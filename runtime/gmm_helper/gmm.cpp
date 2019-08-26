@@ -97,23 +97,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
         imageCount = static_cast<uint32_t>(imgInfo.imgDesc->image_array_size);
     }
 
-    resourceParams.Flags.Info.Linear = 1;
-
-    switch (imgInfo.tilingMode) {
-    case TilingMode::DEFAULT:
-        if (GmmHelper::allowTiling(*imgInfo.imgDesc)) {
-            resourceParams.Flags.Info.TiledY = 1;
-        }
-        break;
-    case TilingMode::TILE_Y:
-        resourceParams.Flags.Info.TiledY = 1;
-        break;
-    case TilingMode::NON_TILED:
-        break;
-    default:
-        UNRECOVERABLE_IF(true);
-        break;
-    }
+    resourceParams.Flags.Info.Linear = imgInfo.linearStorage;
 
     auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
 
@@ -134,10 +118,6 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     }
 
     applyAuxFlagsForImage(imgInfo);
-    if (!hwHelper.supportsYTiling() && resourceParams.Flags.Info.TiledY == 1) {
-        resourceParams.Flags.Info.Linear = 0;
-        resourceParams.Flags.Info.TiledY = 0;
-    }
 }
 
 void Gmm::queryImageParams(ImageInfo &imgInfo) {

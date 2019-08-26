@@ -148,7 +148,7 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
     uint8_t *mappedPtrStart;
     uint8_t *srcMemoryStart;
 
-    if (srcImage->allowTiling()) {
+    if (srcImage->isTiledAllocation()) {
         mappedPtrStart = static_cast<uint8_t *>(mappedPtr);
         srcMemoryStart = srcMemory;
 

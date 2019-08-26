@@ -175,7 +175,7 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
 
     auto imageMemory = srcMemory;
 
-    if (!srcImage->isMemObjZeroCopy() && !srcImage->allowTiling()) {
+    if (!srcImage->isMemObjZeroCopy() && !srcImage->isTiledAllocation()) {
         imageMemory = (uint8_t *)(srcImage->getCpuAddress());
     }
 

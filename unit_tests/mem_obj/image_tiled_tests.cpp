@@ -79,7 +79,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
         retVal);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_TRUE(image->isTiledImage);
+    EXPECT_TRUE(image->isTiledAllocation());
 
     delete image;
 }
@@ -112,7 +112,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
     ASSERT_NE(nullptr, image);
 
-    EXPECT_TRUE(image->isTiledImage);
+    EXPECT_TRUE(image->isTiledAllocation());
 
     delete image;
 }
@@ -150,7 +150,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
 
     ASSERT_NE(nullptr, image);
 
-    EXPECT_FALSE(image->isTiledImage);
+    EXPECT_FALSE(image->isTiledAllocation());
 
     delete image;
 }

@@ -268,8 +268,12 @@ TEST(MemObj, givenMemObjAndPointerToDiffrentStorageAndProperCommandWhenCheckIfMe
 }
 
 TEST(MemObj, givenSharingHandlerWhenAskedForCpuMappingThenReturnFalse) {
-    MemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+    MockContext context;
+    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, allocation, true, false, false);
     memObj.setSharingHandler(new SharingHandler());
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
@@ -277,7 +281,7 @@ TEST(MemObj, givenSharingHandlerWhenAskedForCpuMappingThenReturnFalse) {
 TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
     struct MyMemObj : public MemObj {
         using MemObj::MemObj;
-        bool allowTiling() const override { return true; }
+        bool isTiledAllocation() const override { return true; }
     };
     MyMemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                     MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -314,7 +318,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   64, allocation->getUnderlyingBuffer(), nullptr, allocation, true, false, false);
 
-    EXPECT_FALSE(memObj.allowTiling());
+    EXPECT_FALSE(memObj.isTiledAllocation());
     EXPECT_FALSE(memObj.peekSharingHandler());
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
 }

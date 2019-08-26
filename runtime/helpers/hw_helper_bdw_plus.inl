@@ -36,11 +36,6 @@ bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) con
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::supportsYTiling() const {
-    return true;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
     return true;
 }

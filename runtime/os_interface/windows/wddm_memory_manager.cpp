@@ -49,7 +49,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
-    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc) && allocationData.imgInfo->mipCount == 0) {
+    if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
         return allocateGraphicsMemoryWithAlignment(allocationData);
     }
 

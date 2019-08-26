@@ -473,7 +473,7 @@ HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAnd
     EXPECT_EQ(imageUVPlane->getGraphicsAllocation()->getGpuAddress() + surfaceOffsets.offset, surfaceState.getSurfaceBaseAddress());
 
     auto tileMode = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
-    if (imageNV12->allowTiling()) {
+    if (imageNV12->isTiledAllocation()) {
         tileMode = RENDER_SURFACE_STATE::TILE_MODE_YMAJOR;
     }
 

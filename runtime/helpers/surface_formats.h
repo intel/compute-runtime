@@ -195,13 +195,6 @@ enum class OCLPlane {
     PLANE_UV
 };
 
-enum class TilingMode {
-    DEFAULT = 0,
-    TILE_X = 1,
-    TILE_Y = 2,
-    NON_TILED
-};
-
 struct SurfaceFormatInfo {
     cl_image_format OCLImageFormat;
     GMM_RESOURCE_FORMAT GMMSurfaceFormat;
@@ -226,7 +219,7 @@ struct ImageInfo {
     GMM_YUV_PLANE_ENUM plane;
     uint32_t baseMipLevel;
     uint32_t mipCount;
-    TilingMode tilingMode;
+    bool linearStorage;
     bool preferRenderCompression;
     bool useLocalMemory;
 };

@@ -76,7 +76,7 @@ TEST_F(Image2dFromBufferTest, CreateImage2dFromBuffer) {
     EXPECT_EQ(2, buffer->getRefInternalCount());
     EXPECT_NE(nullptr, imageFromBuffer);
 
-    EXPECT_FALSE(imageFromBuffer->allowTiling());
+    EXPECT_FALSE(imageFromBuffer->isTiledAllocation());
     EXPECT_EQ(imageFromBuffer->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
 
     delete imageFromBuffer;

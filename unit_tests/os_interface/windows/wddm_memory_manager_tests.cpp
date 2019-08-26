@@ -1240,7 +1240,7 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisable
 }
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {
-    cl_image_desc imgDesc;
+    cl_image_desc imgDesc = {};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 

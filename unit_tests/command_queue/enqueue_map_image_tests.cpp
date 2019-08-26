@@ -53,9 +53,6 @@ struct EnqueueMapImageParamsTest : public EnqueueMapImageTest,
 };
 
 TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
-    if (!image->allowTiling()) {
-        return;
-    }
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
@@ -198,7 +195,6 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
                                       imageDesc,
                                       false,
                                       graphicsAllocation,
-                                      true,
                                       true,
                                       0,
                                       0,
@@ -552,7 +548,7 @@ TEST_F(EnqueueMapImageTest, GivenNonZeroCopyImageWhenMappedWithOffsetThenCorrect
 
     EXPECT_NE(nullptr, ptr);
 
-    if (!image->allowTiling()) {
+    if (!image->isTiledAllocation()) {
         EXPECT_EQ(HostPtrOffseted, ptr); // Returned pointer should be offseted
     }
 
@@ -575,7 +571,7 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenNonReadOnlyMapAndUnmapOnNon
     std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
     ASSERT_NE(nullptr, image);
     image->setSharingHandler(new SharingHandler());
-    EXPECT_FALSE(image->allowTiling());
+    EXPECT_FALSE(image->isTiledAllocation());
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = 1;
@@ -600,7 +596,7 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenReadOnlyMapAndUnmapOnNonTil
     std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
     ASSERT_NE(nullptr, image);
     image->setSharingHandler(new SharingHandler());
-    EXPECT_FALSE(image->allowTiling());
+    EXPECT_FALSE(image->isTiledAllocation());
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = 1;
@@ -910,7 +906,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
                                                                                               imageFormat, imageDesc,
                                                                                               true,
                                                                                               allocation,
-                                                                                              false, false, 0, 0,
+                                                                                              false, 0, 0,
                                                                                               surfaceFormat, nullptr) {
         }
 

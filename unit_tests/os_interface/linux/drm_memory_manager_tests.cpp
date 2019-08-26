@@ -1559,53 +1559,47 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
     ASSERT_NE(nullptr, gmm);
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.Linear);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.TiledY);
-    EXPECT_EQ(TilingMode::NON_TILED, imgInfo.tilingMode);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHandleIsCalledThenTileYGmmIsCreatedAndSetInAllocation) {
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemGetTiling = 1;
+    mock->getTilingModeOut = I915_TILING_Y;
 
-    if (hwHelper.supportsYTiling()) {
-        mock->ioctl_expected.primeFdToHandle = 1;
-        mock->ioctl_expected.gemWait = 1;
-        mock->ioctl_expected.gemClose = 1;
-        mock->ioctl_expected.gemGetTiling = 1;
-        mock->getTilingModeOut = I915_TILING_Y;
+    osHandle handle = 1u;
+    uint32_t boHandle = 2u;
+    mock->outputHandle = boHandle;
 
-        osHandle handle = 1u;
-        uint32_t boHandle = 2u;
-        mock->outputHandle = boHandle;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    cl_image_desc imgDesc = {};
+    cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
+    const SurfaceFormatInfo *gmmSurfaceFormat = nullptr;
+    ImageInfo imgInfo = {0};
 
-        cl_mem_flags flags = CL_MEM_READ_ONLY;
-        cl_image_desc imgDesc = {};
-        cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
-        const SurfaceFormatInfo *gmmSurfaceFormat = nullptr;
-        ImageInfo imgInfo = {0};
+    imgInfo.imgDesc = &imgDesc;
+    imgDesc.image_width = 4;
+    imgDesc.image_height = 4;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
+    imgInfo.surfaceFormat = gmmSurfaceFormat;
+    imgInfo.plane = GMM_PLANE_Y;
 
-        imgInfo.imgDesc = &imgDesc;
-        imgDesc.image_width = 4;
-        imgDesc.image_height = 4;
-        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-        gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
-        imgInfo.surfaceFormat = gmmSurfaceFormat;
-        imgInfo.plane = GMM_PLANE_Y;
+    AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
 
-        AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(boHandle, mock->getTilingHandleIn);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
-        ASSERT_NE(nullptr, graphicsAllocation);
-        EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-        EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    auto gmm = graphicsAllocation->getDefaultGmm();
+    ASSERT_NE(nullptr, gmm);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.Linear);
 
-        auto gmm = graphicsAllocation->getDefaultGmm();
-        ASSERT_NE(nullptr, gmm);
-        EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.TiledY);
-        EXPECT_EQ(TilingMode::TILE_Y, imgInfo.tilingMode);
-
-        memoryManager->freeGraphicsMemory(graphicsAllocation);
-    }
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFailsThenReturnNullPtr) {

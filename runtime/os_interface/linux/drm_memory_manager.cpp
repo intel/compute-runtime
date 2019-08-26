@@ -21,7 +21,6 @@
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/linux/tiling_mode_helper.h"
 
 #include "drm/i915_drm.h"
 
@@ -264,7 +263,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
-    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc)) {
+    if (allocationData.imgInfo->linearStorage) {
         auto alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         if (alloc) {
             alloc->setDefaultGmm(gmm.release());
@@ -443,7 +442,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         DEBUG_BREAK_IF(ret != 0);
         ((void)(ret));
 
-        properties.imgInfo->tilingMode = TilingModeHelper::convert(getTiling.tiling_mode);
+        if (getTiling.tiling_mode == I915_TILING_NONE) {
+            properties.imgInfo->linearStorage = true;
+        }
+
         Gmm *gmm = new Gmm(*properties.imgInfo, createStorageInfoFromProperties(properties));
         drmAllocation->setDefaultGmm(gmm);
     }

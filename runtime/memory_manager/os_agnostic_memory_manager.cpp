@@ -270,7 +270,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     GraphicsAllocation *alloc = nullptr;
 
-    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc) && allocationData.imgInfo->mipCount == 0) {
+    if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
         alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         alloc->setDefaultGmm(gmm.release());
         return alloc;

@@ -33,7 +33,6 @@ typedef Image *(*ImageCreatFunc)(Context *context,
                                  bool zeroCopy,
                                  GraphicsAllocation *graphicsAllocation,
                                  bool isImageRedescribed,
-                                 bool createTiledImage,
                                  uint32_t baseMipLevel,
                                  uint32_t mipCount,
                                  const SurfaceFormatInfo *surfaceFormatInfo,
@@ -67,7 +66,7 @@ class Image : public MemObj {
     static Image *createImageHw(Context *context, const MemoryProperties &properties, size_t size, void *hostPtr,
                                 const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
-                                bool isObjectRedescribed, bool createTiledImage, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
+                                bool isObjectRedescribed, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
 
     static Image *createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
                                     GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
@@ -141,7 +140,6 @@ class Image : public MemObj {
     void setHostPtrSlicePitch(size_t pitch) { this->hostPtrSlicePitch = pitch; }
     size_t getImageCount() const { return imageCount; }
     void setImageCount(size_t imageCount) { this->imageCount = imageCount; }
-    bool allowTiling() const override { return this->isTiledImage; }
     void setImageRowPitch(size_t rowPitch) { imageDesc.image_row_pitch = rowPitch; }
     void setImageSlicePitch(size_t slicePitch) { imageDesc.image_slice_pitch = slicePitch; }
     void setSurfaceOffsets(uint64_t offset, uint32_t xOffset, uint32_t yOffset, uint32_t yOffsetForUVPlane) {
@@ -173,8 +171,6 @@ class Image : public MemObj {
     virtual void transformImage2dArrayTo3d(void *memory) = 0;
     virtual void transformImage3dTo2dArray(void *memory) = 0;
 
-    const bool isTiledImage;
-
     bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
     bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
 
@@ -191,7 +187,6 @@ class Image : public MemObj {
           bool zeroCopy,
           GraphicsAllocation *graphicsAllocation,
           bool isObjectRedescribed,
-          bool createTiledImage,
           uint32_t baseMipLevel,
           uint32_t mipCount,
           const SurfaceFormatInfo &surfaceFormatInfo,
@@ -246,19 +241,34 @@ class ImageHw : public Image {
             bool zeroCopy,
             GraphicsAllocation *graphicsAllocation,
             bool isObjectRedescribed,
-            bool createTiledImage,
             uint32_t baseMipLevel,
             uint32_t mipCount,
             const SurfaceFormatInfo &surfaceFormatInfo,
             const SurfaceOffsets *surfaceOffsets = nullptr)
         : Image(context, properties, size, hostPtr, imageFormat, imageDesc,
-                zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
+                zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
         if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
             this->imageDesc.image_depth = 0;
+        }
+
+        switch (imageDesc.image_type) {
+        case CL_MEM_OBJECT_IMAGE1D:
+        case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+            surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
+            break;
+        default:
+        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        case CL_MEM_OBJECT_IMAGE2D:
+            surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D;
+            break;
+        case CL_MEM_OBJECT_IMAGE3D:
+            surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
+            break;
         }
     }
 
@@ -283,43 +293,24 @@ class ImageHw : public Image {
                          bool zeroCopy,
                          GraphicsAllocation *graphicsAllocation,
                          bool isObjectRedescribed,
-                         bool createTiledImage,
                          uint32_t baseMipLevel,
                          uint32_t mipCount,
                          const SurfaceFormatInfo *surfaceFormatInfo,
                          const SurfaceOffsets *surfaceOffsets) {
         UNRECOVERABLE_IF(surfaceFormatInfo == nullptr);
-        auto image = new ImageHw<GfxFamily>(context,
-                                            properties,
-                                            size,
-                                            hostPtr,
-                                            imageFormat,
-                                            imageDesc,
-                                            zeroCopy,
-                                            graphicsAllocation,
-                                            isObjectRedescribed,
-                                            createTiledImage,
-                                            baseMipLevel,
-                                            mipCount,
-                                            *surfaceFormatInfo,
-                                            surfaceOffsets);
-
-        switch (imageDesc.image_type) {
-        case CL_MEM_OBJECT_IMAGE1D:
-        case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-            image->surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
-            break;
-        default:
-        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        case CL_MEM_OBJECT_IMAGE2D:
-            image->surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D;
-            break;
-        case CL_MEM_OBJECT_IMAGE3D:
-            image->surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
-            break;
-        }
-        return image;
+        return new ImageHw<GfxFamily>(context,
+                                      properties,
+                                      size,
+                                      hostPtr,
+                                      imageFormat,
+                                      imageDesc,
+                                      zeroCopy,
+                                      graphicsAllocation,
+                                      isObjectRedescribed,
+                                      baseMipLevel,
+                                      mipCount,
+                                      *surfaceFormatInfo,
+                                      surfaceOffsets);
     }
 
     static int getShaderChannelValue(int inputShaderChannel, cl_channel_order imageChannelOrder) {

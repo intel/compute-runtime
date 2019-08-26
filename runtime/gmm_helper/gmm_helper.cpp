@@ -15,6 +15,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/surface_formats.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/platform/platform.h"
@@ -81,21 +82,11 @@ void GmmHelper::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation 
 }
 
 bool GmmHelper::allowTiling(const cl_image_desc &imageDesc) {
-    // consider returning tiling type instead of bool
-    if (DebugManager.flags.ForceLinearImages.get()) {
-        return false;
-    } else {
-        auto imageType = imageDesc.image_type;
+    auto imageType = imageDesc.image_type;
+    auto buffer = castToObject<Buffer>(imageDesc.buffer);
 
-        if (imageType == CL_MEM_OBJECT_IMAGE1D ||
-            imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-            imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
-            ((imageType == CL_MEM_OBJECT_IMAGE2D && imageDesc.buffer))) {
-            return false;
-        } else {
-            return true;
-        }
-    }
+    return (!(DebugManager.flags.ForceLinearImages.get() || imageType == CL_MEM_OBJECT_IMAGE1D ||
+              imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer));
 }
 
 uint64_t GmmHelper::canonize(uint64_t address) {

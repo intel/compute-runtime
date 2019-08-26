@@ -126,7 +126,7 @@ HWTEST_F(MediaImageSetArgTest, clSetKernelArgImage) {
 
     typename FamilyType::MEDIA_SURFACE_STATE::TILE_MODE tileMode;
 
-    if (srcImage->allowTiling()) {
+    if (srcImage->isTiledAllocation()) {
         tileMode = FamilyType::MEDIA_SURFACE_STATE::TILE_MODE_TILEMODE_YMAJOR;
     } else {
         tileMode = FamilyType::MEDIA_SURFACE_STATE::TILE_MODE_TILEMODE_LINEAR;

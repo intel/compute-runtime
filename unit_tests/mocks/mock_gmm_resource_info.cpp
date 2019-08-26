@@ -135,6 +135,10 @@ void MockGmmResourceInfo::setAuxQPitch(uint32_t value) {
 }
 
 uint32_t MockGmmResourceInfo::getTileModeSurfaceState() {
+    if (mockResourceCreateParams.Flags.Info.Linear == 1) {
+        return 0;
+    }
+
     if (mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_2D ||
         mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 3;

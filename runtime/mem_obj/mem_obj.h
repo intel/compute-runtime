@@ -88,7 +88,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool writeMemObjFlagsInvalid();
     bool mapMemObjFlagsInvalid(cl_map_flags mapFlags);
 
-    virtual bool allowTiling() const { return false; }
+    MOCKABLE_VIRTUAL bool isTiledAllocation() const;
 
     void *getCpuAddressForMapping();
     void *getCpuAddressForMemoryTransfer();

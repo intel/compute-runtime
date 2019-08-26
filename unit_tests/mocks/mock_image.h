@@ -15,7 +15,7 @@ struct MockImageBase : public NEO::Image {
     using Image::imageDesc;
 
     MockImageBase() : Image(nullptr, cl_mem_flags{}, 0, nullptr, cl_image_format{},
-                            cl_image_desc{}, false, new NEO::MockGraphicsAllocation(nullptr, 0), false, false,
+                            cl_image_desc{}, false, new NEO::MockGraphicsAllocation(nullptr, 0), false,
                             0, 0, NEO::SurfaceFormatInfo{}, nullptr) {
     }
     ~MockImageBase() override {

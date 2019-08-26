@@ -91,6 +91,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
+    imgInfo.linearStorage = !GmmHelper::allowTiling(imageDesc);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
     //allocate host_ptr
@@ -238,7 +239,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
         data = (char *)pHostPtr;
 
         uint8_t *readMemory = nullptr;
-        if (image->allowTiling()) {
+        if (image->isTiledAllocation()) {
             readMemory = new uint8_t[testImageDimensions * testImageDimensions * elementSize * 4];
             size_t imgOrigin[] = {0, 0, 0};
             size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth ? imageDesc.image_depth : 1};
@@ -251,7 +252,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
 
         while (heightToCopy--) {
             for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-                if (image->allowTiling()) {
+                if (image->isTiledAllocation()) {
                     AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
                 } else {
                     EXPECT_EQ(imageStorage[i], data[i]);
@@ -351,7 +352,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
 
         while (heightToCopy--) {
             for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-                if (image->allowTiling()) {
+                if (image->isTiledAllocation()) {
                     AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
                 } else {
                     EXPECT_EQ(imageStorage[i], data[i]);
@@ -401,7 +402,7 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
     data = (char *)host_ptr;
 
     uint8_t *readMemory = nullptr;
-    if (image->allowTiling()) {
+    if (image->isTiledAllocation()) {
         readMemory = new uint8_t[imageSize];
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
@@ -414,7 +415,7 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
 
     while (depthToCopy--) {
         for (unsigned int i = 0; i < imageDesc.image_width * 4 * imageDesc.image_height; i++) {
-            if (image->allowTiling()) {
+            if (image->isTiledAllocation()) {
                 AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
             } else {
                 EXPECT_EQ(imageStorage[i], data[i]);

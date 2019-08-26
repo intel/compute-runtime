@@ -182,7 +182,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
 
-            if (false == img->isTiledImage) {
+            if (false == img->isTiledAllocation()) {
                 //VME only works with tiled images.
                 return CL_OUT_OF_RESOURCES;
             }

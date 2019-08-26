@@ -39,7 +39,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tiling_mode_helper_tests.cpp
 )
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
