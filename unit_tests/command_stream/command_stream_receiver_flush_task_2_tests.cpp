@@ -840,11 +840,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeStore3
     }
 }
 
-TEST(CacheSettings, GivenCacheSettingWhenCheckedForValuesThenProperValuesAreSelected) {
-    EXPECT_EQ(static_cast<uint32_t>(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), CacheSettings::l3CacheOff);
-    EXPECT_EQ(static_cast<uint32_t>(GMM_RESOURCE_USAGE_OCL_BUFFER), CacheSettings::l3CacheOn);
-}
-
 HWTEST_F(UltCommandStreamReceiverTest, addPipeControlWithFlushAllCaches) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
