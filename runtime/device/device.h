@@ -11,23 +11,11 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/engine_control.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/performance_counters.h"
 
-#include "engine_node.h"
-
-#include <vector>
-
 namespace NEO {
-
-class GraphicsAllocation;
-class MemoryManager;
 class OSTime;
 class DriverInfo;
-struct HardwareInfo;
-class SourceLevelDebugger;
-class OsContext;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -61,20 +49,15 @@ class Device : public BaseObject<_cl_device_id> {
     // Helper functions
     const HardwareInfo &getHardwareInfo() const;
     const DeviceInfo &getDeviceInfo() const;
-    DeviceInfo *getMutableDeviceInfo();
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
 
     void *getSLMWindowStartAddress();
     void prepareSLMWindow();
-    void setForce32BitAddressing(bool value) {
-        deviceInfo.force32BitAddressess = value;
-    }
 
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
 
     const char *getProductAbbrev() const;
-    const std::string getFamilyNameWithType() const;
 
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info Param>
@@ -99,7 +82,6 @@ class Device : public BaseObject<_cl_device_id> {
     unsigned int getSupportedClVersion() const;
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
-    void checkPriorityHints();
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;

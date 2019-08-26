@@ -217,7 +217,7 @@ TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndTooLargeRowPitchSpeci
 }
 
 TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlignmentWhenValidatingSurfaceFormatThenReturnError) {
-    context.getDevice(0u)->getMutableDeviceInfo()->imagePitchAlignment = 128;
+    static_cast<MockDevice *>(context.getDevice(0))->deviceInfo.imagePitchAlignment = 128;
     imageDesc.image_width = 64;
     imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
     cl_mem_flags flags = CL_MEM_READ_ONLY;

@@ -7,28 +7,18 @@
 
 #include "runtime/device/device.h"
 
-#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
-
-#include "hw_cmds.h"
-
-#include <cstring>
-#include <map>
 
 namespace NEO {
 
@@ -50,21 +40,6 @@ void DeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
         i++;
     }
 }
-
-CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
-
-// Global table of hardware prefixes
-const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
-    nullptr,
-};
-// Global table of family names
-const char *familyName[IGFX_MAX_CORE] = {
-    nullptr,
-};
-// Global table of family names
-bool familyEnabled[IGFX_MAX_CORE] = {
-    false,
-};
 
 Device::Device(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : executionEnvironment(executionEnvironment), deviceIndex(deviceIndex) {
@@ -200,10 +175,6 @@ const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;
 }
 
-DeviceInfo *Device::getMutableDeviceInfo() {
-    return &deviceInfo;
-}
-
 void *Device::getSLMWindowStartAddress() {
     prepareSLMWindow();
     return this->slmWindowStartAddress;
@@ -216,14 +187,7 @@ void Device::prepareSLMWindow() {
 }
 
 const char *Device::getProductAbbrev() const {
-    return hardwarePrefix[executionEnvironment->getHardwareInfo()->platform.eProductFamily];
-}
-
-const std::string Device::getFamilyNameWithType() const {
-    auto &hwInfo = getHardwareInfo();
-    std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
-    platformName.append(hwInfo.capabilityTable.platformType);
-    return platformName;
+    return hardwarePrefix[getHardwareInfo().platform.eProductFamily];
 }
 
 double Device::getProfilingTimerResolution() {

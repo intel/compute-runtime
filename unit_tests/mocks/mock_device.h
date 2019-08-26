@@ -22,6 +22,7 @@ class MockDevice : public Device {
   public:
     using Device::createDeviceInternals;
     using Device::createEngine;
+    using Device::deviceInfo;
     using Device::enabledClVersion;
     using Device::engines;
     using Device::executionEnvironment;

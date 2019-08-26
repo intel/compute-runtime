@@ -19,6 +19,19 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *feature
     : platform(*platform), featureTable(*featureTable), workaroundTable(*workaroundTable), gtSystemInfo(*gtSystemInfo), capabilityTable(capabilityTable) {
 }
 
+// Global table of hardware prefixes
+const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
+    nullptr,
+};
+// Global table of family names
+const char *familyName[IGFX_MAX_CORE] = {
+    nullptr,
+};
+// Global table of family names
+bool familyEnabled[IGFX_MAX_CORE] = {
+    false,
+};
+
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
 void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const std::string &) = {
     nullptr,
@@ -44,5 +57,11 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
     return DebugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(DebugManager.flags.NodeOrdinal.get());
+}
+
+const std::string getFamilyNameWithType(const HardwareInfo &hwInfo) {
+    std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
+    platformName.append(hwInfo.capabilityTable.platformType);
+    return platformName;
 }
 } // namespace NEO

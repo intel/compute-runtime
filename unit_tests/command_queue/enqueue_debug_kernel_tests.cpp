@@ -35,7 +35,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
         pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
 
         if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            pDevice->getMutableDeviceInfo()->sourceLevelDebuggerActive = true;
+            pDevice->deviceInfo.sourceLevelDebuggerActive = true;
             std::string filename;
             std::string kernelOption(CompilerOptions::debugKernelEnable);
             KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);

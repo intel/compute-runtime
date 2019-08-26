@@ -1702,9 +1702,9 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
-    auto defaultVersion = pDevice->getMutableDeviceInfo()->clVersion;
+    auto defaultVersion = pDevice->deviceInfo.clVersion;
 
-    pDevice->getMutableDeviceInfo()->clVersion = "OpenCL 2.0 ";
+    pDevice->deviceInfo.clVersion = "OpenCL 2.0 ";
     if (pDevice) {
         MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
         char paramValue[32];
@@ -1712,7 +1712,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
         ASSERT_EQ(std::string(paramValue), "OpenCL 2.0 ");
         EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=200")));
     }
-    pDevice->getMutableDeviceInfo()->clVersion = defaultVersion;
+    pDevice->deviceInfo.clVersion = defaultVersion;
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
