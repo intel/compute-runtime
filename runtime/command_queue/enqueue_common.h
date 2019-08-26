@@ -688,6 +688,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
+    } else if (!kernel->areStatelessWritesUsed()) {
+        dispatchFlags.l3CacheSettings = L3CachingSettings::l3AndL1On;
     }
 
     if (gtpinIsGTPinInitialized()) {

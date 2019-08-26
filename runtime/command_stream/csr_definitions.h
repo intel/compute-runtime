@@ -33,6 +33,7 @@ constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
 namespace L3CachingSettings {
 constexpr uint32_t l3CacheOn = 0u;
 constexpr uint32_t l3CacheOff = 1u;
+constexpr uint32_t l3AndL1On = 2u;
 } // namespace L3CachingSettings
 
 struct DispatchFlags {

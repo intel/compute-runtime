@@ -27,6 +27,7 @@ class MockKernel : public Kernel {
     using Kernel::addAllocationToCacheFlushVector;
     using Kernel::allBufferArgsStateful;
     using Kernel::auxTranslationRequired;
+    using Kernel::containsStatelessWrites;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;

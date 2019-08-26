@@ -194,6 +194,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
+    } else if (!kernel->areStatelessWritesUsed()) {
+        dispatchFlags.l3CacheSettings = L3CachingSettings::l3AndL1On;
     }
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
