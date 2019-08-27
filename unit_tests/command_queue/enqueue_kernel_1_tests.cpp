@@ -365,6 +365,11 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getExecutionEnvironment()->getGmmHelper();
+    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 }
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePathWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {
@@ -382,6 +387,11 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePa
     clSetUserEventStatus(userEvent, 0u);
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getExecutionEnvironment()->getGmmHelper();
+    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 
     clReleaseEvent(userEvent);
 }
