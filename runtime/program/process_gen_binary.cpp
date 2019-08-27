@@ -379,7 +379,6 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo, uint32_t kernelNum) {
             case DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS:
                 DBG_LOG(LogPatchTokens, "\n  .Type", "LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS");
                 LocalMemoryStatelessWindowStartAddressOffset = pDataParameterBuffer->Offset;
-                pDevice->prepareSLMWindow();
                 break;
             case DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE:
                 DBG_LOG(LogPatchTokens, "\n  .Type", "PREFERRED_WORKGROUP_MULTIPLE");
@@ -844,7 +843,7 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo, uint32_t kernelNum) {
         memset(kernelInfo.crossThreadData, 0x00, crossThreadDataSize);
 
         if (LocalMemoryStatelessWindowStartAddressOffset != 0xFFffFFff) {
-            *(uintptr_t *)&(kernelInfo.crossThreadData[LocalMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(this->pDevice->getSLMWindowStartAddress());
+            *(uintptr_t *)&(kernelInfo.crossThreadData[LocalMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment));
         }
 
         if (LocalMemoryStatelessWindowSizeOffset != 0xFFffFFff) {

@@ -49,6 +49,9 @@ MemoryManager::~MemoryManager() {
     for (auto &engine : registeredEngines) {
         engine.osContext->decRefInternal();
     }
+    if (reservedMemory) {
+        alignedFreeWrapper(reservedMemory);
+    }
 }
 
 void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
@@ -454,6 +457,15 @@ void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForComplet
         }
         csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
     }
+}
+
+void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
+    if (!reservedMemory) {
+        reservedMemory = allocateSystemMemory(size, alignment);
+    }
+    return reservedMemory;
 }
 
 } // namespace NEO

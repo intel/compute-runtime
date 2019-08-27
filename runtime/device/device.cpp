@@ -72,8 +72,6 @@ Device::~Device() {
     }
 
     executionEnvironment->memoryManager->waitForDeletions();
-    alignedFree(this->slmWindowStartAddress);
-
     executionEnvironment->decRefInternal();
 }
 
@@ -173,17 +171,6 @@ const WorkaroundTable *Device::getWaTable() const { return &getHardwareInfo().wo
 
 const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;
-}
-
-void *Device::getSLMWindowStartAddress() {
-    prepareSLMWindow();
-    return this->slmWindowStartAddress;
-}
-
-void Device::prepareSLMWindow() {
-    if (this->slmWindowStartAddress == nullptr) {
-        this->slmWindowStartAddress = executionEnvironment->memoryManager->allocateSystemMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
-    }
 }
 
 const char *Device::getProductAbbrev() const {

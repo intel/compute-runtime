@@ -51,9 +51,6 @@ class Device : public BaseObject<_cl_device_id> {
     const DeviceInfo &getDeviceInfo() const;
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
 
-    void *getSLMWindowStartAddress();
-    void prepareSLMWindow();
-
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
 
@@ -127,8 +124,6 @@ class Device : public BaseObject<_cl_device_id> {
     std::unique_ptr<PerformanceCounters> performanceCounters;
 
     std::vector<EngineControl> engines;
-
-    void *slmWindowStartAddress = nullptr;
 
     std::string exposedBuiltinKernels = "";
 

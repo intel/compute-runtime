@@ -790,7 +790,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->gpuPointerSize = 4;
     pDevice->getMemoryManager()->setForce32BitAllocations(false);
     if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
-        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
     EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
 }
 
@@ -809,7 +809,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->gpuPointerSize = 4;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
     if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
-        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
     EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
 }
 
@@ -828,7 +828,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->gpuPointerSize = 8;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
     if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
-        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
     EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
 }
 

@@ -66,7 +66,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
 
 TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImageThenInvalidOperationErrorIsReturned) {
     auto device = static_cast<MockDevice *>(pContext->getDevice(0));
-    device->getDeviceInfoToModify()->imageSupport = CL_FALSE;
+    device->deviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
     auto status = clGetDeviceInfo(devices[0], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);

@@ -114,7 +114,7 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
         PerformanceHintTest::SetUp();
         std::tie(profilingEnabled, preemptionSupported) = GetParam();
         device = new MockDevice;
-        device->getDeviceInfoToModify()->preemptionSupported = preemptionSupported;
+        device->deviceInfo.preemptionSupported = preemptionSupported;
     }
 
     void TearDown() override {

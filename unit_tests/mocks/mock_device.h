@@ -33,19 +33,8 @@ class MockDevice : public RootDevice {
     bool hasDriverInfo();
 
     bool getCpuTime(uint64_t *timeStamp) { return true; };
-    void *peekSlmWindowStartAddress() const {
-        return this->slmWindowStartAddress;
-    }
     MockDevice();
     MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
-
-    DeviceInfo *getDeviceInfoToModify() {
-        return &this->deviceInfo;
-    }
-
-    void initializeCaps() override {
-        Device::initializeCaps();
-    }
 
     void setPreemptionMode(PreemptionMode mode) {
         preemptionMode = mode;

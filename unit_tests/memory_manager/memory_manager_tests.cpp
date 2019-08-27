@@ -1845,3 +1845,20 @@ TEST_F(MemoryAllocatorTest, whenReservingAddressRangeThenExpectProperAddressAndR
     EXPECT_EQ(size, allocation->getReservedAddressSize());
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenGettingReservedMemoryThenAllocateIt) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    EXPECT_EQ(nullptr, memoryManager.reservedMemory);
+    memoryManager.getReservedMemory(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    EXPECT_NE(nullptr, memoryManager.reservedMemory);
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenGetReservedMemoryIsCalledManyTimesThenReuseSameMemory) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    auto reservedMemory = memoryManager.getReservedMemory(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    memoryManager.getReservedMemory(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    memoryManager.getReservedMemory(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    EXPECT_EQ(reservedMemory, memoryManager.reservedMemory);
+}

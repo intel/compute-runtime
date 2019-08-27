@@ -147,17 +147,17 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_USE_HOST_PTR, 1 * MB, smallBufferPtr, retVal));
 
     // platform LP == true && size <= 10 MB
-    mockDevice->getDeviceInfoToModify()->platformLP = true;
+    mockDevice->deviceInfo.platformLP = true;
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, smallBufferPtr, 1 * MB));
 
     // platform LP == false && size <= 10 MB
-    mockDevice->getDeviceInfoToModify()->platformLP = false;
+    mockDevice->deviceInfo.platformLP = false;
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, smallBufferPtr, 1 * MB));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == false && size > 10 MB
-    mockDevice->getDeviceInfoToModify()->platformLP = false;
+    mockDevice->deviceInfo.platformLP = false;
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, buffer->getCpuAddress(), largeBufferSize));
 
     alignedFree(smallBufferPtr);
@@ -198,7 +198,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == true && size > 10 MB
-    mockDevice->getDeviceInfoToModify()->platformLP = true;
+    mockDevice->deviceInfo.platformLP = true;
     EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, buffer->getCpuAddress(), largeBufferSize));
 
     alignedFree(alignedHostPtr);

@@ -156,6 +156,7 @@ class MemoryManager {
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
     virtual void *reserveCpuAddressRange(size_t size) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size){};
+    void *getReservedMemory(size_t size, size_t alignment);
 
   protected:
     struct AllocationData {
@@ -224,6 +225,7 @@ class MemoryManager {
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::unique_ptr<GfxPartition> gfxPartition;
     std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
+    void *reservedMemory = nullptr;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
