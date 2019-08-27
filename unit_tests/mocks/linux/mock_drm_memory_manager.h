@@ -57,6 +57,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         lseekCalledCount = 0;
         hostPtrManager.reset(new MockHostPtrManager);
     };
+
     TestedDrmMemoryManager(bool enableLocalMemory,
                            bool allowForcePin,
                            bool validateHostPtrMemory,
@@ -71,14 +72,10 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         lseekCalledCount = 0;
     }
 
-    void unreference(BufferObject *bo) {
-        DrmMemoryManager::unreference(bo);
-    }
-
     void injectPinBB(BufferObject *newPinBB) {
         BufferObject *currentPinBB = pinBB;
         pinBB = nullptr;
-        DrmMemoryManager::unreference(currentPinBB);
+        DrmMemoryManager::unreference(currentPinBB, true);
         pinBB = newPinBB;
     }
 

@@ -62,7 +62,7 @@ bool DrmGemCloseWorker::isEmpty() {
 
 inline void DrmGemCloseWorker::close(BufferObject *bo) {
     bo->wait(-1);
-    memoryManager.unreference(bo);
+    memoryManager.unreference(bo, false);
     workCount--;
 }
 

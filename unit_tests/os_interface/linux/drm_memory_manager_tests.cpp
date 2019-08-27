@@ -305,11 +305,11 @@ TEST_F(DrmMemoryManagerTest, unreference) {
     mock->ioctl_expected.gemClose = 1;
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul);
     ASSERT_NE(nullptr, bo);
-    memoryManager->unreference(bo);
+    memoryManager->unreference(bo, false);
 }
 
 TEST_F(DrmMemoryManagerTest, UnreferenceNullPtr) {
-    memoryManager->unreference(nullptr);
+    memoryManager->unreference(nullptr, false);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
@@ -533,7 +533,7 @@ TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
     EXPECT_THROW(bo->wait(-1), std::exception);
     mock->ioctl_res = 1;
 
-    memoryManager->unreference(bo);
+    memoryManager->unreference(bo, false);
     mock->ioctl_res = 0;
 }
 
@@ -3051,4 +3051,65 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThen
 
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     memoryManager->releaseGpuRange(reinterpret_cast<void *>(gpuAddressCanonized), size);
+}
+
+class GMockDrmMemoryManager : public TestedDrmMemoryManager {
+  public:
+    GMockDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(executionEnvironment) {
+        ON_CALL(*this, unreference).WillByDefault([this](BufferObject *bo, bool synchronousDestroy) {
+            return this->baseUnreference(bo, synchronousDestroy);
+        });
+
+        ON_CALL(*this, releaseGpuRange).WillByDefault([this](void *ptr, size_t size) {
+            return this->baseReleaseGpuRange(ptr, size);
+        });
+
+        ON_CALL(*this, alignedFreeWrapper).WillByDefault([this](void *ptr) {
+            return this->baseAlignedFreeWrapper(ptr);
+        });
+    }
+
+    MOCK_METHOD2(unreference, uint32_t(BufferObject *, bool));
+    MOCK_METHOD2(releaseGpuRange, void(void *, size_t));
+    MOCK_METHOD1(alignedFreeWrapper, void(void *));
+
+    uint32_t baseUnreference(BufferObject *bo, bool synchronousDestroy) { return TestedDrmMemoryManager::unreference(bo, synchronousDestroy); }
+    void baseReleaseGpuRange(void *ptr, size_t size) { TestedDrmMemoryManager::releaseGpuRange(ptr, size); }
+    void baseAlignedFreeWrapper(void *ptr) { TestedDrmMemoryManager::alignedFreeWrapper(ptr); }
+};
+
+TEST(DrmMemoryManagerFreeGraphicsMemoryCallSequenceTest, givenDrmMemoryManagerAndFreeGraphicsMemoryIsCalledThenUnreferenceBufferObjectIsCalledFirstWithSynchronousDestroySetToTrue) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
+    GMockDrmMemoryManager gmockDrmMemoryManager(executionEnvironment);
+
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    auto allocation = gmockDrmMemoryManager.allocateGraphicsMemoryWithProperties(properties);
+    ASSERT_NE(allocation, nullptr);
+
+    {
+        ::testing::InSequence inSequence;
+        EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true));
+        EXPECT_CALL(gmockDrmMemoryManager, releaseGpuRange(::testing::_, ::testing::_));
+        EXPECT_CALL(gmockDrmMemoryManager, alignedFreeWrapper(::testing::_));
+    }
+
+    gmockDrmMemoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAndFreeGraphicsMemoryIsCalledForSharedAllocationThenUnreferenceBufferObjectIsCalledWithSynchronousDestroySetToFalse) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
+    ::testing::NiceMock<GMockDrmMemoryManager> gmockDrmMemoryManager(executionEnvironment);
+
+    osHandle handle = 1u;
+    AllocationProperties properties(false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
+    auto allocation = gmockDrmMemoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, false));
+
+    gmockDrmMemoryManager.freeGraphicsMemory(allocation);
 }

@@ -64,7 +64,7 @@ DrmMemoryManager::~DrmMemoryManager() {
         gemCloseWorker->close(false);
     }
     if (pinBB) {
-        unreference(pinBB);
+        unreference(pinBB, true);
         pinBB = nullptr;
     }
     if (memoryForPinBB) {
@@ -501,32 +501,26 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
-    auto input = static_cast<DrmAllocation *>(gfxAllocation);
     for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
         if (gfxAllocation->getGmm(handleId)) {
             delete gfxAllocation->getGmm(handleId);
         }
     }
 
-    alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
-
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
-        delete gfxAllocation;
-        return;
-    }
-
-    BufferObject *search = input->getBO();
-
-    if (gfxAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
-        closeFunction(gfxAllocation->peekSharedHandle());
+    } else {
+        auto bo = static_cast<DrmAllocation *>(gfxAllocation)->getBO();
+        unreference(bo, bo->isReused ? false : true);
+        if (gfxAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
+            closeFunction(gfxAllocation->peekSharedHandle());
+        }
     }
 
     releaseGpuRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize());
+    alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
 
     delete gfxAllocation;
-
-    unreference(search);
 }
 
 void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {

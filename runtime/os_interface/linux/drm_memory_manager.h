@@ -44,7 +44,7 @@ class DrmMemoryManager : public MemoryManager {
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
     // drm/i915 ioctl wrappers
-    uint32_t unreference(BufferObject *bo, bool synchronousDestroy = false);
+    MOCKABLE_VIRTUAL uint32_t unreference(BufferObject *bo, bool synchronousDestroy);
 
     bool isValidateHostMemoryEnabled() const {
         return validateHostPtrMemory;
@@ -63,7 +63,7 @@ class DrmMemoryManager : public MemoryManager {
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
     uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness);
-    void releaseGpuRange(void *address, size_t size);
+    MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId() const;
 
