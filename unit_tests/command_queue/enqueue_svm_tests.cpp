@@ -389,7 +389,50 @@ TEST_F(EnqueueSvmTest, GivenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, GivenDstHostPtrAndSrcHostPtrWhenEnqueueSVMMemcpyThenReturnInvalidValue) {
+HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+    char dstHostPtr[] = {0, 0, 0};
+    char srcHostPtr[] = {1, 2, 3};
+    void *pDstSVM = dstHostPtr;
+    void *pSrcSVM = srcHostPtr;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        3,       // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_evebt *event_wait_list
+        nullptr  // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+
+    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    EXPECT_EQ(1u, tempAlloc->countSuccessors());
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->next->getGpuAddress()));
+}
+
+HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+    char dstHostPtr[] = {0, 0, 0};
+    char srcHostPtr[] = {1, 2, 3};
+    void *pDstSVM = dstHostPtr;
+    void *pSrcSVM = srcHostPtr;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        true,    // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        3,       // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_evebt *event_wait_list
+        nullptr  // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+}
+
+TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
     char dstHostPtr[260];
     char srcHostPtr[260];
     void *pDstSVM = dstHostPtr;
@@ -398,12 +441,12 @@ TEST_F(EnqueueSvmTest, GivenDstHostPtrAndSrcHostPtrWhenEnqueueSVMMemcpyThenRetur
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
         pSrcSVM, // const void *src_ptr
-        256,     // size_t size
+        0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
     );
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
@@ -1179,6 +1222,28 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
 HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
     char srcHostPtr[260];
     void *pDstSVM = ptrSVM;
+    void *pSrcSVM = srcHostPtr;
+    MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+    auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment());
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
+    retVal = cmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        256,     // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_evebt *event_wait_list
+        nullptr  // cL_event *event
+    );
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+}
+
+HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    char dstHostPtr[260];
+    char srcHostPtr[260];
+    void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment());

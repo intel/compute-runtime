@@ -291,19 +291,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     auto dstSvmData = context->getSVMAllocsManager()->getSVMAlloc(dstPtr);
     auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcPtr);
 
-    enum CopyType { InvalidCopyType,
+    enum CopyType { HostToHost,
                     SvmToHost,
                     HostToSvm,
                     SvmToSvm };
-    CopyType copyType = InvalidCopyType;
+    CopyType copyType = HostToHost;
     if ((srcSvmData != nullptr) && (dstSvmData != nullptr)) {
         copyType = SvmToSvm;
     } else if ((srcSvmData == nullptr) && (dstSvmData != nullptr)) {
         copyType = HostToSvm;
     } else if (srcSvmData != nullptr) {
         copyType = SvmToHost;
-    } else {
-        return CL_INVALID_VALUE;
     }
 
     MultiDispatchInfo dispatchInfo;
@@ -361,7 +359,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             numEventsInWaitList,
             eventWaitList,
             event);
-    } else {
+    } else if (copyType == SvmToSvm) {
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
         setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr, dstSvmData->gpuAllocation, dstPtrOffset);
@@ -369,6 +367,30 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstSvmSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
         enqueueHandler<CL_COMMAND_SVM_MEMCPY>(
+            surfaces,
+            blockingCopy ? true : false,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    } else {
+        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcPtr), size);
+        HostPtrSurface dstHostPtrSurf(dstPtr, size);
+        if (size != 0) {
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(srcHostPtrSurf, false);
+            status &= getGpgpuCommandStreamReceiver().createAllocationForHostSurface(dstHostPtrSurf, true);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
+            dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
+        }
+        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, alignedDstPtr, nullptr, dstPtrOffset);
+        surfaces[0] = &srcHostPtrSurf;
+        surfaces[1] = &dstHostPtrSurf;
+
+        builder.buildDispatchInfos(dispatchInfo, operationParams);
+        enqueueHandler<CL_COMMAND_WRITE_BUFFER>(
             surfaces,
             blockingCopy ? true : false,
             dispatchInfo,
