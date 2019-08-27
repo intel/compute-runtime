@@ -313,6 +313,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     BuiltinOpParams operationParams;
 
     Surface *surfaces[2];
+
+    void *alignedSrcPtr = alignDown(const_cast<void *>(srcPtr), 4);
+    size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
+    void *alignedDstPtr = alignDown(dstPtr, 4);
+    size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
+
     if (copyType == SvmToHost) {
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
@@ -323,10 +329,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
         }
-
-        void *alignedDstPtr = alignDown(dstPtr, 4);
-        size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
-        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, 0, alignedDstPtr, nullptr, dstPtrOffset);
+        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr, nullptr, dstPtrOffset);
         surfaces[0] = &srcSvmSurf;
         surfaces[1] = &dstHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -347,9 +350,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        void *alignedSrcPtr = alignDown(const_cast<void *>(srcPtr), 4);
-        size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
-        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, dstPtr, dstSvmData->gpuAllocation, 0);
+        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, alignedDstPtr, dstSvmData->gpuAllocation, dstPtrOffset);
         surfaces[0] = &dstSvmSurf;
         surfaces[1] = &srcHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -363,7 +364,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     } else {
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
-        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, 0, dstPtr, dstSvmData->gpuAllocation, 0);
+        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr, dstSvmData->gpuAllocation, dstPtrOffset);
         surfaces[0] = &srcSvmSurf;
         surfaces[1] = &dstSvmSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -429,10 +430,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     BuiltinOpParams operationParams;
     MemObj patternMemObj(this->context, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+
+    void *alignedDstPtr = alignDown(svmPtr, 4);
+    size_t dstPtrOffset = ptrDiff(svmPtr, alignedDstPtr);
+
     operationParams.srcMemObj = &patternMemObj;
-    operationParams.dstPtr = svmPtr;
+    operationParams.dstPtr = alignedDstPtr;
     operationParams.dstSvmAlloc = svmData->gpuAllocation;
-    operationParams.dstOffset = {0, 0, 0};
+    operationParams.dstOffset = {dstPtrOffset, 0, 0};
     operationParams.size = {size, 0, 0};
     builder.buildDispatchInfos(dispatchInfo, operationParams);
 

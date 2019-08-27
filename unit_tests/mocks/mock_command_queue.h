@@ -127,6 +127,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
+        kernelParams = dispatchInfo.peekBuiltinOpParams();
         lastCommandType = commandType;
         for (auto &di : dispatchInfo) {
             lastEnqueuedKernels.push_back(di.getKernel());
@@ -148,6 +149,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
     bool cpuDataTransferHandlerCalled = false;
+    BuiltinOpParams kernelParams;
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

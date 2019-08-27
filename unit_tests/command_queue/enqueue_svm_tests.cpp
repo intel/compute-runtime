@@ -496,6 +496,27 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     uEvent->setStatus(-1);
 }
 
+HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoHasAlignedAddressAndProperOffset) {
+    void *pDstSVM = reinterpret_cast<void *>(0x17);
+    void *pSrcSVM = ptrSVM;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    retVal = myCmdQ.enqueueSVMMemcpy(
+        false,   // cl_bool  blocking_copy
+        pDstSVM, // void *dst_ptr
+        pSrcSVM, // const void *src_ptr
+        0,       // size_t size
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_evebt *event_wait_list
+        nullptr  // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
+}
+
 TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
     void *svmPtr = nullptr;
     const float pattern[1] = {1.2345f};
