@@ -199,10 +199,10 @@ int main(int argc, char **argv) {
     FeatureTable featureTable = device.featureTable;
     WorkaroundTable workaroundTable = device.workaroundTable;
 
-    size_t revisionId = device.platform.usRevId;
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
     uint32_t subSlicePerSliceCount = 0;
+    int32_t revId = -1;
     int dieRecovery = 0;
     ::productFamily = device.platform.eProductFamily;
 
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--rev_id", argv[i])) {
             ++i;
             if (i < argc) {
-                revisionId = atoi(argv[i]);
+                revId = atoi(argv[i]);
             }
         } else if (!strcmp("--product", argv[i])) {
             ++i;
@@ -308,7 +308,10 @@ int main(int argc, char **argv) {
     }
     platform = hardwareInfo->platform;
 
-    platform.usRevId = (uint16_t)revisionId;
+    if (revId != -1) {
+        platform.usRevId = revId;
+    }
+
     HardwareInfo hwInfo = *hardwareInfo;
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
