@@ -40,6 +40,7 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/scenario_test_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_kernel_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/templated_fixture_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/two_walker_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_command_stream_receiver_fixture.h
 )
