@@ -3,6 +3,7 @@
 ## Enabling [cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt) extension
 
 To enable cl_intel_va_api_media_sharing extension Neo needs to be compiled on system with libva 2.x installed.
+This extension is supported by [iHD media driver](https://github.com/intel/media-driver).
 Before compilation additional packages have to be installed.
 
 1. Download sources:
