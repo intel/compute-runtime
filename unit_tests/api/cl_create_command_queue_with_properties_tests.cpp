@@ -11,6 +11,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
@@ -361,13 +362,13 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComman
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueThenSelectRcsEngine) {
+HWTEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueThenSelectRcsEngine) {
     cl_queue_properties properties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdQ = clCreateCommandQueueWithProperties(pContext, devices[0], properties, nullptr);
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
     auto &osContext = commandQueueObj->getGpgpuCommandStreamReceiver().getOsContext();
-    EXPECT_EQ(aub_stream::ENGINE_RCS, osContext.getEngineType());
+    EXPECT_EQ(HwHelperHw<FamilyType>::lowPriorityEngineType, osContext.getEngineType());
     EXPECT_TRUE(osContext.isLowPriority());
 
     clReleaseCommandQueue(cmdQ);
