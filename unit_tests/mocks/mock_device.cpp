@@ -28,7 +28,7 @@ MockDevice::MockDevice()
 }
 
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
-    : Device(executionEnvironment, deviceIndex) {
+    : RootDevice(executionEnvironment, deviceIndex) {
     auto &hwInfo = getHardwareInfo();
     bool enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);

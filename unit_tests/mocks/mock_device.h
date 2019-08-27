@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/device/device.h"
+#include "runtime/device/root_device.h"
 #include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -18,7 +18,7 @@ class FailMemoryManager;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
 
-class MockDevice : public Device {
+class MockDevice : public RootDevice {
   public:
     using Device::createDeviceInternals;
     using Device::createEngine;
