@@ -20,8 +20,8 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN9 {
-#include "runtime/gen9/hw_cmds_generated.inl"
-#include "runtime/gen9/hw_cmds_generated_patched.inl"
+#include "core/gen9/hw_cmds_generated.inl"
+#include "core/gen9/hw_cmds_generated_patched.inl"
 };
 
 struct SKLFamily : public GEN9 {
