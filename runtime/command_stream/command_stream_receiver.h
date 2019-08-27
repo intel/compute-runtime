@@ -181,6 +181,11 @@ class CommandStreamReceiver {
         return scratchSpaceController.get();
     }
 
+    void registerInstructionCacheFlush() {
+        auto mutex = obtainUniqueOwnership();
+        requiresInstructionCacheFlush = true;
+    }
+
   protected:
     void cleanupResources();
 
@@ -247,6 +252,7 @@ class CommandStreamReceiver {
     bool timestampPacketWriteEnabled = false;
     bool nTo1SubmissionModelEnabled = false;
     bool lastSpecialPipelineSelectMode = false;
+    bool requiresInstructionCacheFlush = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment);

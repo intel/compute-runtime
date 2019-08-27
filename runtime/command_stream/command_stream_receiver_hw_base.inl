@@ -342,6 +342,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         experimentalCmdBuffer->injectBufferStart<GfxFamily>(commandStreamCSR, startingOffset);
     }
 
+    if (requiresInstructionCacheFlush) {
+        auto pipeControl = PipeControlHelper<GfxFamily>::addPipeControl(commandStreamCSR, false);
+        pipeControl->setInstructionCacheInvalidateEnable(true);
+        requiresInstructionCacheFlush = false;
+    }
+
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         if (!timestampPacketWriteEnabled) {
@@ -607,6 +613,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (stallingPipeControlOnNextFlushRequired) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }
+    if (requiresInstructionCacheFlush) {
+        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+    }
+
     return size;
 }
 

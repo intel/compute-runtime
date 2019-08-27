@@ -274,6 +274,25 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeCont
     EXPECT_NE(cmdList.end(), itorPC);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWithInstructionCacheRequestWhenFlushTaskIsCalledThenPipeControlWithInstructionCacheIsEmitted) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>();
+
+    commandStreamReceiver.registerInstructionCacheFlush();
+    EXPECT_EQ(1u, commandStreamReceiver.recursiveLockCounter);
+
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itorPC);
+    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(commandStreamReceiver.requiresInstructionCacheFlush);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampPacketWriteIsEnabledThenDontAddPipeControl) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = true;

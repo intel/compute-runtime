@@ -31,6 +31,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::iohState;
     using BaseClass::programPreamble;
     using BaseClass::programStateSip;
+    using BaseClass::requiresInstructionCacheFlush;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::cleanupResources;

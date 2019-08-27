@@ -1589,6 +1589,21 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSiz
     EXPECT_EQ(sizeWithPcRequest, extendedSize);
 }
 
+HWTEST_F(TimestampPacketTests, givenInstructionCacheRequesWhenSizeIsEstimatedThenPipeControlIsAdded) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    DispatchFlags flags;
+
+    csr.requiresInstructionCacheFlush = false;
+    auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    csr.requiresInstructionCacheFlush = true;
+    auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    size_t extendedSize = sizeWithoutPcRequest + sizeof(typename FamilyType::PIPE_CONTROL);
+
+    EXPECT_EQ(sizeWithPcRequest, extendedSize);
+}
+
 HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPipeControlAndResetRequestFlag) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
