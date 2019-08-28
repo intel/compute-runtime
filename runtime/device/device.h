@@ -72,9 +72,6 @@ class Device : public BaseObject<_cl_device_id> {
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
 
-    /* We hide the retain and release function of BaseObject. */
-    void retain() override;
-    unique_ptr_if_unused<Device> release() override;
     OSTime *getOSTime() const { return osTime.get(); };
     double getProfilingTimerResolution();
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
@@ -113,7 +110,7 @@ class Device : public BaseObject<_cl_device_id> {
         return device;
     }
 
-    bool createDeviceImpl();
+    virtual bool createDeviceImpl();
     bool createEngines();
     bool createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 

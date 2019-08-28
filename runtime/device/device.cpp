@@ -183,16 +183,6 @@ unsigned int Device::getSupportedClVersion() const {
     return getHardwareInfo().capabilityTable.clVersionSupport;
 }
 
-/* We hide the retain and release function of BaseObject. */
-void Device::retain() {
-    DEBUG_BREAK_IF(!isValid());
-}
-
-unique_ptr_if_unused<Device> Device::release() {
-    DEBUG_BREAK_IF(!isValid());
-    return unique_ptr_if_unused<Device>(this, false);
-}
-
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 

@@ -27,6 +27,7 @@ class MockDevice : public RootDevice {
     using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
+    using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);
     void setDriverInfo(DriverInfo *driverInfo);

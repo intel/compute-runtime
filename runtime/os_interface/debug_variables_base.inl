@@ -109,6 +109,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalker, -1, "-1: platform b
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLocalMemory, -1, "-1: default behavior, 0: disabled, 1: enabled, Allows allocating graphics memory in Local Memory")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessToStatefulBufferOffsetOpt, -1, "-1: dont override, 0: disable, 1: enable, Enables buffer-offset improvement of the stateless to stateful optimization")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateMultipleDevices, 0, "0: default - disable, 1+: Driver will create multiple (N) devices during initialization.")
+DECLARE_DEBUG_VARIABLE(int32_t, CreateMultipleSubDevices, 0, "0: default - disable, 1+: Driver will create multiple (N) sub devices during initialization.")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitAmountOfReturnedDevices, 0, "0: default - disable, 1+: Driver will limit the number of devices returned from clGetDeviceIds to N.")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64kbpages, -1, "-1: default behaviour, 0 Disables, 1 Enables support for 64KB pages for driver allocated fine grain svm buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableKmdNotify, -1, "-1: dont override, 0: disable, 1: enable")
