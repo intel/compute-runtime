@@ -195,7 +195,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>(), emptyFcn, emptyFcn)
 
-#define HWTEST_F_T(test_fixture, test_name)             \
+#define HWTEST_TEMPLATED_F(test_fixture, test_name)     \
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>(), SetUpT, TearDownT)
 

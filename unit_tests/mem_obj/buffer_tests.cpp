@@ -717,7 +717,7 @@ struct BcsBufferTests : public ::testing::Test {
     cl_int retVal = CL_SUCCESS;
 };
 
-HWTEST_F_T(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
     auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
     device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
@@ -728,7 +728,7 @@ HWTEST_F_T(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatin
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
@@ -766,7 +766,7 @@ HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledTh
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -786,7 +786,7 @@ HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPat
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F_T(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
@@ -829,7 +829,7 @@ HWTEST_F_T(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamTh
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
-HWTEST_F_T(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
@@ -872,7 +872,7 @@ HWTEST_F_T(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThe
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
-HWTEST_F_T(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     CsrDependencies csrDependencies;
     MultiDispatchInfo multiDispatchInfo;
@@ -887,7 +887,7 @@ HWTEST_F_T(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstim
     EXPECT_EQ(expectedSize, writeBufferCmdsSize);
 }
 
-HWTEST_F_T(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
@@ -924,7 +924,7 @@ HWTEST_F_T(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMi
     EXPECT_TRUE(blitCmdFound);
 }
 
-HWTEST_F_T(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
@@ -952,7 +952,7 @@ HWTEST_F_T(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenM
     EXPECT_EQ(cmdQ->taskCount, outputTimestampPacketAllocation->getTaskCount(bcsCsr->getOsContext().getContextId()));
 }
 
-HWTEST_F_T(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
     class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;

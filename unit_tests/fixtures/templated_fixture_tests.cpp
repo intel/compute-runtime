@@ -37,7 +37,7 @@ struct TemplatedFixtureTests : public ::testing::Test {
     uint32_t idForBaseTearDown = -1;
 };
 
-HWTEST_F_T(TemplatedFixtureTests, whenExecutingTemplatedTestThenCallTemplatedSetupAndTeardown) {
+HWTEST_TEMPLATED_F(TemplatedFixtureTests, whenExecutingTemplatedTestThenCallTemplatedSetupAndTeardown) {
     EXPECT_EQ(2u, callsOrder);
 
     EXPECT_EQ(0u, baseSetUpCallId);
@@ -63,7 +63,7 @@ struct DerivedTemplatedFixtureTests : public TemplatedFixtureTests {
     uint32_t templateDerivedTearDownCallId = -1;
 };
 
-HWTEST_F_T(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenCallTemplatedSetupAndTeardown) {
+HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenCallTemplatedSetupAndTeardown) {
     EXPECT_EQ(3u, callsOrder);
 
     EXPECT_EQ(0u, baseSetUpCallId);
@@ -85,7 +85,7 @@ struct TemplatedFixtureBaseTests : public ::testing::Test {
     bool capturedPipeControlWaRequiredInSetUp = false;
 };
 
-HWTEST_F_T(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
+HWTEST_TEMPLATED_F(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
     bool capturedPipeControlWaRequiredInTestBody = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(**platformDevices);
 
     EXPECT_EQ(capturedPipeControlWaRequiredInTestBody, capturedPipeControlWaRequiredInSetUp);
