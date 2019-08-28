@@ -681,7 +681,8 @@ struct BcsBufferTests : public ::testing::Test {
         std::unique_ptr<CommandStreamReceiver> bcsCsr;
     };
 
-    void SetUp() override {
+    template <typename FamilyType>
+    void SetUpT() {
         if (is32bit) {
             GTEST_SKIP();
         }
@@ -693,7 +694,7 @@ struct BcsBufferTests : public ::testing::Test {
         capabilityTable.blitterOperationsSupported = true;
 
         if (createBcsEngine) {
-            auto &engine = device->getEngine(aub_stream::ENGINE_RCS, true);
+            auto &engine = device->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
             bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
@@ -702,6 +703,9 @@ struct BcsBufferTests : public ::testing::Test {
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
         commandQueue.reset(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
     }
+
+    template <typename FamilyType>
+    void TearDownT() {}
 
     DebugManagerStateRestore restore;
 
@@ -713,7 +717,7 @@ struct BcsBufferTests : public ::testing::Test {
     cl_int retVal = CL_SUCCESS;
 };
 
-HWTEST_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
+HWTEST_F_T(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
     auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
     device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
@@ -724,7 +728,7 @@ HWTEST_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingT
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
+HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
@@ -762,7 +766,7 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThen
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
+HWTEST_F_T(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -782,7 +786,7 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath)
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_F_T(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
@@ -825,7 +829,7 @@ HWTEST_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThen
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
-HWTEST_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+HWTEST_F_T(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
@@ -868,7 +872,7 @@ HWTEST_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenA
     EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
 }
 
-HWTEST_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
+HWTEST_F_T(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     CsrDependencies csrDependencies;
     MultiDispatchInfo multiDispatchInfo;
@@ -883,7 +887,7 @@ HWTEST_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimat
     EXPECT_EQ(expectedSize, writeBufferCmdsSize);
 }
 
-HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
+HWTEST_F_T(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
@@ -920,7 +924,7 @@ HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFl
     EXPECT_TRUE(blitCmdFound);
 }
 
-HWTEST_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
+HWTEST_F_T(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
@@ -948,7 +952,7 @@ HWTEST_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMak
     EXPECT_EQ(cmdQ->taskCount, outputTimestampPacketAllocation->getTaskCount(bcsCsr->getOsContext().getContextId()));
 }
 
-HWTEST_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
+HWTEST_F_T(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
     class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
