@@ -194,17 +194,13 @@ int main(int argc, char **argv) {
     std::string hwInfoConfig = "default";
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
-    hardwareInfoSetup[device.platform.eProductFamily](&device, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    GT_SYSTEM_INFO gtSystemInfo = device.gtSystemInfo;
-    FeatureTable featureTable = device.featureTable;
-    WorkaroundTable workaroundTable = device.workaroundTable;
+    ::productFamily = device.platform.eProductFamily;
 
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
     uint32_t subSlicePerSliceCount = 0;
     int32_t revId = -1;
     int dieRecovery = 0;
-    ::productFamily = device.platform.eProductFamily;
 
     for (int i = 1; i < argc; ++i) {
         if (!strcmp("--disable_default_listener", argv[i])) {
@@ -315,9 +311,9 @@ int main(int argc, char **argv) {
     HardwareInfo hwInfo = *hardwareInfo;
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    featureTable = hwInfo.featureTable;
-    gtSystemInfo = hwInfo.gtSystemInfo;
-    workaroundTable = hwInfo.workaroundTable;
+    FeatureTable featureTable = hwInfo.featureTable;
+    GT_SYSTEM_INFO gtSystemInfo = hwInfo.gtSystemInfo;
+    WorkaroundTable workaroundTable = hwInfo.workaroundTable;
 
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
