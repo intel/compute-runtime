@@ -9,12 +9,14 @@
 
 #include "core/helpers/string.h"
 #include "elf/writer.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 
 #include <sstream>
 
@@ -469,6 +471,14 @@ void Program::freeBlockResources() {
 void Program::cleanCurrentKernelInfo() {
     for (auto &kernelInfo : kernelInfoArray) {
         if (kernelInfo->kernelAllocation) {
+            //register cache flush in all csrs where kernel allocation was used
+            for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
+                auto contextId = engine.osContext->getContextId();
+                if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
+                    engine.commandStreamReceiver->registerInstructionCacheFlush();
+                }
+            }
+
             this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
         }
         delete kernelInfo;
