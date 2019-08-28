@@ -593,7 +593,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
     propertiesStruct.flags = flags;
 
     if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer)) {
-        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
+        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, flags, 0, size, hostPtr, retVal, buffer);
     } else {
         retVal = CL_INVALID_VALUE;
     }
@@ -622,7 +622,7 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
 
     MemoryProperties propertiesStruct;
     if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER)) {
-        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
+        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, propertiesStruct.flags, propertiesStruct.flags_intel, size, hostPtr, retVal, buffer);
     } else {
         retVal = CL_INVALID_VALUE;
     }

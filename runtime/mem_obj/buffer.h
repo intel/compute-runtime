@@ -48,6 +48,8 @@ class Buffer : public MemObj {
 
     static void validateInputAndCreateBuffer(cl_context &context,
                                              MemoryProperties properties,
+                                             cl_mem_flags flags,
+                                             cl_mem_flags_intel flagsIntel,
                                              size_t size,
                                              void *hostPtr,
                                              cl_int &retVal,

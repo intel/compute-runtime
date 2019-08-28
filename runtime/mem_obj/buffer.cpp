@@ -80,6 +80,8 @@ bool Buffer::isValidSubBufferOffset(size_t offset) {
 
 void Buffer::validateInputAndCreateBuffer(cl_context &context,
                                           MemoryProperties properties,
+                                          cl_mem_flags flags,
+                                          cl_mem_flags_intel flagsIntel,
                                           size_t size,
                                           void *hostPtr,
                                           cl_int &retVal,
@@ -90,7 +92,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
         return;
     }
 
-    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties)) {
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties, flags, flagsIntel)) {
         retVal = CL_INVALID_VALUE;
         return;
     }

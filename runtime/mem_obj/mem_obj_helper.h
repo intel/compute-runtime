@@ -31,7 +31,7 @@ class MemObjHelper {
     static const uint64_t validFlagsForImage;
     static const uint64_t validFlagsForImageIntel;
 
-    static bool validateMemoryPropertiesForBuffer(const MemoryProperties &properties);
+    static bool validateMemoryPropertiesForBuffer(const MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel);
     static bool validateMemoryPropertiesForImage(const MemoryProperties &properties, cl_mem parent);
     static AllocationProperties getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties);
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags);
