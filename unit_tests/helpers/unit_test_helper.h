@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "hw_cmds.h"
+
 namespace NEO {
 
 class Kernel;
@@ -29,5 +31,7 @@ struct UnitTestHelper {
     static bool evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress);
 
     static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
+
+    static uint64_t getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
 };
 } // namespace NEO

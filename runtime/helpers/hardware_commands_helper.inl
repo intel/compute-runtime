@@ -399,11 +399,18 @@ typename GfxFamily::MI_ATOMIC *HardwareCommandsHelper<GfxFamily>::programMiAtomi
                                                                                   typename MI_ATOMIC::DATA_SIZE dataSize) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
     *miAtomic = GfxFamily::cmdInitAtomic;
-    miAtomic->setAtomicOpcode(opcode);
-    miAtomic->setDataSize(dataSize);
-    miAtomic->setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    miAtomic->setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+    HardwareCommandsHelper<GfxFamily>::programMiAtomic(*miAtomic, writeAddress, opcode, dataSize);
     return miAtomic;
+}
+
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::programMiAtomic(MI_ATOMIC &atomic, uint64_t writeAddress,
+                                                        typename MI_ATOMIC::ATOMIC_OPCODES opcode,
+                                                        typename MI_ATOMIC::DATA_SIZE dataSize) {
+    atomic.setAtomicOpcode(opcode);
+    atomic.setDataSize(dataSize);
+    atomic.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
+    atomic.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
 }
 
 template <typename GfxFamily>

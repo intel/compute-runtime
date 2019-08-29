@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/device_queue/device_queue_hw.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>
@@ -107,12 +108,10 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         auto placeholder = (uint64_t)&igilCmdQueue->m_controls.m_DummyAtomicOperationPlaceholder;
 
         MI_ATOMIC miAtomic = GfxFamily::cmdInitAtomic;
-        miAtomic.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT);
         miAtomic.setReturnDataControl(0x1);
         miAtomic.setCsStall(0x1);
-        miAtomic.setDataSize(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD);
-        miAtomic.setMemoryAddress(static_cast<uint32_t>(placeholder & 0x0000FFFFFFFFULL));
-        miAtomic.setMemoryAddressHigh(static_cast<uint32_t>((placeholder >> 32) & 0x0000FFFFFFFFULL));
+        HardwareCommandsHelper<GfxFamily>::programMiAtomic(miAtomic, placeholder, MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+                                                           MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD);
 
         return miAtomic;
     };

@@ -26,6 +26,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -819,8 +820,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
             miAtomicsCount++;
             auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(static_cast<uint32_t>(dataAddress), miAtomicCmd->getMemoryAddress());
-            EXPECT_EQ(static_cast<uint32_t>(dataAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
         }
     }
@@ -862,8 +862,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
             miAtomicsCount++;
             auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
-            EXPECT_EQ(static_cast<uint32_t>(dataAddress), miAtomicCmd->getMemoryAddress());
-            EXPECT_EQ(static_cast<uint32_t>(dataAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
+            EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
         }
     }

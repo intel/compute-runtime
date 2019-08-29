@@ -15,6 +15,7 @@
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -69,14 +70,14 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
     };
 
-    template <typename MI_ATOMIC>
-    void verifyMiAtomic(MI_ATOMIC *miAtomicCmd, TagNode<TimestampPacketStorage> *timestampPacketNode) {
+    template <typename GfxFamily>
+    void verifyMiAtomic(typename GfxFamily::MI_ATOMIC *miAtomicCmd, TagNode<TimestampPacketStorage> *timestampPacketNode) {
+        using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
         EXPECT_NE(nullptr, miAtomicCmd);
         auto writeAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
         EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
-        EXPECT_EQ(static_cast<uint32_t>(writeAddress), miAtomicCmd->getMemoryAddress());
-        EXPECT_EQ(static_cast<uint32_t>(writeAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
+        EXPECT_EQ(writeAddress, UnitTestHelper<GfxFamily>::getMemoryAddress(*miAtomicCmd));
     };
 
     void verifyDependencyCounterValues(TimestampPacketContainer *timestampPacketContainer, uint32_t expectedValue) {
@@ -115,7 +116,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedTh
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode);
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
 }
 
 TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenCanBeReleased) {
@@ -646,12 +647,12 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp4.getNode(0));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp4.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp4.getNode(0));
     verifyDependencyCounterValues(event4.getTimestampPacketNodes(), 1);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(0));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(0));
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(1));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(1));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(1));
     verifyDependencyCounterValues(event6.getTimestampPacketNodes(), 1);
 
     while (it != hwParser.cmdList.end()) {
@@ -732,12 +733,12 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp4.getNode(0));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp4.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp4.getNode(0));
     verifyDependencyCounterValues(event4.getTimestampPacketNodes(), 1);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(0));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(0));
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(1));
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(1));
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(1));
     verifyDependencyCounterValues(event6.getTimestampPacketNodes(), 1);
 
     while (it != hwParser.cmdList.end()) {
@@ -779,7 +780,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
 
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp1.getNode(0));
-    verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*it++), timestamp1.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*it++), timestamp1.getNode(0));
     verifyDependencyCounterValues(event1.getTimestampPacketNodes(), 1);
 
     while (it != hwParser.cmdList.end()) {
@@ -824,7 +825,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp1.getNode(0));
-    verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*it++), timestamp1.getNode(0));
+    verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*it++), timestamp1.getNode(0));
     verifyDependencyCounterValues(event1.getTimestampPacketNodes(), 1);
 
     while (it != hwParser.cmdList.end()) {
@@ -897,15 +898,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
             semaphoresFound++;
             if (semaphoresFound == 1) {
                 verifySemaphore(semaphoreCmd, timestamp3.getNode(0));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp3.getNode(0));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp3.getNode(0));
                 verifyDependencyCounterValues(event3.getTimestampPacketNodes(), 1);
             } else if (semaphoresFound == 2) {
                 verifySemaphore(semaphoreCmd, timestamp5.getNode(0));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(0));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(0));
                 verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
             } else if (semaphoresFound == 3) {
                 verifySemaphore(semaphoreCmd, timestamp5.getNode(1));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(1));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(1));
                 verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
             }
         }
@@ -980,15 +981,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
             semaphoresFound++;
             if (semaphoresFound == 1) {
                 verifySemaphore(semaphoreCmd, timestamp3.getNode(0));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp3.getNode(0));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp3.getNode(0));
                 verifyDependencyCounterValues(event3.getTimestampPacketNodes(), 1);
             } else if (semaphoresFound == 2) {
                 verifySemaphore(semaphoreCmd, timestamp5.getNode(0));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(0));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(0));
                 verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
             } else if (semaphoresFound == 3) {
                 verifySemaphore(semaphoreCmd, timestamp5.getNode(1));
-                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(1));
+                verifyMiAtomic<FamilyType>(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(1));
                 verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
             }
         }
@@ -1120,10 +1121,10 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
 
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it), firstTag0);
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*++it), firstTag0);
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*++it), firstTag0);
 
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*++it), firstTag1);
-    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*++it), firstTag1);
+    verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*++it), firstTag1);
 
     while (it != hwParser.cmdList.end()) {
         EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));

@@ -49,4 +49,9 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
     return false;
 }
+
+template <typename GfxFamily>
+inline uint64_t UnitTestHelper<GfxFamily>::getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
+    return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
+}
 } // namespace NEO
