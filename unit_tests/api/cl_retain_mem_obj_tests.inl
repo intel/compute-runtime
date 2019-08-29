@@ -52,6 +52,5 @@ TEST_F(clRetainMemObjectTests, GivenValidParamsWhenRetainingMemObjectThenRefCoun
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
 }
 } // namespace ULT

@@ -8,6 +8,11 @@ set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/clflush.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_creator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
 )
 

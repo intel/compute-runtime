@@ -20,13 +20,13 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices.cpp
 
   ${IGDRCL_SOURCE_DIR}/core/utilities/clflush.cpp
+  ${IGDRCL_SOURCE_DIR}/core/utilities/debug_settings_reader_creator.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/api/api.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/built_ins_helper.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/utilities/debug_settings_reader_creator.cpp
 
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}

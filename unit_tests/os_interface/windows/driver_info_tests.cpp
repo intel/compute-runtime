@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/os_interface/windows/debug_registry_reader.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/registry_reader.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_csr.h"

@@ -7,7 +7,7 @@
 
 #include "runtime/utilities/directory.h"
 
-#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "core/os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 

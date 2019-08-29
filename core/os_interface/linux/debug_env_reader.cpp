@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/utilities/linux/debug_env_reader.h"
+#include "core/os_interface/linux/debug_env_reader.h"
 
 namespace NEO {
 

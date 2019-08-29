@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "windows_wrapper.h"
+#include "core/os_interface/windows/windows_wrapper.h"
 
 LSTATUS APIENTRY RegOpenKeyExA(
     HKEY hKey,

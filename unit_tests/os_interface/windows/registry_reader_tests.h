@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/registry_reader.h"
+#include "core/os_interface/windows/debug_registry_reader.h"
 
 namespace NEO {
 class TestedRegistryReader : public RegistryReader {

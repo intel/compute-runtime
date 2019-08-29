@@ -6,7 +6,7 @@
  */
 
 #if defined(_WIN32)
-#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "core/os_interface/windows/windows_wrapper.h"
 #endif
 
 #include "runtime/device/device.h"

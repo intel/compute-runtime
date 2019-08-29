@@ -19,7 +19,7 @@
 #include "CL/cl_d3d11.h"
 #include "CL/cl_dx9_media_sharing.h"
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
-#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "core/os_interface/windows/windows_wrapper.h"
 
 #include "CL/cl_dx9_media_sharing_intel.h"
 #else

@@ -16,7 +16,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d10_11_sharing_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d9_sharing_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
@@ -46,7 +45,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
@@ -67,7 +65,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
@@ -77,6 +74,9 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
 )
 
 if(WIN32)
+  get_property(NEO_CORE_OS_INTERFACE_WINDOWS GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_WINDOWS)
+  list(APPEND RUNTIME_SRCS_OS_INTERFACE_WINDOWS ${NEO_CORE_OS_INTERFACE_WINDOWS})
+
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE
     ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS}
   )

@@ -6,13 +6,13 @@
  */
 
 #include <core/helpers/aligned_memory.h>
+#include <core/utilities/debug_settings_reader.h>
 #include <runtime/compiler_interface/binary_cache.h>
 #include <runtime/helpers/file_io.h>
 #include <runtime/helpers/hash.h>
 #include <runtime/helpers/hw_info.h>
 #include <runtime/os_interface/os_inc_base.h>
 #include <runtime/program/program.h>
-#include <runtime/utilities/debug_settings_reader.h>
 
 #include "config.h"
 #include "os_inc.h"

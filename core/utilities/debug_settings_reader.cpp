@@ -5,9 +5,9 @@
  *
  */
 
-#include "debug_settings_reader.h"
+#include "core/utilities/debug_settings_reader.h"
 
-#include "debug_file_reader.h"
+#include "core/utilities/debug_file_reader.h"
 
 namespace NEO {
 

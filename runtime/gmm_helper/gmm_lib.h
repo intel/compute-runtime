@@ -7,7 +7,7 @@
 
 #pragma once
 #ifdef WIN32
-#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "core/os_interface/windows/windows_wrapper.h"
 
 #include <d3d9types.h>
 

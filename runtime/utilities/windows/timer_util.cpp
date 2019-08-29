@@ -7,8 +7,8 @@
 
 #include "runtime/utilities/timer_util.h"
 
+#include "core/os_interface/windows/windows_wrapper.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 

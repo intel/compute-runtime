@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/os_interface/windows/windows_wrapper.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"

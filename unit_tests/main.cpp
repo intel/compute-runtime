@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/memory_leak_listener.h"
+#include "core/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/utilities/debug_settings_reader.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"

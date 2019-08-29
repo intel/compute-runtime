@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/os_interface/windows/windows_wrapper.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 

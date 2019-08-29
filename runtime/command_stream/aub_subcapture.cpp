@@ -7,9 +7,9 @@
 
 #include "runtime/command_stream/aub_subcapture.h"
 
+#include "core/utilities/debug_settings_reader.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/utilities/debug_settings_reader.h"
 
 namespace NEO {
 
