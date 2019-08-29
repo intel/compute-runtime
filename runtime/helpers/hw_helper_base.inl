@@ -12,6 +12,7 @@
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_interface.h"
@@ -34,6 +35,11 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
     caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
     caps->isStatelesToStatefullWithOffsetSupported = true;
+}
+
+template <typename Family>
+bool HwHelperHw<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
+    return PreambleHelper<Family>::isL3Configurable(hwInfo);
 }
 
 template <typename Family>

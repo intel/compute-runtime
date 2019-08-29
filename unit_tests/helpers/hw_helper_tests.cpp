@@ -571,6 +571,19 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
     }
 }
 
+HWTEST_F(HwHelperTest, testIfL3ConfigProgrammable) {
+    bool PreambleHelperL3Config;
+    bool isL3Programmable;
+    const HardwareInfo &hwInfo = **platformDevices;
+
+    PreambleHelperL3Config =
+        PreambleHelper<FamilyType>::isL3Configurable(**platformDevices);
+    isL3Programmable =
+        HwHelperHw<FamilyType>::get().isL3Configurable(hwInfo);
+
+    EXPECT_EQ(PreambleHelperL3Config, isL3Programmable);
+}
+
 TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformDoesNotSupportThenOverrideAndReturnSupportTrue) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);

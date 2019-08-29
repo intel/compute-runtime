@@ -37,6 +37,7 @@ class HwHelper {
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
+    virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
@@ -123,6 +124,8 @@ class HwHelperHw : public HwHelper {
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
 
     void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) override;
+
+    bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) override;
 
