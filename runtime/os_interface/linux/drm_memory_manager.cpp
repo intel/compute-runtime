@@ -64,11 +64,11 @@ DrmMemoryManager::~DrmMemoryManager() {
         gemCloseWorker->close(false);
     }
     if (pinBB) {
-        unreference(pinBB, true);
+        DrmMemoryManager::unreference(pinBB, true);
         pinBB = nullptr;
     }
     if (memoryForPinBB) {
-        alignedFreeWrapper(memoryForPinBB);
+        MemoryManager::alignedFreeWrapper(memoryForPinBB);
     }
 }
 
