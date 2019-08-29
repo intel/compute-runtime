@@ -279,7 +279,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueSrcPtrIsNull) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(EnqueueSvmTest, GivenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
+TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
     char srcHostPtr[260];
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
@@ -300,7 +300,7 @@ TEST_F(EnqueueSvmTest, GivenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
     clReleaseEvent(event);
 }
 
-TEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
+TEST_F(EnqueueSvmTest, givenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
     char srcHostPtr[260];
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
@@ -316,7 +316,7 @@ TEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBufferIsCalled) {
+HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBufferIsCalled) {
     char srcHostPtr[260];
     void *pSrcSVM = srcHostPtr;
     void *pDstSVM = ptrSVM;
@@ -332,9 +332,22 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+
+    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    EXPECT_EQ(0u, tempAlloc->countSuccessors());
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
 
-HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBufferIsCalled) {
+HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBufferIsCalled) {
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -350,9 +363,22 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
+    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+
+    EXPECT_EQ(0u, tempAlloc->countSuccessors());
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
+
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
 
-TEST_F(EnqueueSvmTest, GivenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
+TEST_F(EnqueueSvmTest, givenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventCommandTypeIsCorrectlySet) {
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -373,7 +399,7 @@ TEST_F(EnqueueSvmTest, GivenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
     clReleaseEvent(event);
 }
 
-TEST_F(EnqueueSvmTest, GivenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
+TEST_F(EnqueueSvmTest, givenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
@@ -411,6 +437,15 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
     EXPECT_EQ(1u, tempAlloc->countSuccessors());
     EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
     EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->next->getGpuAddress()));
+
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
 
 HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcpyThenEnqueuWriteBufferIsCalled) {
@@ -430,6 +465,15 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcp
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
+
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
 
 TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnSuccess) {
@@ -449,10 +493,11 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
+HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThenSvmMemcpyCommandIsEnqueued) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
-    retVal = this->pCmdQ->enqueueSVMMemcpy(
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
         pSrcSVM, // const void *src_ptr
@@ -462,10 +507,23 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
         nullptr  // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY));
+
+    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    EXPECT_EQ(nullptr, tempAlloc);
+
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
+    EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
+TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSuccessIsReturned) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -554,8 +612,12 @@ HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoH
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    auto srcAddress = myCmdQ.kernelParams.srcPtr;
+    auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
     auto dstAddress = myCmdQ.kernelParams.dstPtr;
     auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(pSrcSVM, 4), srcAddress);
+    EXPECT_EQ(ptrDiff(pSrcSVM, alignDown(pSrcSVM, 4)), srcOffset);
     EXPECT_EQ(alignDown(pDstSVM, 4), dstAddress);
     EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
@@ -576,10 +638,11 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemFill_Success) {
+HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccesIsReturnedAndAddressIsProperlyAligned) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
-    retVal = this->pCmdQ->enqueueSVMMemFill(
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    retVal = myCmdQ.enqueueSVMMemFill(
         ptrSVM,      // void *svm_ptr
         pattern,     // const void *pattern
         patternSize, // size_t pattern_size
@@ -588,7 +651,12 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFill_Success) {
         nullptr,     // cl_evebt *event_wait_list
         nullptr      // cL_event *event
     );
+
     EXPECT_EQ(CL_SUCCESS, retVal);
+    auto dstAddress = myCmdQ.kernelParams.dstPtr;
+    auto dstOffset = myCmdQ.kernelParams.dstOffset.x;
+    EXPECT_EQ(alignDown(ptrSVM, 4), dstAddress);
+    EXPECT_EQ(ptrDiff(ptrSVM, alignDown(ptrSVM, 4)), dstOffset);
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
