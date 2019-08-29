@@ -44,13 +44,13 @@ class ProgramFromBinaryTest : public DeviceFixture,
         ProgramFixture::SetUp();
 
         if (options.size())
-            CreateProgramFromBinary<Program>(pContext, &device, BinaryFileName, options);
+            CreateProgramFromBinary(pContext, &device, BinaryFileName, options);
         else
-            CreateProgramFromBinary<Program>(pContext, &device, BinaryFileName);
+            CreateProgramFromBinary(pContext, &device, BinaryFileName);
     }
 
     void TearDown() override {
-        deleteDataReadFromFile(knownSource);
+        knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
@@ -88,7 +88,7 @@ class ProgramSimpleFixture : public DeviceFixture,
     }
 
     void TearDown() override {
-        deleteDataReadFromFile(knownSource);
+        knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();

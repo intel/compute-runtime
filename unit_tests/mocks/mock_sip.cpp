@@ -32,14 +32,12 @@ std::vector<char> MockSipKernel::getBinary() {
     std::string testFile;
     retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".gen");
 
-    void *binary = nullptr;
-    auto binarySize = loadDataFromFile(testFile.c_str(), binary);
-
+    size_t binarySize = 0;
+    auto binary = loadDataFromFile(testFile.c_str(), binarySize);
     UNRECOVERABLE_IF(binary == nullptr);
 
-    std::vector<char> ret{static_cast<char *>(binary), static_cast<char *>(binary) + binarySize};
+    std::vector<char> ret{binary.get(), binary.get() + binarySize};
 
-    deleteDataReadFromFile(binary);
     return ret;
 }
 void MockSipKernel::initDummyBinary() {

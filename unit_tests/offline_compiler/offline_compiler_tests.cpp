@@ -590,10 +590,10 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    void *ptrSrc = nullptr;
-    size_t srcSize = loadDataFromFile("test_files/copy_buffer_to_buffer.igdrcl_built_in", ptrSrc);
+    size_t srcSize = 0;
+    auto ptrSrc = loadDataFromFile("test_files/copy_buffer_to_buffer.igdrcl_built_in", srcSize);
 
-    const std::string src = (const char *)ptrSrc;
+    const std::string src = ptrSrc.get();
     ASSERT_EQ(srcSize, src.size());
 
     // assert that pattern was found
@@ -609,8 +609,6 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
     // expect that pattern was not found
     EXPECT_EQ(std::string::npos, dst.find("R\"===("));
     EXPECT_EQ(std::string::npos, dst.find(")===\""));
-
-    delete[] static_cast<char *>(ptrSrc);
 }
 
 TEST(OfflineCompilerTest, convertToPascalCase) {

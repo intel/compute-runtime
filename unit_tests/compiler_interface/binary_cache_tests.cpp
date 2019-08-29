@@ -48,8 +48,8 @@ class BinaryCacheMock : public BinaryCache {
         return cacheResult;
     }
 
-    bool loadCachedBinary(const std::string kernelFileHash, Program &program) override {
-        return loadResult;
+    std::unique_ptr<char[]> loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) override {
+        return loadResult ? std::unique_ptr<char[]>{new char[1]} : nullptr;
     }
 
     bool cacheResult = false;
@@ -174,7 +174,7 @@ TEST_F(BinaryCacheHashTests, hashShortBuffers) {
 
 TEST_F(BinaryCacheHashTests, testUnique) {
     static const size_t bufSize = 64;
-    TranslationArgs args;
+    TranslationInput args{IGC::CodeType::undefined, IGC::CodeType::undefined};
     HardwareInfo hwInfo;
 
     std::set<std::string> hashes;
@@ -192,7 +192,6 @@ TEST_F(BinaryCacheHashTests, testUnique) {
     w1.waDoNotUseMIReportPerfCount = true;
     w2.waDoNotUseMIReportPerfCount = false;
     const WorkaroundTable *was[] = {&w1, &w2};
-    // GT_SYSTEM_INFO s1 = {};
 
     std::array<std::string, 4> input = {{std::string(""),
                                          std::string("12345678901234567890123456789012"),
@@ -229,24 +228,19 @@ TEST_F(BinaryCacheHashTests, testUnique) {
 
                 for (size_t i1 = 0; i1 < input.size(); i1++) {
                     strcpy_s(buf1.get(), bufSize, input[i1].c_str());
-                    args.pInput = buf1.get();
-                    args.InputSize = static_cast<uint32_t>(strlen(buf1.get()));
+                    args.src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
                     for (size_t i2 = 0; i2 < options.size(); i2++) {
                         strcpy_s(buf2.get(), bufSize, options[i2].c_str());
-                        args.pOptions = buf2.get();
-                        args.OptionsSize = static_cast<uint32_t>(strlen(buf2.get()));
+                        args.apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
                         for (size_t i3 = 0; i3 < internalOptions.size(); i3++) {
                             strcpy_s(buf3.get(), bufSize, internalOptions[i3].c_str());
-                            args.pInternalOptions = buf3.get();
-                            args.InternalOptionsSize = static_cast<uint32_t>(strlen(buf3.get()));
+                            args.internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
                             for (size_t i4 = 0; i4 < tracingOptions.size(); i4++) {
                                 strcpy_s(buf4.get(), bufSize, tracingOptions[i4].c_str());
-                                args.pTracingOptions = buf4.get();
-                                args.TracingOptionsCount = static_cast<uint32_t>(strlen(buf4.get()));
+                                args.tracingOptions = buf4.get();
+                                args.tracingOptionsCount = static_cast<uint32_t>(strlen(buf4.get()));
 
-                                string hash = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
-                                                                       ArrayRef<const char>(args.pOptions, args.OptionsSize),
-                                                                       ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+                                string hash = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
 
                                 if (hashes.find(hash) != hashes.end()) {
                                     FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3 << ":" << i4;
@@ -260,13 +254,8 @@ TEST_F(BinaryCacheHashTests, testUnique) {
         }
     }
 
-    string hash = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
-                                           ArrayRef<const char>(args.pOptions, args.OptionsSize),
-                                           ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
-
-    string hash2 = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
-                                            ArrayRef<const char>(args.pOptions, args.OptionsSize),
-                                            ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+    string hash = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
+    string hash2 = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
@@ -280,15 +269,13 @@ TEST_F(BinaryCacheTests, doNotCacheEmpty) {
 }
 
 TEST_F(BinaryCacheTests, loadNotFound) {
-    ExecutionEnvironment executionEnvironment;
-    MockProgram program(executionEnvironment);
-    bool ret = cache->loadCachedBinary("----do-not-exists----", program);
-    EXPECT_FALSE(ret);
+    size_t size;
+    auto ret = cache->loadCachedBinary("----do-not-exists----", size);
+    EXPECT_EQ(nullptr, ret);
+    EXPECT_EQ(0U, size);
 }
 
 TEST_F(BinaryCacheTests, cacheThenLoad) {
-    ExecutionEnvironment executionEnvironment;
-    MockProgram program(executionEnvironment);
     static const char *hash = "SOME_HASH";
     std::unique_ptr<char> data(new char[32]);
     for (size_t i = 0; i < 32; i++)
@@ -297,8 +284,10 @@ TEST_F(BinaryCacheTests, cacheThenLoad) {
     bool ret = cache->cacheBinary(hash, static_cast<const char *>(data.get()), 32);
     EXPECT_TRUE(ret);
 
-    ret = cache->loadCachedBinary(hash, program);
-    EXPECT_TRUE(ret);
+    size_t size;
+    auto loadedBin = cache->loadCachedBinary(hash, size);
+    EXPECT_NE(nullptr, loadedBin);
+    EXPECT_NE(0U, size);
 }
 
 TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
@@ -310,14 +299,12 @@ TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
     EXPECT_EQ(res2, cache.get());
 }
 TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
-    MockContext context(pDevice, true);
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
-    TranslationArgs inputArgs;
+    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
-    inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
-    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+    auto src = "#include \"header.h\"\n__kernel k() {}";
+
+    inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = gEnvironment->fclGetMockFile();
@@ -330,25 +317,23 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
 
     auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
 
-    auto retVal = pCompilerInterface->build(program, inputArgs, true);
-    EXPECT_NE(CL_SUCCESS, retVal);
+    TranslationOutput translationOutput;
+    inputArgs.allowCaching = true;
+    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, err);
 
     pCompilerInterface->replaceBinaryCache(res1);
-    delete[] inputArgs.pInput;
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceCachedTests, wasCached) {
-    MockContext context(pDevice, true);
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
-    TranslationArgs inputArgs;
+    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
-    inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
-    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+    auto src = "#include \"header.h\"\n__kernel k() {}";
+    inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = gEnvironment->fclGetMockFile();
@@ -361,25 +346,23 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
 
     auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
     cache.loadResult = true;
-    auto retVal = pCompilerInterface->build(program, inputArgs, true);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    TranslationOutput translationOutput;
+    inputArgs.allowCaching = true;
+    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
 
     pCompilerInterface->replaceBinaryCache(res1);
-    delete[] inputArgs.pInput;
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
 TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
-    MockContext context(pDevice, true);
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
-    TranslationArgs inputArgs;
+    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
-    inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
-    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+    auto src = "#include \"header.h\"\n__kernel k() {}";
+    inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = gEnvironment->fclGetMockFile();
@@ -390,12 +373,13 @@ TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
     auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
-    auto retVal = pCompilerInterface->build(program, inputArgs, true);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    TranslationOutput translationOutput = {};
+    inputArgs.allowCaching = true;
+    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
     EXPECT_EQ(1u, cache.cacheInvoked);
 
     pCompilerInterface->replaceBinaryCache(res1);
-    delete[] inputArgs.pInput;
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -405,11 +389,10 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheW
     MockContext context(pDevice, true);
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
-    TranslationArgs inputArgs;
+    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
-    inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
-    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+    auto src = "__kernel k() {}";
+    inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     // we force both compilers to fail compilation request
     // at the end we expect CL_SUCCESS which means compilation ends in cache
@@ -425,11 +408,12 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheW
 
     auto res = pCompilerInterface->replaceBinaryCache(&cache);
     cache.loadResult = true;
-    auto retVal = pCompilerInterface->build(program, inputArgs, true);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    TranslationOutput translationOutput;
+    inputArgs.allowCaching = true;
+    auto retVal = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
 
     pCompilerInterface->replaceBinaryCache(res);
-    delete[] inputArgs.pInput;
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -439,11 +423,10 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhen
     MockContext context(pDevice, true);
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
-    TranslationArgs inputArgs;
+    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
-    inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "#include \"file.h\"\n__kernel k() {}");
-    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+    auto src = "#include \"file.h\"\n__kernel k() {}";
+    inputArgs.src = ArrayRef<const char>(src, strlen(src));
 
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = gEnvironment->fclGetMockFile();
@@ -452,11 +435,12 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhen
 
     auto res = pCompilerInterface->replaceBinaryCache(&cache);
     cache.loadResult = true;
-    auto retVal = pCompilerInterface->build(program, inputArgs, true);
-    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
+    TranslationOutput translationOutput;
+    inputArgs.allowCaching = true;
+    auto retVal = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
 
     pCompilerInterface->replaceBinaryCache(res);
-    delete[] inputArgs.pInput;
 
     gEnvironment->fclPopDebugVars();
 }

@@ -69,15 +69,14 @@ class BuiltInTests
     }
 
     void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {
-        void *pData = nullptr;
         std::string src;
-        size = loadDataFromFile(
+        auto pData = loadDataFromFile(
             builtInFile.c_str(),
-            pData);
+            size);
 
         ASSERT_NE(nullptr, pData);
 
-        src = (const char *)pData;
+        src = (const char *)pData.get();
         size_t start = src.find("R\"===(");
         size_t stop = src.find(")===\"");
 
@@ -88,7 +87,6 @@ class BuiltInTests
         start += strlen("R\"===(");
         size = stop - start;
         allBuiltIns.append(src, start, size);
-        deleteDataReadFromFile(pData);
     }
 
     bool compareBultinOpParams(const BuiltinOpParams &left,

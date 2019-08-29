@@ -24,7 +24,6 @@ using namespace iOpenCL;
 static const char constValue[] = "11223344";
 static const char globalValue[] = "55667788";
 
-template <typename ProgramType>
 class ProgramDataTestBase : public testing::Test,
                             public ContextFixture,
                             public PlatformFixture,
@@ -49,14 +48,14 @@ class ProgramDataTestBase : public testing::Test,
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
 
-        CreateProgramWithSource<ProgramType>(
+        CreateProgramWithSource(
             pContext,
             &device,
             "CopyBuffer_simd8.cl");
     }
 
     void TearDown() override {
-        deleteDataReadFromFile(knownSource);
+        knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         PlatformFixture::TearDown();
@@ -123,8 +122,7 @@ class ProgramDataTestBase : public testing::Test,
     bool allowDecodeFailure = false;
 };
 
-template <typename ProgramType>
-void ProgramDataTestBase<ProgramType>::buildAndDecodeProgramPatchList() {
+void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
     size_t headerSize = sizeof(SProgramBinaryHeader);
 
     cl_int error = CL_SUCCESS;
@@ -151,7 +149,8 @@ void ProgramDataTestBase<ProgramType>::buildAndDecodeProgramPatchList() {
     pCurPtr += programPatchListSize;
 
     //as we use mock compiler in unit test, replace the genBinary here.
-    pProgram->storeGenBinary(pProgramData, headerSize + programBinaryHeader.PatchListSize);
+    pProgram->genBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
+    pProgram->genBinarySize = headerSize + programBinaryHeader.PatchListSize;
 
     error = pProgram->processGenBinary();
     patchlistDecodeErrorCode = error;
@@ -161,8 +160,7 @@ void ProgramDataTestBase<ProgramType>::buildAndDecodeProgramPatchList() {
     delete[] pProgramData;
 }
 
-using ProgramDataTest = ProgramDataTestBase<NEO::Program>;
-using MockProgramDataTest = ProgramDataTestBase<MockProgram>;
+using ProgramDataTest = ProgramDataTestBase;
 
 TEST_F(ProgramDataTest, EmptyProgramBinaryHeader) {
     buildAndDecodeProgramPatchList();
@@ -178,7 +176,7 @@ TEST_F(ProgramDataTest, AllocateConstantMemorySurfaceProgramBinaryInfo) {
     EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface()->getUnderlyingBuffer(), constSize));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
+TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -194,7 +192,7 @@ TEST_F(MockProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAs
     EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getConstantSurface()->getGpuAddress())));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {
+TEST_F(ProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurfacesAsNonSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -213,7 +211,7 @@ TEST_F(MockProgramDataTest, whenGlobalConstantsAreNotExportedThenAllocateSurface
     EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getConstantSurface()->getGpuAddress())));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalConstantsAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
+TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -232,7 +230,7 @@ TEST_F(MockProgramDataTest, whenGlobalConstantsAreExportedButContextUnavailableT
     EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getConstantSurface()->getGpuAddress())));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalVariablesAreExportedThenAllocateSurfacesAsSvm) {
+TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedThenAllocateSurfacesAsSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -247,7 +245,7 @@ TEST_F(MockProgramDataTest, whenGlobalVariablesAreExportedThenAllocateSurfacesAs
     EXPECT_NE(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface()->getGpuAddress())));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalVariablesAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
+TEST_F(ProgramDataTest, whenGlobalVariablesAreExportedButContextUnavailableThenAllocateSurfacesAsNonSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -266,7 +264,7 @@ TEST_F(MockProgramDataTest, whenGlobalVariablesAreExportedButContextUnavailableT
     EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface()->getGpuAddress())));
 }
 
-TEST_F(MockProgramDataTest, whenGlobalVariablesAreNotExportedThenAllocateSurfacesAsNonSvm) {
+TEST_F(ProgramDataTest, whenGlobalVariablesAreNotExportedThenAllocateSurfacesAsNonSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
     }
@@ -718,10 +716,10 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
     cl_device_id device = pPlatform->getDevice(0);
-    CreateProgramWithSource<MockProgram>(pContext, &device, "CopyBuffer_simd8.cl");
+    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd8.cl");
     ASSERT_NE(nullptr, pProgram);
 
-    MockProgram *prog = static_cast<MockProgram *>(pProgram);
+    MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
     EXPECT_EQ(nullptr, prog->getConstantSurface());
@@ -760,10 +758,10 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
     cl_device_id device = pPlatform->getDevice(0);
-    CreateProgramWithSource<MockProgram>(pContext, &device, "CopyBuffer_simd8.cl");
+    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd8.cl");
     ASSERT_NE(nullptr, pProgram);
 
-    MockProgram *prog = static_cast<MockProgram *>(pProgram);
+    MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
     EXPECT_EQ(nullptr, prog->getConstantSurface());

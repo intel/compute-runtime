@@ -24,7 +24,7 @@ struct clGetKernelWorkGroupInfoTests : public api_fixture,
     void SetUp() override {
         BaseClass::SetUp();
 
-        void *pSource = nullptr;
+        std::unique_ptr<char[]> pSource = nullptr;
         size_t sourceSize = 0;
         std::string testFile;
 
@@ -33,22 +33,23 @@ struct clGetKernelWorkGroupInfoTests : public api_fixture,
         testFile.append("CopyBuffer_simd8.cl");
         ASSERT_EQ(true, fileExists(testFile));
 
-        sourceSize = loadDataFromFile(
+        pSource = loadDataFromFile(
             testFile.c_str(),
-            pSource);
+            sourceSize);
         ASSERT_NE(0u, sourceSize);
         ASSERT_NE(nullptr, pSource);
 
+        const char *sources[1] = {pSource.get()};
         pProgram = clCreateProgramWithSource(
             pContext,
             1,
-            (const char **)&pSource,
+            sources,
             &sourceSize,
             &retVal);
         EXPECT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        deleteDataReadFromFile(pSource);
+        pSource.reset();
 
         retVal = clBuildProgram(
             pProgram,

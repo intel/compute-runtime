@@ -130,7 +130,7 @@ cl_int Program::compile(
             break;
         }
 
-        TranslationArgs inputArgs = {};
+        TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
         internalOptions.append(platform()->peekCompilerExtensions());
@@ -144,19 +144,25 @@ cl_int Program::compile(
             }
         }
 
-        inputArgs.pInput = compileData.data();
-        inputArgs.InputSize = static_cast<uint32_t>(compileDataSize);
-        inputArgs.pOptions = options.c_str();
-        inputArgs.OptionsSize = static_cast<uint32_t>(options.length());
-        inputArgs.pInternalOptions = internalOptions.c_str();
-        inputArgs.InternalOptionsSize = static_cast<uint32_t>(internalOptions.length());
-        inputArgs.pTracingOptions = nullptr;
-        inputArgs.TracingOptionsCount = 0;
+        inputArgs.src = ArrayRef<const char>(compileData.data(), compileDataSize);
+        inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
+        inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
-        retVal = pCompilerInterface->compile(*this, inputArgs);
+        TranslationOutput compilerOuput;
+        auto compilerErr = pCompilerInterface->compile(*this->pDevice, inputArgs, compilerOuput);
+        this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+        this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+        retVal = asClError(compilerErr);
         if (retVal != CL_SUCCESS) {
             break;
         }
+
+        this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
+        this->irBinarySize = compilerOuput.intermediateRepresentation.size;
+        this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
+        this->debugData = std::move(compilerOuput.debugData.mem);
+        this->debugDataSize = compilerOuput.debugData.size;
+
         updateNonUniformFlag();
     } while (false);
 

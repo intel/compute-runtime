@@ -76,7 +76,7 @@ class KernelTest : public ProgramFromBinaryTest {
     void TearDown() override {
         delete pKernel;
         pKernel = nullptr;
-        deleteDataReadFromFile(knownSource);
+        knownSource.reset();
         ProgramFromBinaryTest::TearDown();
     }
 
@@ -314,7 +314,7 @@ typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
 TEST_F(KernelFromBinaryTests, getInfo_NumArgs) {
     cl_device_id device = pDevice;
 
-    CreateProgramFromBinary<Program>(pContext, &device, "kernel_num_args");
+    CreateProgramFromBinary(pContext, &device, "kernel_num_args");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -357,7 +357,7 @@ TEST_F(KernelFromBinaryTests, getInfo_NumArgs) {
 TEST_F(KernelFromBinaryTests, BuiltInIsSetToFalseForRegularKernels) {
     cl_device_id device = pDevice;
 
-    CreateProgramFromBinary<Program>(pContext, &device, "simple_kernels");
+    CreateProgramFromBinary(pContext, &device, "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -392,7 +392,7 @@ TEST_F(KernelFromBinaryTests, BuiltInIsSetToFalseForRegularKernels) {
 TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
     cl_device_id device = pDevice;
 
-    CreateProgramFromBinary<Program>(pContext, &device, "simple_kernels");
+    CreateProgramFromBinary(pContext, &device, "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(

@@ -61,23 +61,22 @@ TEST_F(ProgramTests, GivenProgramWithDebugDataForTwoKernelsWhenPorcessedThenDebu
     char *genIsa2 = (ptrOffset(vIsa2, visaSize));
     memset(genIsa2, 20, genIsaSize);
 
-    program->storeDebugData(debugData.get(), debugDataSize);
+    program->debugData = makeCopy(debugData.get(), debugDataSize);
+    program->debugDataSize = debugDataSize;
 
     program->addKernelInfo(kernelInfo1);
     program->addKernelInfo(kernelInfo2);
 
     program->processDebugData();
-
-    size_t programDebugDataSize = 0;
     EXPECT_EQ(genIsaSize, kernelInfo1->debugData.genIsaSize);
     EXPECT_EQ(visaSize, kernelInfo1->debugData.vIsaSize);
-    EXPECT_EQ(ptrDiff(vIsa1, debugData.get()), ptrDiff(kernelInfo1->debugData.vIsa, program->getDebugDataBinary(programDebugDataSize)));
-    EXPECT_EQ(ptrDiff(genIsa1, debugData.get()), ptrDiff(kernelInfo1->debugData.genIsa, program->getDebugDataBinary(programDebugDataSize)));
+    EXPECT_EQ(ptrDiff(vIsa1, debugData.get()), ptrDiff(kernelInfo1->debugData.vIsa, program->getDebugData()));
+    EXPECT_EQ(ptrDiff(genIsa1, debugData.get()), ptrDiff(kernelInfo1->debugData.genIsa, program->getDebugData()));
 
     EXPECT_EQ(genIsaSize, kernelInfo2->debugData.genIsaSize);
     EXPECT_EQ(visaSize, kernelInfo2->debugData.vIsaSize);
-    EXPECT_EQ(ptrDiff(vIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.vIsa, program->getDebugDataBinary(programDebugDataSize)));
-    EXPECT_EQ(ptrDiff(genIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.genIsa, program->getDebugDataBinary(programDebugDataSize)));
+    EXPECT_EQ(ptrDiff(vIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.vIsa, program->getDebugData()));
+    EXPECT_EQ(ptrDiff(genIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.genIsa, program->getDebugData()));
 }
 
 TEST_F(ProgramTests, GivenProgramWithoutDebugDataWhenPorcessedThenDebugDataIsNotSetInKernelInfo) {
@@ -90,8 +89,7 @@ TEST_F(ProgramTests, GivenProgramWithoutDebugDataWhenPorcessedThenDebugDataIsNot
     program->addKernelInfo(kernelInfo1);
     program->processDebugData();
 
-    size_t programDebugDataSize = 0;
     EXPECT_EQ(0u, kernelInfo1->debugData.genIsaSize);
     EXPECT_EQ(0u, kernelInfo1->debugData.vIsaSize);
-    EXPECT_EQ(nullptr, program->getDebugDataBinary(programDebugDataSize));
+    EXPECT_EQ(nullptr, program->getDebugData());
 }

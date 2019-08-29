@@ -48,17 +48,16 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
 
 TEST_F(ProcessElfBinaryTests, ValidBinary) {
     uint32_t binaryVersion;
-    void *pBinary = nullptr;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
-    size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, program->elfBinary.data(), binarySize));
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
-    deleteDataReadFromFile(pBinary);
 }
 
 TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
@@ -70,7 +69,8 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
 
     //clCompileProgram => SPIR-V stored as IR binary
     program->isSpirV = true;
-    program->storeIrBinary(spirvBinary, spirvBinarySize, true);
+    program->irBinary = makeCopy(spirvBinary, spirvBinarySize);
+    program->irBinarySize = spirvBinarySize;
     program->programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
     EXPECT_NE(nullptr, program->irBinary);
     EXPECT_NE(0u, program->irBinarySize);
@@ -126,12 +126,12 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
 
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
     uint32_t binaryVersion;
-    void *pBinary = nullptr;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
-    size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     const auto &options = program->getOptions();
     size_t optionsSize = strlen(options.c_str()) + 1;
@@ -139,12 +139,12 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     auto pTmpIrBinary = new char[program->irBinarySize];
     auto pTmpOptions = new char[optionsSize];
 
-    memcpy_s(pTmpGenBinary, program->genBinarySize, program->genBinary, program->genBinarySize);
-    memcpy_s(pTmpIrBinary, program->irBinarySize, program->irBinary, program->irBinarySize);
+    memcpy_s(pTmpGenBinary, program->genBinarySize, program->genBinary.get(), program->genBinarySize);
+    memcpy_s(pTmpIrBinary, program->irBinarySize, program->irBinary.get(), program->irBinarySize);
     memcpy_s(pTmpOptions, optionsSize, options.c_str(), optionsSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, program->elfBinary.data(), binarySize));
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
 
     // delete program's elf reference to force a resolve
@@ -152,15 +152,13 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     program->programBinaryType = GetParam();
     retVal = program->resolveProgramBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pTmpGenBinary, program->genBinary, program->genBinarySize));
-    EXPECT_EQ(0, memcmp(pTmpIrBinary, program->irBinary, program->irBinarySize));
+    EXPECT_EQ(0, memcmp(pTmpGenBinary, program->genBinary.get(), program->genBinarySize));
+    EXPECT_EQ(0, memcmp(pTmpIrBinary, program->irBinary.get(), program->irBinarySize));
     EXPECT_EQ(0, memcmp(pTmpOptions, options.c_str(), optionsSize));
 
     delete[] pTmpGenBinary;
     delete[] pTmpIrBinary;
     delete[] pTmpOptions;
-
-    deleteDataReadFromFile(pBinary);
 }
 
 INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
@@ -169,55 +167,52 @@ INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
 
 TEST_F(ProcessElfBinaryTests, BackToBack) {
     uint32_t binaryVersion;
-    void *pBinary = nullptr;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
-    size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, program->elfBinary.data(), binarySize));
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
-    deleteDataReadFromFile(pBinary);
 
     std::string filePath2;
     retrieveBinaryKernelFilename(filePath2, "simple_arg_int_", ".bin");
 
-    binarySize = loadDataFromFile(filePath2.c_str(), pBinary);
-    retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    pBinary = loadDataFromFile(filePath2.c_str(), binarySize);
+    retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, program->elfBinary.data(), binarySize));
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
-    deleteDataReadFromFile(pBinary);
 }
 
 TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
     uint32_t binaryVersion;
-    void *pBinary = nullptr;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_", ".bin");
 
-    size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
     size_t optionsSize = strlen(options.c_str()) + 1;
     EXPECT_EQ(0, memcmp("", options.c_str(), optionsSize));
     EXPECT_NE(0u, binaryVersion);
-    deleteDataReadFromFile(pBinary);
 }
 
 TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
     uint32_t binaryVersion;
-    void *pBinary = nullptr;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_opts_", ".bin");
 
-    size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
@@ -225,7 +220,6 @@ TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
     std::string buildOptionsNotEmpty = "-cl-opt-disable -DDEF_WAS_SPECIFIED=1";
     EXPECT_EQ(0, memcmp(buildOptionsNotEmpty.c_str(), options.c_str(), optionsSize));
     EXPECT_NE(0u, binaryVersion);
-    deleteDataReadFromFile(pBinary);
 }
 
 TEST_F(ProcessElfBinaryTests, GivenBinaryWhenInvalidCURRENT_ICBE_VERSIONThenInvalidCURRENT_ICBE_VERSIONTIsReturned) {

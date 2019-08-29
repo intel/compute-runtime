@@ -23,7 +23,7 @@ namespace ULT {
 
 TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     cl_program pProgram = nullptr;
-    void *pSource = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
 
@@ -32,17 +32,18 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd8.cl");
 
-    sourceSize = loadDataFromFile(
+    pSource = loadDataFromFile(
         testFile.c_str(),
-        pSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
+    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pSource,
+        sources,
         &sourceSize,
         &retVal);
 
@@ -76,7 +77,7 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     EXPECT_EQ(sourceSize + 1, length);
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, sizeof(buffer), buffer, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(strlen((const char *)pSource), strlen(buffer));
+    EXPECT_EQ(strlen(pSource.get()), strlen(buffer));
 
     // try to get program info for invalid program object - should fail
     retVal = clGetProgramInfo(nullptr, CL_PROGRAM_SOURCE, 0, nullptr, nullptr);
@@ -93,8 +94,6 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    deleteDataReadFromFile(pSource);
 }
 
 TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {

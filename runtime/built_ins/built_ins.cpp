@@ -98,9 +98,9 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         auto compilerInteface = device.getExecutionEnvironment()->getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
-        auto ret = compilerInteface->getSipKernelBinary(type, device, sipBinary);
+        auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary);
 
-        UNRECOVERABLE_IF(ret != CL_SUCCESS);
+        UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
         auto program = createProgramForSip(*device.getExecutionEnvironment(),
                                            nullptr,

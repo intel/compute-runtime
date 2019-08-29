@@ -96,7 +96,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
-        CreateProgramFromBinary<Program>(
+        CreateProgramFromBinary(
             pContext,
             &device,
             testFile);
@@ -151,7 +151,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
         cl_device_id deviceId = device;
         cl_context clContext = context;
 
-        CreateProgramFromBinary<Program>(
+        CreateProgramFromBinary(
             clContext,
             &deviceId,
             "simple_nonuniform",
@@ -199,7 +199,7 @@ class SimpleKernelFixture : public ProgramFixture {
         cl_device_id deviceId = device;
         cl_context clContext = context;
         std::string programName("simple_kernels");
-        CreateProgramFromBinary<Program>(
+        CreateProgramFromBinary(
             clContext,
             &deviceId,
             programName);
@@ -258,7 +258,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
-        CreateProgramFromBinary<Program>(
+        CreateProgramFromBinary(
             clContext,
             &deviceId,
             "stateless_kernel");

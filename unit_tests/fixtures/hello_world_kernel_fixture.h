@@ -51,13 +51,13 @@ struct HelloWorldKernelFixture : public ProgramFixture {
                 ASSERT_TRUE(pDevice->getSupportedClVersion() >= 20u);
             }
 
-            CreateProgramFromBinary<Program>(
+            CreateProgramFromBinary(
                 pContext,
                 &device,
                 *pTestFilename,
                 optionsToProgram);
         } else {
-            CreateProgramFromBinary<Program>(
+            CreateProgramFromBinary(
                 pContext,
                 &device,
                 *pTestFilename);

@@ -19,24 +19,26 @@ struct clCreateKernelsInProgramTests : public api_tests {
         std::string testFile;
         retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-        auto binarySize = loadDataFromFile(
+        size_t binarySize = 0;
+        auto pBinary = loadDataFromFile(
             testFile.c_str(),
-            pBinary);
+            binarySize);
 
         ASSERT_NE(0u, binarySize);
         ASSERT_NE(nullptr, pBinary);
 
         auto binaryStatus = CL_SUCCESS;
+        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
         program = clCreateProgramWithBinary(
             pContext,
             num_devices,
             devices,
             &binarySize,
-            (const unsigned char **)&pBinary,
+            binaries,
             &binaryStatus,
             &retVal);
 
-        deleteDataReadFromFile(pBinary);
+        pBinary.reset();
         ASSERT_NE(nullptr, program);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -58,7 +60,7 @@ struct clCreateKernelsInProgramTests : public api_tests {
 
     cl_program program = nullptr;
     cl_kernel kernel = nullptr;
-    void *pBinary = nullptr;
+    std::unique_ptr<char[]> pBinary = nullptr;
 };
 
 TEST_F(clCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObjectsThenKernelsAndSuccessAreReturned) {

@@ -35,7 +35,7 @@ void api_fixture::SetUp() {
 
     pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    pKernel = new MockKernel(pProgram, *pProgram->MockProgram::getKernelInfo(), *pDevice);
+    pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
     ASSERT_NE(nullptr, pKernel);
 }
 
@@ -69,7 +69,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     program = new MockProgram(*device->getExecutionEnvironment(), ctxPtr, false);
     Program *prgPtr = reinterpret_cast<Program *>(program);
 
-    kernel = new MockKernel(prgPtr, *program->MockProgram::getKernelInfo(), *devPtr);
+    kernel = new MockKernel(prgPtr, program->mockKernelInfo, *devPtr);
     ASSERT_NE(nullptr, kernel);
 }
 

@@ -253,8 +253,26 @@ struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
 
 class MockCompilerInterface : public CompilerInterface {
   public:
-    bool isCompilerAvailable() const {
-        return CompilerInterface::isCompilerAvailable();
+    using CompilerInterface::initialize;
+    using CompilerInterface::isCompilerAvailable;
+    using CompilerInterface::isFclAvailable;
+    using CompilerInterface::isIgcAvailable;
+
+    using CompilerInterface::fclMain;
+    using CompilerInterface::igcMain;
+
+    bool loadFcl() override {
+        if (failLoadFcl) {
+            return false;
+        }
+        return CompilerInterface::loadFcl();
+    }
+
+    bool loadIgc() override {
+        if (failLoadIgc) {
+            return false;
+        }
+        return CompilerInterface::loadIgc();
     }
 
     void setFclDeviceCtx(const Device &d, IGC::FclOclDeviceCtxTagOCL *ctx) {
@@ -292,17 +310,6 @@ class MockCompilerInterface : public CompilerInterface {
         return std::unique_lock<std::mutex>(mtx);
     }
 
-    bool initialize() {
-        return CompilerInterface::initialize();
-    }
-
-    CIF::CIFMain *GetIgcMain() {
-        return this->igcMain.get();
-    }
-
-    CIF::CIFMain *GetFclMain() {
-        return this->fclMain.get();
-    }
 
     void SetIgcMain(CIF::CIFMain *main) {
         this->igcMain.release();
@@ -340,13 +347,13 @@ class MockCompilerInterface : public CompilerInterface {
         return this->fclBaseTranslationCtx.get();
     }
 
-    cl_int getSipKernelBinary(SipKernelType type, const Device &device, std::vector<char> &retBinary) override {
+    TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary) override {
         if (this->sipKernelBinaryOverride.size() > 0) {
             retBinary = this->sipKernelBinaryOverride;
             this->requestedSipKernel = type;
-            return 0;
+            return TranslationOutput::ErrorCode::Success;
         } else {
-            return CompilerInterface::getSipKernelBinary(type, device, retBinary);
+            return CompilerInterface::getSipKernelBinary(device, type, retBinary);
         }
     }
 
@@ -356,6 +363,8 @@ class MockCompilerInterface : public CompilerInterface {
     void *lockListenerData = nullptr;
     bool failCreateFclTranslationCtx = false;
     bool failCreateIgcTranslationCtx = false;
+    bool failLoadFcl = false;
+    bool failLoadIgc = false;
 
     using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
     std::vector<TranslationOpT> requestedTranslationCtxs;
@@ -364,7 +373,6 @@ class MockCompilerInterface : public CompilerInterface {
     SipKernelType requestedSipKernel = SipKernelType::COUNT;
 
     IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
-    using CompilerInterface::useLlvmText;
 };
 
 template <>

@@ -22,7 +22,6 @@ namespace ULT {
 
 TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
-    void *pSource = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
 
@@ -30,17 +29,18 @@ TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
     testFile.append(clFiles);
     testFile.append("copybuffer.cl");
 
-    sourceSize = loadDataFromFile(
+    auto pSource = loadDataFromFile(
         testFile.c_str(),
-        pSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
+    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pSource,
+        sources,
         &sourceSize,
         &retVal);
 
@@ -62,15 +62,11 @@ TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    deleteDataReadFromFile(pSource);
 }
 
 TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_program pHeader = nullptr;
-    void *pSource = nullptr;
-    void *pHeaderSource = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
     const char *simpleHeaderName = "simple_header.h";
@@ -78,17 +74,18 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
     testFile.append(clFiles);
     testFile.append("/copybuffer_with_header.cl");
 
-    sourceSize = loadDataFromFile(
+    auto pSource = loadDataFromFile(
         testFile.c_str(),
-        pSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
+    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pSource,
+        sources,
         &sourceSize,
         &retVal);
 
@@ -98,17 +95,18 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
     testFile.clear();
     testFile.append(clFiles);
     testFile.append("simple_header.h");
-    sourceSize = loadDataFromFile(
+    auto pHeaderSource = loadDataFromFile(
         testFile.c_str(),
-        pHeaderSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pHeaderSource);
 
+    const char *headerSources[1] = {pHeaderSource.get()};
     pHeader = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pHeaderSource,
+        headerSources,
         &sourceSize,
         &retVal);
 
@@ -130,11 +128,9 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    deleteDataReadFromFile(pSource);
 
     retVal = clReleaseProgram(pHeader);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    deleteDataReadFromFile(pHeaderSource);
 }
 
 TEST_F(clCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidProgramErrorIsReturned) {

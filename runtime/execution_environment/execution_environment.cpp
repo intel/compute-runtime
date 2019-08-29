@@ -105,7 +105,7 @@ CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     if (this->compilerInterface.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
         if (this->compilerInterface.get() == nullptr) {
-            this->compilerInterface.reset(CompilerInterface::createInstance());
+            this->compilerInterface.reset(CompilerInterface::createInstance(true));
         }
     }
     return this->compilerInterface.get();

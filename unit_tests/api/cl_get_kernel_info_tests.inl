@@ -23,7 +23,6 @@ namespace ULT {
 
 TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
-    void *pSource = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
 
@@ -32,17 +31,18 @@ TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsR
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd8.cl");
 
-    sourceSize = loadDataFromFile(
+    auto pSource = loadDataFromFile(
         testFile.c_str(),
-        pSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
+    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pSource,
+        sources,
         &sourceSize,
         &retVal);
 
@@ -88,7 +88,5 @@ TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsR
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    deleteDataReadFromFile(pSource);
 }
 } // namespace ULT

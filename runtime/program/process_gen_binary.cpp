@@ -110,7 +110,7 @@ size_t Program::processKernel(
         auto pKernel = ptrOffset(pKernelBlob, sizeof(SKernelBinaryHeaderCommon));
 
         if (genBinary)
-            pKernelInfo->gpuPointerSize = reinterpret_cast<const SProgramBinaryHeader *>(genBinary)->GPUPointerSizeInBytes;
+            pKernelInfo->gpuPointerSize = reinterpret_cast<const SProgramBinaryHeader *>(genBinary.get())->GPUPointerSizeInBytes;
 
         uint32_t kernelSize =
             pKernelHeader->DynamicStateHeapSize +
@@ -1124,7 +1124,7 @@ cl_int Program::processGenBinary() {
             break;
         }
 
-        auto pCurBinaryPtr = genBinary;
+        auto pCurBinaryPtr = genBinary.get();
         auto pGenBinaryHeader = reinterpret_cast<const SProgramBinaryHeader *>(pCurBinaryPtr);
         if (!validateGenBinaryHeader(pGenBinaryHeader)) {
             retVal = CL_INVALID_BINARY;
@@ -1170,7 +1170,7 @@ bool Program::validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenB
 
 void Program::processDebugData() {
     if (debugData != nullptr) {
-        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(debugData);
+        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(debugData.get());
 
         DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != kernelInfoArray.size());
 

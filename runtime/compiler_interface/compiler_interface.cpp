@@ -13,7 +13,6 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
-#include "runtime/program/program.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
@@ -26,7 +25,6 @@
 #include <fstream>
 
 namespace NEO {
-bool CompilerInterface::useLlvmText = false;
 std::mutex CompilerInterface::mtx;
 
 enum CachingMode {
@@ -38,306 +36,269 @@ enum CachingMode {
 CompilerInterface::CompilerInterface() = default;
 CompilerInterface::~CompilerInterface() = default;
 NO_SANITIZE
-cl_int CompilerInterface::build(
-    Program &program,
-    const TranslationArgs &inputArgs,
-    bool enableCaching) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::build(
+    const NEO::Device &device,
+    const TranslationInput &input,
+    TranslationOutput &output) {
+    if (false == isCompilerAvailable(input.srcType, input.outType)) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    IGC::CodeType::CodeType_t highLevelCodeType = IGC::CodeType::undefined;
+    IGC::CodeType::CodeType_t srcCodeType = input.srcType;
     IGC::CodeType::CodeType_t intermediateCodeType = IGC::CodeType::undefined;
 
-    if (program.isCreatedFromIL() || (program.getProgramBinaryType() == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
-        if (program.getIsSpirV()) {
-            intermediateCodeType = IGC::CodeType::spirV;
-        } else {
-            intermediateCodeType = IGC::CodeType::llvmBc;
-        }
-    } else {
-        highLevelCodeType = IGC::CodeType::oclC;
-    }
-
-    if (useLlvmText == true) {
-        intermediateCodeType = IGC::CodeType::llvmLl;
+    if (input.preferredIntermediateType != IGC::CodeType::undefined) {
+        intermediateCodeType = input.preferredIntermediateType;
     }
 
     CachingMode cachingMode = None;
 
-    if (enableCaching) {
-        if ((highLevelCodeType == IGC::CodeType::oclC) && (std::strstr(inputArgs.pInput, "#include") == nullptr)) {
+    if (input.allowCaching) {
+        if ((srcCodeType == IGC::CodeType::oclC) && (std::strstr(input.src.begin(), "#include") == nullptr)) {
             cachingMode = CachingMode::Direct;
         } else {
             cachingMode = CachingMode::PreProcess;
         }
     }
 
-    uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
-    for (uint32_t i = 0; i < numDevices; i++) {
-        const auto &device = program.getDevice(i);
-        if (intermediateCodeType == IGC::CodeType::undefined) {
-            UNRECOVERABLE_IF(highLevelCodeType != IGC::CodeType::oclC);
-            intermediateCodeType = getPreferredIntermediateRepresentation(device);
-        }
+    if (intermediateCodeType == IGC::CodeType::undefined) {
+        intermediateCodeType = getPreferredIntermediateRepresentation(device);
+    }
 
-        bool binaryLoaded = false;
-        std::string kernelFileHash;
-        if (cachingMode == CachingMode::Direct) {
-            kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
-                                                      ArrayRef<const char>(inputArgs.pInput, inputArgs.InputSize),
-                                                      ArrayRef<const char>(inputArgs.pOptions, inputArgs.OptionsSize),
-                                                      ArrayRef<const char>(inputArgs.pInternalOptions, inputArgs.InternalOptionsSize));
-            if (cache->loadCachedBinary(kernelFileHash, program)) {
-                continue;
-            }
-        }
-
-        auto inSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInput, inputArgs.InputSize);
-        auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
-        auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
-
-        CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> intermediateRepresentation;
-
-        if (highLevelCodeType != IGC::CodeType::undefined) {
-            auto fclTranslationCtx = createFclTranslationCtx(device, highLevelCodeType, intermediateCodeType);
-            auto fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
-                                       fclOptions.get(), fclInternalOptions.get());
-
-            if (fclOutput == nullptr) {
-                return CL_OUT_OF_HOST_MEMORY;
-            }
-
-            if (fclOutput->Successful() == false) {
-                program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-                return CL_BUILD_PROGRAM_FAILURE;
-            }
-
-            program.storeIrBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw(), intermediateCodeType == IGC::CodeType::spirV);
-            program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-
-            fclOutput->GetOutput()->Retain(); // will be used as input to compiler
-            intermediateRepresentation.reset(fclOutput->GetOutput());
-        } else {
-            inSrc->Retain(); // will be used as input to compiler directly
-            intermediateRepresentation.reset(inSrc.get());
-        }
-
-        if (cachingMode == CachingMode::PreProcess) {
-            kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
-                                                      ArrayRef<const char>(fclOptions->GetMemory<char>(), fclOptions->GetSize<char>()),
-                                                      ArrayRef<const char>(fclInternalOptions->GetMemory<char>(), fclInternalOptions->GetSize<char>()));
-            binaryLoaded = cache->loadCachedBinary(kernelFileHash, program);
-        }
-        if (!binaryLoaded) {
-            auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, IGC::CodeType::oclGenBin);
-
-            auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), program.getSpecConstIdsBuffer().get(), program.getSpecConstValuesBuffer().get(),
-                                       fclOptions.get(), fclInternalOptions.get(), inputArgs.GTPinInput);
-
-            if (igcOutput == nullptr) {
-                return CL_OUT_OF_HOST_MEMORY;
-            }
-
-            if (igcOutput->Successful() == false) {
-                program.updateBuildLog(&device, igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
-                return CL_BUILD_PROGRAM_FAILURE;
-            }
-
-            if (enableCaching) {
-                cache->cacheBinary(kernelFileHash, igcOutput->GetOutput()->GetMemory<char>(), static_cast<uint32_t>(igcOutput->GetOutput()->GetSizeRaw()));
-            }
-
-            program.storeGenBinary(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
-            program.updateBuildLog(&device, igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
-            if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
-                program.storeDebugData(igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
-            }
+    std::string kernelFileHash;
+    if (cachingMode == CachingMode::Direct) {
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
+                                                  input.src,
+                                                  input.apiOptions,
+                                                  input.internalOptions);
+        output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
+        if (output.deviceBinary.mem) {
+            return TranslationOutput::ErrorCode::Success;
         }
     }
 
-    return CL_SUCCESS;
+    auto inSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.src.begin(), input.src.size());
+    auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.apiOptions.begin(), input.apiOptions.size());
+    auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.internalOptions.begin(), input.internalOptions.size());
+
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> intermediateRepresentation;
+
+    if (srcCodeType == IGC::CodeType::oclC) {
+        auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
+        auto fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
+                                   fclOptions.get(), fclInternalOptions.get());
+
+        if (fclOutput == nullptr) {
+            return TranslationOutput::ErrorCode::UnknownError;
+        }
+
+        TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
+
+        if (fclOutput->Successful() == false) {
+            return TranslationOutput::ErrorCode::BuildFailure;
+        }
+
+        output.intermediateCodeType = intermediateCodeType;
+        TranslationOutput::makeCopy(output.intermediateRepresentation, fclOutput->GetOutput());
+
+        fclOutput->GetOutput()->Retain(); // will be used as input to compiler
+        intermediateRepresentation.reset(fclOutput->GetOutput());
+    } else {
+        inSrc->Retain(); // will be used as input to compiler directly
+        intermediateRepresentation.reset(inSrc.get());
+        intermediateCodeType = srcCodeType;
+    }
+
+    if (cachingMode == CachingMode::PreProcess) {
+        kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
+                                                  input.apiOptions,
+                                                  input.internalOptions);
+        output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
+        if (output.deviceBinary.mem) {
+            return TranslationOutput::ErrorCode::Success;
+        }
+    }
+
+    auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, IGC::CodeType::oclGenBin);
+
+    auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), input.specConstants.idsBuffer, input.specConstants.valuesBuffer,
+                               fclOptions.get(), fclInternalOptions.get(), input.GTPinInput);
+
+    if (igcOutput == nullptr) {
+        return TranslationOutput::ErrorCode::UnknownError;
+    }
+
+    TranslationOutput::makeCopy(output.backendCompilerLog, igcOutput->GetBuildLog());
+
+    if (igcOutput->Successful() == false) {
+        return TranslationOutput::ErrorCode::BuildFailure;
+    }
+
+    if (input.allowCaching) {
+        cache->cacheBinary(kernelFileHash, igcOutput->GetOutput()->GetMemory<char>(), static_cast<uint32_t>(igcOutput->GetOutput()->GetSize<char>()));
+    }
+
+    TranslationOutput::makeCopy(output.deviceBinary, igcOutput->GetOutput());
+    TranslationOutput::makeCopy(output.debugData, igcOutput->GetDebugData());
+
+    return TranslationOutput::ErrorCode::Success;
 }
 
-cl_int CompilerInterface::compile(
-    Program &program,
-    const TranslationArgs &inputArgs) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::compile(
+    const NEO::Device &device,
+    const TranslationInput &input,
+    TranslationOutput &output) {
+
+    if ((IGC::CodeType::oclC != input.srcType) && (IGC::CodeType::elf != input.srcType)) {
+        return TranslationOutput::ErrorCode::AlreadyCompiled;
     }
 
-    IGC::CodeType::CodeType_t inType = IGC::CodeType::undefined;
-    IGC::CodeType::CodeType_t outType = IGC::CodeType::undefined;
-
-    bool fromIntermediate = (program.getProgramBinaryType() == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE);
-
-    if (fromIntermediate == false) {
-        inType = IGC::CodeType::elf;
-        if (useLlvmText == true) {
-            outType = IGC::CodeType::llvmLl;
-        }
+    if (false == isCompilerAvailable(input.srcType, input.outType)) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
-    for (uint32_t i = 0; i < numDevices; i++) {
-        const auto &device = program.getDevice(i);
-        if (outType == IGC::CodeType::undefined) {
-            outType = getPreferredIntermediateRepresentation(device);
-        }
+    auto outType = input.outType;
 
-        if (fromIntermediate == false) {
-            auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInput, inputArgs.InputSize);
-            auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
-            auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
-
-            auto fclTranslationCtx = createFclTranslationCtx(device, inType, outType);
-
-            auto fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
-                                       fclOptions.get(), fclInternalOptions.get());
-
-            if (fclOutput == nullptr) {
-                return CL_OUT_OF_HOST_MEMORY;
-            }
-
-            if (fclOutput->Successful() == false) {
-                program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-                return CL_COMPILE_PROGRAM_FAILURE;
-            }
-
-            program.storeIrBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw(), outType == IGC::CodeType::spirV);
-            program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-        } else {
-            char *pOutput;
-            uint32_t OutputSize;
-            program.getSource(pOutput, OutputSize);
-            program.storeIrBinary(pOutput, OutputSize, program.getIsSpirV());
-        }
+    if (outType == IGC::CodeType::undefined) {
+        outType = getPreferredIntermediateRepresentation(device);
     }
 
-    return CL_SUCCESS;
+    auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.src.begin(), input.src.size());
+    auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.apiOptions.begin(), input.apiOptions.size());
+    auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), input.internalOptions.begin(), input.internalOptions.size());
+
+    auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
+
+    auto fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
+                               fclOptions.get(), fclInternalOptions.get());
+
+    if (fclOutput == nullptr) {
+        return TranslationOutput::ErrorCode::UnknownError;
+    }
+
+    TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
+
+    if (fclOutput->Successful() == false) {
+        return TranslationOutput::ErrorCode::CompilationFailure;
+    }
+
+    output.intermediateCodeType = outType;
+    TranslationOutput::makeCopy(output.intermediateRepresentation, fclOutput->GetOutput());
+
+    return TranslationOutput::ErrorCode::Success;
 }
 
-cl_int CompilerInterface::link(
-    Program &program,
-    const TranslationArgs &inputArgs) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::link(
+    const NEO::Device &device,
+    const TranslationInput &input,
+    TranslationOutput &output) {
+    if (false == isCompilerAvailable(input.srcType, input.outType)) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
-    for (uint32_t i = 0; i < numDevices; i++) {
-        const auto &device = program.getDevice(i);
+    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.src.begin(), input.src.size());
+    auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.apiOptions.begin(), input.apiOptions.size());
+    auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.internalOptions.begin(), input.internalOptions.size());
 
-        auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInput, inputArgs.InputSize);
-        auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
-        auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
-
-        if (inSrc == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
-        }
-
-        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
-        inSrc->Retain(); // shared with currSrc
-        CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
-        IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
-        constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
-        for (size_t ti = 1; ti < numTranslations; ti++) {
-            IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
-            IGC::CodeType::CodeType_t outType = translationChain[ti];
-
-            auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
-            currOut = translate(igcTranslationCtx.get(), currSrc.get(),
-                                igcOptions.get(), igcInternalOptions.get());
-
-            if (currOut == nullptr) {
-                return CL_OUT_OF_HOST_MEMORY;
-            }
-
-            if (currOut->Successful() == false) {
-                program.updateBuildLog(&device, currOut->GetBuildLog()->GetMemory<char>(), currOut->GetBuildLog()->GetSizeRaw());
-                return CL_BUILD_PROGRAM_FAILURE;
-            }
-
-            currOut->GetOutput()->Retain(); // shared with currSrc
-            currSrc.reset(currOut->GetOutput());
-        }
-
-        program.storeGenBinary(currOut->GetOutput()->GetMemory<char>(), currOut->GetOutput()->GetSizeRaw());
-        program.updateBuildLog(&device, currOut->GetBuildLog()->GetMemory<char>(), currOut->GetBuildLog()->GetSizeRaw());
-
-        if (currOut->GetDebugData()->GetSizeRaw() != 0) {
-            program.storeDebugData(currOut->GetDebugData()->GetMemory<char>(), currOut->GetDebugData()->GetSizeRaw());
-        }
+    if (inSrc == nullptr) {
+        return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    return CL_SUCCESS;
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
+    inSrc->Retain(); // shared with currSrc
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
+    IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+    constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
+    for (size_t ti = 1; ti < numTranslations; ti++) {
+        IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
+        IGC::CodeType::CodeType_t outType = translationChain[ti];
+
+        auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
+        currOut = translate(igcTranslationCtx.get(), currSrc.get(),
+                            igcOptions.get(), igcInternalOptions.get());
+
+        if (currOut == nullptr) {
+            return TranslationOutput::ErrorCode::UnknownError;
+        }
+
+        if (currOut->Successful() == false) {
+            TranslationOutput::makeCopy(output.backendCompilerLog, currOut->GetBuildLog());
+            return TranslationOutput::ErrorCode::LinkFailure;
+        }
+
+        currOut->GetOutput()->Retain(); // shared with currSrc
+        currSrc.reset(currOut->GetOutput());
+    }
+
+    TranslationOutput::makeCopy(output.backendCompilerLog, currOut->GetBuildLog());
+    TranslationOutput::makeCopy(output.deviceBinary, currOut->GetOutput());
+    TranslationOutput::makeCopy(output.debugData, currOut->GetDebugData());
+
+    return TranslationOutput::ErrorCode::Success;
 }
 
-cl_int CompilerInterface::getSpecConstantsInfo(Program &program, const TranslationArgs &inputArgs) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) {
+    if (false == isIgcAvailable()) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    auto igcTranslationCtx = createIgcTranslationCtx(program.getDevice(0), IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
+    auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
 
-    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInput, inputArgs.InputSize);
-    program.getSpecConstIdsBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    program.getSpecConstSizesBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    program.getSpecConstValuesBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), srcSpirV.begin(), srcSpirV.size());
+    output.idsBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    output.sizesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    output.valuesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
 
-    auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), program.getSpecConstIdsBuffer().get(), program.getSpecConstSizesBuffer().get(), program.getSpecConstValuesBuffer().get());
+    auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), output.idsBuffer.get(), output.sizesBuffer.get(), output.valuesBuffer.get());
 
     if (!retVal) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    return CL_SUCCESS;
+    return TranslationOutput::ErrorCode::Success;
 }
 
-cl_int CompilerInterface::createLibrary(
-    Program &program,
-    const TranslationArgs &inputArgs) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::createLibrary(
+    NEO::Device &device,
+    const TranslationInput &input,
+    TranslationOutput &output) {
+    if (false == isIgcAvailable()) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
-    uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
-    for (uint32_t i = 0; i < numDevices; i++) {
-        const auto &device = program.getDevice(i);
+    auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.src.begin(), input.src.size());
+    auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.apiOptions.begin(), input.apiOptions.size());
+    auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.internalOptions.begin(), input.internalOptions.size());
 
-        auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInput, inputArgs.InputSize);
-        auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
-        auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
+    auto intermediateRepresentation = IGC::CodeType::llvmBc;
+    auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, intermediateRepresentation);
 
-        auto intermediateRepresentation = IGC::CodeType::llvmBc;
-        auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, intermediateRepresentation);
+    auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
+                               igcOptions.get(), igcInternalOptions.get());
 
-        auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
-                                   igcOptions.get(), igcInternalOptions.get());
-
-        if (igcOutput == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
-        }
-
-        if (igcOutput->Successful() == false) {
-            program.updateBuildLog(&device, igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
-            return CL_BUILD_PROGRAM_FAILURE;
-        }
-
-        program.storeIrBinary(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw(), intermediateRepresentation == IGC::CodeType::spirV);
-        program.updateBuildLog(&device, igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+    if (igcOutput == nullptr) {
+        return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    return CL_SUCCESS;
+    TranslationOutput::makeCopy(output.backendCompilerLog, igcOutput->GetBuildLog());
+
+    if (igcOutput->Successful() == false) {
+        return TranslationOutput::ErrorCode::LinkFailure;
+    }
+
+    output.intermediateCodeType = intermediateRepresentation;
+    TranslationOutput::makeCopy(output.intermediateRepresentation, igcOutput->GetOutput());
+
+    return TranslationOutput::ErrorCode::Success;
 }
 
-cl_int CompilerInterface::getSipKernelBinary(SipKernelType kernel, const Device &device, std::vector<char> &retBinary) {
-    if (false == isCompilerAvailable()) {
-        return CL_COMPILER_NOT_AVAILABLE;
+TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary) {
+    if (false == isIgcAvailable()) {
+        return TranslationOutput::ErrorCode::CompilerNotAvailable;
     }
 
     const char *sipSrc = getSipLlSrc(device);
-    std::string sipInternalOptions = getSipKernelCompilerInternalOptions(kernel);
+    std::string sipInternalOptions = getSipKernelCompilerInternalOptions(type);
 
     auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sipSrc, strlen(sipSrc) + 1);
     auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
@@ -348,26 +309,30 @@ cl_int CompilerInterface::getSipKernelBinary(SipKernelType kernel, const Device 
     auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
                                igcOptions.get(), igcInternalOptions.get());
 
-    if (igcOutput == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
-    }
-
-    if (igcOutput->Successful() == false) {
-        return CL_BUILD_PROGRAM_FAILURE;
+    if ((igcOutput == nullptr) || (igcOutput->Successful() == false)) {
+        return TranslationOutput::ErrorCode::UnknownError;
     }
 
     retBinary.assign(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetMemory<char>() + igcOutput->GetOutput()->GetSizeRaw());
-    return CL_SUCCESS;
+    return TranslationOutput::ErrorCode::Success;
 }
 
-bool CompilerInterface::initialize() {
-    bool compilersModulesSuccessfulyLoaded = true;
-    compilersModulesSuccessfulyLoaded &= NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
-    compilersModulesSuccessfulyLoaded &= NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+bool CompilerInterface::loadFcl() {
+    return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
+    ;
+}
+
+bool CompilerInterface::loadIgc() {
+    return NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+}
+
+bool CompilerInterface::initialize(bool requireFcl) {
+    bool fclAvailable = this->loadFcl();
+    bool igcAvailable = this->loadIgc();
 
     cache.reset(new BinaryCache());
 
-    return compilersModulesSuccessfulyLoaded;
+    return igcAvailable && (fclAvailable || (false == requireFcl));
 }
 
 BinaryCache *CompilerInterface::replaceBinaryCache(BinaryCache *newCache) {

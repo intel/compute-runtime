@@ -91,7 +91,7 @@ cl_int Program::link(
             }
 
             elfWriter.addSection(CLElfLib::SSectionNode(pInputProgObj->getIsSpirV() ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY,
-                                                        CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "", std::string(pInputProgObj->irBinary, pInputProgObj->irBinarySize), static_cast<uint32_t>(pInputProgObj->irBinarySize)));
+                                                        CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "", std::string(pInputProgObj->irBinary.get(), pInputProgObj->irBinarySize), static_cast<uint32_t>(pInputProgObj->irBinarySize)));
         }
         if (retVal != CL_SUCCESS) {
             break;
@@ -107,22 +107,27 @@ cl_int Program::link(
             break;
         }
 
-        TranslationArgs inputArgs = {};
+        TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
-        inputArgs.pInput = data.data();
-        inputArgs.InputSize = (uint32_t)dataSize;
-        inputArgs.pOptions = options.c_str();
-        inputArgs.OptionsSize = (uint32_t)options.length();
-        inputArgs.pInternalOptions = internalOptions.c_str();
-        inputArgs.InternalOptionsSize = (uint32_t)internalOptions.length();
-        inputArgs.pTracingOptions = nullptr;
-        inputArgs.TracingOptionsCount = 0;
+        inputArgs.src = ArrayRef<const char>(data.data(), dataSize);
+        inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
+        inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
         if (!isCreateLibrary) {
-            retVal = pCompilerInterface->link(*this, inputArgs);
+            inputArgs.outType = IGC::CodeType::oclGenBin;
+            NEO::TranslationOutput compilerOuput = {};
+            auto compilerErr = pCompilerInterface->link(*this->pDevice, inputArgs, compilerOuput);
+            this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+            this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+            retVal = asClError(compilerErr);
             if (retVal != CL_SUCCESS) {
                 break;
             }
+
+            this->genBinary = std::move(compilerOuput.deviceBinary.mem);
+            this->genBinarySize = compilerOuput.deviceBinary.size;
+            this->debugData = std::move(compilerOuput.debugData.mem);
+            this->debugDataSize = compilerOuput.debugData.size;
 
             retVal = processGenBinary();
             if (retVal != CL_SUCCESS) {
@@ -137,10 +142,20 @@ cl_int Program::link(
                 }
             }
         } else {
-            retVal = pCompilerInterface->createLibrary(*this, inputArgs);
+            inputArgs.outType = IGC::CodeType::llvmBc;
+            NEO::TranslationOutput compilerOuput = {};
+            auto compilerErr = pCompilerInterface->createLibrary(*this->pDevice, inputArgs, compilerOuput);
+            this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+            this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+            retVal = asClError(compilerErr);
             if (retVal != CL_SUCCESS) {
                 break;
             }
+            this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
+            this->irBinarySize = compilerOuput.intermediateRepresentation.size;
+            this->isSpirV = (compilerOuput.intermediateCodeType == IGC::CodeType::spirV);
+            this->debugData = std::move(compilerOuput.debugData.mem);
+            this->debugDataSize = compilerOuput.debugData.size;
             programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
         }
         updateNonUniformFlag(&*inputProgramsInternal.begin(), inputProgramsInternal.size());

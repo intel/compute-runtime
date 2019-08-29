@@ -9,13 +9,12 @@
 #include "runtime/helpers/stdio.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
-size_t loadDataFromFile(
+std::unique_ptr<char[]> loadDataFromFile(
     const char *filename,
-    void *&pData);
-
-void deleteDataReadFromFile(void *&pData);
+    size_t &retSize);
 
 size_t writeDataToFile(
     const char *filename,

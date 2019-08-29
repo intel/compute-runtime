@@ -10,6 +10,7 @@
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "runtime/api/cl_types.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/stdio.h"
 #include "runtime/helpers/string_helpers.h"
@@ -34,6 +35,23 @@ template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;
 };
+
+constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
+    switch (err) {
+    default:
+        return CL_OUT_OF_HOST_MEMORY;
+    case TranslationOutput::ErrorCode::Success:
+        return CL_SUCCESS;
+    case TranslationOutput::ErrorCode::CompilerNotAvailable:
+        return CL_COMPILER_NOT_AVAILABLE;
+    case TranslationOutput::ErrorCode::CompilationFailure:
+        return CL_COMPILE_PROGRAM_FAILURE;
+    case TranslationOutput::ErrorCode::BuildFailure:
+        return CL_BUILD_PROGRAM_FAILURE;
+    case TranslationOutput::ErrorCode::LinkFailure:
+        return CL_LINK_PROGRAM_FAILURE;
+    }
+}
 
 bool isSafeToSkipUnhandledToken(unsigned int token);
 
@@ -154,29 +172,11 @@ class Program : public BaseObject<_cl_program> {
 
     void setDevice(Device *device) { this->pDevice = device; }
 
-    cl_uint getNumDevices() const {
-        return 1;
-    }
-
     MOCKABLE_VIRTUAL cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion);
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
-    void setSource(const char *pSourceString);
-
-    cl_int getSource(char *&pBinary, unsigned int &dataSize) const;
-
     cl_int getSource(std::string &binary) const;
 
-    void storeGenBinary(const void *pSrc, const size_t srcSize);
-
-    char *getGenBinary(size_t &genBinarySize) const {
-        genBinarySize = this->genBinarySize;
-        return this->genBinary;
-    }
-
-    void storeIrBinary(const void *pSrc, const size_t srcSize, bool isSpirV);
-
-    void storeDebugData(const void *pSrc, const size_t srcSize);
     void processDebugData();
 
     void updateBuildLog(const Device *pDevice, const char *pErrorString, const size_t errorStringSize);
@@ -189,10 +189,6 @@ class Program : public BaseObject<_cl_program> {
 
     bool getIsSpirV() const {
         return isSpirV;
-    }
-
-    bool isCreatedFromIL() const {
-        return createdFrom == CreatedFrom::IL;
     }
 
     size_t getProgramScopePatchListSize() const {
@@ -244,23 +240,11 @@ class Program : public BaseObject<_cl_program> {
     }
 
     char *getDebugData() {
-        return debugData;
+        return debugData.get();
     }
 
     size_t getDebugDataSize() {
         return debugDataSize;
-    }
-
-    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstIdsBuffer() {
-        return this->specConstantsIds;
-    }
-
-    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstValuesBuffer() {
-        return this->specConstantsValues;
-    }
-
-    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstSizesBuffer() {
-        return this->specConstantsSizes;
     }
 
     const Linker::RelocatedSymbolsMap &getSymbols() const {
@@ -297,8 +281,6 @@ class Program : public BaseObject<_cl_program> {
 
     size_t processKernel(const void *pKernelBlob, uint32_t kernelNum, cl_int &retVal);
 
-    void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
-
     bool validateGenBinaryDevice(GFXCORE_FAMILY device) const;
     bool validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenBinaryHeader) const;
 
@@ -325,13 +307,13 @@ class Program : public BaseObject<_cl_program> {
     CLElfLib::ElfBinaryStorage elfBinary;
     size_t elfBinarySize;
 
-    char *genBinary;
+    std::unique_ptr<char[]> genBinary;
     size_t genBinarySize;
 
-    char *irBinary;
+    std::unique_ptr<char[]> irBinary;
     size_t irBinarySize;
 
-    char *debugData;
+    std::unique_ptr<char[]> debugData;
     size_t debugDataSize;
 
     CreatedFrom createdFrom = CreatedFrom::UNKNOWN;

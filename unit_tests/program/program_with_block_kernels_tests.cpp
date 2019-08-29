@@ -48,7 +48,7 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuildingThenKernelInfosHaveCorrectNames) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        CreateProgramFromBinary<MockProgram>(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
+        CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
         auto mockProgram = (MockProgram *)pProgram;
         ASSERT_NE(nullptr, mockProgram);
 
@@ -92,7 +92,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLinkedThenBlockKernelsAreSeparated) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.0") != std::string::npos) {
-        CreateProgramFromBinary<Program>(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
+        CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
         const char *buildOptions = "-cl-std=CL2.0";
 
         overwriteBuiltInBinaryName(

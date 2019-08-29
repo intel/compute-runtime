@@ -15,7 +15,7 @@ namespace NEO {
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     auto mockCompilerInterface = new MockCompilerInterface();
-    mockCompilerInterface->initialize();
+    mockCompilerInterface->initialize(false);
 
     device.getExecutionEnvironment()->compilerInterface.reset(mockCompilerInterface);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();

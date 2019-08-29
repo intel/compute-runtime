@@ -6,6 +6,10 @@
  */
 
 #pragma once
+
+#include <memory>
+#include <type_traits>
+
 #if defined(__linux__)
 
 #include <cstring>
@@ -89,3 +93,14 @@ inline int memmove_s(void *dst, size_t numberOfElements, const void *src, size_t
 }
 
 #endif
+
+template <typename T = char[]>
+inline std::unique_ptr<T> makeCopy(const void *src, size_t size) {
+    if (size == 0) {
+        return nullptr;
+    }
+    using ElT = typename std::remove_all_extents<T>::type;
+    std::unique_ptr<T> copiedData(reinterpret_cast<ElT *>(new char[size]));
+    memcpy_s(copiedData.get(), size, src, size);
+    return copiedData;
+}

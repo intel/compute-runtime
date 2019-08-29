@@ -13,11 +13,12 @@
 #include <cstring>
 #include <new>
 
-size_t loadDataFromFile(
+std::unique_ptr<char[]> loadDataFromFile(
     const char *filename,
-    void *&pData) {
+    size_t &retSize) {
     FILE *fp = nullptr;
     size_t nsize = 0;
+    std::unique_ptr<char[]> ret;
 
     DEBUG_BREAK_IF(nullptr == filename);
     // Open the file
@@ -29,12 +30,12 @@ size_t loadDataFromFile(
 
         fseek(fp, 0, SEEK_SET);
 
-        pData = new (std::nothrow) char[nsize + 1];
+        ret.reset(new (std::nothrow) char[nsize + 1]);
 
-        if (pData) {
+        if (ret) {
             // we initialize to all zeroes before reading in data
-            memset(pData, 0x00, nsize + 1);
-            auto read = fread(pData, sizeof(unsigned char), nsize, fp);
+            memset(ret.get(), 0x00, nsize + 1);
+            auto read = fread(ret.get(), sizeof(unsigned char), nsize, fp);
             DEBUG_BREAK_IF(read != nsize);
             ((void)(read));
         } else {
@@ -44,12 +45,8 @@ size_t loadDataFromFile(
         fclose(fp);
     }
 
-    return nsize;
-}
-
-void deleteDataReadFromFile(void *&pData) {
-    delete[](char *) pData;
-    pData = nullptr;
+    retSize = nsize;
+    return ret;
 }
 
 size_t writeDataToFile(
@@ -64,12 +61,8 @@ size_t writeDataToFile(
 
     fopen_s(&fp, filename, "wb");
     if (fp) {
-        if (fwrite(pData, sizeof(unsigned char), dataSize, fp) == 0) {
-            fclose(fp);
-        } else {
-            fclose(fp);
-        }
-        nsize = dataSize;
+        nsize = fwrite(pData, sizeof(unsigned char), dataSize, fp);
+        fclose(fp);
     }
 
     return nsize;

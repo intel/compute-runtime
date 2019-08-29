@@ -87,10 +87,9 @@ class Kernel : public BaseObject<_cl_kernel> {
         }
 
         if (DebugManager.debugKernelDumpingAvailable()) {
-            char *pSrc = nullptr;
-            unsigned int size = 0;
-            program->getSource(pSrc, size);
-            DebugManager.dumpKernel(kernelInfo.name, (pSrc != nullptr) ? std::string(pSrc) : std::string());
+            std::string source;
+            program->getSource(source);
+            DebugManager.dumpKernel(kernelInfo.name, source);
         }
 
         return pKernel;

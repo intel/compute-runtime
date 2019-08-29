@@ -9,6 +9,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/file_io.h"
+#include "runtime/program/program.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
@@ -54,10 +55,8 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
 
         EXPECT_EQ(true, fileExists(binaryFileName));
 
-        void *pSource = nullptr;
-        size_t sourceSize = loadDataFromFile(
-            binaryFileName.c_str(),
-            pSource);
+        size_t sourceSize = 0;
+        auto pSource = loadDataFromFile(binaryFileName.c_str(), sourceSize);
 
         EXPECT_NE(0u, sourceSize);
         EXPECT_NE(nullptr, pSource);
@@ -65,19 +64,18 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
         Program *pProgram = nullptr;
         const cl_device_id device = pDevice;
 
+        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pSource.get())};
         pProgram = Program::create(
             context,
             1,
             &device,
             &sourceSize,
-            (const unsigned char **)&pSource,
+            binaries,
             nullptr,
             retVal);
 
         EXPECT_EQ(retVal, CL_SUCCESS);
         EXPECT_NE(pProgram, nullptr);
-
-        deleteDataReadFromFile(pSource);
 
         return pProgram;
     }

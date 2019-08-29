@@ -13,7 +13,6 @@
 #include <runtime/helpers/hw_info.h>
 #include <runtime/os_interface/ocl_reg_path.h>
 #include <runtime/os_interface/os_inc_base.h>
-#include <runtime/program/program.h>
 
 #include "config.h"
 #include "os_inc.h"
@@ -68,36 +67,14 @@ bool BinaryCache::cacheBinary(const std::string kernelFileHash, const char *pBin
     }
     std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
     std::lock_guard<std::mutex> lock(cacheAccessMtx);
-    if (writeDataToFile(
-            filePath.c_str(),
-            pBinary,
-            binarySize) == 0) {
-        return false;
-    }
-
-    return true;
+    return 0 != writeDataToFile(filePath.c_str(), pBinary, binarySize);
 }
 
-bool BinaryCache::loadCachedBinary(const std::string kernelFileHash, Program &program) {
-    void *pBinary = nullptr;
-    size_t binarySize = 0;
-
+std::unique_ptr<char[]> BinaryCache::loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) {
     std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
 
-    {
-        std::lock_guard<std::mutex> lock(cacheAccessMtx);
-        binarySize = loadDataFromFile(filePath.c_str(), pBinary);
-    }
-
-    if ((pBinary == nullptr) || (binarySize == 0)) {
-        deleteDataReadFromFile(pBinary);
-        return false;
-    }
-    program.storeGenBinary(pBinary, binarySize);
-
-    deleteDataReadFromFile(pBinary);
-
-    return true;
+    std::lock_guard<std::mutex> lock(cacheAccessMtx);
+    return loadDataFromFile(filePath.c_str(), cachedBinarySize);
 }
 
 } // namespace NEO

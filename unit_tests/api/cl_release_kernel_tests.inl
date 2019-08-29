@@ -26,20 +26,20 @@ TEST_F(clReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsC
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    void *binary = nullptr;
     size_t binarySize = 0;
     std::string testFile;
     retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-    binarySize = loadDataFromFile(testFile.c_str(), binary);
+    auto binary = loadDataFromFile(testFile.c_str(), binarySize);
 
     ASSERT_NE(0u, binarySize);
     ASSERT_NE(nullptr, binary);
 
+    unsigned const char *binaries[1] = {reinterpret_cast<const unsigned char *>(binary.get())};
     program = clCreateProgramWithBinary(pContext, num_devices, devices, &binarySize,
-                                        (const unsigned char **)&binary, &binaryStatus, &retVal);
+                                        binaries, &binaryStatus, &retVal);
 
-    deleteDataReadFromFile(binary);
+    binary.reset();
 
     EXPECT_NE(nullptr, program);
     ASSERT_EQ(CL_SUCCESS, retVal);

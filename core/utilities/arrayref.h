@@ -18,73 +18,73 @@ class ArrayRef {
     using const_iterator = const DataType *;
 
     template <typename IteratorType>
-    ArrayRef(IteratorType b, IteratorType e) {
-        if (b != nullptr) {
-            this->b = &*b;
-            this->e = &*(e - 1) + 1;
+    ArrayRef(IteratorType begIt, IteratorType endIt) {
+        if (begIt != nullptr) {
+            this->begIt = &*begIt;
+            this->endIt = &*(endIt - 1) + 1;
         } else {
-            this->b = nullptr;
-            this->e = nullptr;
+            this->begIt = nullptr;
+            this->endIt = nullptr;
         }
     }
 
     template <typename IteratorType>
-    ArrayRef(IteratorType b, size_t s)
-        : ArrayRef(b, b + s) {
+    ArrayRef(IteratorType first, size_t size)
+        : ArrayRef(first, (size > 0) ? (first + size) : first) {
     }
 
     template <typename SequentialContainerType>
     ArrayRef(SequentialContainerType &ctr)
-        : b(&*ctr.begin()), e(&*(ctr.end() - 1) + 1) {
+        : begIt((ctr.size() > 0) ? &*ctr.begin() : nullptr), endIt((ctr.size() > 0) ? (&*(ctr.end() - 1) + 1) : nullptr) {
     }
 
     template <size_t Size>
     ArrayRef(DataType (&array)[Size])
-        : b(&array[0]), e(&array[Size]) {
+        : begIt(&array[0]), endIt(&array[Size]) {
     }
 
     ArrayRef() = default;
 
     size_t size() const {
-        return e - b;
+        return endIt - begIt;
     }
 
     DataType &operator[](std::size_t idx) {
-        return b[idx];
+        return begIt[idx];
     }
 
     const DataType &operator[](std::size_t idx) const {
-        return b[idx];
+        return begIt[idx];
     }
 
     iterator begin() {
-        return b;
+        return begIt;
     }
 
     const_iterator begin() const {
-        return b;
+        return begIt;
     }
 
     iterator end() {
-        return e;
+        return endIt;
     }
 
     const_iterator end() const {
-        return e;
+        return endIt;
     }
 
     void swap(ArrayRef &rhs) {
-        std::swap(b, rhs.b);
-        std::swap(e, rhs.e);
+        std::swap(begIt, rhs.begIt);
+        std::swap(endIt, rhs.endIt);
     }
 
     operator ArrayRef<const DataType>() {
-        return ArrayRef<const DataType>(b, e);
+        return ArrayRef<const DataType>(begIt, endIt);
     }
 
   private:
-    DataType *b = nullptr;
-    DataType *e = nullptr;
+    DataType *begIt = nullptr;
+    DataType *endIt = nullptr;
 };
 
 template <typename T>

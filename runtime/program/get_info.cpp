@@ -122,7 +122,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
 
     case CL_PROGRAM_DEBUG_INFO_INTEL:
         resolveProgramBinary();
-        pSrc = debugData;
+        pSrc = debugData.get();
         retSize = numDevices * sizeof(void **);
         srcSize = debugDataSize;
         if (paramValue != nullptr) {

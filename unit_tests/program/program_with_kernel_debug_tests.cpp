@@ -50,7 +50,7 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
         kbHelper = std::make_unique<KernelBinaryHelper>(filename, false);
-        CreateProgramWithSource<MockProgram>(
+        CreateProgramWithSource(
             pContext,
             &device,
             "copybuffer.cl");
@@ -258,10 +258,9 @@ TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuilt
     if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
 
-        size_t debugDataSize = 0;
-        auto debugData = mockProgram->getDebugDataBinary(debugDataSize);
+        auto debugData = mockProgram->getDebugData();
         EXPECT_NE(nullptr, debugData);
-        EXPECT_NE(0u, debugDataSize);
+        EXPECT_NE(0u, mockProgram->getDebugDataSize());
     }
 }
 

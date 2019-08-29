@@ -6,11 +6,12 @@
  */
 
 #pragma once
+#include "core/helpers/string.h"
+#include "core/utilities/arrayref.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/os_interface/os_library.h"
 
-#include "CL/cl_platform.h"
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
@@ -23,16 +24,78 @@ namespace NEO {
 class Device;
 class Program;
 
-struct TranslationArgs {
-    char *pInput = nullptr;                 // data to be translated
-    uint32_t InputSize = 0;                 // size of data to be translated
-    const char *pOptions = nullptr;         // list of build/compile options
-    uint32_t OptionsSize = 0;               // size of options list
-    const char *pInternalOptions = nullptr; // list of build/compile options
-    uint32_t InternalOptionsSize = 0;       // size of options list
-    void *pTracingOptions = nullptr;        // instrumentation options
-    uint32_t TracingOptionsCount = 0;       // number of instrumentation options
-    void *GTPinInput = nullptr;             // input structure for GTPin requests
+struct TranslationInput {
+    TranslationInput(IGC::CodeType::CodeType_t srcType, IGC::CodeType::CodeType_t outType, IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::undefined)
+        : srcType(srcType), preferredIntermediateType(preferredIntermediateType), outType(outType) {
+    }
+
+    bool allowCaching = false;
+
+    ArrayRef<const char> src;
+    ArrayRef<const char> apiOptions;
+    ArrayRef<const char> internalOptions;
+    const char *tracingOptions = nullptr;
+    uint32_t tracingOptionsCount = 0;
+    IGC::CodeType::CodeType_t srcType = IGC::CodeType::invalid;
+    IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::invalid;
+    IGC::CodeType::CodeType_t outType = IGC::CodeType::invalid;
+    void *GTPinInput = nullptr;
+
+    struct SpecConstants {
+        CIF::Builtins::BufferLatest *idsBuffer = nullptr;
+        CIF::Builtins::BufferLatest *sizesBuffer = nullptr;
+        CIF::Builtins::BufferLatest *valuesBuffer = nullptr;
+    } specConstants;
+};
+
+struct TranslationOutput {
+    enum class ErrorCode {
+        Success = 0,
+        CompilerNotAvailable,
+        CompilationFailure,
+        BuildFailure,
+        LinkFailure,
+        AlreadyCompiled,
+        UnknownError,
+    };
+
+    struct MemAndSize {
+        std::unique_ptr<char[]> mem;
+        size_t size = 0;
+    };
+
+    IGC::CodeType::CodeType_t intermediateCodeType = IGC::CodeType::invalid;
+    MemAndSize intermediateRepresentation;
+    MemAndSize deviceBinary;
+    MemAndSize debugData;
+    std::string frontendCompilerLog;
+    std::string backendCompilerLog;
+
+    template <typename ContainerT>
+    static void makeCopy(ContainerT &dst, CIF::Builtins::BufferSimple *src) {
+        if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
+            dst.clear();
+            return;
+        }
+        dst.assign(src->GetMemory<char>(), src->GetSize<char>());
+    }
+
+    static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
+        if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
+            dst.mem.reset();
+            dst.size = 0U;
+            return;
+        }
+
+        dst.size = src->GetSize<char>();
+        dst.mem = ::makeCopy(src->GetMemory<void>(), src->GetSize<char>());
+    }
+};
+
+struct SpecConstantInfo {
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> idsBuffer;
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> sizesBuffer;
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> valuesBuffer;
 };
 
 class CompilerInterface {
@@ -40,41 +103,52 @@ class CompilerInterface {
     CompilerInterface();
     CompilerInterface(const CompilerInterface &) = delete;
     CompilerInterface &operator=(const CompilerInterface &) = delete;
+    CompilerInterface(CompilerInterface &&) = delete;
+    CompilerInterface &operator=(CompilerInterface &&) = delete;
     virtual ~CompilerInterface();
 
-    static CompilerInterface *createInstance() {
+    static CompilerInterface *createInstance(bool requireFcl) {
         auto instance = new CompilerInterface();
-        if (!instance->initialize()) {
+        if (!instance->initialize(requireFcl)) {
             delete instance;
             instance = nullptr;
         }
         return instance;
     }
 
-    MOCKABLE_VIRTUAL cl_int build(Program &program, const TranslationArgs &pInputArgs, bool enableCaching);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode build(const NEO::Device &device,
+                                                        const TranslationInput &input,
+                                                        TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL cl_int compile(Program &program, const TranslationArgs &pInputArgs);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode compile(const NEO::Device &device,
+                                                          const TranslationInput &input,
+                                                          TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL cl_int link(Program &program, const TranslationArgs &pInputArgs);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode link(const NEO::Device &device,
+                                                       const TranslationInput &input,
+                                                       TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL cl_int getSpecConstantsInfo(Program &program, const TranslationArgs &inputArgs);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
+                                                                       ArrayRef<const char> srcSpirV, SpecConstantInfo &output);
 
-    cl_int createLibrary(Program &program, const TranslationArgs &pInputArgs);
+    TranslationOutput::ErrorCode createLibrary(NEO::Device &device,
+                                               const TranslationInput &input,
+                                               TranslationOutput &output);
 
-    MOCKABLE_VIRTUAL cl_int getSipKernelBinary(SipKernelType kernel, const Device &device, std::vector<char> &retBinary);
+    MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary);
 
     BinaryCache *replaceBinaryCache(BinaryCache *newCache);
 
   protected:
-    bool initialize();
+    bool initialize(bool requireFcl);
+    MOCKABLE_VIRTUAL bool loadFcl();
+    MOCKABLE_VIRTUAL bool loadIgc();
 
     static std::mutex mtx;
     MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() {
         return std::unique_lock<std::mutex>{mtx};
     }
     std::unique_ptr<BinaryCache> cache = nullptr;
-
-    static bool useLlvmText;
 
     using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
@@ -98,8 +172,18 @@ class CompilerInterface {
                                                                                                 IGC::CodeType::CodeType_t inType,
                                                                                                 IGC::CodeType::CodeType_t outType);
 
-    bool isCompilerAvailable() const {
-        return (fclMain != nullptr) && (igcMain != nullptr);
+    bool isFclAvailable() const {
+        return (fclMain != nullptr);
+    }
+
+    bool isIgcAvailable() const {
+        return (igcMain != nullptr);
+    }
+
+    bool isCompilerAvailable(IGC::CodeType::CodeType_t translationSrc, IGC::CodeType::CodeType_t translationDst) const {
+        bool requiresFcl = (IGC::CodeType::oclC == translationSrc);
+        bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
+        return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable() || (false == requiresIgc));
     }
 };
 } // namespace NEO

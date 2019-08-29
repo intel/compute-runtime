@@ -51,17 +51,19 @@ cl_int Program::processElfBinary(
             const auto &sectionHeader = elfReader.getSectionHeaders()[i];
             switch (sectionHeader.Type) {
             case CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV:
-                isSpirV = true;
+                this->isSpirV = true;
                 CPP_ATTRIBUTE_FALLTHROUGH;
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY:
                 if (sectionHeader.DataSize > 0) {
-                    storeIrBinary(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize), isSpirV);
+                    this->irBinary = makeCopy(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
+                    this->irBinarySize = static_cast<size_t>(sectionHeader.DataSize);
                 }
                 break;
 
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY:
                 if (sectionHeader.DataSize > 0 && validateGenBinaryHeader(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)))) {
-                    storeGenBinary(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
+                    this->genBinary = makeCopy(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
+                    this->genBinarySize = static_cast<size_t>(sectionHeader.DataSize);
                     isCreatedFromBinary = true;
                 } else {
                     getProgramCompilerVersion(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)), binaryVersion);
@@ -134,19 +136,19 @@ cl_int Program::resolveProgramBinary() {
         CLElfLib::CElfWriter elfWriter(headerType, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
         elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "BuildOptions", options, static_cast<uint32_t>(strlen(options.c_str()) + 1u)));
-        std::string irBinaryTemp = irBinary ? std::string(irBinary, irBinarySize) : "";
+        std::string irBinaryTemp = irBinary ? std::string(irBinary.get(), irBinarySize) : "";
         // Add the LLVM component if available
         elfWriter.addSection(CLElfLib::SSectionNode(getIsSpirV() ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
                                                     headerType == CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY ? "Intel(R) OpenCL LLVM Archive" : "Intel(R) OpenCL LLVM Object", std::move(irBinaryTemp), static_cast<uint32_t>(irBinarySize)));
         // Add the device binary if it exists
         if (genBinary) {
-            std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
+            std::string genBinaryTemp = genBinary ? std::string(genBinary.get(), genBinarySize) : "";
             elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
         }
 
         // Add the device debug data if it exists
         if (debugData != nullptr) {
-            std::string debugDataTemp = debugData ? std::string(debugData, debugDataSize) : "";
+            std::string debugDataTemp = debugData ? std::string(debugData.get(), debugDataSize) : "";
             elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_DEBUG, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Debug", std::move(debugDataTemp), static_cast<uint32_t>(debugDataSize)));
         }
 

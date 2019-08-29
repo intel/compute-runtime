@@ -24,7 +24,7 @@ namespace ULT {
 
 TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
-    void *pSource = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
 
@@ -32,17 +32,19 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     testFile.append(clFiles);
     testFile.append("CopyBuffer_simd8.cl");
 
-    sourceSize = loadDataFromFile(
+    pSource = loadDataFromFile(
         testFile.c_str(),
-        pSource);
+        sourceSize);
 
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
+    const char *sourceArray[1] = {pSource.get()};
+
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        (const char **)&pSource,
+        sourceArray,
         &sourceSize,
         &retVal);
 
@@ -62,12 +64,10 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    deleteDataReadFromFile(pSource);
-
     pProgram = clCreateProgramWithSource(
         nullptr,
         1,
-        (const char **)&pSource,
+        sourceArray,
         &sourceSize,
         nullptr);
     EXPECT_EQ(nullptr, pProgram);
@@ -76,28 +76,29 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
 TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    void *pBinary = nullptr;
+    std::unique_ptr<char[]> pBinary = nullptr;
     size_t binarySize = 0;
     std::string testFile;
     retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-    binarySize = loadDataFromFile(
+    pBinary = loadDataFromFile(
         testFile.c_str(),
-        pBinary);
+        binarySize);
 
     ASSERT_NE(0u, binarySize);
     ASSERT_NE(nullptr, pBinary);
 
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         num_devices,
         devices,
         &binarySize,
-        (const unsigned char **)&pBinary,
+        binaries,
         &binaryStatus,
         &retVal);
 
-    deleteDataReadFromFile(pBinary);
+    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -119,30 +120,29 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
 TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    void *pBinary = nullptr;
     size_t binarySize = 0;
     std::string testFile;
     retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-    binarySize = loadDataFromFile(
+    auto pBinary = loadDataFromFile(
         testFile.c_str(),
-        pBinary);
+        binarySize);
 
     ASSERT_NE(0u, binarySize);
     ASSERT_NE(nullptr, pBinary);
-
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         num_devices,
         devices,
         &binarySize,
-        (const unsigned char **)&pBinary,
+        binaries,
         &binaryStatus,
         &retVal);
 
     auto pInternalProgram = castToObject<Program>(pProgram);
 
-    deleteDataReadFromFile(pBinary);
+    pBinary.reset();
     auto storedOptionsSize = pInternalProgram->getOptions().size();
 
     EXPECT_NE(nullptr, pProgram);
@@ -171,16 +171,16 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
 TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    char llvm[16] = "BC\xc0\xde";
-    void *binary = llvm;
+    unsigned char llvm[16] = "BC\xc0\xde";
     size_t binarySize = sizeof(llvm);
 
+    const unsigned char *binaries[1] = {llvm};
     pProgram = clCreateProgramWithBinary(
         pContext,
         num_devices,
         devices,
         &binarySize,
-        (const unsigned char **)&binary,
+        binaries,
         &binaryStatus,
         &retVal);
 

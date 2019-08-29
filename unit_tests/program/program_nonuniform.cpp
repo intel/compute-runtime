@@ -194,7 +194,7 @@ class ProgramNonUniformTest : public ContextFixture,
 
 TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform21) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        CreateProgramFromBinary<MockProgram>(pContext, &device, "kernel_data_param");
+        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
         auto mockProgram = (MockProgram *)pProgram;
         ASSERT_NE(nullptr, mockProgram);
 
@@ -236,8 +236,8 @@ TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform21) {
 
 TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform20) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.0") != std::string::npos) {
-        CreateProgramFromBinary<MockProgram>(pContext, &device, "kernel_data_param");
-        auto mockProgram = (MockProgram *)pProgram;
+        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+        auto mockProgram = pProgram;
         ASSERT_NE(nullptr, mockProgram);
 
         mockProgram->setBuildOptions("-cl-std=CL2.0");
@@ -277,8 +277,8 @@ TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform20) {
 }
 
 TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform12) {
-    CreateProgramFromBinary<MockProgram>(pContext, &device, "kernel_data_param");
-    auto mockProgram = (MockProgram *)pProgram;
+    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
     mockProgram->setBuildOptions("-cl-std=CL1.2");

@@ -50,7 +50,7 @@ class ProgramFromSourceTest : public ContextFixture,
     }
 
     virtual void TearDown() {
-        deleteDataReadFromFile(knownSource);
+        knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         PlatformFixture::TearDown();
