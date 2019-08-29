@@ -20,8 +20,6 @@
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 
-extern PRODUCT_FAMILY defaultProductFamily;
-
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 

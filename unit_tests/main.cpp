@@ -59,7 +59,6 @@ TestEnvironment *gEnvironment;
 
 PRODUCT_FAMILY productFamily = IGFX_SKYLAKE;
 GFXCORE_FAMILY renderCoreFamily = IGFX_GEN9_CORE;
-PRODUCT_FAMILY defaultProductFamily = productFamily;
 
 extern std::string lastTest;
 bool generateRandomInput = false;
