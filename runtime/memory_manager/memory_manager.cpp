@@ -50,7 +50,7 @@ MemoryManager::~MemoryManager() {
         engine.osContext->decRefInternal();
     }
     if (reservedMemory) {
-        alignedFreeWrapper(reservedMemory);
+        MemoryManager::alignedFreeWrapper(reservedMemory);
     }
 }
 
