@@ -88,27 +88,6 @@ TEST(MemObjHelper, givenValidPropertiesWhenValidatingMemoryPropertiesThenTrueIsR
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
 }
 
-TEST(MemObjHelper, givenInvalidPropertiesWhenValidatingMemoryPropertiesThenFalseIsReturned) {
-    MemoryProperties properties;
-    properties.flags = (1 << 31);
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
-
-    properties.flags = CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_NO_ACCESS_INTEL;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
-
-    properties.flags = CL_MEM_NO_ACCESS_INTEL;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
-
-    properties.flags_intel = (1 << 31);
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
-
-    properties.flags = 0;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
-}
-
 struct Image1dWithAccessFlagsUnrestricted : public Image1dDefaults {
     enum { flags = CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL };
 };

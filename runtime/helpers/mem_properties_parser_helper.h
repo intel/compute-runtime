@@ -16,7 +16,13 @@ namespace NEO {
 
 class MemoryPropertiesParser {
   public:
-    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct);
+    enum class ObjType {
+        UNKNOWN,
+        BUFFER,
+        IMAGE,
+    };
+
+    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct, ObjType objectType);
 
     static AllocationProperties getAllocationProperties(MemoryPropertiesFlags memoryProperties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {

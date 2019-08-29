@@ -5,9 +5,7 @@
  *
  */
 
-#include "runtime/mem_obj/mem_obj_helper.h"
-
-#include "common/helpers/bit_helpers.h"
+#include "runtime/mem_obj/mem_obj_helper_common.inl"
 
 #include "memory_properties_flags.h"
 
@@ -21,7 +19,8 @@ bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &propert
     return true;
 }
 
-void MemObjHelper::addExtraMemoryProperties(MemoryProperties &properties) {
-}
+const uint64_t MemObjHelper::extraFlags = 0;
+
+const uint64_t MemObjHelper::extraFlagsIntel = 0;
 
 } // namespace NEO

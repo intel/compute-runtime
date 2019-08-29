@@ -6,21 +6,25 @@
  */
 
 #include "runtime/helpers/mem_properties_parser_helper.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 
+#include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
 TEST(MemoryPropertiesParser, givenNullPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
     MemoryProperties propertiesStruct;
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(nullptr, propertiesStruct));
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(nullptr, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::UNKNOWN));
 }
 
 TEST(MemoryPropertiesParser, givenEmptyPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {0};
 
     MemoryProperties propertiesStruct;
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct));
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::UNKNOWN));
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER));
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE));
 }
 
 TEST(MemoryPropertiesParser, givenValidPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
@@ -33,7 +37,31 @@ TEST(MemoryPropertiesParser, givenValidPropertiesWhenParsingMemoryPropertiesThen
         0};
 
     MemoryProperties propertiesStruct;
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct));
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::UNKNOWN));
+}
+
+TEST(MemoryPropertiesParser, givenValidPropertiesWhenParsingMemoryPropertiesForBufferThenTrueIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForBuffer,
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForBufferIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::BUFFER));
+}
+
+TEST(MemoryPropertiesParser, givenValidPropertiesWhenParsingMemoryPropertiesForImageThenTrueIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForImage,
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForImageIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::IMAGE));
 }
 
 TEST(MemoryPropertiesParser, givenInvalidPropertiesWhenParsingMemoryPropertiesThenFalseIsReturned) {
@@ -42,7 +70,81 @@ TEST(MemoryPropertiesParser, givenInvalidPropertiesWhenParsingMemoryPropertiesTh
         0};
 
     MemoryProperties propertiesStruct;
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct));
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::UNKNOWN));
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::BUFFER));
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::IMAGE));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidPropertiesWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForBuffer,
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForBufferIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::IMAGE));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidFlagsWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        (1 << 30),
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForImageIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::IMAGE));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForImage,
+        CL_MEM_FLAGS_INTEL,
+        (1 << 30),
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::IMAGE));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidPropertiesWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForImage,
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForImageIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::BUFFER));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidFlagsWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        (1 << 30),
+        CL_MEM_FLAGS_INTEL,
+        MemObjHelper::validFlagsForBufferIntel,
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::BUFFER));
+}
+
+TEST(MemoryPropertiesParser, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS,
+        MemObjHelper::validFlagsForBuffer,
+        CL_MEM_FLAGS_INTEL,
+        (1 << 30),
+        0};
+
+    MemoryProperties propertiesStruct;
+    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::ObjType::BUFFER));
 }
 
 TEST(MemoryPropertiesParser, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {

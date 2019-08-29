@@ -591,7 +591,12 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
 
     MemoryProperties propertiesStruct;
     propertiesStruct.flags = flags;
-    Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
+
+    if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer)) {
+        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
+    } else {
+        retVal = CL_INVALID_VALUE;
+    }
 
     err.set(retVal);
     DBG_LOG_INPUTS("buffer", buffer);
@@ -616,10 +621,10 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     MemoryProperties propertiesStruct;
-    if (!MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct)) {
-        retVal = CL_INVALID_VALUE;
-    } else {
+    if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER)) {
         Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
+    } else {
+        retVal = CL_INVALID_VALUE;
     }
 
     err.set(retVal);
@@ -759,7 +764,11 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
-        image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
+        if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage)) {
+            image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
+        } else {
+            retVal = CL_INVALID_VALUE;
+        }
     }
 
     ErrorCodeHelper err(errcodeRet, retVal);
@@ -794,7 +803,7 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct)) {
+        if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE)) {
             image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;

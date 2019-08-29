@@ -7,9 +7,11 @@
 
 #include "runtime/helpers/mem_properties_parser_helper.h"
 
+#include "runtime/mem_obj/mem_obj_helper.h"
+
 namespace NEO {
 
-bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct) {
+bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct, ObjType objectType) {
     if (properties == nullptr) {
         return true;
     }
@@ -25,6 +27,17 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
         default:
             return false;
         }
+    }
+
+    switch (objectType) {
+    case MemoryPropertiesParser::ObjType::BUFFER:
+        return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer) &&
+               isFieldValid(propertiesStruct.flags_intel, MemObjHelper::validFlagsForBufferIntel);
+    case MemoryPropertiesParser::ObjType::IMAGE:
+        return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage) &&
+               isFieldValid(propertiesStruct.flags_intel, MemObjHelper::validFlagsForImageIntel);
+    default:
+        break;
     }
     return true;
 }
