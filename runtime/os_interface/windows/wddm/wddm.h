@@ -7,7 +7,6 @@
 
 #pragma once
 #include "core/command_stream/preemption_mode.h"
-#include "core/memory_manager/eviction_status.h"
 #include "core/utilities/spinlock.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/debug_helpers.h"

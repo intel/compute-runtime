@@ -27,9 +27,6 @@ struct MakeResidentCall : CallResult {
     std::vector<D3DKMT_HANDLE> handlePack;
     uint32_t handleCount = 0;
 };
-struct EvictCallResult : CallResult {
-    EvictionStatus status = EvictionStatus::UNKNOWN;
-};
 struct KmDafLockCall : CallResult {
     std::vector<D3DKMT_HANDLE> lockedAllocations;
 };
@@ -38,6 +35,9 @@ struct WaitFromCpuResult : CallResult {
 };
 struct FreeGpuVirtualAddressCall : CallResult {
     uint64_t sizePassed = -1;
+};
+struct MemoryOperationResult : CallResult {
+    MemoryOperationsStatus operationSuccess = MemoryOperationsStatus::UNSUPPORTED;
 };
 } // namespace WddmMockHelpers
 

@@ -23,12 +23,12 @@ struct DrmMemoryOperationsHandlerTest : public ::testing::Test {
 };
 
 TEST_F(DrmMemoryOperationsHandlerTest, whenMakingResidentAllocaionExpectMakeResidentFail) {
-    EXPECT_FALSE(drmMemoryOperationsHandler->makeResident(graphicsAllocation));
-    EXPECT_FALSE(drmMemoryOperationsHandler->isResident(graphicsAllocation));
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
 }
 
 TEST_F(DrmMemoryOperationsHandlerTest, whenEvictingResidentAllocationExpectEvictFalse) {
-    EXPECT_FALSE(drmMemoryOperationsHandler->makeResident(graphicsAllocation));
-    EXPECT_FALSE(drmMemoryOperationsHandler->evict(graphicsAllocation));
-    EXPECT_FALSE(drmMemoryOperationsHandler->isResident(graphicsAllocation));
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->evict(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
 }

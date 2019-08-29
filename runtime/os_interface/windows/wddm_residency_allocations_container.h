@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/eviction_status.h"
+#include "core/memory_manager/memory_operations_status.h"
 #include "core/utilities/spinlock.h"
 #include "runtime/os_interface/windows/windows_defs.h"
 
@@ -21,12 +21,12 @@ class WddmResidentAllocationsContainer {
     WddmResidentAllocationsContainer(Wddm *wddm) : wddm(wddm) {}
     virtual ~WddmResidentAllocationsContainer();
 
-    bool isAllocationResident(const D3DKMT_HANDLE &handle);
-    MOCKABLE_VIRTUAL EvictionStatus evictAllResources();
-    MOCKABLE_VIRTUAL EvictionStatus evictResource(const D3DKMT_HANDLE &handle);
-    EvictionStatus evictResources(const D3DKMT_HANDLE *handles, const uint32_t count);
-    MOCKABLE_VIRTUAL bool makeResidentResource(const D3DKMT_HANDLE &handle);
-    bool makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count);
+    MemoryOperationsStatus isAllocationResident(const D3DKMT_HANDLE &handle);
+    MOCKABLE_VIRTUAL MemoryOperationsStatus evictAllResources();
+    MOCKABLE_VIRTUAL MemoryOperationsStatus evictResource(const D3DKMT_HANDLE &handle);
+    MemoryOperationsStatus evictResources(const D3DKMT_HANDLE *handles, const uint32_t count);
+    MOCKABLE_VIRTUAL MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle);
+    MemoryOperationsStatus makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count);
     MOCKABLE_VIRTUAL void removeResource(const D3DKMT_HANDLE &handle);
 
   protected:

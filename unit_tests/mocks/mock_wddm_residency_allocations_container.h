@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/memory_manager/memory_operations_status.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "unit_tests/mocks/wddm_mock_helpers.h"
 
@@ -20,22 +21,22 @@ class MockWddmResidentAllocationsContainer : public WddmResidentAllocationsConta
     MockWddmResidentAllocationsContainer(Wddm *wddm) : WddmResidentAllocationsContainer(wddm) {}
     virtual ~MockWddmResidentAllocationsContainer() = default;
 
-    bool makeResidentResource(const D3DKMT_HANDLE &handle) override {
+    MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle) override {
         makeResidentResult.called++;
-        makeResidentResult.success = WddmResidentAllocationsContainer::makeResidentResource(handle);
-        return makeResidentResult.success;
+        makeResidentResult.operationSuccess = WddmResidentAllocationsContainer::makeResidentResource(handle);
+        return makeResidentResult.operationSuccess;
     }
 
-    EvictionStatus evictAllResources() override {
+    MemoryOperationsStatus evictAllResources() override {
         evictAllResourcesResult.called++;
-        evictAllResourcesResult.status = WddmResidentAllocationsContainer::evictAllResources();
-        return evictAllResourcesResult.status;
+        evictAllResourcesResult.operationSuccess = WddmResidentAllocationsContainer::evictAllResources();
+        return evictAllResourcesResult.operationSuccess;
     }
 
-    EvictionStatus evictResource(const D3DKMT_HANDLE &handle) override {
+    MemoryOperationsStatus evictResource(const D3DKMT_HANDLE &handle) override {
         evictResourceResult.called++;
-        evictResourceResult.status = WddmResidentAllocationsContainer::evictResource(handle);
-        return evictResourceResult.status;
+        evictResourceResult.operationSuccess = WddmResidentAllocationsContainer::evictResource(handle);
+        return evictResourceResult.operationSuccess;
     }
 
     std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override {
@@ -49,11 +50,11 @@ class MockWddmResidentAllocationsContainer : public WddmResidentAllocationsConta
         WddmResidentAllocationsContainer::removeResource(handle);
     }
 
-    WddmMockHelpers::CallResult makeResidentResult;
-    WddmMockHelpers::CallResult acquireLockResult;
-    WddmMockHelpers::CallResult removeResourceResult;
-    WddmMockHelpers::EvictCallResult evictAllResourcesResult;
-    WddmMockHelpers::EvictCallResult evictResourceResult;
+    WddmMockHelpers::MemoryOperationResult makeResidentResult;
+    WddmMockHelpers::MemoryOperationResult acquireLockResult;
+    WddmMockHelpers::MemoryOperationResult removeResourceResult;
+    WddmMockHelpers::MemoryOperationResult evictAllResourcesResult;
+    WddmMockHelpers::MemoryOperationResult evictResourceResult;
 };
 
 } // namespace NEO

@@ -12,16 +12,16 @@ namespace NEO {
 DrmMemoryOperationsHandler::DrmMemoryOperationsHandler() {
 }
 
-bool DrmMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
-    return false;
+MemoryOperationsStatus DrmMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
-bool DrmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
-    return false;
+MemoryOperationsStatus DrmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
-bool DrmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
-    return false;
+MemoryOperationsStatus DrmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
 } // namespace NEO

@@ -16,8 +16,8 @@ class MockMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandler() {}
     virtual ~MockMemoryOperationsHandler() {}
-    bool makeResident(GraphicsAllocation &gfxAllocation) { return false; }
-    bool evict(GraphicsAllocation &gfxAllocation) { return false; }
-    bool isResident(GraphicsAllocation &gfxAllocation) { return false; }
+    MemoryOperationsStatus makeResident(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
 };
 } // namespace NEO

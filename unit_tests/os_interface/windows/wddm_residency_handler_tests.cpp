@@ -26,12 +26,12 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
 };
 
 TEST_F(WddmMemoryOperationsHandlerTest, whenMakingResidentAllocaionExpectMakeResidentCalled) {
-    EXPECT_TRUE(wddmMemoryOperationsHandler->makeResident(wddmAllocation));
-    EXPECT_TRUE(wddmMemoryOperationsHandler->isResident(wddmAllocation));
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(wddmAllocation), MemoryOperationsStatus::SUCCESS);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, whenEvictingResidentAllocationExpectEvictCalled) {
-    EXPECT_TRUE(wddmMemoryOperationsHandler->makeResident(wddmAllocation));
-    EXPECT_TRUE(wddmMemoryOperationsHandler->evict(wddmAllocation));
-    EXPECT_FALSE(wddmMemoryOperationsHandler->isResident(wddmAllocation));
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }

@@ -343,10 +343,10 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             if (!trimmingDone) {
                 auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
-                if (evictionStatus == EvictionStatus::SUCCESS) {
+                if (evictionStatus == MemoryOperationsStatus::SUCCESS) {
                     continue;
                 }
-                DEBUG_BREAK_IF(evictionStatus != EvictionStatus::NOT_APPLIED);
+                DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::MEMORY_NOT_FOUND);
                 result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, true, &bytesToTrim);
                 break;
             }

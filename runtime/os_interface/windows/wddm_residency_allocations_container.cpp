@@ -17,58 +17,58 @@ WddmResidentAllocationsContainer::~WddmResidentAllocationsContainer() {
     evictAllResources();
 }
 
-bool WddmResidentAllocationsContainer::isAllocationResident(const D3DKMT_HANDLE &handle) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::isAllocationResident(const D3DKMT_HANDLE &handle) {
     auto lock = acquireLock(resourcesLock);
     auto position = std::find(resourceHandles.begin(), resourceHandles.end(), handle);
-    return position != resourceHandles.end();
+    return position != resourceHandles.end() ? MemoryOperationsStatus::SUCCESS : MemoryOperationsStatus::MEMORY_NOT_FOUND;
 }
 
-EvictionStatus WddmResidentAllocationsContainer::evictAllResources() {
+MemoryOperationsStatus WddmResidentAllocationsContainer::evictAllResources() {
     decltype(resourceHandles) resourcesToEvict;
     auto lock = acquireLock(resourcesLock);
     resourceHandles.swap(resourcesToEvict);
     if (resourcesToEvict.empty()) {
-        return EvictionStatus::NOT_APPLIED;
+        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
     }
     uint64_t sizeToTrim = 0;
     uint32_t evictedResources = static_cast<uint32_t>(resourcesToEvict.size());
     bool success = wddm->evict(resourcesToEvict.data(), evictedResources, sizeToTrim);
-    return success ? EvictionStatus::SUCCESS : EvictionStatus::FAILED;
+    return success ? MemoryOperationsStatus::SUCCESS : MemoryOperationsStatus::FAILED;
 }
 
-EvictionStatus WddmResidentAllocationsContainer::evictResource(const D3DKMT_HANDLE &handle) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::evictResource(const D3DKMT_HANDLE &handle) {
     return evictResources(&handle, 1u);
 }
 
-EvictionStatus WddmResidentAllocationsContainer::evictResources(const D3DKMT_HANDLE *handles, const uint32_t count) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::evictResources(const D3DKMT_HANDLE *handles, const uint32_t count) {
     auto lock = acquireLock(resourcesLock);
     auto position = std::find(resourceHandles.begin(), resourceHandles.end(), handles[0]);
     if (position == resourceHandles.end()) {
-        return EvictionStatus::NOT_APPLIED;
+        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
     }
     auto distance = static_cast<size_t>(std::distance(resourceHandles.begin(), position));
     UNRECOVERABLE_IF(distance + count > resourceHandles.size());
     resourceHandles.erase(position, position + count);
     uint64_t sizeToTrim = 0;
     if (!wddm->evict(handles, count, sizeToTrim)) {
-        return EvictionStatus::FAILED;
+        return MemoryOperationsStatus::FAILED;
     }
-    return EvictionStatus::SUCCESS;
+    return MemoryOperationsStatus::SUCCESS;
 }
 
-bool WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle) {
     return makeResidentResources(&handle, 1u);
 }
 
-bool WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count) {
     bool madeResident = false;
     while (!(madeResident = wddm->makeResident(handles, count, false, nullptr))) {
-        if (evictAllResources() == EvictionStatus::SUCCESS) {
+        if (evictAllResources() == MemoryOperationsStatus::SUCCESS) {
             continue;
         }
         if (!wddm->makeResident(handles, count, false, nullptr)) {
             DEBUG_BREAK_IF(true);
-            return false;
+            return MemoryOperationsStatus::OUT_OF_MEMORY;
         };
         break;
     }
@@ -79,7 +79,7 @@ bool WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE
     }
     lock.unlock();
     wddm->waitOnPagingFenceFromCpu();
-    return madeResident;
+    return madeResident ? MemoryOperationsStatus::SUCCESS : MemoryOperationsStatus::FAILED;
 }
 
 void WddmResidentAllocationsContainer::removeResource(const D3DKMT_HANDLE &handle) {

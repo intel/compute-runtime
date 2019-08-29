@@ -13,16 +13,16 @@
 TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResidentCalledThenFalseReturned) {
     getMemoryOperationsHandler()->setAubManager(nullptr);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    bool result = memoryOperationsInterface->makeResident(allocation);
-    EXPECT_FALSE(result);
+    auto result = memoryOperationsInterface->makeResident(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::DEVICE_UNINITIALIZED);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThenTrueReturnedAndWriteCalled) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    bool result = memoryOperationsInterface->makeResident(allocation);
-    EXPECT_TRUE(result);
+    auto result = memoryOperationsInterface->makeResident(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
     EXPECT_TRUE(aubManager.writeMemoryCalled);
 }
 
@@ -37,29 +37,29 @@ TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenIsResident
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    bool result = memoryOperationsInterface->isResident(allocation);
-    EXPECT_FALSE(result);
+    auto result = memoryOperationsInterface->isResident(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenIsResidentCalledThenTrueReturned) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(allocation);
-    bool result = memoryOperationsInterface->isResident(allocation);
-    EXPECT_TRUE(result);
+    auto result = memoryOperationsInterface->isResident(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenEvictCalledThenFalseReturned) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    bool result = memoryOperationsInterface->evict(allocation);
-    EXPECT_FALSE(result);
+    auto result = memoryOperationsInterface->evict(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::MEMORY_NOT_FOUND);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenEvictCalledThenTrueReturned) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(allocation);
-    bool result = memoryOperationsInterface->evict(allocation);
-    EXPECT_TRUE(result);
+    auto result = memoryOperationsInterface->evict(allocation);
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
 }

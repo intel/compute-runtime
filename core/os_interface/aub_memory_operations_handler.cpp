@@ -18,35 +18,35 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
     this->aubManager = aubManager;
 }
 
-bool AubMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
     if (!aubManager) {
-        return false;
+        return MemoryOperationsStatus::DEVICE_UNINITIALIZED;
     }
     auto lock = acquireLock(resourcesLock);
     int hint = AubMemDump::DataTypeHintValues::TraceNotype;
     aubManager->writeMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(), gfxAllocation.storageInfo.getMemoryBanks(), hint, gfxAllocation.getUsedPageSize());
     residentAllocations.push_back(&gfxAllocation);
-    return true;
+    return MemoryOperationsStatus::SUCCESS;
 }
 
-bool AubMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {
-        return false;
+        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
     } else {
         residentAllocations.erase(itor, itor + 1);
-        return true;
+        return MemoryOperationsStatus::SUCCESS;
     }
 }
 
-bool AubMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {
-        return false;
+        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
     } else {
-        return true;
+        return MemoryOperationsStatus::SUCCESS;
     }
 }
 void AubMemoryOperationsHandler::setAubManager(aub_stream::AubManager *aubManager) {

@@ -15,8 +15,8 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     DrmMemoryOperationsHandler();
     ~DrmMemoryOperationsHandler() override = default;
 
-    bool makeResident(GraphicsAllocation &gfxAllocation) override;
-    bool evict(GraphicsAllocation &gfxAllocation) override;
-    bool isResident(GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus makeResident(GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) override;
 };
 } // namespace NEO

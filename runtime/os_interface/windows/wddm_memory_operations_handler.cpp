@@ -19,18 +19,17 @@ WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm
     residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
 }
 
-bool WddmMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     return residentAllocations->makeResidentResources(wddmAllocation.getHandles().data(), wddmAllocation.getNumHandles());
 }
 
-bool WddmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
-    auto result = residentAllocations->evictResources(wddmAllocation.getHandles().data(), wddmAllocation.getNumHandles());
-    return result == EvictionStatus::SUCCESS;
+    return residentAllocations->evictResources(wddmAllocation.getHandles().data(), wddmAllocation.getNumHandles());
 }
 
-bool WddmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     return residentAllocations->isAllocationResident(wddmAllocation.getDefaultHandle());
 }

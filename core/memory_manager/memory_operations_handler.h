@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/memory_manager/memory_operations_status.h"
 
 namespace NEO {
 
@@ -16,8 +17,8 @@ class MemoryOperationsHandler {
     MemoryOperationsHandler() = default;
     virtual ~MemoryOperationsHandler() = default;
 
-    virtual bool makeResident(GraphicsAllocation &gfxAllocation) = 0;
-    virtual bool evict(GraphicsAllocation &gfxAllocation) = 0;
-    virtual bool isResident(GraphicsAllocation &gfxAllocation) = 0;
+    virtual MemoryOperationsStatus makeResident(GraphicsAllocation &gfxAllocation) = 0;
+    virtual MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) = 0;
+    virtual MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) = 0;
 };
 } // namespace NEO

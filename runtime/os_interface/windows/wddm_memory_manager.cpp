@@ -292,7 +292,7 @@ void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocatio
     wddm->unlockResource(wddmAllocation.getDefaultHandle());
     if (wddmAllocation.needsMakeResidentBeforeLock) {
         auto evictionStatus = wddm->getTemporaryResourcesContainer()->evictResource(wddmAllocation.getDefaultHandle());
-        DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
+        DEBUG_BREAK_IF(evictionStatus == MemoryOperationsStatus::FAILED);
     }
 }
 void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) {
