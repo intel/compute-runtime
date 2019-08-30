@@ -21,8 +21,6 @@ class LinearStream;
 class TimestampPacketContainer;
 
 struct BlitProperties {
-    BlitProperties() = delete;
-
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
                                                                 GraphicsAllocation *memObjAllocation, void *hostPtr, bool blocking,

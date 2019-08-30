@@ -213,6 +213,13 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         return completionStamp;
     }
 
+    void blitBuffer(const BlitProperties &blitProperites) override {
+        if (!skipBlitCalls) {
+            CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
+        }
+    }
+
+    bool skipBlitCalls = false;
     bool storeFlushedTaskStream = false;
     std::unique_ptr<uint8_t> storedTaskStream;
     size_t storedTaskStreamSize = 0;

@@ -347,7 +347,7 @@ class CommandQueueHw : public CommandQueue {
                                                 LinearStream &commandStream,
                                                 size_t commandStreamStart,
                                                 bool &blocking,
-                                                bool blitEnqueue,
+                                                const EnqueueProperties &enqueueProperties,
                                                 TimestampPacketContainer *previousTimestampPacketNodes,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
@@ -356,11 +356,11 @@ class CommandQueueHw : public CommandQueue {
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
                                       CsrDependencies &csrDeps);
-    void processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
-                                       TimestampPacketContainer &previousTimestampPacketNodes,
-                                       const EventsRequest &eventsRequest,
-                                       LinearStream &commandStream,
-                                       uint32_t commandType);
+    BlitProperties processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
+                                                 TimestampPacketContainer &previousTimestampPacketNodes,
+                                                 const EventsRequest &eventsRequest,
+                                                 LinearStream &commandStream,
+                                                 uint32_t commandType);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
                           LinearStream *commandStream,
