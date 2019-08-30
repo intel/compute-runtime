@@ -56,6 +56,10 @@ TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsT
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.locallyUncachedResource);
 
+    memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
+    EXPECT_TRUE(properties.flags.locallyUncachedInSurfaceState);
+
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL);
     EXPECT_TRUE(properties.flags.forceSharedPhysicalMemory);
 }

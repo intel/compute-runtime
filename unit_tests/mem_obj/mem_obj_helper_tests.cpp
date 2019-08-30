@@ -79,6 +79,10 @@ TEST(MemObjHelper, givenValidPropertiesWhenValidatingMemoryPropertiesThenTrueIsR
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
 
+    properties.flags_intel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
+    EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
+
     properties.flags = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));

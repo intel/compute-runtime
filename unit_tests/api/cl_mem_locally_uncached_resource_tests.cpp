@@ -53,6 +53,7 @@ const size_t localWorkSize[3] = {256, 1, 1};
 
 const cl_mem_properties_intel *propertiesCacheable = nullptr;
 const cl_mem_properties_intel propertiesUncacheable[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
+const cl_mem_properties_intel propertiesUncacheableInSurfaceState[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0};
 
 using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
@@ -113,6 +114,74 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableR
     retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(mocsUncacheable, cmdQueueMocs<FamilyType>(pCmdQ));
+
+    retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &bufferCacheable2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, argMocs<FamilyType>(*kernel, 1));
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
+}
+
+HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedItIsCached) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
+    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto pBufferCacheable2 = clUniquePtr(castToObject<Buffer>(bufferCacheable2));
+
+    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
+    auto pBufferUncacheable1 = clUniquePtr(castToObject<Buffer>(bufferUncacheable1));
+    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
+    auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
+
+    auto mocsCacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocsUncacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &bufferCacheable1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, argMocs<FamilyType>(*kernel, 0));
+
+    retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &bufferCacheable2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, argMocs<FamilyType>(*kernel, 1));
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &bufferUncacheable1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsUncacheable, argMocs<FamilyType>(*kernel, 0));
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
+
+    retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &bufferUncacheable2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsUncacheable, argMocs<FamilyType>(*kernel, 0));
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &bufferCacheable1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, argMocs<FamilyType>(*kernel, 0));
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 
     retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &bufferCacheable2);
     EXPECT_EQ(CL_SUCCESS, retVal);

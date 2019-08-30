@@ -551,7 +551,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
                          isAligned<MemoryConstants::cacheLineSize>(bufferSize);
 
     auto gmmHelper = executionEnvironment->getGmmHelper();
-    if (!disableL3Cache && !isMemObjUncacheable() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
+    if (!disableL3Cache && !isMemObjUncacheableForSurfaceState() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
         return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     } else {
         return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);

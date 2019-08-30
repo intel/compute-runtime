@@ -54,6 +54,7 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 #define CL_MEM_FLAGS_INTEL 0x10001
 #define CL_MEM_LOCALLY_UNCACHED_RESOURCE (1 << 18)
+#define CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE (1 << 21)
 
 // Used with clEnqueueVerifyMemory
 #define CL_MEM_COMPARE_EQUAL 0u

@@ -63,6 +63,11 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(M
     if (isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
         memoryPropertiesFlags.flags.locallyUncachedResource = true;
     }
+
+    if (isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
+        memoryPropertiesFlags.flags.locallyUncachedInSurfaceState = true;
+    }
+
     if (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
         memoryPropertiesFlags.flags.forceSharedPhysicalMemory = true;
     }

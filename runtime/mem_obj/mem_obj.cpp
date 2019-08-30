@@ -236,6 +236,10 @@ bool MemObj::isMemObjUncacheable() const {
     return isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
+bool MemObj::isMemObjUncacheableForSurfaceState() const {
+    return isAnyBitSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+}
+
 GraphicsAllocation *MemObj::getGraphicsAllocation() const {
     return graphicsAllocation;
 }

@@ -21,6 +21,7 @@ struct MemoryFlags {
     uint32_t accessFlagsUnrestricted : 1;
     uint32_t noAccess : 1;
     uint32_t locallyUncachedResource : 1;
+    uint32_t locallyUncachedInSurfaceState : 1;
     uint32_t allowUnrestrictedSize : 1;
     uint32_t forceSharedPhysicalMemory : 1;
 };

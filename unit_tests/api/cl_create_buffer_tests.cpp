@@ -115,7 +115,7 @@ TEST_P(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBuffe
 
 static cl_mem_flags validFlagsIntel[] = {
     CL_MEM_LOCALLY_UNCACHED_RESOURCE,
-};
+    CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE};
 
 INSTANTIATE_TEST_CASE_P(
     CreateBufferCheckFlagsIntel,
