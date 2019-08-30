@@ -48,7 +48,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setInstructionBufferSizeModifyEnable(true);
 
     pCmd->setDynamicStateBufferSize(static_cast<uint32_t>((dsh.getMaxAvailableSpace() + MemoryConstants::pageMask) / MemoryConstants::pageSize));
-    pCmd->setGeneralStateBufferSize(static_cast<uint32_t>(-1));
+    pCmd->setGeneralStateBufferSize(0xfffff);
 
     pCmd->setIndirectObjectBaseAddress(ioh.getHeapGpuBase());
     pCmd->setIndirectObjectBufferSize(ioh.getHeapSizeInPages());
