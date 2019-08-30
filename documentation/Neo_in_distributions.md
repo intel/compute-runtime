@@ -6,7 +6,7 @@
 pacman -S intel-compute-runtime
 ```
 
-## Centos*
+## Centos* 7
 
 ```
 yum install yum-plugin-copr
@@ -26,7 +26,7 @@ swupd bundle-add computer-vision-basic
 cave resolve --execute intel-compute-runtime
 ```
 
-## Fedora* 30 and rawhide
+## Fedora* 30, 31, rawhide
 
 ```
 dnf install dnf-plugins-core
