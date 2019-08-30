@@ -244,7 +244,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         AllocationInfo() {
             flags.coherent = false;
             flags.evictable = true;
-            flags.flushL3Required = false;
+            flags.flushL3Required = true;
             flags.is32BitAllocation = false;
             flags.multiOsContextCapable = false;
         }
