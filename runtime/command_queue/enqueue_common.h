@@ -621,7 +621,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         auto numGrfRequiredByKernel = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
-        if (kernel->hasUncacheableArgs()) {
+        if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
         }
     }

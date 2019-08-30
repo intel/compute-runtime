@@ -294,15 +294,28 @@ class MockKernelWithInternals {
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
 
         if (addDefaultArg) {
-            defaultKernelArguments.resize(1);
+            defaultKernelArguments.resize(2);
             defaultKernelArguments[0] = {};
-            kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
-            kernelInfo.kernelArgInfo.resize(1);
+            defaultKernelArguments[1] = {};
+
+            kernelInfo.resizeKernelArgInfoAndRegisterParameter(2);
+            kernelInfo.kernelArgInfo.resize(2);
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+
+            kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector.resize(1);
+            kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
+            kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+
             mockKernel->setKernelArguments(defaultKernelArguments);
-            mockKernel->kernelArgRequiresCacheFlush.resize(1);
+            mockKernel->kernelArgRequiresCacheFlush.resize(2);
+            mockKernel->kernelArgHandlers.resize(2);
+            mockKernel->kernelArgHandlers[0] = &Kernel::setArgBuffer;
+            mockKernel->kernelArgHandlers[1] = &Kernel::setArgBuffer;
+
+            kernelInfo.kernelArgInfo[1].offsetHeap = 64;
+            kernelInfo.kernelArgInfo[0].offsetHeap = 64;
         }
     }
     ~MockKernelWithInternals() {
