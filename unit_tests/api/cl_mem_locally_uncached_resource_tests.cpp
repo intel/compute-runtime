@@ -353,4 +353,41 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFr
     EXPECT_EQ(mocsUncacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 }
 
+HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateAndAreNotUsedInStatelessFashionThenThoseResourcesAreNotRegistredAsResourcesForCacheFlush) {
+    cl_int retVal = CL_SUCCESS;
+
+    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    auto kernel = mockKernel.mockKernel;
+    mockKernel.kernelInfo.usesSsh = true;
+    mockKernel.kernelInfo.requiresSshForBuffers = true;
+    mockKernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = true;
+    mockKernel.kernelInfo.kernelArgInfo[1].pureStatefulBufferAccess = true;
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+
+    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+
+    retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferUncacheableInSurfaceState);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
+
+    retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferCacheable);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
+
+    retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferUncacheable);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, kernel->kernelArgRequiresCacheFlush[0]);
+
+    clReleaseMemObject(bufferUncacheableInSurfaceState);
+    clReleaseMemObject(bufferUncacheable);
+    clReleaseMemObject(bufferCacheable);
+}
+
 } // namespace clMemLocallyUncachedResourceTests

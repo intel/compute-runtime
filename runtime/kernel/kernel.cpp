@@ -1206,9 +1206,16 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3, isAuxTranslationKernel, kernelArgInfo.isReadOnly);
         }
 
-        kernelArguments[argIndex].isStatelessUncacheable = !kernelArgInfo.pureStatefulBufferAccess ? buffer->isMemObjUncacheable() : false;
+        kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();
 
-        addAllocationToCacheFlushVector(argIndex, buffer->getGraphicsAllocation());
+        auto allocationForCacheFlush = buffer->getGraphicsAllocation();
+
+        //if we make object uncacheable for surface state and there are not stateless accessess , then ther is no need to flush caches
+        if (buffer->isMemObjUncacheableForSurfaceState() && kernelArgInfo.pureStatefulBufferAccess) {
+            allocationForCacheFlush = nullptr;
+        }
+
+        addAllocationToCacheFlushVector(argIndex, allocationForCacheFlush);
         return CL_SUCCESS;
     } else {
 

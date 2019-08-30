@@ -137,7 +137,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
     if (ptrAlloc != nullptr) {
         memoryAllocation = new MemoryAllocation(allocationData.type, ptrAlloc, ptrAlloc, GmmHelper::canonize(gpuAddress),
                                                 allocationData.size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, false,
-                                                false, false);
+                                                false, allocationData.flags.flushL3);
 
         memoryAllocation->set32BitAllocation(true);
         memoryAllocation->setGpuBaseAddress(GmmHelper::canonize(gfxPartition->getHeapBase(heap)));

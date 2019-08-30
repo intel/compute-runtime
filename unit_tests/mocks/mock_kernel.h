@@ -29,6 +29,7 @@ class MockKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::isSchedulerKernel;
+    using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
     using Kernel::kernelSvmGfxAllocations;
@@ -220,9 +221,6 @@ class MockKernel : public Kernel {
 
     std::vector<char> mockCrossThreadData;
     std::vector<char> mockSshLocal;
-
-    // Make protected members from base class publicly accessible in mock class
-    using Kernel::kernelArgHandlers;
 
     void setUsingSharedArgs(bool usingSharedArgValue) { this->usingSharedObjArgs = usingSharedArgValue; }
 
