@@ -1,7 +1,7 @@
-%global neo_commit_id 874ae355f76e93c69ea626aad7e86a41756529aa
+%global neo_commit_id 5f2de3e0839a3b93d1d5b0f9d5d9447fd7cb3c36
 
 Name: intel-opencl
-Version: 19.32.13826
+Version: 19.34.13959
 Release: 1%{?dist}
 Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 
@@ -18,10 +18,10 @@ BuildRequires: make libva-devel gcc-c++ cmake
 %endif
 
 BuildRequires: intel-gmmlib-devel >= 19.2.3
-BuildRequires: intel-igc-opencl-devel >= 1.0.10
+BuildRequires: intel-igc-opencl-devel >= 1.0.2456
 
 Requires: intel-gmmlib >= 19.2.3
-Requires: intel-igc-opencl >= 1.0.10
+Requires: intel-igc-opencl >= 1.0.2456
 
 %description
 Intel(R) Graphics Compute Runtime for OpenCL(TM).
