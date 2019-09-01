@@ -18,6 +18,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_engine_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp

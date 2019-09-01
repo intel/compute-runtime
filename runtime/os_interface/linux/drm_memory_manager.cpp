@@ -510,8 +510,10 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        auto bo = static_cast<DrmAllocation *>(gfxAllocation)->getBO();
-        unreference(bo, bo->isReused ? false : true);
+        auto &bos = static_cast<DrmAllocation *>(gfxAllocation)->getBOs();
+        for (auto bo : bos) {
+            unreference(bo, bo && bo->isReused ? false : true);
+        }
         if (gfxAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
             closeFunction(gfxAllocation->peekSharedHandle());
         }

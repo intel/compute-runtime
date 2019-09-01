@@ -21,7 +21,7 @@ class MockBufferObject : public BufferObject {
 
 class MockDrmAllocation : public DrmAllocation {
   public:
-    using DrmAllocation::bo;
+    using DrmAllocation::bufferObjects;
     using DrmAllocation::memoryPool;
 
     MockDrmAllocation(AllocationType allocationType, MemoryPool::Type pool) : DrmAllocation(allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool, false) {

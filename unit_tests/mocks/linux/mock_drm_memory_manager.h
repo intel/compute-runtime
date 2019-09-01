@@ -37,13 +37,16 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
+    using DrmMemoryManager::drm;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::gfxPartition;
+    using DrmMemoryManager::lockResourceInLocalMemoryImpl;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
+    using DrmMemoryManager::unlockResourceInLocalMemoryImpl;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::useInternal32BitAllocator;
 

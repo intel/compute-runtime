@@ -159,6 +159,13 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     EXPECT_EQ(EFAULT, ret);
 }
 
+TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
+    std::unique_ptr<DrmMockCustom> drmMock(new DrmMockCustom);
+    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000));
+
+    EXPECT_EQ(0x1000u, bo->peekSize());
+}
+
 TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);

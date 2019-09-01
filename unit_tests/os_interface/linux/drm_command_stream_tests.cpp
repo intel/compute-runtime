@@ -24,69 +24,12 @@
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+#include "unit_tests/os_interface/linux/drm_command_stream_fixture.h"
 
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 
 using namespace NEO;
-
-class DrmCommandStreamFixture {
-  public:
-    void SetUp() {
-
-        //make sure this is disabled, we don't want test this now
-        DebugManager.flags.EnableForcePin.set(false);
-
-        mock = std::make_unique<::testing::NiceMock<DrmMockImpl>>(mockFd);
-
-        executionEnvironment.setHwInfo(*platformDevices);
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.osInterface->get()->setDrm(mock.get());
-        executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
-
-        osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-
-        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
-        ASSERT_NE(nullptr, csr);
-        executionEnvironment.commandStreamReceivers.resize(1);
-        executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
-        csr->setupContext(*osContext);
-
-        // Memory manager creates pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
-            .Times(1);
-        memoryManager = new DrmMemoryManager(gemCloseWorkerActive,
-                                             DebugManager.flags.EnableForcePin.get(),
-                                             true,
-                                             executionEnvironment);
-        executionEnvironment.memoryManager.reset(memoryManager);
-        ::testing::Mock::VerifyAndClearExpectations(mock.get());
-
-        //assert we have memory manager
-        ASSERT_NE(nullptr, memoryManager);
-    }
-
-    void TearDown() {
-        memoryManager->waitForDeletions();
-        memoryManager->peekGemCloseWorker()->close(true);
-        executionEnvironment.commandStreamReceivers.clear();
-        ::testing::Mock::VerifyAndClearExpectations(mock.get());
-        // Memory manager closes pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
-            .Times(::testing::AtLeast(1));
-    }
-
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    DrmMemoryManager *memoryManager = nullptr;
-    std::unique_ptr<::testing::NiceMock<DrmMockImpl>> mock;
-    const int mockFd = 33;
-    static const uint64_t alignment = MemoryConstants::allocationAlignment;
-    DebugManagerStateRestore dbgState;
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<OsContextLinux> osContext;
-};
 
 typedef Test<DrmCommandStreamFixture> DrmCommandStreamTest;
 
@@ -550,77 +493,6 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
-/* **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
- * **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
- * **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** */
-class DrmCommandStreamEnhancedFixture
-
-{
-  public:
-    std::unique_ptr<DebugManagerStateRestore> dbgState;
-    ExecutionEnvironment *executionEnvironment;
-    std::unique_ptr<DrmMockCustom> mock;
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-
-    DrmMemoryManager *mm = nullptr;
-    std::unique_ptr<MockDevice> device;
-
-    virtual void SetUp() {
-        executionEnvironment = new ExecutionEnvironment;
-        executionEnvironment->incRefInternal();
-        executionEnvironment->setHwInfo(*platformDevices);
-        executionEnvironment->initGmm();
-        this->dbgState = std::make_unique<DebugManagerStateRestore>();
-        //make sure this is disabled, we don't want test this now
-        DebugManager.flags.EnableForcePin.set(false);
-
-        mock = std::make_unique<DrmMockCustom>();
-        executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setDrm(mock.get());
-
-        tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
-        csr = tCsr;
-        ASSERT_NE(nullptr, csr);
-        mm = new DrmMemoryManager(gemCloseWorkerInactive,
-                                  DebugManager.flags.EnableForcePin.get(),
-                                  true,
-                                  *executionEnvironment);
-        ASSERT_NE(nullptr, mm);
-        executionEnvironment->memoryManager.reset(mm);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        device->resetCommandStreamReceiver(tCsr);
-        ASSERT_NE(nullptr, device);
-    }
-
-    virtual void TearDown() {
-        executionEnvironment->decRefInternal();
-    }
-
-    bool isResident(BufferObject *bo) {
-        return tCsr->isResident(bo);
-    }
-
-    const BufferObject *getResident(BufferObject *bo) {
-        return tCsr->getResident(bo);
-    }
-
-  protected:
-    TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *tCsr = nullptr;
-
-    class MockBufferObject : public BufferObject {
-        friend DrmCommandStreamEnhancedFixture;
-
-      protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1) {
-            this->size = alignUp(size, 4096);
-        }
-    };
-
-    MockBufferObject *createBO(size_t size) {
-        return new MockBufferObject(this->mock.get(), size);
-    }
-};
-
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamGemWorkerTests;
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsInactive) {
@@ -932,6 +804,26 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamLeaksTest;
+
+TEST_F(DrmCommandStreamLeaksTest, givenDrmAllocationWhenGetBufferObjectToModifyIsCalledForAGivenHandleIdThenTheCorrespondingBufferObjectGetsModified) {
+    auto size = 1024u;
+    auto allocation = new DrmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, size, MemoryPool::MemoryNull, 1u, false);
+
+    auto &bos = allocation->getBOs();
+    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+        EXPECT_EQ(nullptr, bos[handleId]);
+    }
+
+    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+        allocation->getBufferObjectToModify(handleId) = this->createBO(size);
+    }
+
+    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+        EXPECT_NE(nullptr, bos[handleId]);
+    }
+
+    mm->freeGraphicsMemory(allocation);
+}
 
 TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     auto buffer = this->createBO(1024);
@@ -1540,4 +1432,21 @@ TEST_F(DrmCommandStreamTest, givenDrmCommandStreamWhenGettingMocsThenProperValue
     mocs = platform()->peekExecutionEnvironment()->getGmmHelper()->getMOCS(0);
     expectedMocs = GmmHelper::cacheEnabledIndex;
     EXPECT_EQ(mocs, expectedMocs);
+}
+
+typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamHwTest;
+
+HWTEST_F(DrmCommandStreamHwTest, givenAllocationWithSingleBufferObjectWhenMakeResidentBufferObjectsIsCalledThenTheBufferObjectIsMadeResident) {
+    TestedDrmCommandStreamReceiver<FamilyType> csrHw(gemCloseWorkerMode::gemCloseWorkerInactive, *executionEnvironment);
+
+    auto size = 1024u;
+    auto bo = this->createBO(size);
+    BufferObjects bos{bo};
+    auto allocation = new DrmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory, false);
+    EXPECT_EQ(bo, allocation->getBO());
+
+    csrHw.makeResidentBufferObjects(allocation);
+    EXPECT_TRUE(csrHw.isResident(bo));
+
+    mm->freeGraphicsMemory(allocation);
 }

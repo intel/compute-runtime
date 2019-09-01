@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "runtime/os_interface/os_context.h"
 
 #include <vector>

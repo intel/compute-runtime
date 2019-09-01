@@ -15,8 +15,10 @@
 namespace NEO {
 std::string DrmAllocation::getAllocationInfoString() const {
     std::stringstream ss;
-    if (bo != nullptr) {
-        ss << " Handle: " << bo->peekHandle();
+    for (auto bo : bufferObjects) {
+        if (bo != nullptr) {
+            ss << " Handle: " << bo->peekHandle();
+        }
     }
     return ss.str();
 }

@@ -18,6 +18,13 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphi
     return nullptr;
 }
 
+void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
+    return nullptr;
+}
+
+void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
+}
+
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) {
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
 }

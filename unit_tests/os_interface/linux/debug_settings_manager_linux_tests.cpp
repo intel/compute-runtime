@@ -24,7 +24,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCo
     MockBufferObject bo;
     bo.handle = 4;
 
-    allocation.bo = &bo;
+    allocation.bufferObjects[0] = &bo;
 
     debugManager.logAllocation(&allocation);
 

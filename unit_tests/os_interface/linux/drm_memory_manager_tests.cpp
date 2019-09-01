@@ -3090,9 +3090,9 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryCallSequenceTest, givenDrmMemoryManagerAn
 
     {
         ::testing::InSequence inSequence;
-        EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true));
-        EXPECT_CALL(gmockDrmMemoryManager, releaseGpuRange(::testing::_, ::testing::_));
-        EXPECT_CALL(gmockDrmMemoryManager, alignedFreeWrapper(::testing::_));
+        EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true)).Times(maxHandleCount);
+        EXPECT_CALL(gmockDrmMemoryManager, releaseGpuRange(::testing::_, ::testing::_)).Times(1);
+        EXPECT_CALL(gmockDrmMemoryManager, alignedFreeWrapper(::testing::_)).Times(1);
     }
 
     gmockDrmMemoryManager.freeGraphicsMemory(allocation);
@@ -3109,7 +3109,8 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     auto allocation = gmockDrmMemoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, false));
+    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, false)).Times(1);
+    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true)).Times(maxHandleCount - 1);
 
     gmockDrmMemoryManager.freeGraphicsMemory(allocation);
 }

@@ -35,6 +35,10 @@ BufferObject::BufferObject(Drm *drm, int handle) : drm(drm), refCount(1), handle
     this->lockedAddress = nullptr;
 }
 
+BufferObject::BufferObject(Drm *drm, int handle, size_t size) : BufferObject(drm, handle) {
+    this->size = size;
+}
+
 uint32_t BufferObject::getRefCount() const {
     return this->refCount.load();
 }

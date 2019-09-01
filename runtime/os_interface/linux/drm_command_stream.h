@@ -16,6 +16,7 @@
 namespace NEO {
 class BufferObject;
 class Drm;
+class DrmAllocation;
 class DrmMemoryManager;
 
 template <typename GfxFamily>
@@ -49,6 +50,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     }
 
   protected:
+    void makeResidentBufferObjects(const DrmAllocation *drmAllocation);
     void makeResident(BufferObject *bo);
 
     std::vector<BufferObject *> residency;

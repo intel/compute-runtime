@@ -35,6 +35,29 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIs
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
+TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOnNullBufferObjectThenReturnNullPtr) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory, false);
+
+    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation.getBO());
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager.unlockResourceInLocalMemoryImpl(drmAllocation.getBO());
+}
+
+TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCalledOnAllocationWithNullBufferObjectThenEarlyReturn) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+
+    auto drmAllocation = new DrmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory, false);
+    EXPECT_NE(nullptr, drmAllocation);
+
+    memoryManager.freeGraphicsMemoryImpl(drmAllocation);
+}
+
 using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
 
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {

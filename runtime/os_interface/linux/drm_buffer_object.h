@@ -23,6 +23,7 @@ class BufferObject {
 
   public:
     BufferObject(Drm *drm, int handle);
+    BufferObject(Drm *drm, int handle, size_t size);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
     bool setTiling(uint32_t mode, uint32_t stride);

@@ -5,10 +5,13 @@
  *
  */
 
+#pragma once
+
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
     using CommandStreamReceiver::commandStream;
+    using DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
 
     TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
