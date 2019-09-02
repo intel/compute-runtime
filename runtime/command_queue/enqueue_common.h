@@ -247,8 +247,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     CompletionStamp completionStamp = {Event::eventNotReady, taskLevel, 0};
 
-    EnqueueProperties enqueueProperties(blitEnqueue, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                        flushDependenciesForNonKernelCommand, &blitProperties);
+    const EnqueueProperties enqueueProperties(blitEnqueue, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
+                                              flushDependenciesForNonKernelCommand, &blitProperties);
+
     if (!blockQueue) {
         if (parentKernel) {
             processDeviceEnqueue(devQueueHw, multiDispatchInfo, hwTimeStamps, blocking);
@@ -338,16 +339,16 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             blockedCommandsData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         }
 
-        enqueueBlocked<commandType>(
-            surfacesForResidency,
-            numSurfaceForResidency,
-            multiDispatchInfo,
-            &previousTimestampPacketNodes,
-            blockedCommandsData,
-            enqueueProperties,
-            eventsRequest,
-            eventBuilder,
-            std::move(printfHandler));
+        enqueueBlocked(commandType,
+                       surfacesForResidency,
+                       numSurfaceForResidency,
+                       multiDispatchInfo,
+                       &previousTimestampPacketNodes,
+                       blockedCommandsData,
+                       enqueueProperties,
+                       eventsRequest,
+                       eventBuilder,
+                       std::move(printfHandler));
     }
 
     queueOwnership.unlock();
@@ -712,8 +713,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 }
 
 template <typename GfxFamily>
-template <uint32_t commandType>
 void CommandQueueHw<GfxFamily>::enqueueBlocked(
+    uint32_t commandType,
     Surface **surfaces,
     size_t surfaceCount,
     const MultiDispatchInfo &multiDispatchInfo,
@@ -750,7 +751,16 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     taskCount = outEvent->getCompletionStamp();
 
     std::unique_ptr<Command> command;
-    bool storeTimestampPackets = blockedCommandsData && timestampPacketContainer;
+    bool storeTimestampPackets = false;
+
+    if (blockedCommandsData) {
+        if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+            blockedCommandsData->blitProperties = *enqueueProperties.blitProperties;
+            blockedCommandsData->blitEnqueue = true;
+        }
+
+        storeTimestampPackets = (timestampPacketContainer != nullptr);
+    }
 
     if (enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel) {
         command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData);

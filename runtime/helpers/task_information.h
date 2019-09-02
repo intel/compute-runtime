@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
@@ -74,6 +75,8 @@ struct KernelOperation {
     IndirectHeapUniquePtrT ioh{nullptr, resourceCleaner};
     IndirectHeapUniquePtrT ssh{nullptr, resourceCleaner};
 
+    BlitProperties blitProperties;
+    bool blitEnqueue = false;
     size_t surfaceStateHeapSizeEM = 0;
 };
 

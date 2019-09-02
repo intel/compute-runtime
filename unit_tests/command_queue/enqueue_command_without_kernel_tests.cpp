@@ -50,6 +50,59 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
 }
 
+HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontRegisterBlitProperties) {
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+    auto &csr = mockCmdQ->getGpgpuCommandStreamReceiver();
+
+    auto commandStream = new LinearStream();
+    csr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+    auto blockedCommandsDataForDependencyFlush = new KernelOperation(commandStream, *csr.getInternalAllocationStorage());
+
+    TimestampPacketContainer previousTimestampPacketNodes;
+    MultiDispatchInfo multiDispatchInfo;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+
+    const EnqueueProperties enqueuePropertiesForDependencyFlush(false, false, false, true, nullptr);
+
+    auto blockedCommandsData = std::unique_ptr<KernelOperation>(blockedCommandsDataForDependencyFlush);
+    Surface *surfaces[] = {nullptr};
+    mockCmdQ->enqueueBlocked(CL_COMMAND_MARKER, surfaces, size_t(0), multiDispatchInfo, &previousTimestampPacketNodes,
+                             blockedCommandsData, enqueuePropertiesForDependencyFlush, eventsRequest,
+                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr));
+    EXPECT_FALSE(blockedCommandsDataForDependencyFlush->blitEnqueue);
+}
+
+HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBlitProperties) {
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+    auto &csr = mockCmdQ->getGpgpuCommandStreamReceiver();
+
+    auto commandStream = new LinearStream();
+    csr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+    auto blockedCommandsDataForBlitEnqueue = new KernelOperation(commandStream, *csr.getInternalAllocationStorage());
+
+    TimestampPacketContainer previousTimestampPacketNodes;
+    MultiDispatchInfo multiDispatchInfo;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+
+    BlitProperties blitProperties;
+    blitProperties.srcAllocation = reinterpret_cast<GraphicsAllocation *>(0x12345);
+    blitProperties.dstAllocation = reinterpret_cast<GraphicsAllocation *>(0x56789);
+    const EnqueueProperties enqueuePropertiesForBlitEnqueue(true, false, false, false, &blitProperties);
+
+    auto blockedCommandsData = std::unique_ptr<KernelOperation>(blockedCommandsDataForBlitEnqueue);
+    Surface *surfaces[] = {nullptr};
+    mockCmdQ->enqueueBlocked(CL_COMMAND_READ_BUFFER, surfaces, size_t(0), multiDispatchInfo, &previousTimestampPacketNodes,
+                             blockedCommandsData, enqueuePropertiesForBlitEnqueue, eventsRequest,
+                             eventBuilder, std::unique_ptr<PrintfHandler>(nullptr));
+    EXPECT_TRUE(blockedCommandsDataForBlitEnqueue->blitEnqueue);
+    EXPECT_EQ(blitProperties.srcAllocation, blockedCommandsDataForBlitEnqueue->blitProperties.srcAllocation);
+    EXPECT_EQ(blitProperties.dstAllocation, blockedCommandsDataForBlitEnqueue->blitProperties.dstAllocation);
+}
+
 struct DispatchFlagsTests : public ::testing::Test {
     template <typename CsrType>
     void SetUpImpl() {

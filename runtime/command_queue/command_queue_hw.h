@@ -332,8 +332,8 @@ class CommandQueueHw : public CommandQueue {
                                       uint32_t taskLevel,
                                       PrintfHandler *printfHandler);
 
-    template <uint32_t commandType>
-    void enqueueBlocked(Surface **surfacesForResidency,
+    void enqueueBlocked(uint32_t commandType,
+                        Surface **surfacesForResidency,
                         size_t surfacesCount,
                         const MultiDispatchInfo &multiDispatchInfo,
                         TimestampPacketContainer *previousTimestampPacketNodes,
