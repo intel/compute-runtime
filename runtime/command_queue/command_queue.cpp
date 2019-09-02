@@ -577,7 +577,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
-bool CommandQueue::blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType) {
+bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     bool blitAllowed = false;
 
     if (DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() != -1) {
@@ -587,7 +587,7 @@ bool CommandQueue::blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType
 
     bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType);
 
-    return commandAllowed && !queueBlocked && blitAllowed;
+    return commandAllowed && blitAllowed;
 }
 
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {

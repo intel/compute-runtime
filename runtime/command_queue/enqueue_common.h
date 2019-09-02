@@ -170,7 +170,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto blockQueue = false;
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
-    bool blitEnqueue = blitEnqueueAllowed(blockQueue, commandType);
+    bool blitEnqueue = blitEnqueueAllowed(commandType);
 
     DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
@@ -345,6 +345,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             multiDispatchInfo,
             &previousTimestampPacketNodes,
             blockedCommandsData,
+            enqueueProperties,
             eventsRequest,
             eventBuilder,
             std::move(printfHandler));
@@ -720,6 +721,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     const MultiDispatchInfo &multiDispatchInfo,
     TimestampPacketContainer *previousTimestampPacketNodes,
     std::unique_ptr<KernelOperation> &blockedCommandsData,
+    const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
     EventBuilder &externalEventBuilder,
     std::unique_ptr<PrintfHandler> printfHandler) {
@@ -752,7 +754,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     std::unique_ptr<Command> command;
     bool storeTimestampPackets = blockedCommandsData && timestampPacketContainer;
 
-    if (multiDispatchInfo.empty()) {
+    if (enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel) {
         command = std::make_unique<CommandMarker>(*this, blockedCommandsData);
     } else {
         //store task data in event

@@ -437,7 +437,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
-    bool blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType);
+    bool blitEnqueueAllowed(cl_command_type cmdType) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
 
     Context *context = nullptr;

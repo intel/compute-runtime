@@ -338,6 +338,7 @@ class CommandQueueHw : public CommandQueue {
                         const MultiDispatchInfo &multiDispatchInfo,
                         TimestampPacketContainer *previousTimestampPacketNodes,
                         std::unique_ptr<KernelOperation> &blockedCommandsData,
+                        const EnqueueProperties &enqueueProperties,
                         EventsRequest &eventsRequest,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
