@@ -523,6 +523,20 @@ TEST(DeviceGetCapsTest, givenEnableAdvancedVmeSetToTrueAndDeviceSupportsVmeWhenC
     EXPECT_THAT(caps.builtInKernels, testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel"));
 }
 
+TEST(DeviceGetCapsTest, givenDeviceCapsSupportFor64BitAtomicsFollowsHardwareCapabilities) {
+    auto hwInfo = *platformDevices[0];
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+
+    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
+        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr("cl_khr_int64_base_atomics "));
+        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr("cl_khr_int64_extended_atomics "));
+    } else {
+        EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr("cl_khr_int64_base_atomics ")));
+        EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr("cl_khr_int64_extended_atomics ")));
+    }
+}
+
 TEST(DeviceGetCapsTest, givenEnableAdvancedVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelAdvancedVme.set(true);

@@ -154,6 +154,11 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_intel_advanced_motion_estimation ";
     }
 
+    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
+        deviceExtensions += "cl_khr_int64_base_atomics ";
+        deviceExtensions += "cl_khr_int64_extended_atomics ";
+    }
+
     deviceExtensions += sharingFactory.getExtensions();
 
     simultaneousInterops = {0};
