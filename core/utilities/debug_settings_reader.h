@@ -15,15 +15,14 @@ namespace NEO {
 class SettingsReader {
   public:
     virtual ~SettingsReader() {}
-    static SettingsReader *create() {
+    static SettingsReader *create(const std::string &regKey) {
         SettingsReader *readerImpl = createFileReader();
         if (readerImpl != nullptr)
             return readerImpl;
 
-        return createOsReader(false);
+        return createOsReader(false, regKey);
     }
-    static SettingsReader *createOsReader(bool userScope);
-    static SettingsReader *createOsReader(const std::string &regKey);
+    static SettingsReader *createOsReader(bool userScope, const std::string &regKey);
     static SettingsReader *createFileReader();
     virtual int32_t getSetting(const char *settingName, int32_t defaultValue) = 0;
     virtual bool getSetting(const char *settingName, bool defaultValue) = 0;

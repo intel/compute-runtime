@@ -7,6 +7,7 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/debug_file_reader.h"
+#include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -42,7 +43,7 @@ TEST(DebugSettingsManager, WithDebugFunctionalityCreatesAndDumpsToLogFile) {
 
     FullyEnabledTestDebugManager debugManager;
     if (debugManager.registryReadAvailable()) {
-        debugManager.setReaderImpl(SettingsReader::create());
+        debugManager.setReaderImpl(SettingsReader::create(oclRegPath));
         debugManager.injectSettingsFromReader();
     }
     debugManager.logApiCall("searchString", true, 0);
@@ -850,16 +851,16 @@ TEST(DebugSettingsManager, givenStringDebugVariableWhenLongValueExeedingSmallStr
 
 TEST(DebugSettingsManager, givenNullAsReaderImplInDebugManagerWhenSettingReaderImplThenItsSetProperly) {
     FullyDisabledTestDebugManager debugManager;
-    auto readerImpl = SettingsReader::create();
+    auto readerImpl = SettingsReader::create(oclRegPath);
     debugManager.setReaderImpl(readerImpl);
     EXPECT_EQ(readerImpl, debugManager.getReaderImpl());
 }
 TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentReaderImplThenItsSetProperly) {
     FullyDisabledTestDebugManager debugManager;
-    auto readerImpl = SettingsReader::create();
+    auto readerImpl = SettingsReader::create(oclRegPath);
     debugManager.setReaderImpl(readerImpl);
 
-    auto readerImpl2 = SettingsReader::create();
+    auto readerImpl2 = SettingsReader::create(oclRegPath);
     debugManager.setReaderImpl(readerImpl2);
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
 }

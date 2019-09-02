@@ -10,12 +10,13 @@
 #include "core/utilities/debug_settings_reader.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 
 AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon)
     : initialFileName(fileName), subCaptureCommon(subCaptureCommon) {
-    settingsReader.reset(SettingsReader::createOsReader(true));
+    settingsReader.reset(SettingsReader::createOsReader(true, oclRegPath));
 }
 
 AubSubCaptureManager::~AubSubCaptureManager() = default;

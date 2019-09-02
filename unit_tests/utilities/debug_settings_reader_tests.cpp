@@ -8,6 +8,7 @@
 #include "core/utilities/debug_settings_reader.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/ocl_reg_path.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -19,7 +20,7 @@ using namespace NEO;
 using namespace std;
 
 TEST(SettingsReader, Create) {
-    SettingsReader *reader = SettingsReader::create();
+    SettingsReader *reader = SettingsReader::create(oclRegPath);
     EXPECT_NE(nullptr, reader);
     delete reader;
 }
@@ -40,14 +41,14 @@ TEST(SettingsReader, CreateFileReader) {
 }
 
 TEST(SettingsReader, CreateOsReader) {
-    SettingsReader *reader = SettingsReader::createOsReader(false);
+    SettingsReader *reader = SettingsReader::createOsReader(false, oclRegPath);
     EXPECT_NE(nullptr, reader);
     delete reader;
 }
 
 TEST(SettingsReader, CreateOsReaderWithRegKey) {
-    std::string regKey = "Software\\Intel\\OpenCL";
-    unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(regKey));
+    std::string regKey = oclRegPath;
+    unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(false, regKey));
     EXPECT_NE(nullptr, reader);
 }
 

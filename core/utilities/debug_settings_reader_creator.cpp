@@ -8,7 +8,7 @@
 #include "core/utilities/debug_settings_reader_creator.h"
 
 namespace NEO {
-std::unique_ptr<SettingsReader> SettingsReaderCreator::create() {
-    return std::unique_ptr<SettingsReader>(SettingsReader::create());
+std::unique_ptr<SettingsReader> SettingsReaderCreator::create(const std::string &regKey) {
+    return std::unique_ptr<SettingsReader>(SettingsReader::create(regKey));
 }
 }; // namespace NEO

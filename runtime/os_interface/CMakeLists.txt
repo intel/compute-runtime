@@ -18,6 +18,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h

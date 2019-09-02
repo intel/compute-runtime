@@ -11,6 +11,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -275,7 +276,7 @@ int main(int argc, char **argv) {
             generateRandomInput = true;
         } else if (!strcmp("--read-config", argv[i]) && testMode == TestMode::AubTests) {
             if (DebugManager.registryReadAvailable()) {
-                DebugManager.setReaderImpl(SettingsReader::create());
+                DebugManager.setReaderImpl(SettingsReader::create(oclRegPath));
                 DebugManager.injectSettingsFromReader();
             }
         } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::AubTests) {

@@ -15,20 +15,15 @@
 
 namespace NEO {
 
-SettingsReader *SettingsReader::createOsReader(bool userScope) {
-    return new RegistryReader(userScope);
-}
-SettingsReader *SettingsReader::createOsReader(const std::string &regKey) {
-    return new RegistryReader("Software\\Intel\\IGFX\\OCL\\" + regKey);
+SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
+    return new RegistryReader(userScope, regKey);
 }
 
-RegistryReader::RegistryReader(bool userScope) {
+RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {
     igdrclHkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
     setUpProcessName();
 }
-RegistryReader::RegistryReader(const std::string &regKey) : registryReadRootKey(regKey) {
-    setUpProcessName();
-}
+
 void RegistryReader::setUpProcessName() {
     char buff[MAX_PATH];
     GetModuleFileNameA(nullptr, buff, MAX_PATH);

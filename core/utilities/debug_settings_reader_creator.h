@@ -14,6 +14,6 @@
 namespace NEO {
 class SettingsReaderCreator {
   public:
-    static std::unique_ptr<SettingsReader> create();
+    static std::unique_ptr<SettingsReader> create(const std::string &regKey);
 };
 } // namespace NEO

@@ -24,7 +24,7 @@ DriverInfo *DriverInfo::create(OSInterface *osInterface) {
         auto result = new DriverInfoWindows();
         path = result->trimRegistryKey(path);
 
-        result->setRegistryReader(new RegistryReader(path));
+        result->setRegistryReader(new RegistryReader(false, path));
         return result;
     }
 

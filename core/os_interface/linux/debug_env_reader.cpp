@@ -9,13 +9,10 @@
 
 namespace NEO {
 
-SettingsReader *SettingsReader::createOsReader(bool userScope) {
+SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
     return new EnvironmentVariableReader;
 }
 
-SettingsReader *SettingsReader::createOsReader(const std::string &regKey) {
-    return new EnvironmentVariableReader;
-}
 const char *EnvironmentVariableReader::appSpecificLocation(const std::string &name) {
     return name.c_str();
 }
