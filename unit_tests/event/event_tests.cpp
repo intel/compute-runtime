@@ -795,7 +795,7 @@ HWTEST_F(InternalsEventTest, givenCpuProfilingPathWhenEnqueuedMarkerThenDontUseT
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
 
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -838,7 +838,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
 
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -865,7 +865,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
 
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -1453,7 +1453,7 @@ HWTEST_F(InternalsEventTest, givenCommandWhenSubmitCalledThenUpdateFlushStamp) {
 
     FlushStamp expectedFlushStamp = 0;
     EXPECT_EQ(expectedFlushStamp, event->flushStamp->peekStamp());
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
     event->submitCommand(false);
     EXPECT_EQ(csr.flushStamp->peekStamp(), event->flushStamp->peekStamp());
     delete event;

@@ -63,7 +63,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
-    std::unique_ptr<Command> command(new CommandMarker(*cmdQ));
+    std::unique_ptr<Command> command(new CommandWithoutKernel(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, false);
 
     EXPECT_EQ(initialTaskCount, completionStamp.taskCount);
@@ -77,7 +77,7 @@ TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
-    std::unique_ptr<Command> command(new CommandMarker(*cmdQ));
+    std::unique_ptr<Command> command(new CommandWithoutKernel(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, true);
 
     auto submitTaskCount = csr.peekTaskCount();

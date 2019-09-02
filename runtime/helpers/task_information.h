@@ -145,7 +145,7 @@ class CommandComputeKernel : public Command {
     PreemptionMode preemptionMode;
 };
 
-class CommandMarker : public Command {
+class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;

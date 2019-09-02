@@ -755,7 +755,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     bool storeTimestampPackets = blockedCommandsData && timestampPacketContainer;
 
     if (enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel) {
-        command = std::make_unique<CommandMarker>(*this, blockedCommandsData);
+        command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData);
     } else {
         //store task data in event
         std::vector<Surface *> allSurfaces;

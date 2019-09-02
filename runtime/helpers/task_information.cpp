@@ -224,7 +224,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
         return completionStamp;
     }
