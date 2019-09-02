@@ -458,6 +458,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     using BaseClass::CommandStreamReceiver;
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
+        executionEnvironment.initializeMemoryManager();
     }
 
     void makeResident(GraphicsAllocation &graphicsAllocation) override {

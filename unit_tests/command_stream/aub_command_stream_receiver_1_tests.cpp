@@ -81,6 +81,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCre
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
     MockExecutionEnvironment executionEnvironment(platformDevices[0], false);
+    executionEnvironment.initializeMemoryManager();
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment);
     ASSERT_NE(nullptr, aubCsr);
@@ -208,6 +209,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
     std::string fileName = "file_name.aub";
     MockExecutionEnvironment executionEnvironment(platformDevices[0]);
+    executionEnvironment.initializeMemoryManager();
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, executionEnvironment)));
     EXPECT_NE(nullptr, aubCsr);
     EXPECT_FALSE(aubCsr->isFileOpen());

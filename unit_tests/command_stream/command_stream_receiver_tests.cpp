@@ -241,6 +241,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment);
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
@@ -301,14 +302,6 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     EXPECT_TRUE(csr.addAubCommentCalled);
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    MockCommandStreamReceiver csr(executionEnvironment);
-    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    csr.setTagAllocation(&allocation);
-    EXPECT_EQ(&allocation, csr.getTagAllocation());
-}
-
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
     struct MockGraphicsAllocationWithDestructorTracing : public MockGraphicsAllocation {
         using MockGraphicsAllocation::MockGraphicsAllocation;
@@ -364,6 +357,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
 
 TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment);
 
     constexpr size_t setSize = 6;
@@ -619,6 +613,7 @@ HWTEST_P(CommandStreamReceiverWithAubSubCaptureTest, givenCommandStreamReceiverW
     bool isActive = status.second;
 
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
     MyMockCsr mockCsr(executionEnvironment);
 
     mockCsr.programForAubSubCapture(wasActiveInPreviousEnqueue, isActive);

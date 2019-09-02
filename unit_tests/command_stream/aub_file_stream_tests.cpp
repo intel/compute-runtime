@@ -46,6 +46,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWi
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
     MockExecutionEnvironment executionEnvironment(platformDevices[0]);
+    executionEnvironment.initializeMemoryManager();
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment);
     std::string invalidFileName = "";
     aubCsr->aubManager = nullptr;

@@ -147,6 +147,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(static_cast<WddmMock *>(wddm));
+    executionEnvironment->initializeMemoryManager();
     std::unique_ptr<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(false, *executionEnvironment)));
     EXPECT_NE(nullptr, csr);
     auto wddmFromCsr = csr->peekWddm();
@@ -158,6 +159,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(static_cast<WddmMock *>(wddm));
+    executionEnvironment->initializeMemoryManager();
     std::unique_ptr<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(true, *executionEnvironment)));
     EXPECT_NE(nullptr, csr);
     auto wddmFromCsr = csr->peekWddm();

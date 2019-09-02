@@ -16,6 +16,7 @@ typedef ::testing::Test Gen9CoherencyRequirements;
 
 GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
     CommandStreamReceiverHw<SKLFamily> csr(*executionEnvironment);
     LinearStream stream;
     DispatchFlags flags = {};

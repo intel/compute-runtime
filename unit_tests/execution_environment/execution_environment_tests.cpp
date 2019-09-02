@@ -112,12 +112,14 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamReceiverIsCalledThenItIsInitalized) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
     executionEnvironment->initializeCommandStreamReceiver(0, 0);
     EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][0]);
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledWithDifferentDeviceIndexesThenInternalStorageIsResized) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(0u, executionEnvironment->commandStreamReceivers.size());
     executionEnvironment->initializeCommandStreamReceiver(0, 0);
     EXPECT_EQ(1u, executionEnvironment->commandStreamReceivers.size());
@@ -129,6 +131,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledWithDi
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultipleTimesForTheSameIndexThenCommandStreamReceiverIsReused) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(0u, executionEnvironment->commandStreamReceivers.size());
     executionEnvironment->initializeCommandStreamReceiver(0, 1);
 
@@ -271,6 +274,7 @@ HWTEST_F(ExecutionEnvironmentHw, givenHwHelperInputWhenInitializingCsrThenCreate
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
 
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
     executionEnvironment.setHwInfo(&localHwInfo);
     executionEnvironment.initializeCommandStreamReceiver(0, 0);
     auto csr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0][0].get());
