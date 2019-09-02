@@ -194,7 +194,7 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, aub_stream::EngineType engineType,
                                                      DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool lowPriority) {
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(executionEnvironment.osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+    auto osContext = OsContext::create(peekExecutionEnvironment().osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
@@ -331,7 +331,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryForImage(allocationData);
     }
     if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
-        (!executionEnvironment.isFullRangeSvm() || !DebugManager.flags.EnableHostPtrTracking.get())) {
+        (!peekExecutionEnvironment().isFullRangeSvm() || !DebugManager.flags.EnableHostPtrTracking.get())) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -384,7 +384,7 @@ EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *c
 }
 
 CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {
-    return executionEnvironment.commandStreamReceivers[deviceId][defaultEngineIndex].get();
+    return peekExecutionEnvironment().commandStreamReceivers[deviceId][defaultEngineIndex].get();
 }
 
 void *MemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {

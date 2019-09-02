@@ -537,7 +537,11 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedWithUnifiedAuxSur
 
     auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal));
 
-    EXPECT_EQ(1u, tempMM->mapAuxGpuVACalled);
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+
+    EXPECT_EQ(expectedMapAuxGpuVaCalls, tempMM->mapAuxGpuVACalled);
 }
 class GetGlTextureInfoTests : public GlSharingTextureTests,
                               public ::testing::WithParamInterface<unsigned int /*cl_GLenum*/> {

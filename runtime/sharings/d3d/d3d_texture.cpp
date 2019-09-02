@@ -13,6 +13,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 
@@ -63,13 +64,15 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
 
     GraphicsAllocation *alloc = nullptr;
+    auto memoryManager = context->getMemoryManager();
+
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
-        alloc = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(sharedHandle);
+        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
         AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
-        alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
+        alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
 
@@ -83,8 +86,11 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
     }
 
+    auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        alloc->getDefaultGmm()->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+        alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                   : true;
     }
 
     return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
@@ -121,13 +127,15 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     }
 
     GraphicsAllocation *alloc = nullptr;
+    auto memoryManager = context->getMemoryManager();
+
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
-        alloc = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(sharedHandle);
+        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
         AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
-        alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
+        alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
 
@@ -139,8 +147,11 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
 
+    auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        alloc->getDefaultGmm()->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+        alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                   : true;
     }
 
     return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
