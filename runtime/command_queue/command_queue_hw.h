@@ -334,7 +334,6 @@ class CommandQueueHw : public CommandQueue {
     template <uint32_t commandType>
     void enqueueBlocked(Surface **surfacesForResidency,
                         size_t surfacesCount,
-                        bool &blocking,
                         const MultiDispatchInfo &multiDispatchInfo,
                         TimestampPacketContainer *previousTimestampPacketNodes,
                         std::unique_ptr<KernelOperation> &blockedCommandsData,

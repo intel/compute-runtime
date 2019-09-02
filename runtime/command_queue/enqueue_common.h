@@ -341,7 +341,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         enqueueBlocked<commandType>(
             surfacesForResidency,
             numSurfaceForResidency,
-            blocking,
             multiDispatchInfo,
             &previousTimestampPacketNodes,
             blockedCommandsData,
@@ -717,7 +716,6 @@ template <uint32_t commandType>
 void CommandQueueHw<GfxFamily>::enqueueBlocked(
     Surface **surfaces,
     size_t surfaceCount,
-    bool &blocking,
     const MultiDispatchInfo &multiDispatchInfo,
     TimestampPacketContainer *previousTimestampPacketNodes,
     std::unique_ptr<KernelOperation> &blockedCommandsData,
