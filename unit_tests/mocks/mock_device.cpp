@@ -60,18 +60,23 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
+    UNRECOVERABLE_IF(getDeviceIndex() != 0u);
+
+    auto osContext = this->engines[engineIndex].osContext;
+    auto memoryManager = executionEnvironment->memoryManager.get();
+    auto registeredEngine = *memoryManager->getRegisteredEngineForCsr(engines[engineIndex].commandStreamReceiver);
+
+    registeredEngine.commandStreamReceiver = newCsr;
+    engines[engineIndex].commandStreamReceiver = newCsr;
+    memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
+    osContext->incRefInternal();
+    newCsr->setupContext(*osContext);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex].reset(newCsr);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->initializeTagAllocation();
 
     if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
         executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->createPreemptionAllocation();
     }
-    this->engines[engineIndex].commandStreamReceiver = newCsr;
-
-    auto osContext = this->engines[engineIndex].osContext;
-    executionEnvironment->memoryManager->getRegisteredEngines()[osContext->getContextId()].commandStreamReceiver = newCsr;
-    this->engines[engineIndex].commandStreamReceiver->setupContext(*osContext);
-    UNRECOVERABLE_IF(getDeviceIndex() != 0u);
 }
 
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {

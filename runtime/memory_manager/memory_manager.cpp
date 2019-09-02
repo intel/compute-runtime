@@ -383,6 +383,18 @@ EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *c
     return engineCtrl;
 }
 
+void MemoryManager::unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {
+    auto numRegisteredEngines = registeredEngines.size();
+    for (auto i = 0u; i < numRegisteredEngines; i++) {
+        if (registeredEngines[i].commandStreamReceiver == commandStreamReceiver) {
+            registeredEngines[i].osContext->decRefInternal();
+            std::swap(registeredEngines[i], registeredEngines[numRegisteredEngines - 1]);
+            registeredEngines.pop_back();
+            return;
+        }
+    }
+}
+
 CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {
     return peekExecutionEnvironment().commandStreamReceivers[deviceId][defaultEngineIndex].get();
 }

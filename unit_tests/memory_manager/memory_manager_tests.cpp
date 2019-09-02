@@ -1608,6 +1608,20 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
 }
 
+TEST(MemoryManagerRegisteredEnginesTest, givenOsContextWhenItIsUnregisteredFromMemoryManagerThenRefCountDecreases) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto memoryManager = device->getMemoryManager();
+    auto &engine = device->getDefaultEngine();
+
+    engine.osContext->incRefInternal();
+    EXPECT_EQ(2, engine.osContext->getRefInternalCount());
+
+    memoryManager->unregisterEngineForCsr(engine.commandStreamReceiver);
+    EXPECT_EQ(1, engine.osContext->getRefInternalCount());
+
+    engine.osContext->decRefInternal();
+}
+
 TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValue) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, false, executionEnvironment);

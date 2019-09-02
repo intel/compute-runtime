@@ -64,6 +64,9 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 
     internalAllocationStorage->cleanAllocationList(-1, REUSABLE_ALLOCATION);
     internalAllocationStorage->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    if (getMemoryManager()) {
+        getMemoryManager()->unregisterEngineForCsr(this);
+    }
 }
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
