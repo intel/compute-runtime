@@ -74,14 +74,10 @@ extern const HardwareInfo **platformDevices;
 }
 using namespace NEO;
 struct GmmInterfaceTest : public ::testing::Test {
+    const char *empty = "";
 
-    void SetUp() override {
-        gmmDllNameBackup = std::make_unique<VariableBackup<const char *>>(&Os::gmmDllName, "");
-        gmmEntryNameBackup = std::make_unique<VariableBackup<const char *>>(&Os::gmmEntryName, mockGmmEntryName);
-    }
-
-    std::unique_ptr<VariableBackup<const char *>> gmmDllNameBackup;
-    std::unique_ptr<VariableBackup<const char *>> gmmEntryNameBackup;
+    VariableBackup<const char *> gmmDllNameBackup = {&Os::gmmDllName, empty};
+    VariableBackup<const char *> gmmEntryNameBackup = {&Os::gmmEntryName, mockGmmEntryName};
 };
 
 TEST_F(GmmInterfaceTest, givenValidGmmLibWhenCreateGmmHelperThenEverythingWorksFine) {
@@ -90,7 +86,7 @@ TEST_F(GmmInterfaceTest, givenValidGmmLibWhenCreateGmmHelperThenEverythingWorksF
 }
 TEST_F(GmmInterfaceTest, givenInvalidGmmLibNameWhenCreateGmmHelperThenThrowException) {
     std::unique_ptr<GmmHelper> gmmHelper;
-    *gmmDllNameBackup = "invalidName";
+    gmmDllNameBackup = "invalidName";
     EXPECT_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)), std::exception);
 }
 TEST_F(GmmInterfaceTest, givenGmmLibWhenOpenGmmFunctionFailsThenThrowException) {
