@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device_queue/device_queue_hw.h"

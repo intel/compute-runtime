@@ -465,12 +465,4 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 typedef CommandQueue *(*CommandQueueCreateFunc)(
     Context *context, Device *device, const cl_queue_properties *properties);
 
-template <typename GfxFamily, unsigned int eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue,
-                               bool reserveProfilingCmdsSpace,
-                               bool reservePerfCounterCmdsSpace,
-                               const Kernel *pKernel);
-
-template <typename GfxFamily, IndirectHeap::Type heapType>
-IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const Kernel &kernel);
 } // namespace NEO
