@@ -444,11 +444,7 @@ MATCHER(BoExecFlushCheckFlags, "") {
     drm_i915_gem_exec_object2 *exec_objects = (drm_i915_gem_exec_object2 *)exec2->buffers_ptr;
 
     for (unsigned int i = 0; i < exec2->buffer_count; i++) {
-        if (exec_objects[i].offset > 0xFFFFFFFF) {
-            EXPECT_TRUE(exec_objects[i].flags == (EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS));
-        } else {
-            EXPECT_TRUE(exec_objects[i].flags == (EXEC_OBJECT_PINNED));
-        }
+        EXPECT_TRUE(exec_objects[i].flags == (EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS));
     }
 
     return true;

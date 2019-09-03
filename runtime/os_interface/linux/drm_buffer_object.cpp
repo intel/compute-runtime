@@ -96,11 +96,7 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.relocs_ptr = 0ul;
     execObject.alignment = 0;
     execObject.offset = this->gpuAddress;
-    execObject.flags = EXEC_OBJECT_PINNED;
-#ifdef __x86_64__
-    // set EXEC_OBJECT_SUPPORTS_48B_ADDRESS flag if whole object resides in 32BIT address space boundary
-    execObject.flags |= (this->gpuAddress + this->size) & MemoryConstants::zoneHigh ? EXEC_OBJECT_SUPPORTS_48B_ADDRESS : 0;
-#endif
+    execObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
 }

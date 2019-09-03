@@ -111,7 +111,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryW
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
 
-TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWhenExecIsCalledThen48BitFlagIsNotSet) {
+TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWhenExecIsCalledThen48BitFlagSet) {
     drm_i915_gem_exec_object2 execObject;
 
     memset(&execObject, 0, sizeof(execObject));
@@ -119,7 +119,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
     bo->setSize(0xFFF);
     bo->fillExecObject(execObject, 1);
     //base address + size < size of 32bit address space
-    EXPECT_FALSE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
+    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
 
 TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
