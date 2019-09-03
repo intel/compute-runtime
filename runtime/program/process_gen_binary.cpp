@@ -10,14 +10,15 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
+#include "runtime/program/program.h"
 
 #include "patch_list.h"
 #include "patch_shared.h"
-#include "program.h"
 #include "program_debug_data.h"
 
 #include <algorithm>

@@ -13,6 +13,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/unified_memory_manager.h"

@@ -9,6 +9,7 @@
 
 #include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/compiler_interface/compiler_interface.inl"
+#include "runtime/device/device.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_inc_base.h"

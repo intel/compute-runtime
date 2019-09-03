@@ -6,7 +6,7 @@
  */
 
 #include "core/helpers/string.h"
-#include "runtime/program/program.h"
+#include "runtime/device/device.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"

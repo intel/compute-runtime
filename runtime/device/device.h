@@ -11,7 +11,10 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/engine_control.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/performance_counters.h"
+
+#include "engine_node.h"
 
 namespace NEO {
 class OSTime;

@@ -7,7 +7,7 @@
 
 #include "runtime/helpers/built_ins_helper.h"
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "runtime/device/device.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_program.h"
 

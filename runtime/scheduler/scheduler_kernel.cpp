@@ -7,6 +7,7 @@
 
 #include "runtime/scheduler/scheduler_kernel.h"
 
+#include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
 
 #include <cinttypes>

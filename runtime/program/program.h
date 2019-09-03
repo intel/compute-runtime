@@ -10,15 +10,14 @@
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "runtime/api/cl_types.h"
-#include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/stdio.h"
 #include "runtime/helpers/string_helpers.h"
+#include "runtime/program/block_kernel_manager.h"
+#include "runtime/program/kernel_info.h"
 
-#include "block_kernel_manager.h"
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "igfxfmid.h"
-#include "kernel_info.h"
 #include "patch_list.h"
 
 #include <map>

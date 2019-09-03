@@ -7,12 +7,9 @@
 
 #pragma once
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
-
-#include "engine_node.h"
 
 #include <mutex>
 #include <vector>
@@ -54,9 +51,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setHwInfo(const HardwareInfo *hwInfo);
     const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
     HardwareInfo *getMutableHardwareInfo() const { return hwInfo.get(); }
-    bool isFullRangeSvm() const {
-        return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
-    }
+    bool isFullRangeSvm() const;
 
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();

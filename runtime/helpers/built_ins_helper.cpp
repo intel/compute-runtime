@@ -7,7 +7,7 @@
 
 #include "runtime/helpers/built_ins_helper.h"
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "runtime/device/device.h"
 #include "runtime/program/program.h"
 
 namespace NEO {

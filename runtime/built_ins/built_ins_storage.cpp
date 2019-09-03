@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/device/device.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include "os_inc.h"

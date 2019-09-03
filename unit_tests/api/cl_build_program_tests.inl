@@ -7,6 +7,7 @@
 
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"

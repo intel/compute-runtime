@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/indirect_heap/indirect_heap.h"

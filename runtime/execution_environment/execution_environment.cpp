@@ -128,4 +128,8 @@ EngineControl *ExecutionEnvironment::getEngineControlForSpecialCsr() {
     }
     return engine;
 }
+
+bool ExecutionEnvironment::isFullRangeSvm() const {
+    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
+}
 } // namespace NEO

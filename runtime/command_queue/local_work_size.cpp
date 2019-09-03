@@ -8,6 +8,7 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/debug_helpers.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
