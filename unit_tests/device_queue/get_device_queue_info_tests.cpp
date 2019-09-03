@@ -17,6 +17,9 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
 
     void SetUp() override {
         BaseClass::SetUp();
+        if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+            GTEST_SKIP();
+        }
         deviceQueue = createQueueObject(deviceQueueProperties::allProperties);
         ASSERT_NE(deviceQueue, nullptr);
     }
@@ -27,7 +30,7 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
         BaseClass::TearDown();
     }
 
-    DeviceQueue *deviceQueue;
+    DeviceQueue *deviceQueue = nullptr;
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, context) {

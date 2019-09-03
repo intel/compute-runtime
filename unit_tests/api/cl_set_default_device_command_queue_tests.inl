@@ -27,13 +27,22 @@ struct clSetDefaultDeviceCommandQueueApiTest : public api_tests {
                                             0,
                                             0};
         deviceQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
-        ASSERT_NE(nullptr, deviceQueue);
-        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        if (!pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+            ASSERT_EQ(nullptr, deviceQueue);
+            EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+            GTEST_SKIP();
+        } else {
+            ASSERT_NE(nullptr, deviceQueue);
+            ASSERT_EQ(CL_SUCCESS, retVal);
+        }
     }
 
     void TearDown() override {
-        retVal = clReleaseCommandQueue(deviceQueue);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+        if (deviceQueue) {
+            retVal = clReleaseCommandQueue(deviceQueue);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+        }
         api_tests::TearDown();
     }
 

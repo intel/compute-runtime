@@ -58,6 +58,9 @@ class DeviceQueueHwTest : public DeviceHostQueueFixture<DeviceQueue> {
         BaseClass::SetUp();
         device = castToObject<Device>(devices[0]);
         ASSERT_NE(device, nullptr);
+        if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+            GTEST_SKIP();
+        }
     }
 
     void TearDown() override {

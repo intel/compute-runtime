@@ -48,6 +48,10 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     void SetUp() override {
         BaseClass::SetUp();
         device = castToObject<Device>(devices[0]);
+
+        if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+            GTEST_SKIP();
+        }
         ASSERT_NE(device, nullptr);
     }
 

@@ -4455,6 +4455,11 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+            err.set(CL_INVALID_QUEUE_PROPERTIES);
+            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            return commandQueue;
+        }
     }
 
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
@@ -4501,6 +4506,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             pDevice,
             *properties,
             retVal);
+
     } else {
         commandQueue = CommandQueue::create(
             pContext,

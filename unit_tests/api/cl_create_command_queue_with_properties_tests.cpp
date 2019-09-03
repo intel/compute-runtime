@@ -263,6 +263,9 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueu
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
+    if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
     auto pDevice = castToObject<Device>(devices[0]);
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
@@ -287,6 +290,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
+    if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        GTEST_SKIP();
+    }
     InjectedFunction method = [this](size_t failureIndex) {
         cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
         auto retVal = CL_INVALID_VALUE;
