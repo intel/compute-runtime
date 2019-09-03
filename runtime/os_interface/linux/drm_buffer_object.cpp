@@ -31,7 +31,6 @@ namespace NEO {
 
 BufferObject::BufferObject(Drm *drm, int handle) : drm(drm), refCount(1), handle(handle), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
-    this->stride = 0;
     this->size = 0;
     this->lockedAddress = nullptr;
 }
@@ -87,7 +86,6 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     }
 
     this->tiling_mode = set_tiling.tiling_mode;
-    this->stride = set_tiling.stride;
 
     return set_tiling.tiling_mode == mode;
 }
