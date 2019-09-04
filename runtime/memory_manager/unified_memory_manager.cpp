@@ -92,26 +92,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     }
 }
 
-void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties, void *cmdQ) {
-    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported();
-
-    if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
-        supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
-    }
-
-    if (memoryProperties.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY && supportDualStorageSharedMemory) {
-        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
-        UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
-        auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
-        unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
-
-        UNRECOVERABLE_IF(cmdQ == nullptr);
-        auto pageFaultManager = this->memoryManager->getPageFaultManager();
-        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ);
-
-        return unifiedMemoryPointer;
-    }
-
+void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
     AllocationProperties unifiedMemoryProperties{true,
@@ -130,6 +111,28 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const Unified
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
+}
+
+void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties, void *cmdQ) {
+    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported();
+
+    if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
+        supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
+    }
+
+    if (supportDualStorageSharedMemory) {
+        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
+        UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
+        auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
+        unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
+
+        UNRECOVERABLE_IF(cmdQ == nullptr);
+        auto pageFaultManager = this->memoryManager->getPageFaultManager();
+        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ);
+
+        return unifiedMemoryPointer;
+    }
+    return createUnifiedMemoryAllocation(size, memoryProperties);
 }
 
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {

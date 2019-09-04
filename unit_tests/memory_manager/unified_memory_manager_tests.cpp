@@ -157,7 +157,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -176,7 +176,7 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -196,7 +196,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -219,7 +219,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocation->cpuAllocation);
@@ -248,7 +248,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocation->cpuAllocation);
@@ -276,7 +276,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
