@@ -115,7 +115,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     MockDevice mockDevice;
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
                                                 ThreadArbitrationPolicy::RoundRobin,
-                                                nullptr);
+                                                nullptr, nullptr);
 
     parseCommands<FamilyType>(cs);
 

@@ -168,6 +168,24 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingPreambleCm
     EXPECT_EQ(expectedDifference, actualDifference);
 }
 
+HWTEST_F(UltCommandStreamReceiverTest, givenPerDssBackBufferProgrammingEnabledWhenEstimatingPreambleCmdSizeThenResultIncludesPerDssBackBufferProgramingCommandsSize) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForcePerDssBackedBufferProgramming.set(true);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
+
+    commandStreamReceiver.isPreambleSent = false;
+    auto preambleNotSent = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+
+    commandStreamReceiver.isPreambleSent = true;
+    auto preambleSent = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+
+    auto actualDifference = preambleNotSent - preambleSent;
+    auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice) + PreambleHelper<FamilyType>::getPerDssBackedBufferCommandsSize(pDevice->getHardwareInfo());
+    EXPECT_EQ(expectedDifference, actualDifference);
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirtyEstimatingPreambleCmdSizeThenResultDependsVfeStateProgrammingCmdSize) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

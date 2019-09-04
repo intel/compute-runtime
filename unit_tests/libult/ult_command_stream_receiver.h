@@ -30,6 +30,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getScratchSpaceController;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
+    using BaseClass::perDssBackedBuffer;
     using BaseClass::programPreamble;
     using BaseClass::programStateSip;
     using BaseClass::requiresInstructionCacheFlush;
@@ -177,6 +178,16 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
     }
 
+    bool createPerDssBackedBuffer(Device &device) override {
+        createPerDssBackedBufferCalled++;
+        bool result = BaseClass::createPerDssBackedBuffer(device);
+        if (!perDssBackedBuffer) {
+            AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP};
+            perDssBackedBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(properties);
+        }
+        return result;
+    }
+
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -190,6 +201,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     BatchBuffer latestFlushedBatchBuffer = {};
     uint32_t latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;
+    uint32_t createPerDssBackedBufferCalled = 0;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
     DispatchFlags recordedDispatchFlags;
 };

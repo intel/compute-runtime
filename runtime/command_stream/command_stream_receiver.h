@@ -148,6 +148,7 @@ class CommandStreamReceiver {
 
     bool initializeTagAllocation();
     MOCKABLE_VIRTUAL bool createPreemptionAllocation();
+    MOCKABLE_VIRTUAL bool createPerDssBackedBuffer(Device &device);
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
@@ -212,6 +213,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *preemptionAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
+    GraphicsAllocation *perDssBackedBuffer = nullptr;
     OSInterface *osInterface = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];

@@ -80,7 +80,7 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     MockDevice mockDevice;
     PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
                                                ThreadArbitrationPolicy::RoundRobin,
-                                               nullptr);
+                                               nullptr, nullptr);
 
     parseCommands<SKLFamily>(cs);
 

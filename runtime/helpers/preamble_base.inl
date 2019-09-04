@@ -38,6 +38,15 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 }
 
 template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programPerDssBackedBuffer(LinearStream *pCommandStream, const HardwareInfo &hwInfo, GraphicsAllocation *perDssBackBufferOffset) {
+}
+
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo) {
+    return 0;
+}
+
+template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     totalSize += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
@@ -46,7 +55,7 @@ size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
+                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer) {
     programL3(pCommandStream, l3Config);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
     programPreemption(pCommandStream, device, preemptionCsr);
@@ -54,6 +63,9 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
         programKernelDebugging(pCommandStream);
     }
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
+    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
+        programPerDssBackedBuffer(pCommandStream, device.getHardwareInfo(), perDssBackedBuffer);
+    }
 }
 
 template <typename GfxFamily>

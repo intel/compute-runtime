@@ -179,6 +179,11 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(preemptionAllocation);
         preemptionAllocation = nullptr;
     }
+
+    if (perDssBackedBuffer) {
+        getMemoryManager()->freeGraphicsMemory(perDssBackedBuffer);
+        perDssBackedBuffer = nullptr;
+    }
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {

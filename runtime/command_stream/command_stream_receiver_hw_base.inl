@@ -106,6 +106,12 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
     if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
     }
+
+    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
+        if (!this->isPreambleSent) {
+            size += PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(device.getHardwareInfo());
+        }
+    }
     return size;
 }
 
@@ -234,6 +240,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (scratchSpaceController->getPrivateScratchSpaceAllocation()) {
             makeResident(*scratchSpaceController->getPrivateScratchSpaceAllocation());
         }
+    }
+
+    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
+        if (!perDssBackedBuffer) {
+            createPerDssBackedBuffer(device);
+        }
+        makeResident(*perDssBackedBuffer);
     }
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
@@ -686,7 +699,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation, this->perDssBackedBuffer);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
