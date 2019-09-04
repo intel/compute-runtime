@@ -7,11 +7,9 @@
 set(IGDRCL_SRCS_tests_command_queue
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_operations_fixture.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/buffer_operations_withAsyncGPU_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_api_tests_mt_with_asyncGPU.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_barrier_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_command_without_kernel_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_copy_buffer_event_tests.cpp
