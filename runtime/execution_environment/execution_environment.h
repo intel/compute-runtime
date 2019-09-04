@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
 

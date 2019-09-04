@@ -10,6 +10,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
+#include "core/os_interface/os_memory.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -18,7 +19,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
-#include "runtime/os_interface/os_memory.h"
 
 #include <cassert>
 

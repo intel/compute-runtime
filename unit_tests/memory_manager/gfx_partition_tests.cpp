@@ -8,7 +8,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/os_interface/os_memory.h"
+#include "core/os_interface/os_memory.h"
 #include "unit_tests/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"

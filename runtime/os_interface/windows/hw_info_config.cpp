@@ -7,11 +7,11 @@
 
 #include "runtime/os_interface/hw_info_config.h"
 
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include "instrumentation.h"

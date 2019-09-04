@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/linux/os_memory_linux.h"
+#include "core/os_interface/linux/os_memory_linux.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

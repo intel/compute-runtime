@@ -13,6 +13,8 @@ set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_creator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
 )
 

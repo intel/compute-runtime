@@ -7,6 +7,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
@@ -18,7 +19,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"

@@ -9,8 +9,6 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
   ${CMAKE_CURRENT_SOURCE_DIR}/arrayref.h
   ${CMAKE_CURRENT_SOURCE_DIR}/directory.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h

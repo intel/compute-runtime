@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/abort.h"
@@ -13,7 +14,6 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/kmd_notify_properties.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/sku_info/sku_info_base.h"
 #include "test.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"

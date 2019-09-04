@@ -7,7 +7,7 @@
 
 #include "drm_neo.h"
 
-#include "runtime/memory_manager/memory_constants.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "runtime/utilities/directory.h"
 

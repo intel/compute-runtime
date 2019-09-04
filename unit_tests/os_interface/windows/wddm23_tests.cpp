@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/memory_manager/memory_constants.h"
+#include "core/memory_manager/memory_constants.h"
 
 #include <cwchar>
 #include <dxgi.h>

@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -14,7 +15,6 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_interface.h"
 
 namespace NEO {

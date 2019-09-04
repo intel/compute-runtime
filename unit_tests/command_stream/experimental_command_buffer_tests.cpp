@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"

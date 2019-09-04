@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/gen_common/aub_mapper_base.h"
-#include "runtime/memory_manager/memory_constants.h"
 
 #include "engine_node.h"
 

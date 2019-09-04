@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_library.h"

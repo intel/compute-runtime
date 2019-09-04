@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
@@ -14,7 +15,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"

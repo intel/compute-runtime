@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/aub/aub_helper_bdw_plus.inl"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 #include "runtime/helpers/hw_helper_bdw_plus.inl"
-#include "runtime/memory_manager/memory_constants.h"
 
 namespace NEO {
 typedef BDWFamily Family;

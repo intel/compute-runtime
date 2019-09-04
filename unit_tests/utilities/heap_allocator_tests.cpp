@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/utilities/heap_allocator.h"
+#include "core/utilities/heap_allocator.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

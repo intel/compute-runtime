@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/gfx_partition.h"
+#include "core/memory_manager/gfx_partition.h"
 
 #include "core/helpers/aligned_memory.h"
 

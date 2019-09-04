@@ -6,8 +6,8 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"

@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/hardware_context_controller.h"
 
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 
 using namespace NEO;

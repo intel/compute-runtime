@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/os_memory.h"
+#include "core/os_interface/os_memory.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>

@@ -19,8 +19,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/engine_limits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_partition.h
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/graphics_allocation_extra.cpp
@@ -32,7 +30,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.h
   ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_manager_banks_count.cpp

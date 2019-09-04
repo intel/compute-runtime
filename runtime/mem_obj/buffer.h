@@ -7,10 +7,10 @@
 
 #pragma once
 #include "core/helpers/basic_math.h"
+#include "core/memory_manager/memory_constants.h"
 #include "public/cl_ext_private.h"
 #include "runtime/context/context_type.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/memory_constants.h"
 
 #include "igfxfmid.h"
 #include "memory_properties_flags.h"

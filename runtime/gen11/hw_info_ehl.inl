@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/aub_mem_dump/aub_services.h"
-#include "runtime/memory_manager/memory_constants.h"
 
 #include "engine_node.h"
 #include "hw_cmds_ehl.h"

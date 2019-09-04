@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/memory_manager/memory_constants.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 
 #include "drm/i915_drm.h"
