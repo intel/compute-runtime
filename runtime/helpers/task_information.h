@@ -96,7 +96,7 @@ class Command : public IFNode<Command> {
     }
     void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous);
     void setEventsRequest(EventsRequest &eventsRequest);
-    void makeTimestampPacketsResident();
+    void makeTimestampPacketsResident(CommandStreamReceiver &commandStreamReceiver);
 
     TagNode<HwTimeStamps> *timestamp = nullptr;
     CompletionStamp completionStamp = {};
@@ -152,5 +152,6 @@ class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
+    void dispatchBlitOperation();
 };
 } // namespace NEO
