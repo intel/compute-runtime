@@ -13,9 +13,8 @@
 #include "runtime/helpers/timestamp_packet.h"
 
 namespace NEO {
-void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &eventsRequest,
-                                                           CommandStreamReceiver &currentCsr,
-                                                           DependenciesType depsType) {
+void CsrDependencies::fillFromEventsRequest(const EventsRequest &eventsRequest, CommandStreamReceiver &currentCsr,
+                                            DependenciesType depsType) {
     for (cl_uint i = 0; i < eventsRequest.numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
         if (event->isUserEvent()) {
@@ -27,7 +26,6 @@ void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &
             continue;
         }
 
-        timestampPacketContainer->makeResident(currentCsr);
         auto sameCsr = (&event->getCommandQueue()->getGpgpuCommandStreamReceiver() == &currentCsr);
         bool pushDependency = (DependenciesType::OnCsr == depsType && sameCsr) ||
                               (DependenciesType::OutOfCsr == depsType && !sameCsr) ||
@@ -36,6 +34,12 @@ void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &
         if (pushDependency) {
             this->push_back(timestampPacketContainer);
         }
+    }
+}
+
+void CsrDependencies::makeResident(CommandStreamReceiver &commandStreamReceiver) const {
+    for (auto &timestampPacketContainer : *this) {
+        timestampPacketContainer->makeResident(commandStreamReceiver);
     }
 }
 } // namespace NEO

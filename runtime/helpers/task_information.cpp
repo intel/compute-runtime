@@ -188,7 +188,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
     dispatchFlags.numGrfRequired = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+        dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }
     dispatchFlags.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
 
@@ -252,7 +252,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
 
     UNRECOVERABLE_IF(!commandStreamReceiver.peekTimestampPacketWriteEnabled());
 
-    dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+    dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
 
     makeTimestampPacketsResident();
 
@@ -300,6 +300,15 @@ Command::~Command() {
 
 void Command::makeTimestampPacketsResident() {
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        for (cl_event &eventFromWaitList : eventsWaitlist) {
+            auto event = castToObjectOrAbort<Event>(eventFromWaitList);
+            if (event->getTimestampPacketNodes()) {
+                event->getTimestampPacketNodes()->makeResident(commandStreamReceiver);
+            }
+        }
+    }
 
     if (currentTimestampPacketNodes) {
         currentTimestampPacketNodes->makeResident(commandStreamReceiver);

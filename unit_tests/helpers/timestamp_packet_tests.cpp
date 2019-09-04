@@ -260,7 +260,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequest(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
@@ -303,7 +303,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequest(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
@@ -329,7 +329,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDepsEmpty;
-    csrDepsEmpty.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDepsEmpty.fillFromEventsRequest(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
     EXPECT_EQ(0u, csrDepsEmpty.size());
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -357,7 +357,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
     cl_event waitlist2[] = {&event1, &eventWithEmptyTimestampContainer2, &event3, &eventWithEmptyTimestampContainer4, &event5};
     EventsRequest eventsRequest2(numEventsOnWaitlist, waitlist2, nullptr);
     CsrDependencies csrDepsSize3;
-    csrDepsSize3.fillFromEventsRequestAndMakeResident(eventsRequest2, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDepsSize3.fillFromEventsRequest(eventsRequest2, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     EXPECT_EQ(3u, csrDepsSize3.size());
 
@@ -554,7 +554,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
-    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
+    flags.csrDependencies.fillFromEventsRequest(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
     size_t extendedSize = sizeWithoutEvents + ((1 + 2 + 3 + 4 + 5) * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
@@ -596,7 +596,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
 
-    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
+    flags.csrDependencies.fillFromEventsRequest(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
 
     size_t extendedSize = sizeWithoutEvents + ((1 + 2 + 3 + 4 + 5) * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
@@ -687,7 +687,7 @@ HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDiffere
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
 
     CsrDependencies csrDependencies;
-    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr1, CsrDependencies::DependenciesType::All);
+    csrDependencies.fillFromEventsRequest(eventsRequest, csr1, CsrDependencies::DependenciesType::All);
     EXPECT_EQ(static_cast<size_t>(eventsOnWaitlist), csrDependencies.size());
 }
 
@@ -873,7 +873,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequest(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -956,7 +956,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequest(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -1040,7 +1040,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
     auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
-    EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation(), csr.taskCount));
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {
@@ -1064,9 +1064,9 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
     auto secondNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     EXPECT_NE(firstNode->getBaseGraphicsAllocation(), secondNode->getBaseGraphicsAllocation());
-    EXPECT_FALSE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()));
+    EXPECT_FALSE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation(), csr.taskCount));
     userEvent.setStatus(CL_COMPLETE);
-    EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation(), csr.taskCount));
     cmdQ->isQueueBlocked();
 }
 
@@ -1221,8 +1221,8 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
 
     EXPECT_NE(tagNode1->getBaseGraphicsAllocation(), tagNode2->getBaseGraphicsAllocation());
-    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getBaseGraphicsAllocation()));
-    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getBaseGraphicsAllocation(), ultCsr.taskCount));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getBaseGraphicsAllocation(), ultCsr.taskCount));
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
@@ -1257,8 +1257,8 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueuein
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
 
     EXPECT_NE(tagNode1->getBaseGraphicsAllocation(), tagNode2->getBaseGraphicsAllocation());
-    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getBaseGraphicsAllocation()));
-    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getBaseGraphicsAllocation(), ultCsr.taskCount));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getBaseGraphicsAllocation(), ultCsr.taskCount));
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingNonBlockedThenMakeItResident) {
@@ -1272,7 +1272,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingNonBlockedThenM
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto timestampPacketNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
 
-    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation(), csr.taskCount));
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMakeItResidentOnSubmit) {
@@ -1291,9 +1291,9 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMake
     cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
     auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
-    EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()));
+    EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation(), csr.taskCount));
     userEvent.setStatus(CL_COMPLETE);
-    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation(), csr.taskCount));
     cmdQ->isQueueBlocked();
 }
 

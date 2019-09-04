@@ -363,7 +363,7 @@ class CommandQueueHw : public CommandQueue {
                                                  TimestampPacketContainer &previousTimestampPacketNodes,
                                                  const EventsRequest &eventsRequest,
                                                  LinearStream &commandStream,
-                                                 uint32_t commandType);
+                                                 uint32_t commandType, bool queueBlocked);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
                           LinearStream *commandStream,

@@ -162,7 +162,7 @@ HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKerne
 
     mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, true);
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest,
-                                                                            mockCmdQ->getCS(0), 0);
+                                                                            mockCmdQ->getCS(0), 0, false);
 
     EnqueueProperties enqueueProperties(true, false, false, false, &blitProperties);
     mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocking, enqueueProperties, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
@@ -197,7 +197,7 @@ HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelTheAllowO
 
     mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, true);
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest,
-                                                                            mockCmdQ->getCS(0), 0);
+                                                                            mockCmdQ->getCS(0), 0, false);
     EnqueueProperties enqueueProperties(true, false, false, false, &blitProperties);
     enqueueProperties.blitProperties = &blitProperties;
 

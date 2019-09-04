@@ -9,6 +9,7 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"
 
 #include <map>
@@ -54,6 +55,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
     using BaseClass::CommandStreamReceiver::latestSentTaskCount;
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
+    using BaseClass::CommandStreamReceiver::osContext;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
@@ -133,6 +135,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     bool isMadeResident(GraphicsAllocation *graphicsAllocation) const {
         return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
+    }
+
+    bool isMadeResident(GraphicsAllocation *graphicsAllocation, uint32_t taskCount) const {
+        auto it = makeResidentAllocations.find(graphicsAllocation);
+        if (it == makeResidentAllocations.end()) {
+            return false;
+        }
+        return (it->first->getTaskCount(osContext->getContextId()) == taskCount);
     }
 
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
