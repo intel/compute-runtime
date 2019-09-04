@@ -851,6 +851,19 @@ TEST(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) 
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
 }
 
+TEST(DeviceGetCapsTest, givenUnifiedMemoryShardeSystemFlagWhenDeviceIsCreatedItContainsProperSystemMemorySetting) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(0u);
+
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    EXPECT_EQ(0u, device->getDeviceInfo().sharedSystemMemCapabilities);
+
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    cl_unified_shared_memory_capabilities_intel expectedProperties = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
+    EXPECT_EQ(expectedProperties, device->getDeviceInfo().sharedSystemMemCapabilities);
+}
+
 TEST(DeviceGetCapsTest, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 

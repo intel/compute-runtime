@@ -353,5 +353,12 @@ void Device::initializeCaps() {
     deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
     deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
     deviceInfo.sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities();
+    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        if (DebugManager.flags.EnableSharedSystemUsmSupport.get() == 0) {
+            deviceInfo.sharedSystemMemCapabilities = 0u;
+        } else {
+            deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
+        }
+    }
 }
 } // namespace NEO
