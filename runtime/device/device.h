@@ -93,6 +93,9 @@ class Device : public BaseObject<_cl_device_id> {
     bool isFullRangeSvm() const {
         return executionEnvironment->isFullRangeSvm();
     }
+    bool areSharedSystemAllocationsAllowed() const {
+        return this->deviceInfo.sharedSystemMemCapabilities != 0u;
+    }
 
   protected:
     Device() = delete;

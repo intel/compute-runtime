@@ -4204,12 +4204,16 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     if (argValue != nullptr) {
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
-            retVal = CL_INVALID_ARG_VALUE;
-            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-            return retVal;
+            if (!pKernel->getDevice().areSharedSystemAllocationsAllowed()) {
+                retVal = CL_INVALID_ARG_VALUE;
+                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                return retVal;
+            }
+        } else {
+            pSvmAlloc = svmData->gpuAllocation;
         }
-        pSvmAlloc = svmData->gpuAllocation;
     }
+
     retVal = pKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAlloc);
     TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
     return retVal;

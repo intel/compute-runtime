@@ -204,6 +204,27 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThen
     EXPECT_EQ(offsetedPtr, surfaceAddress);
 }
 
+HWTEST_F(KernelArgSvmTest, givenDeviceSupportingSharedSystemAllocationsWhenSetArgSvmIsCalledWithSurfaceStateThenSizeIsMaxAndAddressIsProgrammed) {
+    this->pDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
+
+    auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    pKernel->setArgSvmAlloc(0, systemPointer, nullptr);
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
+    EXPECT_EQ(systemPointer, surfaceAddress);
+    EXPECT_EQ(128u, surfaceState->getWidth());
+    EXPECT_EQ(2048u, surfaceState->getDepth());
+    EXPECT_EQ(16384u, surfaceState->getHeight());
+}
+
 TEST_F(KernelArgSvmTest, SetKernelArgImmediateInvalidArgValue) {
     auto retVal = pKernel->setArgImmediate(0, 256, nullptr);
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);

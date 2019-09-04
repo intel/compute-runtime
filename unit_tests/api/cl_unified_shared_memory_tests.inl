@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -290,6 +291,25 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutParamN
 TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithInvalidKernelThenInvaliKernelErrorIsReturned) {
     auto retVal = clSetKernelArgMemPointerINTEL(0, 0, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedItIsProperlySetInKernel) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    auto mockContext = std::make_unique<MockContext>();
+
+    MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
+
+    auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
+
+    auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, systemPointer);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    //check if cross thread is updated
+    auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset));
+    auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
+
+    EXPECT_EQ(*crossThreadLocation, systemAddress);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithValidUnifiedMemoryAllocationThenProperFieldsAreSet) {
