@@ -22,7 +22,7 @@ size_t PreemptionHelper::getPreemptionWaCsSize(const Device &device) {
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getWaTable()->waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
             size += 2 * sizeof(MI_LOAD_REGISTER_IMM);
         }
     }
@@ -35,7 +35,7 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin(LinearStream *pCommandStream, 
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getWaTable()->waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             *pCmd = GfxFamily::cmdInitLoadRegisterImm;
             pCmd->setRegisterOffset(CS_GPR_R0);
@@ -50,7 +50,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, co
     PreemptionMode preemptionMode = device.getPreemptionMode();
     if (preemptionMode == PreemptionMode::ThreadGroup ||
         preemptionMode == PreemptionMode::MidThread) {
-        if (device.getWaTable()->waModifyVFEStateAfterGPGPUPreemption) {
+        if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             *pCmd = GfxFamily::cmdInitLoadRegisterImm;
             pCmd->setRegisterOffset(CS_GPR_R0);

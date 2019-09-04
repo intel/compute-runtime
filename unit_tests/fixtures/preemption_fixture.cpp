@@ -49,7 +49,7 @@ void DevicePreemptionTests::SetUp() {
     ASSERT_NE(nullptr, context);
     ASSERT_NE(nullptr, cmdQ);
 
-    waTable = const_cast<WorkaroundTable *>(device->getWaTable());
+    waTable = &device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
 }
 
 void DevicePreemptionTests::TearDown() {

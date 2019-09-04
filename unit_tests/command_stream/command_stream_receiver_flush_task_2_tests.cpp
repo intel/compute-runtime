@@ -1040,15 +1040,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentT
     auto samplerCacheFlushBeforeSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
     EXPECT_EQ(samplerCacheNotFlushedSize, samplerCacheFlushBeforeSize);
 
-    NEO::WorkaroundTable *waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
-    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    NEO::WorkaroundTable *waTable = &pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     samplerCacheFlushBeforeSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
 
     auto difference = samplerCacheFlushBeforeSize - samplerCacheNotFlushedSize;
     EXPECT_EQ(sizeof(typename FamilyType::PIPE_CONTROL), difference);
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {

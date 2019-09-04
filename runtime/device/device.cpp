@@ -167,8 +167,6 @@ bool Device::createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_str
 
 const HardwareInfo &Device::getHardwareInfo() const { return *executionEnvironment->getHardwareInfo(); }
 
-const WorkaroundTable *Device::getWaTable() const { return &getHardwareInfo().workaroundTable; }
-
 const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;
 }

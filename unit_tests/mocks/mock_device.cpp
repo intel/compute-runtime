@@ -34,7 +34,6 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t devi
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
     this->mockMemoryManager.reset(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, enableLocalMemory, aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
-    mockWaTable = hwInfo.workaroundTable;
     executionEnvironment->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
 }

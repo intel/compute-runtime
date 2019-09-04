@@ -55,7 +55,7 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, Kernel *kern
     }
 
     if (device.getPreemptionMode() >= PreemptionMode::ThreadGroup &&
-        allowThreadGroupPreemption(kernel, device.getWaTable())) {
+        allowThreadGroupPreemption(kernel, &device.getHardwareInfo().workaroundTable)) {
         return PreemptionMode::ThreadGroup;
     }
 

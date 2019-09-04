@@ -40,8 +40,6 @@ class MockDevice : public RootDevice {
         preemptionMode = mode;
     }
 
-    const WorkaroundTable *getWaTable() const override { return &mockWaTable; }
-
     void injectMemoryManager(MemoryManager *);
 
     void setPerfCounters(PerformanceCounters *perfCounters) {
@@ -87,9 +85,6 @@ class MockDevice : public RootDevice {
     }
 
     std::unique_ptr<MemoryManager> mockMemoryManager;
-
-  private:
-    WorkaroundTable mockWaTable = {};
 };
 
 template <>

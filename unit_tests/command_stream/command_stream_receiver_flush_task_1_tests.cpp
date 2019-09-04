@@ -311,15 +311,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampP
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    NEO::WorkaroundTable *waTable = nullptr;
-    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    NEO::WorkaroundTable *waTable = &pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
 
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
     flushTask(commandStreamReceiver);
 
@@ -330,7 +328,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredTh
 
     auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itorPC);
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSendPipecontrol) {
@@ -339,10 +336,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    NEO::WorkaroundTable *waTable = nullptr;
-    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    NEO::WorkaroundTable *waTable = &pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
 
-    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     flushTask(commandStreamReceiver);
@@ -356,7 +351,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     EXPECT_NE(cmdList.end(), itorPC);
     auto pipeControlCmd = (typename FamilyType::PIPE_CONTROL *)*itorPC;
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSamplerCacheFlushBetweenRedescribedSurfaceReadsDasabledThenDontSendPipecontrol) {
@@ -365,10 +359,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSa
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    NEO::WorkaroundTable *waTable = nullptr;
-    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    NEO::WorkaroundTable *waTable = &pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
 
-    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
 
     flushTask(commandStreamReceiver);
@@ -380,7 +372,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSa
 
     auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itorPC);
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSendPipecontrol) {
@@ -389,10 +380,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    NEO::WorkaroundTable *waTable = nullptr;
-    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    NEO::WorkaroundTable *waTable = &pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
 
-    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     flushTask(commandStreamReceiver);
@@ -406,7 +395,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
     EXPECT_NE(cmdList.end(), itorPC);
     auto pipeControlCmd = (typename FamilyType::PIPE_CONTROL *)*itorPC;
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStampValid) {
