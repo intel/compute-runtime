@@ -110,7 +110,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     DebugManagerStateRestore dbgRestore;
 };
 
-HWTEST_F(DispatchWalkerTest, computeDimensions) {
+HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDimensionsIsReturned) {
     const size_t workItems1D[] = {100, 1, 1};
     EXPECT_EQ(1u, computeDimensions(workItems1D));
 
@@ -121,7 +121,7 @@ HWTEST_F(DispatchWalkerTest, computeDimensions) {
     EXPECT_EQ(3u, computeDimensions(workItems3D));
 }
 
-HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
+HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntChanged) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -163,7 +163,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
 
-HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalIdsWhenDispatchingWalkerThenWalkerIsDispatched) {
     threadPayload.LocalIDXPresent = 0;
     threadPayload.LocalIDYPresent = 0;
     threadPayload.LocalIDZPresent = 0;
@@ -210,7 +210,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm) {
+HWTEST_F(DispatchWalkerTest, GivenDefaultLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -238,7 +238,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm) {
+HWTEST_F(DispatchWalkerTest, GivenSquaredLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
@@ -267,7 +267,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
+HWTEST_F(DispatchWalkerTest, GivenNdLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
@@ -295,7 +295,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
+HWTEST_F(DispatchWalkerTest, GivenOldLwsAlgorithmWhenDispatchingWalkerThenDimensionsAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
@@ -324,7 +324,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
+HWTEST_F(DispatchWalkerTest, GivenNumWorkGroupsWhenDispatchingWalkerThenNumWorkGroupsIsCorrectlySet) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.numWorkGroupsOffset[0] = 0;
     kernelInfo.workloadInfo.numWorkGroupsOffset[1] = 4;
@@ -355,7 +355,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
     EXPECT_EQ(10u, *kernel.numWorkGroupsZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndDefaultAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
@@ -385,7 +385,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndNdOnWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
@@ -415,7 +415,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
     EXPECT_EQ(10u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
@@ -446,7 +446,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAndND) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeAndSquaredAlgorithmOffAndNdOffWhenDispatchingWalkerThenLwsIsCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
@@ -477,7 +477,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
+HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
@@ -506,7 +506,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
     EXPECT_EQ(3u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
+HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
@@ -541,7 +541,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
     EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
+HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
@@ -587,7 +587,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
+HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pDevice);
     MockKernel mainKernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
@@ -646,7 +646,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIsBlocked) {
+HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenCommandSteamIsNotConsumed) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -680,7 +680,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     EXPECT_NE(nullptr, blockedCommandsData->ssh);
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelWhenQueueIsBlocked) {
+HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredHeaSizesAreTakenFromKernel) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -739,7 +739,7 @@ HWTEST_F(DispatchWalkerTest, givenBlockedEnqueueWhenObtainingCommandStreamThenAl
     EXPECT_EQ(cmdStream, blockedKernelData->commandStream.get());
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhenQueueIsBlocked) {
+HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredHeapSizesAreTakenFromMdi) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -815,7 +815,7 @@ HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerI
     EXPECT_EQ(allocation, blockedCommandsData->commandStream->getGraphicsAllocation());
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
+HWTEST_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenWorkDimensionsAreCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     MockKernel kernel2(program.get(), kernelInfo, *pDevice);
@@ -840,7 +840,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsInterfaceDesriptors) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenInterfaceDescriptorsAreProgrammedCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto memoryManager = this->pDevice->getMemoryManager();
@@ -935,7 +935,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     memoryManager->freeGraphicsMemory(kernelIsaWithSamplerAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsGpgpuWalkerIDOffset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenGpgpuWalkerIdOffsetIsProgrammedCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(program.get(), kernelInfo, *pDevice);
@@ -980,7 +980,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoAndDifferentKernelsCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenThreadGroupIdStartingCoordinatesAreProgrammedCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(program.get(), kernelInfo, *pDevice);
@@ -1029,7 +1029,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoButSameKernelCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleDispatchInfoAndSameKernelWhenDispatchingWalkerThenGpgpuWalkerThreadGroupIdStartingCoordinatesAreCorrectlyProgrammed) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
@@ -1200,7 +1200,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
     EXPECT_EQ(pipeControlCount, 2u);
 }
 
-TEST(DispatchWalker, calculateDispatchDim) {
+TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturned) {
     Vec3<size_t> dim0{0, 0, 0};
     Vec3<size_t> dim1{2, 1, 1};
     Vec3<size_t> dim2{2, 2, 1};
