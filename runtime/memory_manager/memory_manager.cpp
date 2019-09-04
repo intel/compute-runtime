@@ -276,7 +276,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::MCS:
     case GraphicsAllocation::AllocationType::PREEMPTION:
-    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
     case GraphicsAllocation::AllocationType::SVM_CPU:

@@ -176,6 +176,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::INTERNAL_HEAP ||
                allocationType == AllocationType::LINEAR_STREAM ||
                allocationType == AllocationType::PIPE ||
+               allocationType == AllocationType::PRINTF_SURFACE ||
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
     void *getReservedAddressPtr() const {

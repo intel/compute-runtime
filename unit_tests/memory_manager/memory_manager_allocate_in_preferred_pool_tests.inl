@@ -555,6 +555,15 @@ TEST(MemoryManagerTest, givenLinearStreamWhenGetAllocationDataIsCalledThenSystem
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
+TEST(MemoryManagerTest, givenPrintfAllocationWhenGetAllocationDataIsCalledThenDontUseSystemMemoryAndRequireCpuAccess) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{1, GraphicsAllocation::AllocationType::PRINTF_SURFACE};
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+}
+
 TEST(MemoryManagerTest, givenKernelIsaTypeThenUseInternal32BitAllocator) {
     EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::KERNEL_ISA));
 }
