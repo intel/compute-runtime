@@ -74,7 +74,8 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             internalOptions += "-m32 ";
         }
 
-        if (DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
+        if (pDevice->areSharedSystemAllocationsAllowed() ||
+            DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
         }
         kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();

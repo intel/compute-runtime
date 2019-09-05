@@ -1745,7 +1745,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
-    auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
+    DebugManagerStateRestore restorer;
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
     if (pDevice) {
@@ -1768,7 +1768,12 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStateful
     } else {
         EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
     }
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
+}
+
+TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProgramIsCompiledThenItForcesStatelessCompilation) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddressess) {
