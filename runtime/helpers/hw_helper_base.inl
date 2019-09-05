@@ -215,4 +215,9 @@ template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
+
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::requiresAuxResolves() const {
+    return true;
+}
 } // namespace NEO

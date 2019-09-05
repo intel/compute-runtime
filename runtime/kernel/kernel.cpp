@@ -356,6 +356,8 @@ cl_int Kernel::initialize() {
             }
         }
 
+        auxTranslationRequired &= HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves();
+
         if (DebugManager.flags.DisableAuxTranslation.get()) {
             auxTranslationRequired = false;
         }

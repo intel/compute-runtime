@@ -67,6 +67,7 @@ class HwHelper {
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
+    virtual bool requiresAuxResolves() const = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -163,6 +164,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getMetricsLibraryGenId() const override;
 
     uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
+
+    bool requiresAuxResolves() const override;
 
   protected:
     HwHelperHw() = default;
