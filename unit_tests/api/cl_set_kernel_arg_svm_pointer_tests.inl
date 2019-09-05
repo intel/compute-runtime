@@ -99,6 +99,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettin
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     void *ptrHost = malloc(256);
     EXPECT_NE(nullptr, ptrHost);
 
@@ -179,6 +180,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKer
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
+    pDevice->deviceInfo.sharedSystemMemCapabilities = 0u;
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
