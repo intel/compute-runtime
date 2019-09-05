@@ -708,6 +708,10 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutA
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
+    if (!HwHelper::get(this->pDevice->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves()) {
+        GTEST_SKIP();
+    }
+
     MyCmdQ<FamilyType> cmdQ(context, pDevice);
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer0, buffer1, buffer2, buffer3;

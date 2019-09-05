@@ -2651,7 +2651,12 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
-    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+
+    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves()) {
+        EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+    } else {
+        EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
+    }
 
     DebugManager.flags.DisableAuxTranslation.set(true);
     kernel.mockKernel->initialize();
@@ -2674,7 +2679,12 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
 
     kernel.mockKernel->initialize();
-    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+
+    if (HwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves()) {
+        EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+    } else {
+        EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
+    }
 }
 
 TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
