@@ -97,7 +97,7 @@ T *Program::create(
         }
         program->pDevice = &device;
         program->numDevices = 1;
-        if (is32bit || DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
+        if (is32bit || DebugManager.flags.DisableStatelessToStatefulOptimization.get() || device.areSharedSystemAllocationsAllowed()) {
             program->internalOptions += "-cl-intel-greater-than-4GB-buffer-required";
         }
     }
