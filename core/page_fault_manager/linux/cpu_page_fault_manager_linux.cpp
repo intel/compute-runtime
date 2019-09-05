@@ -7,7 +7,7 @@
 
 #include "core/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
 
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 
 #include <sys/mman.h>
 

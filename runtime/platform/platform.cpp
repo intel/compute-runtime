@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -17,7 +18,6 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"

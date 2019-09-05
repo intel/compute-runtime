@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
 #include "runtime/aub/aub_center.h"
@@ -14,7 +15,6 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"

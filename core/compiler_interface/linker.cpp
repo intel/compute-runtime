@@ -7,8 +7,8 @@
 
 #include "linker.h"
 
+#include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/helpers/debug_helpers.h"
 
 #if __has_include("RelocationInfo.h")
 #include "RelocationInfo.h"

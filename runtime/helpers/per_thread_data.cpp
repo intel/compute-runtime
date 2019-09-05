@@ -8,7 +8,7 @@
 #include "runtime/helpers/per_thread_data.h"
 
 #include "core/command_stream/linear_stream.h"
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 
 #include <array>
 

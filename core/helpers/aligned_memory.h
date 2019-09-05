@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include <algorithm>

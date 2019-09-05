@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/abort.h"
+#include "core/helpers/abort.h"
 
 #include <cstdio>
 #include <cstdlib>

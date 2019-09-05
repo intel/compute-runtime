@@ -7,9 +7,9 @@
 
 #include "offline_compiler.h"
 
+#include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"
 #include "elf/writer.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/validators.h"

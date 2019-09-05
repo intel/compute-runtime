@@ -7,7 +7,7 @@
 
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/kernel_info.h"
 

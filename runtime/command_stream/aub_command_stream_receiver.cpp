@@ -7,8 +7,8 @@
 
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 
+#include "core/helpers/debug_helpers.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"

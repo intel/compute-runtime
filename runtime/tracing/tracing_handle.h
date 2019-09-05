@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 #include "runtime/tracing/tracing_types.h"
 
 #include <bitset>

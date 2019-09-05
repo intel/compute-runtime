@@ -6,7 +6,6 @@
 
 set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
   ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
@@ -23,7 +22,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/device_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,7 @@ set(CLOC_SEGFAULT_TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/segfault_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp
+  ${IGDRCL_SOURCE_DIR}/core/helpers/abort.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/os_library.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
 )

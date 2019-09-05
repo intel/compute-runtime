@@ -8,7 +8,7 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_time_linux.h"

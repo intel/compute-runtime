@@ -7,6 +7,8 @@
 project(ocloc)
 
 set(CLOC_SRCS_LIB
+  ${IGDRCL_SOURCE_DIR}/core/helpers/abort.cpp
+  ${IGDRCL_SOURCE_DIR}/core/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
   ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.h
   ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.cpp
@@ -22,8 +24,6 @@ set(CLOC_SRCS_LIB
   ${IGDRCL_SOURCE_DIR}/offline_compiler/multi_command.h
   ${IGDRCL_SOURCE_DIR}/offline_compiler/options.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/compiler_interface/create_main.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/file_io.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/hw_info.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/platform/extensions.cpp

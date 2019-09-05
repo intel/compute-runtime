@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/debug_helpers.h"
 #include "runtime/commands/bxml_generator_glue.h"
-#include "runtime/helpers/debug_helpers.h"
 
 #include "hw_info.h"
 #include "igfxfmid.h"

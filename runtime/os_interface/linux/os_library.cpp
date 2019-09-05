@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/os_library.h"
 
-#include "runtime/helpers/debug_helpers.h"
+#include "core/helpers/debug_helpers.h"
 
 #include "os_library.h"
 

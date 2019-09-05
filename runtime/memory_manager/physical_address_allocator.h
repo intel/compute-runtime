@@ -7,8 +7,8 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/memory_banks.h"
 
 #include <atomic>

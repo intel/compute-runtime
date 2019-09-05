@@ -7,10 +7,10 @@
 
 #include "runtime/event/event_builder.h"
 
+#include "core/helpers/debug_helpers.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/context/context.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/timestamp_packet.h"
 
 namespace NEO {
