@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <fstream>
+#include <sstream>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -166,7 +167,23 @@ void BinaryDecoder::parseTokens() {
             "",
             "enum PATCH_TOKEN",
             "{",
+            "    PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO,             // 41 @SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo@",
+            "    PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO,           // 42 @SPatchAllocateConstantMemorySurfaceProgramBinaryInfo@",
             "};",
+            "struct SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo :",
+            "    SPatchItemHeader",
+            "{",
+            "    uint32_t   Type;",
+            "    uint32_t   GlobalBufferIndex;",
+            "    uint32_t   InlineDataSize;",
+            "};",
+            "struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :",
+            "    SPatchItemHeader",
+            "{",
+            "    uint32_t   ConstantBufferIndex;",
+            "    uint32_t   InlineDataSize;",
+            "};",
+
         };
     } else {
         readFileToVectorOfStrings(patchList, pathToPatch + "patch_list.h", true);
@@ -199,7 +216,6 @@ void BinaryDecoder::parseTokens() {
     }
 
     // Reading all Patch Tokens and according structs
-    uint8_t patchNo = 0;
     size_t patchTokenEnumPos = findPos(patchList, "enum PATCH_TOKEN");
     if (patchTokenEnumPos == patchList.size()) {
         exit(1);
@@ -211,9 +227,15 @@ void BinaryDecoder::parseTokens() {
         } else if (patchList[i].find("PATCH_TOKEN") == std::string::npos) {
             continue;
         } else if (patchList[i].find("@") == std::string::npos) {
-            patchNo++;
             continue;
         }
+
+        size_t patchTokenNoStartPos, patchTokenNoEndPos;
+        patchTokenNoStartPos = patchList[i].find('/') + 3;
+        patchTokenNoEndPos = patchList[i].find(' ', patchTokenNoStartPos);
+        std::stringstream patchTokenNoStream(patchList[i].substr(patchTokenNoStartPos, patchTokenNoEndPos - patchTokenNoStartPos));
+        int patchNo;
+        patchTokenNoStream >> patchNo;
 
         auto patchTokenPtr = std::make_unique<PatchToken>();
         size_t nameStartPos, nameEndPos;
@@ -224,18 +246,16 @@ void BinaryDecoder::parseTokens() {
         nameStartPos = patchList[i].find("@");
         nameEndPos = patchList[i].find('@', nameStartPos + 1);
         if (nameEndPos == std::string::npos) {
-            patchNo++;
             continue;
         }
         std::string structName = "struct " + patchList[i].substr(nameStartPos + 1, nameEndPos - nameStartPos - 1) + " :";
 
         size_t structPos = findPos(patchList, structName);
         if (structPos == patchList.size()) {
-            patchNo++;
             continue;
         }
         patchTokenPtr->size = readStructFields(patchList, structPos + 1, patchTokenPtr->fields);
-        patchTokens[patchNo++] = std::move(patchTokenPtr);
+        patchTokens[static_cast<uint8_t>(patchNo)] = std::move(patchTokenPtr);
     }
 
     //Finding and reading Program Binary Header
