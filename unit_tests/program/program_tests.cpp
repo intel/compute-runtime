@@ -1795,7 +1795,11 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
         } else {
             EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=000")));
         }
-        EXPECT_THAT(program.getInternalOptions(), testing::Not(testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required"))));
+        if (pDevice->areSharedSystemAllocationsAllowed()) {
+            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
+        } else {
+            EXPECT_THAT(program.getInternalOptions(), testing::Not(testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required"))));
+        }
     } else {
         EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
     }

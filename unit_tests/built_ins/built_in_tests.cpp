@@ -1296,7 +1296,7 @@ TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
     EXPECT_EQ(std::string::npos, it);
 
     it = builtinInternalOptions.find("-cl-intel-greater-than-4GB-buffer-required");
-    if (is32bit) {
+    if (is32bit || pDevice->areSharedSystemAllocationsAllowed()) {
         EXPECT_NE(std::string::npos, it);
     } else {
         EXPECT_EQ(std::string::npos, it);

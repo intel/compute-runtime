@@ -45,7 +45,7 @@ class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
         pKernelInfo->kernelArgInfo[0].typeStr = "char *";
         pKernelInfo->kernelArgInfo[0].addressQualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL;
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getDevice(0));
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *this->pDevice);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
