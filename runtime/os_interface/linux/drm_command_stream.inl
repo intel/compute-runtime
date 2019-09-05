@@ -108,7 +108,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency) {
+void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency) {
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<const DrmAllocation *>(alloc);
         if (drmAlloc->fragmentsStorage.fragmentCount) {

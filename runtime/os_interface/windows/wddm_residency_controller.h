@@ -56,8 +56,8 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency);
-    void makeNonResidentEvictionAllocations(ResidencyContainer &evictionAllocations);
+    bool makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency);
+    void makeNonResidentEvictionAllocations(const ResidencyContainer &evictionAllocations);
 
   protected:
     Wddm &wddm;
