@@ -15,3 +15,7 @@ using IcllpTest = Test<DeviceFixture>;
 ICLLPTEST_F(IcllpTest, givenIcllpWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
+
+ICLLPTEST_F(IcllpTest, givenIclLpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+}

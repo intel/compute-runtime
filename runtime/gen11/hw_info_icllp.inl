@@ -50,7 +50,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
     false,                                           // blitterOperationsSupported
-    true,                                            // ftrSupportsInteger64BitAtomics
+    false,                                           // ftrSupportsInteger64BitAtomics
     false,                                           // ftrSupportsFP64
     false,                                           // ftrSupports64BitMath
     true,                                            // ftrSvm
