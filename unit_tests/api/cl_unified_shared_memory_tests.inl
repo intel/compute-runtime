@@ -38,6 +38,22 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, givenMappedAllocationWhenClMemFreeIntelIscalledThenMappingIsRemoved) {
+
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    allocationsManager->insertSvmMapOperation(unifiedMemorySharedAllocation, 4u, unifiedMemorySharedAllocation, 0u, false);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, allocationsManager->getSvmMapOperation(unifiedMemorySharedAllocation));
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clDeviceMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);

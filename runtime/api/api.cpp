@@ -3467,6 +3467,10 @@ cl_int clMemFreeINTEL(
         return CL_INVALID_VALUE;
     }
 
+    if (neoContext->getSVMAllocsManager()->getSvmMapOperation(ptr)) {
+        neoContext->getSVMAllocsManager()->removeSvmMapOperation(ptr);
+    }
+
     return CL_SUCCESS;
 }
 
