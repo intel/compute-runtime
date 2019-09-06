@@ -121,6 +121,7 @@ void Device::initializeCaps() {
     deviceInfo.platformLP = (hwInfo.capabilityTable.clVersionSupport == 12) ? true : false;
     deviceInfo.spirVersions = spirVersions.c_str();
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
+    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
     if (enabledClVersion >= 21) {
         deviceInfo.independentForwardProgress = true;
@@ -146,11 +147,19 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_intel_packed_yuv ";
         deviceInfo.packedYuvExtension = true;
     }
-    if (DebugManager.flags.EnableIntelVme.get() && supportsVme) {
+    if (DebugManager.flags.EnableIntelVme.get() != -1) {
+        supportsVme = !!DebugManager.flags.EnableIntelVme.get();
+    }
+
+    if (supportsVme) {
         deviceExtensions += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
         deviceInfo.vmeExtension = true;
     }
-    if (DebugManager.flags.EnableIntelAdvancedVme.get() && supportsVme) {
+
+    if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
+        supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
+    }
+    if (supportsAdvancedVme) {
         deviceExtensions += "cl_intel_advanced_motion_estimation ";
     }
 
@@ -169,10 +178,11 @@ void Device::initializeCaps() {
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     exposedBuiltinKernels = builtInKernels;
-    if (deviceExtensions.find("cl_intel_motion_estimation") != std::string::npos) {
+
+    if (supportsVme) {
         exposedBuiltinKernels.append("block_motion_estimate_intel;");
     }
-    if (deviceExtensions.find("cl_intel_advanced_motion_estimation") != std::string::npos) {
+    if (supportsAdvancedVme) {
         auto advVmeKernels = "block_advanced_motion_estimate_check_intel;block_advanced_motion_estimate_bidirectional_check_intel;";
         exposedBuiltinKernels.append(advVmeKernels);
     }

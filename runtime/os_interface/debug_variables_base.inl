@@ -89,8 +89,6 @@ DECLARE_DEBUG_VARIABLE(bool, DisableDcFlushInEpilogue, false, "Disable DC flush 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
-DECLARE_DEBUG_VARIABLE(bool, EnableIntelVme, true, "Enables cl_intel_motion_estimation extension")
-DECLARE_DEBUG_VARIABLE(bool, EnableIntelAdvancedVme, true, "Enables cl_intel_advanced_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(bool, EnableDeferredDeleter, true, "Enables async deleter")
 DECLARE_DEBUG_VARIABLE(bool, EnableAsyncDestroyAllocations, true, "Enables async destroying graphics allocations in mem obj destructor")
 DECLARE_DEBUG_VARIABLE(bool, EnableAsyncEventsHandler, true, "Enables async events handler")
@@ -104,6 +102,8 @@ DECLARE_DEBUG_VARIABLE(bool, EnablePassInlineData, false, "Enable passing of inl
 DECLARE_DEBUG_VARIABLE(bool, EnableFormatQuery, false, "Enable sharing format querying")
 DECLARE_DEBUG_VARIABLE(bool, AllowOpenFdOperations, false, "When enabled driver is allowed to call DRM_IOCTL_PRIME_HANDLE_TO_FD.")
 DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memory manager")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_motion_estimation extension")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelAdvancedVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_advanced_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsForReadWriteBuffers, -1, "Use Blitter engine for Read/Write Buffers operations. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalker, -1, "-1: platform behavior, 0: disabled, 1: enabled. Adds dedicated cache flush command after WALKER command when surfaces used by kernel require to flush the cache")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLocalMemory, -1, "-1: default behavior, 0: disabled, 1: enabled, Allows allocating graphics memory in Local Memory")
