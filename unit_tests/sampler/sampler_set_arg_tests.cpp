@@ -127,9 +127,9 @@ HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
         ptrOffset(pKernel->getDynamicStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), static_cast<cl_bool>(!samplerState->getNonNormalizedCoordinateEnable()));
-    EXPECT_EQ(SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_MIRROR, samplerState->getTcxAddressControlMode());
-    EXPECT_EQ(SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_MIRROR, samplerState->getTcyAddressControlMode());
-    EXPECT_EQ(SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_MIRROR, samplerState->getTczAddressControlMode());
+    EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTcxAddressControlMode());
+    EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTcyAddressControlMode());
+    EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR, samplerState->getTczAddressControlMode());
     EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
     EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
     EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerState->getMipModeFilter());
@@ -478,32 +478,32 @@ HWTEST_P(AddressingModeTest, setKernelArgSampler) {
         ptrOffset(pKernel->getDynamicStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    auto expectedModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_MIRROR;
-    auto expectedModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_MIRROR;
-    auto expectedModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_MIRROR;
+    auto expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+    auto expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+    auto expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
 
     // clang-format off
     switch (addressingMode) {
     case CL_ADDRESS_NONE:
     case CL_ADDRESS_CLAMP:
-        expectedModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_CLAMP_BORDER;
-        expectedModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_CLAMP_BORDER;
-        expectedModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_CLAMP_BORDER;
+        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
         break;
     case CL_ADDRESS_CLAMP_TO_EDGE:
-        expectedModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_CLAMP;
-        expectedModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_CLAMP;
-        expectedModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_CLAMP;
+        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         break;
     case CL_ADDRESS_MIRRORED_REPEAT:
-        expectedModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_MIRROR;
-        expectedModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_MIRROR;
-        expectedModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_MIRROR;
+        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
         break;
     case CL_ADDRESS_REPEAT:
-        expectedModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_WRAP;
-        expectedModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_WRAP;
-        expectedModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_WRAP;
+        expectedModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+        expectedModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+        expectedModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
         break;
     }
     // clang-format on

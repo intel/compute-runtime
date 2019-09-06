@@ -3151,36 +3151,16 @@ typedef struct tagSAMPLER_STATE {
         RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_DISABLE = 0x0,
         RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_ENABLE = 0x1,
     } RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS;
-    typedef enum tagTCZ_ADDRESS_CONTROL_MODE {
-        TCZ_ADDRESS_CONTROL_MODE_WRAP = 0x0,
-        TCZ_ADDRESS_CONTROL_MODE_MIRROR = 0x1,
-        TCZ_ADDRESS_CONTROL_MODE_CLAMP = 0x2,
-        TCZ_ADDRESS_CONTROL_MODE_CUBE = 0x3,
-        TCZ_ADDRESS_CONTROL_MODE_CLAMP_BORDER = 0x4,
-        TCZ_ADDRESS_CONTROL_MODE_MIRROR_ONCE = 0x5,
-        TCZ_ADDRESS_CONTROL_MODE_HALF_BORDER = 0x6,
-        TCZ_ADDRESS_CONTROL_MODE_MIRROR_101 = 0x7,
-    } TCZ_ADDRESS_CONTROL_MODE;
-    typedef enum tagTCY_ADDRESS_CONTROL_MODE {
-        TCY_ADDRESS_CONTROL_MODE_WRAP = 0x0,
-        TCY_ADDRESS_CONTROL_MODE_MIRROR = 0x1,
-        TCY_ADDRESS_CONTROL_MODE_CLAMP = 0x2,
-        TCY_ADDRESS_CONTROL_MODE_CUBE = 0x3,
-        TCY_ADDRESS_CONTROL_MODE_CLAMP_BORDER = 0x4,
-        TCY_ADDRESS_CONTROL_MODE_MIRROR_ONCE = 0x5,
-        TCY_ADDRESS_CONTROL_MODE_HALF_BORDER = 0x6,
-        TCY_ADDRESS_CONTROL_MODE_MIRROR_101 = 0x7,
-    } TCY_ADDRESS_CONTROL_MODE;
-    typedef enum tagTCX_ADDRESS_CONTROL_MODE {
-        TCX_ADDRESS_CONTROL_MODE_WRAP = 0x0,
-        TCX_ADDRESS_CONTROL_MODE_MIRROR = 0x1,
-        TCX_ADDRESS_CONTROL_MODE_CLAMP = 0x2,
-        TCX_ADDRESS_CONTROL_MODE_CUBE = 0x3,
-        TCX_ADDRESS_CONTROL_MODE_CLAMP_BORDER = 0x4,
-        TCX_ADDRESS_CONTROL_MODE_MIRROR_ONCE = 0x5,
-        TCX_ADDRESS_CONTROL_MODE_HALF_BORDER = 0x6,
-        TCX_ADDRESS_CONTROL_MODE_MIRROR_101 = 0x7,
-    } TCX_ADDRESS_CONTROL_MODE;
+    typedef enum tagTEXTURE_COORDINATE_MODE {
+        TEXTURE_COORDINATE_MODE_WRAP = 0x0,
+        TEXTURE_COORDINATE_MODE_MIRROR = 0x1,
+        TEXTURE_COORDINATE_MODE_CLAMP = 0x2,
+        TEXTURE_COORDINATE_MODE_CUBE = 0x3,
+        TEXTURE_COORDINATE_MODE_CLAMP_BORDER = 0x4,
+        TEXTURE_COORDINATE_MODE_MIRROR_ONCE = 0x5,
+        TEXTURE_COORDINATE_MODE_HALF_BORDER = 0x6,
+        TEXTURE_COORDINATE_MODE_MIRROR_101 = 0x7,
+    } TEXTURE_COORDINATE_MODE;
     typedef enum tagTRILINEAR_FILTER_QUALITY {
         TRILINEAR_FILTER_QUALITY_FULL = 0x0,
         TRILINEAR_FILTER_QUALITY_TRIQUAL_HIGH_MAG_CLAMP_MIPFILTER = 0x1,
@@ -3219,9 +3199,9 @@ typedef struct tagSAMPLER_STATE {
         TheStructure.Common.SrgbDecode = SRGB_DECODE_DECODE_EXT;
         TheStructure.Common.ReturnFilterWeightForNullTexels = RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_DISABLE;
         TheStructure.Common.ReturnFilterWeightForBorderTexels = RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_DISABLE;
-        TheStructure.Common.TczAddressControlMode = TCZ_ADDRESS_CONTROL_MODE_WRAP;
-        TheStructure.Common.TcyAddressControlMode = TCY_ADDRESS_CONTROL_MODE_WRAP;
-        TheStructure.Common.TcxAddressControlMode = TCX_ADDRESS_CONTROL_MODE_WRAP;
+        TheStructure.Common.TczAddressControlMode = TEXTURE_COORDINATE_MODE_WRAP;
+        TheStructure.Common.TcyAddressControlMode = TEXTURE_COORDINATE_MODE_WRAP;
+        TheStructure.Common.TcxAddressControlMode = TEXTURE_COORDINATE_MODE_WRAP;
         TheStructure.Common.TrilinearFilterQuality = TRILINEAR_FILTER_QUALITY_FULL;
         TheStructure.Common.MaximumAnisotropy = MAXIMUM_ANISOTROPY_RATIO_21;
         TheStructure.Common.ReductionType = REDUCTION_TYPE_STD_FILTER;
@@ -3372,23 +3352,23 @@ typedef struct tagSAMPLER_STATE {
     inline uint32_t getIndirectStatePointer(void) const {
         return (TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT);
     }
-    inline void setTczAddressControlMode(const TCZ_ADDRESS_CONTROL_MODE value) {
+    inline void setTczAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TczAddressControlMode = value;
     }
-    inline TCZ_ADDRESS_CONTROL_MODE getTczAddressControlMode(void) const {
-        return static_cast<TCZ_ADDRESS_CONTROL_MODE>(TheStructure.Common.TczAddressControlMode);
+    inline TEXTURE_COORDINATE_MODE getTczAddressControlMode(void) const {
+        return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TczAddressControlMode);
     }
-    inline void setTcyAddressControlMode(const TCY_ADDRESS_CONTROL_MODE value) {
+    inline void setTcyAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TcyAddressControlMode = value;
     }
-    inline TCY_ADDRESS_CONTROL_MODE getTcyAddressControlMode(void) const {
-        return static_cast<TCY_ADDRESS_CONTROL_MODE>(TheStructure.Common.TcyAddressControlMode);
+    inline TEXTURE_COORDINATE_MODE getTcyAddressControlMode(void) const {
+        return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TcyAddressControlMode);
     }
-    inline void setTcxAddressControlMode(const TCX_ADDRESS_CONTROL_MODE value) {
+    inline void setTcxAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TcxAddressControlMode = value;
     }
-    inline TCX_ADDRESS_CONTROL_MODE getTcxAddressControlMode(void) const {
-        return static_cast<TCX_ADDRESS_CONTROL_MODE>(TheStructure.Common.TcxAddressControlMode);
+    inline TEXTURE_COORDINATE_MODE getTcxAddressControlMode(void) const {
+        return static_cast<TEXTURE_COORDINATE_MODE>(TheStructure.Common.TcxAddressControlMode);
     }
     inline void setReductionTypeEnable(const bool value) {
         TheStructure.Common.ReductionTypeEnable = value;

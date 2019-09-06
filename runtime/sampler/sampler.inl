@@ -17,35 +17,33 @@ void SamplerHw<GfxFamily>::setArg(void *memory) {
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(memory);
     samplerState->setNonNormalizedCoordinateEnable(!this->normalizedCoordinates);
 
-    auto addressControlModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_CLAMP;
-    auto addressControlModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_CLAMP;
-    auto addressControlModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_CLAMP;
+    auto addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+    auto addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+    auto addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
 
-    // clang-format off
     switch (this->addressingMode) {
-    case CL_ADDRESS_NONE: 
+    case CL_ADDRESS_NONE:
     case CL_ADDRESS_CLAMP:
-        addressControlModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_CLAMP_BORDER; 
-        addressControlModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_CLAMP_BORDER; 
-        addressControlModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_CLAMP_BORDER; 
+        addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+        addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
+        addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
         break;
     case CL_ADDRESS_CLAMP_TO_EDGE:
-        addressControlModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_CLAMP;        
-        addressControlModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_CLAMP;        
-        addressControlModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_CLAMP;        
+        addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         break;
-    case CL_ADDRESS_MIRRORED_REPEAT: 
-        addressControlModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_MIRROR;       
-        addressControlModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_MIRROR;       
-        addressControlModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_MIRROR;       
+    case CL_ADDRESS_MIRRORED_REPEAT:
+        addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
+        addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;
         break;
     case CL_ADDRESS_REPEAT:
-        addressControlModeX = SAMPLER_STATE::TCX_ADDRESS_CONTROL_MODE_WRAP;
-        addressControlModeY = SAMPLER_STATE::TCY_ADDRESS_CONTROL_MODE_WRAP;
-        addressControlModeZ = SAMPLER_STATE::TCZ_ADDRESS_CONTROL_MODE_WRAP;
+        addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+        addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
+        addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP;
         break;
     }
-    // clang-format on
 
     auto minMode = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST;
     auto magMode = SAMPLER_STATE::MAG_MODE_FILTER_NEAREST;
