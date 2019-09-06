@@ -18,10 +18,14 @@ std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerW
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
     pageFaultHandler = [&](struct _EXCEPTION_POINTERS *exceptionInfo) {
-        if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && !this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
-            return EXCEPTION_CONTINUE_SEARCH;
+        if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+            if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
+                //this is our fault that we serviced, continue app execution
+                return EXCEPTION_CONTINUE_EXECUTION;
+            }
         }
-        return EXCEPTION_CONTINUE_EXECUTION;
+        //not our exception
+        return EXCEPTION_CONTINUE_SEARCH;
     };
 
     previousHandler = AddVectoredExceptionHandler(1, pageFaultHandlerWrapper);

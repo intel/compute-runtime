@@ -14,12 +14,35 @@
 using namespace NEO;
 using MockPageFaultManagerWindows = MockPageFaultManagerHandlerInvoke<PageFaultManagerWindows>;
 
+bool raiseException(NTSTATUS type) {
+    __try {
+        RaiseException(type, 0, 0, NULL);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return true;
+    }
+    return false;
+}
+
 TEST(PageFaultManagerWindowsTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
-
-    RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
+    EXPECT_FALSE(raiseException(EXCEPTION_ACCESS_VIOLATION));
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
+}
+
+TEST(PageFaultManagerWindowsTest, whenExceptionAccessViolationIsRaisedButPointerIsNotKnownThenExceptionIsRethrown) {
+    auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
+    EXPECT_FALSE(pageFaultManager->handlerInvoked);
+    pageFaultManager->returnStatus = false;
+    EXPECT_TRUE(raiseException(EXCEPTION_ACCESS_VIOLATION));
+    EXPECT_TRUE(pageFaultManager->handlerInvoked);
+}
+
+TEST(PageFaultManagerWindowsTest, whenExceptionOtherThanAccessViolationIsRaisedThenExceptionIsRethrownAndHandlerIsNotInvoked) {
+    auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
+    EXPECT_FALSE(pageFaultManager->handlerInvoked);
+    EXPECT_TRUE(raiseException(EXCEPTION_DATATYPE_MISALIGNMENT));
+    EXPECT_FALSE(pageFaultManager->handlerInvoked);
 }
 
 TEST(PageFaultManagerWindowsTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {

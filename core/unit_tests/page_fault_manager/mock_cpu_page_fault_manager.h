@@ -69,9 +69,10 @@ class MockPageFaultManagerHandlerInvoke : public T {
         if (allowCPUMemoryAccessOnPageFault) {
             this->allowCPUMemoryAccess(ptr, size);
         }
-        return true;
+        return returnStatus;
     }
 
+    bool returnStatus = true;
     bool allowCPUMemoryAccessOnPageFault = false;
     bool handlerInvoked = false;
     size_t size = 65536;
