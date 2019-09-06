@@ -81,14 +81,6 @@ void GmmHelper::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation 
     imgInfo.qPitch = 0;
 }
 
-bool GmmHelper::allowTiling(const cl_image_desc &imageDesc) {
-    auto imageType = imageDesc.image_type;
-    auto buffer = castToObject<Buffer>(imageDesc.buffer);
-
-    return (!(DebugManager.flags.ForceLinearImages.get() || imageType == CL_MEM_OBJECT_IMAGE1D ||
-              imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer));
-}
-
 uint64_t GmmHelper::canonize(uint64_t address) {
     return ((int64_t)((address & 0xFFFFFFFFFFFF) << (64 - 48))) >> (64 - 48);
 }

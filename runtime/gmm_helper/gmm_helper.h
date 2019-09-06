@@ -46,7 +46,6 @@ class GmmHelper {
 
     static void queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc);
     static GMM_CUBE_FACE_ENUM getCubeFaceIndex(uint32_t target);
-    static bool allowTiling(const cl_image_desc &imageDesc);
     static uint32_t getRenderMultisamplesCount(uint32_t numSamples);
     static GMM_YUV_PLANE convertPlane(OCLPlane oclPlane);
 

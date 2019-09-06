@@ -417,79 +417,7 @@ static const cl_mem_object_type imgTypes[6] = {
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY,
     CL_MEM_OBJECT_IMAGE3D};
-
-static const cl_mem_object_type imgFromBufferTypes[2] = {
-    CL_MEM_OBJECT_IMAGE1D_BUFFER,
-    CL_MEM_OBJECT_IMAGE2D};
 } // namespace GmmTestConst
-
-class GmmTiling : public GmmTests,
-                  public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {
-  public:
-    void checkTiling(cl_image_desc &imgDesc, bool forceLinear) {
-        bool allowTiling = GmmHelper::allowTiling(imgDesc);
-        if (forceLinear) {
-            EXPECT_FALSE(allowTiling);
-        } else {
-            if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D ||
-                imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-                imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
-                imgDesc.buffer != nullptr) {
-                EXPECT_FALSE(allowTiling);
-            } else {
-                EXPECT_TRUE(allowTiling);
-            }
-        }
-    };
-};
-
-class GmmImgTilingTests : public GmmTiling {};
-
-INSTANTIATE_TEST_CASE_P(
-    GmmTiledTests,
-    GmmImgTilingTests,
-    testing::ValuesIn(GmmTestConst::imgTypes));
-
-TEST_P(GmmImgTilingTests, allowTiling) {
-    bool defaultTilingType = DebugManager.flags.ForceLinearImages.get();
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = GetParam();
-
-    checkTiling(imgDesc, defaultTilingType);
-
-    DebugManager.flags.ForceLinearImages.set(!defaultTilingType);
-
-    checkTiling(imgDesc, !defaultTilingType);
-
-    DebugManager.flags.ForceLinearImages.set(defaultTilingType);
-}
-
-class GmmImgFromBufferTilingTests : public GmmTiling {};
-INSTANTIATE_TEST_CASE_P(
-    GmmTiledTests,
-    GmmImgFromBufferTilingTests,
-    testing::ValuesIn(GmmTestConst::imgFromBufferTypes));
-
-TEST_P(GmmImgFromBufferTilingTests, disallowImgFromBufferTiling) {
-    bool defaultTilingType = DebugManager.flags.ForceLinearImages.get();
-    if (defaultTilingType) {
-        DebugManager.flags.ForceLinearImages.set(false);
-    }
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = GetParam();
-
-    MockContext context;
-    cl_int retVal = CL_SUCCESS;
-
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, {}, 1, nullptr, retVal));
-    imgDesc.buffer = buffer.get();
-
-    checkTiling(imgDesc, false);
-
-    DebugManager.flags.ForceLinearImages.set(defaultTilingType);
-}
 
 TEST_F(GmmTests, converOclPlaneToGmmPlane) {
     std::vector<std::pair<OCLPlane, GMM_YUV_PLANE>> v = {{OCLPlane::NO_PLANE, GMM_YUV_PLANE::GMM_NO_PLANE},
@@ -503,7 +431,8 @@ TEST_F(GmmTests, converOclPlaneToGmmPlane) {
     }
 }
 
-class GmmImgTest : public GmmTiling {};
+class GmmImgTest : public GmmTests,
+                   public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {};
 
 INSTANTIATE_TEST_CASE_P(
     GmmImgTests,

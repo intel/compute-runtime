@@ -33,5 +33,7 @@ struct UnitTestHelper {
     static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
 
     static uint64_t getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
+
+    static const bool tiledImagesSupported;
 };
 } // namespace NEO

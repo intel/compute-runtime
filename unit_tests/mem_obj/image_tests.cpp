@@ -1264,6 +1264,7 @@ TEST(ImageTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhenIsCopyR
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
+    imgInfo.linearStorage = true;
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 
@@ -1274,6 +1275,7 @@ TEST(ImageTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhenIsCopyR
 TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceLinearImages.set(true);
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
 
     ImageInfo imgInfo{};
 
@@ -1295,6 +1297,7 @@ TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCop
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
+    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, *imgInfo.imgDesc, false);
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 

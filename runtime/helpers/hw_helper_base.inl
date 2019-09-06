@@ -220,4 +220,17 @@ template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::requiresAuxResolves() const {
     return true;
 }
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) {
+    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext) {
+        return false;
+    }
+
+    auto imageType = imgDesc.image_type;
+    auto buffer = castToObject<Buffer>(imgDesc.buffer);
+
+    return !(imageType == CL_MEM_OBJECT_IMAGE1D || imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
+             imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer);
+}
 } // namespace NEO

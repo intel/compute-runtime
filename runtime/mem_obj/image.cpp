@@ -119,6 +119,7 @@ Image *Image::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
+    auto &hwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
 
     do {
         size_t imageWidth = imageDesc->image_width;
@@ -181,7 +182,7 @@ Image *Image::create(Context *context,
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-        imgInfo.linearStorage = context->isSharedContext || !GmmHelper::allowTiling(*imageDesc) || memoryProperties.flags.forceLinearStorage;
+        imgInfo.linearStorage = !hwHelper.tilingAllowed(context->isSharedContext, *imageDesc, memoryProperties.flags.forceLinearStorage);
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        context->peekContextType(), true);
 
@@ -215,7 +216,7 @@ Image *Image::create(Context *context,
         bool transferNeeded = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
 
-            HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).checkResourceCompatibility(parentBuffer, errcodeRet);
+            hwHelper.checkResourceCompatibility(parentBuffer, errcodeRet);
 
             if (errcodeRet != CL_SUCCESS) {
                 return nullptr;
@@ -710,7 +711,6 @@ bool Image::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
 
     auto hostPtrRowPitch = imgInfo.imgDesc->image_row_pitch ? imgInfo.imgDesc->image_row_pitch : imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
     auto hostPtrSlicePitch = imgInfo.imgDesc->image_slice_pitch ? imgInfo.imgDesc->image_slice_pitch : hostPtrRowPitch * imgInfo.imgDesc->image_height;
-    auto isTilingAllowed = GmmHelper::allowTiling(*imgInfo.imgDesc) && !imgInfo.linearStorage;
 
     size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
     auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
@@ -721,7 +721,7 @@ bool Image::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
                         (imgInfo.rowPitch != hostPtrRowPitch) |
                         (imgInfo.slicePitch != hostPtrSlicePitch) |
                         ((reinterpret_cast<uintptr_t>(hostPtr) & (MemoryConstants::cacheLineSize - 1)) != 0) |
-                        isTilingAllowed;
+                        !imgInfo.linearStorage;
 
     return copyRequired;
 }

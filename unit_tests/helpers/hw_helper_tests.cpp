@@ -19,6 +19,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_context.h"
 
 #include <chrono>
 #include <iostream>
@@ -675,5 +676,44 @@ TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned)
         EXPECT_EQ(expectedMocsForL3on, mocsIndex);
     } else {
         EXPECT_EQ(expectedMocsForL3andL1on, mocsIndex);
+    }
+}
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {
+    bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
+
+    const uint32_t numImageTypes = 6;
+    const cl_mem_object_type imgTypes[numImageTypes] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER,
+                                                        CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+    cl_image_desc imgDesc = {};
+    MockContext context;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    for (uint32_t i = 0; i < numImageTypes; i++) {
+        imgDesc.image_type = imgTypes[i];
+        imgDesc.buffer = nullptr;
+
+        bool allowedType = imgTypes[i] == (CL_MEM_OBJECT_IMAGE2D) || (imgTypes[i] == CL_MEM_OBJECT_IMAGE3D) ||
+                           (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
+
+        // non shared context, dont force linear storage
+        EXPECT_EQ((tilingSupported & allowedType), helper.tilingAllowed(false, imgDesc, false));
+        {
+            DebugManagerStateRestore restore;
+            DebugManager.flags.ForceLinearImages.set(true);
+            // non shared context, dont force linear storage + debug flag
+            EXPECT_FALSE(helper.tilingAllowed(false, imgDesc, false));
+        }
+        // shared context, dont force linear storage
+        EXPECT_FALSE(helper.tilingAllowed(true, imgDesc, false));
+        // non shared context,  force linear storage
+        EXPECT_FALSE(helper.tilingAllowed(false, imgDesc, true));
+
+        // non shared context, dont force linear storage + create from buffer
+        imgDesc.buffer = buffer.get();
+        EXPECT_FALSE(helper.tilingAllowed(false, imgDesc, false));
     }
 }

@@ -84,6 +84,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(ImgArrayTypes));
 
 HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
+    auto &hwHelper = HwHelper::get(pDevice->getExecutionEnvironment()->getHardwareInfo()->platform.eRenderCoreFamily);
     imageDesc.image_type = GetParam();
     if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
         imageDesc.image_height = 1;
@@ -91,7 +92,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
-    imgInfo.linearStorage = !GmmHelper::allowTiling(imageDesc);
+    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, imageDesc, false);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
     //allocate host_ptr
