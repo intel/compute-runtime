@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/file_io.h"
@@ -241,6 +242,51 @@ class SimpleKernelFixture : public ProgramFixture {
     static constexpr size_t maxKernelsCount = std::numeric_limits<decltype(kernelIds)>::digits;
     cl_int retVal = CL_SUCCESS;
     std::array<std::unique_ptr<Kernel>, maxKernelsCount> kernels;
+};
+
+class SimpleKernelStatelessFixture : public ProgramFixture {
+  public:
+    DebugManagerStateRestore restorer;
+    using ProgramFixture::SetUp;
+    SimpleKernelStatelessFixture() = default;
+
+  protected:
+    void SetUp(Device *device, Context *context) {
+        ProgramFixture::SetUp();
+        cl_device_id deviceId = device;
+        cl_context clContext = context;
+        DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+
+        CreateProgramFromBinary<Program>(
+            clContext,
+            &deviceId,
+            "stateless_kernel");
+        ASSERT_NE(nullptr, pProgram);
+
+        retVal = pProgram->build(
+            1,
+            &deviceId,
+            "-cl-intel-greater-than-4GB-buffer-required",
+            nullptr,
+            nullptr,
+            false);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        kernel.reset(Kernel::create<MockKernel>(
+            pProgram,
+            *pProgram->getKernelInfo("statelessKernel"),
+            &retVal));
+        ASSERT_NE(nullptr, kernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
+    void TearDown() {
+        ProgramFixture::TearDown();
+    }
+
+    std::unique_ptr<Kernel> kernel = nullptr;
+    cl_int retVal = CL_SUCCESS;
 };
 
 } // namespace NEO

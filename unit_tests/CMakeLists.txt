@@ -261,6 +261,39 @@ function(neo_gen_kernels_with_options target platform_name suffix filepath)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
 endfunction()
 
+function(neo_gen_kernels_with_internal_options target platform_name suffix filepath)
+  set(results)
+  foreach(filearg ${filepath})
+    get_filename_component(filename ${filearg} NAME)
+    get_filename_component(basename ${filearg} NAME_WE)
+    get_filename_component(base_workdir ${filearg} DIRECTORY)
+
+    set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
+    set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
+
+    foreach(arg ${ARGN})
+
+      set(outputpath_base "${outputdir}/${basename}_${suffix}")
+      set(output_files
+        ${outputpath_base}.spv
+        ${outputpath_base}.bin
+        ${outputpath_base}.gen
+      )
+
+      add_custom_command(
+        OUTPUT ${output_files}
+        COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${arg}
+        WORKING_DIRECTORY ${workdir}
+        DEPENDS ${filearg} ocloc
+      )
+
+      list(APPEND results ${output_files})
+    endforeach()
+  endforeach()
+  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+endfunction()
+
 set(TEST_KERNEL_kernel_debug_enable
   "-cl-kernel-debug-enable"
 )
@@ -342,6 +375,19 @@ set(TEST_KERNEL_2_0
   test_files/simple_nonuniform.cl
 )
 
+set(TEST_KERNEL_STATELESS_internal_options
+  "-cl-intel-greater-than-4GB-buffer-required"
+)
+
+set(TEST_KERNEL_STATELESS_internal_options_gen9lp
+  "-cl-intel-greater-than-4GB-buffer-required -m32"
+)
+
+
+set(TEST_KERNEL_STATELESS
+  test_files/stateless_kernel.cl
+)
+
 set(TEST_KERNEL_VME
   ${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl
   ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_backend.cl
@@ -360,7 +406,9 @@ file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_block_kernel.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
-list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME})
+list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/stateless_kernel.cl")
+list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME}
+)
 
 function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
@@ -407,6 +455,7 @@ macro(macro_for_each_platform)
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       add_dependencies(unit_tests test_kernels_${family_name_with_type})
       add_dependencies(unit_tests test_kernel_${family_name_with_type})
+      add_dependencies(unit_tests test_kernel_stateless_${family_name_with_type})
       if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
         add_dependencies(unit_tests test_kernel_debug_enable_${family_name_with_type})
       endif()
@@ -434,13 +483,16 @@ macro(macro_for_each_gen)
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
         neo_gen_kernels_with_options(test_kernel_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
-
         # Temporarily disabled debug kernel generation on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
           neo_gen_kernel_with_kernel_debug_options(test_kernel_debug_enable_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL})
         endif()
-
-
+        # Gen9lp needs extra -m32 flag
+        if( ("${GEN_TYPE_LOWER}" STREQUAL "gen9") AND ("${PLATFORM_TYPE_LOWER}" STREQUAL "lp"))
+          neo_gen_kernels_with_internal_options(test_kernel_stateless_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
+        else()
+          neo_gen_kernels_with_internal_options(test_kernel_stateless_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options})
+        endif()
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)
         set(sip_debug_kernel_output_file)
