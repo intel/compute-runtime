@@ -53,7 +53,7 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
         mockCalled = true;
     }
 
-    ~MockFailPageFaultManager() {
+    ~MockFailPageFaultManager() override {
         mockCalled = false;
     }
     static bool mockCalled;

@@ -76,7 +76,7 @@ class MockFailPageFaultManager : public PageFaultManagerWindows {
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 
-    ~MockFailPageFaultManager() {
+    ~MockFailPageFaultManager() override {
         mockCalled = false;
     }
     static bool mockCalled;
