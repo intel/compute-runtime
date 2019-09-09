@@ -186,6 +186,11 @@ Image *Image::create(Context *context,
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        context->peekContextType(), true);
 
+        if (!context->getDevice(0)->getDeviceInfo().imageSupport && !imgInfo.linearStorage) {
+            errcodeRet = CL_INVALID_OPERATION;
+            return nullptr;
+        }
+
         switch (imageDesc->image_type) {
         case CL_MEM_OBJECT_IMAGE3D:
             hostPtrMinSize = hostPtrSlicePitch * imageDepth;
@@ -1036,11 +1041,6 @@ Image *Image::validateAndCreateImage(Context *context,
     bool areHostPtrFlagsUsed = isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR) || isValueSet(properties.flags, CL_MEM_USE_HOST_PTR);
     if (isHostPtrUsed != areHostPtrFlagsUsed) {
         errcodeRet = CL_INVALID_HOST_PTR;
-        return nullptr;
-    }
-
-    if (!context->getDevice(0)->getDeviceInfo().imageSupport) {
-        errcodeRet = CL_INVALID_OPERATION;
         return nullptr;
     }
 
