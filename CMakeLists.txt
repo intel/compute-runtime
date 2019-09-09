@@ -746,6 +746,7 @@ endif()
 # Please keep alphabetical order
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
+include_directories(${IGDRCL_SOURCE_DIR}/core/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/built_ins/builtinops${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/command_stream/definitions${BRANCH_DIR_SUFFIX})

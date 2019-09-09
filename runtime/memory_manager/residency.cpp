@@ -7,8 +7,6 @@
 
 #include "runtime/memory_manager/residency.h"
 
-#include "runtime/os_interface/os_context.h"
-
 using namespace NEO;
 
 void ResidencyData::updateCompletionData(uint64_t newFenceValue, uint32_t contextId) {
