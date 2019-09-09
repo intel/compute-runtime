@@ -229,7 +229,10 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     surfaceState->setHeight(static_cast<uint32_t>(getImageDesc().image_height));
     surfaceState->setPictureStructure(MEDIA_SURFACE_STATE::PICTURE_STRUCTURE_FRAME_PICTURE);
 
-    surfaceState->setTileMode(MEDIA_SURFACE_STATE::TILE_MODE_TILEMODE_YMAJOR);
+    auto gmm = getGraphicsAllocation()->getDefaultGmm();
+    auto tileMode = static_cast<typename MEDIA_SURFACE_STATE::TILE_MODE>(gmm->gmmResourceInfo->getTileModeSurfaceState());
+
+    surfaceState->setTileMode(tileMode);
     surfaceState->setSurfacePitch(static_cast<uint32_t>(getImageDesc().image_row_pitch));
 
     surfaceState->setSurfaceFormat(surfaceFormat);
