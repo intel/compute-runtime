@@ -1441,7 +1441,7 @@ HWTEST_F(DrmCommandStreamHwTest, givenAllocationWithSingleBufferObjectWhenMakeRe
 
     auto size = 1024u;
     auto bo = this->createBO(size);
-    BufferObjects bos{bo};
+    BufferObjects bos{{bo}};
     auto allocation = new DrmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory, false);
     EXPECT_EQ(bo, allocation->getBO());
 
