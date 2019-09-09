@@ -9,6 +9,7 @@
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "hw_cmds.h"
@@ -89,7 +90,7 @@ HWTEST_P(CreateImageArraySize, arrayTypes) {
         EXPECT_NE(nullptr, address);
 
     } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        EXPECT_FALSE(image->isMemObjZeroCopy());
+        EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
     }
     ASSERT_EQ(10u, image->getImageDesc().image_array_size);
 
@@ -122,7 +123,7 @@ HWTEST_P(CreateImageNonArraySize, NonArrayTypes) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
     if (types == CL_MEM_OBJECT_IMAGE2D || types == CL_MEM_OBJECT_IMAGE3D) {
-        EXPECT_FALSE(image->isMemObjZeroCopy());
+        EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
     } else {
         EXPECT_TRUE(image->isMemObjZeroCopy());
         auto address = image->getCpuAddress();

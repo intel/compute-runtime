@@ -19,6 +19,7 @@
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mem_obj/image_compression_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
@@ -393,7 +394,7 @@ TEST(TestCreateImageUseHostPtr, CheckMemoryAllocationForDifferenHostPtrAlignment
         ASSERT_NE(nullptr, image);
 
         auto address = image->getCpuAddress();
-        if (result[i] && !image->isTiledAllocation()) {
+        if (result[i] && image->isMemObjZeroCopy()) {
             EXPECT_EQ(hostPtr[i], address);
         } else {
             EXPECT_NE(hostPtr[i], address);
@@ -914,7 +915,7 @@ TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIs
     EXPECT_EQ(nullptr, surfaceFormat);
 }
 
-TEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRenderCompression) {
+HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRenderCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;
@@ -923,9 +924,9 @@ TEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRen
 
     auto image = std::unique_ptr<Image>(Image::create(mockContext.get(), flags, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(image->isTiledAllocation());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_TRUE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferRenderCompression) {
@@ -941,7 +942,11 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
 
-TEST(ImageTest, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectValue) {
+using ImageTests = ::testing::Test;
+HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectValue) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
@@ -995,7 +1000,10 @@ TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrec
     EXPECT_EQ(expectedOffset, retOffset);
 }
 
-TEST(ImageTest, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorrectValue) {
+HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorrectValue) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_FALSE(image->mappingOnCpuAllowed());

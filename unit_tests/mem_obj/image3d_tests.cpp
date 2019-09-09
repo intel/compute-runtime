@@ -9,6 +9,7 @@
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
@@ -75,7 +76,7 @@ HWTEST_F(CreateImage3DTest, validTypes) {
     EXPECT_NE(0u, imgDesc.image_row_pitch);
 
     EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
-    EXPECT_FALSE(image->isMemObjZeroCopy());
+    EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image);

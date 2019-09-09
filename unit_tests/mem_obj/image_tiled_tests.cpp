@@ -10,6 +10,7 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -65,8 +66,7 @@ class CreateTiledImageTest : public DeviceFixture,
     cl_mem_object_type type = 0;
 };
 
-TEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
-
+HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
     MockContext context;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
@@ -79,7 +79,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
         retVal);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_TRUE(image->isTiledAllocation());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
 
     delete image;
 }

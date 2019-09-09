@@ -392,7 +392,7 @@ HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto imageNV12 = Image::create(contextWithMockCmdQ, flags, surfaceFormat, &imageDesc, hostPtr, retVal);
 
-    EXPECT_EQ(2u, cmdQ->EnqueueWriteImageCounter);
+    EXPECT_EQ(imageNV12->isTiledAllocation() ? 2u : 0u, cmdQ->EnqueueWriteImageCounter);
 
     ASSERT_NE(nullptr, imageNV12);
     contextWithMockCmdQ->release();
