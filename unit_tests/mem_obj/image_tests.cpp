@@ -1425,7 +1425,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 
     imageHw->setUnifiedAuxBaseAddress(&surfaceState, gmm.get());
-    uint64_t offset = gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS);
+    uint64_t offset = gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
 
     EXPECT_EQ(surfBsaseAddress + offset, surfaceState.getAuxiliarySurfaceBaseAddress());
 }

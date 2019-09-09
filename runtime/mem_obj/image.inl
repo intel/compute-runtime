@@ -196,7 +196,7 @@ void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
     uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
-                           gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS);
+                           gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
     surfaceState->setAuxiliarySurfaceBaseAddress(baseAddress);
 }
 
