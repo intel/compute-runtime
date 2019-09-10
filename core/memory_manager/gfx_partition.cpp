@@ -125,7 +125,7 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
-            UNRECOVERABLE_IF("Invalid GPU Address Range!");
+            initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop);
         }
     }
 

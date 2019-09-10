@@ -70,6 +70,8 @@ class GfxPartition {
     static const std::array<HeapIndex, 6> heapNonSvmNames;
 
   protected:
+    void initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop);
+
     class Heap {
       public:
         Heap() = default;
