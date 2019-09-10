@@ -25,7 +25,6 @@
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/local_memory_usage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/stackvec.h"

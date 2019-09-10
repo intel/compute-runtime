@@ -10,13 +10,13 @@
 #include "core/command_stream/preemption_mode.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/memory_manager/gfx_partition.h"
+#include "core/memory_manager/local_memory_usage.h"
 #include "core/page_fault_manager/cpu_page_fault_manager.h"
 #include "public/cl_ext_private.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/memory_manager/allocation_properties.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
-#include "runtime/memory_manager/local_memory_usage.h"
 
 #include "engine_node.h"
 

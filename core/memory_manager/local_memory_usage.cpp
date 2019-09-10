@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/local_memory_usage.h"
+#include "core/memory_manager/local_memory_usage.h"
 
 #include <algorithm>
 #include <bitset>
