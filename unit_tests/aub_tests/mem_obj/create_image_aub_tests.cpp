@@ -240,7 +240,8 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
         data = (char *)pHostPtr;
 
         uint8_t *readMemory = nullptr;
-        if (image->isTiledAllocation()) {
+        bool isGpuCopy = image->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(image->getGraphicsAllocation()->getMemoryPool());
+        if (isGpuCopy) {
             readMemory = new uint8_t[testImageDimensions * testImageDimensions * elementSize * 4];
             size_t imgOrigin[] = {0, 0, 0};
             size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth ? imageDesc.image_depth : 1};
@@ -253,7 +254,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
 
         while (heightToCopy--) {
             for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-                if (image->isTiledAllocation()) {
+                if (isGpuCopy) {
                     AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
                 } else {
                     EXPECT_EQ(imageStorage[i], data[i]);
@@ -300,13 +301,6 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
             pUseHostPtr,
             retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
-        EXPECT_EQ(image->getHostPtrRowPitch(), (size_t)passedRowPitch);
-        EXPECT_EQ(image->getSize(), imgInfo.size);
-        EXPECT_EQ(image->getImageDesc().image_slice_pitch, imgInfo.slicePitch);
-        EXPECT_GE(image->getImageDesc().image_slice_pitch, image->getImageDesc().image_row_pitch);
-        EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
-        EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
 
         //now check if data is properly propagated to image
         auto mapFlags = CL_MAP_READ;
@@ -350,10 +344,11 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         heightToCopy = imageDesc.image_height;
         char *imageStorage = (char *)ptr;
         data = (char *)pUseHostPtr;
+        bool isGpuCopy = image->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(image->getGraphicsAllocation()->getMemoryPool());
 
         while (heightToCopy--) {
             for (unsigned int i = 0; i < imageDesc.image_width * elementSize; i++) {
-                if (image->isTiledAllocation()) {
+                if (isGpuCopy) {
                     AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
                 } else {
                     EXPECT_EQ(imageStorage[i], data[i]);
@@ -403,7 +398,8 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
     data = (char *)host_ptr;
 
     uint8_t *readMemory = nullptr;
-    if (image->isTiledAllocation()) {
+    bool isGpuCopy = image->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(image->getGraphicsAllocation()->getMemoryPool());
+    if (isGpuCopy) {
         readMemory = new uint8_t[imageSize];
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
@@ -416,7 +412,7 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
 
     while (depthToCopy--) {
         for (unsigned int i = 0; i < imageDesc.image_width * 4 * imageDesc.image_height; i++) {
-            if (image->isTiledAllocation()) {
+            if (isGpuCopy) {
                 AUBCommandStreamFixture::expectMemory<FamilyType>(&imageStorage[i], &data[i], 1);
             } else {
                 EXPECT_EQ(imageStorage[i], data[i]);
