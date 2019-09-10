@@ -81,7 +81,10 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalledThenReturnDifferentPointers) {
+HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalledThenReturnDifferentPointers) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     std::unique_ptr<Image> img(Image2dHelper<Image2dDefaults>::create(context));
     auto mapFlags = CL_MAP_READ;
     const size_t origin1[3] = {0, 0, 0};
@@ -182,6 +185,9 @@ struct mockedImage : public ImageHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSetWithImageMutexTaken) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     auto imageFormat = image->getImageFormat();
     auto imageDesc = image->getImageDesc();
     auto graphicsAllocation = image->getGraphicsAllocation();
@@ -294,7 +300,10 @@ TEST_F(EnqueueMapImageTest, checkRetVal) {
     EXPECT_EQ(imageSlicePitch, imageSlicePitchRef);
 }
 
-TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEventAndIncraseTaskCountFromWriteImage) {
+HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEventAndIncraseTaskCountFromWriteImage) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -378,7 +387,10 @@ TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEven
     clReleaseEvent(unmapEventReturned);
 }
 
-TEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAndDontIncraseTaskCountFromWriteImage) {
+HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAndDontIncraseTaskCountFromWriteImage) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -421,6 +433,9 @@ TEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAn
 }
 
 HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
+    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+        GTEST_SKIP();
+    }
     cl_event eventReturned = nullptr;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
