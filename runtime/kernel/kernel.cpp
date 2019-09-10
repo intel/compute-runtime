@@ -1021,7 +1021,7 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
 
-    auto pageFaultManager = this->getContext().getMemoryManager()->getPageFaultManager();
+    auto pageFaultManager = program->peekExecutionEnvironment().memoryManager->getPageFaultManager();
 
     for (auto gfxAlloc : kernelUnifiedMemoryGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
