@@ -1,8 +1,9 @@
-%global igc_commit_id 8b0b9d18e0bc602b732fd50a920b203c23ef630f
+%global igc_commit_id 6dd3bde8f93ee61f798f84a34a9c9e66d0aedd49
 %global major_version 1
 %global minor_version 0
-%global patch_version 2456
+%global patch_version 2500
 %global package_release 1
+%global so_version 11
 
 Name: intel-igc
 Version: %{major_version}.%{minor_version}.%{patch_version}
@@ -65,14 +66,14 @@ echo "==== DONE ===="
 %files core
 %defattr(-,root,root)
 /usr/lib64/libiga64.so.%{major_version}
-/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.10
+/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.%{so_version}
 /usr/lib64/libigc.so.%{major_version}
-/usr/lib64/libigc.so.%{major_version}.%{minor_version}.10
+/usr/lib64/libigc.so.%{major_version}.%{minor_version}.%{so_version}
 
 %files opencl
 %defattr(-,root,root)
 /usr/lib64/libigdfcl.so.%{major_version}
-/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.10
+/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.%{so_version}
 
 %files opencl-devel
 %defattr(-,root,root)
