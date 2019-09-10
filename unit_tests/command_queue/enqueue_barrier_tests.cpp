@@ -57,7 +57,7 @@ HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierI
     EXPECT_EQ(&csrCommandStream, &commandStreamReceiver.commandStream);
 }
 
-HWTEST_F(BarrierTest, CS_GT_CQ_ShouldNotAddPipeControl) {
+HWTEST_F(BarrierTest, GivenCsrTaskLevelGreaterThenCmdqTaskLevelWhenEnqueingBarrierWithWaitListThenAddPipeControlIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto pCS = this->pCS;
     auto pCmdQ = this->pCmdQ;
@@ -91,7 +91,7 @@ HWTEST_F(BarrierTest, CS_GT_CQ_ShouldNotAddPipeControl) {
     ASSERT_EQ(cmdList.end(), itorCmd);
 }
 
-HWTEST_F(BarrierTest, returnsEvent) {
+HWTEST_F(BarrierTest, GivenEventWhenEnqueingBarrierWithWaitListThenEventIsSetupCorrectly) {
     auto pCmdQ = this->pCmdQ;
 
     cl_uint numEventsInWaitList = 0;
@@ -118,7 +118,7 @@ HWTEST_F(BarrierTest, returnsEvent) {
     }
 }
 
-HWTEST_F(BarrierTest, returnedEventShouldHaveEqualDepth) {
+HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenReturnedEventShouldHaveEqualDepth) {
     auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -144,7 +144,7 @@ HWTEST_F(BarrierTest, returnedEventShouldHaveEqualDepth) {
     delete pEvent;
 }
 
-HWTEST_F(BarrierTest, eventWithWaitDependenciesShouldSync) {
+HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenDependenciesShouldSync) {
     auto pCmdQ = this->pCmdQ;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
