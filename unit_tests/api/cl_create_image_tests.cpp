@@ -418,12 +418,13 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
 
 TEST_P(clCreateImageValidFlags, GivenValidFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     cl_mem_flags flags = GetParam();
-    char ptr[10];
+    std::unique_ptr<char[]> ptr;
     char *hostPtr = nullptr;
 
     if (flags & CL_MEM_USE_HOST_PTR ||
         flags & CL_MEM_COPY_HOST_PTR) {
-        hostPtr = ptr;
+        ptr = std::make_unique<char[]>(alignUp(imageDesc.image_width * imageDesc.image_height * 4, MemoryConstants::pageSize));
+        hostPtr = ptr.get();
     }
 
     auto image = clCreateImage(
