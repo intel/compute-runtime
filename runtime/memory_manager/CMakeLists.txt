@@ -40,8 +40,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/residency.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/residency.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/residency_container.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp

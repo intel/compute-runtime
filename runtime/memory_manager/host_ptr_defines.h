@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/residency.h"
+#include "core/memory_manager/residency.h"
 
 #include <cinttypes>
 #include <cstdlib>
