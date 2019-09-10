@@ -311,8 +311,8 @@ void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyn
     }
 }
 
-bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *hostPtr, cl_command_type cmdType) {
-    auto bufferStorage = ptrOffset(this->getCpuAddressForMemoryTransfer(), offsetInMemObjest);
+bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObject, size_t offsetInHostPtr, const void *hostPtr, cl_command_type cmdType) {
+    auto bufferStorage = ptrOffset(this->getCpuAddressForMemoryTransfer(), offsetInMemObject);
     auto hostStorage = ptrOffset(hostPtr, offsetInHostPtr);
     auto isMemTransferNeeded = !((bufferStorage == hostStorage) &&
                                  (cmdType == CL_COMMAND_WRITE_BUFFER || cmdType == CL_COMMAND_READ_BUFFER ||

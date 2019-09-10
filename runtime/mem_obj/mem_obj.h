@@ -102,7 +102,7 @@ class MemObj : public BaseObject<_cl_mem> {
     Context *getContext() const { return context; }
 
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
-    bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
+    bool checkIfMemoryTransferIsRequired(size_t offsetInMemObject, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
     bool mappingOnCpuAllowed() const;
     virtual size_t calculateOffsetForMapping(const MemObjOffsetArray &offset) const { return offset[0]; }
     size_t calculateMappedPtrLength(const MemObjSizeArray &size) const { return calculateOffsetForMapping(size); }
