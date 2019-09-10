@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/pipeline_select_args.h"
 #include "core/memory_manager/memory_constants.h"
 #include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/hw_info.h"
@@ -38,6 +39,7 @@ constexpr uint32_t l3AndL1On = 2u;
 
 struct DispatchFlags {
     CsrDependencies csrDependencies;
+    PipelineSelectArgs pipelineSelectArgs;
     FlushStampTrackingObj *flushStampReference = nullptr;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
@@ -48,12 +50,10 @@ struct DispatchFlags {
     bool useSLM = false;
     bool guardCommandBufferWithPipeControl = false;
     bool GSBA32BitRequired = false;
-    bool mediaSamplerRequired = false;
     bool requiresCoherency = false;
     bool lowPriority = false;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
-    bool specialPipelineSelectMode = false;
     bool multiEngineQueue = false;
     bool epilogueRequired = false;
 };

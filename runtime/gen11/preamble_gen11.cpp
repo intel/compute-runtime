@@ -29,7 +29,7 @@ uint32_t PreambleHelper<ICLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 
 template <>
 void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const DispatchFlags &dispatchFlags,
+                                                      const PipelineSelectArgs &pipelineSelectArgs,
                                                       const HardwareInfo &hwInfo) {
 
     typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
@@ -43,8 +43,8 @@ void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStre
 
     pCmd->setMaskBits(mask);
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!dispatchFlags.mediaSamplerRequired);
-    pCmd->setMediaSamplerPowerClockGateDisable(dispatchFlags.mediaSamplerRequired);
+    pCmd->setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    pCmd->setMediaSamplerPowerClockGateDisable(pipelineSelectArgs.mediaSamplerRequired);
 }
 
 template <>

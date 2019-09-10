@@ -34,7 +34,7 @@ bool PreambleHelper<SKLFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
 
 template <>
 void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const DispatchFlags &dispatchFlags,
+                                                      const PipelineSelectArgs &pipelineSelectArgs,
                                                       const HardwareInfo &hwInfo) {
 
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
@@ -45,7 +45,7 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     pCmd->setMaskBits(mask);
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!dispatchFlags.mediaSamplerRequired);
+    pCmd->setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 }
 
 template <>

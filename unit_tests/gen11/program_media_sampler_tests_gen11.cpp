@@ -30,7 +30,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
 
     void overrideMediaRequest(bool lastVmeConfig, bool mediaSamplerRequired) {
         csr->overrideLastVmeSubliceConfig(lastVmeConfig);
-        flags.mediaSamplerRequired = mediaSamplerRequired;
+        flags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     }
 
     void SetUp() override {
@@ -46,7 +46,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     }
 
     size_t getCmdSize() {
-        return csr->getCmdSizeForMediaSampler(flags.mediaSamplerRequired);
+        return csr->getCmdSizeForMediaSampler(flags.pipelineSelectArgs.mediaSamplerRequired);
     }
 
     myCsr *csr = nullptr;

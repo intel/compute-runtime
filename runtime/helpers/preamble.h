@@ -20,6 +20,7 @@ class Device;
 struct DispatchFlags;
 class GraphicsAllocation;
 class LinearStream;
+struct PipelineSelectArgs;
 
 template <typename GfxFamily>
 struct PreambleHelper {
@@ -28,7 +29,7 @@ struct PreambleHelper {
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream,
-                                      const DispatchFlags &dispatchFlags,
+                                      const PipelineSelectArgs &pipelineSelectArgs,
                                       const HardwareInfo &hwInfo);
     static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
@@ -51,7 +52,10 @@ struct PreambleHelper {
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
+
     static size_t getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo);
+
+    static size_t getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo);
 };
 
 template <PRODUCT_FAMILY ProductFamily>

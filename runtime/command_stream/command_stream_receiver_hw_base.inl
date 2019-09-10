@@ -215,9 +215,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.coherencyRequestChanged = this->lastSentCoherencyRequest != static_cast<int8_t>(dispatchFlags.requiresCoherency);
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
-    csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
+    csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
-    csrSizeRequestFlags.specialPipelineSelectModeChanged = this->lastSpecialPipelineSelectMode != dispatchFlags.specialPipelineSelectMode;
+    csrSizeRequestFlags.specialPipelineSelectModeChanged = this->lastSpecialPipelineSelectMode != dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode;
 
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
     bool stateBaseAddressDirty = false;
@@ -264,7 +264,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programPreemption(commandStreamCSR, dispatchFlags);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
-    programPipelineSelect(commandStreamCSR, dispatchFlags);
+    programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
 
@@ -607,7 +607,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
     size += getCmdSizeForL3Config();
     size += getCmdSizeForComputeMode();
-    size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
+    size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
     size += getCmdSizeForEpilogue(dispatchFlags);
@@ -635,18 +635,12 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
-    size_t size = 0;
 
+    size_t size = 0;
     if (csrSizeRequestFlags.mediaSamplerConfigChanged ||
         csrSizeRequestFlags.specialPipelineSelectModeChanged ||
         !isPreambleSent) {
-
-        size += sizeof(PIPELINE_SELECT);
-        if (HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(peekHwInfo())) {
-            size += sizeof(PIPE_CONTROL);
-        }
+        size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo());
     }
     return size;
 }

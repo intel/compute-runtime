@@ -37,7 +37,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
     if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
-        if (dispatchFlags.mediaSamplerRequired) {
+        if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 auto pc = addPipeControlCmd(stream);
                 pc->setDcFlushEnable(true);
@@ -108,7 +108,7 @@ template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     bool flag = DebugManager.flags.ForceCsrReprogramming.get();
     if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
-        if (!dispatchFlags.mediaSamplerRequired) {
+        if (!dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (lastVmeSubslicesConfig) {
                 flag = true;
             }

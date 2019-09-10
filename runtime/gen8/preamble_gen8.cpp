@@ -38,7 +38,7 @@ bool PreambleHelper<BDWFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
 
 template <>
 void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const DispatchFlags &dispatchFlags,
+                                                      const PipelineSelectArgs &pipelineSelectArgs,
                                                       const HardwareInfo &hwInfo) {
 
     typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;

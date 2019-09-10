@@ -184,14 +184,13 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = preemptionMode;
-    dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = kernel->isVmeKernel();
     dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
     dispatchFlags.numGrfRequired = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }
-    dispatchFlags.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
-
+    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
     } else if (!kernel->areStatelessWritesUsed()) {

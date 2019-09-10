@@ -9,6 +9,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/kernel/kernel.h"
 
@@ -51,6 +52,17 @@ size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     totalSize += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
     return totalSize;
+}
+
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo) {
+    size_t size = 0;
+    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
+    size += sizeof(PIPELINE_SELECT);
+    if (HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+        size += sizeof(PIPE_CONTROL);
+    }
+    return size;
 }
 
 template <typename GfxFamily>
