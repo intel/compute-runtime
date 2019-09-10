@@ -148,7 +148,8 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
     uint8_t *mappedPtrStart;
     uint8_t *srcMemoryStart;
 
-    if (srcImage->isTiledAllocation()) {
+    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(srcImage->getGraphicsAllocation()->getMemoryPool());
+    if (isGpuCopy) {
         mappedPtrStart = static_cast<uint8_t *>(mappedPtr);
         srcMemoryStart = srcMemory;
 

@@ -580,9 +580,9 @@ TEST_P(CreateImageHostPtr, getAddress) {
         EXPECT_NE(pHostPtr, address);
     }
 
-    if (flags & CL_MEM_COPY_HOST_PTR && !image->isTiledAllocation()) {
+    if (flags & CL_MEM_COPY_HOST_PTR && image->isMemObjZeroCopy()) {
         // Buffer should contain a copy of host memory
-        EXPECT_EQ(0, memcmp(pHostPtr, address, sizeof(testImageDimensions)));
+        EXPECT_EQ(0, memcmp(pHostPtr, image->getGraphicsAllocation()->getUnderlyingBuffer(), sizeof(testImageDimensions)));
     }
 }
 
@@ -627,6 +627,28 @@ TEST_P(CreateImageHostPtr, getImageDesc) {
 }
 
 TEST_P(CreateImageHostPtr, failedAllocationInjection) {
+    InjectedFunction method = [this](size_t failureIndex) {
+        // System under test
+        image = createImage(retVal);
+
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            EXPECT_NE(nullptr, image);
+        } else {
+            EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal) << "for allocation " << failureIndex;
+            EXPECT_EQ(nullptr, image);
+        }
+
+        delete image;
+        image = nullptr;
+    };
+    injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
+}
+
+TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLinearImages.set(true);
+
     InjectedFunction method = [this](size_t failureIndex) {
         // System under test
         image = createImage(retVal);

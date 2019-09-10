@@ -273,7 +273,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
 
     if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
         alloc = allocateGraphicsMemoryWithAlignment(allocationData);
-        alloc->setDefaultGmm(gmm.release());
+        if (alloc) {
+            alloc->setDefaultGmm(gmm.release());
+        }
         return alloc;
     }
 

@@ -175,7 +175,8 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
 
     auto imageMemory = srcMemory;
 
-    if (!srcImage->isMemObjZeroCopy() && !srcImage->isTiledAllocation()) {
+    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(srcImage->getGraphicsAllocation()->getMemoryPool());
+    if (!isGpuCopy) {
         imageMemory = (uint8_t *)(srcImage->getCpuAddress());
     }
 
