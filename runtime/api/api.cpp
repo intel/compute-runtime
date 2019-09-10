@@ -3584,7 +3584,16 @@ cl_int clEnqueueMigrateMemINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    return CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_SUCCESS;
+
+    CommandQueue *pCommandQueue = nullptr;
+    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), ptr, EventWaitList(numEventsInWaitList, eventWaitList));
+
+    if (retVal == CL_SUCCESS) {
+        pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+    }
+
+    return retVal;
 }
 
 cl_int clEnqueueMemAdviseINTEL(
@@ -3595,7 +3604,16 @@ cl_int clEnqueueMemAdviseINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    return CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_SUCCESS;
+
+    CommandQueue *pCommandQueue = nullptr;
+    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), ptr, EventWaitList(numEventsInWaitList, eventWaitList));
+
+    if (retVal == CL_SUCCESS) {
+        pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+    }
+
+    return retVal;
 }
 
 cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context context,
