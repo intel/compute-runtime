@@ -34,8 +34,25 @@ constexpr uint32_t ALU_OPCODE_OR = 0x103;
 
 constexpr uint32_t ALU_REGISTER_R_0 = 0x0;
 constexpr uint32_t ALU_REGISTER_R_1 = 0x1;
+constexpr uint32_t ALU_REGISTER_R_2 = 0x2;
+constexpr uint32_t ALU_REGISTER_R_3 = 0x3;
+constexpr uint32_t ALU_REGISTER_R_4 = 0x4;
+constexpr uint32_t ALU_REGISTER_R_5 = 0x5;
+constexpr uint32_t ALU_REGISTER_R_6 = 0x6;
+constexpr uint32_t ALU_REGISTER_R_7 = 0x7;
+constexpr uint32_t ALU_REGISTER_R_8 = 0x8;
+constexpr uint32_t ALU_REGISTER_R_9 = 0x9;
+constexpr uint32_t ALU_REGISTER_R_10 = 0xA;
+constexpr uint32_t ALU_REGISTER_R_11 = 0xB;
+constexpr uint32_t ALU_REGISTER_R_12 = 0xC;
+constexpr uint32_t ALU_REGISTER_R_13 = 0xD;
+constexpr uint32_t ALU_REGISTER_R_14 = 0xE;
+constexpr uint32_t ALU_REGISTER_R_15 = 0xF;
+
 constexpr uint32_t ALU_REGISTER_R_SRCA = 0x20;
 constexpr uint32_t ALU_REGISTER_R_SRCB = 0x21;
 constexpr uint32_t ALU_REGISTER_R_ACCU = 0x31;
+constexpr uint32_t ALU_REGISTER_R_ZF = 0x32;
+constexpr uint32_t ALU_REGISTER_R_CF = 0x33;
 
 constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
