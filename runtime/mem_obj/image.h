@@ -316,22 +316,22 @@ class ImageHw : public Image {
 
     static int getShaderChannelValue(int inputShaderChannel, cl_channel_order imageChannelOrder) {
         if (imageChannelOrder == CL_A) {
-            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED ||
-                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN ||
-                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE) {
-                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO;
+            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED ||
+                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN ||
+                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE) {
+                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
             }
         } else if (imageChannelOrder == CL_R ||
                    imageChannelOrder == CL_RA ||
                    imageChannelOrder == CL_Rx) {
-            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN ||
-                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE) {
-                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO;
+            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN ||
+                inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE) {
+                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
             }
         } else if (imageChannelOrder == CL_RG ||
                    imageChannelOrder == CL_RGx) {
-            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE) {
-                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO;
+            if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE) {
+                return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
             }
         }
         return inputShaderChannel;

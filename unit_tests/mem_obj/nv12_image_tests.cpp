@@ -417,7 +417,7 @@ HWTEST_F(Nv12ImageTest, setImageArg) {
     EXPECT_EQ(surfaceOffsets.yOffsetForUVplane, surfaceState.getYOffsetForUOrUvPlane());
 
     // NV 12 image has correct alpha channel == one
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ONE, surfaceState.getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE, surfaceState.getShaderChannelSelectAlpha());
 
     delete image;
 }

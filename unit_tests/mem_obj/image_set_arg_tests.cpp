@@ -45,22 +45,22 @@ class ImageSetArgTest : public DeviceFixture,
     void SetupChannels(int imgChannelOrder) {
         typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
-        expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
-        expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN_GREEN;
-        expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_BLUE;
+        expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
+        expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
+        expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
 
         if (imgChannelOrder == CL_A) {
-            expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO;
-            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN_ZERO;
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_ZERO;
+            expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
         } else if (imgChannelOrder == CL_RA ||
                    imgChannelOrder == CL_R ||
                    imgChannelOrder == CL_Rx) {
-            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN_ZERO;
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_ZERO;
+            expectedChannelGreen = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
+            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
         } else if (imgChannelOrder == CL_RG ||
                    imgChannelOrder == CL_RGx) {
-            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_ZERO;
+            expectedChannelBlue = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
         }
     }
 
@@ -351,7 +351,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
     EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
 
     std::vector<Surface *> surfaces;
@@ -423,7 +423,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage2Darray) {
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -470,7 +470,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Darray) {
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -781,10 +781,10 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceState->getSurfaceType());
     EXPECT_FALSE((GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceArray());
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN_GREEN, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_BLUE, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, surfaceState->getShaderChannelSelectGreen());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, surfaceState->getShaderChannelSelectBlue());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
 
     clReleaseMemObject(imageFromBuffer);
     clReleaseMemObject(buffer);
@@ -807,10 +807,10 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImageWithCLLuminanceFormat) {
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
     //for CL_LUMINANCE format we override channels to RED to be spec complaint.
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, surfaceState->getShaderChannelSelectRed());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN_RED, surfaceState->getShaderChannelSelectGreen());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE_RED, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectRed());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectGreen());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState->getShaderChannelSelectBlue());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -953,7 +953,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ALPHA, surfaceState->getShaderChannelSelectAlpha());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
     EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
 
     std::vector<Surface *> surfaces;
@@ -973,19 +973,19 @@ HWTEST_F(ImageShaderChanelValueTest, ChannelA) {
     int outputChannel = 0;
     int inputChannel = 0;
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_A);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_A);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_A);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_A);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
 }
 
 HWTEST_F(ImageShaderChanelValueTest, ChannelRA) {
@@ -994,47 +994,47 @@ HWTEST_F(ImageShaderChanelValueTest, ChannelRA) {
     int outputChannel = 0;
     int inputChannel = 0;
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_R);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_R);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_R);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_R);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_Rx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_Rx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_Rx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_Rx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
 }
 
 HWTEST_F(ImageShaderChanelValueTest, ChannelRGA) {
@@ -1043,33 +1043,33 @@ HWTEST_F(ImageShaderChanelValueTest, ChannelRGA) {
     int outputChannel = 0;
     int inputChannel = 0;
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RG);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RG);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RG);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RG);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ZERO, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, outputChannel);
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGx);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, outputChannel);
 }
 
 HWTEST_F(ImageShaderChanelValueTest, ChannelRGBA) {
@@ -1078,18 +1078,18 @@ HWTEST_F(ImageShaderChanelValueTest, ChannelRGBA) {
     int outputChannel = 0;
     int inputChannel = 0;
 
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA;
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGBA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_ALPHA, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGBA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_RED, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGBA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_GREEN, outputChannel);
-    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, outputChannel);
+    inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGBA);
-    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE, outputChannel);
+    EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, outputChannel);
 }
 
 HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsProgrammedThenCorrectStataBaseAddressIsSet) {

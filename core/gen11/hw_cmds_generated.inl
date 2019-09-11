@@ -2450,38 +2450,14 @@ typedef struct tagRENDER_SURFACE_STATE {
         HALF_PITCH_FOR_CHROMA_DISABLE = 0x0,
         HALF_PITCH_FOR_CHROMA_ENABLE = 0x1,
     } HALF_PITCH_FOR_CHROMA;
-    typedef enum tagSHADER_CHANNEL_SELECT_ALPHA {
-        SHADER_CHANNEL_SELECT_ALPHA_ZERO = 0x0,
-        SHADER_CHANNEL_SELECT_ALPHA_ONE = 0x1,
-        SHADER_CHANNEL_SELECT_ALPHA_RED = 0x4,
-        SHADER_CHANNEL_SELECT_ALPHA_GREEN = 0x5,
-        SHADER_CHANNEL_SELECT_ALPHA_BLUE = 0x6,
-        SHADER_CHANNEL_SELECT_ALPHA_ALPHA = 0x7,
-    } SHADER_CHANNEL_SELECT_ALPHA;
-    typedef enum tagSHADER_CHANNEL_SELECT_BLUE {
-        SHADER_CHANNEL_SELECT_BLUE_ZERO = 0x0,
-        SHADER_CHANNEL_SELECT_BLUE_ONE = 0x1,
-        SHADER_CHANNEL_SELECT_BLUE_RED = 0x4,
-        SHADER_CHANNEL_SELECT_BLUE_GREEN = 0x5,
-        SHADER_CHANNEL_SELECT_BLUE_BLUE = 0x6,
-        SHADER_CHANNEL_SELECT_BLUE_ALPHA = 0x7,
-    } SHADER_CHANNEL_SELECT_BLUE;
-    typedef enum tagSHADER_CHANNEL_SELECT_GREEN {
-        SHADER_CHANNEL_SELECT_GREEN_ZERO = 0x0,
-        SHADER_CHANNEL_SELECT_GREEN_ONE = 0x1,
-        SHADER_CHANNEL_SELECT_GREEN_RED = 0x4,
-        SHADER_CHANNEL_SELECT_GREEN_GREEN = 0x5,
-        SHADER_CHANNEL_SELECT_GREEN_BLUE = 0x6,
-        SHADER_CHANNEL_SELECT_GREEN_ALPHA = 0x7,
-    } SHADER_CHANNEL_SELECT_GREEN;
-    typedef enum tagSHADER_CHANNEL_SELECT_RED {
-        SHADER_CHANNEL_SELECT_RED_ZERO = 0x0,
-        SHADER_CHANNEL_SELECT_RED_ONE = 0x1,
-        SHADER_CHANNEL_SELECT_RED_RED = 0x4,
-        SHADER_CHANNEL_SELECT_RED_GREEN = 0x5,
-        SHADER_CHANNEL_SELECT_RED_BLUE = 0x6,
-        SHADER_CHANNEL_SELECT_RED_ALPHA = 0x7,
-    } SHADER_CHANNEL_SELECT_RED;
+    typedef enum tagSHADER_CHANNEL_SELECT {
+        SHADER_CHANNEL_SELECT_ZERO = 0x0,
+        SHADER_CHANNEL_SELECT_ONE = 0x1,
+        SHADER_CHANNEL_SELECT_RED = 0x4,
+        SHADER_CHANNEL_SELECT_GREEN = 0x5,
+        SHADER_CHANNEL_SELECT_BLUE = 0x6,
+        SHADER_CHANNEL_SELECT_ALPHA = 0x7,
+    } SHADER_CHANNEL_SELECT;
     typedef enum tagMEMORY_COMPRESSION_MODE {
         MEMORY_COMPRESSION_MODE_HORIZONTAL = 0x0,
         MEMORY_COMPRESSION_MODE_VERTICAL = 0x1,
@@ -2518,10 +2494,10 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.TileAddressMappingMode = TILE_ADDRESS_MAPPING_MODE_GEN9;
         TheStructure.Common.CoherencyType = COHERENCY_TYPE_GPU_COHERENT;
         TheStructure.Common.TiledResourceMode = TILED_RESOURCE_MODE_NONE;
-        TheStructure.Common.ShaderChannelSelectAlpha = SHADER_CHANNEL_SELECT_ALPHA_ZERO;
-        TheStructure.Common.ShaderChannelSelectBlue = SHADER_CHANNEL_SELECT_BLUE_ZERO;
-        TheStructure.Common.ShaderChannelSelectGreen = SHADER_CHANNEL_SELECT_GREEN_ZERO;
-        TheStructure.Common.ShaderChannelSelectRed = SHADER_CHANNEL_SELECT_RED_ZERO;
+        TheStructure.Common.ShaderChannelSelectAlpha = SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.ShaderChannelSelectBlue = SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.ShaderChannelSelectGreen = SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.ShaderChannelSelectRed = SHADER_CHANNEL_SELECT_ZERO;
         TheStructure.Common.MemoryCompressionMode = MEMORY_COMPRESSION_MODE_HORIZONTAL;
         TheStructure.SurfaceTypeIsnotSurftype_Strbuf.NumberOfMultisamples = NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
         TheStructure.SurfaceTypeIsnotSurftype_Strbuf.MultisampledSurfaceStorageFormat = MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS;
@@ -2770,29 +2746,29 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline uint32_t getResourceMinLod(void) const {
         return (TheStructure.Common.ResourceMinLod);
     }
-    inline void setShaderChannelSelectAlpha(const SHADER_CHANNEL_SELECT_ALPHA value) {
+    inline void setShaderChannelSelectAlpha(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectAlpha = value;
     }
-    inline SHADER_CHANNEL_SELECT_ALPHA getShaderChannelSelectAlpha(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT_ALPHA>(TheStructure.Common.ShaderChannelSelectAlpha);
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectAlpha(void) const {
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectAlpha);
     }
-    inline void setShaderChannelSelectBlue(const SHADER_CHANNEL_SELECT_BLUE value) {
+    inline void setShaderChannelSelectBlue(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectBlue = value;
     }
-    inline SHADER_CHANNEL_SELECT_BLUE getShaderChannelSelectBlue(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT_BLUE>(TheStructure.Common.ShaderChannelSelectBlue);
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectBlue(void) const {
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectBlue);
     }
-    inline void setShaderChannelSelectGreen(const SHADER_CHANNEL_SELECT_GREEN value) {
+    inline void setShaderChannelSelectGreen(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectGreen = value;
     }
-    inline SHADER_CHANNEL_SELECT_GREEN getShaderChannelSelectGreen(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT_GREEN>(TheStructure.Common.ShaderChannelSelectGreen);
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectGreen(void) const {
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectGreen);
     }
-    inline void setShaderChannelSelectRed(const SHADER_CHANNEL_SELECT_RED value) {
+    inline void setShaderChannelSelectRed(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectRed = value;
     }
-    inline SHADER_CHANNEL_SELECT_RED getShaderChannelSelectRed(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT_RED>(TheStructure.Common.ShaderChannelSelectRed);
+    inline SHADER_CHANNEL_SELECT getShaderChannelSelectRed(void) const {
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectRed);
     }
     inline void setMemoryCompressionEnable(const bool value) {
         TheStructure.Common.MemoryCompressionEnable = value;
