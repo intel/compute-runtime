@@ -9,8 +9,8 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/host_ptr_defines.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/memory_pool.h"
 #include "runtime/utilities/idlist.h"
 

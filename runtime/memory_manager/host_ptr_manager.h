@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/host_ptr_defines.h"
+#include "core/memory_manager/host_ptr_defines.h"
 
 #include <map>
 #include <mutex>

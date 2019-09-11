@@ -21,7 +21,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/graphics_allocation_extra.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_defines.h
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.cpp

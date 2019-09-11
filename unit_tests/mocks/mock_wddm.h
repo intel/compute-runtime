@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/memory_manager/host_ptr_defines.h"
+#include "core/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/os_interface/windows/windows_defs.h"
