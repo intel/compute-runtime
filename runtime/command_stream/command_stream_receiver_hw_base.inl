@@ -776,8 +776,6 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitPr
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
-    UNRECOVERABLE_IF(osContext->getEngineType() != aub_stream::EngineType::ENGINE_BCS);
-
     auto lock = obtainUniqueOwnership();
     bool updateTimestampPacket = blitProperites.outputTimestampPacket != nullptr;
     auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperites.copySize,
