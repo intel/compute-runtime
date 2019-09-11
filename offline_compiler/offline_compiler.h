@@ -93,6 +93,7 @@ class OfflineCompiler {
     bool quiet = false;
     bool inputFileLlvm = false;
     bool inputFileSpirV = false;
+    bool outputNoSuffix = false;
 
     CLElfLib::ElfBinaryStorage elfBinary;
     size_t elfBinarySize = 0;

@@ -511,6 +511,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-q")) {
             quiet = true;
+        } else if (stringsAreEqual(argv[argIndex], "-output_no_suffix")) {
+            outputNoSuffix = true;
         } else if (stringsAreEqual(argv[argIndex], "--help")) {
             printUsage();
             retVal = PRINT_USAGE;
@@ -661,7 +663,7 @@ void OfflineCompiler::printUsage() {
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
-Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [--help]
+Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-32|-64] [-internal_options <options>] [-llvm_text|-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [-output_no_suffix] [--help]
 
   -file <filename>              The input file to be compiled
                                 (by default input source format is
@@ -732,6 +734,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -cpp_file                     Will generate c++ file with C-array
                                 containing Intel OpenCL device binary.
 
+  -output_no_suffix             Prevents ocloc from adding family name suffix.
+
   --help                        Print this usage message.
 
 Examples :
@@ -797,10 +801,18 @@ bool OfflineCompiler::generateElfBinary() {
 void OfflineCompiler::writeOutAllFiles() {
     std::string fileBase;
     std::string fileTrunk = getFileNameTrunk(inputFile);
-    if (outputFile.empty()) {
-        fileBase = fileTrunk + "_" + familyNameWithType;
+    if (outputNoSuffix) {
+        if (outputFile.empty()) {
+            fileBase = fileTrunk;
+        } else {
+            fileBase = outputFile;
+        }
     } else {
-        fileBase = outputFile + "_" + familyNameWithType;
+        if (outputFile.empty()) {
+            fileBase = fileTrunk + "_" + familyNameWithType;
+        } else {
+            fileBase = outputFile + "_" + familyNameWithType;
+        }
     }
 
     if (outputDirectory != "") {
@@ -845,8 +857,12 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 
     if (!elfBinary.empty()) {
-        std::string elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
-
+        std::string elfOutputFile;
+        if (outputNoSuffix) {
+            elfOutputFile = generateFilePath(outputDirectory, fileBase, "");
+        } else {
+            elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
+        }
         writeDataToFile(
             elfOutputFile.c_str(),
             elfBinary.data(),
