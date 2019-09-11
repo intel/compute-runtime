@@ -3547,14 +3547,20 @@ cl_int clEnqueueMemsetINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    return clEnqueueSVMMemFill(commandQueue,
-                               dstPtr,
-                               &value,
-                               1u,
-                               size,
-                               numEventsInWaitList,
-                               eventWaitList,
-                               event);
+    auto retVal = clEnqueueSVMMemFill(commandQueue,
+                                      dstPtr,
+                                      &value,
+                                      1u,
+                                      size,
+                                      numEventsInWaitList,
+                                      eventWaitList,
+                                      event);
+    if (retVal == CL_SUCCESS && event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(CL_COMMAND_MEMSET_INTEL);
+    }
+
+    return retVal;
 }
 
 cl_int clEnqueueMemcpyINTEL(
@@ -3566,14 +3572,20 @@ cl_int clEnqueueMemcpyINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    return clEnqueueSVMMemcpy(commandQueue,
-                              blocking,
-                              dstPtr,
-                              srcPtr,
-                              size,
-                              numEventsInWaitList,
-                              eventWaitList,
-                              event);
+    auto retVal = clEnqueueSVMMemcpy(commandQueue,
+                                     blocking,
+                                     dstPtr,
+                                     srcPtr,
+                                     size,
+                                     numEventsInWaitList,
+                                     eventWaitList,
+                                     event);
+    if (retVal == CL_SUCCESS && event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(CL_COMMAND_MEMCPY_INTEL);
+    }
+
+    return retVal;
 }
 
 cl_int clEnqueueMigrateMemINTEL(
@@ -3591,6 +3603,11 @@ cl_int clEnqueueMigrateMemINTEL(
 
     if (retVal == CL_SUCCESS) {
         pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_MIGRATEMEM_INTEL);
+        }
     }
 
     return retVal;
@@ -3611,6 +3628,11 @@ cl_int clEnqueueMemAdviseINTEL(
 
     if (retVal == CL_SUCCESS) {
         pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_MEMADVISE_INTEL);
+        }
     }
 
     return retVal;

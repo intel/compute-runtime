@@ -8,6 +8,7 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
@@ -452,4 +453,72 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperPa
 
     auto retVal = clEnqueueMemAdviseINTEL(&cmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+class clUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
+                                        public ::testing::Test {
+  public:
+    void SetUp() override {
+        this->pCmdQ = createCommandQueue(nullptr);
+    }
+    void TearDown() override {
+        clReleaseEvent(event);
+        CommandQueueHwFixture::TearDown();
+    }
+
+    cl_event event = nullptr;
+};
+
+TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
+
+    auto retVal = clEnqueueMigrateMemINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_MIGRATEMEM_INTEL;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+}
+
+TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
+
+    auto retVal = clEnqueueMemAdviseINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_MEMADVISE_INTEL;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+}
+
+TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    cl_int retVal = CL_SUCCESS;
+
+    auto unfiedMemoryDst = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unfiedMemorySrc = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+
+    retVal = clEnqueueMemcpyINTEL(this->pCmdQ, 0, unfiedMemoryDst, unfiedMemorySrc, 400u, 0, nullptr, &event);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_MEMCPY_INTEL;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+
+    clMemFreeINTEL(this->context, unfiedMemoryDst);
+    clMemFreeINTEL(this->context, unfiedMemorySrc);
+}
+
+TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    cl_int retVal = CL_SUCCESS;
+
+    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
+    cl_int setValue = 12u;
+
+    retVal = clEnqueueMemsetINTEL(this->pCmdQ, unfiedMemorySharedAllocation, setValue, 400u, 0, nullptr, &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_MEMSET_INTEL;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+    clMemFreeINTEL(this->context, unfiedMemorySharedAllocation);
 }
