@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/debug_file_reader.h"
 #include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
@@ -16,7 +17,6 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/debug_settings_manager_fixture.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include <cstdio>
 #include <memory>

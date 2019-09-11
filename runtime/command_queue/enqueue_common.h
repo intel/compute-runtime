@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/utilities/range.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
@@ -29,7 +30,6 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/printf_handler.h"
-#include "runtime/utilities/range.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include "hw_cmds.h"

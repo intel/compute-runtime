@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/utilities/timer_util.h"
 #include "runtime/helpers/options.h"
-#include "runtime/utilities/timer_util.h"
 
 #include <atomic>
 #include <fstream>

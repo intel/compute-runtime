@@ -10,6 +10,7 @@
 #include "core/helpers/ptr_math.h"
 #include "core/os_interface/linux/debug_env_reader.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -43,7 +44,6 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include "reg_configs_common.h"
 

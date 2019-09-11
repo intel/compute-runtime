@@ -8,6 +8,7 @@
 #include "api.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/utilities/stackvec.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/api/additional_extensions.h"
 #include "runtime/aub/aub_center.h"
@@ -41,7 +42,6 @@
 #include "runtime/tracing/tracing_api.h"
 #include "runtime/tracing/tracing_notify.h"
 #include "runtime/utilities/api_intercept.h"
-#include "runtime/utilities/stackvec.h"
 
 #include "CL/cl.h"
 #include "config.h"

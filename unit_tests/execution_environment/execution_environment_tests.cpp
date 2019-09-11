@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/destructor_counted.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
@@ -26,7 +27,6 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_memory_operations_handler.h"
-#include "unit_tests/utilities/destructor_counted.h"
 
 using namespace NEO;
 

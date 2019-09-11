@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/utilities/timer_util.h"
+#include "core/utilities/timer_util.h"
 
 #include <chrono>
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/utilities/arrayref.h"
 #include "runtime/api/api.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
@@ -15,7 +16,6 @@
 #include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/d3d/d3d_surface.h"
 #include "runtime/sharings/d3d/d3d_texture.h"
-#include "runtime/utilities/arrayref.h"
 #include "unit_tests/fixtures/d3d_test_fixture.h"
 
 #include "gmock/gmock.h"

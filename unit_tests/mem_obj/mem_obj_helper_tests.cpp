@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 

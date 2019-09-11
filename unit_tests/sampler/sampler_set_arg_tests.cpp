@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/utilities/numeric.h"
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
-#include "runtime/utilities/numeric.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"

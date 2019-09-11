@@ -9,6 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/array_count.h"
@@ -27,7 +28,6 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
 using namespace ::testing;

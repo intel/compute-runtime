@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "test.h"
@@ -21,7 +22,6 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
 

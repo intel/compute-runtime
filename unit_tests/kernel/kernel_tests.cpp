@@ -7,6 +7,7 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -36,7 +37,6 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_tests.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include <memory>
 

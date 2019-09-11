@@ -7,7 +7,7 @@
 
 #include "runtime/utilities/perf_profiler.h"
 
-#include "runtime/utilities/stackvec.h"
+#include "core/utilities/stackvec.h"
 
 #include "os_inc.h"
 

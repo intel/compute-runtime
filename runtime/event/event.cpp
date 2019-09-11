@@ -8,6 +8,8 @@
 #include "runtime/event/event.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/utilities/range.h"
+#include "core/utilities/stackvec.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_queue/command_queue.h"
@@ -22,8 +24,6 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/platform/platform.h"
-#include "runtime/utilities/range.h"
-#include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)

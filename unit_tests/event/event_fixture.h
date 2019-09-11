@@ -9,6 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/user_event.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
@@ -18,7 +19,6 @@
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 

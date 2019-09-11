@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/utilities/arrayref.h"
 #include "runtime/sharings/d3d/cl_d3d_api.h"
 #include "runtime/sharings/d3d/d3d_buffer.h"
 #include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/d3d/d3d_surface.h"
 #include "runtime/sharings/d3d/d3d_texture.h"
-#include "runtime/utilities/arrayref.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"

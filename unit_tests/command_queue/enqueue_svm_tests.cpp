@@ -8,6 +8,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
 #include "runtime/memory_manager/allocations_list.h"
@@ -25,7 +26,6 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
 

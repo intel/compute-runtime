@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/helpers/surface_formats.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
 

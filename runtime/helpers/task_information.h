@@ -7,13 +7,13 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "core/utilities/iflist.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"
-#include "runtime/utilities/iflist.h"
 
 #include <memory>
 #include <vector>

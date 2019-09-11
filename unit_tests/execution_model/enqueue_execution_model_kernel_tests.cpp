@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -23,7 +24,6 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
 

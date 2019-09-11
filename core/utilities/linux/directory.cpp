@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/utilities/directory.h"
+#include "core/utilities/directory.h"
 
 #include <cstdio>
 #include <dirent.h>

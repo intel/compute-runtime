@@ -5,12 +5,12 @@
  *
  */
 
-#include "runtime/utilities/arrayref.h"
-#include "runtime/utilities/idlist.h"
-#include "runtime/utilities/iflist.h"
-#include "runtime/utilities/range.h"
-#include "runtime/utilities/stackvec.h"
-#include "unit_tests/utilities/containers_tests_helpers.h"
+#include "core/unit_tests/utilities/containers_tests_helpers.h"
+#include "core/utilities/arrayref.h"
+#include "core/utilities/idlist.h"
+#include "core/utilities/iflist.h"
+#include "core/utilities/range.h"
+#include "core/utilities/stackvec.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

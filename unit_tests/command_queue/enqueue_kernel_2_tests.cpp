@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/allocations_list.h"
@@ -18,7 +19,6 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device_queue.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include "reg_configs_common.h"
 

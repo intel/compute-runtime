@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/utilities/stackvec.h"
+#include "core/utilities/stackvec.h"
 
 #include "CL/cl.h"
 

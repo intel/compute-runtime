@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/helpers/options.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "test.h"
@@ -15,7 +16,6 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 
