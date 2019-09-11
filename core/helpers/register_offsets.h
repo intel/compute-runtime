@@ -21,6 +21,22 @@ constexpr uint32_t GPUGPU_DISPATCHDIMZ = 0x2508;
 
 constexpr uint32_t CS_GPR_R0 = 0x2600;
 constexpr uint32_t CS_GPR_R1 = 0x2608;
+constexpr uint32_t CS_GPR_R2 = 0x2610;
+constexpr uint32_t CS_GPR_R3 = 0x2618;
+constexpr uint32_t CS_GPR_R4 = 0x2620;
+constexpr uint32_t CS_GPR_R5 = 0x2628;
+constexpr uint32_t CS_GPR_R6 = 0x2630;
+constexpr uint32_t CS_GPR_R7 = 0x2638;
+constexpr uint32_t CS_GPR_R8 = 0x2640;
+constexpr uint32_t CS_GPR_R9 = 0x2648;
+constexpr uint32_t CS_GPR_R10 = 0x2650;
+constexpr uint32_t CS_GPR_R11 = 0x2658;
+constexpr uint32_t CS_GPR_R12 = 0x2660;
+constexpr uint32_t CS_GPR_R13 = 0x2668;
+constexpr uint32_t CS_GPR_R14 = 0x2670;
+constexpr uint32_t CS_GPR_R15 = 0x2678;
+
+constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
 
 //Alu opcodes
 constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
