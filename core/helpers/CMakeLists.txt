@@ -10,6 +10,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
   ${CMAKE_CURRENT_SOURCE_DIR}/interlocked_max.h
   ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
