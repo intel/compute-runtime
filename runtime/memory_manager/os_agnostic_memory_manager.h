@@ -21,17 +21,17 @@ class MemoryAllocation : public GraphicsAllocation {
     void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
     MemoryAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, multiOsContextCapable),
+                     MemoryPool::Type pool)
+        : GraphicsAllocation(allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool),
           id(0), uncacheable(false) {}
 
-    MemoryAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, multiOsContextCapable),
+    MemoryAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool)
+        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool),
           id(0), uncacheable(false) {}
 
     MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable, bool uncacheable, bool flushL3Required)
-        : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool, multiOsContextCapable),
+                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required)
+        : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool),
           id(count), uncacheable(uncacheable) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;
@@ -79,7 +79,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     MemoryAllocation *createMemoryAllocation(GraphicsAllocation::AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                                             uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
+                                             uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
 
   private:
     unsigned long long counter = 0;

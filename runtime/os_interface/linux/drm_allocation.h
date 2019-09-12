@@ -19,18 +19,18 @@ using BufferObjects = std::array<BufferObject *, maxHandleCount>;
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, ptrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
+    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
+        : GraphicsAllocation(allocationType, ptrIn, sizeIn, sharedHandle, pool),
           bufferObjects({{bo}}) {
     }
 
-    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool, multiOsContextCapable),
+    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool),
           bufferObjects({{bo}}) {
     }
 
-    DrmAllocation(AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool, multiOsContextCapable),
+    DrmAllocation(AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool),
           bufferObjects(bos) {
     }
 

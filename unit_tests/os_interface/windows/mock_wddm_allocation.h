@@ -12,7 +12,7 @@ namespace NEO {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
-    MockWddmAllocation() : WddmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, nullptr, MemoryPool::MemoryNull, false), gpuPtr(gpuAddress), handle(handles[0]) {
+    MockWddmAllocation() : WddmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, nullptr, MemoryPool::MemoryNull), gpuPtr(gpuAddress), handle(handles[0]) {
     }
     using WddmAllocation::cpuPtr;
     using WddmAllocation::memoryPool;
