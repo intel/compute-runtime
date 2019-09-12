@@ -252,6 +252,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
+    bool multiOsContextCapable = false;
 
     ~MockCommandStreamReceiver() {
     }
@@ -261,6 +262,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return true;
     }
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
+
+    bool isMultiOsContextCapable() const { return multiOsContextCapable; }
 
     CompletionStamp flushTask(
         LinearStream &commandStream,

@@ -82,7 +82,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWh
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSpecialCommandStreamReceiverWhenFlushTaskIsCalledThenCommandStreamReceiverStreamIsUsed) {
     configureCSRtoNonDirtyState<FamilyType>();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.executionEnvironment.specialCommandStreamReceiver.reset(&commandStreamReceiver);
+    commandStreamReceiver.multiOsContextCapable = true;
     commandStream.getSpace(4);
 
     flushTask(commandStreamReceiver);

@@ -144,10 +144,6 @@ MemoryManager *CommandStreamReceiver::getMemoryManager() const {
     return executionEnvironment.memoryManager.get();
 }
 
-bool CommandStreamReceiver::isMultiOsContextCapable() const {
-    return executionEnvironment.specialCommandStreamReceiver.get() == this;
-}
-
 LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
     constexpr static auto additionalAllocationSize = MemoryConstants::cacheLineSize + CSRequirements::csOverfetchSize;
     ensureCommandBufferAllocation(this->commandStream, minRequiredSize, additionalAllocationSize);

@@ -188,6 +188,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return result;
     }
 
+    bool isMultiOsContextCapable() const override {
+        return multiOsContextCapable;
+    }
+
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -204,5 +208,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t createPerDssBackedBufferCalled = 0;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
     DispatchFlags recordedDispatchFlags;
+    bool multiOsContextCapable = false;
 };
 } // namespace NEO

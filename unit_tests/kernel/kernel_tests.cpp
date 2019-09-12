@@ -458,6 +458,9 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     using CommandStreamReceiver::executionEnvironment;
 
     using BaseClass::CommandStreamReceiver;
+
+    bool isMultiOsContextCapable() const override { return false; }
+
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
         executionEnvironment.initializeMemoryManager();

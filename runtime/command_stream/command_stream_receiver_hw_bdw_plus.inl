@@ -65,4 +65,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogueCommands(const D
     return 0u;
 }
 
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
+    return false;
+}
+
 } // namespace NEO

@@ -170,7 +170,7 @@ class CommandStreamReceiver {
 
     virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
-    bool isMultiOsContextCapable() const;
+    virtual bool isMultiOsContextCapable() const = 0;
 
     void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;

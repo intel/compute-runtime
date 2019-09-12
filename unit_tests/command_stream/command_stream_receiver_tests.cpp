@@ -56,15 +56,6 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     InternalAllocationStorage *internalAllocationStorage;
 };
 
-TEST_F(CommandStreamReceiverTest, whenCommandStreamReceiverIsSetAsSpecialCommandStreamReceiverInExecutionEnvironmentThenItIsMulitOsContextCapable) {
-    EXPECT_FALSE(commandStreamReceiver->isMultiOsContextCapable());
-
-    auto executionEnvironment = pDevice->getExecutionEnvironment();
-    executionEnvironment->specialCommandStreamReceiver.reset(commandStreamReceiver);
-    EXPECT_TRUE(commandStreamReceiver->isMultiOsContextCapable());
-    executionEnvironment->specialCommandStreamReceiver.release();
-}
-
 HWTEST_F(CommandStreamReceiverTest, testCtor) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.peekTaskLevel());
