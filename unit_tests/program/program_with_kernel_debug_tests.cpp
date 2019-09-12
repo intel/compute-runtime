@@ -41,12 +41,15 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
     void SetUp() override {
         ProgramSimpleFixture::SetUp();
         device = pDevice;
+        if (!pDevice->getHardwareInfo().capabilityTable.sourceLevelDebuggerSupported) {
+            GTEST_SKIP();
+        }
 
         std::string filename;
         std::string kernelOption(CompilerOptions::debugKernelEnable);
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
-        kbHelper = new KernelBinaryHelper(filename, false);
+        kbHelper = std::make_unique<KernelBinaryHelper>(filename, false);
         CreateProgramWithSource<MockProgram>(
             pContext,
             &device,
@@ -56,11 +59,10 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
     }
 
     void TearDown() override {
-        delete kbHelper;
         ProgramSimpleFixture::TearDown();
     }
     cl_device_id device;
-    KernelBinaryHelper *kbHelper = nullptr;
+    std::unique_ptr<KernelBinaryHelper> kbHelper;
     MockProgram *mockProgram = nullptr;
 };
 
