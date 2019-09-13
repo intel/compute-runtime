@@ -578,10 +578,11 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    bool blitAllowed = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported;
+    bool blitAllowed = false;
 
     if (DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() != -1) {
-        blitAllowed &= !!DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
+        blitAllowed = !!DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() &&
+                      device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported;
     }
 
     bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType);
