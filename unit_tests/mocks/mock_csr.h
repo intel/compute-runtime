@@ -153,7 +153,6 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
@@ -168,6 +167,8 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;
+
+    MockCsrHw2(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment) {}
 
     SubmissionAggregator *peekSubmissionAggregator() {
         return this->submissionAggregator.get();
@@ -227,7 +228,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     int flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
     ResidencyContainer copyOfAllocations;
-    DispatchFlags passedDispatchFlags = {};
+    DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 };
 
 template <typename GfxFamily>

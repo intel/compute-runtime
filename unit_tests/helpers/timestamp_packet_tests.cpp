@@ -15,6 +15,7 @@
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -550,7 +551,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
@@ -592,7 +593,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
 
@@ -1577,7 +1578,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequest
 
 HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSizeThenAddSizeForPipeControl) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     csr.stallingPipeControlOnNextFlushRequired = false;
     auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
@@ -1592,7 +1593,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSiz
 
 HWTEST_F(TimestampPacketTests, givenInstructionCacheRequesWhenSizeIsEstimatedThenPipeControlIsAdded) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     csr.requiresInstructionCacheFlush = false;
     auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());

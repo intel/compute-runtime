@@ -12,6 +12,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/preemption_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -543,8 +544,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
         CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
         auto &commandStream = commandQueue.getCS(4096u);
 
-        DispatchFlags dispatchFlags;
-        dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
         void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 

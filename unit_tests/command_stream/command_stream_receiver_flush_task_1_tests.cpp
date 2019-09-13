@@ -11,6 +11,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -123,7 +124,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
 
     auto fillSize = MemoryConstants::cacheLineSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     commandStream.getSpace(fillSize);
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
     mockCsr.flushTask(commandStream,
@@ -141,7 +142,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIohNotEvictable) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     mockCsr.flushTask(commandStream,
                       0,
@@ -168,7 +169,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
 
     mockCsr.flushTask(commandStream,
@@ -199,7 +200,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
 
     mockCsr->flushTask(commandStream,
@@ -838,9 +839,9 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
     IndirectHeap linear(&allocation);
 
     auto blocking = true;
-    DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = blocking;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+    dispatchFlags.blocking = blocking;
 
     commandStreamReceiver.flushTask(
         commandStream,
@@ -885,10 +886,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
     auto &commandStreamCSR = commandStreamReceiver->getCS();
     commandStreamReceiver->lastSentCoherencyRequest = 0;
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.blocking = blocking;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
     commandStreamReceiver->flushTask(
         commandStreamTask,
@@ -928,11 +929,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
     auto &commandStreamTask = commandQueue.getCS(1024);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.blocking = true;
     dispatchFlags.dcFlush = true;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
     commandStreamReceiver.flushTask(
         commandStreamTask,

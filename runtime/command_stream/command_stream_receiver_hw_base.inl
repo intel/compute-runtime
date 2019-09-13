@@ -273,7 +273,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
     }
 
-    stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.GSBA32BitRequired) && force32BitAllocations);
+    stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
 
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
@@ -301,7 +301,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         GSBAFor32BitProgrammed = false;
         if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
             newGSHbase = scratchSpaceController->calculateNewGSH();
-        } else if (is64bit && force32BitAllocations && dispatchFlags.GSBA32BitRequired) {
+        } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
             newGSHbase = getMemoryManager()->getExternalHeapBaseAddress();
             GSBAFor32BitProgrammed = true;
         }

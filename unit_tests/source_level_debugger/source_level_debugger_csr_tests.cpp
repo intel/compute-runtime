@@ -9,6 +9,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_builtins.h"
@@ -53,8 +54,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
     CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    DispatchFlags dispatchFlags;
-    dispatchFlags.preemptionMode = PreemptionMode::Disabled;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
@@ -94,8 +94,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
         auto &commandStream = commandQueue.getCS(4096u);
         auto &preambleStream = mockCsr->getCS(0);
 
-        DispatchFlags dispatchFlags;
-        dispatchFlags.preemptionMode = PreemptionMode::Disabled;
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
         void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
@@ -146,8 +145,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
         auto &commandStream = commandQueue.getCS(4096u);
         auto &preambleStream = mockCsr->getCS(0);
 
-        DispatchFlags dispatchFlags;
-        dispatchFlags.preemptionMode = PreemptionMode::Disabled;
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
         void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 

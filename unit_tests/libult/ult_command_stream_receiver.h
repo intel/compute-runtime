@@ -10,6 +10,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"
 
 #include <map>
@@ -75,8 +76,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     virtual ~UltCommandStreamReceiver() override {
     }
 
-    UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : BaseClass(executionEnvironment), recursiveLockCounter(0) {
-    }
+    UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : BaseClass(executionEnvironment), recursiveLockCounter(0),
+                                                                           recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
     static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
         return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }

@@ -18,6 +18,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -699,8 +700,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     csr->makeResident(*dummyAllocation);
 
     csr->setTagAllocation(tagAllocation);
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
+
     csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
     //make sure command buffer is recorded
@@ -754,9 +756,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     //use some bytes
     submittedCommandBuffer.getSpace(4);
 
-    DispatchFlags dispatchFlags;
-    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+
     csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();

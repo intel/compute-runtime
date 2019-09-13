@@ -27,6 +27,7 @@
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -71,7 +72,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
@@ -133,7 +134,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.throttle = QueueThrottle::MEDIUM;
 
     EXPECT_CALL(*mockHelper, setPatchInfoData(_)).Times(0);
@@ -161,8 +162,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
 
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    DispatchFlags dispatchFlags;
-    dispatchFlags.throttle = QueueThrottle::MEDIUM;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     std::vector<PatchInfoData> patchInfoDataVector;
     EXPECT_CALL(*mockHelper, setPatchInfoData(_))
@@ -269,7 +269,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     bool vfeStateDirty;
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
 
     mockCsr->programVFEState(commandStream, flags, 10);
@@ -288,7 +288,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     bool vfeStateDirty;
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
 
     mockCsr->programVFEState(commandStream, flags, 10);
@@ -305,7 +305,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment));
     mockCsr->overwriteFlatBatchBufferHelper(new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment));
 
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
 
     mockCsr->programVFEState(commandStream, flags, 10);

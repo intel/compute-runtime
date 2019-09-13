@@ -38,6 +38,30 @@ constexpr uint32_t l3AndL1On = 2u;
 } // namespace L3CachingSettings
 
 struct DispatchFlags {
+    DispatchFlags() = delete;
+    DispatchFlags(CsrDependencies csrDependencies, PipelineSelectArgs pipelineSelectArgs, FlushStampTrackingObj *flushStampReference,
+                  QueueThrottle throttle, PreemptionMode preemptionMode, uint32_t numGrfRequired,
+                  uint32_t l3CacheSettings, bool blocking, bool dcFlush,
+                  bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
+                  bool requiresCoherency, bool lowPriority, bool implicitFlush,
+                  bool outOfOrderExecutionAllowed, bool multiEngineQueue, bool epilogueRequired) : csrDependencies(csrDependencies),
+                                                                                                   pipelineSelectArgs(pipelineSelectArgs),
+                                                                                                   flushStampReference(flushStampReference),
+                                                                                                   throttle(throttle),
+                                                                                                   preemptionMode(preemptionMode),
+                                                                                                   numGrfRequired(numGrfRequired),
+                                                                                                   l3CacheSettings(l3CacheSettings),
+                                                                                                   blocking(blocking),
+                                                                                                   dcFlush(dcFlush),
+                                                                                                   useSLM(useSLM),
+                                                                                                   guardCommandBufferWithPipeControl(guardCommandBufferWithPipeControl),
+                                                                                                   gsba32BitRequired(gsba32BitRequired),
+                                                                                                   requiresCoherency(requiresCoherency),
+                                                                                                   lowPriority(lowPriority),
+                                                                                                   implicitFlush(implicitFlush),
+                                                                                                   outOfOrderExecutionAllowed(outOfOrderExecutionAllowed),
+                                                                                                   multiEngineQueue(multiEngineQueue),
+                                                                                                   epilogueRequired(epilogueRequired){};
     CsrDependencies csrDependencies;
     PipelineSelectArgs pipelineSelectArgs;
     FlushStampTrackingObj *flushStampReference = nullptr;
@@ -49,7 +73,7 @@ struct DispatchFlags {
     bool dcFlush = false;
     bool useSLM = false;
     bool guardCommandBufferWithPipeControl = false;
-    bool GSBA32BitRequired = false;
+    bool gsba32BitRequired = false;
     bool requiresCoherency = false;
     bool lowPriority = false;
     bool implicitFlush = false;

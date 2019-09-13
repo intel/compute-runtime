@@ -16,6 +16,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -82,7 +83,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
 
     auto &commandStreamTask = commandQueue.getCS(1024);
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     // Pass taskCS as command stream parameter
     auto cs = commandStreamReceiver.flushTask(
@@ -965,7 +966,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenReq
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnmediaSamplerConfigChanged) {
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
     commandStreamReceiver.isPreambleSent = false;
 
     csrSizeRequest.mediaSamplerConfigChanged = false;
@@ -986,7 +988,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSpecialPipelineSelectModeChan
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
 
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
     csrSizeRequest.specialPipelineSelectModeChanged = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
     size_t size = commandStreamReceiver.getCmdSizeForPipelineSelect();
@@ -1004,7 +1007,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequir
 
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
     commandStreamReceiver.isPreambleSent = true;
 
     csrSizeRequest.mediaSamplerConfigChanged = false;
@@ -1030,7 +1034,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentT
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     commandStreamReceiver.isPreambleSent = true;
 
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
@@ -1058,8 +1062,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTa
 
     configureCSRtoNonDirtyState<FamilyType>();
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+
     mockCsr->flushTask(commandStream,
                        0,
                        dsh,
@@ -1086,8 +1091,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
 
     configureCSRtoNonDirtyState<FamilyType>();
 
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+
     mockCsr->flushTask(commandStream,
                        0,
                        dsh,
@@ -1109,7 +1115,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
     uint64_t generalStateBaseAddress = 0xffff800400010000ull;
     StateBaseAddressHelper<FamilyType> helper;
-    DispatchFlags dispatchFlags;
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     helper.programStateBaseAddress(commandStream,
                                    dsh,

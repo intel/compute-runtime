@@ -9,6 +9,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
+#include "unit_tests/helpers/dispatch_flags_helper.h"
 
 using namespace NEO;
 
@@ -19,7 +20,7 @@ GEN8TEST_F(Gen8CoherencyRequirements, noCoherencyProgramming) {
     executionEnvironment->initializeMemoryManager();
     CommandStreamReceiverHw<BDWFamily> csr(*executionEnvironment);
     LinearStream stream;
-    DispatchFlags flags = {};
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
     auto retSize = csr.getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);

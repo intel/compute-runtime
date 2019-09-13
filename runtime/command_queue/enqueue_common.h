@@ -670,27 +670,35 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         }
     }
 
-    DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = blocking;
-    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC;
-    dispatchFlags.useSLM = multiDispatchInfo.usesSlm() || multiDispatchInfo.peekParentKernel();
-    dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.GSBA32BitRequired = commandType == CL_COMMAND_NDRANGE_KERNEL;
+    DispatchFlags dispatchFlags(
+        {},                                                                                         //csrDependencies
+        {},                                                                                         //pipelineSelectArgs
+        this->flushStamp->getStampReference(),                                                      //flushStampReference
+        getThrottle(),                                                                              //throttle
+        PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo),                           //preemptionMode
+        numGrfRequired,                                                                             //numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
+        blocking,                                                                                   //blocking
+        shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
+        multiDispatchInfo.usesSlm() || multiDispatchInfo.peekParentKernel(),                        //useSLM
+        true,                                                                                       //guardCommandBufferWithPipeControl
+        commandType == CL_COMMAND_NDRANGE_KERNEL,                                                   //GSBA32BitRequired
+        requiresCoherency,                                                                          //requiresCoherency
+        (QueuePriority::LOW == priority),                                                           //lowPriority
+        implicitFlush,                                                                              //implicitFlush
+        !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
+        this->multiEngineQueue,                                                                     //multiEngineQueue
+        false                                                                                       //epilogueRequired
+    );
+
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
-    dispatchFlags.requiresCoherency = requiresCoherency;
-    dispatchFlags.lowPriority = (QueuePriority::LOW == priority);
-    dispatchFlags.throttle = getThrottle();
-    dispatchFlags.implicitFlush = implicitFlush;
-    dispatchFlags.flushStampReference = this->flushStamp->getStampReference();
-    dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
-    dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled();
+    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
+
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
         dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
     }
-    dispatchFlags.numGrfRequired = numGrfRequired;
-    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
-    dispatchFlags.multiEngineQueue = this->multiEngineQueue;
+
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     if (anyUncacheableArgs) {
@@ -852,13 +860,26 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         bcsCsr->blitBuffer(*enqueueProperties.blitProperties);
     }
 
-    DispatchFlags dispatchFlags = {};
-    dispatchFlags.blocking = blocking;
-    dispatchFlags.multiEngineQueue = multiEngineQueue;
-    dispatchFlags.preemptionMode = device->getPreemptionMode();
-    dispatchFlags.implicitFlush = (enqueueProperties.operation == EnqueueProperties::Operation::Blit);
-    dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.outOfOrderExecutionAllowed = getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled();
+    DispatchFlags dispatchFlags(
+        {},                                                                  //csrDependencies
+        {},                                                                  //pipelineSelectArgs
+        nullptr,                                                             //flushStampReference
+        QueueThrottle::MEDIUM,                                               //throttle
+        device->getPreemptionMode(),                                         //preemptionMode
+        GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
+        L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
+        blocking,                                                            //blocking
+        false,                                                               //dcFlush
+        false,                                                               //useSLM
+        true,                                                                //guardCommandBufferWithPipeControl
+        false,                                                               //GSBA32BitRequired
+        false,                                                               //requiresCoherency
+        false,                                                               //lowPriority
+        (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
+        getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
+        multiEngineQueue,                                                    //multiEngineQueue
+        false                                                                //epilogueRequired
+    );
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
