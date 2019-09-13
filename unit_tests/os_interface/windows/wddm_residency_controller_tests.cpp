@@ -48,6 +48,18 @@ class MockWddmResidencyController : public WddmResidencyController {
     }
 };
 
+class MockOsContextWin : public OsContextWin {
+  public:
+    MockOsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
+                     aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
+        : OsContextWin(wddm, contextId, deviceBitfield, engineType, preemptionMode, lowPriority),
+          mockResidencyController(wddm, contextId) {}
+
+    WddmResidencyController &getResidencyController() override { return mockResidencyController; };
+
+    MockWddmResidencyController mockResidencyController;
+};
+
 struct WddmResidencyControllerTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
@@ -55,12 +67,14 @@ struct WddmResidencyControllerTest : ::testing::Test {
         wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm()));
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);
-        residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
-        wddm->getWddmInterface()->createMonitoredFence(*residencyController);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
+        residencyController = &mockOsContextWin->mockResidencyController;
     }
 
     std::unique_ptr<WddmMock> wddm;
-    std::unique_ptr<MockWddmResidencyController> residencyController;
+    std::unique_ptr<MockOsContextWin> mockOsContextWin;
+    MockWddmResidencyController *residencyController = nullptr;
 };
 
 struct WddmResidencyControllerWithGdiTest : ::testing::Test {
@@ -73,13 +87,15 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);
 
-        residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
-        wddm->getWddmInterface()->createMonitoredFence(*residencyController);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
+        residencyController = &mockOsContextWin->mockResidencyController;
         residencyController->registerCallback();
     }
 
     std::unique_ptr<WddmMock> wddm;
-    std::unique_ptr<MockWddmResidencyController> residencyController;
+    std::unique_ptr<MockOsContextWin> mockOsContextWin;
+    MockWddmResidencyController *residencyController = nullptr;
     MockGdi *gdi;
 };
 
@@ -212,7 +228,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsD
     auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmResidencyController::trimCallback);
 
     std::memset(&gdi->getUnregisterTrimNotificationArg(), 0, sizeof(D3DKMT_UNREGISTERTRIMNOTIFICATION));
-    residencyController.reset();
+    mockOsContextWin.reset();
 
     EXPECT_EQ(trimCallbackAddress, gdi->getUnregisterTrimNotificationArg().Callback);
     EXPECT_EQ(trimCallbackHandle, gdi->getUnregisterTrimNotificationArg().Handle);

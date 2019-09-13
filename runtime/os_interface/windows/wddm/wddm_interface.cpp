@@ -19,7 +19,8 @@ bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
 }
 void WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
 
-bool WddmInterface::createMonitoredFence(WddmResidencyController &residencyController) {
+bool WddmInterface20::createMonitoredFence(OsContextWin &osContext) {
+    auto &residencyController = osContext.getResidencyController();
     NTSTATUS Status;
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
     CreateSynchronizationObject.hDevice = wddm.getDevice();
@@ -80,9 +81,19 @@ bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
 
     auto status = wddm.getGdi()->createHwQueue(&createHwQueue);
     UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-    osContext.setHwQueue(createHwQueue.hHwQueue);
+    osContext.setHwQueue({createHwQueue.hHwQueue, createHwQueue.hHwQueueProgressFence, createHwQueue.HwQueueProgressFenceCPUVirtualAddress,
+                          createHwQueue.HwQueueProgressFenceGPUVirtualAddress});
 
     return status == STATUS_SUCCESS;
+}
+
+bool WddmInterface23::createMonitoredFence(OsContextWin &osContext) {
+    auto &residencyController = osContext.getResidencyController();
+    auto hwQueue = osContext.getHwQueue();
+    residencyController.resetMonitoredFenceParams(hwQueue.progressFenceHandle,
+                                                  reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA),
+                                                  hwQueue.progressFenceGpuVA);
+    return true;
 }
 
 void WddmInterface23::destroyHwQueue(D3DKMT_HANDLE hwQueue) {
@@ -103,14 +114,10 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     auto monitoredFence = osContext.getResidencyController().getMonitoredFence();
 
     D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommand = {};
-    submitCommand.hHwQueue = osContext.getHwQueue();
-    submitCommand.HwQueueProgressFenceId = monitoredFence.fenceHandle;
+    submitCommand.hHwQueue = osContext.getHwQueue().handle;
+    submitCommand.HwQueueProgressFenceId = monitoredFence.currentFenceValue;
     submitCommand.CommandBuffer = commandBuffer;
     submitCommand.CommandLength = static_cast<UINT>(size);
-
-    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
-    pHeader->MonitorFenceVA = monitoredFence.gpuAddress;
-    pHeader->MonitorFenceValue = monitoredFence.currentFenceValue;
 
     submitCommand.pPrivateDriverData = commandHeader;
     submitCommand.PrivateDriverDataSize = MemoryConstants::pageSize;

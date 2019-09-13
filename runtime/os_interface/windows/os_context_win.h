@@ -12,6 +12,14 @@
 namespace NEO {
 
 class Wddm;
+
+struct HardwareQueue {
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE progressFenceHandle = 0;
+    VOID *progressFenceCpuVA = nullptr;
+    D3DGPU_VIRTUAL_ADDRESS progressFenceGpuVA = 0;
+};
+
 class OsContextWin : public OsContext {
   public:
     OsContextWin() = delete;
@@ -22,16 +30,16 @@ class OsContextWin : public OsContext {
 
     D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }
-    D3DKMT_HANDLE getHwQueue() const { return hwQueueHandle; }
-    void setHwQueue(D3DKMT_HANDLE hwQueue) { hwQueueHandle = hwQueue; }
+    HardwareQueue getHwQueue() const { return hardwareQueue; }
+    void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
     bool isInitialized() const { return initialized; }
     Wddm *getWddm() const { return &wddm; }
-    WddmResidencyController &getResidencyController() { return residencyController; }
+    MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
 
   protected:
     bool initialized = false;
     D3DKMT_HANDLE wddmContextHandle = 0;
-    D3DKMT_HANDLE hwQueueHandle = 0;
+    HardwareQueue hardwareQueue;
     Wddm &wddm;
     WddmResidencyController residencyController;
 };

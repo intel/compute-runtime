@@ -34,12 +34,12 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
             return;
         }
     }
-    initialized = wddmInterface->createMonitoredFence(residencyController);
+    initialized = wddmInterface->createMonitoredFence(*this);
     residencyController.registerCallback();
 };
 
 OsContextWin::~OsContextWin() {
-    wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
+    wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
     wddm.destroyContext(wddmContextHandle);
 }
 
