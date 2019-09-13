@@ -82,7 +82,7 @@ inline uint32_t calculateDispatchDim(Vec3<size_t> dispatchSize, Vec3<size_t> dis
 Vec3<size_t> canonizeWorkgroup(
     Vec3<size_t> workgroup);
 
-void provideLocalWorkGroupSizeHints(Context *context, uint32_t maxWorkGroupSize, DispatchInfo dispatchInfo);
+void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo);
 
 inline cl_uint computeDimensions(const size_t workItems[3]) {
     return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2 : 1;

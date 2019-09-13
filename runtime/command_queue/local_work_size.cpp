@@ -448,7 +448,7 @@ Vec3<size_t> canonizeWorkgroup(Vec3<size_t> workgroup) {
                               : Vec3<size_t>(0, 0, 0));
 }
 
-void provideLocalWorkGroupSizeHints(Context *context, uint32_t maxWorkGroupSize, DispatchInfo dispatchInfo) {
+void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo) {
     if (context != nullptr && context->isProvidingPerformanceHints() && dispatchInfo.getDim() <= 3) {
         size_t preferredWorkGroupSize[3];
 

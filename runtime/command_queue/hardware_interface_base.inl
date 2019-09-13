@@ -117,9 +117,8 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     DEBUG_BREAK_IF(!(dispatchInfo.getOffset().y == 0 || dispatchInfo.getDim() >= 2));
 
     // If we don't have a required WGS, compute one opportunistically
-    auto maxWorkGroupSize = static_cast<uint32_t>(commandQueue.getDevice().getDeviceInfo().maxWorkGroupSize);
     if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
-        provideLocalWorkGroupSizeHints(commandQueue.getContextPtr(), maxWorkGroupSize, dispatchInfo);
+        provideLocalWorkGroupSizeHints(commandQueue.getContextPtr(), dispatchInfo);
     }
 
     //Get dispatch geometry
