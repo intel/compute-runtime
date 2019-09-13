@@ -15,7 +15,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-cl_int CommandQueueHw<GfxFamily>::finish(bool dcFlush) {
+cl_int CommandQueueHw<GfxFamily>::finish() {
     getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
 
     //as long as queue is blocked we need to stall.

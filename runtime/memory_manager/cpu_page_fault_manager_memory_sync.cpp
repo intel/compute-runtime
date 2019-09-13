@@ -20,7 +20,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
     auto commandQueue = static_cast<CommandQueue *>(cmdQ);
     auto retVal = commandQueue->enqueueSVMUnmap(ptr, 0, nullptr, nullptr, false);
     UNRECOVERABLE_IF(retVal);
-    retVal = commandQueue->finish(false);
+    retVal = commandQueue->finish();
     UNRECOVERABLE_IF(retVal);
 }
 } // namespace NEO

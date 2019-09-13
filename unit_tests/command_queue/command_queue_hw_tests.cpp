@@ -283,7 +283,7 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPre
             : CommandQueueHw<FamilyType>(context, device, 0) {
             finishWasCalled = false;
         }
-        cl_int finish(bool dcFlush) override {
+        cl_int finish() override {
             finishWasCalled = true;
             return 0;
         }

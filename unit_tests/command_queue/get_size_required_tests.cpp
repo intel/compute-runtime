@@ -47,7 +47,7 @@ HWTEST_F(GetSizeRequiredTest, finish) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
-    auto retVal = pCmdQ->finish(false);
+    auto retVal = pCmdQ->finish();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, commandStream.getUsed() - usedBeforeCS);

@@ -423,6 +423,6 @@ HWTEST_F(EnqueueThreading, finish) {
     auto csr = (CommandStreamReceiverMock<FamilyType> *)&this->pCmdQ->getGpgpuCommandStreamReceiver();
     csr->expectedToFreeCount = 0u;
 
-    pCmdQ->finish(false);
+    pCmdQ->finish();
 }
 } // namespace ULT

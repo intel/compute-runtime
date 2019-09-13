@@ -92,7 +92,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         //wait for the completness of previous commands
         if (transferProperties.cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
             if (!transferProperties.memObj->isMemObjZeroCopy() || transferProperties.blocking) {
-                finish(true);
+                finish();
                 eventCompleted = true;
             }
         }

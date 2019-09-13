@@ -55,7 +55,7 @@ HWTEST_F(FinishTest, ShouldntAddPipeControl_If_CS_greater_than_CQ) {
     commandStreamReceiver.taskLevel = originalCSRLevel; // Must be greater than or equal to HW
     pCmdQ->taskLevel = originalCQLevel;
 
-    auto retVal = pCmdQ->finish(false);
+    auto retVal = pCmdQ->finish();
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Don't need to artificially execute PIPE_CONTROL.
@@ -77,7 +77,7 @@ HWTEST_F(FinishTest, ShouldntAddPipeControl_If_CS_greater_than_CQ) {
 HWTEST_F(FinishTest, doesntAddAPipecontrolToCQCommandStream) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto retVal = pCmdQ->finish(false);
+    auto retVal = pCmdQ->finish();
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Check for PIPE_CONTROL
@@ -89,7 +89,7 @@ HWTEST_F(FinishTest, givenFreshQueueWhenFinishIsCalledThenCommandStreamIsNotAllo
     MockContext contextWithMockCmdQ(pDevice, true);
     MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pDevice, 0);
 
-    auto retVal = cmdQ.finish(false);
+    auto retVal = cmdQ.finish();
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(nullptr, cmdQ.peekCommandStream());

@@ -170,7 +170,7 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
-            cmdQ->finish(true);
+            cmdQ->finish();
             break;
         }
     }
@@ -178,7 +178,7 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
     retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_RELEASE_DX9_OBJECTS_INTEL);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
-        cmdQ->finish(true);
+        cmdQ->finish();
     }
     return retVal;
 }
@@ -264,7 +264,7 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (memObject) {
             if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
-                cmdQ->finish(true);
+                cmdQ->finish();
                 break;
             }
 
@@ -277,7 +277,7 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
     retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_RELEASE_DX9_MEDIA_SURFACES_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
-        cmdQ->finish(true);
+        cmdQ->finish();
     }
     return retVal;
 }
@@ -477,7 +477,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
             return retVal;
         }
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D10> *>(memObject->peekSharingHandler())->isSharedResource()) {
-            cmdQ->finish(true);
+            cmdQ->finish();
             break;
         }
     }
@@ -485,7 +485,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
     retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
-        cmdQ->finish(true);
+        cmdQ->finish();
     }
     return retVal;
 }
@@ -682,7 +682,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
             return retVal;
         }
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D11> *>(memObject->peekSharingHandler())->isSharedResource()) {
-            cmdQ->finish(true);
+            cmdQ->finish();
             break;
         }
     }
@@ -690,7 +690,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
     retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_RELEASE_D3D11_OBJECTS_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
-        cmdQ->finish(true);
+        cmdQ->finish();
     }
     return retVal;
 }

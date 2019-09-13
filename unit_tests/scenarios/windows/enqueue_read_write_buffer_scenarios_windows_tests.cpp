@@ -99,7 +99,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     ASSERT_NE(nullptr, hostPtrAllcoation);
 
     uint64_t gpuVa = hostPtrAllcoation->getGpuAddress();
-    cmdQ->finish(true);
+    cmdQ->finish();
 
     parseCommands<FamilyType>(*cmdQ);
 

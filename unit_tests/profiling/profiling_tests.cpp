@@ -374,7 +374,7 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
     pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
-    pCmdQ->finish(false);
+    pCmdQ->finish();
 
     uint64_t queued, submit, start, end;
     cl_int retVal;

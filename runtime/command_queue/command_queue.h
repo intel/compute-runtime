@@ -308,7 +308,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return CL_SUCCESS;
     }
 
-    virtual cl_int finish(bool dcFlush) { return CL_SUCCESS; }
+    virtual cl_int finish() { return CL_SUCCESS; }
 
     virtual cl_int flush() { return CL_SUCCESS; }
 

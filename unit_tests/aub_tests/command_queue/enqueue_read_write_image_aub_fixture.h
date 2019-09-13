@@ -115,7 +115,7 @@ struct AUBImageUnaligned
         AUBCommandStreamFixture::expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &imageMemory[inputRowPitch * origin[1] * pixelSize], size * pixelSize);
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size * pixelSize + offset), referenceMemory, bufferSize - offset - size * pixelSize);
-        pCmdQ->finish(true);
+        pCmdQ->finish();
         alignedFree(dstMemory);
     }
 
@@ -201,7 +201,7 @@ struct AUBImageUnaligned
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        pCmdQ->finish(true);
+        pCmdQ->finish();
 
         auto imageRowPitch = image->getImageDesc().image_row_pitch;
 

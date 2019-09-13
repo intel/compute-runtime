@@ -35,8 +35,7 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
         enqueueWriteImageCalled++;
         return CL_SUCCESS;
     }
-    cl_int finish(bool dcFlush) override {
-        EXPECT_TRUE(dcFlush);
+    cl_int finish() override {
         finishCalled++;
         return CL_SUCCESS;
     }

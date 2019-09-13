@@ -59,7 +59,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
         thread.join();
     }
 
-    pCmdQ->finish(false);
+    pCmdQ->finish();
 
     EXPECT_GE(mockCsr->flushCalledCount, 1);
 

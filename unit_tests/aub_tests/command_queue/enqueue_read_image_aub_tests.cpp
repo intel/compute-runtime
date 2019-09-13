@@ -212,7 +212,7 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
             ptrOffset(dstMemoryUnaligned, testWidth * testHeight * elementSize);
     }
 
-    retVal = pCmdQ->finish(true); //FixMe - not all test cases verified with expects
+    retVal = pCmdQ->finish(); //FixMe - not all test cases verified with expects
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     alignedFree(dstMemoryAligned);

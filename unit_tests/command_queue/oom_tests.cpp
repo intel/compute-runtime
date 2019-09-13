@@ -73,7 +73,7 @@ HWTEST_P(OOMCommandQueueTest, finish) {
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal = pCmdQ->finish(false);
+    auto retVal = pCmdQ->finish();
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();

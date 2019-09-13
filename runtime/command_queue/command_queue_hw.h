@@ -286,7 +286,7 @@ class CommandQueueHw : public CommandQueue {
                                   const cl_event *eventWaitList,
                                   cl_event *event) override;
 
-    cl_int finish(bool dcFlush) override;
+    cl_int finish() override;
     cl_int flush() override;
 
     template <uint32_t enqueueType>

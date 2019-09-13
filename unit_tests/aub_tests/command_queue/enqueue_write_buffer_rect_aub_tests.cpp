@@ -171,7 +171,7 @@ struct AUBWriteBufferRectUnaligned
             nullptr);
 
         EXPECT_EQ(CL_SUCCESS, retVal);
-        pCmdQ->finish(true);
+        pCmdQ->finish();
 
         AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, referenceMemory, rowPitch);
         AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1], ptrOffset(srcMemory, offset), size);

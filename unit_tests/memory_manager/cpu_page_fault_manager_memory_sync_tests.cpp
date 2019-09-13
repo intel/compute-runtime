@@ -27,7 +27,7 @@ struct CommandQueueMock : public CommandQueue {
         passedMapFlags = mapFlags;
         return CL_SUCCESS;
     }
-    cl_int finish(bool dcFlush) override {
+    cl_int finish() override {
         finishCalled++;
         return CL_SUCCESS;
     }

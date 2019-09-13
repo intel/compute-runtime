@@ -96,7 +96,7 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
 
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, lws, 0, 0, 0);
 
-        pCmdQ->finish(false);
+        pCmdQ->finish();
 
         uint32_t expectedNumberOfEnqueues = 1;
         uint64_t gpuAddress = devQueue->getQueueBuffer()->getGpuAddress() + offsetof(IGIL_CommandQueue, m_controls.m_TotalNumberOfQueues);
