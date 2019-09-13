@@ -327,7 +327,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t *numWorkGroupsY;
     uint32_t *numWorkGroupsZ;
 
-    uint32_t *maxWorkGroupSize;
+    uint32_t *maxWorkGroupSizeForCrossThreadData;
+    uint32_t maxKernelWorkGroupSize = 0;
     uint32_t *workDim;
     uint32_t *dataParameterSimdSize;
     uint32_t *parentEventOffset;
