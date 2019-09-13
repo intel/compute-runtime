@@ -24,6 +24,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
         }
         swprintf(pDesc->Description, 128, L"Intel");
         pDesc->AdapterLuid.HighPart = 0x1234;
+        pDesc->DeviceId = 0x1234;
         return S_OK;
     }
 

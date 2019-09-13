@@ -263,16 +263,21 @@ bool Wddm::openAdapter() {
             // be virtualizing one of our adapters) in the description
             if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
                 (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0)) {
-                if (wcsstr(OpenAdapterDesc.Description, L"DCH-D") != 0) {
-                    if (wcsstr(igdrclPath.c_str(), L"_dch_d.inf") != 0) {
+                char deviceId[16];
+                sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
+                bool choosenDevice = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
+                if (choosenDevice) {
+                    if (wcsstr(OpenAdapterDesc.Description, L"DCH-D") != 0) {
+                        if (wcsstr(igdrclPath.c_str(), L"_dch_d.inf") != 0) {
+                            break;
+                        }
+                    } else if (wcsstr(OpenAdapterDesc.Description, L"DCH-I") != 0) {
+                        if (wcsstr(igdrclPath.c_str(), L"_dch_i.inf") != 0) {
+                            break;
+                        }
+                    } else {
                         break;
                     }
-                } else if (wcsstr(OpenAdapterDesc.Description, L"DCH-I") != 0) {
-                    if (wcsstr(igdrclPath.c_str(), L"_dch_i.inf") != 0) {
-                        break;
-                    }
-                } else {
-                    break;
                 }
             }
         }
@@ -281,10 +286,9 @@ bool Wddm::openAdapter() {
         pAdapter = nullptr;
     }
 
-    OpenAdapterData.AdapterLuid = OpenAdapterDesc.AdapterLuid;
-    status = gdi->openAdapterFromLuid(&OpenAdapterData);
-
     if (pAdapter != nullptr) {
+        OpenAdapterData.AdapterLuid = OpenAdapterDesc.AdapterLuid;
+        status = gdi->openAdapterFromLuid(&OpenAdapterData);
         // If an Intel adapter was found, release it here
         pAdapter->Release();
         pAdapter = nullptr;
@@ -298,6 +302,7 @@ bool Wddm::openAdapter() {
         adapter = OpenAdapterData.hAdapter;
         adapterLuid = OpenAdapterDesc.AdapterLuid;
     }
+
     return status == STATUS_SUCCESS;
 }
 

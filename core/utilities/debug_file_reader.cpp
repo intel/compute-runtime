@@ -26,15 +26,16 @@ SettingsFileReader::SettingsFileReader(const char *filePath) {
 }
 
 SettingsFileReader::~SettingsFileReader() {
-    settingValueMap.clear();
     settingStringMap.clear();
 }
 
 int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultValue) {
     int32_t value = defaultValue;
-    map<string, int32_t>::iterator it = settingValueMap.find(string(settingName));
-    if (it != settingValueMap.end())
-        value = it->second;
+
+    map<string, string>::iterator it = settingStringMap.find(string(settingName));
+    if (it != settingStringMap.end()) {
+        value = atoi(it->second.c_str());
+    }
 
     return value;
 }
@@ -59,7 +60,7 @@ const char *SettingsFileReader::appSpecificLocation(const std::string &name) {
 void SettingsFileReader::parseStream(std::istream &inputStream) {
     stringstream ss;
     string key;
-    int32_t value = 0;
+    string value;
     char temp = 0;
 
     while (!inputStream.eof()) {
@@ -72,17 +73,8 @@ void SettingsFileReader::parseStream(std::istream &inputStream) {
         ss >> temp;
         ss >> value;
 
-        bool isEnd = ss.eof();
-        if (!ss.fail() && isEnd) {
-            settingValueMap.insert(pair<string, int32_t>(key, value));
-        } else {
-            stringstream ss2;
-            ss2 << tempString;
-            ss2 >> key;
-            ss2 >> temp;
-            ss2 >> tempStringValue;
-            if (!ss2.fail())
-                settingStringMap.insert(pair<string, string>(key, tempStringValue));
+        if (!ss.fail()) {
+            settingStringMap.insert(pair<string, string>(key, value));
         }
 
         ss.str(string()); // for reset string inside stringstream

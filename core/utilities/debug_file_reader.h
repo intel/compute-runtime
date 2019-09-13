@@ -27,7 +27,6 @@ class SettingsFileReader : public SettingsReader {
 
   protected:
     void parseStream(std::istream &inputStream);
-    std::map<std::string, int32_t> settingValueMap;
     std::map<std::string, std::string> settingStringMap;
 };
 }; // namespace NEO

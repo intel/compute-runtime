@@ -976,3 +976,25 @@ TEST_F(WddmGfxPartitionTest, initGfxPartition) {
         }
     }
 }
+
+TEST_F(Wddm20Tests, givenWddmWhenOpenAdapterAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTrue) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+    MockWddm wddm;
+    bool result = wddm.openAdapter();
+    EXPECT_TRUE(result);
+}
+
+TEST_F(Wddm20Tests, givenWddmWhenOpenAdapterAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnFalse) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("1111");
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+    MockWddm wddm;
+    bool result = wddm.openAdapter();
+    EXPECT_FALSE(result);
+}

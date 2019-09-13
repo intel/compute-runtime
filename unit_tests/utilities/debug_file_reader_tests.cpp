@@ -27,7 +27,7 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
-    size_t mapCount = reader->getValueSettingsCount() + reader->getStringSettingsCount();
+    size_t mapCount = reader->getStringSettingsCount();
     EXPECT_EQ(mapCount, debugVariableCount);
 }
 
