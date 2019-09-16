@@ -1,7 +1,7 @@
-%global neo_commit_id cb4e5576cb
+%global neo_commit_id dface02b191e5de876f287761291ae487dbd5520
 
 Name: intel-opencl
-Version: 19.35.13977
+Version: 19.36.14103
 Release: 1%{?dist}
 Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 
@@ -28,7 +28,6 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM).
 
 %prep
 
-
 %build
 echo "==== BUILD ===="
 rm -rf *
@@ -49,7 +48,6 @@ make -j`nproc` igdrcl_dll
 
 echo "==== DONE ===="
 
-
 %install
 echo "==== INSTALL ===="
 mkdir -p $RPM_BUILD_ROOT/usr/lib64/intel-opencl
@@ -59,7 +57,6 @@ strip $RPM_BUILD_ROOT/usr/lib64/intel-opencl/libigdrcl.so
 echo "/usr/lib64/intel-opencl/libigdrcl.so" > $RPM_BUILD_ROOT/etc/OpenCL/vendors/intel.icd
 echo "==== DONE ===="
 
-
 %files
 %defattr(-,root,root)
 /usr/lib64/intel-opencl/libigdrcl.so
@@ -68,6 +65,5 @@ echo "==== DONE ===="
 /etc/OpenCL/vendors/intel.icd
 
 # %doc
-
 
 # %changelog
