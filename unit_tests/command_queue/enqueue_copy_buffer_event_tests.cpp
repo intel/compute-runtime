@@ -19,7 +19,7 @@ using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueCopyBuffer;
 
-TEST_F(EnqueueCopyBuffer, eventShouldBeReturned) {
+TEST_F(EnqueueCopyBuffer, WhenEnqueingCopyBufferThenEventHasCorrectCommandType) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
@@ -55,7 +55,7 @@ TEST_F(EnqueueCopyBuffer, eventShouldBeReturned) {
     delete pEvent;
 }
 
-TEST_F(EnqueueCopyBuffer, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+TEST_F(EnqueueCopyBuffer, GivenMultipleEventsWhenEnqueingCopyBufferThenReturnedEventShouldBeMaxOfInputEventsAndCmdQPlus1) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
