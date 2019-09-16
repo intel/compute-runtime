@@ -228,7 +228,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                         requiredScratchSize,
                                                         requiredPrivateScratchSize,
                                                         this->taskCount,
-                                                        this->osContext->getContextId(),
+                                                        *this->osContext,
                                                         stateBaseAddressDirty,
                                                         checkVfeStateDirty);
         if (checkVfeStateDirty) {

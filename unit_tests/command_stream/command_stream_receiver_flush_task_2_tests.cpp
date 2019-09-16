@@ -454,7 +454,7 @@ struct MockScratchController : public ScratchSpaceController {
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
                                  uint32_t currentTaskCount,
-                                 uint32_t deviceIdx,
+                                 OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
         if (requiredPerThreadScratchSize > scratchSizeBytes) {

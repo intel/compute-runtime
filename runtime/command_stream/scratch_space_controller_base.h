@@ -18,7 +18,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
                                  uint32_t currentTaskCount,
-                                 uint32_t contextId,
+                                 OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
     uint64_t calculateNewGSH() override;

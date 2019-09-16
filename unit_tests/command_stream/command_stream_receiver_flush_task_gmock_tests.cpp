@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     bool stateBaseAddressDirty;
     bool vfeStateDirty;
-    mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, 0u, stateBaseAddressDirty, vfeStateDirty);
+    mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
     DispatchFlags flags;
     mockCsr->requiredScratchSize = 0x200000;
@@ -286,7 +286,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     bool stateBaseAddressDirty;
     bool vfeStateDirty;
-    mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, 0u, stateBaseAddressDirty, vfeStateDirty);
+    mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
     DispatchFlags flags;
     mockCsr->requiredScratchSize = 0x200000;

@@ -123,6 +123,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(gfxAllocation);
         dumpAllocationCalled = true;
     }
+    bool isMultiOsContextCapable() const override {
+        return multiOsContextCapable;
+    }
+    bool multiOsContextCapable = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool initializeEngineCalled = false;
