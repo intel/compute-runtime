@@ -408,7 +408,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
-            auto maxWorkGroupSize = static_cast<uint32_t>(dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxWorkGroupSize);
+            auto maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
             auto simd = dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {

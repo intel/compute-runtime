@@ -562,7 +562,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
 
     switch (paramName) {
     case CL_KERNEL_WORK_GROUP_SIZE:
-        maxWorkgroupSize = this->device.getDeviceInfo().maxWorkGroupSize;
+        maxWorkgroupSize = this->maxKernelWorkGroupSize;
         if (DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()) {
             auto divisionSize = 32 / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
             maxWorkgroupSize /= divisionSize;
@@ -614,7 +614,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
     size_t numDimensions = 0;
     size_t WGS = 1;
     auto maxSimdSize = static_cast<size_t>(getKernelInfo().getMaxSimdSize());
-    auto maxRequiredWorkGroupSize = static_cast<size_t>(getKernelInfo().getMaxRequiredWorkGroupSize(device.getDeviceInfo().maxWorkGroupSize));
+    auto maxRequiredWorkGroupSize = static_cast<size_t>(getKernelInfo().getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
     auto largestCompiledSIMDSize = static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->LargestCompiledSIMDSize);
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);

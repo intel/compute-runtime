@@ -262,6 +262,9 @@ TEST_P(KernelTest, GetWorkGroupInfo_WorkgroupSize) {
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
 
+    auto kernelMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize - 1;
+    pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(kernelMaxWorkGroupSize);
+
     retVal = pKernel->getWorkGroupInfo(
         pDevice,
         paramName,
@@ -271,7 +274,7 @@ TEST_P(KernelTest, GetWorkGroupInfo_WorkgroupSize) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
-    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, paramValue);
+    EXPECT_EQ(kernelMaxWorkGroupSize, paramValue);
 }
 
 TEST_P(KernelTest, GetWorkGroupInfo_CompileWorkgroupSize) {

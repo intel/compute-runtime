@@ -155,7 +155,7 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
     setMinWorkGroupSize();
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
-    this->maxWorkGroupSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxWorkGroupSize;
+    this->maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
     this->hasBarriers = !!dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment->HasBarriers;
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
