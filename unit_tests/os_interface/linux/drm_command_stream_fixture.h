@@ -18,9 +18,10 @@
 
 #include "gmock/gmock.h"
 
-class DrmCommandStreamFixture {
+class DrmCommandStreamTest : public ::testing::Test {
   public:
-    void SetUp() {
+    template <typename GfxFamily>
+    void SetUpT() {
 
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
@@ -34,7 +35,7 @@ class DrmCommandStreamFixture {
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
-        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         executionEnvironment.commandStreamReceivers.resize(1);
         executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
@@ -54,7 +55,8 @@ class DrmCommandStreamFixture {
         ASSERT_NE(nullptr, memoryManager);
     }
 
-    void TearDown() {
+    template <typename GfxFamily>
+    void TearDownT() {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
         executionEnvironment.commandStreamReceivers.clear();
@@ -64,7 +66,7 @@ class DrmCommandStreamFixture {
             .Times(::testing::AtLeast(1));
     }
 
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
+    CommandStreamReceiver *csr = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
     std::unique_ptr<::testing::NiceMock<DrmMockImpl>> mock;
     const int mockFd = 33;
