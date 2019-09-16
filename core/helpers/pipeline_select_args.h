@@ -5,8 +5,6 @@
  *
  */
 
-#include <cstdint>
-
 namespace NEO {
 struct PipelineSelectArgs {
     bool specialPipelineSelectMode = false;
