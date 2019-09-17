@@ -59,6 +59,7 @@ class OfflineCompiler {
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
     void setStatelessToStatefullBufferOffsetFlag();
+    void resolveExtraSettings();
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     int buildSourceCode();

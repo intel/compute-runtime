@@ -23,6 +23,7 @@ set(CLOC_SRCS_LIB
   ${IGDRCL_SOURCE_DIR}/offline_compiler/multi_command.cpp
   ${IGDRCL_SOURCE_DIR}/offline_compiler/multi_command.h
   ${IGDRCL_SOURCE_DIR}/offline_compiler/options.cpp
+  ${IGDRCL_SOURCE_DIR}/offline_compiler/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/compiler_interface/create_main.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/file_io.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/hw_info.cpp

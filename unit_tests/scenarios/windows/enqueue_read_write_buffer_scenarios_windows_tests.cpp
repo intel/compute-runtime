@@ -78,6 +78,9 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
 
 HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
     initializeFixture<FamilyType>();
+    if (device->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
     uint32_t memory[2] = {};
     char *misalignedPtr = reinterpret_cast<char *>(memory) + 1;

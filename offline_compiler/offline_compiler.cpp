@@ -565,6 +565,7 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
 
 void OfflineCompiler::parseDebugSettings() {
     setStatelessToStatefullBufferOffsetFlag();
+    resolveExtraSettings();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

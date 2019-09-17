@@ -493,6 +493,10 @@ HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThe
 }
 
 HWTEST_F(BuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
+    if (this->pDevice->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
+
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
@@ -546,6 +550,10 @@ HWTEST_F(BuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetVali
 }
 
 HWTEST_F(BuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode) {
+    if (this->pDevice->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
+
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
@@ -588,6 +596,10 @@ HWTEST_F(BuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSet
 }
 
 HWTEST_F(BuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSetValidAuxMode) {
+    if (this->pDevice->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
+
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 

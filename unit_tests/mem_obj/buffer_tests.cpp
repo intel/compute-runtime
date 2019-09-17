@@ -1991,6 +1991,9 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
 };
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
+    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     CommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr);
@@ -2022,6 +2025,9 @@ HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
 }
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
+    if (ctx.getDevice(0)->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     CommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr);

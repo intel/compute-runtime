@@ -534,6 +534,9 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNonZ
 
 HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtrWhenEnqueueReadBufferRectForNon3DCaseIsCalledThenAddressInStateBaseAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
     initializeFixture<FamilyType>();
+    if (device->areSharedSystemAllocationsAllowed()) {
+        GTEST_SKIP();
+    }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
 
     buffer->forceDisallowCPUCopy = true;
