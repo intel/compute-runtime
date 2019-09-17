@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include <algorithm>
-
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
@@ -27,10 +25,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         this->dispatchMode = overrideValue;
     }
 
-    bool isResident(BufferObject *bo) const {
-        return std::find(this->residency.begin(), this->residency.end(), bo) != this->residency.end();
-    }
-
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
         makeNonResidentResult.called = true;
         makeNonResidentResult.allocation = &gfxAllocation;
@@ -47,9 +41,11 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     SubmissionAggregator *peekSubmissionAggregator() const {
         return this->submissionAggregator.get();
     }
+
     void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
         this->submissionAggregator.reset(newSubmissionsAggregator);
     }
+
     std::vector<drm_i915_gem_exec_object2> &getExecStorage() {
         return this->execObjectsStorage;
     }
