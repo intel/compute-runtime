@@ -39,6 +39,7 @@ void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint
 }
 
 void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
+    auto lock = allocationsList.obtainUniqueOwnership();
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     GraphicsAllocation *curr = allocationsList.detachNodes();
 
@@ -94,6 +95,10 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
         curr = curr->next;
     }
     return nullptr;
+}
+
+std::unique_lock<std::mutex> AllocationsList::obtainUniqueOwnership() {
+    return std::unique_lock<std::mutex>(mutex);
 }
 
 } // namespace NEO

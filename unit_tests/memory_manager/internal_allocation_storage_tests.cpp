@@ -12,6 +12,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {
@@ -191,4 +192,53 @@ TEST_F(InternalAllocationStorageTest, givenAllocationWhenItIsPutOnReusableListWh
 
     auto internalAllocation = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(nullptr, internalAllocation);
+}
+
+class WaitAtDeletionAllocation : public MockGraphicsAllocation {
+  public:
+    WaitAtDeletionAllocation(void *buffer, size_t sizeIn)
+        : MockGraphicsAllocation(buffer, sizeIn) {
+        inDestructor = false;
+    }
+
+    std::mutex mutex;
+    std::atomic<bool> inDestructor;
+    ~WaitAtDeletionAllocation() {
+        inDestructor = true;
+        std::lock_guard<std::mutex> lock(mutex);
+    }
+};
+
+TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConcurrentlyThenBothThreadsCanAccessTheList) {
+    auto allocation1 = new WaitAtDeletionAllocation(nullptr, 0);
+    allocation1->updateTaskCount(1, csr->getOsContext().getContextId());
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation1), TEMPORARY_ALLOCATION);
+
+    std::unique_lock<std::mutex> allocationDeletionLock(allocation1->mutex);
+
+    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    allocation2->updateTaskCount(2, csr->getOsContext().getContextId());
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);
+
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+
+    std::thread thread1([&] {
+        storage->cleanAllocationList(1, TEMPORARY_ALLOCATION);
+    });
+
+    std::thread thread2([&] {
+        std::lock_guard<std::mutex> lock(mutex);
+        storage->cleanAllocationList(2, TEMPORARY_ALLOCATION);
+    });
+
+    while (!allocation1->inDestructor)
+        ;
+    lock.unlock();
+    allocationDeletionLock.unlock();
+
+    thread1.join();
+    thread2.join();
+
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
