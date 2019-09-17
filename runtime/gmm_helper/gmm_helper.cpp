@@ -81,14 +81,6 @@ void GmmHelper::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation 
     imgInfo.qPitch = 0;
 }
 
-uint64_t GmmHelper::canonize(uint64_t address) {
-    return ((int64_t)((address & 0xFFFFFFFFFFFF) << (64 - 48))) >> (64 - 48);
-}
-
-uint64_t GmmHelper::decanonize(uint64_t address) {
-    return (uint64_t)(address & 0xFFFFFFFFFFFF);
-}
-
 uint32_t GmmHelper::getRenderMultisamplesCount(uint32_t numSamples) {
     if (numSamples == 2) {
         return 1;

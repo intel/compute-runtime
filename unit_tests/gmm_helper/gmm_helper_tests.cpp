@@ -333,6 +333,14 @@ TEST_F(GmmTests, canonize) {
     uint64_t addr2 = 0x7FFFFFFFFFFFFFFF;
     uint64_t addrExpected2 = 0xFFFFFFFFFFFFFFFF;
     EXPECT_EQ(GmmHelper::canonize(addr2), addrExpected2);
+
+    uint64_t addr3 = 0x7777777777777777;
+    uint64_t addrExpected3 = 0x0000000077777777;
+    EXPECT_EQ(GmmHelper::canonize<32>(addr3), addrExpected3);
+
+    uint64_t addr4 = 0x77777777FFFFFFFF;
+    uint64_t addrExpected4 = 0xFFFFFFFFFFFFFFFF;
+    EXPECT_EQ(GmmHelper::canonize<32>(addr4), addrExpected4);
 }
 
 TEST_F(GmmTests, decanonize) {
@@ -343,6 +351,14 @@ TEST_F(GmmTests, decanonize) {
     uint64_t addr2 = 0x7FFFFFFFFFFFFFFF;
     uint64_t addrExpected2 = 0x0000FFFFFFFFFFFF;
     EXPECT_EQ(GmmHelper::decanonize(addr2), addrExpected2);
+
+    uint64_t addr3 = 0x7777777777777777;
+    uint64_t addrExpected3 = 0x0000000077777777;
+    EXPECT_EQ(GmmHelper::decanonize<32>(addr3), addrExpected3);
+
+    uint64_t addr4 = 0x7FFFFFFFFFFFFFFF;
+    uint64_t addrExpected4 = 0x00000000FFFFFFFF;
+    EXPECT_EQ(GmmHelper::decanonize<32>(addr4), addrExpected4);
 }
 
 TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturned) {
