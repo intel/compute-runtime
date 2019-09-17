@@ -23,8 +23,9 @@ class TimestampPacketContainer;
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
-                                                                GraphicsAllocation *memObjAllocation, void *hostPtr, size_t hostPtrOffset,
-                                                                bool blocking, size_t offset, uint64_t copySize);
+                                                                GraphicsAllocation *memObjAllocation, size_t memObjOFfset,
+                                                                void *hostPtr, size_t hostPtrOffset,
+                                                                bool blocking, size_t copyOffset, uint64_t copySize);
 
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,

@@ -17,14 +17,16 @@
 namespace NEO {
 BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                      CommandStreamReceiver &commandStreamReceiver,
-                                                                     GraphicsAllocation *memObjAllocation, void *hostPtr, size_t hostPtrOffset,
-                                                                     bool blocking, size_t offset, uint64_t copySize) {
+                                                                     GraphicsAllocation *memObjAllocation, size_t memObjOffset,
+                                                                     void *hostPtr, size_t hostPtrOffset,
+                                                                     bool blocking, size_t copyOffset, uint64_t copySize) {
 
     HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
     bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
     UNRECOVERABLE_IF(!success);
     auto hostPtrAllocation = hostPtrSurface.getAllocation();
 
+    auto offset = copyOffset + memObjOffset;
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, hostPtrOffset, copySize};
     } else {
@@ -38,12 +40,12 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
                                                                      bool blocking) {
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.dstMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.srcPtr, builtinOpParams.srcOffset.x, blocking, builtinOpParams.dstOffset.x,
-                                                     builtinOpParams.size.x);
+                                                     builtinOpParams.dstMemObj->getOffset(), builtinOpParams.srcPtr, builtinOpParams.srcOffset.x,
+                                                     blocking, builtinOpParams.dstOffset.x, builtinOpParams.size.x);
     } else {
         return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.srcMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.dstPtr, builtinOpParams.dstOffset.x, blocking, builtinOpParams.srcOffset.x,
-                                                     builtinOpParams.size.x);
+                                                     builtinOpParams.srcMemObj->getOffset(), builtinOpParams.dstPtr, builtinOpParams.dstOffset.x,
+                                                     blocking, builtinOpParams.srcOffset.x, builtinOpParams.size.x);
     }
 }
 
