@@ -6,7 +6,7 @@
 pacman -S intel-compute-runtime
 ```
 
-## Centos* 7
+## Centos* 7, Red Hat Enterprise Linux* 7
 
 ```
 yum install yum-plugin-copr
