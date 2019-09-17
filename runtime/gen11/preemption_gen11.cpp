@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/preemption.inl"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

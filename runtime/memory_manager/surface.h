@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 class CommandQueue;

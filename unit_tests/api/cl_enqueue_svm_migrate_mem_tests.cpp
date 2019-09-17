@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/device.h"
 #include "runtime/event/user_event.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
 #include "unit_tests/mocks/mock_context.h"
 

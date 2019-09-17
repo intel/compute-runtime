@@ -9,12 +9,12 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
-#include "core/memory_manager/host_ptr_defines.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/memory_manager/memory_pool.h"
 #include "core/utilities/idlist.h"
 
 #include "engine_limits.h"
+#include "host_ptr_defines.h"
+#include "memory_constants.h"
+#include "memory_pool.h"
 #include "storage_info.h"
 
 #include <array>

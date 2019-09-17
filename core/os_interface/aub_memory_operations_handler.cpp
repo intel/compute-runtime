@@ -7,8 +7,8 @@
 
 #include "core/os_interface/aub_memory_operations_handler.h"
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 #include <algorithm>
 

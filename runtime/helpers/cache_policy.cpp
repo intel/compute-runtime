@@ -8,7 +8,7 @@
 #include "runtime/helpers/cache_policy.h"
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

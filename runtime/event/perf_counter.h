@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/event/hw_timestamps.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/cache_policy.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"

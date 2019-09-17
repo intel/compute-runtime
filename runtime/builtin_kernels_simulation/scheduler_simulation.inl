@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 #include <cstdint>
 #include <mutex>

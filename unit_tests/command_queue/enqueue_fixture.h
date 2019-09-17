@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/user_event.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 

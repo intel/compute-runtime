@@ -6,7 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "unit_tests/command_stream/linear_stream_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 

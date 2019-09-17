@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

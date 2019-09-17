@@ -7,12 +7,12 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

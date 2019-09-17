@@ -6,9 +6,9 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/helpers/dirty_state_helpers.h"
 #include "runtime/indirect_heap/indirect_heap.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"

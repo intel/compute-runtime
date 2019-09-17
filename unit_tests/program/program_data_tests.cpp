@@ -6,9 +6,9 @@
  */
 
 #include "core/helpers/string.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
 #include "runtime/memory_manager/allocations_list.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"

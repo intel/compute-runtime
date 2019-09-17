@@ -9,7 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/graphics_allocation.h"
 
 void KernelDataTest::buildAndDecode() {
     cl_int error = CL_SUCCESS;

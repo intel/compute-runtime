@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
 ////////////////////////////////////////////////////////////////////////////////

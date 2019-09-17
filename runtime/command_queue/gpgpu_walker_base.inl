@@ -8,6 +8,7 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
@@ -21,7 +22,6 @@
 #include "runtime/helpers/validators.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include <algorithm>
