@@ -17,8 +17,8 @@
 namespace NEO {
 BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                      CommandStreamReceiver &commandStreamReceiver,
-                                                                     GraphicsAllocation *memObjAllocation, void *hostPtr, bool blocking,
-                                                                     size_t offset, uint64_t copySize) {
+                                                                     GraphicsAllocation *memObjAllocation, void *hostPtr, size_t hostPtrOffset,
+                                                                     bool blocking, size_t offset, uint64_t copySize) {
 
     HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
     bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
@@ -26,9 +26,9 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
     auto hostPtrAllocation = hostPtrSurface.getAllocation();
 
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, 0, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, hostPtrOffset, copySize};
     } else {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostPtrAllocation, memObjAllocation, hostPtr, blocking, 0, offset, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostPtrAllocation, memObjAllocation, hostPtr, blocking, hostPtrOffset, offset, copySize};
     }
 }
 
@@ -38,11 +38,11 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
                                                                      bool blocking) {
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.dstMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.srcPtr, blocking, builtinOpParams.dstOffset.x,
+                                                     builtinOpParams.srcPtr, builtinOpParams.srcOffset.x, blocking, builtinOpParams.dstOffset.x,
                                                      builtinOpParams.size.x);
     } else {
         return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.srcMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.dstPtr, blocking, builtinOpParams.srcOffset.x,
+                                                     builtinOpParams.dstPtr, builtinOpParams.dstOffset.x, blocking, builtinOpParams.srcOffset.x,
                                                      builtinOpParams.size.x);
     }
 }

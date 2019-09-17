@@ -674,7 +674,7 @@ struct BcsBufferTests : public ::testing::Test {
         BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                         *bcsCsr, memory,
-                                                                                        hostPtr, true, 0, size);
+                                                                                        hostPtr, 0, true, 0, size);
             bcsCsr->blitBuffer(blitProperties);
             return BlitOperationResult::Success;
         }
