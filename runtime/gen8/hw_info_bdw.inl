@@ -68,7 +68,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // forceStatelessCompilationFor32Bit
     "core",                                        // platformType
     false,                                         // sourceLevelDebuggerSupported
-    true,                                          // supportsVme
+    false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
     true                                           // supportsDeviceEnqueue

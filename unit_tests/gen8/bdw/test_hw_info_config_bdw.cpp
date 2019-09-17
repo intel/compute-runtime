@@ -100,3 +100,13 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
         }
     }
 }
+
+BDWTEST_F(BdwHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
+    HardwareInfo hwInfo;
+
+    std::string strConfig = "default";
+    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
+    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
+}
