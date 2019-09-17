@@ -17,7 +17,6 @@ set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
   hw_cmds.h
   hw_info.h
-  reg_configs.h
 )
 
 set(RUNTIME_SRCS_GENX_CPP_BASE
@@ -43,7 +42,8 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
 
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h")
+
+  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.h" "reg_configs.h")
     if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
     endif()
@@ -52,13 +52,7 @@ macro(macro_for_each_platform)
   foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
   endforeach()
-  
-  foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.h")
-    if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
-    endif()
-  endforeach()
-  
+
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.inl)
 endmacro()
 
