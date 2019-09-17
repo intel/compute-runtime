@@ -45,7 +45,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
 
     DrmMemoryManager *getMemoryManager() const;
 
-    gemCloseWorkerMode peekGemCloseWorkerOperationMode() {
+    gemCloseWorkerMode peekGemCloseWorkerOperationMode() const {
         return this->gemCloseWorkerOperationMode;
     }
 

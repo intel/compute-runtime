@@ -584,7 +584,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     EXPECT_TRUE(allocation->isResident(osContextId));
     EXPECT_TRUE(allocation2->isResident(osContextId));
 
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
+    EXPECT_EQ(getResidencyVector().size(), 2u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
@@ -592,7 +592,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     EXPECT_FALSE(allocation->isResident(osContextId));
     EXPECT_FALSE(allocation2->isResident(osContextId));
 
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
+    EXPECT_EQ(getResidencyVector().size(), 0u);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 }
@@ -833,15 +833,11 @@ TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
-    auto bo = getResident(buffer);
-    EXPECT_EQ(bo, buffer);
-    EXPECT_EQ(1u, bo->getRefCount());
+    EXPECT_EQ(1u, buffer->getRefCount());
 
     csr->makeNonResident(*allocation);
     EXPECT_FALSE(isResident(buffer));
-    EXPECT_EQ(1u, bo->getRefCount());
-    bo = getResident(buffer);
-    EXPECT_EQ(nullptr, bo);
+    EXPECT_EQ(1u, buffer->getRefCount());
     mm->freeGraphicsMemory(allocation);
 }
 
@@ -859,12 +855,8 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
 
     EXPECT_TRUE(isResident(buffer1));
     EXPECT_TRUE(isResident(buffer2));
-    auto bo1 = getResident(buffer1);
-    auto bo2 = getResident(buffer2);
-    EXPECT_EQ(bo1, buffer1);
-    EXPECT_EQ(bo2, buffer2);
-    EXPECT_EQ(1u, bo1->getRefCount());
-    EXPECT_EQ(1u, bo2->getRefCount());
+    EXPECT_EQ(1u, buffer1->getRefCount());
+    EXPECT_EQ(1u, buffer2->getRefCount());
 
     // dont call makeNonResident on allocation2, any other makeNonResident call will clean this
     // we want to keep all makeResident calls before flush and makeNonResident everyting after flush
@@ -882,25 +874,18 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
-    auto bo1 = getResident(buffer);
-    EXPECT_EQ(buffer, bo1);
-    EXPECT_EQ(1u, bo1->getRefCount());
+    EXPECT_EQ(1u, buffer->getRefCount());
 
     csr->getResidencyAllocations().clear();
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
-    auto bo2 = getResident(buffer);
-    EXPECT_EQ(buffer, bo2);
-    EXPECT_EQ(bo1, bo2);
-    EXPECT_EQ(1u, bo1->getRefCount());
+    EXPECT_EQ(1u, buffer->getRefCount());
 
     csr->makeNonResident(*allocation);
     EXPECT_FALSE(isResident(buffer));
-    EXPECT_EQ(1u, bo1->getRefCount());
-    bo1 = getResident(buffer);
-    EXPECT_EQ(nullptr, bo1);
+    EXPECT_EQ(1u, buffer->getRefCount());
     mm->freeGraphicsMemory(allocation);
 }
 
@@ -921,17 +906,13 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
                   reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
-        auto bo1 = getResident(bo);
-        ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(1u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo->getRefCount());
     }
 
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
-        auto bo1 = getResident(bo);
-        EXPECT_EQ(bo1, nullptr);
         EXPECT_EQ(1u, bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation);
@@ -964,9 +945,9 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
     EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
-    auto residency = tCsr->getResidencyVector();
+    auto &residency = getResidencyVector();
 
-    EXPECT_EQ(3u, residency->size());
+    EXPECT_EQ(3u, residency.size());
 
     tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
 
@@ -976,7 +957,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
     EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
-    EXPECT_EQ(0u, residency->size());
+    EXPECT_EQ(0u, residency.size());
 
     tCsr->makeResident(*graphicsAllocation);
     tCsr->makeResident(*graphicsAllocation2);
@@ -988,11 +969,11 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
     EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
-    EXPECT_EQ(3u, residency->size());
+    EXPECT_EQ(3u, residency.size());
 
     tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
 
-    EXPECT_EQ(0u, residency->size());
+    EXPECT_EQ(0u, residency.size());
 
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
@@ -1021,16 +1002,12 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
                   reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
-        auto bo1 = getResident(bo);
-        ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(1u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
-        auto bo1 = getResident(bo);
-        EXPECT_EQ(bo1, nullptr);
         EXPECT_EQ(1u, bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation);
@@ -1056,16 +1033,12 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
                   reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
-        auto bo1 = getResident(bo);
-        ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(1u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
-        auto bo1 = getResident(bo);
-        EXPECT_EQ(bo1, nullptr);
         EXPECT_EQ(1u, bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation);
@@ -1085,16 +1058,12 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
                   reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
-        auto bo1 = getResident(bo);
-        ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(1u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation2);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         auto bo = allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
-        auto bo1 = getResident(bo);
-        EXPECT_EQ(bo1, nullptr);
         EXPECT_EQ(1u, allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation2);
@@ -1113,7 +1082,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSame
 
     csr->processResidency(csr->getResidencyAllocations());
 
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 1u);
+    EXPECT_EQ(getResidencyVector().size(), 1u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
@@ -1136,7 +1105,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDiffere
 
     csr->processResidency(csr->getResidencyAllocations());
 
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
+    EXPECT_EQ(getResidencyVector().size(), 2u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
@@ -1156,8 +1125,6 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_FALSE(isResident(buffer.get()));
-    auto bo = getResident(buffer.get());
-    EXPECT_EQ(nullptr, bo);
 }
 
 HWTEST_F(DrmCommandStreamLeaksTest, Flush) {
@@ -1179,21 +1146,21 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
 
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
+    EXPECT_EQ(getResidencyVector().size(), 0u);
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
     csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(allocation1->getBO()));
     EXPECT_TRUE(isResident(allocation2->getBO()));
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
+    EXPECT_EQ(getResidencyVector().size(), 2u);
 
     EXPECT_EQ(allocation1->getBO()->getRefCount(), 1u);
     EXPECT_EQ(allocation2->getBO()->getRefCount(), 1u);
 
     // makeNonResident without flush
     csr->makeNonResident(*allocation1);
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
+    EXPECT_EQ(getResidencyVector().size(), 0u);
 
     // everything is nonResident after first call
     EXPECT_FALSE(isResident(allocation1->getBO()));

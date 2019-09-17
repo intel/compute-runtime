@@ -121,13 +121,11 @@ class DrmCommandStreamEnhancedFixture {
         tCsr->makeResidentBufferObjects(drmAllocation);
     }
 
-    bool isResident(BufferObject *bo) {
+    bool isResident(BufferObject *bo) const {
         return tCsr->isResident(bo);
     }
 
-    const BufferObject *getResident(BufferObject *bo) {
-        return tCsr->getResident(bo);
-    }
+    const std::vector<BufferObject *> &getResidencyVector() const { return tCsr->residency; }
 
   protected:
     TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *tCsr = nullptr;

@@ -37,17 +37,12 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         DrmCommandStreamReceiver<GfxFamily>::makeNonResident(gfxAllocation);
     }
 
-    const BufferObject *getResident(BufferObject *bo) const {
-        return this->isResident(bo) ? bo : nullptr;
-    }
-
     struct MakeResidentNonResidentResult {
-        bool called;
-        GraphicsAllocation *allocation;
+        bool called = false;
+        GraphicsAllocation *allocation = nullptr;
     };
 
     MakeResidentNonResidentResult makeNonResidentResult;
-    std::vector<BufferObject *> *getResidencyVector() { return &this->residency; }
 
     SubmissionAggregator *peekSubmissionAggregator() const {
         return this->submissionAggregator.get();
