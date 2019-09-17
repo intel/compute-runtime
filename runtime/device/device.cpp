@@ -142,11 +142,9 @@ bool Device::createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_str
 
     auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[deviceIndex][deviceCsrIndex].get();
 
-    DeviceBitfield deviceBitfield;
-    deviceBitfield.set(deviceIndex);
     bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, engineType,
-                                                                                     deviceBitfield, preemptionMode, lowPriority);
+                                                                                     getDeviceBitfieldForOsContext(), preemptionMode, lowPriority);
     commandStreamReceiver->setupContext(*osContext);
 
     if (!commandStreamReceiver->initializeTagAllocation()) {

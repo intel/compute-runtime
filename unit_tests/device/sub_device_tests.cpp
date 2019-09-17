@@ -80,3 +80,18 @@ TEST(SubDevicesTest, givenCreateMultipleDevicesFlagsEnabledWhenDevicesAreCreated
     EXPECT_EQ(0u, platform()->getDevice(0)->getDeviceIndex());
     EXPECT_EQ(4u, platform()->getDevice(1)->getDeviceIndex());
 }
+
+TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDeviceId) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+
+    EXPECT_EQ(2u, device->getNumSubDevices());
+
+    auto firstSubDevice = static_cast<SubDevice *>(device->subdevices.at(0).get());
+    auto secondSubDevice = static_cast<SubDevice *>(device->subdevices.at(1).get());
+    uint32_t firstSubDeviceMask = (1u << 0);
+    uint32_t secondSubDeviceMask = (1u << 1);
+    EXPECT_EQ(firstSubDeviceMask, static_cast<uint32_t>(firstSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
+    EXPECT_EQ(secondSubDeviceMask, static_cast<uint32_t>(secondSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
+}

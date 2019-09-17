@@ -14,6 +14,7 @@
 #include "core/memory_manager/local_memory_usage.h"
 #include "core/page_fault_manager/cpu_page_fault_manager.h"
 #include "public/cl_ext_private.h"
+#include "runtime/helpers/common_types.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/memory_manager/allocation_properties.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -26,16 +27,11 @@
 #include <vector>
 
 namespace NEO {
-class CommandStreamReceiver;
 class DeferredDeleter;
 class ExecutionEnvironment;
 class Gmm;
 class HostPtrManager;
 class OsContext;
-
-using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
-using EngineControlContainer = std::vector<EngineControl>;
-using DeviceBitfield = std::bitset<32>;
 
 inline DeviceBitfield getDeviceBitfieldForNDevices(uint32_t numDevices) {
     return DeviceBitfield((1u << numDevices) - 1u);

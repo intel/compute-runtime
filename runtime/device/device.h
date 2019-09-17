@@ -10,6 +10,7 @@
 #include "runtime/device/device_info_map.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/common_types.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/performance_counters.h"
@@ -29,9 +30,9 @@ class Device : public BaseObject<_cl_device_id> {
   public:
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
-    template <typename T>
-    static T *create(ExecutionEnvironment *execEnv, uint32_t deviceIndex) {
-        T *device = new T(execEnv, deviceIndex);
+    template <typename DeviceT, typename... ArgsT>
+    static DeviceT *create(ArgsT &&... args) {
+        DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);
         return createDeviceInternals(device);
     }
 
@@ -111,6 +112,7 @@ class Device : public BaseObject<_cl_device_id> {
     }
 
     virtual bool createDeviceImpl();
+    virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
     bool createEngines();
     bool createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 

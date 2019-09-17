@@ -8,6 +8,7 @@
 #pragma once
 #include "core/memory_manager/memory_constants.h"
 #include "core/utilities/reference_tracked_object.h"
+#include "runtime/helpers/common_types.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 
@@ -26,8 +27,6 @@ class OSInterface;
 class MemoryOperationsHandler;
 struct EngineControl;
 struct HardwareInfo;
-
-using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:

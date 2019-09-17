@@ -28,7 +28,7 @@ bool RootDevice::createDeviceImpl() {
     subdevices.reserve(numSubDevices);
     for (int i = 0; i < numSubDevices; i++) {
 
-        auto subDevice = Device::createDeviceInternals(new SubDevice(executionEnvironment, deviceIndex + i + 1, *this));
+        auto subDevice = Device::create<SubDevice>(executionEnvironment, deviceIndex + i + 1, i, *this);
         if (!subDevice) {
             return false;
         }
@@ -46,5 +46,9 @@ unique_ptr_if_unused<Device> RootDevice::release() {
     DEBUG_BREAK_IF(!isValid());
     return unique_ptr_if_unused<Device>(this, false);
 }
-
+DeviceBitfield RootDevice::getDeviceBitfieldForOsContext() const {
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(deviceIndex);
+    return deviceBitfield;
+}
 } // namespace NEO

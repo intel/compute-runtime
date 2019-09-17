@@ -24,6 +24,7 @@ class RootDevice : public Device {
     unique_ptr_if_unused<Device> release() override;
 
   protected:
+    DeviceBitfield getDeviceBitfieldForOsContext() const override;
     std::vector<std::unique_ptr<SubDevice>> subdevices;
 };
 } // namespace NEO
