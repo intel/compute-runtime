@@ -111,7 +111,7 @@ TEST(unique_ptr_if_unused, IntializedWithoutCustomDeleterAtDestructionUsesDefaul
 TEST(unique_ptr_if_unused, IntializedWithCustomDeleterAtDestructionUsesCustomDeleter) {
     struct CustomDeleterTestStruct {
         bool customDeleterWasCalled;
-        static void Delete(CustomDeleterTestStruct *ptr) {
+        static void Delete(CustomDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
             ptr->customDeleterWasCalled = true;
         }
     } customDeleterObj;
@@ -130,7 +130,7 @@ TEST(unique_ptr_if_unused, IntializedWithDerivativeOfReferenceCounterAtDestructi
         }
 
         bool obtainedDeleterWasCalled;
-        static void Delete(ObtainedDeleterTestStruct *ptr) {
+        static void Delete(ObtainedDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
             ptr->obtainedDeleterWasCalled = true;
         }
     } obtainedDeleterObj;
