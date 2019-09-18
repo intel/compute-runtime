@@ -22,29 +22,23 @@ extern GFXCORE_FAMILY renderCoreFamily;
 
 #ifdef TESTS_GEN8
 #define BDW_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
-#define BDW_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
 #define BDW_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define BDW_TYPED_TEST(method)
-#define BDW_TYPED_CMDTEST_BODY
 #define BDW_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_GEN9
 #define SKL_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
-#define SKL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
 #define SKL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define SKL_TYPED_TEST(method)
-#define SKL_TYPED_CMDTEST_BODY
 #define SKL_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_GEN11
 #define ICL_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
-#define ICL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
 #define ICL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define ICL_TYPED_TEST(method)
-#define ICL_TYPED_CMDTEST_BODY
 #define ICL_SUPPORTED_TEST(cmdSetBase) false
 #endif
 
@@ -274,20 +268,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         }                                                                                                 \
                                                                                                           \
         void TestBody() override {                                                                        \
-            switch (::renderCoreFamily) {                                                                 \
-            case IGFX_GEN8_CORE:                                                                          \
-                BDW_TYPED_CMDTEST_BODY                                                                    \
-                break;                                                                                    \
-            case IGFX_GEN9_CORE:                                                                          \
-                SKL_TYPED_CMDTEST_BODY                                                                    \
-                break;                                                                                    \
-            case IGFX_GEN11_CORE:                                                                         \
-                ICL_TYPED_CMDTEST_BODY                                                                    \
-                break;                                                                                    \
-            default:                                                                                      \
-                ASSERT_TRUE((false && "Unknown hardware family"));                                        \
-                break;                                                                                    \
-            }                                                                                             \
+            FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                  \
         }                                                                                                 \
         void SetUp() override {                                                                           \
             if (notExcluded()) {                                                                          \
@@ -446,21 +427,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
             /* do nothing */                                                                                                                              \
         }                                                                                                                                                 \
                                                                                                                                                           \
-        virtual void TestBody() override {                                                                                                                \
-            switch (::renderCoreFamily) {                                                                                                                 \
-            case IGFX_GEN8_CORE:                                                                                                                          \
-                BDW_TYPED_CMDTEST_BODY                                                                                                                    \
-                break;                                                                                                                                    \
-            case IGFX_GEN9_CORE:                                                                                                                          \
-                SKL_TYPED_CMDTEST_BODY                                                                                                                    \
-                break;                                                                                                                                    \
-            case IGFX_GEN11_CORE:                                                                                                                         \
-                ICL_TYPED_CMDTEST_BODY                                                                                                                    \
-                break;                                                                                                                                    \
-            default:                                                                                                                                      \
-                ASSERT_TRUE((false && "Unknown hardware family"));                                                                                        \
-                break;                                                                                                                                    \
-            }                                                                                                                                             \
+        void TestBody() override {                                                                                                                        \
+            FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                                  \
         }                                                                                                                                                 \
         void SetUp() override {                                                                                                                           \
             CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::SetUp());                                                                                 \
