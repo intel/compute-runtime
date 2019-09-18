@@ -673,7 +673,7 @@ struct BcsBufferTests : public ::testing::Test {
         }
         BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                        *bcsCsr, memory, 0,
+                                                                                        *bcsCsr, memory, 0, nullptr,
                                                                                         hostPtr, 0, true, 0, size);
             bcsCsr->blitBuffer(blitProperties);
             return BlitOperationResult::Success;
@@ -824,6 +824,27 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     EXPECT_TRUE(bcsCsr->isMadeResident(dependencyFromPreviousEnqueue->getBaseGraphicsAllocation(), bcsCsr->taskCount));
     EXPECT_TRUE(bcsCsr->isMadeResident(outputDependency->getBaseGraphicsAllocation(), bcsCsr->taskCount));
     EXPECT_TRUE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation(), bcsCsr->taskCount));
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {
+    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    uint8_t hostPtr[64] = {};
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_USE_HOST_PTR, 1, hostPtr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+    auto mapAllocation = bufferForBlt->getMapAllocation();
+    EXPECT_NE(nullptr, mapAllocation);
+
+    mockCmdQ->kernelParams.mapAllocation = nullptr;
+    auto mapPtr = clEnqueueMapBuffer(mockCmdQ, bufferForBlt.get(), true, 0, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.mapAllocation);
+
+    mockCmdQ->kernelParams.mapAllocation = nullptr;
+    retVal = clEnqueueUnmapMemObject(mockCmdQ, bufferForBlt.get(), mapPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.mapAllocation);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {

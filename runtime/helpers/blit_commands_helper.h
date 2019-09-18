@@ -24,6 +24,7 @@ struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
                                                                 GraphicsAllocation *memObjAllocation, size_t memObjOFfset,
+                                                                GraphicsAllocation *mapAllocation,
                                                                 void *hostPtr, size_t hostPtrOffset,
                                                                 bool blocking, size_t copyOffset, uint64_t copySize);
 

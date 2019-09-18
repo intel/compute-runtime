@@ -37,6 +37,7 @@ struct BuiltinOpParams {
     MemObj *dstMemObj = nullptr;
     GraphicsAllocation *srcSvmAlloc = nullptr;
     GraphicsAllocation *dstSvmAlloc = nullptr;
+    GraphicsAllocation *mapAllocation = nullptr;
     const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
     bool unifiedMemoryArgsRequireMemSync = true;
