@@ -47,7 +47,6 @@ struct BlitProperties {
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
-    void *hostPtr = nullptr;
     bool blocking = false;
     size_t dstOffset = 0;
     size_t srcOffset = 0;

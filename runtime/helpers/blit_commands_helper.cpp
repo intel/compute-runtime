@@ -28,9 +28,9 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
 
     auto offset = copyOffset + memObjOffset;
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, hostPtrOffset, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, blocking, offset, hostPtrOffset, copySize};
     } else {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostPtrAllocation, memObjAllocation, hostPtr, blocking, hostPtrOffset, offset, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostPtrAllocation, memObjAllocation, blocking, hostPtrOffset, offset, copySize};
     }
 }
 
@@ -52,13 +52,13 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                                 bool blocking, size_t dstOffset, size_t srcOffset, uint64_t copySize) {
 
-    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, AuxTranslationDirection::None, dstAllocation, srcAllocation, nullptr, blocking, dstOffset, srcOffset, copySize};
+    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, AuxTranslationDirection::None, dstAllocation, srcAllocation, blocking, dstOffset, srcOffset, copySize};
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                     GraphicsAllocation *allocation) {
     auto allocationSize = allocation->getUnderlyingBufferSize();
-    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, auxTranslationDirection, allocation, allocation, nullptr, false, 0, 0, allocationSize};
+    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, auxTranslationDirection, allocation, allocation, false, 0, 0, allocationSize};
 }
 
 BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t commandType) {
