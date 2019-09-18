@@ -15,3 +15,6 @@
 #ifdef SUPPORT_GEN11
 #include "runtime/gen11/aub_mapper.h"
 #endif
+#ifdef SUPPORT_GEN12LP
+#include "runtime/gen12lp/aub_mapper.h"
+#endif

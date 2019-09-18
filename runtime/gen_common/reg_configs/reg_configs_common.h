@@ -15,6 +15,9 @@
 #ifdef SUPPORT_GEN11
 #include "runtime/gen11/reg_configs.h"
 #endif
+#ifdef SUPPORT_GEN12LP
+#include "runtime/gen12lp/reg_configs.h"
+#endif
 #include <cstdint>
 
 namespace NEO {

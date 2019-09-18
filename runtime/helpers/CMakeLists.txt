@@ -101,6 +101,7 @@ list(APPEND RUNTIME_SRCS_HELPERS_BASE ${NEO_CORE_HELPERS})
 set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks_tgllp_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
 )

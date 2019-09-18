@@ -41,6 +41,13 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define ICL_TYPED_TEST(method)
 #define ICL_SUPPORTED_TEST(cmdSetBase) false
 #endif
+#ifdef TESTS_GEN12LP
+#define TGLLP_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN12LP_CORE>::GfxFamily>();
+#define TGLLP_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN12LP_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
+#else
+#define TGLLP_TYPED_TEST(method)
+#define TGLLP_SUPPORTED_TEST(cmdSetBase) false
+#endif
 
 #define FAMILY_SELECTOR(family, methodName)                \
     switch (family) {                                      \
@@ -52,6 +59,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
         break;                                             \
     case IGFX_GEN11_CORE:                                  \
         ICL_TYPED_TEST(methodName)                         \
+        break;                                             \
+    case IGFX_GEN12LP_CORE:                                \
+        TGLLP_TYPED_TEST(methodName)                       \
         break;                                             \
     default:                                               \
         ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -208,6 +218,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
             break;                                             \
         case IGFX_GEN11_CORE:                                  \
             supported = ICL_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        case IGFX_GEN12LP_CORE:                                \
+            supported = TGLLP_SUPPORTED_TEST(cmdSetBase);      \
             break;                                             \
         default:                                               \
             ASSERT_TRUE((false && "Unknown hardware family")); \
@@ -519,7 +532,10 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define GEN11TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN11_CORE, test_fixture, test_name)
 #define GEN11TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN11_CORE, test_fixture, test_name)
 #endif
-
+#ifdef TESTS_GEN12LP
+#define GEN12LPTEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN12LP_CORE, test_fixture, test_name)
+#define GEN12LPTEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN12LP_CORE, test_fixture, test_name)
+#endif
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -605,6 +621,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN11_CORE,            \
                       IGFX_ELKHARTLAKE)
+#endif
+#ifdef TESTS_GEN12LP
+#define TGLLPTEST_F(test_fixture, test_name)                         \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN12LP_CORE, IGFX_TIGERLAKE_LP)
+#define TGLLPTEST_P(test_suite_name, test_name)   \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_GEN12LP_CORE,          \
+                      IGFX_TIGERLAKE_LP)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                                                  \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                                                 \

@@ -99,7 +99,8 @@ struct CmdServicesMemTraceVersion {
             Icllp = 19,
             Cfl = 24,
             Lkf = 25,
-            Ehl = 28
+            Ehl = 28,
+            Tgllp = 22
         };
     };
     struct RecordingMethodValues {
@@ -745,6 +746,7 @@ struct CmdServicesMemTraceMemoryWrite {
             TraceCommandBufferBlt = 40,
             TraceRingContextBcs = 56,
             TraceCcViewport = 24,
+            TraceLogicalRingContextCcs = 64,
             TraceIndexBuffer = 13,
             TraceScratchSpace = 27,
             TraceGucContextDescriptor = 61,

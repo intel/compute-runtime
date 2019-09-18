@@ -17,6 +17,8 @@ unsigned int DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
         return I915_EXEC_RENDER;
     } else if (aub_stream::ENGINE_BCS == engineType) {
         return I915_EXEC_BLT;
+    } else if (aub_stream::ENGINE_CCS == engineType) {
+        return I915_EXEC_COMPUTE;
     }
     UNRECOVERABLE_IF(true);
 }

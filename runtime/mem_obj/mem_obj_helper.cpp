@@ -12,7 +12,7 @@
 namespace NEO {
 
 bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, ContextType contextType, bool preferCompression) {
-    return renderCompressed;
+    return renderCompressed && preferCompression;
 }
 
 bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &properties) {

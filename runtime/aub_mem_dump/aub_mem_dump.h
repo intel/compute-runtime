@@ -392,6 +392,13 @@ struct LrcaHelperVecs : public LrcaHelper {
     }
 };
 
+struct LrcaHelperCcs : public LrcaHelper {
+    LrcaHelperCcs(uint32_t base) : LrcaHelper(base) {
+        aubHintLRCA = DataTypeHintValues::TraceLogicalRingContextCcs;
+        name = "CCS";
+    }
+};
+
 extern const uint64_t g_pageMask;
 extern const size_t g_dwordCountMax;
 } // namespace AubMemDump

@@ -15,3 +15,6 @@
 #ifdef SUPPORT_GEN11
 #include "runtime/gen11/hw_cmds.h"
 #endif
+#ifdef SUPPORT_GEN12LP
+#include "runtime/gen12lp/hw_cmds.h"
+#endif

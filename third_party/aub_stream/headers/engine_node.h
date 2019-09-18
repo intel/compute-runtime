@@ -15,6 +15,7 @@ enum EngineType : uint32_t {
     ENGINE_BCS,
     ENGINE_VCS,
     ENGINE_VECS,
+    ENGINE_CCS,
     NUM_ENGINES
 };
 

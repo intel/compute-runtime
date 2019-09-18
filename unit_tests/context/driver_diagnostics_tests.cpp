@@ -473,7 +473,9 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     context->isSharedContext = false;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), properties, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
-    if (!is32bit && HwHelper::renderCompressedBuffersSupported(hwInfo)) {
+    auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size) &&
+                                HwHelper::renderCompressedBuffersSupported(hwInfo);
+    if (!is32bit && compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));

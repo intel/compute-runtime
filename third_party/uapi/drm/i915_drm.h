@@ -1034,6 +1034,7 @@ struct drm_i915_gem_execbuffer2 {
 #define I915_EXEC_BSD                    (2<<0)
 #define I915_EXEC_BLT                    (3<<0)
 #define I915_EXEC_VEBOX                  (4<<0)
+#define I915_EXEC_COMPUTE                (5<<0)
 
 /* Used for switching the constants addressing mode on gen4+ RENDER ring.
  * Gen6+ only supports relative addressing to dynamic state (default) and
