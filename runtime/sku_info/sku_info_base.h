@@ -84,6 +84,9 @@ struct FeatureTableBase {
 
     bool ftrKmdDaf = false;
     bool ftrSimulationMode = false;
+
+    bool ftrE2ECompression = false;
+    bool ftrLinearCCS = false;
 };
 
 struct WorkaroundTableBase {
@@ -108,5 +111,8 @@ struct WorkaroundTableBase {
     bool waCSRUncachable = false;
     bool waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
     bool waRestrictPitch128KB = false;
+    bool waLimit128BMediaCompr = false;
+    bool waUntypedBufferCompression = false;
+    bool waAuxTable16KGranular = false;
 };
 } // namespace NEO

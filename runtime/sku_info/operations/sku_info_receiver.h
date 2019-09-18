@@ -94,6 +94,9 @@ class SkuInfoReceiver {
 
         RECEIVE_FTR(KmdDaf);
         RECEIVE_FTR(SimulationMode);
+
+        RECEIVE_FTR(E2ECompression);
+        RECEIVE_FTR(LinearCCS);
 #undef RECEIVE_FTR
     }
 
@@ -120,6 +123,9 @@ class SkuInfoReceiver {
         RECEIVE_WA(CSRUncachable);
         RECEIVE_WA(SamplerCacheFlushBetweenRedescribedSurfaceReads);
         RECEIVE_WA(RestrictPitch128KB);
+        RECEIVE_WA(AuxTable16KGranular);
+        RECEIVE_WA(Limit128BMediaCompr);
+        RECEIVE_WA(UntypedBufferCompression);
 #undef RECEIVE_WA
     }
 };
