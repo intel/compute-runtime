@@ -127,7 +127,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             ",", globalWorkSizeIn[2],
             ",SIMD:, ", kernel.getKernelInfo().getMaxSimdSize());
 
-    if (totalWorkItems > this->getDevice().getDeviceInfo().maxWorkGroupSize) {
+    if (totalWorkItems > kernel.maxKernelWorkGroupSize) {
         return CL_INVALID_WORK_GROUP_SIZE;
     }
 
