@@ -8,13 +8,6 @@
 #pragma once
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 
-// To Enable TBX Serve support for "igdrcl_dll" project, do following when configuring with cmake:
-// 1. cmake -DHAVE_TBX_SERVER=ON .
-//      <or, when connecting to the localhost>
-//    cmake -DHAVE_TBX_SERVER=ON .
-//      <or, on Windows systems, edit HAVE_TBX_SERVER settings using>
-//    notepad build_runtime_vs2013.bat
-
 namespace NEO {
 class CommandStreamReceiver;
 class TbxSockets;
