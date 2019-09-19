@@ -187,6 +187,8 @@ class CommandStreamReceiver {
         requiresInstructionCacheFlush = true;
     }
 
+    bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
+
   protected:
     void cleanupResources();
 
@@ -255,6 +257,8 @@ class CommandStreamReceiver {
     bool nTo1SubmissionModelEnabled = false;
     bool lastSpecialPipelineSelectMode = false;
     bool requiresInstructionCacheFlush = false;
+
+    bool localMemoryEnabled = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment);

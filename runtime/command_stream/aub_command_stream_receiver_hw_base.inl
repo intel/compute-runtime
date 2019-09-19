@@ -43,7 +43,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     : BaseClass(executionEnvironment),
       standalone(standalone) {
 
-    executionEnvironment.initAubCenter(this->localMemoryEnabled, fileName, this->getType());
+    executionEnvironment.initAubCenter(this->isLocalMemoryEnabled(), fileName, this->getType());
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
@@ -407,7 +407,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
         }
 
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, entryBits, memoryBank);
-        AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+        AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
         AUB::reserveAddressPPGTT(*stream, static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, physBatchBuffer,
                                  entryBits, aubHelperHw);
 
@@ -612,7 +612,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
         getAubStream()->addComment(str.str().c_str());
     }
 
-    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
         AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, entryBits,
@@ -798,7 +798,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
-    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
 
     std::unique_ptr<void, std::function<void(void *)>> buffer(this->getMemoryManager()->alignedMallocWrapper(bufferSize, MemoryConstants::pageSize), [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
     LinearStream linearStream(buffer.get(), bufferSize);

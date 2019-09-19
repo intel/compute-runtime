@@ -105,7 +105,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     HeapDirtyState sshState;
 
     CsrSizeRequestFlags csrSizeRequestFlags = {};
-    bool localMemoryEnabled;
 };
 
 } // namespace NEO
