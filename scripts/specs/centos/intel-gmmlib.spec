@@ -2,7 +2,7 @@
 %global major_version 19
 %global minor_version 2
 %global patch_version 3
-%global package_release 1
+%global package_release 3
 %global api_major_version 9
 %global api_minor_version 0
 %global api_patch_version 589
@@ -19,7 +19,7 @@ Source0:	https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}.tar.gz
 
 %if 0%{?el7}
 BuildRequires: centos-release-scl epel-release
-BuildRequires: devtoolset-4-gcc-c++ cmake3
+BuildRequires: devtoolset-7-gcc-c++ cmake3
 %else
 BuildRequires: gcc-c++ cmake
 %endif
@@ -47,11 +47,17 @@ cd build
 
 %if 0%{?el7}
 echo building for el7: %{el7}
-scl enable devtoolset-4 "cmake3 -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DPATCH_VERSION=%{api_patch_version} -DRUN_TEST_SUITE:BOOL='ON' ../gmmlib"
-scl enable devtoolset-4 "make -j`nproc` DESTDIR=$RPM_BUILD_DIR/build/install igfx_gmmumd_dll install"
+scl enable devtoolset-7 "cmake3 -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TYPE=release \
+ -DMAJOR_VERSION=%{major_version} -DMINOR_VERSION=%{minor_version} -DPATCH_VERSION=%{patch_version} \
+ -DGMMLIB_API_PATCH_VERSION=%{api_patch_version} \
+ -DRUN_TEST_SUITE:BOOL='ON' ../gmmlib"
+scl enable devtoolset-7 "make -j`nproc` DESTDIR=$RPM_BUILD_DIR/build/install igfx_gmmumd_dll install"
 %else
 echo building for Fedora
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DPATCH_VERSION=%{api_patch_version} -DRUN_TEST_SUITE:BOOL='ON' ../gmmlib
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TYPE=release \
+ -DMAJOR_VERSION=%{major_version} -DMINOR_VERSION=%{minor_version} -DPATCH_VERSION=%{patch_version} \
+ -DGMMLIB_API_PATCH_VERSION=%{api_patch_version} \
+ -DRUN_TEST_SUITE:BOOL='ON' ../gmmlib
 make -j `nproc` DESTDIR=$RPM_BUILD_DIR/build/install igfx_gmmumd_dll install
 %endif
 

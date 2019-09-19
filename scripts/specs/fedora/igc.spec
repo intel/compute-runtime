@@ -2,8 +2,7 @@
 %global major_version 1
 %global minor_version 0
 %global patch_version 2500
-%global package_release 1
-%global so_version 11
+%global package_release 2
 
 Name: intel-igc
 Version: %{major_version}.%{minor_version}.%{patch_version}
@@ -14,6 +13,8 @@ Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/intel-graphics-compiler
 Source0: https://github.com/intel/intel-graphics-compiler/archive/%{igc_commit_id}/igc.tar.gz
+Patch0: https://github.com/intel/intel-graphics-compiler/commit/8621841947517aaf4b4278f9f6e94d74cc126747.patch
+Patch1: https://github.com/intel/intel-graphics-compiler/commit/0a69375bf58c5d100cf5d77b3d903720b4af966e.patch
 
 BuildRequires: cmake clang gcc-c++ make procps flex bison python2 llvm-devel clang-devel pkg-config
 BuildRequires: intel-opencl-clang-devel
@@ -38,7 +39,6 @@ Requires:      %{name}-opencl = %{version}-%{release}
 
 %description   opencl-devel
 
-
 %prep
 
 %build
@@ -47,12 +47,16 @@ rm -rf *
 
 mkdir igc
 tar xzf $RPM_SOURCE_DIR/igc.tar.gz -C igc --strip-components=1
-
+cd igc
+patch -p1 < $RPM_SOURCE_DIR/8621841947517aaf4b4278f9f6e94d74cc126747.patch
+patch -p1 < $RPM_SOURCE_DIR/0a69375bf58c5d100cf5d77b3d903720b4af966e.patch
+cd ..
 mkdir build
 cd build
 
-cmake ../igc -Wno-dev -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr  -DCOMMON_CLANG_LIBRARY_NAME=opencl-clang -DIGC_PREFERRED_LLVM_VERSION=8.0.0
-make -j 1
+cmake ../igc -Wno-dev -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr  \
+ -DCOMMON_CLANG_LIBRARY_NAME=opencl-clang -DIGC_PREFERRED_LLVM_VERSION=8.0.0 -DIGC_PACKAGE_RELEASE=%{patch_version}
+make -j `nproc`
 
 %install
 echo "==== INSTALL ===="
@@ -66,14 +70,14 @@ echo "==== DONE ===="
 %files core
 %defattr(-,root,root)
 /usr/lib64/libiga64.so.%{major_version}
-/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.%{so_version}
+/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.%{patch_version}
 /usr/lib64/libigc.so.%{major_version}
-/usr/lib64/libigc.so.%{major_version}.%{minor_version}.%{so_version}
+/usr/lib64/libigc.so.%{major_version}.%{minor_version}.%{patch_version}
 
 %files opencl
 %defattr(-,root,root)
 /usr/lib64/libigdfcl.so.%{major_version}
-/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.%{so_version}
+/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.%{patch_version}
 
 %files opencl-devel
 %defattr(-,root,root)
@@ -85,8 +89,8 @@ echo "==== DONE ===="
 /usr/lib64/libigdfcl.so
 /usr/lib64/pkgconfig/*
 
-# %doc
+%doc
 
 
-# %changelog
+%changelog
 
