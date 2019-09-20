@@ -11,18 +11,23 @@
 #include "gmm_client_context.h"
 
 namespace NEO {
-void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {
-    GmmHelper::getClientContext()->destroyResInfoObject(gmmResourceInfo);
-}
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {
     auto resourceInfoPtr = GmmHelper::getClientContext()->createResInfoObject(resourceCreateParams);
-    this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
+    createResourceInfo(resourceInfoPtr);
 }
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
     auto resourceInfoPtr = GmmHelper::getClientContext()->copyResInfoObject(inputGmmResourceInfo);
-    this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
+    createResourceInfo(resourceInfoPtr);
+}
+
+void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr) {
+    auto gmmClientContext = GmmHelper::getClientContext();
+    auto customDeleter = [gmmClientContext](GMM_RESOURCE_INFO *gmmResourceInfo) {
+        gmmClientContext->destroyResInfoObject(gmmResourceInfo);
+    };
+    this->resourceInfo = UniquePtrType(resourceInfoPtr, customDeleter);
 }
 
 } // namespace NEO

@@ -695,4 +695,33 @@ TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
     EXPECT_NE(nullptr, GmmHelper::getClientContext()->getHandle());
 }
 
+TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThenObserveNoExceptions) {
+    struct MockGmmResourecInfo : public GmmResourceInfo {
+        using GmmResourceInfo::resourceInfo;
+        MockGmmResourecInfo(GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(inputParams){};
+    };
+
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth64 = 1;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.Linear = 1;
+    gmmParams.Flags.Info.Cacheable = 1;
+    gmmParams.Flags.Gpu.Texture = 1;
+    gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+
+    auto gmmResourceInfo = new MockGmmResourecInfo(&gmmParams);
+
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->incRefInternal();
+    platformImpl.reset();
+    EXPECT_EQ(nullptr, platform());
+
+    EXPECT_NO_THROW(delete gmmResourceInfo);
+
+    executionEnvironment->decRefInternal();
+}
+
 } // namespace NEO
