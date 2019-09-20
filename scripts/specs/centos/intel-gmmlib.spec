@@ -1,11 +1,11 @@
-%global gmmlib_commit_id e834bcd 
+%global gmmlib_commit_id bda1dcf
 %global major_version 19
-%global minor_version 2
-%global patch_version 3
-%global package_release 3
-%global api_major_version 9
+%global minor_version 3
+%global patch_version 2
+%global package_release 1
+%global api_major_version 11
 %global api_minor_version 0
-%global api_patch_version 589
+%global api_patch_version 702
 
 Name:		intel-gmmlib
 Version:    %{major_version}.%{minor_version}.%{patch_version}
