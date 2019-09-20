@@ -1,8 +1,8 @@
-%global neo_commit_id dface02b191e5de876f287761291ae487dbd5520
+%global neo_commit_id 5d640e7
 
 Name: intel-opencl
-Version: 19.36.14103
-Release: 1%{?dist}
+Version: 19.37.14191
+Release: 3%{?dist}
 Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 
 Group: System Environment/Libraries
