@@ -41,6 +41,7 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(LLCBypass);
         TRANSFER_FTR_TO_GMM(E2ECompression);
         TRANSFER_FTR_TO_GMM(LinearCCS);
+        TRANSFER_FTR_TO_GMM(MemTypeMocsDeferPAT);
 
 #undef TRANSFER_FTR_TO_GMM
     }

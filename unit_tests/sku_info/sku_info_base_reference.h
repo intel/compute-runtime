@@ -38,6 +38,7 @@ struct SkuInfoBaseReference {
 
         refFtrTable.FtrE2ECompression = 1;
         refFtrTable.FtrLinearCCS = 1;
+        refFtrTable.FtrMemTypeMocsDeferPAT = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -131,6 +132,7 @@ struct SkuInfoBaseReference {
 
         refFtrTable.ftrE2ECompression = 1;
         refFtrTable.ftrLinearCCS = 1;
+        refFtrTable.ftrMemTypeMocsDeferPAT = 1;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
