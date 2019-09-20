@@ -95,9 +95,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
         0,
         0,
         1,
-        kernelInfo.workloadInfo.slmStaticSize,
+        kernel,
         4u,
-        !!executionEnvironment.HasBarriers, // Barriers Enabled
         pDevice->getPreemptionMode(),
         nullptr);
 

@@ -44,6 +44,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     static void setAdditionalInfo(
         INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
+        const Kernel &kernel,
         const size_t &sizeCrossThreadData,
         const size_t &sizePerThreadData);
 
@@ -59,9 +60,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t offsetSamplerState,
         uint32_t numSamplers,
         uint32_t threadsPerThreadGroup,
-        uint32_t sizeSlm,
+        const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
-        bool barrierEnable,
         PreemptionMode preemptionMode,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 

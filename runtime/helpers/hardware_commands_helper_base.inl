@@ -22,6 +22,7 @@ typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareC
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(
     INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
+    const Kernel &kernel,
     const size_t &sizeCrossThreadData,
     const size_t &sizePerThreadData) {
 

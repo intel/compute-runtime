@@ -131,9 +131,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     size_t offsetSamplerState,
     uint32_t numSamplers,
     uint32_t threadsPerThreadGroup,
-    uint32_t sizeSlm,
+    const Kernel &kernel,
     uint32_t bindingTablePrefetchSize,
-    bool barrierEnable,
     PreemptionMode preemptionMode,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
@@ -151,7 +150,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     pInterfaceDescriptor->setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
-    setAdditionalInfo(pInterfaceDescriptor, sizeCrossThreadData, sizePerThreadData);
+    setAdditionalInfo(pInterfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
 
     pInterfaceDescriptor->setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
@@ -161,10 +160,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto samplerCountState = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((numSamplers + 3) / 4);
     pInterfaceDescriptor->setSamplerCount(samplerCountState);
 
-    auto programmableIDSLMSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(computeSlmValues(sizeSlm));
+    auto programmableIDSLMSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(computeSlmValues(kernel.slmTotalSize));
 
     pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
-    pInterfaceDescriptor->setBarrierEnable(barrierEnable);
+    pInterfaceDescriptor->setBarrierEnable(!!kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
 
@@ -337,9 +336,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         samplerStateOffset,
         samplerCount,
         threadsPerThreadGroup,
-        kernel.slmTotalSize,
+        kernel,
         bindingTablePrefetchSize,
-        !!patchInfo.executionEnvironment->HasBarriers,
         preemptionMode,
         inlineInterfaceDescriptor);
 
