@@ -88,6 +88,8 @@ struct FeatureTableBase {
 
     bool ftrE2ECompression = false;
     bool ftrLinearCCS = false;
+    bool ftrCCSRing = false;
+    bool ftrCCSNode = false;
 };
 
 struct WorkaroundTableBase {

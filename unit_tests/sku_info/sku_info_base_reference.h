@@ -38,6 +38,8 @@ struct SkuInfoBaseReference {
 
         refFtrTable.FtrE2ECompression = 1;
         refFtrTable.FtrLinearCCS = 1;
+        refFtrTable.FtrCCSRing = 1;
+        refFtrTable.FtrCCSNode = 1;
         refFtrTable.FtrMemTypeMocsDeferPAT = 1;
     }
 
@@ -132,6 +134,8 @@ struct SkuInfoBaseReference {
 
         refFtrTable.ftrE2ECompression = 1;
         refFtrTable.ftrLinearCCS = 1;
+        refFtrTable.ftrCCSRing = 1;
+        refFtrTable.ftrCCSNode = 1;
         refFtrTable.ftrMemTypeMocsDeferPAT = 1;
     }
 
