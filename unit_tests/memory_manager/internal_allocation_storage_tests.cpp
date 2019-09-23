@@ -203,7 +203,7 @@ class WaitAtDeletionAllocation : public MockGraphicsAllocation {
 
     std::mutex mutex;
     std::atomic<bool> inDestructor;
-    ~WaitAtDeletionAllocation() {
+    ~WaitAtDeletionAllocation() override {
         inDestructor = true;
         std::lock_guard<std::mutex> lock(mutex);
     }
