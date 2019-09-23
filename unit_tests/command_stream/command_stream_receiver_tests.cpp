@@ -624,3 +624,25 @@ INSTANTIATE_TEST_CASE_P(
     CommandStreamReceiverWithAubSubCaptureTest_program,
     CommandStreamReceiverWithAubSubCaptureTest,
     testing::ValuesIn(aubSubCaptureStatus));
+
+TEST(CommandStreamReceiverDeviceIndexTest, givenCommandStreamReceiverWithDeviceIndexDifferentThanDeviceBitfieldInOsContextWhenGetDeviceIndexForAllocationThenUseHighestBitFromOsContext) {
+    ExecutionEnvironment executioneEnvironment;
+    executioneEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executioneEnvironment);
+    csr.deviceIndex = 1;
+    auto osContext = executioneEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b01, PreemptionMode::Disabled, false);
+
+    csr.setupContext(*osContext);
+    EXPECT_EQ(0u, csr.getDeviceIndexForAllocation());
+}
+
+TEST(CommandStreamReceiverDeviceIndexTest, givenCommandStreamReceiverWithOsContextWithoutDeviceBitfieldsWhenGetDeviceIndexForAllocationThenZeroIsReturned) {
+    ExecutionEnvironment executioneEnvironment;
+    executioneEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executioneEnvironment);
+    csr.deviceIndex = 1;
+    auto osContext = executioneEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b00, PreemptionMode::Disabled, false);
+
+    csr.setupContext(*osContext);
+    EXPECT_EQ(0u, csr.getDeviceIndexForAllocation());
+}

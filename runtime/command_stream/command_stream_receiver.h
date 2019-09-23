@@ -191,6 +191,7 @@ class CommandStreamReceiver {
 
   protected:
     void cleanupResources();
+    uint32_t getDeviceIndexForAllocation() const;
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
