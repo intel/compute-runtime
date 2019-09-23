@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, gpgpuWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenGpgpuWalkerIsCorrect) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyBufferToImage<FamilyType>();
 
@@ -50,7 +50,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, gpgpuWalker) {
     }
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, alignsToCSR) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenTaskCountIsAlignedWithCsr) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -61,21 +61,21 @@ HWTEST_F(EnqueueCopyBufferToImageTest, alignsToCSR) {
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, bumpsTaskLevel) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenTaskLevelIsIncremented) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     EnqueueCopyBufferToImageHelper<>::enqueueCopyBufferToImage(pCmdQ, srcBuffer, dstImage);
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, addsCommands) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenCommandsAreAdded) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     EnqueueCopyBufferToImageHelper<>::enqueueCopyBufferToImage(pCmdQ, srcBuffer, dstImage);
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, addsIndirectData) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenIndirectDataGetsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -86,7 +86,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, addsIndirectData) {
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, loadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenL3ProgrammingIsCorrect) {
     enqueueCopyBufferToImage<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -97,7 +97,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenEnqueueIsDoneThenS
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, mediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, mediaInterfaceDescript
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, interfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -150,7 +150,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, interfaceDescriptorDat
     EXPECT_NE(kernelStartPointer, interfaceDescriptorData.getBindingTablePointer());
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, surfaceState) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenSurfaceStateIsCorrect) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     enqueueCopyBufferToImage<FamilyType>();
@@ -175,13 +175,13 @@ HWTEST_F(EnqueueCopyBufferToImageTest, surfaceState) {
     EXPECT_EQ(dstImage->getGraphicsAllocation()->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
 }
 
-HWTEST_F(EnqueueCopyBufferToImageTest, pipelineSelect) {
+HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenNumberOfPipelineSelectsIsOne) {
     enqueueCopyBufferToImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, mediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenMediaVfeStateIsSetCorrectly) {
     enqueueCopyBufferToImage<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
