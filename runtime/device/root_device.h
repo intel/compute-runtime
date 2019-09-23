@@ -17,6 +17,7 @@ class RootDevice : public Device {
     RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
     ~RootDevice() override;
     bool createDeviceImpl() override;
+    uint32_t getNumAvailableDevices() const override;
     uint32_t getNumSubDevices() const;
 
     /* We hide the retain and release function of BaseObject. */

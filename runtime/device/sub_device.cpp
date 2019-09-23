@@ -32,5 +32,8 @@ DeviceBitfield SubDevice::getDeviceBitfieldForOsContext() const {
     deviceBitfield.set(subDeviceIndex);
     return deviceBitfield;
 }
+uint32_t SubDevice::getNumAvailableDevices() const {
+    return 1u;
+}
 
 } // namespace NEO

@@ -17,6 +17,7 @@ class SubDevice : public Device {
     unique_ptr_if_unused<Device> release() override;
     void retainInternal();
     void releaseInternal();
+    uint32_t getNumAvailableDevices() const override;
 
   protected:
     DeviceBitfield getDeviceBitfieldForOsContext() const override;

@@ -18,6 +18,13 @@ uint32_t RootDevice::getNumSubDevices() const {
     return static_cast<uint32_t>(subdevices.size());
 }
 
+uint32_t RootDevice::getNumAvailableDevices() const {
+    if (subdevices.empty()) {
+        return 1u;
+    }
+    return getNumSubDevices();
+}
+
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : Device(executionEnvironment, deviceIndex) {}
 bool RootDevice::createDeviceImpl() {
     auto status = Device::createDeviceImpl();

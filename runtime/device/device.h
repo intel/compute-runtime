@@ -97,6 +97,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool areSharedSystemAllocationsAllowed() const {
         return this->deviceInfo.sharedSystemMemCapabilities != 0u;
     }
+    virtual uint32_t getNumAvailableDevices() const = 0;
 
   protected:
     Device() = delete;

@@ -19,6 +19,7 @@ TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSu
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(0u, device->getNumSubDevices());
+    EXPECT_EQ(1u, device->getNumAvailableDevices());
 }
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
@@ -31,6 +32,10 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     EXPECT_EQ(0u, device->getDeviceIndex());
     EXPECT_EQ(1u, device->subdevices.at(0)->getDeviceIndex());
     EXPECT_EQ(2u, device->subdevices.at(1)->getDeviceIndex());
+
+    EXPECT_EQ(2u, device->getNumAvailableDevices());
+    EXPECT_EQ(1u, device->subdevices.at(0)->getNumAvailableDevices());
+    EXPECT_EQ(1u, device->subdevices.at(1)->getNumAvailableDevices());
 }
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedThenChangeIsPropagatedToRootDevice) {
