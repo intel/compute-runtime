@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 namespace NEO {
 struct PipelineSelectArgs {
     bool specialPipelineSelectMode = false;
