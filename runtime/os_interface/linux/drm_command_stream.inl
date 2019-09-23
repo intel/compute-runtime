@@ -47,35 +47,45 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
     DEBUG_BREAK_IF(!alloc);
 
     BufferObject *bb = alloc->getBO();
-    FlushStamp flushStamp = 0;
+    if (bb == nullptr) {
+        return 0;
+    }
 
-    if (bb) {
-        flushStamp = bb->peekHandle();
-        unsigned int engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
-        this->processResidency(allocationsForResidency);
-        // Residency hold all allocation except command buffer, hence + 1
-        auto requiredSize = this->residency.size() + 1;
-        if (requiredSize > this->execObjectsStorage.size()) {
-            this->execObjectsStorage.resize(requiredSize);
-        }
+    FlushStamp flushStamp = bb->peekHandle();
+    this->flushInternal(batchBuffer, allocationsForResidency);
 
-        int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                           batchBuffer.startOffset, engineFlag | I915_EXEC_NO_RELOC,
-                           batchBuffer.requiresCoherency,
-                           static_cast<OsContextLinux *>(osContext)->getDrmContextIds()[0],
-                           this->residency.data(), this->residency.size(),
-                           this->execObjectsStorage.data());
-        UNRECOVERABLE_IF(err != 0);
-
-        this->residency.clear();
-
-        if (this->gemCloseWorkerOperationMode == gemCloseWorkerActive) {
-            bb->reference();
-            this->getMemoryManager()->peekGemCloseWorker()->push(bb);
-        }
+    if (this->gemCloseWorkerOperationMode == gemCloseWorkerActive) {
+        bb->reference();
+        this->getMemoryManager()->peekGemCloseWorker()->push(bb);
     }
 
     return flushStamp;
+}
+
+template <typename GfxFamily>
+void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t drmContextId) {
+    DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
+    DEBUG_BREAK_IF(!alloc);
+    BufferObject *bb = alloc->getBO();
+    DEBUG_BREAK_IF(!bb);
+
+    auto engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
+
+    // Residency hold all allocation except command buffer, hence + 1
+    auto requiredSize = this->residency.size() + 1;
+    if (requiredSize > this->execObjectsStorage.size()) {
+        this->execObjectsStorage.resize(requiredSize);
+    }
+
+    int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
+                       batchBuffer.startOffset, engineFlag | I915_EXEC_NO_RELOC,
+                       batchBuffer.requiresCoherency,
+                       drmContextId,
+                       this->residency.data(), this->residency.size(),
+                       this->execObjectsStorage.data());
+    UNRECOVERABLE_IF(err != 0);
+
+    this->residency.clear();
 }
 
 template <typename GfxFamily>

@@ -14,4 +14,11 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects(const DrmAll
     auto bo = drmAllocation->getBO();
     makeResident(bo);
 }
+
+template <typename GfxFamily>
+void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+    this->processResidency(allocationsForResidency);
+    this->exec(batchBuffer, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0]);
+}
+
 } // namespace NEO
