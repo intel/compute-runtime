@@ -25,7 +25,13 @@ if [ $# -ne 1 ] || [ $1 == "-h" ] || [ $1 == "--help" ]; then
   exit 1
 fi
 
-DriverStatus=$(! dpkg --compare-versions "$DriverVer" "lt" "$1" ; echo $? )
+if ! [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+.* ]]; then
+   echo Invalid version format
+   exit 1
+fi
+
+TestedString=$(echo "$1" | awk -F. '{ printf("%d.%d.%d\n", $1,$2,$3); }';)
+DriverStatus=$(! dpkg --compare-versions "$DriverVer" "lt" "$TestedString" ; echo $? )
 
 if [ $DriverStatus -eq 1 ]; then
   echo Driver $DriverVer is older than referenced version passed from command line $1
