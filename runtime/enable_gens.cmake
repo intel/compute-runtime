@@ -26,7 +26,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   command_queue
   command_stream_receiver_hw
   command_stream_receiver_simulated_common_hw
-  device_queue
   experimental_command_buffer
   gpgpu_walker
   hardware_commands_helper
@@ -83,6 +82,7 @@ macro(macro_for_each_gen)
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/device_enqueue.h)
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/scheduler_definitions.h)
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/scheduler_igdrcl_built_in.inl)
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/device_queue_${GEN_TYPE_LOWER}.cpp)
   endif()
 
   foreach(OS_IT "BASE" "WINDOWS" "LINUX")
