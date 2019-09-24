@@ -27,7 +27,7 @@ struct FillBufferEventTests : public EnqueueFillBufferFixture,
     }
 };
 
-HWTEST_F(FillBufferEventTests, eventShouldBeReturned) {
+HWTEST_F(FillBufferEventTests, WhenEnqueingFillBufferThenEventHasCorrectCommandType) {
     float pattern[] = {1.0f};
     size_t patternSize = sizeof(pattern);
     size_t offset = 0;
@@ -64,7 +64,7 @@ HWTEST_F(FillBufferEventTests, eventShouldBeReturned) {
     delete pEvent;
 }
 
-HWTEST_F(FillBufferEventTests, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+HWTEST_F(FillBufferEventTests, GivenMultipleEventsWhenEnqueingFillBufferThenReturnedEventShouldBeMaxOfInputEventsAndCmdQPlus1) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
