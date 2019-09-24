@@ -14,6 +14,7 @@
 #include "runtime/sharings/sharing.h"
 
 #include "mem_obj_types.h"
+#include "memory_properties_flags.h"
 
 #include <atomic>
 #include <cstdint>
@@ -39,6 +40,8 @@ class MemObj : public BaseObject<_cl_mem> {
     MemObj(Context *context,
            cl_mem_object_type memObjectType,
            const MemoryProperties &properties,
+           cl_mem_flags flags,
+           cl_mem_flags_intel flagsIntel,
            size_t size,
            void *memoryStorage,
            void *hostPtr,
@@ -59,7 +62,6 @@ class MemObj : public BaseObject<_cl_mem> {
     void *getHostPtr() const;
     bool getIsObjectRedescribed() const { return isObjectRedescribed; };
     size_t getSize() const;
-    cl_mem_flags getFlags() const;
 
     bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
     bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
@@ -121,7 +123,7 @@ class MemObj : public BaseObject<_cl_mem> {
         return mapAllocation;
     }
 
-    const MemoryProperties &getProperties() const { return properties; }
+    const cl_mem_flags &getMemoryPropertiesFlags() const { return flags; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -129,6 +131,9 @@ class MemObj : public BaseObject<_cl_mem> {
     Context *context;
     cl_mem_object_type memObjectType;
     MemoryProperties properties;
+    MemoryPropertiesFlags memoryProperties;
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flags_intel = 0;
     size_t size;
     size_t hostPtrMinSize = 0;
     void *memoryStorage;

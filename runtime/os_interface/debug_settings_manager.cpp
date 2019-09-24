@@ -234,7 +234,7 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 if (memObj != nullptr) {
                     ptr = static_cast<char *>(memObj->getCpuAddress());
                     size = memObj->getSize();
-                    flags = memObj->getFlags();
+                    flags = memObj->getMemoryPropertiesFlags();
                 }
             } else if (argInfo.typeStr.find("sampler") != std::string::npos) {
                 type = "sampler";
@@ -245,7 +245,7 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 if (memObj != nullptr) {
                     ptr = static_cast<char *>(memObj->getCpuAddress());
                     size = memObj->getSize();
-                    flags = memObj->getFlags();
+                    flags = memObj->getMemoryPropertiesFlags();
                 }
             } else {
                 type = "immediate";

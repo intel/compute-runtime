@@ -39,6 +39,8 @@ ImageFuncs imageFactory[IGFX_MAX_CORE] = {};
 
 Image::Image(Context *context,
              const MemoryProperties &properties,
+             cl_mem_flags flags,
+             cl_mem_flags_intel flagsIntel,
              size_t size,
              void *hostPtr,
              cl_image_format imageFormat,
@@ -53,6 +55,8 @@ Image::Image(Context *context,
     : MemObj(context,
              imageDesc.image_type,
              properties,
+             flags,
+             flagsIntel,
              size,
              graphicsAllocation->getUnderlyingBuffer(),
              hostPtr,
@@ -408,7 +412,7 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &properties
 
     auto funcCreate = imageFactory[hwInfo.platform.eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto image = funcCreate(context, properties, size, hostPtr, imageFormat, imageDesc,
+    auto image = funcCreate(context, properties, properties.flags, properties.flags_intel, size, hostPtr, imageFormat, imageDesc,
                             zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
     DEBUG_BREAK_IF(nullptr == image);
     image->createFunction = funcCreate;
@@ -464,7 +468,7 @@ cl_int Image::validate(Context *context,
             const auto minimumBufferSize = imageDesc->image_height * rowSize;
 
             if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
-                ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
+                ((parentBuffer->getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
                 (minimumBufferSize > parentBuffer->getSize())) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             } else if (memoryProperties.flags.useHostPtr || memoryProperties.flags.copyHostPtr) {
@@ -858,6 +862,8 @@ Image *Image::redescribeFillImage() {
     DEBUG_BREAK_IF(nullptr == createFunction);
     auto image = createFunction(context,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags_intel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
@@ -905,6 +911,8 @@ Image *Image::redescribe() {
     DEBUG_BREAK_IF(nullptr == createFunction);
     auto image = createFunction(context,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags_intel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
@@ -1027,12 +1035,14 @@ bool Image::isDepthFormat(const cl_image_format &imageFormat) {
 
 Image *Image::validateAndCreateImage(Context *context,
                                      const MemoryProperties &properties,
+                                     cl_mem_flags flags,
+                                     cl_mem_flags_intel flagsIntel,
                                      const cl_image_format *imageFormat,
                                      const cl_image_desc *imageDesc,
                                      const void *hostPtr,
                                      cl_int &errcodeRet) {
 
-    if (!MemObjHelper::validateMemoryPropertiesForImage(properties, imageDesc->mem_object)) {
+    if (!MemObjHelper::validateMemoryPropertiesForImage(MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties), flags, flagsIntel, imageDesc->mem_object)) {
         errcodeRet = CL_INVALID_VALUE;
         return nullptr;
     }

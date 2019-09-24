@@ -23,6 +23,8 @@ struct MemoryProperties;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
                                    MemoryProperties properties,
+                                   cl_mem_flags flags,
+                                   cl_mem_flags_intel flagsIntel,
                                    size_t size,
                                    void *memoryStorage,
                                    void *hostPtr,
@@ -84,6 +86,7 @@ class Buffer : public MemObj {
 
     static Buffer *createBufferHwFromDevice(const Device *device,
                                             cl_mem_flags flags,
+                                            cl_mem_flags_intel flagsIntel,
                                             size_t size,
                                             void *memoryStorage,
                                             void *hostPtr,
@@ -101,7 +104,8 @@ class Buffer : public MemObj {
                                 size_t svmSize,
                                 void *svmPtr,
                                 GraphicsAllocation *gfxAlloc = nullptr,
-                                cl_mem_flags flags = 0);
+                                cl_mem_flags flags = 0,
+                                cl_mem_flags_intel flagsIntel = 0);
 
     static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
                                        Context *context,
@@ -132,6 +136,8 @@ class Buffer : public MemObj {
   protected:
     Buffer(Context *context,
            MemoryProperties properties,
+           cl_mem_flags flags,
+           cl_mem_flags_intel flagsIntel,
            size_t size,
            void *memoryStorage,
            void *hostPtr,
@@ -162,6 +168,8 @@ class BufferHw : public Buffer {
   public:
     BufferHw(Context *context,
              MemoryProperties properties,
+             cl_mem_flags flags,
+             cl_mem_flags_intel flagsIntel,
              size_t size,
              void *memoryStorage,
              void *hostPtr,
@@ -169,7 +177,7 @@ class BufferHw : public Buffer {
              bool zeroCopy,
              bool isHostPtrSVM,
              bool isObjectRedescribed)
-        : Buffer(context, properties, size, memoryStorage, hostPtr, gfxAllocation,
+        : Buffer(context, properties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) override;
@@ -177,6 +185,8 @@ class BufferHw : public Buffer {
 
     static Buffer *create(Context *context,
                           MemoryProperties properties,
+                          cl_mem_flags flags,
+                          cl_mem_flags_intel flagsIntel,
                           size_t size,
                           void *memoryStorage,
                           void *hostPtr,
@@ -186,6 +196,8 @@ class BufferHw : public Buffer {
                           bool isObjectRedescribed) {
         auto buffer = new BufferHw<GfxFamily>(context,
                                               properties,
+                                              flags,
+                                              flagsIntel,
                                               size,
                                               memoryStorage,
                                               hostPtr,

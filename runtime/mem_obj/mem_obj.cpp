@@ -28,6 +28,8 @@ namespace NEO {
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
                const MemoryProperties &properties,
+               cl_mem_flags flags,
+               cl_mem_flags_intel flagsIntel,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
@@ -35,7 +37,7 @@ MemObj::MemObj(Context *context,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
-    : context(context), memObjectType(memObjectType), properties(properties), size(size),
+    : context(context), memObjectType(memObjectType), properties(properties), flags(flags), flags_intel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
       graphicsAllocation(gfxAllocation) {
@@ -220,10 +222,6 @@ void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {
     this->allocatedMapPtr = allocatedMapPtr;
 }
 
-cl_mem_flags MemObj::getFlags() const {
-    return getProperties().flags;
-}
-
 bool MemObj::isMemObjZeroCopy() const {
     return isZeroCopy;
 }
@@ -325,7 +323,7 @@ void *MemObj::getBasePtrForMap() {
     if (associatedMemObject) {
         return associatedMemObject->getBasePtrForMap();
     }
-    if (getFlags() & CL_MEM_USE_HOST_PTR) {
+    if (getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR) {
         return getHostPtr();
     } else {
         TakeOwnershipWrapper<MemObj> memObjOwnership(*this);

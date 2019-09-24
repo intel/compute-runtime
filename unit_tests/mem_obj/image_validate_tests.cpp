@@ -669,7 +669,7 @@ TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIs
     Image *image;
     imageFormat.image_channel_order = 0;
     imageFormat.image_channel_data_type = 0;
-    image = Image::validateAndCreateImage(&context, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, 0, 0, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
@@ -679,7 +679,8 @@ TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateIm
     cl_image_format imageFormat = {CL_INTENSITY, CL_UNORM_INT8};
     cl_int retVal = CL_SUCCESS;
     Image *image;
-    image = Image::validateAndCreateImage(&context, CL_MEM_READ_WRITE, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    image = Image::validateAndCreateImage(&context, CL_MEM_READ_WRITE, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
 }
@@ -708,6 +709,8 @@ TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCa
     image.reset(Image::validateAndCreateImage(
         &context,
         flags,
+        flags,
+        0,
         &imageFormat,
         &imageDesc,
         nullptr,
@@ -757,7 +760,7 @@ struct NullImage : public Image {
     using Image::imageDesc;
     using Image::imageFormat;
 
-    NullImage() : Image(nullptr, cl_mem_flags{}, 0, nullptr, cl_image_format{},
+    NullImage() : Image(nullptr, cl_mem_flags{}, cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                         cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
                         0, 0, SurfaceFormatInfo{}, nullptr) {
     }

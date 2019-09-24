@@ -189,7 +189,7 @@ TEST_F(D3D9Tests, createSurface) {
     auto image = castToObject<Image>(memObj);
     EXPECT_NE(nullptr, image->getSharingHandler());
 
-    EXPECT_TRUE(CL_MEM_READ_WRITE == image->getFlags());
+    EXPECT_TRUE(CL_MEM_READ_WRITE == image->getMemoryPropertiesFlags());
 
     EXPECT_TRUE(expectedImgFormat.image_channel_data_type == image->getImageFormat().image_channel_data_type);
     EXPECT_TRUE(expectedImgFormat.image_channel_order == image->getImageFormat().image_channel_order);
@@ -223,7 +223,7 @@ TEST_F(D3D9Tests, createSurfaceIntel) {
     auto image = castToObject<Image>(memObj);
     EXPECT_NE(nullptr, image->getSharingHandler());
 
-    EXPECT_TRUE(CL_MEM_READ_WRITE == image->getFlags());
+    EXPECT_TRUE(CL_MEM_READ_WRITE == image->getMemoryPropertiesFlags());
 
     EXPECT_TRUE(expectedImgFormat.image_channel_data_type == image->getImageFormat().image_channel_data_type);
     EXPECT_TRUE(expectedImgFormat.image_channel_order == image->getImageFormat().image_channel_order);

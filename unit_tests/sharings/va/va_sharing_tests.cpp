@@ -398,7 +398,7 @@ TEST_F(VaSharingTests, givenSimpleParamsWhenCreateSurfaceIsCalledThenSetImgObjec
     EXPECT_NE(0u, sharedImg->getImageDesc().image_row_pitch);
     EXPECT_EQ(0u, sharedImg->getHostPtrSlicePitch());
     EXPECT_NE(0u, sharedImg->getHostPtrRowPitch());
-    EXPECT_TRUE(sharedImg->getFlags() == CL_MEM_READ_WRITE);
+    EXPECT_TRUE(sharedImg->getMemoryPropertiesFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(sharedImg->getCubeFaceIndex() == __GMM_NO_CUBE_MAP);
 
     EXPECT_EQ(vaSharing->sharingHandle, sharedImg->getGraphicsAllocation()->peekSharedHandle());

@@ -33,6 +33,8 @@ BufferFuncs bufferFactory[IGFX_MAX_CORE] = {};
 
 Buffer::Buffer(Context *context,
                MemoryProperties properties,
+               cl_mem_flags flags,
+               cl_mem_flags_intel flagsIntel,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
@@ -43,6 +45,8 @@ Buffer::Buffer(Context *context,
     : MemObj(context,
              CL_MEM_OBJECT_BUFFER,
              properties,
+             flags,
+             flagsIntel,
              size,
              memoryStorage,
              hostPtr,
@@ -54,7 +58,7 @@ Buffer::Buffer(Context *context,
     setHostPtrMinSize(size);
 }
 
-Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, 0, 0, nullptr, nullptr, nullptr, false, false, false) {
+Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, 0, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false) {
 }
 
 Buffer::~Buffer() = default;
@@ -92,7 +96,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
         return;
     }
 
-    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties, flags, flagsIntel)) {
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties), flags, flagsIntel)) {
         retVal = CL_INVALID_VALUE;
         return;
     }
@@ -401,7 +405,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                 const cl_buffer_region *region,
                                 cl_int &errcodeRet) {
     DEBUG_BREAK_IF(nullptr == createFunction);
-    auto buffer = createFunction(this->context, flags, region->size,
+    auto buffer = createFunction(this->context, flags, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  this->graphicsAllocation,
@@ -506,7 +510,7 @@ Buffer *Buffer::createBufferHw(Context *context,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(context, properties, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(context, properties, properties.flags, properties.flags_intel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     DEBUG_BREAK_IF(nullptr == pBuffer);
     if (pBuffer) {
@@ -517,6 +521,7 @@ Buffer *Buffer::createBufferHw(Context *context,
 
 Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                                          cl_mem_flags flags,
+                                         cl_mem_flags_intel flagsIntel,
                                          size_t size,
                                          void *memoryStorage,
                                          void *hostPtr,
@@ -529,7 +534,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(nullptr, flags, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(nullptr, flags, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
     return pBuffer;
@@ -547,7 +552,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     }
     bufferAddress += this->offset;
 
-    bool readOnlyMemObj = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
+    bool readOnlyMemObj = isValueSet(getMemoryPropertiesFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
     bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) &&
                          isAligned<MemoryConstants::cacheLineSize>(bufferSize);
 
@@ -564,8 +569,9 @@ void Buffer::setSurfaceState(const Device *device,
                              size_t svmSize,
                              void *svmPtr,
                              GraphicsAllocation *gfxAlloc,
-                             cl_mem_flags flags) {
-    auto buffer = Buffer::createBufferHwFromDevice(device, flags, svmSize, svmPtr, svmPtr, gfxAlloc, true, false, false);
+                             cl_mem_flags flags,
+                             cl_mem_flags_intel flagsIntel) {
+    auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, true, false, false);
     buffer->setArgStateful(surfaceState, false, false, false, false);
     buffer->graphicsAllocation = nullptr;
     delete buffer;

@@ -659,7 +659,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
             break;
         }
 
-        cl_mem_flags parentFlags = parentBuffer->getFlags();
+        cl_mem_flags parentFlags = parentBuffer->getMemoryPropertiesFlags();
 
         if (parentBuffer->isSubBuffer() == true) {
             retVal = CL_INVALID_MEM_OBJECT;
@@ -765,7 +765,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
         if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage)) {
-            image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
+            image = Image::validateAndCreateImage(pContext, propertiesStruct, flags, 0, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
         }
@@ -804,7 +804,7 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE)) {
-            image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
+            image = Image::validateAndCreateImage(pContext, propertiesStruct, propertiesStruct.flags, propertiesStruct.flags_intel, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
         }
@@ -851,7 +851,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
-        image2D = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, &imageDesc, hostPtr, retVal);
+        image2D = Image::validateAndCreateImage(pContext, propertiesStruct, flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
     ErrorCodeHelper err(errcodeRet, retVal);
@@ -902,7 +902,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
-        image3D = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, &imageDesc, hostPtr, retVal);
+        image3D = Image::validateAndCreateImage(pContext, propertiesStruct, flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
     ErrorCodeHelper err(errcodeRet, retVal);

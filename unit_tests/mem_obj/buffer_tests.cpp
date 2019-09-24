@@ -1238,6 +1238,8 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
         bufferFactory[i].createBufferFunction =
             [](Context *,
                MemoryProperties,
+               cl_mem_flags,
+               cl_mem_flags_intel,
                size_t,
                void *,
                void *,

@@ -27,6 +27,8 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 
         static Image *createMockImage(Context *context,
                                       const MemoryProperties &properties,
+                                      uint64_t flags,
+                                      uint64_t flagsIntel,
                                       size_t size,
                                       void *hostPtr,
                                       const cl_image_format &imageFormat,
@@ -38,7 +40,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
                                       uint32_t mipCount,
                                       const SurfaceFormatInfo *surfaceFormatInfo,
                                       const SurfaceOffsets *surfaceOffsets) {
-            return new MockImage<T>(context, properties, size, hostPtr, imageFormat, imageDesc, zeroCopy, graphicsAllocation,
+            return new MockImage<T>(context, properties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc, zeroCopy, graphicsAllocation,
                                     isObjectRedescribed, baseMipLevel, mipCount, *surfaceFormatInfo, surfaceOffsets);
         };
 

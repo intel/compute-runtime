@@ -36,7 +36,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
     char buffer[64];
     MockContext context;
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
-    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
@@ -61,7 +61,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
     char buffer[64];
     MockContext context;
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
-    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
@@ -106,7 +106,7 @@ TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {
     SharingHandler sharingHandler;
     MockContext context;
     MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
                   1, nullptr, nullptr, graphicsAllocation, true, false, false);
 
     auto result = sharingHandler.acquire(&memObj);

@@ -1330,7 +1330,7 @@ class DrmMockBuffer : public Buffer {
         delete gfxAllocation;
     }
 
-    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc) : Buffer(nullptr, CL_MEM_USE_HOST_PTR, size, data, data, alloc, true, false, false),
+    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc) : Buffer(nullptr, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0, size, data, data, alloc, true, false, false),
                                                                    data(data),
                                                                    gfxAllocation(alloc) {
     }

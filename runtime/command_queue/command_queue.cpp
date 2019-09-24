@@ -341,7 +341,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
                                        image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(),
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
             bool mustCallFinish = true;
-            if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
+            if (!(image->getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR)) {
                 mustCallFinish = true;
             } else {
                 mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(this->taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList) != Event::eventNotReady);
