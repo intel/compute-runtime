@@ -417,6 +417,7 @@ class CommandQueueHw : public CommandQueue {
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
     void forceDispatchScheduler(NEO::MultiDispatchInfo &multiDispatchInfo);
+    void runSchedulerSimulation(DeviceQueueHw<GfxFamily> &devQueueHw, Kernel &parentKernel);
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,
                                                    const size_t *bufferOrigin,

@@ -10,6 +10,20 @@
 namespace NEO {
 
 template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::runSchedulerSimulation(DeviceQueueHw<GfxFamily> &devQueueHw, Kernel &parentKernel) {
+    BuiltinKernelsSimulation::SchedulerSimulation<GfxFamily> simulation;
+    simulation.runSchedulerSimulation(devQueueHw.getQueueBuffer(),
+                                      devQueueHw.getStackBuffer(),
+                                      devQueueHw.getEventPoolBuffer(),
+                                      devQueueHw.getSlbBuffer(),
+                                      devQueueHw.getDshBuffer(),
+                                      parentKernel.getKernelReflectionSurface(),
+                                      devQueueHw.getQueueStorageBuffer(),
+                                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
+                                      devQueueHw.getDebugQueue());
+}
+
+template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::submitCacheFlush(Surface **surfaces,
                                                  size_t numSurfaces,
                                                  LinearStream *commandStream,

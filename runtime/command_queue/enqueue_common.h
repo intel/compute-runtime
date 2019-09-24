@@ -277,17 +277,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
                 if (devQueueHw->getSchedulerReturnInstance() > 0) {
                     waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
-
-                    BuiltinKernelsSimulation::SchedulerSimulation<GfxFamily> simulation;
-                    simulation.runSchedulerSimulation(devQueueHw->getQueueBuffer(),
-                                                      devQueueHw->getStackBuffer(),
-                                                      devQueueHw->getEventPoolBuffer(),
-                                                      devQueueHw->getSlbBuffer(),
-                                                      devQueueHw->getDshBuffer(),
-                                                      parentKernel->getKernelReflectionSurface(),
-                                                      devQueueHw->getQueueStorageBuffer(),
-                                                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
-                                                      devQueueHw->getDebugQueue());
+                    this->runSchedulerSimulation(*devQueueHw, *parentKernel);
                 }
             }
         } else if (enqueueProperties.isFlushWithoutKernelRequired()) {
