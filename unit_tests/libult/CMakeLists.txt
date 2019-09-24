@@ -12,6 +12,11 @@ macro(macro_for_each_gen)
     ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
     ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
   )
+
+  if(EXISTS "${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    include_directories(${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
+  endif()
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
