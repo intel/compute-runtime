@@ -23,6 +23,7 @@ class HostPtrManager {
     bool releaseHostPtr(const void *ptr);
     void storeFragment(AllocationStorageData &storageData);
     void storeFragment(FragmentStorage &fragment);
+    std::unique_lock<std::recursive_mutex> obtainOwnership();
 
   protected:
     static AllocationRequirements getAllocationRequirements(const void *inputPtr, size_t size);

@@ -8,6 +8,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 
@@ -39,8 +40,9 @@ void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint
 }
 
 void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
-    auto lock = allocationsList.obtainUniqueOwnership();
     auto memoryManager = commandStreamReceiver.getMemoryManager();
+    auto lock = memoryManager->getHostPtrManager()->obtainOwnership();
+
     GraphicsAllocation *curr = allocationsList.detachNodes();
 
     IDList<GraphicsAllocation, false, true> allocationsLeft;
@@ -95,10 +97,6 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
         curr = curr->next;
     }
     return nullptr;
-}
-
-std::unique_lock<std::mutex> AllocationsList::obtainUniqueOwnership() {
-    return std::unique_lock<std::mutex>(mutex);
 }
 
 } // namespace NEO

@@ -142,6 +142,10 @@ void HostPtrManager::storeFragment(AllocationStorageData &storageData) {
     storeFragment(fragment);
 }
 
+std::unique_lock<std::recursive_mutex> HostPtrManager::obtainOwnership() {
+    return std::unique_lock<std::recursive_mutex>(allocationsMutex);
+}
+
 void HostPtrManager::releaseHandleStorage(OsHandleStorage &fragments) {
     for (int i = 0; i < maxFragmentsCount; i++) {
         if (fragments.fragmentStorageData[i].fragmentSize || fragments.fragmentStorageData[i].cpuPtr) {

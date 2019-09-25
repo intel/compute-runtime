@@ -17,10 +17,7 @@ class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:
     std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType);
 
-    std::unique_lock<std::mutex> obtainUniqueOwnership();
-
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
-    std::mutex mutex;
 };
 } // namespace NEO
