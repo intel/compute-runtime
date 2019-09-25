@@ -89,6 +89,7 @@ class OfflineCompiler {
     std::string buildLog;
 
     bool useLlvmText = false;
+    bool useLlvmBc = false;
     bool useCppFile = false;
     bool useOptionsSuffix = false;
     bool quiet = false;

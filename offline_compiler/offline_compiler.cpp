@@ -130,7 +130,8 @@ int OfflineCompiler::buildSourceCode() {
         bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
         if (false == inputIsIntermediateRepresentation) {
             UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
-            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : preferredIntermediateRepresentation;
+            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
+                                                                               : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
             // sourceCode.size() returns the number of characters without null terminated char
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
             auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
@@ -489,6 +490,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-llvm_text")) {
             useLlvmText = true;
+        } else if (stringsAreEqual(argv[argIndex], "-llvm_bc")) {
+            useLlvmBc = true;
         } else if (stringsAreEqual(argv[argIndex], "-llvm_input")) {
             inputFileLlvm = true;
         } else if (stringsAreEqual(argv[argIndex], "-spirv_input")) {
