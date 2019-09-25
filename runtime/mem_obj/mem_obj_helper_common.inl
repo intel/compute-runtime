@@ -67,6 +67,23 @@ bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryProperties &prop
     return validateExtraMemoryProperties(properties);
 }
 
+bool MemObjHelper::parseUnifiedMemoryProperties(cl_mem_properties_intel *properties, SVMAllocsManager::UnifiedMemoryProperties &unifiedMemoryProperties) {
+    uint64_t unifiedMemoryTokenValue = properties ? *properties : 0;
+
+    while (unifiedMemoryTokenValue != 0) {
+        switch (unifiedMemoryTokenValue) {
+        case CL_MEM_ALLOC_FLAGS_INTEL:
+            unifiedMemoryProperties.allocationFlags = properties[1];
+            break;
+        default:
+            return false;
+        }
+        properties += 2;
+        unifiedMemoryTokenValue = *properties;
+    }
+    return true;
+}
+
 AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties) {
     AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
     MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties);

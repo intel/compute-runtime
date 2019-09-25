@@ -92,7 +92,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     }
 }
 
-void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties) {
+void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
     AllocationProperties unifiedMemoryProperties{true,
@@ -107,13 +107,14 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const Unified
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
     allocData.memoryType = memoryProperties.memoryType;
+    allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
 }
 
-void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties, void *cmdQ) {
+void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties, void *cmdQ) {
     auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported();
 
     if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
@@ -125,6 +126,7 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size, const U
         UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
         auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
         unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
+        unifiedMemoryAllocation->allocationFlagsProperty = memoryProperties.allocationFlags;
 
         UNRECOVERABLE_IF(cmdQ == nullptr);
         auto pageFaultManager = this->memoryManager->getPageFaultManager();
