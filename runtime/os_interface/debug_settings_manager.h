@@ -46,33 +46,26 @@ class GraphicsAllocation;
 struct MultiDispatchInfo;
 class SettingsReader;
 
-// clang-format off
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-struct DebugVar##variableName                                                     \
-{                                                                                 \
-     DebugVar##variableName() {                                                   \
-         value = (dataType)defaultValue;                                          \
-     }                                                                            \
-     dataType get() const {                                                       \
-         return value;                                                            \
-     }                                                                            \
-     void set(dataType data) {                                                    \
-         value = data;                                                            \
-     }                                                                            \
-     dataType &getRef() {                                                         \
-         return value;                                                            \
-     }                                                                            \
-  private:                                                                        \
-     dataType value;                                                              \
-};
+template <typename T>
+struct DebugVarBase {
+    DebugVarBase(const T &defaultValue) : value(defaultValue) {}
+    T get() const {
+        return value;
+    }
+    void set(T data) {
+        value = std::move(data);
+    }
+    T &getRef() {
+        return value;
+    }
 
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
-// clang-format on
+  private:
+    T value;
+};
 
 struct DebugVariables {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    DebugVar##variableName variableName;
+    DebugVarBase<dataType> variableName{defaultValue};
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 };
