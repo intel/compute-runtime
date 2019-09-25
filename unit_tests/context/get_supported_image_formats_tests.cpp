@@ -181,6 +181,7 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYU
     bool isReadOnly = false;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
 
+    device->deviceInfo.nv12Extension = false;
     device->deviceInfo.packedYuvExtension = true;
 
     retVal = context->getSupportedImageFormats(
@@ -266,6 +267,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
 
     device->deviceInfo.nv12Extension = true;
+    device->deviceInfo.packedYuvExtension = false;
 
     retVal = context->getSupportedImageFormats(
         device.get(),

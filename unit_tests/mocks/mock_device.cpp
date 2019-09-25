@@ -25,6 +25,7 @@ MockDevice::MockDevice()
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->engines.resize(defaultEngineIndex + 1);
     this->engines[defaultEngineIndex] = {commandStreamReceiver, nullptr};
+    initializeCaps();
 }
 
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
@@ -36,6 +37,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t devi
     this->osTime = MockOSTime::create();
     executionEnvironment->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
+    initializeCaps();
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {
