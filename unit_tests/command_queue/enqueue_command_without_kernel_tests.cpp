@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
+#include "unit_tests/fixtures/dispatch_flags_fixture.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -103,19 +103,6 @@ HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBl
     EXPECT_EQ(blitProperties.dstAllocation, blockedCommandsDataForBlitEnqueue->blitProperties.dstAllocation);
 }
 
-struct DispatchFlagsTests : public ::testing::Test {
-    template <typename CsrType>
-    void SetUpImpl() {
-        auto executionEnvironment = new MockExecutionEnvironmentWithCsr<CsrType>(**platformDevices, 1u);
-        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0));
-        context = std::make_unique<MockContext>(device.get());
-    }
-
-    std::unique_ptr<MockDevice> device;
-    std::unique_ptr<MockContext> context;
-    DebugManagerStateRestore restore;
-};
-
 HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispatchFlags) {
     using CsrType = MockCsrHw2<FamilyType>;
     SetUpImpl<CsrType>();
@@ -136,6 +123,7 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
     EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
+    EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
 }
 
 HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitFlush) {

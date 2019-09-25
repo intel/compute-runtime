@@ -854,7 +854,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     DispatchFlags dispatchFlags(
         {},                                                                  //csrDependencies
         {},                                                                  //pipelineSelectArgs
-        nullptr,                                                             //flushStampReference
+        flushStamp->getStampReference(),                                     //flushStampReference
         QueueThrottle::MEDIUM,                                               //throttle
         device->getPreemptionMode(),                                         //preemptionMode
         GrfConfig::DefaultGrfNumber,                                         //numGrfRequired

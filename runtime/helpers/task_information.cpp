@@ -45,25 +45,25 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     size_t offset = queueCommandStream.getUsed();
 
     DispatchFlags dispatchFlags(
-        {},                                                                      //csrDependencies
-        {},                                                                      //pipelineSelectArgs
-        nullptr,                                                                 //flushStampReference
-        commandQueue.getThrottle(),                                              //throttle
-        PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), nullptr), //preemptionMode
-        GrfConfig::DefaultGrfNumber,                                             //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                            //l3CacheSettings
-        commandQueue.getSliceCount(),                                            //sliceCount
-        true,                                                                    //blocking
-        true,                                                                    //dcFlush
-        true,                                                                    //useSLM
-        true,                                                                    //guardCommandBufferWithPipeControl
-        false,                                                                   //GSBA32BitRequired
-        false,                                                                   //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                        //lowPriority
-        false,                                                                   //implicitFlush
-        false,                                                                   //outOfOrderExecutionAllowed
-        commandQueue.isMultiEngineQueue(),                                       //multiEngineQueue
-        false                                                                    //epilogueRequired
+        {},                                                                          //csrDependencies
+        {},                                                                          //pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                                //flushStampReference
+        commandQueue.getThrottle(),                                                  //throttle
+        PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), nullptr),     //preemptionMode
+        GrfConfig::DefaultGrfNumber,                                                 //numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
+        commandQueue.getSliceCount(),                                                //sliceCount
+        true,                                                                        //blocking
+        true,                                                                        //dcFlush
+        false,                                                                       //useSLM
+        true,                                                                        //guardCommandBufferWithPipeControl
+        false,                                                                       //GSBA32BitRequired
+        false,                                                                       //requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
+        false,                                                                       //implicitFlush
+        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
+        commandQueue.isMultiEngineQueue(),                                           //multiEngineQueue
+        false                                                                        //epilogueRequired
     );
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -187,27 +187,26 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     DispatchFlags dispatchFlags(
-        {},                                                                     //csrDependencies
-        {},                                                                     //pipelineSelectArgs
-        nullptr,                                                                //flushStampReference
-        commandQueue.getThrottle(),                                             //throttle
-        preemptionMode,                                                         //preemptionMode
-        kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired, //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                           //l3CacheSettings
-        commandQueue.getSliceCount(),                                           //sliceCount
-        true,                                                                   //blocking
-        flushDC,                                                                //dcFlush
-        slmUsed,                                                                //useSLM
-        true,                                                                   //guardCommandBufferWithPipeControl
-        NDRangeKernel,                                                          //GSBA32BitRequired
-        requiresCoherency,                                                      //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                       //lowPriority
-        false,                                                                  //implicitFlush
-        false,                                                                  //outOfOrderExecutionAllowed
-        commandQueue.isMultiEngineQueue(),                                      //multiEngineQueue
-        false                                                                   //epilogueRequired
+        {},                                                                          //csrDependencies
+        {false, kernel->isVmeKernel()},                                              //pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                                //flushStampReference
+        commandQueue.getThrottle(),                                                  //throttle
+        preemptionMode,                                                              //preemptionMode
+        kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired,      //numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
+        commandQueue.getSliceCount(),                                                //sliceCount
+        true,                                                                        //blocking
+        flushDC,                                                                     //dcFlush
+        slmUsed,                                                                     //useSLM
+        true,                                                                        //guardCommandBufferWithPipeControl
+        NDRangeKernel,                                                               //GSBA32BitRequired
+        requiresCoherency,                                                           //requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
+        false,                                                                       //implicitFlush
+        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
+        commandQueue.isMultiEngineQueue(),                                           //multiEngineQueue
+        false                                                                        //epilogueRequired
     );
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = kernel->isVmeKernel();
 
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
@@ -282,7 +281,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
     DispatchFlags dispatchFlags(
         {},                                                   //csrDependencies
         {},                                                   //pipelineSelectArgs
-        nullptr,                                              //flushStampReference
+        commandQueue.flushStamp->getStampReference(),         //flushStampReference
         commandQueue.getThrottle(),                           //throttle
         commandQueue.getDevice().getPreemptionMode(),         //preemptionMode
         GrfConfig::DefaultGrfNumber,                          //numGrfRequired
