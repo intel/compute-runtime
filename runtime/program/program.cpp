@@ -9,6 +9,7 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"
+#include "core/memory_manager/unified_memory_manager.h"
 #include "elf/writer.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
@@ -16,7 +17,6 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 
 #include <sstream>

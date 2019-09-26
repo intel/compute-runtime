@@ -15,7 +15,6 @@
 
 namespace NEO {
 class CommandStreamReceiver;
-class Device;
 class GraphicsAllocation;
 class MemoryManager;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/unified_memory_manager.h"
+#include "core/memory_manager/unified_memory_manager.h"
 
 #include "core/helpers/aligned_memory.h"
 #include "runtime/command_stream/command_stream_receiver.h"

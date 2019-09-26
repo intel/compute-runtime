@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/unified_memory_manager.h"
+#include "core/memory_manager/unified_memory_manager.h"
 namespace NEO {
 struct MockSVMAllocsManager : SVMAllocsManager {
 

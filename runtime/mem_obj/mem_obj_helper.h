@@ -7,12 +7,12 @@
 
 #pragma once
 #include "common/helpers/bit_helpers.h"
+#include "core/memory_manager/unified_memory_manager.h"
 #include "public/cl_ext_private.h"
 #include "runtime/context/context_type.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/unified_memory_manager.h"
 
 #include "CL/cl.h"
 #include "mem_obj_types.h"
