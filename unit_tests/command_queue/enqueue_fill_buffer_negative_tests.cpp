@@ -28,7 +28,7 @@ struct EnqueueFillBuffer : public EnqueueFillBufferFixture,
     }
 };
 
-TEST_F(EnqueueFillBuffer, null_buffer) {
+TEST_F(EnqueueFillBuffer, GivenNullBufferWhenFillingBufferThenInvalidMemObjectErrorIsReturned) {
     cl_float pattern = 1.0f;
     auto retVal = clEnqueueFillBuffer(
         BaseClass::pCmdQ,
@@ -44,7 +44,7 @@ TEST_F(EnqueueFillBuffer, null_buffer) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(EnqueueFillBuffer, null_pattern) {
+TEST_F(EnqueueFillBuffer, GivenNullPatternWhenFillingBufferThenInvalidValueErrorIsReturned) {
     cl_float pattern = 1.0f;
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
@@ -64,7 +64,7 @@ TEST_F(EnqueueFillBuffer, null_pattern) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(EnqueueFillBuffer, null_event_list) {
+TEST_F(EnqueueFillBuffer, GivenNullEventListAndNumEventsNonZeroWhenFillingBufferThenInvalidEventWaitListErrorIsReturned) {
     cl_float pattern = 1.0f;
 
     auto retVal = clEnqueueFillBuffer(
@@ -81,7 +81,7 @@ TEST_F(EnqueueFillBuffer, null_event_list) {
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(EnqueueFillBuffer, invalid_event_list_count) {
+TEST_F(EnqueueFillBuffer, GivenEventListAndNumEventsZeroWhenFillingBufferThenInvalidEventWaitListErrorIsReturned) {
     cl_event eventList = (cl_event)ptrGarbage;
     cl_float pattern = 1.0f;
 
@@ -124,7 +124,7 @@ struct InvalidPatternSize : public EnqueueFillBufferFixture,
     char *pattern = nullptr;
 };
 
-TEST_P(InvalidPatternSize, returns_CL_INVALID_VALUE) {
+TEST_P(InvalidPatternSize, GivenInvalidPatternSizeWhenFillingBufferThenInvalidValueErrorIsReturned) {
     auto retVal = clEnqueueFillBuffer(
         BaseClass::pCmdQ,
         buffer,
