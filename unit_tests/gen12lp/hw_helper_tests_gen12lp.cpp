@@ -5,6 +5,7 @@
  *
  */
 
+#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 #include "unit_tests/mocks/mock_context.h"
 
@@ -27,6 +28,11 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherency
     bool coherency = false;
     helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
 
+    const bool checkDone = SpecialUltHelperGen12lp::additionalCoherencyCheck(hardwareInfo.platform.eProductFamily, coherency);
+    if (checkDone) {
+        return;
+    }
+
     if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
         hardwareInfo.platform.usRevId = 0x1;
         helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
@@ -43,8 +49,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, getPitchAlignmentForImage) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto stepping = hardwareInfo.platform.usRevId;
 
-    if ((hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) &&
-        stepping == 0) {
+    if (SpecialUltHelperGen12lp::shouldPerformimagePitchAlignment(hardwareInfo.platform.eProductFamily) && stepping == 0) {
         EXPECT_EQ(64u, helper.getPitchAlignmentForImage(&hardwareInfo));
     } else {
         EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
@@ -68,9 +73,10 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, adjustDefaultEngineTypeCcs) {
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
+    if (SpecialUltHelperGen12lp::shouldTestDefaultImplementationOfSetupHardwareCapabilities(hardwareInfo.platform.eProductFamily)) {
+        auto &helper = HwHelper::get(renderCoreFamily);
+        testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
+    }
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetConfigureAddressSpaceModeThenReturnOne) {

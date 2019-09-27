@@ -18,6 +18,8 @@ if(TESTS_GEN12LP)
     ${CMAKE_CURRENT_SOURCE_DIR}/profiling_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen12lp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/special_ult_helper_gen12lp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/special_ult_helper_gen12lp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen12lp.cpp

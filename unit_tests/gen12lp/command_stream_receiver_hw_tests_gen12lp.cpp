@@ -11,6 +11,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
+#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -69,9 +70,6 @@ GEN12LPTEST_F(UltCommandStreamReceiverTest, givenStateBaseAddressWhenItIsRequire
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
 
-    if (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        EXPECT_TRUE(pipeControlCmd->getHdcFlushEnable());
-    } else {
-        EXPECT_FALSE(pipeControlCmd->getHdcFlushEnable());
-    }
+    const bool expectedHdcFlushEnable = SpecialUltHelperGen12lp::shouldEnableHdcFlush(::productFamily);
+    EXPECT_EQ(expectedHdcFlushEnable, pipeControlCmd->getHdcFlushEnable());
 }

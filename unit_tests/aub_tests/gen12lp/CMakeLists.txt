@@ -9,6 +9,7 @@ if(TESTS_GEN12LP)
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration_gen12lp.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/gen12lp/special_ult_helper_gen12lp.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/gen12lp/unit_test_helper_gen12lp.cpp
   )
   add_subdirectories()

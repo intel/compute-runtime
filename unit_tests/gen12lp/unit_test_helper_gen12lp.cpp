@@ -6,6 +6,7 @@
  */
 
 #include "runtime/gen12lp/hw_info.h"
+#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/unit_test_helper.inl"
 
@@ -25,10 +26,7 @@ bool UnitTestHelper<Family>::isPageTableManagerSupported(const HardwareInfo &hwI
 
 template <>
 bool UnitTestHelper<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
-    if (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
-        return true;
-    }
-    return false;
+    return SpecialUltHelperGen12lp::isPipeControlWArequired(hwInfo.platform.eProductFamily);
 }
 
 template struct UnitTestHelper<Family>;
