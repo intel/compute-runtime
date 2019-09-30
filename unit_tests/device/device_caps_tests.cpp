@@ -137,7 +137,7 @@ TEST(DeviceGetCapsTest, validate) {
     EXPECT_EQ(64u, caps.preferredLocalAtomicAlignment);
     EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
 
-    EXPECT_EQ(1u, caps.imageSupport);
+    EXPECT_EQ(static_cast<cl_bool>(device->getHardwareInfo().capabilityTable.supportsImages), caps.imageSupport);
     EXPECT_EQ(16384u, caps.image2DMaxWidth);
     EXPECT_EQ(16384u, caps.image2DMaxHeight);
     EXPECT_EQ(2048u, caps.imageMaxArraySize);

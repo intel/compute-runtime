@@ -73,6 +73,10 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckBlitterOperationsSupportTh
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
 }
 
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingImageSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
+}
+
 TGLLPTEST_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }

@@ -53,3 +53,7 @@ GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckBlitterOperationsSupportThenReturnF
 GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
+
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingImageSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
+}

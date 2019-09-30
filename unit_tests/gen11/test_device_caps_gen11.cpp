@@ -105,6 +105,10 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckBlitterOperationsSupportThenRetu
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
 }
 
+GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingImageSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
+}
+
 typedef Test<DeviceFixture> IclLpUsDeviceIdTest;
 
 ICLLPTEST_F(IclLpUsDeviceIdTest, isSimulationCap) {
