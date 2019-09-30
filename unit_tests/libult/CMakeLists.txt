@@ -90,6 +90,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${NEO_SOURCE_DIR}/unit_tests/fixtures/program_fixture.h
   ${NEO_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp
   ${NEO_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h
+  ${NEO_SOURCE_DIR}/unit_tests/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
   ${NEO_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
   ${NEO_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.h
   ${NEO_SOURCE_DIR}/unit_tests/ult_config_listener.cpp

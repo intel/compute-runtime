@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 #include <string>
 
 extern PRODUCT_FAMILY productFamily;
-
-const std::string KernelBinaryHelper::BUILT_INS("7030307152995455603");
 
 KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptionsToFileName) {
     // set mock compiler to return expected kernel

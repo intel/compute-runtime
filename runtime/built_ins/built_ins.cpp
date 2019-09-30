@@ -876,8 +876,6 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = BuiltinOpsBuilders[operationId];
     switch (operation) {
-    default:
-        throw std::runtime_error("getBuiltinDispatchInfoBuilder failed");
     case EBuiltInOps::CopyBufferToBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToBuffer>>(*this, context, device); });
         break;
@@ -926,6 +924,8 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
     case EBuiltInOps::AuxTranslation:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::AuxTranslation>>(*this, context, device); });
         break;
+    default:
+        return getUnknownDispatchInfoBuilder(operation, context, device);
     }
     return *operationBuilder.first;
 }

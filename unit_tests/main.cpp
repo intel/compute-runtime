@@ -15,6 +15,7 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/custom_event_listener.h"
+#include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sip.h"
@@ -408,8 +409,8 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "7030307152995455603_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "7030307152995455603_", ".gen");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);

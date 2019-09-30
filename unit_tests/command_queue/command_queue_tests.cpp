@@ -1084,3 +1084,15 @@ TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenF
     bool isCommandCacheFlush = cmdQ.isCacheFlushCommand(0u);
     EXPECT_FALSE(isCommandCacheFlush);
 }
+
+TEST(CommandQueue, GivenCommandQueueWhenEnqueueInitDispatchGlobalsCalledThenSuccessReturned) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_int result = cmdQ.enqueueInitDispatchGlobals(
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, result);
+}

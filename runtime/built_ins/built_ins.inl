@@ -1,22 +1,15 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/built_ins/aux_translation_builtin.h"
+#include "runtime/built_ins/populate_built_ins.inl"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
-
 namespace NEO {
-template <typename... KernelsDescArgsT>
-void BuiltinDispatchInfoBuilder::populate(Context &context, Device &device, EBuiltInOps::Type op, const char *options, KernelsDescArgsT &&... desc) {
-    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltinCode::ECodeType::Any, device);
-    prog.reset(BuiltinsLib::createProgramFromCode(src, context, device).release());
-    prog->build(0, nullptr, options, nullptr, nullptr, kernelsLib.isCacheingEnabled());
-    grabKernels(std::forward<KernelsDescArgsT>(desc)...);
-}
 
 BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
     BuiltinDispatchInfoBuilder::populate(context, device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);

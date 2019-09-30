@@ -782,6 +782,7 @@ include_directories(${NEO_SOURCE_DIR}/core/memory_manager/definitions${BRANCH_DI
 include_directories(${NEO_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/sku_info/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/runtime/built_ins/builtinops${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/runtime/command_queue/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/runtime/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/runtime/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/runtime/gmm_helper/${BRANCH_DIR_SUFFIX})

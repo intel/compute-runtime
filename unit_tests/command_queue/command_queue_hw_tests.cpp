@@ -1304,3 +1304,7 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
     cl_int errorCode = cmdQueue.finish();
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
 }
+
+HWTEST_F(CommandQueueHwTest, givenEmptyDispatchGlobalsArgsWhenEnqueueInitDispatchGlobalsCalledThenErrorIsReturned) {
+    EXPECT_EQ(CL_INVALID_VALUE, pCmdQ->enqueueInitDispatchGlobals(nullptr, 0, nullptr, nullptr));
+}

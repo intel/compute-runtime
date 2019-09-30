@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,20 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         return &multiDispatchInfo;
     };
 
+    void setFailingArgIndex(uint32_t index) {
+        withFailureInjection = true;
+        failingArgIndex = index;
+    }
+
+    virtual bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const override {
+        err = (withFailureInjection && argIndex == failingArgIndex) ? CL_INVALID_ARG_VALUE : CL_SUCCESS;
+        return false;
+    }
+
   protected:
     mutable BuiltinOpParams builtinOpParams;
     mutable MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder *originalBuilder;
+    bool withFailureInjection = false;
+    uint32_t failingArgIndex = 0;
 };

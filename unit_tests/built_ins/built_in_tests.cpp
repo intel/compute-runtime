@@ -20,6 +20,7 @@
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
+#include "unit_tests/built_ins/built_ins_file_names.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -119,53 +120,11 @@ struct VmeBuiltInTests : BuiltInTests {
 TEST_F(BuiltInTests, SourceConsistency) {
     size_t size = 0;
 
-    AppendBuiltInStringFromFile(
-        "test_files/aux_translation.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_buffer_to_buffer.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/fill_buffer.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/fill_image1d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/fill_image2d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/fill_image3d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_image_to_image1d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_image_to_image2d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_image_to_image3d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_buffer_rect.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_buffer_to_image3d.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
-
-    AppendBuiltInStringFromFile(
-        "test_files/copy_image3d_to_buffer.igdrcl_built_in", size);
-    ASSERT_NE(0u, size);
+    for (auto &fileName : getBuiltInFileNames()) {
+        AppendBuiltInStringFromFile(
+            fileName, size);
+        ASSERT_NE(0u, size);
+    }
 
     // convert /r/n to /n
     size_t start_pos = 0;
@@ -180,8 +139,7 @@ TEST_F(BuiltInTests, SourceConsistency) {
     }
 
     uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
-    std::string hashName = "test_files/" + std::to_string(hash);
-    hashName.append(".cl");
+    auto hashName = getBuiltInHashFileName(hash);
 
     //Fisrt fail, if we are inconsistent
     EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";

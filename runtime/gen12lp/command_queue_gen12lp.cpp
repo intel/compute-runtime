@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/command_queue/command_queue_hw_bdw_plus.inl"
 
 #include "command_queue_helpers_gen12lp.inl"
+#include "enqueue_init_dispatch_globals.h"
 
 namespace NEO {
 

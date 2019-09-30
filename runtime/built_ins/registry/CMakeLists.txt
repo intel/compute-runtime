@@ -22,3 +22,5 @@ target_include_directories(${BUILTINS_SOURCES_LIB_NAME} PRIVATE
   ${NEO__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
 )
+
+add_subdirectories()
