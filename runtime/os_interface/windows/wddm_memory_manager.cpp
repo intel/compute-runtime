@@ -9,6 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
@@ -19,7 +20,6 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
-#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"

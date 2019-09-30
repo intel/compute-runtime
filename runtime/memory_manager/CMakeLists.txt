@@ -18,8 +18,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h

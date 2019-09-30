@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/host_ptr_manager.h"
+#include "core/memory_manager/host_ptr_manager.h"
 
 #include "runtime/memory_manager/memory_manager.h"
 
