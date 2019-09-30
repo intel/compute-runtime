@@ -41,18 +41,22 @@ struct AUBWriteImage
     void SetUp() override {
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
-        context = new MockContext(pDevice);
+        if (!pDevice->getDeviceInfo().imageSupport) {
+            GTEST_SKIP();
+        }
+        context = std::make_unique<MockContext>(pDevice);
     }
 
     void TearDown() override {
-        delete dstImage;
-        delete context;
+        dstImage.reset();
+        context.reset();
+
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }
 
-    MockContext *context;
-    Image *dstImage = nullptr;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Image> dstImage;
 };
 
 HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
@@ -131,14 +135,14 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = 0;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    dstImage = Image::create(
-        context,
+    dstImage.reset(Image::create(
+        context.get(),
         flags,
         surfaceFormat,
         &imageDesc,
         nullptr,
-        retVal);
-    ASSERT_NE(nullptr, dstImage);
+        retVal));
+    ASSERT_NE(nullptr, dstImage.get());
     memset(dstImage->getCpuAddress(), 0xFF, dstImage->getSize()); // init image - avoid writeImage inside createImage (for tiled img)
 
     auto origin = std::get<2>(GetParam()).offsets;
@@ -153,7 +157,7 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     size_t inputRowPitch = testWidth * elementSize;
     size_t inputSlicePitch = inputRowPitch * testHeight;
     retVal = pCmdQ->enqueueWriteImage(
-        dstImage,
+        dstImage.get(),
         CL_TRUE,
         origin,
         region,
@@ -169,7 +173,7 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     auto readMemory = new uint8_t[dstImage->getSize()];
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
-    retVal = pCmdQ->enqueueReadImage(dstImage, CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pCmdQ->flush();

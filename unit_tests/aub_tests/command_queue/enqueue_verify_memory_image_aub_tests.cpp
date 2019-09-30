@@ -28,6 +28,9 @@ struct VerifyMemoryImageHw
 
     void SetUp() override {
         CommandEnqueueAUBFixture::SetUp();
+        if (!pDevice->getDeviceInfo().imageSupport) {
+            GTEST_SKIP();
+        }
     }
 
     void TearDown() override {

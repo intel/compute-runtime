@@ -87,18 +87,22 @@ struct AubFillImage
     void SetUp() override {
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
-        context = new MockContext(pDevice);
+        if (!pDevice->getDeviceInfo().imageSupport) {
+            GTEST_SKIP();
+        }
+        context = std::make_unique<MockContext>(pDevice);
     }
 
     void TearDown() override {
-        delete image;
-        delete context;
+        image.reset();
+        context.reset();
+
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }
 
-    MockContext *context;
-    Image *image = nullptr;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Image> image;
 };
 
 HWTEST_P(AubFillImage, simple) {
@@ -169,15 +173,15 @@ HWTEST_P(AubFillImage, simple) {
         return; //sRGBA and sBGRA support only unorm int8 type, so other cases will return from the test with a success
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    image = Image::create(
-        context,
+    image.reset(Image::create(
+        context.get(),
         flags,
         surfaceFormat,
         &imageDesc,
         nullptr,
-        retVal);
+        retVal));
 
-    ASSERT_NE(nullptr, image);
+    ASSERT_NE(nullptr, image.get());
 
     auto sizeMemory = image->getSize();
     ASSERT_GT(sizeMemory, 0u);
@@ -194,7 +198,7 @@ HWTEST_P(AubFillImage, simple) {
         std::max(testDepth / 2, 1u)};
 
     retVal = pCmdQ->enqueueFillImage(
-        image,
+        image.get(),
         fillValues,
         origin,
         region,
@@ -207,7 +211,7 @@ HWTEST_P(AubFillImage, simple) {
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
 
     auto dstMemory = new uint8_t[sizeMemory];
-    retVal = pCmdQ->enqueueReadImage(image, CL_FALSE, imgOrigin, imgRegion, 0, 0, dstMemory, nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadImage(image.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, dstMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pCmdQ->flush();
