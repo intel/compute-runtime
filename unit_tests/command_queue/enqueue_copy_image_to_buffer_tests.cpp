@@ -69,7 +69,7 @@ HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenTaskLevelIsIn
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenCommandsAreAddedWhenCopyingImageToBufferThenCommandsAreAdded) {
+HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenCommandsAreAdded) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueCopyImageToBuffer<FamilyType>();
