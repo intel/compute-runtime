@@ -25,8 +25,8 @@ template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
-    using CommandStreamReceiverHw<GfxFamily>::deviceIndex;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
+    using CommandStreamReceiverHw<GfxFamily>::getDeviceIndex;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 

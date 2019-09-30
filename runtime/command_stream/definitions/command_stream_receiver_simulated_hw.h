@@ -17,10 +17,11 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
   protected:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::osContext;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex;
 
   public:
     uint32_t getMemoryBank(GraphicsAllocation *allocation) const {
-        return MemoryBanks::getBank(this->deviceIndex);
+        return MemoryBanks::getBank(getDeviceIndex());
     }
     int getAddressSpace(int hint) {
         return AubMemDump::AddressSpaceValues::TraceNonlocal;

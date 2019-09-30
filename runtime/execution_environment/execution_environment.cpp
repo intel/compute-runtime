@@ -60,7 +60,6 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex,
     if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo)) {
         commandStreamReceiver->createPageTableManager();
     }
-    commandStreamReceiver->setDeviceIndex(deviceIndex);
     this->commandStreamReceivers[deviceIndex][deviceCsrIndex] = std::move(commandStreamReceiver);
     return true;
 }

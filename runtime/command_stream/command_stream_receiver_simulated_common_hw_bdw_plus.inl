@@ -29,7 +29,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getGTTData(void *memory,
 
 template <typename GfxFamily>
 uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt() const {
-    return MemoryBanks::getBank(this->deviceIndex);
+    return MemoryBanks::getBank(getDeviceIndex());
 }
 
 template <typename GfxFamily>

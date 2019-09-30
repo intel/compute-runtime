@@ -491,6 +491,8 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     executionEnvironment->memoryManager.reset(memoryManager);
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment));
+    auto osContext = memoryManager->createAndRegisterOsContext(aubCsr.get(), getChosenEngineType(**platformDevices), 0, PreemptionMode::Disabled, false);
+    aubCsr->setupContext(*osContext);
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     memoryManager->lockResource(gfxAllocation);
@@ -542,6 +544,7 @@ HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorre
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment));
     aubCsr->localMemoryEnabled = false;
 
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     auto bank = aubCsr->getMemoryBankForGtt();
     EXPECT_EQ(MemoryBanks::MainBank, bank);
 }
@@ -648,6 +651,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment);
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
 
     PhysicalAddressAllocator allocator;
