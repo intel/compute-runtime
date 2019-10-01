@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
 #include "unit_tests/preamble/preamble_fixture.h"
 
@@ -123,6 +124,26 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenDefaultPipeControlWhenItIsProgrammedTh
     *pipeControl = FamilyType::cmdInitPipeControl;
 
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+}
+
+TGLLPTEST_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditionalFieldsInVfeStateIsCalledThenGetDisableSlice0Subslice2ReturnsCorrectValues) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(linearStream.getSpace(sizeof(MEDIA_VFE_STATE)));
+    *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
+
+    DebugManagerStateRestore restorer;
+
+    std::vector<std::pair<bool, int32_t>> testParams{{false, 0},
+                                                     {false, -1},
+                                                     {true, 1},
+                                                     {true, -1}};
+
+    for (const auto &it : testParams) {
+        ::DebugManager.flags.CFEFusedEUDispatch.set(it.second);
+        PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState);
+        EXPECT_EQ(it.first, pMediaVfeState->getDisableSlice0Subslice2());
+    }
 }
 
 typedef PreambleFixture ThreadArbitrationGen12Lp;

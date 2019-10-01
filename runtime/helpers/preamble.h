@@ -26,6 +26,7 @@ template <typename GfxFamily>
 struct PreambleHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream,
@@ -40,6 +41,7 @@ struct PreambleHelper {
                                     int scratchSize,
                                     uint64_t scratchAddress,
                                     uint32_t maxFrontEndThreads);
+    static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer);
     static void programKernelDebugging(LinearStream *pCommandStream);
@@ -52,9 +54,7 @@ struct PreambleHelper {
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
-
     static size_t getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo);
-
     static size_t getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo);
 };
 

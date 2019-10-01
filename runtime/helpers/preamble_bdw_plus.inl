@@ -48,6 +48,8 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
     pMediaVfeState->setScratchSpaceBasePointer(lowAddress);
     pMediaVfeState->setScratchSpaceBasePointerHigh(highAddress);
 
+    programAdditionalFieldsInVfeState(pMediaVfeState);
+
     return scratchSpaceAddressOffset;
 }
 

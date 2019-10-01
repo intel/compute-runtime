@@ -111,4 +111,8 @@ bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
     return false;
 }
 
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState) {
+}
+
 } // namespace NEO

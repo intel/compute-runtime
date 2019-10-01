@@ -25,6 +25,7 @@ struct ICLFamily : public GEN11 {
     using PARSE = CmdParse<ICLFamily>;
     using GfxFamily = ICLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
+    using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
