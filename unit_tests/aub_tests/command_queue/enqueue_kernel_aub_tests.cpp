@@ -17,6 +17,7 @@
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 
 using namespace NEO;
@@ -145,6 +146,9 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
 };
 
 HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
+    if (this->simd < UnitTestHelper<FamilyType>::smallestTestableSimdSize) {
+        GTEST_SKIP();
+    }
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {param.globalWorkSizeX, param.globalWorkSizeY, param.globalWorkSizeZ};
