@@ -81,8 +81,10 @@ struct L3CNTLRegisterOffset {
 };
 
 namespace DebugModeRegisterOffset {
-static constexpr uint32_t registerOffset = 0x20ec;
-static constexpr uint32_t debugEnabledValue = (1 << 6) | (1 << 22);
+template <typename GfxFamily>
+constexpr uint32_t registerOffset = 0x20ec;
+template <typename GfxFamily>
+constexpr uint32_t debugEnabledValue = (1 << 6) | (1 << 22);
 }; // namespace DebugModeRegisterOffset
 
 namespace TdDebugControlRegisterOffset {

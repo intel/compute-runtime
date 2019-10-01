@@ -9,6 +9,7 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/gen11/reg_configs.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
@@ -120,9 +121,8 @@ HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComman
     auto it = cmdList.begin();
 
     MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(DebugModeRegisterOffset::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(DebugModeRegisterOffset::debugEnabledValue, pCmd->getDataDword());
-
+    EXPECT_EQ(DebugModeRegisterOffset::registerOffset<FamilyType>, pCmd->getRegisterOffset());
+    EXPECT_EQ(DebugModeRegisterOffset::debugEnabledValue<FamilyType>, pCmd->getDataDword());
     it++;
 
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
