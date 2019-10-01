@@ -5,7 +5,7 @@
 #
 
 if(NOT DISABLED_GTPIN_SUPPORT)
-  set(GTPIN_INIT_FILE "gtpin/gtpin_init.cpp")
+  set(GTPIN_INIT_FILE "${IGDRCL_SOURCE_DIR}/runtime/gtpin/gtpin_init.cpp")
 else()
   set(GTPIN_INIT_FILE "")
 endif()
