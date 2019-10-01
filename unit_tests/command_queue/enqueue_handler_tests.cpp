@@ -23,7 +23,7 @@
 
 using namespace NEO;
 
-HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueingHandlerWithKernelThenProcessEvictionOnCsrIsCalled) {
     int32_t tag;
     auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
@@ -230,7 +230,7 @@ HWTEST_F(EnqueueHandlerTest, givenLocalWorkgroupSizeGreaterThenGlobalWorkgroupSi
     EXPECT_EQ(retVal, CL_INVALID_WORK_GROUP_SIZE);
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueHandlerCallOnEnqueueMarkerDoesntCallProcessEvictionOnCSR) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProcessEvictionOnCsrIsNotCalled) {
     int32_t tag;
     auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
@@ -247,7 +247,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerCallOnEnqueueMarkerDoesntCallProcessE
     EXPECT_EQ(0u, csr->madeNonResidentGfxAllocations.size());
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnUnblockedQueueDoesntIncrementTaskLevel) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerForMarkerOnUnblockedQueueThenTaskLevelIsNotIncremented) {
     int32_t tag;
     auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
@@ -265,7 +265,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnUnblockedQueueDoesntIncrem
     EXPECT_EQ(0u, mockCmdQ->taskLevel);
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnBlockedQueueShouldNotIncrementTaskLevel) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerForMarkerOnBlockedQueueThenTaskLevelIsNotIncremented) {
     int32_t tag;
     auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
@@ -283,7 +283,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnBlockedQueueShouldNotIncre
     EXPECT_EQ(Event::eventNotReady, mockCmdQ->taskLevel);
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueBlockedWithoutReturnEventCreatesVirtualEventAndIncremetsCommandQueueInternalRefCount) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingBlockedWithoutReturnEventThenVirtualEventIsCreatedAndCommandQueueInternalRefCountIsIncremeted) {
 
     MockKernelWithInternals kernelInternals(*pDevice, context);
 
@@ -317,7 +317,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedWithoutReturnEventCreatesVirtualEvent
     mockCmdQ->release();
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualEvent) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingBlockedThenVirtualEventIsSetAsCurrentCmdQVirtualEvent) {
 
     MockKernelWithInternals kernelInternals(*pDevice, context);
 
@@ -346,7 +346,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualE
     mockCmdQ->release();
 }
 
-HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
+HWTEST_F(EnqueueHandlerTest, WhenEnqueuingWithOutputEventThenEventIsRegistered) {
     MockKernelWithInternals kernelInternals(*pDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
