@@ -38,7 +38,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints ex
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerGWS, 0, "Forces gws of scheduler kernel, only multiple of 24 allowed or 0 - default selected")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableExperimentalCommandBuffer, 0, "Enables injection of experimental command buffer")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideStatelessMocsIndex, -1, "-1: feature inactive, >=0 : following MOCS index will be programmed for stateless accesses in state base address")
-DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch in FrontEnd State command. -1 – do not set")
+DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch in FrontEnd State command. -1 - do not set")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
 DECLARE_DEBUG_VARIABLE(bool, FlushAllCaches, false, "pipe controls between enqueues flush all possible caches")
 DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of finish after each enqueue")
