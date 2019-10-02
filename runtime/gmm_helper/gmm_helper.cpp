@@ -37,10 +37,6 @@ GmmHelper *GmmHelper::getInstance() {
     return platform()->peekExecutionEnvironment()->getGmmHelper();
 }
 
-void GmmHelper::setSimplifiedMocsTableUsage(bool value) {
-    useSimplifiedMocsTable = value;
-}
-
 void GmmHelper::initContext(const PLATFORM *platform,
                             const FeatureTable *featureTable,
                             const WorkaroundTable *workaroundTable,
@@ -57,13 +53,6 @@ void GmmHelper::initContext(const PLATFORM *platform,
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) {
-    if (useSimplifiedMocsTable) {
-        if (type == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
-            return cacheDisabledIndex;
-        } else {
-            return cacheEnabledIndex;
-        }
-    }
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);

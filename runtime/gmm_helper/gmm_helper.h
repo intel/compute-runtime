@@ -33,10 +33,7 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type);
-    void setSimplifiedMocsTableUsage(bool value);
 
-    static constexpr uint32_t cacheDisabledIndex = 0;
-    static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint64_t maxPossiblePitch = 2147483648;
 
     template <uint8_t addressWidth = 48>
@@ -63,7 +60,6 @@ class GmmHelper {
     void loadLib();
     void initContext(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable, const GT_SYSTEM_INFO *pGtSysInfo);
 
-    bool useSimplifiedMocsTable = false;
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;

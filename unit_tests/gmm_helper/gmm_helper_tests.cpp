@@ -674,22 +674,6 @@ TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleCont
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
 }
 
-TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
-    GmmHelper gmmHelper(*platformDevices);
-    gmmHelper.setSimplifiedMocsTableUsage(true);
-    auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-    auto expectedIndex = GmmHelper::cacheDisabledIndex;
-    EXPECT_EQ(expectedIndex, index);
-}
-
-TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForCachedIndexThen4IsReturned) {
-    GmmHelper gmmHelper(*platformDevices);
-    gmmHelper.setSimplifiedMocsTableUsage(true);
-    auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto expectedIndex = GmmHelper::cacheEnabledIndex;
-    EXPECT_EQ(expectedIndex, index);
-}
-
 TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
     ASSERT_NE(nullptr, GmmHelper::getClientContext());
     EXPECT_NE(nullptr, GmmHelper::getClientContext()->getHandle());

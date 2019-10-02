@@ -1982,8 +1982,6 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
 HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBeingProgrammedThenL3CacheIsOff) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    this->device->getExecutionEnvironment()->getGmmHelper()->setSimplifiedMocsTableUsage(true);
-
     RENDER_SURFACE_STATE surfaceState = {};
     MockContext context;
     void *svmPtr = reinterpret_cast<void *>(0x1005);
@@ -2001,7 +1999,6 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBei
 class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
   public:
     void SetUp() override {
-        ctx.getDevice(0)->getExecutionEnvironment()->getGmmHelper()->setSimplifiedMocsTableUsage(true);
         hostPtr = reinterpret_cast<void *>(GetParam());
     }
     MockContext ctx;

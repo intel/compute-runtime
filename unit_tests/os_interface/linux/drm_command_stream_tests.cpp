@@ -1370,16 +1370,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCommandStreamReceiverWh
     EXPECT_TRUE(mm->isValidateHostMemoryEnabled());
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamWhenGettingMocsThenProperValueIsReturned) {
-    auto mocs = platform()->peekExecutionEnvironment()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-    auto expectedMocs = GmmHelper::cacheDisabledIndex;
-    EXPECT_EQ(mocs, expectedMocs);
-
-    mocs = platform()->peekExecutionEnvironment()->getGmmHelper()->getMOCS(0);
-    expectedMocs = GmmHelper::cacheEnabledIndex;
-    EXPECT_EQ(mocs, expectedMocs);
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBufferObjectWhenMakeResidentBufferObjectsIsCalledThenTheBufferObjectIsMadeResident) {
     auto size = 1024u;
     auto bo = this->createBO(size);

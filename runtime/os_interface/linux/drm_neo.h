@@ -72,8 +72,6 @@ class Drm {
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }
     MOCKABLE_VIRTUAL int getErrno();
-    void setSimplifiedMocsTableUsage(bool value);
-    bool getSimplifiedMocsTableUsage() const;
     bool setQueueSliceCount(uint64_t sliceCount);
     void checkQueueSliceSupport();
     uint64_t getSliceMask(uint64_t sliceCount);
@@ -89,7 +87,6 @@ class Drm {
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
-    bool useSimplifiedMocsTable = false;
     bool preemptionSupported = false;
     int fd;
     int deviceId = 0;

@@ -205,12 +205,4 @@ int Drm::getErrno() {
     return errno;
 }
 
-bool Drm::getSimplifiedMocsTableUsage() const {
-    return useSimplifiedMocsTable;
-}
-
-void Drm::setSimplifiedMocsTableUsage(bool value) {
-    useSimplifiedMocsTable = value;
-}
-
 } // namespace NEO
