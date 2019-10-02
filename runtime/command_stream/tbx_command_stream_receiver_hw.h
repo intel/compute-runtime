@@ -18,6 +18,7 @@
 
 namespace NEO {
 
+class AubSubCaptureManager;
 class TbxStream;
 
 class TbxMemoryManager : public OsAgnosticMemoryManager {
@@ -57,6 +58,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation) override;
 
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
+
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     void pollForCompletion() override;
@@ -73,7 +76,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     TbxStream tbxStream;
-
+    std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
     bool streamInitialized = false;
 
@@ -88,5 +91,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_TBX;
     }
+
+    bool dumpTbxNonWritable = false;
 };
 } // namespace NEO

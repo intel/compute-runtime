@@ -85,6 +85,9 @@ class MockAubManager : public aub_stream::AubManager {
         getFileNameCalled = true;
         return fileName;
     }
+    void pause(bool onoff) override {
+        isPaused = onoff;
+    }
 
     void addComment(const char *message) override {
         receivedComment.assign(message);
@@ -106,6 +109,7 @@ class MockAubManager : public aub_stream::AubManager {
     bool closeCalled = false;
     bool isOpenCalled = false;
     bool getFileNameCalled = false;
+    bool isPaused = false;
     bool addCommentCalled = false;
     std::string receivedComment = "";
     bool writeMemoryCalled = false;

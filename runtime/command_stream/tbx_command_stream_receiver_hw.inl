@@ -16,6 +16,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_banks.h"
@@ -156,9 +157,21 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         executionEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment);
+
+        auto aubCenter = executionEnvironment.aubCenter.get();
+        UNRECOVERABLE_IF(nullptr == aubCenter);
+
+        auto subCaptureCommon = aubCenter->getSubCaptureCommon();
+        UNRECOVERABLE_IF(nullptr == subCaptureCommon);
+
+        if (subCaptureCommon->subCaptureMode > AubSubCaptureManager::SubCaptureMode::Off) {
+            csr->subCaptureManager = std::make_unique<AubSubCaptureManager>(fullName, *subCaptureCommon);
+        }
+
         if (csr->aubManager) {
             if (!csr->aubManager->isOpen()) {
-                csr->aubManager->open(fullName);
+                MultiDispatchInfo dispatchInfo;
+                csr->aubManager->open(csr->subCaptureManager ? csr->subCaptureManager->getSubCaptureFileName(dispatchInfo) : fullName);
                 UNRECOVERABLE_IF(!csr->aubManager->isOpen());
             }
         }
@@ -179,6 +192,12 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
 
 template <typename GfxFamily>
 FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    if (subCaptureManager) {
+        if (aubManager) {
+            aubManager->pause(false);
+        }
+    }
+
     initializeEngine();
 
     // Write our batch buffer
@@ -196,7 +215,19 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     // Write allocations for residency
     processResidency(allocationsForResidency);
 
+    if (subCaptureManager && !subCaptureManager->isSubCaptureEnabled()) {
+        if (aubManager) {
+            aubManager->pause(true);
+        }
+    }
+
     submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+
+    if (subCaptureManager) {
+        pollForCompletion();
+        subCaptureManager->disableSubCapture();
+    }
+
     return 0;
 }
 
@@ -412,12 +443,17 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency) {
     for (auto &gfxAllocation : allocationsForResidency) {
+        if (dumpTbxNonWritable) {
+            this->setTbxWritable(true, *gfxAllocation);
+        }
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) ||
                              !this->isTbxWritable(*gfxAllocation)));
         }
         gfxAllocation->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
     }
+
+    dumpTbxNonWritable = false;
 }
 
 template <typename GfxFamily>
@@ -449,5 +485,18 @@ uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPollForComplet
 template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::getpollNotEqualValueForPollForCompletion() const {
     return false;
+}
+
+template <typename GfxFamily>
+AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+    if (!subCaptureManager) {
+        return {false, false};
+    }
+
+    auto status = subCaptureManager->checkAndActivateSubCapture(dispatchInfo);
+    if (status.isActive && !status.wasActiveInPreviousEnqueue) {
+        dumpTbxNonWritable = true;
+    }
+    return status;
 }
 } // namespace NEO

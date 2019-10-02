@@ -356,6 +356,15 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledForEmptyDispatchInfoThenGenerateToggleFileNameWithoutKernelName) {
+    AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
+
+    MultiDispatchInfo dispatchInfo;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    auto toggleFileName = aubSubCaptureManager.generateToggleFileName(dispatchInfo);
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(dispatchInfo).c_str());
+}
+
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledManyTimesAndExternalFileNameIsNotSpecifiedThenItGeneratesFilterFileNameOnceOnly) {
     struct AubSubCaptureManagerMockWithFilterFileNameGenerationCount : AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
