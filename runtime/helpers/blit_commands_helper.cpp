@@ -46,18 +46,50 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
                                                                      CommandStreamReceiver &commandStreamReceiver,
                                                                      const BuiltinOpParams &builtinOpParams,
                                                                      bool blocking) {
-    auto mapAllocation = builtinOpParams.mapAllocation;
+    GraphicsAllocation *hostAllocation = builtinOpParams.mapAllocation;
+    GraphicsAllocation *gpuAllocation = nullptr;
+    size_t copyOffset = 0;
+    size_t memObjOffset = 0;
+
+    void *hostPtr = nullptr;
+    size_t hostPtrOffset = 0;
+
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
-        return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.dstMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.dstMemObj->getOffset(), mapAllocation, builtinOpParams.srcPtr,
-                                                     builtinOpParams.srcOffset.x, blocking, builtinOpParams.dstOffset.x,
-                                                     builtinOpParams.size.x);
-    } else {
-        return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.srcMemObj->getGraphicsAllocation(),
-                                                     builtinOpParams.srcMemObj->getOffset(), mapAllocation, builtinOpParams.dstPtr,
-                                                     builtinOpParams.dstOffset.x, blocking, builtinOpParams.srcOffset.x,
-                                                     builtinOpParams.size.x);
+        // write buffer
+        if (builtinOpParams.dstSvmAlloc) {
+            gpuAllocation = builtinOpParams.dstSvmAlloc;
+            hostAllocation = builtinOpParams.srcSvmAlloc;
+        } else {
+            gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
+            memObjOffset = builtinOpParams.dstMemObj->getOffset();
+        }
+
+        hostPtr = builtinOpParams.srcPtr;
+        hostPtrOffset = builtinOpParams.srcOffset.x;
+        copyOffset = builtinOpParams.dstOffset.x;
     }
+
+    if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection) {
+        // read buffer
+        if (builtinOpParams.srcSvmAlloc) {
+            gpuAllocation = builtinOpParams.srcSvmAlloc;
+            hostAllocation = builtinOpParams.dstSvmAlloc;
+        } else {
+            gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation();
+            memObjOffset = builtinOpParams.srcMemObj->getOffset();
+        }
+
+        hostPtr = builtinOpParams.dstPtr;
+        hostPtrOffset = builtinOpParams.dstOffset.x;
+        copyOffset = builtinOpParams.srcOffset.x;
+    }
+
+    UNRECOVERABLE_IF(BlitterConstants::BlitDirection::HostPtrToBuffer != blitDirection &&
+                     BlitterConstants::BlitDirection::BufferToHostPtr != blitDirection);
+
+    return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation, memObjOffset,
+                                                 hostAllocation, hostPtr, hostPtrOffset, blocking, copyOffset,
+                                                 builtinOpParams.size.x);
 }
 
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,

@@ -10,6 +10,7 @@
 #include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/linux/debug_env_reader.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
@@ -24,6 +25,7 @@
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
@@ -43,6 +45,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
@@ -784,6 +787,49 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
     }
 
     memoryManager->freeGraphicsMemory(mapAllocation);
+}
+
+HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesForReadWriteBufferCallThenSetValidAllocations) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockMemoryManager mockMemoryManager(true, true);
+    SVMAllocsManager svmAllocsManager(&mockMemoryManager);
+
+    auto svmAllocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_READ_WRITE);
+    auto svmAlloc = svmAllocsManager.createSVMAlloc(1, svmAllocationProperties);
+    auto svmData = svmAllocsManager.getSVMAlloc(svmAlloc);
+
+    EXPECT_NE(nullptr, svmData->gpuAllocation);
+    EXPECT_NE(nullptr, svmData->cpuAllocation);
+    EXPECT_NE(svmData->gpuAllocation, svmData->cpuAllocation);
+
+    {
+        // from hostPtr
+        BuiltinOpParams builtinOpParams = {};
+        builtinOpParams.dstSvmAlloc = svmData->gpuAllocation;
+        builtinOpParams.srcSvmAlloc = svmData->cpuAllocation;
+        builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
+        builtinOpParams.size.x = 1;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                    csr, builtinOpParams, true);
+        EXPECT_EQ(svmData->cpuAllocation, blitProperties.srcAllocation);
+        EXPECT_EQ(svmData->gpuAllocation, blitProperties.dstAllocation);
+    }
+    {
+        // to hostPtr
+        BuiltinOpParams builtinOpParams = {};
+        builtinOpParams.srcSvmAlloc = svmData->gpuAllocation;
+        builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
+        builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
+        builtinOpParams.size.x = 1;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                                    csr, builtinOpParams, true);
+        EXPECT_EQ(svmData->cpuAllocation, blitProperties.dstAllocation);
+        EXPECT_EQ(svmData->gpuAllocation, blitProperties.srcAllocation);
+    }
+
+    svmAllocsManager.freeSVMAlloc(svmAlloc);
 }
 
 HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrectGpuAddresses) {
