@@ -279,7 +279,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, blockingRequiresPipeContr
     }
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3ON) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3OrL1ON) {
     void *ptr = (void *)0x1040;
 
     cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
@@ -296,8 +296,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto gmmHelper = csr.peekExecutionEnvironment().getGmmHelper();
     auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    auto mocsIndexL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
 
-    EXPECT_EQ(mocsIndexL3on, csr.latestSentStatelessMocsConfig);
+    EXPECT_TRUE(mocsIndexL3on == csr.latestSentStatelessMocsConfig || mocsIndexL1on == csr.latestSentStatelessMocsConfig);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
@@ -319,6 +320,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
     auto gmmHelper = csr.peekExecutionEnvironment().getGmmHelper();
     auto mocsIndexL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    auto mocsIndexL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
 
     EXPECT_EQ(mocsIndexL3off, csr.latestSentStatelessMocsConfig);
 
@@ -334,7 +336,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
                                       nullptr,
                                       nullptr);
 
-    EXPECT_EQ(mocsIndexL3on, csr.latestSentStatelessMocsConfig);
+    EXPECT_TRUE(mocsIndexL3on == csr.latestSentStatelessMocsConfig || mocsIndexL1on == csr.latestSentStatelessMocsConfig);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
