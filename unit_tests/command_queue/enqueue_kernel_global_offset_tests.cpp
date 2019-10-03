@@ -12,8 +12,9 @@
 
 using namespace NEO;
 
-typedef HelloWorldTest<HelloWorldFixtureFactory> GlobalWorkOffset;
-TEST_F(GlobalWorkOffset, nullPointer) {
+using GlobalWorkOffset = HelloWorldTest<HelloWorldFixtureFactory>;
+
+TEST_F(GlobalWorkOffset, GivenNullGlobalWorkOffsetWhenEnqueuingKernelThenSuccessIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
 
