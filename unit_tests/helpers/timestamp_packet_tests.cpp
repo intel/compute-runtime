@@ -1591,6 +1591,26 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSiz
     EXPECT_EQ(sizeWithPcRequest, extendedSize);
 }
 
+HWTEST_F(TimestampPacketTests, givenPipeControlRequestWithBarrierWriteWhenEstimatingCsrStreamSizeThenAddSizeForPipeControlForWrite) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    TimestampPacketContainer barrierTimestampPacketNode;
+    barrierTimestampPacketNode.add(csr.getTimestampPacketAllocator()->getTag());
+
+    flags.barrierTimestampPacketNodes = &barrierTimestampPacketNode;
+
+    csr.stallingPipeControlOnNextFlushRequired = false;
+    auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    csr.stallingPipeControlOnNextFlushRequired = true;
+    auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    size_t extendedSize = sizeWithoutPcRequest + PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(device->getHardwareInfo());
+
+    EXPECT_EQ(sizeWithPcRequest, extendedSize);
+}
+
 HWTEST_F(TimestampPacketTests, givenInstructionCacheRequesWhenSizeIsEstimatedThenPipeControlIsAdded) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();

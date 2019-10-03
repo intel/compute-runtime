@@ -255,11 +255,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
 
     if (stallingPipeControlOnNextFlushRequired) {
-        stallingPipeControlOnNextFlushRequired = false;
-        auto stallingPipeControlCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-        *stallingPipeControlCmd = GfxFamily::cmdInitPipeControl;
-        stallingPipeControlCmd->setCommandStreamerStallEnable(true);
+        programStallingPipeControlForBarrier(commandStreamCSR, dispatchFlags);
     }
+
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, dispatchFlags);
     programComputeMode(commandStreamCSR, dispatchFlags);
@@ -499,6 +497,27 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 }
 
 template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
+    stallingPipeControlOnNextFlushRequired = false;
+
+    PIPE_CONTROL *stallingPipeControlCmd;
+    auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
+
+    if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() != 0) {
+        auto barrierTimestampPacketGpuAddress = dispatchFlags.barrierTimestampPacketNodes->peekNodes()[0]->getGpuAddress() +
+                                                offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+        stallingPipeControlCmd = PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            barrierTimestampPacketGpuAddress, 0, false, peekHwInfo());
+    } else {
+        stallingPipeControlCmd = PipeControlHelper<GfxFamily>::addPipeControl(cmdStream, false);
+    }
+
+    stallingPipeControlCmd->setCommandStreamerStallEnable(true);
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
         return;
@@ -624,8 +643,14 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
 
     if (stallingPipeControlOnNextFlushRequired) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
+        if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() > 0) {
+            size += PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+        } else {
+            size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        }
     }
+
     if (requiresInstructionCacheFlush) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }

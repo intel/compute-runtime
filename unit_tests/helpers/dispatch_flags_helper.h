@@ -14,6 +14,7 @@ struct DispatchFlagsHelper {
     static DispatchFlags createDefaultDispatchFlags() {
         return DispatchFlags(
             {},                                 //csrDependencies
+            nullptr,                            //barrierTimestampPacketNodes
             {},                                 //pipelineSelectArgs
             nullptr,                            //flushStampReference
             QueueThrottle::MEDIUM,              //throttle

@@ -44,12 +44,13 @@ constexpr uint32_t l3AndL1On = 2u;
 
 struct DispatchFlags {
     DispatchFlags() = delete;
-    DispatchFlags(CsrDependencies csrDependencies, PipelineSelectArgs pipelineSelectArgs, FlushStampTrackingObj *flushStampReference,
-                  QueueThrottle throttle, PreemptionMode preemptionMode, uint32_t numGrfRequired,
+    DispatchFlags(CsrDependencies csrDependencies, const TimestampPacketContainer *barrierTimestampPacketNodes, PipelineSelectArgs pipelineSelectArgs,
+                  FlushStampTrackingObj *flushStampReference, QueueThrottle throttle, PreemptionMode preemptionMode, uint32_t numGrfRequired,
                   uint32_t l3CacheSettings, uint64_t sliceCount, bool blocking, bool dcFlush,
                   bool useSLM, bool guardCommandBufferWithPipeControl, bool gsba32BitRequired,
                   bool requiresCoherency, bool lowPriority, bool implicitFlush,
                   bool outOfOrderExecutionAllowed, bool multiEngineQueue, bool epilogueRequired) : csrDependencies(csrDependencies),
+                                                                                                   barrierTimestampPacketNodes(barrierTimestampPacketNodes),
                                                                                                    pipelineSelectArgs(pipelineSelectArgs),
                                                                                                    flushStampReference(flushStampReference),
                                                                                                    throttle(throttle),
@@ -69,6 +70,7 @@ struct DispatchFlags {
                                                                                                    multiEngineQueue(multiEngineQueue),
                                                                                                    epilogueRequired(epilogueRequired){};
     CsrDependencies csrDependencies;
+    const TimestampPacketContainer *barrierTimestampPacketNodes = nullptr;
     PipelineSelectArgs pipelineSelectArgs;
     FlushStampTrackingObj *flushStampReference = nullptr;
     QueueThrottle throttle = QueueThrottle::MEDIUM;

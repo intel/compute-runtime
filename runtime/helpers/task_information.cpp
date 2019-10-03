@@ -46,6 +46,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
+        nullptr,                                                                     //barrierTimestampPacketNodes
         {},                                                                          //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
@@ -188,6 +189,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
+        nullptr,                                                                     //barrierTimestampPacketNodes
         {false, kernel->isVmeKernel()},                                              //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
@@ -252,6 +254,7 @@ void CommandWithoutKernel::dispatchBlitOperation() {
     auto &blitProperties = kernelOperation->blitProperties;
     blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *bcsCsr, CsrDependencies::DependenciesType::All);
     blitProperties.csrDependencies.push_back(previousTimestampPacketNodes.get());
+    blitProperties.csrDependencies.push_back(barrierTimestampPacketNodes.get());
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes.get();
 
     bcsCsr->blitBuffer(blitProperties);
@@ -280,6 +283,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
 
     DispatchFlags dispatchFlags(
         {},                                                   //csrDependencies
+        barrierTimestampPacketNodes.get(),                    //barrierTimestampPacketNodes
         {},                                                   //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),         //flushStampReference
         commandQueue.getThrottle(),                           //throttle
@@ -330,12 +334,15 @@ void Command::setEventsRequest(EventsRequest &eventsRequest) {
     }
 }
 
-void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous) {
+void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous, TimestampPacketContainer &barrier) {
     currentTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     currentTimestampPacketNodes->assignAndIncrementNodesRefCounts(current);
 
     previousTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     previousTimestampPacketNodes->assignAndIncrementNodesRefCounts(previous);
+
+    barrierTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
+    barrierTimestampPacketNodes->assignAndIncrementNodesRefCounts(barrier);
 }
 
 Command::~Command() {
@@ -363,6 +370,9 @@ void Command::makeTimestampPacketsResident(CommandStreamReceiver &commandStreamR
     }
     if (previousTimestampPacketNodes) {
         previousTimestampPacketNodes->makeResident(commandStreamReceiver);
+    }
+    if (barrierTimestampPacketNodes) {
+        barrierTimestampPacketNodes->makeResident(commandStreamReceiver);
     }
 }
 

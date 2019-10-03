@@ -188,6 +188,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     TimestampPacketContainer previousTimestampPacketNodes;
+    TimestampPacketContainer barrierTimestampPacketNode;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     CsrDependencies csrDeps;
     BlitProperties blitProperties;
@@ -200,6 +201,11 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
+        }
+
+        if (blitEnqueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+            auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+            barrierTimestampPacketNode.add(allocator->getTag());
         }
 
         if (nodesCount > 0) {
@@ -219,8 +225,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool flushDependenciesForNonKernelCommand = false;
 
     if (blitEnqueue) {
-        blitProperties = processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest, commandStream,
-                                                       commandType, blockQueue);
+        blitProperties = processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, barrierTimestampPacketNode,
+                                                       eventsRequest, commandStream, commandType, blockQueue);
     } else if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, devQueueHw, csrDeps, blockedCommandsData.get(),
@@ -289,6 +295,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 blocking,
                 enqueueProperties,
                 &previousTimestampPacketNodes,
+                barrierTimestampPacketNode,
                 eventsRequest,
                 eventBuilder,
                 taskLevel);
@@ -337,6 +344,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        numSurfaceForResidency,
                        multiDispatchInfo,
                        &previousTimestampPacketNodes,
+                       barrierTimestampPacketNode,
                        blockedCommandsData,
                        enqueueProperties,
                        eventsRequest,
@@ -431,6 +439,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
 template <typename GfxFamily>
 BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
                                                                         TimestampPacketContainer &previousTimestampPacketNodes,
+                                                                        TimestampPacketContainer &barrierTimestampPacketNode,
                                                                         const EventsRequest &eventsRequest, LinearStream &commandStream,
                                                                         uint32_t commandType, bool queueBlocked) {
     auto blitDirection = BlitProperties::obtainBlitDirection(commandType);
@@ -444,6 +453,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
                                                              CsrDependencies::DependenciesType::All);
 
         blitProperties.csrDependencies.push_back(&previousTimestampPacketNodes);
+        blitProperties.csrDependencies.push_back(&barrierTimestampPacketNode);
     }
 
     blitProperties.outputTimestampPacket = timestampPacketContainer.get();
@@ -662,6 +672,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     DispatchFlags dispatchFlags(
         {},                                                                                         //csrDependencies
+        nullptr,                                                                                    //barrierTimestampPacketNodes
         {},                                                                                         //pipelineSelectArgs
         this->flushStamp->getStampReference(),                                                      //flushStampReference
         getThrottle(),                                                                              //throttle
@@ -723,6 +734,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     size_t surfaceCount,
     const MultiDispatchInfo &multiDispatchInfo,
     TimestampPacketContainer *previousTimestampPacketNodes,
+    TimestampPacketContainer &barrierTimestampPacketNode,
     std::unique_ptr<KernelOperation> &blockedCommandsData,
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
@@ -801,7 +813,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
             event->incRefInternal();
         }
-        command->setTimestampPacketNode(*timestampPacketContainer, *previousTimestampPacketNodes);
+        command->setTimestampPacketNode(*timestampPacketContainer, *previousTimestampPacketNodes, barrierTimestampPacketNode);
         command->setEventsRequest(eventsRequest);
     }
     outEvent->setCommand(std::move(command));
@@ -826,6 +838,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     bool &blocking,
     const EnqueueProperties &enqueueProperties,
     TimestampPacketContainer *previousTimestampPacketNodes,
+    const TimestampPacketContainer &barrierTimestampPacketNodes,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     uint32_t taskLevel) {
@@ -853,6 +866,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
     DispatchFlags dispatchFlags(
         {},                                                                  //csrDependencies
+        &barrierTimestampPacketNodes,                                        //barrierTimestampPacketNodes
         {},                                                                  //pipelineSelectArgs
         flushStamp->getStampReference(),                                     //flushStampReference
         QueueThrottle::MEDIUM,                                               //throttle
