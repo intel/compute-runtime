@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/preamble.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
-#include "runtime/helpers/preamble.h"
 
 namespace NEO {
 struct SKLFamily;

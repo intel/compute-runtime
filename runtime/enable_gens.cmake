@@ -32,7 +32,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   hw_helper
   hw_info
   image
-  preamble
   preemption
   sampler
   state_base_address
@@ -64,6 +63,9 @@ macro(macro_for_each_gen)
   endforeach()
   if(EXISTS "${CORE_GENX_PREFIX}/hw_cmds_generated.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_cmds_generated.inl")
+  endif()
+  if(EXISTS "${CORE_GENX_PREFIX}/preamble_${GEN_TYPE_LOWER}.cpp")
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/preamble_${GEN_TYPE_LOWER}.cpp")
   endif()
   if(EXISTS "${CORE_GENX_PREFIX}/hw_cmds_generated_patched.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_cmds_generated_patched.inl")

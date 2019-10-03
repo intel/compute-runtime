@@ -7,6 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/linux/debug_env_reader.h"
@@ -19,7 +20,6 @@
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/cache_policy.h"
-#include "runtime/helpers/preamble.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"

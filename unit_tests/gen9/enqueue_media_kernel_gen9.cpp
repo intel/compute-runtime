@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/preamble.h"
+#include "core/helpers/preamble.h"
 #include "test.h"
 #include "unit_tests/fixtures/media_kernel_fixture.h"
 

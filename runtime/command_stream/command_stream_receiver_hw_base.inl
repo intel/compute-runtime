@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
+#include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -21,7 +22,6 @@
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/preamble.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"

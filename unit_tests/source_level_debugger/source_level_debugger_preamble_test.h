@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/preamble.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/preamble.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device.h"

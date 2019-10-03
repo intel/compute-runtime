@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/preamble.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/preamble.h"
 #include "unit_tests/command_stream/linear_stream_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"

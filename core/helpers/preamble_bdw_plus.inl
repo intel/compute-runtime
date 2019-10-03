@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/preamble_base.inl"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/preamble_base.inl"
 
 namespace NEO {
 
