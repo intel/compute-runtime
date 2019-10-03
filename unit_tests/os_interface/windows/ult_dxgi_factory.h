@@ -15,6 +15,7 @@
 namespace NEO {
 class UltIDXGIAdapter1 : public IDXGIAdapter1 {
   public:
+    const static wchar_t *description;
     // IDXGIAdapter1
     HRESULT STDMETHODCALLTYPE GetDesc1(
         _Out_ DXGI_ADAPTER_DESC1 *pDesc) {
@@ -22,7 +23,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
         if (pDesc == nullptr) {
             return S_FALSE;
         }
-        swprintf(pDesc->Description, 128, L"Intel");
+        swprintf(pDesc->Description, 128, description);
         pDesc->AdapterLuid.HighPart = 0x1234;
         pDesc->DeviceId = 0x1234;
         return S_OK;

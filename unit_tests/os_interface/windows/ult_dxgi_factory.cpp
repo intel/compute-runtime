@@ -22,4 +22,6 @@ void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
     pSystemInfo->lpMaximumApplicationAddress = is32bit ? (LPVOID)MemoryConstants::max32BitAppAddress : (LPVOID)MemoryConstants::max64BitAppAddress;
 }
 
+const wchar_t *UltIDXGIAdapter1::description = L"Intel";
+
 } // namespace NEO

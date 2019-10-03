@@ -21,6 +21,7 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/kmdaf_listener.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/sys_calls.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
@@ -35,12 +36,12 @@ std::wstring getIgdrclPath() {
     WCHAR path[255];
     HMODULE handle = NULL;
 
-    auto status = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                                        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                    (LPCWSTR)(&clGetPlatformIDs), &handle);
+    auto status = NEO::SysCalls::getModuleHandle(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                                     GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                                 reinterpret_cast<LPCWSTR>(&getIgdrclPath), &handle);
     if (status != 0) {
 
-        status = GetModuleFileName(handle, path, sizeof(path));
+        status = NEO::SysCalls::getModuleFileName(handle, path, sizeof(path));
         if (status != 0) {
             returnValue.append(path);
         }

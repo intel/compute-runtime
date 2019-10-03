@@ -22,7 +22,12 @@ BOOL closeHandle(HANDLE hObject) {
 BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
     return GetSystemPowerStatus(systemPowerStatusPtr);
 }
-
+BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
+    return GetModuleHandleEx(dwFlags, lpModuleName, phModule);
+}
+DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
+    return GetModuleFileName(hModule, lpFilename, nSize);
+}
 } // namespace SysCalls
 
 } // namespace NEO

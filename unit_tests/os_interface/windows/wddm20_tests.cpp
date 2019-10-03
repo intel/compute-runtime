@@ -20,16 +20,24 @@
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_gfx_partition.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
+#include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
 
 #include <functional>
 #include <memory>
+
+namespace NEO {
+namespace SysCalls {
+extern const wchar_t *igdrclFilePath;
+}
+} // namespace NEO
 
 using namespace NEO;
 
@@ -82,6 +90,70 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
 
     EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation));
+}
+
+TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHDAndgdrclPathDoesntContainDchDThenAdapterIsNotOpened) {
+    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
+    descriptionBackup = L"Intel DCH-D";
+    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
+    igdrclPathBackup = L"intel_dch.inf";
+
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+
+    MockWddm wddm;
+    bool isOpened = wddm.openAdapter();
+
+    EXPECT_FALSE(isOpened);
+}
+
+TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntContainDchIThenAdapterIsNotOpened) {
+    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
+    descriptionBackup = L"Intel DCH-I";
+    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
+    igdrclPathBackup = L"intel_dch.inf";
+
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+
+    auto wddm = std::make_unique<MockWddm>();
+    bool isOpened = wddm->openAdapter();
+
+    EXPECT_FALSE(isOpened);
+}
+
+TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHDAndgdrclPathContainsDchDThenAdapterIsOpened) {
+    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
+    descriptionBackup = L"Intel DCH-D";
+    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
+    igdrclPathBackup = L"intel_dch_d.inf";
+
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+
+    auto wddm = std::make_unique<MockWddm>();
+    bool isOpened = wddm->openAdapter();
+
+    EXPECT_TRUE(isOpened);
+}
+
+TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathContainsDchIThenAdapterIsOpened) {
+    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
+    descriptionBackup = L"Intel DCH-I";
+    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
+    igdrclPathBackup = L"intel_dch_i.inf";
+
+    struct MockWddm : Wddm {
+        using Wddm::openAdapter;
+    };
+
+    auto wddm = std::make_unique<MockWddm>();
+    bool isOpened = wddm->openAdapter();
+
+    EXPECT_TRUE(isOpened);
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
