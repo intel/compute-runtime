@@ -138,6 +138,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, addLriWithoutArbCheck) {
     delete mockDeviceQueueHw;
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, GivenDeviceQueueHWWhenEventPoolIsCreatedThenTimestampResolutionIsSet) {
+    auto timestampResolution = static_cast<float>(device->getProfilingTimerResolution());
+
+    auto deviceQueue = std::unique_ptr<DeviceQueue>(createQueueObject());
+    ASSERT_NE(deviceQueue, nullptr);
+
+    auto eventPoolBuffer = reinterpret_cast<IGIL_EventPool *>(deviceQueue->getEventPoolBuffer()->getUnderlyingBuffer());
+
+    EXPECT_FLOAT_EQ(timestampResolution, eventPoolBuffer->m_TimestampResolution);
+}
+
 class DeviceQueueSlb : public DeviceQueueHwTest {
   public:
     template <typename Cmd>

@@ -116,6 +116,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenMultipleDevic
     const_cast<DeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCreatedThenTimestampResolutionIsSet) {
+    auto timestampResolution = static_cast<float>(device->getProfilingTimerResolution());
+
+    auto deviceQueue = std::unique_ptr<DeviceQueue>(createQueueObject());
+    ASSERT_NE(deviceQueue, nullptr);
+
+    auto eventPoolBuffer = reinterpret_cast<IGIL_EventPool *>(deviceQueue->getEventPoolBuffer()->getUnderlyingBuffer());
+
+    EXPECT_FLOAT_EQ(timestampResolution, eventPoolBuffer->m_TimestampResolution);
+}
+
 typedef DeviceQueueTest DeviceQueueBuffer;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenNoPropertyGiven) {
@@ -170,6 +181,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, initValues) {
     IGIL_EventPool expectedIgilEventPool = {0, 0, 0};
     expectedIgilEventPool.m_head = 0;
     expectedIgilEventPool.m_size = deviceInfo.maxOnDeviceEvents;
+    expectedIgilEventPool.m_TimestampResolution = static_cast<float>(device->getProfilingTimerResolution());
 
     // initialized header
     EXPECT_EQ(0, memcmp(deviceQueue->getQueueBuffer()->getUnderlyingBuffer(),

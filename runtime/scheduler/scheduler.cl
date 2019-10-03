@@ -2665,9 +2665,9 @@ void UpdateEventsTreeStatusParallel( clk_event_t eventId, __global IGIL_EventPoo
                         CLCompleteTransitionTime = PROFILING_MAX_TIMER_VALUE - StartTime + CompleteTime;
                     }
                     //First value is END - START timestamp
-                    retValues[ 0 ] = ( ulong )( ( float )CLEndTransitionTime * __intel__getProfilingTimerResolution() );
+                    retValues[ 0 ] = ( ulong )( ( float )CLEndTransitionTime * eventsPool->m_TimestampResolution );
                     //Second value is COMPLETE - START timestamp
-                    retValues[ 1 ] = ( ulong )( ( float )CLCompleteTransitionTime * __intel__getProfilingTimerResolution() );
+                    retValues[ 1 ] = ( ulong )( ( float )CLCompleteTransitionTime * eventsPool->m_TimestampResolution );
                 }
             }
             //Signal parent because we completed

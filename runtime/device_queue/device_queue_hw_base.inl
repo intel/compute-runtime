@@ -35,6 +35,7 @@ void DeviceQueueHw<GfxFamily>::resetDeviceQueue() {
     auto igilEventPool = reinterpret_cast<IGIL_EventPool *>(eventPoolBuffer->getUnderlyingBuffer());
 
     memset(eventPoolBuffer->getUnderlyingBuffer(), 0x0, eventPoolBuffer->getUnderlyingBufferSize());
+    igilEventPool->m_TimestampResolution = static_cast<float>(device->getProfilingTimerResolution());
     igilEventPool->m_size = caps.maxOnDeviceEvents;
 
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());
