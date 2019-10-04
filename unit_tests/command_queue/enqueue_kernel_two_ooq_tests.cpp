@@ -59,7 +59,6 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
             &event1);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ);
 
         // Create a second command queue (beyond the default one)
         pCmdQ2 = createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
@@ -76,10 +75,12 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
             &event2);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
-        HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
         pCmdQ->flush();
         pCmdQ2->flush();
+
+        HardwareParse::parseCommands<FamilyType>(*pCmdQ);
+        HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
         Event *E1 = castToObject<Event>(event1);
         ASSERT_NE(nullptr, E1);
