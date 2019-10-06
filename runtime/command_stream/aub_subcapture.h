@@ -68,7 +68,8 @@ class AubSubCaptureManager {
   protected:
     MOCKABLE_VIRTUAL bool isSubCaptureToggleActive() const;
     bool isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo);
-    MOCKABLE_VIRTUAL std::string getExternalFileName() const;
+    MOCKABLE_VIRTUAL std::string getAubCaptureFileName() const;
+    MOCKABLE_VIRTUAL std::string getToggleFileName() const;
     MOCKABLE_VIRTUAL std::string generateFilterFileName() const;
     MOCKABLE_VIRTUAL std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const;
     bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const;
@@ -78,7 +79,7 @@ class AubSubCaptureManager {
     bool subCaptureWasActiveInPreviousEnqueue = false;
     uint32_t kernelCurrentIdx = 0;
     uint32_t kernelNameMatchesNum = 0;
-    bool useExternalFileName = true;
+    bool useToggleFileName = true;
     std::string initialFileName;
     std::string currentFileName;
     std::unique_ptr<SettingsReader> settingsReader;

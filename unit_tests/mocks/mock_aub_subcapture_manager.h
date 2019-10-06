@@ -32,8 +32,8 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
     uint32_t getKernelCurrentIndex() const {
         return kernelCurrentIdx;
     }
-    bool getUseExternalFileName() const {
-        return useExternalFileName;
+    bool getUseToggleFileName() const {
+        return useToggleFileName;
     }
     const std::string &getInitialFileName() const {
         return initialFileName;
@@ -50,11 +50,11 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
     bool isSubCaptureToggleActive() const override {
         return isToggledOn;
     }
-    void setExternalFileName(const std::string &fileName) {
-        externalFileName = fileName;
+    void setToggleFileName(const std::string &fileName) {
+        toggleFileName = fileName;
     }
-    std::string getExternalFileName() const override {
-        return externalFileName;
+    std::string getToggleFileName() const override {
+        return toggleFileName;
     }
 
     std::unique_lock<std::mutex> lock() const override {
@@ -64,10 +64,11 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
 
     using AubSubCaptureManager::generateFilterFileName;
     using AubSubCaptureManager::generateToggleFileName;
+    using AubSubCaptureManager::getAubCaptureFileName;
 
     mutable bool isLocked = false;
 
   protected:
     bool isToggledOn = false;
-    std::string externalFileName = "";
+    std::string toggleFileName = "";
 };

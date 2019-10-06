@@ -45,13 +45,19 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureToggleCaptureOnOff
     EXPECT_FALSE(aubSubCaptureManagerWithToggleActiveMock.isSubCaptureToggleActive());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureToggleFileNameIsUnspecifiedThenEmptyExternalFileNameIsReturnedByDefault) {
-    struct AubSubCaptureManagerWithToggleActiveMock : public AubSubCaptureManager {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureToggleFileNameIsUnspecifiedThenEmptyToggleFileNameIsReturnedByDefault) {
+    struct AubSubCaptureManagerWithToggleFileNameMock : public AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
-        using AubSubCaptureManager::getExternalFileName;
-    } aubSubCaptureManagerWithToggleActiveMock("", subCaptureCommon);
+        using AubSubCaptureManager::getToggleFileName;
+    } aubSubCaptureManagerWithToggleFileNameMock("", subCaptureCommon);
 
-    EXPECT_STREQ("", aubSubCaptureManagerWithToggleActiveMock.getExternalFileName().c_str());
+    EXPECT_STREQ("", aubSubCaptureManagerWithToggleFileNameMock.getToggleFileName().c_str());
+}
+
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenAubCaptureFileNameIsUnspecifiedThenEmptyFileNameIsReturnedByDefault) {
+    AubSubCaptureManagerMock aubSubCaptureManager("file_name.aub", subCaptureCommon);
+
+    EXPECT_STREQ("", aubSubCaptureManager.getAubCaptureFileName().c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenItIsCreatedThenItIsInitializedWithDefaults) {
@@ -66,7 +72,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenItIsCreatedThenItIsInitializ
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
     EXPECT_FALSE(aubSubCaptureManager.wasSubCaptureActiveInPreviousEnqueue());
     EXPECT_EQ(0u, aubSubCaptureManager.getKernelCurrentIndex());
-    EXPECT_TRUE(aubSubCaptureManager.getUseExternalFileName());
+    EXPECT_TRUE(aubSubCaptureManager.getUseToggleFileName());
     EXPECT_STREQ(initialFileName.c_str(), aubSubCaptureManager.getInitialFileName().c_str());
     EXPECT_STREQ("", aubSubCaptureManager.getCurrentFileName().c_str());
     EXPECT_NE(nullptr, aubSubCaptureManager.getSettingsReader());
@@ -292,6 +298,15 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureActiveStatesAreDet
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureEnabled());
 }
 
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenGetSubCaptureFileNameIsCalledAndAubCaptureFileNameIsSpecifiedThenItReturnsTheSpecifiedFileName) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
+
+    AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
+    MultiDispatchInfo multiDispatchInfo;
+    EXPECT_STREQ("aubcapture_file_name.aub", aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+}
+
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInOffModeWhenGetSubCaptureFileNameIsCalledThenItReturnsEmptyFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
     DispatchInfo dispatchInfo;
@@ -300,47 +315,60 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInOffModeWhenGetSubCaptureFileNa
     EXPECT_STREQ("", aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndExternalFileNameIsSpecifiedThenItReturnsItsName) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsSpecifiedThenItReturnsItsName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    std::string externalFileName = "external_file_name.aub";
-    aubSubCaptureManager.setExternalFileName(externalFileName);
+    std::string toggleFileName = "toggle_file_name.aub";
+    aubSubCaptureManager.setToggleFileName(toggleFileName);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    EXPECT_STREQ(externalFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndExternalFileNameIsSpecifiedThenItReturnsItsName) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsSpecifiedThenItReturnsItsName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    std::string externalFileName = "external_file_name.aub";
-    aubSubCaptureManager.setExternalFileName(externalFileName);
+    std::string toggleFileName = "toggle_file_name.aub";
+    aubSubCaptureManager.setToggleFileName(toggleFileName);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    EXPECT_STREQ(externalFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndExternalFileNameIsNotSpecifiedThenItGeneratesFilterFileName) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndBothToggleAndAubCaptureFileNamesAreSpecifiedThenToggleNameTakesPrecedence) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
+
+    AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
+
+    MultiDispatchInfo multiDispatchInfo;
+    std::string toggleFileName = "toggle_file_name.aub";
+    aubSubCaptureManager.setToggleFileName(toggleFileName);
+
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+}
+
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsNotSpecifiedThenItGeneratesFilterFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    std::string externalFileName = "";
-    aubSubCaptureManager.setExternalFileName(externalFileName);
+    aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     std::string filterFileName = aubSubCaptureManager.generateFilterFileName();
     EXPECT_STREQ(filterFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndExternalFileNameIsNotSpecifiedThenItGeneratesToggleFileName) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsNotSpecifiedThenItGeneratesToggleFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
@@ -348,8 +376,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    std::string externalFileName = "";
-    aubSubCaptureManager.setExternalFileName(externalFileName);
+    aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(multiDispatchInfo);
@@ -365,7 +392,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(dispatchInfo).c_str());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledManyTimesAndExternalFileNameIsNotSpecifiedThenItGeneratesFilterFileNameOnceOnly) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledManyTimesAndToggleFileNameIsNotSpecifiedThenItGeneratesFilterFileNameOnceOnly) {
     struct AubSubCaptureManagerMockWithFilterFileNameGenerationCount : AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
         std::string generateFilterFileName() const override {
@@ -385,7 +412,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFil
     EXPECT_EQ(1u, aubSubCaptureManager.generateFilterFileNameCount);
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledManyTimesAndExternalFileNameIsNotSpecifiedThenItGeneratesToggleFileNameOnceOnly) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledManyTimesAndToggleFileNameIsNotSpecifiedThenItGeneratesToggleFileNameOnceOnly) {
     struct AubSubCaptureManagerMockWithToggleFileNameGenerationCount : AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
         std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const override {
@@ -471,8 +498,7 @@ TEST_F(AubSubCaptureTest, givenMultiDispatchInfoWithMultipleKernelsWhenGenerateT
     multiDispatchInfo.push(mainDispatchInfo);
     multiDispatchInfo.push(dispatchInfo2);
 
-    std::string externalFileName = "";
-    aubSubCaptureManager.setExternalFileName(externalFileName);
+    aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(multiDispatchInfo);
