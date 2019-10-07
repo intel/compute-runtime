@@ -25,7 +25,11 @@ int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     SYSTEM_ENTER();
     do {
+#if defined(__ANDROID__)
+        ret = ::ioctl(fd, static_cast<unsigned int>(request), arg);
+#else
         ret = ::ioctl(fd, request, arg);
+#endif
     } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
     SYSTEM_LEAVE(request);
     return ret;

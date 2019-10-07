@@ -85,7 +85,10 @@ if(WIN32)
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
-  set(IGDRCL_EXTRA_LIBS dl pthread)
+  set(IGDRCL_EXTRA_LIBS dl)
+  if (NOT ANDROID)
+    list(APPEND IGDRCL_EXTRA_LIBS pthread)
+  endif()
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     os_interface/linux
     ${I915_INCLUDES_DIR}

@@ -840,7 +840,7 @@ else()
     endif()
 endif()
 
-if(DEFAULT_TESTED_PLATFORM)
+if(DEFAULT_TESTED_PLATFORM AND (NOT ANDROID))
   add_subdirectory_unique(unit_tests ${NEO_BUILD_DIR}/unit_tests)
 else()
   hide_subdir(unit_tests)

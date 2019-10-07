@@ -16,7 +16,9 @@
 #include <cstdio>
 #include <cxxabi.h>
 #include <dlfcn.h>
+#if !defined(__ANDROID__)
 #include <execinfo.h>
+#endif
 #elif defined(_WIN32)
 #include <Windows.h>
 #pragma warning(push)           // Saves the current warning state.

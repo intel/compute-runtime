@@ -121,7 +121,10 @@ if(MSVC)
 endif()
 
 if(UNIX)
-  target_link_libraries(ocloc dl pthread)
+  target_link_libraries(ocloc dl)
+  if (NOT ANDROID)
+    target_link_libraries(ocloc pthread)
+  endif()
 endif()
 
 target_link_libraries(ocloc elflib)
