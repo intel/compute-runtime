@@ -14,7 +14,6 @@ if(TESTS_GEN11)
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_media_sampler_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen11.cpp
@@ -22,11 +21,14 @@ if(TESTS_GEN11)
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen11.cpp
   )
+
+  get_property(NEO_CORE_TESTS_GEN11 GLOBAL PROPERTY NEO_CORE_TESTS_GEN11)
+  list(APPEND IGDRCL_SRCS_tests_gen11 ${NEO_CORE_TESTS_GEN11})
+
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen11})
   add_subdirectories()
 endif()

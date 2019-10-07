@@ -6,14 +6,14 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.h"
+#include "core/unit_tests/source_level_debugger/source_level_debugger_preamble_test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 typedef ICLFamily GfxFamily;
 
-#include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.inl"
+#include "core/unit_tests/source_level_debugger/source_level_debugger_preamble_test.inl"
 
 using PreambleTestGen11 = ::testing::Test;
 

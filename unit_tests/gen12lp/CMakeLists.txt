@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,11 +24,14 @@ if(TESTS_GEN12LP)
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen12lp.cpp
   )
+
+  get_property(NEO_CORE_TESTS_GEN12LP GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP)
+  list(APPEND IGDRCL_SRCS_tests_gen12lp ${NEO_CORE_TESTS_GEN12LP})
+
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen12lp})
   add_subdirectories()
 endif()

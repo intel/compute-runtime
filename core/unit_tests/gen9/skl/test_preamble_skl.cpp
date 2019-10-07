@@ -7,11 +7,11 @@
 
 #include "core/helpers/preamble.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/preamble/preamble_fixture.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/gen9/reg_configs.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/preamble/preamble_fixture.h"
 
 using namespace NEO;
 
