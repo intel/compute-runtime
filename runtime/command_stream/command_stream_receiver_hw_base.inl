@@ -259,7 +259,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     initPageTableManagerRegisters(commandStreamCSR);
-    programPreemption(commandStreamCSR, dispatchFlags);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -274,6 +273,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
 
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
+
+    programPreemption(commandStreamCSR, dispatchFlags);
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
     bool iohDirty = iohState.updateAndCheck(&ioh);
