@@ -21,7 +21,8 @@ enum SharingType {
     D3D9_SHARING = 2,
     D3D10_SHARING = 3,
     D3D11_SHARING = 4,
-    MAX_SHARING_VALUE = 5
+    UNIFIED_SHARING = 5,
+    MAX_SHARING_VALUE = 6
 };
 
 class SharingContextBuilder {
@@ -36,7 +37,7 @@ class SharingBuilderFactory {
     virtual ~SharingBuilderFactory() = default;
     virtual std::unique_ptr<SharingContextBuilder> createContextBuilder() = 0;
     virtual std::string getExtensions() = 0;
-    virtual void fillGlobalDispatchTable() = 0;
+    virtual void fillGlobalDispatchTable() {}
     virtual void *getExtensionFunctionAddress(const std::string &functionName) = 0;
 };
 
