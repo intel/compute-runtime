@@ -3227,3 +3227,26 @@ TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWh
     auto retVal = mockProgram.setProgramSpecializationConstant(1, sizeof(int), &specValue);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
+
+using ProgramBinTest = Test<ProgramSimpleFixture>;
+
+TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramThenProcessingTimeIsPrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintProgramBinaryProcessingTime.set(true);
+    testing::internal::CaptureStdout();
+
+    cl_device_id device = pDevice;
+    CreateProgramFromBinary<Program>(pContext, &device, "kernel_data_param");
+
+    auto retVal = pProgram->build(
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr,
+        false);
+
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.compare(0, 14, "Elapsed time: "));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}

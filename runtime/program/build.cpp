@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/utilities/time_measure_wrapper.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/device/device.h"
@@ -110,7 +111,12 @@ cl_int Program::build(
         }
         updateNonUniformFlag();
 
-        retVal = processGenBinary();
+        if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
+            retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary);
+        } else {
+            retVal = processGenBinary();
+        }
+
         if (retVal != CL_SUCCESS) {
             break;
         }
