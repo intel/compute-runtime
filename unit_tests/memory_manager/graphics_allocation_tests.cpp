@@ -11,6 +11,20 @@
 
 using namespace NEO;
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAdditionalDataIsSetToNull) {
+    MockGraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, maxOsContextCount, MemoryPool::MemoryNull);
+    EXPECT_EQ(graphicsAllocation.getAdditionalData(), nullptr);
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSetAdditionalDataThenAdditionalDataIsSetCorrectly) {
+    MockGraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, maxOsContextCount, MemoryPool::MemoryNull);
+    uint32_t dataToCheck = 32u;
+
+    graphicsAllocation.setAdditionalData(&dataToCheck);
+
+    EXPECT_EQ(*static_cast<uint32_t *>(graphicsAllocation.getAdditionalData()), dataToCheck);
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
     MockGraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, maxOsContextCount, MemoryPool::MemoryNull);
     for (auto i = 0u; i < maxOsContextCount; i++) {
