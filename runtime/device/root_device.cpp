@@ -8,6 +8,7 @@
 #include "runtime/device/root_device.h"
 
 #include "runtime/device/sub_device.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
@@ -39,19 +40,22 @@ Device *RootDevice::getDeviceById(uint32_t deviceId) const {
 
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : Device(executionEnvironment, deviceIndex) {}
 bool RootDevice::createDeviceImpl() {
-    auto status = Device::createDeviceImpl();
-    if (!status) {
-        return status;
+    auto numSubDevices = DeviceHelper::getDevicesCount(&getHardwareInfo());
+    if (numSubDevices == 1) {
+        numSubDevices = 0;
     }
-    auto numSubDevices = DebugManager.flags.CreateMultipleSubDevices.get();
     subdevices.reserve(numSubDevices);
-    for (int i = 0; i < numSubDevices; i++) {
+    for (auto i = 0u; i < numSubDevices; i++) {
 
         auto subDevice = Device::create<SubDevice>(executionEnvironment, deviceIndex + i + 1, i, *this);
         if (!subDevice) {
             return false;
         }
         subdevices.push_back(std::unique_ptr<SubDevice>(subDevice));
+    }
+    auto status = Device::createDeviceImpl();
+    if (!status) {
+        return status;
     }
     return true;
 }
@@ -69,5 +73,20 @@ DeviceBitfield RootDevice::getDeviceBitfieldForOsContext() const {
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(deviceIndex);
     return deviceBitfield;
+}
+
+bool RootDevice::createEngines() {
+    if (!executionEnvironment->initializeRootCommandStreamReceiver(*this)) {
+        return Device::createEngines();
+    }
+    return true;
+}
+
+void RootDevice::setupRootEngine(EngineControl engine) {
+    if (engines.size() > 0u) {
+        return;
+    }
+    defaultEngineIndex = 0;
+    engines.emplace_back(engine);
 }
 } // namespace NEO

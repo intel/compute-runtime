@@ -33,6 +33,9 @@ class MockDevice : public RootDevice {
     void setDriverInfo(DriverInfo *driverInfo);
     bool hasDriverInfo();
 
+    static bool createSingleDevice;
+    bool createDeviceImpl() override;
+
     bool getCpuTime(uint64_t *timeStamp) { return true; };
     MockDevice();
     MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);

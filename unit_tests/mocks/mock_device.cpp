@@ -16,6 +16,8 @@
 
 using namespace NEO;
 
+bool MockDevice::createSingleDevice = true;
+
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment);
@@ -38,6 +40,13 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t devi
     executionEnvironment->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
     initializeCaps();
+}
+
+bool MockDevice::createDeviceImpl() {
+    if (MockDevice::createSingleDevice) {
+        return Device::createDeviceImpl();
+    }
+    return RootDevice::createDeviceImpl();
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {

@@ -24,6 +24,7 @@
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -219,6 +220,7 @@ TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenD
 using CommandQueueWithSubDevicesTest = ::testing::Test;
 HWTEST_F(CommandQueueWithSubDevicesTest, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsCreatedThenBcsIsTakenFromFirstSubDevice) {
     DebugManagerStateRestore restorer;
+    VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
     HardwareInfo hwInfo = *platformDevices[0];

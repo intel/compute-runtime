@@ -116,7 +116,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     virtual bool createDeviceImpl();
     virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
-    bool createEngines();
+    virtual bool createEngines();
     bool createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 
     MOCKABLE_VIRTUAL void initializeCaps();

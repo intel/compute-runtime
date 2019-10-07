@@ -24,6 +24,7 @@ class GmmHelper;
 class MemoryManager;
 class SourceLevelDebugger;
 class OSInterface;
+class RootDevice;
 class MemoryOperationsHandler;
 struct EngineControl;
 struct HardwareInfo;
@@ -44,7 +45,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     void initGmm();
     bool initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex);
-    void initializeSpecialCommandStreamReceiver();
+    MOCKABLE_VIRTUAL bool initializeRootCommandStreamReceiver(RootDevice &rootDevice);
     void initializeMemoryManager();
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);
@@ -55,14 +56,12 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
-    EngineControl *getEngineControlForSpecialCsr();
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<AubCenter> aubCenter;
     CsrContainer commandStreamReceivers;
-    std::unique_ptr<CommandStreamReceiver> specialCommandStreamReceiver;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

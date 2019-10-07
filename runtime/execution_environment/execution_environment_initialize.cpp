@@ -8,7 +8,8 @@
 #include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
-void ExecutionEnvironment::initializeSpecialCommandStreamReceiver() {
+bool ExecutionEnvironment::initializeRootCommandStreamReceiver(RootDevice &device) {
+    return false;
 }
 
 } // namespace NEO

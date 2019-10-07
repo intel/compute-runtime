@@ -33,7 +33,7 @@ TEST(AubHelper, WhenGetPtEntryBitsIsCalledThenEntryBitsAreNotMasked) {
     EXPECT_EQ(entryBits, maskedEntryBits);
 }
 
-TEST(AubHelper, GivenMultipleDevicesWhenGettingDeviceCountThenCorrectValueIsReturned) {
+TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsReturned) {
     DebugManagerStateRestore stateRestore;
     FeatureTable featureTable = {};
     WorkaroundTable workaroundTable = {};
@@ -41,12 +41,12 @@ TEST(AubHelper, GivenMultipleDevicesWhenGettingDeviceCountThenCorrectValueIsRetu
     GT_SYSTEM_INFO sysInfo = {};
     PLATFORM platform = {};
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
 
     uint32_t devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
-    DebugManager.flags.CreateMultipleRootDevices.set(0);
+    DebugManager.flags.CreateMultipleSubDevices.set(0);
     devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }

@@ -21,13 +21,14 @@ class RootDevice : public Device {
     uint32_t getNumSubDevices() const;
     uint32_t getRootDeviceIndex() const override;
     Device *getDeviceById(uint32_t deviceId) const override;
-
     /* We hide the retain and release function of BaseObject. */
     void retain() override;
     unique_ptr_if_unused<Device> release() override;
+    void setupRootEngine(EngineControl engineControl);
 
   protected:
     DeviceBitfield getDeviceBitfieldForOsContext() const override;
+    bool createEngines() override;
     std::vector<std::unique_ptr<SubDevice>> subdevices;
 };
 } // namespace NEO

@@ -120,14 +120,6 @@ BuiltIns *ExecutionEnvironment::getBuiltIns() {
     return this->builtins.get();
 }
 
-EngineControl *ExecutionEnvironment::getEngineControlForSpecialCsr() {
-    EngineControl *engine = nullptr;
-    if (specialCommandStreamReceiver.get()) {
-        engine = memoryManager->getRegisteredEngineForCsr(specialCommandStreamReceiver.get());
-    }
-    return engine;
-}
-
 bool ExecutionEnvironment::isFullRangeSvm() const {
     return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
 }

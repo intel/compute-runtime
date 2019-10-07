@@ -25,6 +25,7 @@ TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSu
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItsSubdevicesHaveProperRootIdSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -40,6 +41,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -56,6 +58,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     auto subDevice0 = device->subdevices.at(0).get();
@@ -93,17 +96,20 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
 TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCreatedThenEachHasUniqueDeviceIndex) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
-    DebugManager.flags.CreateMultipleSubDevices.set(3);
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
     platform()->initialize();
-    EXPECT_EQ(0u, platform()->getDevice(0)->getDeviceIndex());
-    EXPECT_EQ(4u, platform()->getDevice(1)->getDeviceIndex());
+    auto device = static_cast<RootDevice *>(platform()->getDevice(0));
+    EXPECT_EQ(0u, device->getDeviceIndex());
+    EXPECT_EQ(2u, device->getNumSubDevices());
+    EXPECT_EQ(1u, device->getDeviceById(0)->getDeviceIndex());
+    EXPECT_EQ(2u, device->getDeviceById(1)->getDeviceIndex());
 }
 
 TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDeviceId) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -127,6 +133,7 @@ TEST(SubDevicesTest, givenDeviceWithoutSubDevicesWhenGettingDeviceByIdZeroThenGe
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     EXPECT_EQ(2u, device->getNumSubDevices());
     EXPECT_EQ(device->subdevices.at(0).get(), device->getDeviceById(0));
@@ -137,10 +144,53 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrec
 TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     EXPECT_EQ(2u, device->getNumSubDevices());
     auto subDevice = device->subdevices.at(0).get();
 
     EXPECT_EQ(subDevice, subDevice->getDeviceById(0));
     EXPECT_THROW(subDevice->getDeviceById(1), std::exception);
+}
+
+TEST(SubDevicesTest, givenRootDeviceWithSubdevicesWhenSetupRootEngineOnceAgainThenDontOverrideEngine) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    EXPECT_EQ(2u, device->getNumSubDevices());
+    auto subDevice = device->subdevices.at(0).get();
+
+    auto subDeviceEngine = subDevice->getDefaultEngine();
+    auto rootDeviceEngine = device->getDefaultEngine();
+
+    EXPECT_NE(subDeviceEngine.commandStreamReceiver, rootDeviceEngine.commandStreamReceiver);
+    EXPECT_NE(subDeviceEngine.osContext, rootDeviceEngine.osContext);
+
+    device->setupRootEngine(subDeviceEngine);
+    rootDeviceEngine = device->getDefaultEngine();
+
+    EXPECT_NE(subDeviceEngine.commandStreamReceiver, rootDeviceEngine.commandStreamReceiver);
+    EXPECT_NE(subDeviceEngine.osContext, rootDeviceEngine.osContext);
+}
+
+TEST(SubDevicesTest, givenRootDeviceWithoutEngineWhenSetupRootEngine) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    MockDevice device(executionEnvironment, 0);
+    EXPECT_EQ(0u, device.engines.size());
+    EngineControl dummyEngine{reinterpret_cast<CommandStreamReceiver *>(0x123), reinterpret_cast<OsContext *>(0x456)};
+    device.setupRootEngine(dummyEngine);
+    EXPECT_EQ(1u, device.engines.size());
+    EXPECT_EQ(dummyEngine.commandStreamReceiver, device.engines[0].commandStreamReceiver);
+    EXPECT_EQ(dummyEngine.osContext, device.engines[0].osContext);
+
+    device.engines.clear();
+}
+
+TEST(SubDevicesTest, givenRootDeviceWhenExecutionEnvironmentInitializesRootCommandStreamReceiverThenDeviceDoesntCreateExtraEngines) {
+    auto executionEnvironment = new MockExecutionEnvironment;
+    executionEnvironment->initRootCommandStreamReceiver = true;
+    executionEnvironment->initializeMemoryManager();
+    std::unique_ptr<MockDevice> device(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0u));
+    EXPECT_EQ(0u, device->engines.size());
 }

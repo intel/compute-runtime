@@ -8,13 +8,14 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
 
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
@@ -382,6 +383,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComm
 using LowPriorityCommandQueueTest = ::testing::Test;
 HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPriorityCommandQueueThenEngineFromFirstSubdeviceIsTaken) {
     DebugManagerStateRestore restorer;
+    VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     MockContext context;
     cl_queue_properties properties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};

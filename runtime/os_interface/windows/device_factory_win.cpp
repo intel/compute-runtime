@@ -8,7 +8,6 @@
 #ifdef _WIN32
 
 #include "runtime/device/device.h"
-#include "runtime/helpers/device_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/hw_info_config.h"
@@ -31,7 +30,10 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         return false;
     }
 
-    auto totalDeviceCount = DeviceHelper::getDevicesCount(hardwareInfo);
+    auto totalDeviceCount = 1u;
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        totalDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
+    }
 
     executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
     executionEnvironment.osInterface.reset(new OSInterface());

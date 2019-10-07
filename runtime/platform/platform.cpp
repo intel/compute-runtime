@@ -173,7 +173,6 @@ bool Platform::initialize() {
             return false;
         }
     }
-    executionEnvironment->initializeSpecialCommandStreamReceiver();
 
     auto hwInfo = executionEnvironment->getHardwareInfo();
 

@@ -173,7 +173,12 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto memoryManager = device->getMemoryManager();
-    EXPECT_EQ(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getRegisteredEnginesCount());
+    auto numEnginesForDevice = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
+    if (device->getNumAvailableDevices() > 1) {
+        numEnginesForDevice *= device->getNumAvailableDevices();
+        numEnginesForDevice += device->getExecutionEnvironment()->commandStreamReceivers[0].size();
+    }
+    EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
