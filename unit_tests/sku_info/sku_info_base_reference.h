@@ -165,6 +165,7 @@ struct SkuInfoBaseReference {
         refWaTable.waLimit128BMediaCompr = 1;
         refWaTable.waUntypedBufferCompression = 1;
         refWaTable.waAuxTable16KGranular = 1;
+        refWaTable.waDisableFusedThreadScheduling = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace NEO

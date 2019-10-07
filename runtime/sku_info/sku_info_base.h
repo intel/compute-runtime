@@ -117,5 +117,6 @@ struct WorkaroundTableBase {
     bool waLimit128BMediaCompr = false;
     bool waUntypedBufferCompression = false;
     bool waAuxTable16KGranular = false;
+    bool waDisableFusedThreadScheduling = false;
 };
 } // namespace NEO

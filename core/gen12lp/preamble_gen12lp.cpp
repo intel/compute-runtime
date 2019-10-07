@@ -76,7 +76,8 @@ uint32_t PreambleHelper<TGLLPFamily>::getUrbEntryAllocationSize() {
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState) {
+void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo) {
+    mediaVfeState->setDisableSlice0Subslice2(hwInfo.workaroundTable.waDisableFusedThreadScheduling);
 
     if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
         mediaVfeState->setDisableSlice0Subslice2(DebugManager.flags.CFEFusedEUDispatch.get());
