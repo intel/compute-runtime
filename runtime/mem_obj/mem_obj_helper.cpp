@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, ContextType contextType, bool preferCompression) {
+bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, Context &context, bool preferCompression) {
     return renderCompressed && preferCompression;
 }
 

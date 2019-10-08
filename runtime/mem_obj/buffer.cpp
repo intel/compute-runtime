@@ -149,8 +149,7 @@ Buffer *Buffer::create(Context *context,
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
         memoryProperties,
-        context->isSharedContext,
-        context->peekContextType(),
+        *context,
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
         memoryManager->isLocalMemorySupported(),
         HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size));
@@ -376,10 +375,10 @@ void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
     return;
 }
 
-GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryPropertiesFlags &properties, bool sharedContext,
-                                                                     ContextType contextType, bool renderCompressedBuffers,
-                                                                     bool isLocalMemoryEnabled, bool preferCompression) {
-    if (is32bit || sharedContext || properties.flags.forceSharedPhysicalMemory) {
+GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryPropertiesFlags &properties, Context &context,
+                                                                     bool renderCompressedBuffers, bool isLocalMemoryEnabled,
+                                                                     bool preferCompression) {
+    if (is32bit || context.isSharedContext || properties.flags.forceSharedPhysicalMemory) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
@@ -387,7 +386,7 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, contextType, preferCompression)) {
+    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, context, preferCompression)) {
         return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
     return GraphicsAllocation::AllocationType::BUFFER;
