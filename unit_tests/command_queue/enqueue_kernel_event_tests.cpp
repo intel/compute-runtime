@@ -14,7 +14,7 @@
 using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
-TEST_F(EventTests, eventShouldBeReturned) {
+TEST_F(EventTests, WhenEnqueingKernelThenCorrectEventIsReturned) {
 
     cl_event event = nullptr;
     auto retVal = callOneWorkItemNDRKernel(nullptr, 0, &event);
@@ -38,7 +38,7 @@ TEST_F(EventTests, eventShouldBeReturned) {
     delete pEvent;
 }
 
-TEST_F(EventTests, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+TEST_F(EventTests, WhenEnqueingKernelThenEventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
@@ -65,7 +65,7 @@ TEST_F(EventTests, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
     delete pEvent;
 }
 
-TEST_F(EventTests, eventWaitShouldntSendPC) {
+TEST_F(EventTests, WhenWaitingForEventThenPipeControlIsNotInserted) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
@@ -103,7 +103,7 @@ TEST_F(EventTests, eventWaitShouldntSendPC) {
     delete pEvent;
 }
 
-TEST_F(EventTests, waitForArray) {
+TEST_F(EventTests, GivenTwoEnqueuesWhenWaitingForBothEventsThenTaskLevelIsCorrect) {
 
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
@@ -148,7 +148,7 @@ TEST_F(EventTests, waitForArray) {
     delete pEvent1;
 }
 
-TEST_F(EventTests, event_NDR_Wait_NDR_Finish) {
+TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
@@ -188,7 +188,7 @@ TEST_F(EventTests, event_NDR_Wait_NDR_Finish) {
     delete pEvent;
 }
 
-TEST_F(EventTests, eventPassedToEnqueueMarkerHasTheSameLevelAsPreviousCommand) {
+TEST_F(EventTests, WhenEnqueuingMarkerThenPassedEventHasTheSameLevelAsPreviousCommand) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
