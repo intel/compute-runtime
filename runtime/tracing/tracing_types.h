@@ -13,20 +13,38 @@
 struct _cl_tracing_handle;
 typedef _cl_tracing_handle *cl_tracing_handle;
 
+//! Enumeration of callback call sites
 typedef enum _cl_callback_site {
-    CL_CALLBACK_SITE_ENTER = 0,
-    CL_CALLBACK_SITE_EXIT = 1
+    CL_CALLBACK_SITE_ENTER = 0, //!< Before the function
+    CL_CALLBACK_SITE_EXIT = 1   //!< After the function
 } cl_callback_site;
 
+/*!
+    \brief Callback data structure
+
+    The structure contains information about the traced function.
+    Function name allows to determine which function is currently traced.
+    Call site is used to determine if the callback was called at the beginning
+    or at the end of function.
+    Correlation ID and Data fields allow to associate the callback on
+    enter with the callback on exit and pass any piece of data between them.
+    Function arguments and return value available both for reading and writing.
+    Return value will be available only within on-exit callback
+*/
 typedef struct _cl_callback_data {
-    cl_callback_site site;
-    cl_uint correlationId;
-    cl_ulong *correlationData;
-    const char *functionName;
-    const void *functionParams;
-    void *functionReturnValue;
+    cl_callback_site site;      //!< Call site, can be ENTER or EXIT
+    cl_uint correlationId;      //!< Correlation identifier, the same for ENTER
+                                //!< and EXIT callbacks
+    cl_ulong *correlationData;  //!< Pointer to correlation data repository,
+                                //!< can be used to move data from ENTER to
+                                //!< EXIT callback
+    const char *functionName;   //!< Name of the traced function
+    const void *functionParams; //!< Traced function arguments, should be
+                                //!< casted to appropriate params structure
+    void *functionReturnValue;  //!< Return value for the traced function
 } cl_callback_data;
 
+//! Enumeration of supported functions for tracing
 typedef enum _cl_function_id {
     CL_FUNCTION_clBuildProgram = 0,
     CL_FUNCTION_clCloneKernel = 1,
@@ -149,6 +167,16 @@ typedef enum _cl_function_id {
     CL_FUNCTION_COUNT = 118,
 } cl_function_id;
 
+/*!
+    User-defined tracing callback prototype
+    \param[in] fid Identifier of the function for which the callback is called
+    \param[in] callbackData Data structure with information about the traced
+                            function
+    \param[in] userData User-defined data pointer passed through
+                        clCreateTracingHandleINTEL() function
+
+	Thread Safety: must be guaranteed by customer
+*/
 typedef void (*cl_tracing_callback)(cl_function_id fid, cl_callback_data *callbackData, void *userData);
 
 typedef struct _cl_params_clBuildProgram {
