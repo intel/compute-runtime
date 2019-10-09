@@ -101,7 +101,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algor
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedVaFormats, false, "Enable more formats in cl-va sharing")
 DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
-DECLARE_DEBUG_VARIABLE(bool, EnablePassInlineData, false, "Enable passing of inline data")
 DECLARE_DEBUG_VARIABLE(bool, EnableFormatQuery, false, "Enable sharing format querying")
 DECLARE_DEBUG_VARIABLE(bool, AllowOpenFdOperations, false, "When enabled driver is allowed to call DRM_IOCTL_PRIME_HANDLE_TO_FD.")
 DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memory manager")
@@ -128,6 +127,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont overr
 DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedImagesEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedBuffersEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSharedSystemUsmSupport, -1, "-1: default, 0: shared system memory disabled, 1: shared system memory enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnablePassInlineData, -1, "-1: default, 0: Do not allow to pass inline data 1: Enable passing of inline data")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")

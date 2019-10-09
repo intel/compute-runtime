@@ -1174,7 +1174,7 @@ INSTANTIATE_TEST_CASE_P(ParentKernelCommandsFromBinaryTest,
 
 HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineThenReturnTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(true);
+    DebugManager.flags.EnablePassInlineData.set(1u);
 
     uint32_t crossThreadData[8];
 
@@ -1186,7 +1186,7 @@ HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineT
 
 HWTEST_F(HardwareCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineThenReturnFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(true);
+    DebugManager.flags.EnablePassInlineData.set(1u);
 
     uint32_t crossThreadData[8];
 
