@@ -119,4 +119,4 @@ target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual $<TARGE
 
 set_target_properties(igdrcl_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(igdrcl_mocks PROPERTIES FOLDER "test mocks")
-create_project_source_tree(igdrcl_mocks ${IGDRCL_SOURCE_DIR})
+create_project_source_tree(igdrcl_mocks)

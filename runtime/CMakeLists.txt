@@ -175,10 +175,10 @@ if(${GENERATE_EXECUTABLE})
     OUTPUT_NAME "${NEO_DLL_NAME_BASE}${IGDRCL_NAME_POSTFIX}${IGDRCL_OPTION__BITS}"
   )
   set_target_properties(${NEO_DYNAMIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
-  create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${EXPORTS_FILENAME}" ${IGDRCL_SOURCE_DIR})
+  create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${EXPORTS_FILENAME}")
 endif(${GENERATE_EXECUTABLE})
 
-create_project_source_tree(${NEO_STATIC_LIB_NAME} ${IGDRCL_SOURCE_DIR})
+create_project_source_tree(${NEO_STATIC_LIB_NAME})
 
 if(UNIX AND NOT (TARGET clang-tidy))
   add_custom_target(clang-tidy

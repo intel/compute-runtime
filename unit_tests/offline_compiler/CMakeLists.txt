@@ -146,4 +146,4 @@ else()
 endif()
 
 add_subdirectories()
-create_project_source_tree(ocloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})
+create_project_source_tree(ocloc_tests)

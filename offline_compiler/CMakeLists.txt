@@ -97,7 +97,7 @@ endif()
 
 add_subdirectories()
 
-create_project_source_tree(ocloc ${IGDRCL_SOURCE_DIR})
+create_project_source_tree(ocloc)
 
 set(CLOC_INCLUDES
   ${ENGINE_NODE_DIR}
