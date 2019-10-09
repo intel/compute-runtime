@@ -186,7 +186,7 @@ endif()
 set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 if(WIN32)
   set(cloc_cmd_prefix ocloc)

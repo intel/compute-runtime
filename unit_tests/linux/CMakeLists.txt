@@ -54,8 +54,9 @@ foreach(target_name linux_tests linux_dll_tests)
 
   set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
   target_include_directories(igdrcl_${target_name} PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
+    ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
+    ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
   add_dependencies(unit_tests igdrcl_${target_name})

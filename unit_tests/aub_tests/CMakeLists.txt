@@ -66,7 +66,7 @@ target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
   if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)

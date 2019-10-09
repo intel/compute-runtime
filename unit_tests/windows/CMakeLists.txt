@@ -29,6 +29,7 @@ add_executable(igdrcl_windows_dll_tests
 target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(igdrcl_windows_dll_tests PRIVATE
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
   ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
