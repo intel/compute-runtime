@@ -473,7 +473,7 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     context->isSharedContext = false;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), properties, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
-    auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size) &&
+    auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size) &&
                                 HwHelper::renderCompressedBuffersSupported(hwInfo);
     if (!is32bit && compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
@@ -502,7 +502,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
         isCompressed = MemObjHelper::isSuitableForRenderCompression(
                            HwHelper::renderCompressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size)) &&
+                           HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size)) &&
                        !is32bit && !context->isSharedContext &&
                        (!isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) || context->getMemoryManager()->isLocalMemorySupported()) &&
                        !isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL);

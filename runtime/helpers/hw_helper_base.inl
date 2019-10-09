@@ -23,7 +23,7 @@ template <typename Family>
 const aub_stream::EngineType HwHelperHw<Family>::lowPriorityEngineType = aub_stream::EngineType::ENGINE_RCS;
 
 template <typename Family>
-bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const size_t size) const {
+bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const {
     return size > KB;
 }
 

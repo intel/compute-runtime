@@ -31,4 +31,16 @@ bool SpecialUltHelperGen12lp::isPipeControlWArequired(PRODUCT_FAMILY productFami
     return true;
 }
 
+bool SpecialUltHelperGen12lp::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
+    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
+}
+
+bool SpecialUltHelperGen12lp::isRenderBufferCompressionPreferred(const HardwareInfo &hwInfo, const std::size_t size) {
+    return false;
+}
+
+bool SpecialUltHelperGen12lp::isAdditionalSurfaceStateParamForCompressionRequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
 } // namespace NEO

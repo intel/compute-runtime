@@ -34,4 +34,13 @@ void GmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
 GMM_CLIENT_CONTEXT *GmmClientContextBase::getHandle() const {
     return clientContext;
 }
+
+uint8_t GmmClientContextBase::getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) {
+    return clientContext->GetSurfaceStateCompressionFormat(format);
+}
+
+uint8_t GmmClientContextBase::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) {
+    return clientContext->GetMediaSurfaceStateCompressionFormat(format);
+}
+
 } // namespace NEO

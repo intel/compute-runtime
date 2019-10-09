@@ -9,10 +9,13 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
+
+#include "mock_gmm_client_context.h"
 
 #include <functional>
 
@@ -134,4 +137,25 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionSurfaceStateParamsAreSetFo
 
     EXPECT_TRUE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+}
+
+GEN12LPTEST_F(gen12LpImageTests, givenCompressionEnabledWhenAppendingSurfaceStateParamsForImageCompressionThenSetCompressionFormat) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using ImageHwTgllp = ImageHw<FamilyType>;
+    constexpr static uint8_t mockCompressionFormat = 13u;
+
+    RENDER_SURFACE_STATE rss{};
+    rss.setMemoryCompressionEnable(true);
+    MockContext context{};
+    std::unique_ptr<ImageHwTgllp> image{static_cast<ImageHwTgllp *>(ImageHelper<Image2dDefaults>::create(&context))};
+    MockGmmClientContext *gmmClientContext = static_cast<MockGmmClientContext *>(GmmHelper::getClientContext());
+
+    uint8_t expectedCompressionFormat = rss.getCompressionFormat();
+    if (SpecialUltHelperGen12lp::isAdditionalSurfaceStateParamForCompressionRequired(context.getDevice(0)->getHardwareInfo())) {
+        expectedCompressionFormat = mockCompressionFormat;
+    }
+
+    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
+    image->appendSurfaceStateParams(&rss);
+    EXPECT_EQ(expectedCompressionFormat, rss.getCompressionFormat());
 }

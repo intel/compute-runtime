@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/gen12lp/helpers_gen12lp.h"
 #include "runtime/gen12lp/hw_cmds.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/image.inl"
@@ -35,6 +36,12 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 
     surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
 }
+
+template <>
+void ImageHw<Family>::appendSurfaceStateParams(Family::RENDER_SURFACE_STATE *surfaceState) {
+    Gen12LPHelpers::setAdditionalSurfaceStateParamsForImageCompression(*this, surfaceState);
+}
+
 // clang-format off
 #include "runtime/mem_obj/image_tgllp_plus.inl"
 #include "runtime/mem_obj/image_factory_init.inl"

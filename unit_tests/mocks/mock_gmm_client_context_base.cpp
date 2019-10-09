@@ -48,4 +48,17 @@ GMM_RESOURCE_INFO *MockGmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO
 void MockGmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
     delete[] reinterpret_cast<char *>(pResInfo);
 }
+
+uint8_t MockGmmClientContextBase::getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) {
+    capturedFormat = format;
+    getSurfaceStateCompressionFormatCalled++;
+    return compressionFormatToReturn;
+}
+
+uint8_t MockGmmClientContextBase::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) {
+    capturedFormat = format;
+    getMediaSurfaceStateCompressionFormatCalled++;
+    return compressionFormatToReturn;
+}
+
 } // namespace NEO

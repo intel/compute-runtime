@@ -21,7 +21,7 @@ bool UnitTestHelper<Family>::isL3ConfigProgrammable() {
 
 template <>
 bool UnitTestHelper<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
-    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
+    return SpecialUltHelperGen12lp::isPageTableManagerSupported(hwInfo);
 }
 
 template <>

@@ -84,24 +84,38 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetConfigureAddressSpaceModeThenReturnOne
     EXPECT_EQ(1u, helper.getConfigureAddressSpaceMode());
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnTrue) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     hardwareInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(helper.isPageTableManagerSupported(hardwareInfo));
+    bool expectedPageTableManagerSupport = SpecialUltHelperGen12lp::isPageTableManagerSupported(hardwareInfo);
+    EXPECT_EQ(expectedPageTableManagerSupport, helper.isPageTableManagerSupported(hardwareInfo));
 
     hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     hardwareInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
+    expectedPageTableManagerSupport = SpecialUltHelperGen12lp::isPageTableManagerSupported(hardwareInfo);
+    EXPECT_EQ(expectedPageTableManagerSupport, helper.isPageTableManagerSupported(hardwareInfo));
 
     hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
+    expectedPageTableManagerSupport = SpecialUltHelperGen12lp::isPageTableManagerSupported(hardwareInfo);
+    EXPECT_EQ(expectedPageTableManagerSupport, helper.isPageTableManagerSupported(hardwareInfo));
 
     hardwareInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(helper.isPageTableManagerSupported(hardwareInfo));
+    expectedPageTableManagerSupport = SpecialUltHelperGen12lp::isPageTableManagerSupported(hardwareInfo);
+    EXPECT_EQ(expectedPageTableManagerSupport, helper.isPageTableManagerSupported(hardwareInfo));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCompressionPreferenceThenReturnCorrectValue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    const size_t sizesToCheck[] = {128, 256, 512, 1023, 1024, 1025};
+    for (size_t size : sizesToCheck) {
+        EXPECT_EQ(SpecialUltHelperGen12lp::isRenderBufferCompressionPreferred(hardwareInfo, size),
+                  helper.obtainRenderBufferCompressionPreference(hardwareInfo, size));
+    }
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnTwoRcsEnginesAndOneCcsEngine) {

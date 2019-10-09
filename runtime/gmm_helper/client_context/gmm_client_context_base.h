@@ -27,6 +27,9 @@ class GmmClientContextBase {
         return std::make_unique<T>(clientType, gmmEntries);
     }
 
+    MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
+    MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
+
   protected:
     GMM_CLIENT_CONTEXT *clientContext;
     GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
