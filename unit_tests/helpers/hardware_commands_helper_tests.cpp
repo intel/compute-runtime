@@ -544,7 +544,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         true);
 
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
-    numThreads = (numThreads + modifiedKernelInfo.getMaxSimdSize() - 1) / modifiedKernelInfo.getMaxSimdSize();
+    numThreads = Math::divideAndRoundUp(numThreads, modifiedKernelInfo.getMaxSimdSize());
     size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);

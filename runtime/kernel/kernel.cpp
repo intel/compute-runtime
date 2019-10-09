@@ -701,7 +701,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
     }
     case CL_KERNEL_MAX_NUM_SUB_GROUPS: {
         // round-up maximum number of subgroups
-        return info.set<size_t>((maxRequiredWorkGroupSize + largestCompiledSIMDSize - 1) / largestCompiledSIMDSize);
+        return info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
     }
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS: {
         return info.set<size_t>(static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber));

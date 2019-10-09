@@ -175,4 +175,8 @@ constexpr T ffs(T v) {
     std::abort();
 }
 
+constexpr size_t divideAndRoundUp(size_t dividend, size_t divisor) {
+    return (dividend + divisor - 1) / divisor;
+}
+
 } // namespace Math

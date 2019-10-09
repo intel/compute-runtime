@@ -152,7 +152,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadImageTest, interfaceDescriptorData) {
 
     auto localWorkSize = 4u;
     auto simd = 32u;
-    auto threadsPerThreadGroup = (localWorkSize + simd - 1) / simd;
+    auto threadsPerThreadGroup = Math::divideAndRoundUp(localWorkSize, simd);
     EXPECT_EQ(threadsPerThreadGroup, interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, interfaceDescriptorData.getCrossThreadConstantDataReadLength());
     EXPECT_NE(0u, interfaceDescriptorData.getConstantIndirectUrbEntryReadLength());

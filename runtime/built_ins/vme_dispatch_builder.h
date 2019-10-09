@@ -38,8 +38,8 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
     void getBlkTraits(const Vec3<size_t> &inGws, size_t &gwWidthInBlk, size_t &gwHeightInBlk) const {
         const size_t vmeMacroBlockWidth = 16;
         const size_t vmeMacroBlockHeight = 16;
-        gwWidthInBlk = (inGws.x + vmeMacroBlockWidth - 1) / vmeMacroBlockWidth;
-        gwHeightInBlk = (inGws.y + vmeMacroBlockHeight - 1) / vmeMacroBlockHeight;
+        gwWidthInBlk = Math::divideAndRoundUp(inGws.x, vmeMacroBlockWidth);
+        gwHeightInBlk = Math::divideAndRoundUp(inGws.y, vmeMacroBlockHeight);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, Kernel *kern,

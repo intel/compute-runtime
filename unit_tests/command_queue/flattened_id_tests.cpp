@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "core/helpers/string.h"
 
 #include "gtest/gtest.h"
@@ -97,7 +98,7 @@ size_t getSizeFlattenedIDs(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t
     lws = std::min(lws, 256u);
 
     auto iDsPerGrf = std::min(simd, 16u);
-    auto numGRFs = (lws + iDsPerGrf - 1) / iDsPerGrf;
+    auto numGRFs = Math::divideAndRoundUp(lws, iDsPerGrf);
 
     return numGRFs * sizeof(GRF);
 }
@@ -228,7 +229,7 @@ TEST_P(FlattenedIDFixture, sizeCalculationLocalIDs) {
 
     auto workItems = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     auto idsPerGRF = (simd == 8) ? 8 : 16;
-    auto numGRFsExpected = (workItems + idsPerGRF - 1) / idsPerGRF;
+    auto numGRFsExpected = Math::divideAndRoundUp(workItems, idsPerGRF);
     EXPECT_EQ(numGRFsExpected, sizePerThreadData / sizeGRF);
 }
 

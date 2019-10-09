@@ -144,8 +144,8 @@ void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_
                 continue;
             }
 
-            workGroups = (workItems[0] + Xdim - 1) / Xdim;
-            workGroups *= (workItems[1] + Ydim - 1) / Ydim;
+            workGroups = Math::divideAndRoundUp(workItems[0], Xdim);
+            workGroups *= Math::divideAndRoundUp(workItems[1], Ydim);
 
             ratioDiff = log((float)Xdim) - log((float)Ydim);
             ratioDiff = fabs(wsInfo.targetRatio - ratioDiff);
@@ -187,9 +187,9 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
                     continue;
                 }
 
-                workGroups = (workItems[0] + Xdim - 1) / Xdim;
-                workGroups *= (workItems[1] + Ydim - 1) / Ydim;
-                workGroups *= (workItems[2] + Zdim - 1) / Zdim;
+                workGroups = Math::divideAndRoundUp(workItems[0], Xdim);
+                workGroups *= Math::divideAndRoundUp(workItems[1], Ydim);
+                workGroups *= Math::divideAndRoundUp(workItems[2], Zdim);
                 cl_ulong euThrdsDispatched;
 
                 euThrdsDispatched = (Xdim * Ydim * Zdim + wsInfo.simdSize - 1) / wsInfo.simdSize;
@@ -270,8 +270,8 @@ void computeWorkgroupSize2D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], 
             }
 
             // Find the wasted channels.
-            workGroups = (workItems[0] + xDim - 1) / xDim;
-            workGroups *= (workItems[1] + yDim - 1) / yDim;
+            workGroups = Math::divideAndRoundUp(workItems[0], xDim);
+            workGroups *= Math::divideAndRoundUp(workItems[1], yDim);
 
             // Compaction Mode!
             euThrdsDispatched = (xDim * yDim + simdSize - 1) / simdSize;

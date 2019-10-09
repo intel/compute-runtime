@@ -253,7 +253,7 @@ TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNu
 
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-        EXPECT_EQ(paramValue[0], (calculatedMaxWorkgroupSize + largestCompiledSIMDSize - 1) / largestCompiledSIMDSize);
+        EXPECT_EQ(paramValue[0], Math::divideAndRoundUp(calculatedMaxWorkgroupSize, largestCompiledSIMDSize));
     }
 }
 
