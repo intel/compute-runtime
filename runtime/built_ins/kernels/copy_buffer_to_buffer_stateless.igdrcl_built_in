@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2019 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+R"===(
+__kernel void CopyBufferToBufferBytes(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    ulong srcOffsetInBytes,
+    ulong dstOffsetInBytes,
+    ulong bytesToRead )
+{
+    pSrc += ( srcOffsetInBytes + get_global_id(0) );
+    pDst += ( dstOffsetInBytes + get_global_id(0) );
+    pDst[ 0 ] = pSrc[ 0 ];
+}
+
+__kernel void CopyBufferToBufferLeftLeftover(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    ulong srcOffsetInBytes,
+    ulong dstOffsetInBytes)
+{
+    size_t gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
+}
+
+__kernel void CopyBufferToBufferMiddle(
+    const __global uint* pSrc,
+    __global uint* pDst,
+    ulong srcOffsetInBytes,
+    ulong dstOffsetInBytes)
+{
+    size_t gid = get_global_id(0);
+    pDst += dstOffsetInBytes >> 2;
+    pSrc += srcOffsetInBytes >> 2;
+    uint4 loaded = vload4(gid, pSrc);
+    vstore4(loaded, gid, pDst);
+}
+
+__kernel void CopyBufferToBufferRightLeftover(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    ulong srcOffsetInBytes,
+    ulong dstOffsetInBytes)
+{
+    size_t gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
+}
+
+)==="

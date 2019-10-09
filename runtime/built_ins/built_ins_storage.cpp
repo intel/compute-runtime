@@ -24,6 +24,8 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
         return "aux_translation.igdrcl_built_in";
     case EBuiltInOps::CopyBufferToBuffer:
         return "copy_buffer_to_buffer.igdrcl_built_in";
+    case EBuiltInOps::CopyBufferToBufferStateless:
+        return "copy_buffer_to_buffer_stateless.igdrcl_built_in";
     case EBuiltInOps::CopyBufferRect:
         return "copy_buffer_rect.igdrcl_built_in";
     case EBuiltInOps::FillBuffer:

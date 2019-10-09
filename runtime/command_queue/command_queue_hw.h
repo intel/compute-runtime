@@ -395,6 +395,8 @@ class CommandQueueHw : public CommandQueue {
     MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                                  AuxTranslationDirection auxTranslationDirection);
 
+    MOCKABLE_VIRTUAL bool forceStateless(size_t size);
+
     template <uint32_t commandType>
     LinearStream *obtainCommandStream(const CsrDependencies &csrDependencies, bool blitEnqueue, bool blockedQueue,
                                       const MultiDispatchInfo &multiDispatchInfo, const EventsRequest &eventsRequest,

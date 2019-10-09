@@ -8,6 +8,7 @@
 #include "core/helpers/ptr_math.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
@@ -138,7 +139,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
 
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
-    dc.srcMemObj = dstBuffer;
+    dc.dstMemObj = dstBuffer;
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
@@ -152,6 +153,30 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     if (kernel->requiresSshForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
+}
+
+HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsUsed) {
+
+    auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+
+    MultiDispatchInfo multiDispatchInfo;
+    auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless,
+                                                                                                     pCmdQ->getContext(), pCmdQ->getDevice());
+
+    ASSERT_NE(nullptr, &builder);
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcBuffer.get();
+    dc.dstMemObj = dstBuffer.get();
+    dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
+    dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
+    dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    EXPECT_NE(0u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 }
 
 HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenL3ProgrammingIsCorrect) {
@@ -272,4 +297,84 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
     EXPECT_EQ((void *)((uintptr_t)dstBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
+}
+
+struct EnqueueCopyBufferHw : public ::testing::Test {
+    template <typename FamilyType>
+    struct MyCmdQStateless : public CommandQueueHw<FamilyType> {
+        using CommandQueueHw<FamilyType>::commandStream;
+        MyCmdQStateless(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+
+        bool forceStateless(size_t size) override {
+            return true;
+        }
+    };
+
+    template <typename FamilyType>
+    struct MyCmdQStatefull : public CommandQueueHw<FamilyType> {
+        using CommandQueueHw<FamilyType>::commandStream;
+        MyCmdQStatefull(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+
+        bool forceStateless(size_t size) override {
+            return false;
+        }
+    };
+
+    void SetUp() override {
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+
+        srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+        dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Buffer> srcBuffer;
+    std::unique_ptr<Buffer> dstBuffer;
+};
+
+using EnqueueCopyBufferStatelessTest = EnqueueCopyBufferHw;
+
+HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessThenSuccessIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    auto cmdQ = std::make_unique<MyCmdQStateless<FamilyType>>(context.get(), device.get());
+
+    auto retVal = cmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        sizeof(float),
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqueueCopyBufferStatefullTest = EnqueueCopyBufferHw;
+
+HWTEST_F(EnqueueCopyBufferStatefullTest, givenBuffersWhenCopyingBufferStatefullThenSuccessIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = std::make_unique<MyCmdQStatefull<FamilyType>>(context.get(), device.get());
+
+    auto retVal = cmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        sizeof(float),
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }

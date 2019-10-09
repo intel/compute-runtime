@@ -113,4 +113,10 @@ void CommandQueueHw<Family>::dispatchAuxTranslation(MultiDispatchInfo &multiDisp
 
     auxTranslationBuilder.buildDispatchInfosForAuxTranslation<Family>(multiDispatchInfo, dispatchParams);
 }
+
+template <typename Family>
+bool CommandQueueHw<Family>::forceStateless(size_t size) {
+    return size >= 4ull * MemoryConstants::gigaByte;
+}
+
 } // namespace NEO

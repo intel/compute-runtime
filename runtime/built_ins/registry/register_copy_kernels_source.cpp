@@ -20,6 +20,15 @@ static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
 #include "runtime/built_ins/kernels/copy_buffer_to_buffer.igdrcl_built_in"
         ));
 
+static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::CopyBufferToBufferStateless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "runtime/built_ins/kernels/copy_buffer_to_buffer_stateless.igdrcl_built_in"
+        ));
+
 static RegisterEmbeddedResource registerCopyBufferRectSrc(
     createBuiltinResourceName(
         EBuiltInOps::CopyBufferRect,

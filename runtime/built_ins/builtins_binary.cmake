@@ -24,6 +24,10 @@ set(GENERATED_BUILTINS
   "fill_image3d"
 )
 
+set(GENERATED_BUILTINS_STATELESS
+  "copy_buffer_to_buffer_stateless"
+)
+
 # Generate builtins cpps
 if(COMPILE_BUILT_INS)
   add_subdirectory(kernels)
@@ -34,6 +38,9 @@ macro(macro_for_each_gen)
     get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
     foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
       list(APPEND GENERATED_BUILTINS_CPPS ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN}_${family_name_with_type}})
+    endforeach()
+    foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
+      list(APPEND GENERATED_BUILTINS_CPPS ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN_STATELESS}_${family_name_with_type}})
     endforeach()
   endforeach()
   source_group("generated files\\${GEN_TYPE_LOWER}" FILES ${GENERATED_BUILTINS_CPPS})
