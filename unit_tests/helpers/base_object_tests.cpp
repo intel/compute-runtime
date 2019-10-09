@@ -275,7 +275,7 @@ TEST(CastToImage, fromMemObj) {
 extern std::thread::id tempThreadID;
 class MockBuffer : public MockBufferStorage, public Buffer {
   public:
-    MockBuffer() : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
+    MockBuffer() : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_USE_HOST_PTR}), CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
     }
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
@@ -306,7 +306,7 @@ TYPED_TEST(BaseObjectTests, getCond) {
 TYPED_TEST(BaseObjectTests, convertToInternalObject) {
     class ObjectForTest : public NEO::MemObj {
       public:
-        ObjectForTest() : MemObj(nullptr, 0, 0, 0, 0, 0u, nullptr, nullptr, nullptr, false, false, false) {
+        ObjectForTest() : MemObj(nullptr, 0, {}, 0, 0, 0u, nullptr, nullptr, nullptr, false, false, false) {
         }
 
         void convertToInternalObject(void) {

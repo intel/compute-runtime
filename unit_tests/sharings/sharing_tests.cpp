@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/sharings/sharing.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -36,7 +37,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
     char buffer[64];
     MockContext context;
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
-    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_USE_HOST_PTR}), CL_MEM_USE_HOST_PTR, 0,
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
@@ -61,7 +62,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
     char buffer[64];
     MockContext context;
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
-    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_USE_HOST_PTR}), CL_MEM_USE_HOST_PTR, 0,
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
@@ -106,7 +107,7 @@ TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {
     SharingHandler sharingHandler;
     MockContext context;
     MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0,
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_USE_HOST_PTR}), CL_MEM_USE_HOST_PTR, 0,
                   1, nullptr, nullptr, graphicsAllocation, true, false, false);
 
     auto result = sharingHandler.acquire(&memObj);

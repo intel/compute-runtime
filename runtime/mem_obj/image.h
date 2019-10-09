@@ -25,7 +25,7 @@ struct SurfaceOffsets {
 };
 
 typedef Image *(*ImageCreatFunc)(Context *context,
-                                 const MemoryProperties &properties,
+                                 const MemoryPropertiesFlags &memoryProperties,
                                  uint64_t flags,
                                  uint64_t flagsIntel,
                                  size_t size,
@@ -183,7 +183,7 @@ class Image : public MemObj {
 
   protected:
     Image(Context *context,
-          const MemoryProperties &properties,
+          const MemoryPropertiesFlags &memoryProperties,
           cl_mem_flags flags,
           cl_mem_flags_intel flagsIntel,
           size_t size,
@@ -239,7 +239,7 @@ class ImageHw : public Image {
 
   public:
     ImageHw(Context *context,
-            const MemoryProperties &properties,
+            const MemoryPropertiesFlags &memoryProperties,
             cl_mem_flags flags,
             cl_mem_flags_intel flagsIntel,
             size_t size,
@@ -253,7 +253,7 @@ class ImageHw : public Image {
             uint32_t mipCount,
             const SurfaceFormatInfo &surfaceFormatInfo,
             const SurfaceOffsets *surfaceOffsets = nullptr)
-        : Image(context, properties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc,
+        : Image(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc,
                 zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
         if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
@@ -295,7 +295,7 @@ class ImageHw : public Image {
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,
-                         const MemoryProperties &properties,
+                         const MemoryPropertiesFlags &memoryProperties,
                          cl_mem_flags flags,
                          cl_mem_flags_intel flagsIntel,
                          size_t size,
@@ -311,7 +311,7 @@ class ImageHw : public Image {
                          const SurfaceOffsets *surfaceOffsets) {
         UNRECOVERABLE_IF(surfaceFormatInfo == nullptr);
         return new ImageHw<GfxFamily>(context,
-                                      properties,
+                                      memoryProperties,
                                       flags,
                                       flagsIntel,
                                       size,

@@ -469,7 +469,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinOpParams operationParams;
-    MemObj patternMemObj(this->context, 0, 0, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
 
     void *alignedDstPtr = alignDown(svmPtr, 4);

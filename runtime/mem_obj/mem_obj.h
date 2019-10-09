@@ -39,7 +39,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     MemObj(Context *context,
            cl_mem_object_type memObjectType,
-           const MemoryProperties &properties,
+           const MemoryPropertiesFlags &memoryProperties,
            cl_mem_flags flags,
            cl_mem_flags_intel flagsIntel,
            size_t size,
@@ -130,7 +130,6 @@ class MemObj : public BaseObject<_cl_mem> {
 
     Context *context;
     cl_mem_object_type memObjectType;
-    MemoryProperties properties;
     MemoryPropertiesFlags memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;

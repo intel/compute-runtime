@@ -27,7 +27,7 @@ namespace NEO {
 
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
-               const MemoryProperties &properties,
+               const MemoryPropertiesFlags &memoryProperties,
                cl_mem_flags flags,
                cl_mem_flags_intel flagsIntel,
                size_t size,
@@ -37,7 +37,7 @@ MemObj::MemObj(Context *context,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
-    : context(context), memObjectType(memObjectType), properties(properties), flags(flags), flagsIntel(flagsIntel), size(size),
+    : context(context), memObjectType(memObjectType), memoryProperties(memoryProperties), flags(flags), flagsIntel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
       graphicsAllocation(gfxAllocation) {
@@ -130,8 +130,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_FLAGS:
-        srcParamSize = sizeof(properties.flags);
-        srcParam = &properties.flags;
+        srcParamSize = sizeof(flags);
+        srcParam = &flags;
         break;
 
     case CL_MEM_SIZE:
@@ -151,7 +151,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_USES_SVM_POINTER:
-        usesSVMPointer = isHostPtrSVM && isValueSet(properties.flags, CL_MEM_USE_HOST_PTR);
+        usesSVMPointer = isHostPtrSVM && isValueSet(flags, CL_MEM_USE_HOST_PTR);
         srcParamSize = sizeof(cl_bool);
         srcParam = &usesSVMPointer;
         break;
@@ -231,11 +231,11 @@ bool MemObj::isMemObjWithHostPtrSVM() const {
 }
 
 bool MemObj::isMemObjUncacheable() const {
-    return isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    return isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
 bool MemObj::isMemObjUncacheableForSurfaceState() const {
-    return isAnyBitSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    return isAnyBitSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
 GraphicsAllocation *MemObj::getGraphicsAllocation() const {
@@ -253,11 +253,11 @@ void MemObj::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
 }
 
 bool MemObj::readMemObjFlagsInvalid() {
-    return isValueSet(properties.flags, CL_MEM_HOST_WRITE_ONLY) || isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS);
+    return isValueSet(flags, CL_MEM_HOST_WRITE_ONLY) || isValueSet(flags, CL_MEM_HOST_NO_ACCESS);
 }
 
 bool MemObj::writeMemObjFlagsInvalid() {
-    return isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY) || isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS);
+    return isValueSet(flags, CL_MEM_HOST_READ_ONLY) || isValueSet(flags, CL_MEM_HOST_NO_ACCESS);
 }
 
 bool MemObj::mapMemObjFlagsInvalid(cl_map_flags mapFlags) {
@@ -271,7 +271,7 @@ void MemObj::setHostPtrMinSize(size_t size) {
 
 void *MemObj::getCpuAddressForMapping() {
     void *ptrToReturn = nullptr;
-    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
+    if (isValueSet(flags, CL_MEM_USE_HOST_PTR)) {
         ptrToReturn = this->hostPtr;
     } else {
         ptrToReturn = this->memoryStorage;
@@ -280,7 +280,7 @@ void *MemObj::getCpuAddressForMapping() {
 }
 void *MemObj::getCpuAddressForMemoryTransfer() {
     void *ptrToReturn = nullptr;
-    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) && this->isMemObjZeroCopy()) {
+    if (isValueSet(flags, CL_MEM_USE_HOST_PTR) && this->isMemObjZeroCopy()) {
         ptrToReturn = this->hostPtr;
     } else {
         ptrToReturn = this->memoryStorage;
@@ -289,7 +289,7 @@ void *MemObj::getCpuAddressForMemoryTransfer() {
 }
 void MemObj::releaseAllocatedMapPtr() {
     if (allocatedMapPtr) {
-        DEBUG_BREAK_IF(isValueSet(properties.flags, CL_MEM_USE_HOST_PTR));
+        DEBUG_BREAK_IF(isValueSet(flags, CL_MEM_USE_HOST_PTR));
         memoryManager->freeSystemMemory(allocatedMapPtr);
     }
     allocatedMapPtr = nullptr;

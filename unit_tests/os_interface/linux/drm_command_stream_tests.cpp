@@ -9,6 +9,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -1330,7 +1331,7 @@ class DrmMockBuffer : public Buffer {
         delete gfxAllocation;
     }
 
-    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc) : Buffer(nullptr, CL_MEM_USE_HOST_PTR, CL_MEM_USE_HOST_PTR, 0, size, data, data, alloc, true, false, false),
+    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc) : Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_USE_HOST_PTR}), CL_MEM_USE_HOST_PTR, 0, size, data, data, alloc, true, false, false),
                                                                    data(data),
                                                                    gfxAllocation(alloc) {
     }

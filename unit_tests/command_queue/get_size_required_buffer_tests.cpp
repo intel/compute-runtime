@@ -81,7 +81,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueFillBuffer) {
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
-    MemObj patternMemObj(this->context, 0, 0, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = dstBuffer;

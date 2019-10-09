@@ -38,7 +38,7 @@ namespace NEO {
 ImageFuncs imageFactory[IGFX_MAX_CORE] = {};
 
 Image::Image(Context *context,
-             const MemoryProperties &properties,
+             const MemoryPropertiesFlags &memoryProperties,
              cl_mem_flags flags,
              cl_mem_flags_intel flagsIntel,
              size_t size,
@@ -54,7 +54,7 @@ Image::Image(Context *context,
              const SurfaceOffsets *surfaceOffsets)
     : MemObj(context,
              imageDesc.image_type,
-             properties,
+             memoryProperties,
              flags,
              flagsIntel,
              size,
@@ -412,7 +412,8 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &properties
 
     auto funcCreate = imageFactory[hwInfo.platform.eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto image = funcCreate(context, properties, properties.flags, properties.flagsIntel, size, hostPtr, imageFormat, imageDesc,
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    auto image = funcCreate(context, memoryProperties, properties.flags, properties.flagsIntel, size, hostPtr, imageFormat, imageDesc,
                             zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
     DEBUG_BREAK_IF(nullptr == image);
     image->createFunction = funcCreate;
@@ -860,10 +861,11 @@ Image *Image::redescribeFillImage() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags | CL_MEM_USE_HOST_PTR});
     auto image = createFunction(context,
-                                properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flagsIntel,
+                                memoryProperties,
+                                flags | CL_MEM_USE_HOST_PTR,
+                                flagsIntel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
@@ -909,10 +911,11 @@ Image *Image::redescribe() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags | CL_MEM_USE_HOST_PTR});
     auto image = createFunction(context,
-                                properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flagsIntel,
+                                memoryProperties,
+                                flags | CL_MEM_USE_HOST_PTR,
+                                flagsIntel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,

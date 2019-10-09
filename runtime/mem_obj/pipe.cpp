@@ -24,7 +24,7 @@ Pipe::Pipe(Context *context,
            GraphicsAllocation *gfxAllocation)
     : MemObj(context,
              CL_MEM_OBJECT_PIPE,
-             flags,
+             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
              flags,
              0,
              static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace),

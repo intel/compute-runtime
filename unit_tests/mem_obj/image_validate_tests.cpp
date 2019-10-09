@@ -760,7 +760,7 @@ struct NullImage : public Image {
     using Image::imageDesc;
     using Image::imageFormat;
 
-    NullImage() : Image(nullptr, cl_mem_flags{}, cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
+    NullImage() : Image(nullptr, MemoryPropertiesFlags(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                         cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
                         0, 0, SurfaceFormatInfo{}, nullptr) {
     }

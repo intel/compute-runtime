@@ -32,7 +32,7 @@ namespace NEO {
 BufferFuncs bufferFactory[IGFX_MAX_CORE] = {};
 
 Buffer::Buffer(Context *context,
-               MemoryProperties properties,
+               MemoryPropertiesFlags memoryProperties,
                cl_mem_flags flags,
                cl_mem_flags_intel flagsIntel,
                size_t size,
@@ -44,7 +44,7 @@ Buffer::Buffer(Context *context,
                bool isObjectRedescribed)
     : MemObj(context,
              CL_MEM_OBJECT_BUFFER,
-             properties,
+             memoryProperties,
              flags,
              flagsIntel,
              size,
@@ -58,7 +58,7 @@ Buffer::Buffer(Context *context,
     setHostPtrMinSize(size);
 }
 
-Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, 0, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false) {
+Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false) {
 }
 
 Buffer::~Buffer() = default;
@@ -405,7 +405,8 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                 const cl_buffer_region *region,
                                 cl_int &errcodeRet) {
     DEBUG_BREAK_IF(nullptr == createFunction);
-    auto buffer = createFunction(this->context, flags, flags, 0, region->size,
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags});
+    auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  this->graphicsAllocation,
@@ -510,7 +511,8 @@ Buffer *Buffer::createBufferHw(Context *context,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(context, properties, properties.flags, properties.flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    auto pBuffer = funcCreate(context, memoryProperties, properties.flags, properties.flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     DEBUG_BREAK_IF(nullptr == pBuffer);
     if (pBuffer) {
@@ -534,7 +536,8 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(nullptr, flags, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags});
+    auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
     return pBuffer;

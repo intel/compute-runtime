@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/os_interface/os_context.h"
@@ -38,7 +39,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
-                            CL_MEM_READ_WRITE, CL_MEM_READ_WRITE, 0,
+                            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_READ_WRITE}), CL_MEM_READ_WRITE, 0,
                             size,
                             nullptr, nullptr, allocation, true, false, false);
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 0;
@@ -215,7 +216,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         MemObjSizeArray region = {{1, 1, 1}};
         cl_map_flags mapFlags = CL_MAP_READ;
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
-                            CL_MEM_READ_WRITE, CL_MEM_READ_WRITE, 0,
+                            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_READ_WRITE}), CL_MEM_READ_WRITE, 0,
                             size,
                             storage, nullptr, allocation, true, false, false);
         memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0);

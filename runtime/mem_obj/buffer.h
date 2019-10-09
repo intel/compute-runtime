@@ -22,7 +22,7 @@ class MemoryManager;
 struct MemoryProperties;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
-                                   MemoryProperties properties,
+                                   MemoryPropertiesFlags memoryProperties,
                                    cl_mem_flags flags,
                                    cl_mem_flags_intel flagsIntel,
                                    size_t size,
@@ -135,7 +135,7 @@ class Buffer : public MemObj {
 
   protected:
     Buffer(Context *context,
-           MemoryProperties properties,
+           MemoryPropertiesFlags memoryProperties,
            cl_mem_flags flags,
            cl_mem_flags_intel flagsIntel,
            size_t size,
@@ -167,7 +167,7 @@ template <typename GfxFamily>
 class BufferHw : public Buffer {
   public:
     BufferHw(Context *context,
-             MemoryProperties properties,
+             MemoryPropertiesFlags memoryProperties,
              cl_mem_flags flags,
              cl_mem_flags_intel flagsIntel,
              size_t size,
@@ -177,7 +177,7 @@ class BufferHw : public Buffer {
              bool zeroCopy,
              bool isHostPtrSVM,
              bool isObjectRedescribed)
-        : Buffer(context, properties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+        : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) override;
@@ -185,7 +185,7 @@ class BufferHw : public Buffer {
     void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,
-                          MemoryProperties properties,
+                          MemoryPropertiesFlags memoryProperties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,
@@ -196,7 +196,7 @@ class BufferHw : public Buffer {
                           bool isHostPtrSVM,
                           bool isObjectRedescribed) {
         auto buffer = new BufferHw<GfxFamily>(context,
-                                              properties,
+                                              memoryProperties,
                                               flags,
                                               flagsIntel,
                                               size,
