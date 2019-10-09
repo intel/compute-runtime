@@ -24,7 +24,8 @@ void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(
     INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
     const Kernel &kernel,
     const size_t &sizeCrossThreadData,
-    const size_t &sizePerThreadData) {
+    const size_t &sizePerThreadData,
+    const uint32_t threadsPerThreadGroup) {
 
     DEBUG_BREAK_IF((sizeCrossThreadData % sizeof(GRF)) != 0);
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(GRF));
