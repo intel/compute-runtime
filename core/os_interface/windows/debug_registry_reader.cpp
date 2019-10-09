@@ -65,6 +65,11 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
                                    &size);
         RegCloseKey(Key);
         value = ERROR_SUCCESS == success ? value : defaultValue;
+    } else { // Check environment variables
+        char *envValue = getenv(settingName);
+        if (envValue) {
+            value = atoi(envValue);
+        }
     }
 
     return value;
@@ -118,6 +123,11 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
         }
 
         RegCloseKey(Key);
+    } else { // Check environment variables
+        char *envValue = getenv(settingName);
+        if (envValue) {
+            keyValue.assign(envValue);
+        }
     }
     return keyValue;
 }

@@ -47,3 +47,10 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithRegKeySpecified
     TestedRegistryReader registryReader(regKey);
     EXPECT_STREQ(regKey.c_str(), registryReader.getRegKey());
 }
+
+TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentVariableExistsThenReturnCorrectValue) {
+    char *envVar = "TestedEnvironmentVariable";
+    std::string value = "defaultValue";
+    TestedRegistryReader registryReader("");
+    EXPECT_EQ("TestedEnvironmentVariableValue", registryReader.getSetting(envVar, value));
+}
