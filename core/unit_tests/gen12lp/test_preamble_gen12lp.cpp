@@ -135,12 +135,12 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAddi
     *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
     auto &waTable = pHwInfo->workaroundTable;
 
-    const std::array<std::tuple<bool, bool, int32_t>, 6> testParams{std::make_tuple(false, false, 0),
-                                                                    std::make_tuple(false, true, 0),
-                                                                    std::make_tuple(false, false, -1),
-                                                                    std::make_tuple(true, false, 1),
-                                                                    std::make_tuple(true, true, -1),
-                                                                    std::make_tuple(true, true, 1)};
+    const std::array<std::tuple<bool, bool, int32_t>, 6> testParams{{std::make_tuple(false, false, 0),
+                                                                     std::make_tuple(false, true, 0),
+                                                                     std::make_tuple(false, false, -1),
+                                                                     std::make_tuple(true, false, 1),
+                                                                     std::make_tuple(true, true, -1),
+                                                                     std::make_tuple(true, true, 1)}};
 
     for (const auto &params : testParams) {
         bool expectedValue, waDisableFusedThreadScheduling;
