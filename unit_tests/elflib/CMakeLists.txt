@@ -9,10 +9,10 @@ project(elflib_tests)
 set(CLELFLIB_UNIT_TESTS_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/elflib_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h
-  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.cpp
-  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.h
+  ${NEO_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h
+  ${NEO_SOURCE_DIR}/core/unit_tests/helpers/memory_management.cpp
+  ${NEO_SOURCE_DIR}/core/unit_tests/helpers/memory_management.h
 )
 
 add_executable(elflib_tests ${CLELFLIB_UNIT_TESTS_SRCS})
@@ -33,4 +33,4 @@ add_dependencies(run_unit_tests run_elflib_tests)
 
 set_target_properties(elflib_tests PROPERTIES FOLDER "elflib")
 set_target_properties(run_elflib_tests PROPERTIES FOLDER "elflib")
-create_project_source_tree(elflib_tests ${IGDRCL_SOURCE_DIR}/unit_tests)
+create_project_source_tree(elflib_tests ${NEO_SOURCE_DIR}/unit_tests)

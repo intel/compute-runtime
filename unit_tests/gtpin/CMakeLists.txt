@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,7 @@ set(IGDRCL_SRCS_tests_gtpin
   ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
 )
 macro(macro_for_each_gen)
-  list(APPEND IGDRCL_SRCS_tests_gtpin ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND IGDRCL_SRCS_tests_gtpin ${NEO_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
 endmacro()
 apply_macro_for_each_gen("TESTED")
 if(NOT DISABLED_GTPIN_SUPPORT)

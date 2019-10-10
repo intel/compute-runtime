@@ -7,11 +7,11 @@
 add_executable(igdrcl_tbx_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/main_tbx.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_tests_configuration.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
+  ${NEO_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
+  ${NEO_SOURCE_DIR}/runtime/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/options.cpp
   $<TARGET_OBJECTS:igdrcl_libult>
 )
 
@@ -19,29 +19,29 @@ target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmo
 
 if(WIN32)
   target_include_directories(igdrcl_tbx_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+    ${NEO_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
   target_include_directories(igdrcl_tbx_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_sources(igdrcl_tbx_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/windows/options.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/create_wddm_memory_manager.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/sys_calls.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_calls.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
+    ${NEO_SOURCE_DIR}/runtime/dll/windows/options.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/create_wddm_memory_manager.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/sys_calls.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_calls.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   )
   target_link_libraries(igdrcl_tbx_tests dbghelp)
 else()
   target_sources(igdrcl_tbx_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/allocator_helper.cpp
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
+    ${NEO_SOURCE_DIR}/runtime/dll/linux/allocator_helper.cpp
+    ${NEO_SOURCE_DIR}/runtime/dll/linux/options.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   )
 endif()
 
 copy_gmm_dll_for(igdrcl_tbx_tests)
-create_project_source_tree(igdrcl_tbx_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+create_project_source_tree(igdrcl_tbx_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
 
 add_custom_target(run_tbx_tests ALL DEPENDS unit_tests igdrcl_tbx_tests)
 add_custom_command(

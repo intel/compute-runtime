@@ -56,7 +56,7 @@ endmacro()
 
 macro(macro_for_each_gen)
   set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER})
-  set(CORE_GENX_PREFIX "${IGDRCL_SOURCE_DIR}/core/${GEN_TYPE_LOWER}")
+  set(CORE_GENX_PREFIX "${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}")
   # Add default GEN files
   foreach(SRC_IT ${RUNTIME_SRCS_GENX_H_BASE})
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})

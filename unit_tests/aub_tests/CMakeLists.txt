@@ -10,8 +10,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
+  ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   $<TARGET_OBJECTS:igdrcl_libult>
@@ -40,21 +40,21 @@ set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 if(WIN32)
   target_include_directories(igdrcl_aub_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+    ${NEO_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
 endif()
 
 target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(igdrcl_aub_tests PRIVATE
-  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
+  ${NEO_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
+    ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
   )
 endif()
 
@@ -66,7 +66,7 @@ target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
   if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)
@@ -123,4 +123,4 @@ macro(macro_for_each_gen)
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
-create_project_source_tree(igdrcl_aub_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+create_project_source_tree(igdrcl_aub_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)

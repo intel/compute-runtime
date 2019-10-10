@@ -41,7 +41,7 @@ set(IGDRCL_SRCS_tests_local
 )
 
 if(WIN32)
-   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp)
+   list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp)
 endif()
 
 add_subdirectory(libult)
@@ -82,14 +82,14 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
 
 if(DEFINED AUB_STREAM_DIR)
   add_library (aub_stream_mock_lib OBJECT EXCLUDE_FROM_ALL
-    ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   )
   list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
     $<TARGET_OBJECTS:aub_stream_mock_lib>
   )
 else()
-   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp)
+   list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp)
 endif()
 
 add_executable(igdrcl_tests
@@ -142,7 +142,7 @@ else()
 endif()
 
 target_include_directories(igdrcl_tests PRIVATE
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   ${ENGINE_NODE_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -150,7 +150,7 @@ target_include_directories(igdrcl_tests PRIVATE
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
-set(BUILT_IN_KERNEL_DIR "${IGDRCL_SOURCE_DIR}/runtime/built_ins")
+set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/runtime/built_ins")
 
 function(neo_copy_test_files target product)
   set(outputdir "${TargetDir}/${product}")
@@ -163,10 +163,10 @@ function(neo_copy_test_files target product)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
     COMMAND echo copying built-in kernel files from ${BUILT_IN_KERNEL_DIR}/kernels to ${outputdir}/test_files
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILT_IN_KERNEL_DIR}/kernels ${outputdir}/test_files
-    COMMAND echo copying test files from ${IGDRCL_SOURCE_DIR}/unit_tests/test_files to ${outputdir}/test_files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${IGDRCL_SOURCE_DIR}/unit_tests/test_files ${outputdir}/test_files
+    COMMAND echo copying test files from ${NEO_SOURCE_DIR}/unit_tests/test_files to ${outputdir}/test_files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${NEO_SOURCE_DIR}/unit_tests/test_files ${outputdir}/test_files
     COMMAND WORKING_DIRECTORY ${TargetDir}
-    DEPENDS ${IGDRCL_SOURCE_DIR}/unit_tests/test_files
+    DEPENDS ${NEO_SOURCE_DIR}/unit_tests/test_files
   )
   add_dependencies(${target} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
@@ -186,7 +186,7 @@ endif()
 set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 if(WIN32)
   set(cloc_cmd_prefix ocloc)
@@ -525,7 +525,7 @@ apply_macro_for_each_gen("TESTED")
 add_subdirectories()
 add_dependencies(unit_tests mock_gmm)
 add_dependencies(igdrcl_tests mock_gmm)
-create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)
+create_project_source_tree(igdrcl_tests ${NEO_SOURCE_DIR}/runtime)
 
 set(UltPchHeader "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.h")
 set(UltPchSource "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.cpp")

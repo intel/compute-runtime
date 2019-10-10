@@ -8,23 +8,23 @@ set(CLOC_SEGFAULT_TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/segfault_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${IGDRCL_SOURCE_DIR}/core/helpers/abort.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/os_interface/os_library.h
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
+  ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
+  ${NEO_SOURCE_DIR}/runtime/os_interface/os_library.h
+  ${NEO_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
 )
 
 if(WIN32)
   list(APPEND CLOC_SEGFAULT_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/safety_guard_caller_windows.cpp
-    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
-    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
-    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
-    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/os_library.cpp
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
+    ${NEO_SOURCE_DIR}/runtime/os_interface/windows/os_library.cpp
   )
 else()
   list(APPEND CLOC_SEGFAULT_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/safety_guard_caller_linux.cpp
-    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/os_library.cpp
+    ${NEO_SOURCE_DIR}/runtime/os_interface/linux/os_library.cpp
   )
 endif()
 
@@ -40,7 +40,7 @@ if(UNIX)
 endif()
 
 set(CLOC_SEGFAULT_TEST_INCLUDES
-  ${IGDRCL_SOURCE_DIR}
+  ${NEO_SOURCE_DIR}
   ${THIRD_PARTY_DIR}
 )
 
@@ -52,7 +52,7 @@ get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
 set_property(TARGET ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
 
 target_include_directories(ocloc_segfault_test BEFORE PRIVATE ${CLOC_SEGFAULT_TEST_INCLUDES})
-create_project_source_tree(ocloc_segfault_test ${IGDRCL_SOURCE_DIR}/offline_compiler ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+create_project_source_tree(ocloc_segfault_test ${NEO_SOURCE_DIR}/offline_compiler ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
 
 add_custom_target(run_ocloc_segfault_test ALL
   DEPENDS ocloc_segfault_test

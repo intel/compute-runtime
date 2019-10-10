@@ -16,7 +16,7 @@ add_library(elflib STATIC EXCLUDE_FROM_ALL
 create_project_source_tree(elflib)
 
 target_include_directories(elflib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(elflib PRIVATE ${IGDRCL_SOURCE_DIR})
+target_include_directories(elflib PRIVATE ${NEO_SOURCE_DIR})
 
 set_target_properties(elflib PROPERTIES FOLDER "elflib")
 

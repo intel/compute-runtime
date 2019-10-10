@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,8 +8,8 @@ if(UNIX)
   if(NOT DEFINED NEO_DRIVER_VERSION)
     find_program(GIT NAMES git)
     if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
-      if(IS_DIRECTORY ${IGDRCL_SOURCE_DIR}/.git)
-        set(GIT_arg --git-dir=${IGDRCL_SOURCE_DIR}/.git show -s --format=%ct)
+      if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
+        set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git show -s --format=%ct)
         execute_process(
           COMMAND ${GIT} ${GIT_arg}
           OUTPUT_VARIABLE GIT_output

@@ -121,7 +121,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
-    ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+    ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   )
 
   if(UNIX)
@@ -189,7 +189,7 @@ if(UNIX AND NOT (TARGET clang-tidy))
     POST_BUILD
     COMMAND echo clang-tidy...
     COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} -name *.cpp -print0 | xargs -0 -I{} -P`nproc` clang-tidy -p ${IGDRCL_BINARY_DIR} {} | tee ${IGDRCL_BINARY_DIR}/clang-tidy.log
-    WORKING_DIRECTORY ${IGDRCL_SOURCE_DIR}
+    WORKING_DIRECTORY ${NEO_SOURCE_DIR}
   )
 endif()
 

@@ -30,12 +30,12 @@ set_property(GLOBAL PROPERTY RUNTIME_SRCS_SHARINGS ${RUNTIME_SRCS_SHARINGS})
 
 
 if(WIN32)
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/runtime/os_interface/windows)
 else()
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/runtime/os_interface/linux)
 endif()
 
 add_subdirectories()
 
-create_project_source_tree(${SHARINGS_ENABLE_LIB_NAME} ${IGDRCL_SOURCE_DIR}/runtime)
+create_project_source_tree(${SHARINGS_ENABLE_LIB_NAME} ${NEO_SOURCE_DIR}/runtime)
 set(MSVC_DEF_ADDITIONAL_EXPORTS ${MSVC_DEF_ADDITIONAL_EXPORTS} PARENT_SCOPE)
