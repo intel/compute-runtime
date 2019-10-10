@@ -77,6 +77,7 @@ class Drm {
     uint64_t getSliceMask(uint64_t sliceCount);
     void queryEngineInfo();
     void queryMemoryInfo();
+    int setEngines();
     void setMemoryRegions();
 
     MemoryInfo *getMemoryInfo() const {

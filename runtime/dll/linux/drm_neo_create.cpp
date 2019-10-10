@@ -182,6 +182,12 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     }
 
     drmObject->queryEngineInfo();
+    ret = drmObject->setEngines();
+    if (ret != 0) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Failed to set engines\n");
+        return nullptr;
+    }
+
     if (HwHelper::get(device->pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
         drmObject->queryMemoryInfo();
         drmObject->setMemoryRegions();

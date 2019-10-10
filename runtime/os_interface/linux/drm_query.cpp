@@ -21,6 +21,10 @@ void Drm::queryEngineInfo() {
 void Drm::queryMemoryInfo() {
 }
 
+int Drm::setEngines() {
+    return 0;
+}
+
 void Drm::setMemoryRegions() {
 }
 
