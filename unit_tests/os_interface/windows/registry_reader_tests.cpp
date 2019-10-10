@@ -54,3 +54,10 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentVariableExistsThenR
     TestedRegistryReader registryReader("");
     EXPECT_EQ("TestedEnvironmentVariableValue", registryReader.getSetting(envVar, value));
 }
+
+TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsThenReturnCorrectValue) {
+    char *envVar = "TestedEnvironmentIntVariable";
+    int32_t value = -1;
+    TestedRegistryReader registryReader("");
+    EXPECT_EQ(1234, registryReader.getSetting(envVar, value));
+}

@@ -17,9 +17,12 @@ class TestedRegistryReader : public RegistryReader {
         return igdrclHkeyType;
     }
     using RegistryReader::getSetting;
+
     char *getenv(const char *envVar) override {
         if (strcmp(envVar, "TestedEnvironmentVariable") == 0) {
             return "TestedEnvironmentVariableValue";
+        } else if (strcmp(envVar, "TestedEnvironmentIntVariable") == 0) {
+            return "1234";
         } else {
             return nullptr;
         }
