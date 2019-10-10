@@ -25,6 +25,14 @@ uint32_t RootDevice::getNumAvailableDevices() const {
     return getNumSubDevices();
 }
 
+Device *RootDevice::getDeviceById(uint32_t deviceId) const {
+    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
+    if (subdevices.empty()) {
+        return const_cast<RootDevice *>(this);
+    }
+    return subdevices[deviceId].get();
+};
+
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : Device(executionEnvironment, deviceIndex) {}
 bool RootDevice::createDeviceImpl() {
     auto status = Device::createDeviceImpl();

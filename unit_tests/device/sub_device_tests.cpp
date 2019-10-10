@@ -100,3 +100,32 @@ TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnS
     EXPECT_EQ(firstSubDeviceMask, static_cast<uint32_t>(firstSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
     EXPECT_EQ(secondSubDeviceMask, static_cast<uint32_t>(secondSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
 }
+
+TEST(SubDevicesTest, givenDeviceWithoutSubDevicesWhenGettingDeviceByIdZeroThenGetThisDevice) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+
+    EXPECT_EQ(1u, device->getNumAvailableDevices());
+    EXPECT_EQ(device.get(), device->getDeviceById(0u));
+    EXPECT_THROW(device->getDeviceById(1), std::exception);
+}
+
+TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    EXPECT_EQ(2u, device->getNumSubDevices());
+    EXPECT_EQ(device->subdevices.at(0).get(), device->getDeviceById(0));
+    EXPECT_EQ(device->subdevices.at(1).get(), device->getDeviceById(1));
+    EXPECT_THROW(device->getDeviceById(2), std::exception);
+}
+
+TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    EXPECT_EQ(2u, device->getNumSubDevices());
+    auto subDevice = device->subdevices.at(0).get();
+
+    EXPECT_EQ(subDevice, subDevice->getDeviceById(0));
+    EXPECT_THROW(subDevice->getDeviceById(1), std::exception);
+}

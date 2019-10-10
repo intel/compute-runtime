@@ -98,6 +98,7 @@ class Device : public BaseObject<_cl_device_id> {
         return this->deviceInfo.sharedSystemMemCapabilities != 0u;
     }
     virtual uint32_t getNumAvailableDevices() const = 0;
+    virtual Device *getDeviceById(uint32_t deviceId) const = 0;
 
   protected:
     Device() = delete;
