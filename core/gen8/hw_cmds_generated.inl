@@ -452,8 +452,8 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize(void) const {
         return static_cast<SHARED_LOCAL_MEMORY_SIZE>(TheStructure.Common.SharedLocalMemorySize);
     }
-    inline void setBarrierEnable(const bool value) {
-        TheStructure.Common.BarrierEnable = value;
+    inline void setBarrierEnable(const uint32_t value) {
+        TheStructure.Common.BarrierEnable = (value > 0u) ? 1u : 0u;
     }
     inline bool getBarrierEnable(void) const {
         return (TheStructure.Common.BarrierEnable);
