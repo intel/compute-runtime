@@ -418,7 +418,7 @@ bool HardwareCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
 
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
-    auto checkKernelForInlineData = false;
+    auto checkKernelForInlineData = true;
     if (DebugManager.flags.EnablePassInlineData.get() != -1) {
         checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
     }
