@@ -16,6 +16,7 @@ set(IGDRCL_SRCS_tests_gen_common
   ${CMAKE_CURRENT_SOURCE_DIR}/exclude_tests/exclude_test_exclude.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_commands_common_validation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/matchers.h
   ${NEO_CORE_DIRECTORY}/unit_tests/test_macros${BRANCH_DIR_SUFFIX}/test.h
 )
