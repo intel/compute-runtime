@@ -57,7 +57,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         cl_int stride = height;
         size_t numThreadsX = gwWidthInBlk;
         const size_t simdWidth = vmeKernel->getKernelInfo().getMaxSimdSize();
-        stride = (height * width + (cl_int)numThreadsX - 1) / (cl_int)numThreadsX;
+        stride = static_cast<cl_int>(Math::divideAndRoundUp(height * width, numThreadsX));
 
         // update implicit args
         vmeKernel->setArg(heightArgNum, sizeof(height), &height);

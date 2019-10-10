@@ -192,7 +192,7 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
                 workGroups *= Math::divideAndRoundUp(workItems[2], Zdim);
                 cl_ulong euThrdsDispatched;
 
-                euThrdsDispatched = (Xdim * Ydim * Zdim + wsInfo.simdSize - 1) / wsInfo.simdSize;
+                euThrdsDispatched = Math::divideAndRoundUp(Xdim * Ydim * Zdim, wsInfo.simdSize);
                 euThrdsDispatched *= workGroups;
 
                 if (euThrdsDispatched < localEuThrdsDispatched) {
@@ -274,7 +274,7 @@ void computeWorkgroupSize2D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], 
             workGroups *= Math::divideAndRoundUp(workItems[1], yDim);
 
             // Compaction Mode!
-            euThrdsDispatched = (xDim * yDim + simdSize - 1) / simdSize;
+            euThrdsDispatched = Math::divideAndRoundUp(xDim * yDim, simdSize);
             euThrdsDispatched *= workGroups;
 
             waste = simdSize - ((xDim * yDim - 1) & (simdSize - 1));

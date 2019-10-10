@@ -227,7 +227,7 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
         auto sizeThisIteration = std::min(sizeRemaining, blockSizeMax);
 
         // Round up to the number of dwords
-        auto dwordCount = (headerSize + sizeThisIteration + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+        auto dwordCount = Math::divideAndRoundUp(headerSize + sizeThisIteration, sizeof(uint32_t));
 
         header.dwordCount = static_cast<uint32_t>(dwordCount - 1);
         header.dataSizeInBytes = static_cast<uint32_t>(sizeThisIteration);
