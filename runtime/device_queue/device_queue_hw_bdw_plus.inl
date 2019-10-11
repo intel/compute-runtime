@@ -198,8 +198,10 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         pIDDestination[blockIndex + i] = *pBlockID;
         pIDDestination[blockIndex + i].setKernelStartPointerHigh(gpuAddress >> 32);
         pIDDestination[blockIndex + i].setKernelStartPointer((uint32_t)gpuAddress);
-        pIDDestination[blockIndex + i].setBarrierEnable(pBlockInfo->patchInfo.executionEnvironment->HasBarriers);
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
+        HardwareCommandsHelper<GfxFamily>::programBarrierEnable(ptrOffset(pIDDestination, blockIndex + i),
+                                                                pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
+                                                                parentKernel->getDevice().getHardwareInfo());
 
         // Set offset to sampler states, block's DHSOffset is added by scheduler
         pIDDestination[blockIndex + i].setSamplerStatePointer(static_cast<uint32_t>(pBlockInfo->getBorderColorStateSize()));

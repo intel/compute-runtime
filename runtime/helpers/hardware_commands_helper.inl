@@ -163,7 +163,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto programmableIDSLMSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(computeSlmValues(kernel.slmTotalSize));
 
     pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
-    pInterfaceDescriptor->setBarrierEnable(kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers);
+    programBarrierEnable(pInterfaceDescriptor, kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers,
+                         kernel.getDevice().getHardwareInfo());
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
 
