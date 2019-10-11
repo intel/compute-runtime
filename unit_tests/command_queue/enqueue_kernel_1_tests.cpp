@@ -1091,3 +1091,16 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
 }
+
+HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIsSet) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    size_t off[3] = {0, 0, 0};
+    size_t gws[3] = {1, 1, 1};
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    pCmdQ->dispatchHints = 1;
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(csr.recordedDispatchFlags.epilogueRequired, true);
+}

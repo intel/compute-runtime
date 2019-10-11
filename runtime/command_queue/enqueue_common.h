@@ -709,6 +709,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3AndL1On;
     }
 
+    if (this->dispatchHints != 0) {
+        dispatchFlags.epilogueRequired = true;
+    }
+
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyPreFlushTask(this);
     }

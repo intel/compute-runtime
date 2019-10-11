@@ -423,6 +423,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     uint64_t getSliceCount() const { return sliceCount; }
 
+    // extend dispatch hints
+    uint64_t dispatchHints = 0;
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);

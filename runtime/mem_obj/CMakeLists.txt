@@ -27,6 +27,8 @@ set(RUNTIME_SRCS_MEM_OBJ
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_helper_common.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/pipe.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/pipe.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/buffer_ext.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/image_ext.inl
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_MEM_OBJ})

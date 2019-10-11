@@ -14,6 +14,7 @@
 #include "runtime/mem_obj/image.h"
 
 #include "hw_cmds.h"
+#include "image_ext.inl"
 
 namespace NEO {
 
@@ -155,6 +156,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         setAuxParamsForCCS(surfaceState, gmm);
     }
     appendSurfaceStateParams(surfaceState);
+    appendSurfaceStateExt(surfaceState);
 }
 
 template <typename GfxFamily>

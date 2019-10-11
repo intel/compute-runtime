@@ -78,6 +78,7 @@ struct DispatchFlags {
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     uint32_t l3CacheSettings = L3CachingSettings::l3CacheOn;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
+    uint64_t engineHints = 0;
     bool blocking = false;
     bool dcFlush = false;
     bool useSLM = false;

@@ -31,6 +31,8 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 
+#include "command_stream_receiver_hw_ext.inl"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -258,6 +260,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         programStallingPipeControlForBarrier(commandStreamCSR, dispatchFlags);
     }
 
+    programEngineModeCommands(commandStreamCSR, dispatchFlags);
     initPageTableManagerRegisters(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);

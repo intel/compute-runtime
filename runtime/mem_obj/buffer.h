@@ -182,6 +182,7 @@ class BufferHw : public Buffer {
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) override;
     void appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation, bool isReadOnlyArgument);
+    void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,
                           MemoryProperties properties,

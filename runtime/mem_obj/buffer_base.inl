@@ -14,6 +14,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/buffer.h"
 
+#include "buffer_ext.inl"
 #include "hw_cmds.h"
 
 namespace NEO {
@@ -79,6 +80,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     }
 
     appendBufferState(memory, context, getGraphicsAllocation(), isReadOnlyArgument);
+    appendSurfaceStateExt(memory);
 }
 
 } // namespace NEO

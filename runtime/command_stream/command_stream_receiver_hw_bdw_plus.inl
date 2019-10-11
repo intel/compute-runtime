@@ -57,12 +57,15 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
     scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(executionEnvironment, *internalAllocationStorage.get());
 }
+
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags) {
+    this->programEngineModeEpliogue(csr, dispatchFlags);
 }
+
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const {
-    return 0u;
+    return this->getCmdSizeForEngineMode(dispatchFlags);
 }
 
 template <typename GfxFamily>

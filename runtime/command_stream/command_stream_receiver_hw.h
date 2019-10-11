@@ -53,6 +53,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPipelineSelect() const;
     size_t getCmdSizeForComputeMode();
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
+    size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
@@ -88,6 +89,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
     void programStallingPipeControlForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
+    void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
+    void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
 
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
