@@ -69,6 +69,7 @@ class HwHelper {
     virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual bool requiresAuxResolves() const = 0;
     virtual bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) = 0;
+    virtual bool allowsIndependentForwardProgress() = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -169,6 +170,8 @@ class HwHelperHw : public HwHelper {
     bool requiresAuxResolves() const override;
 
     bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) override;
+
+    bool allowsIndependentForwardProgress() override;
 
   protected:
     HwHelperHw() = default;

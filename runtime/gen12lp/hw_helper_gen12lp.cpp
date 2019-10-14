@@ -51,6 +51,11 @@ bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareI
 }
 
 template <>
+bool HwHelperHw<Family>::allowsIndependentForwardProgress() {
+    return false;
+}
+
+template <>
 void HwHelperHw<Family>::checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) {
     if (buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         errorCode = CL_INVALID_MEM_OBJECT;

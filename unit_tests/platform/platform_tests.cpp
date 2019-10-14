@@ -77,7 +77,10 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     compilerExtensions = pPlatform->peekCompilerExtensions();
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    auto subGroupsSupported = hwHelper.allowsIndependentForwardProgress();
+    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos && subGroupsSupported) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
 }
