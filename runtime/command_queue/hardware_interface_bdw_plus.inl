@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface_base.inl"
+#include "runtime/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -112,6 +113,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker, commandQueue.getDevice().getHardwareInfo());
     }
 
+    auto isCcsUsed = isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
+
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         dsh,
@@ -125,7 +128,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         preemptionMode,
         walkerCmd,
         nullptr,
-        true);
+        true,
+        isCcsUsed);
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,

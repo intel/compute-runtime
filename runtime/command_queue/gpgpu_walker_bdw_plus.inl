@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/gpgpu_walker_base.inl"
+#include "runtime/helpers/engine_node_helper.h"
 
 namespace NEO {
 
@@ -123,7 +124,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     // Program the walker.  Invokes execution so all state should already be programmed
     auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
-
+    auto isCcsUsed = isCcs(devQueueHw.getDevice().getDefaultEngine().osContext->getEngineType());
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -138,7 +139,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         preemptionMode,
         pGpGpuWalkerCmd,
         nullptr,
-        true);
+        true,
+        isCcsUsed);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);

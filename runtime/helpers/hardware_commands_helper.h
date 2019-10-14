@@ -112,7 +112,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         PreemptionMode preemptionMode,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        bool localIdsGenerationByRuntime);
+        bool localIdsGenerationByRuntime,
+        bool isCcsUsed);
 
     static void programPerThreadData(
         size_t &sizePerThreadData,
@@ -140,7 +141,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const KernelInfo &kernelInfo,
         const bool &localIdsGenerationByRuntime,
         const bool &kernelUsesLocalIds,
-        Kernel &kernel);
+        Kernel &kernel,
+        bool isCssUsed);
 
     static size_t getSizeRequiredCS(const Kernel *kernel);
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);

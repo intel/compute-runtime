@@ -31,6 +31,8 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/engine_node_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h

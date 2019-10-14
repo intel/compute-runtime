@@ -95,12 +95,21 @@ void HardwareCommandsHelper<GfxFamily>::setKernelStartOffset(
     const KernelInfo &kernelInfo,
     const bool &localIdsGenerationByRuntime,
     const bool &kernelUsesLocalIds,
-    Kernel &kernel) {
+    Kernel &kernel,
+    bool isCssUsed) {
 
     if (kernelAllocation) {
         kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
     }
     kernelStartOffset += kernel.getStartOffset();
+
+#ifdef WIN32
+    if ((kernel.getDevice().getHardwareInfo().platform.eProductFamily == IGFX_TIGERLAKE_LP) &&
+        (kernel.getDevice().getHardwareInfo().platform.usRevId == REVISION_A0) &&
+        isCssUsed) {
+        kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+    }
+#endif
 }
 
 template <typename GfxFamily>

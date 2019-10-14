@@ -239,7 +239,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     PreemptionMode preemptionMode,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-    bool localIdsGenerationByRuntime) {
+    bool localIdsGenerationByRuntime,
+    bool isCcsUsed) {
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
@@ -252,7 +253,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const auto &kernelInfo = kernel.getKernelInfo();
     auto kernelAllocation = kernelInfo.getGraphicsAllocation();
     DEBUG_BREAK_IF(!kernelAllocation);
-    setKernelStartOffset(kernelStartOffset, kernelAllocation, kernelInfo, localIdsGenerationByRuntime, kernelUsesLocalIds, kernel);
+    setKernelStartOffset(kernelStartOffset, kernelAllocation, kernelInfo, localIdsGenerationByRuntime,
+                         kernelUsesLocalIds, kernel, isCcsUsed);
 
     const auto &patchInfo = kernelInfo.patchInfo;
 
