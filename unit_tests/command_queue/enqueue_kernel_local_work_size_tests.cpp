@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueKernelLocalWorkSize;
 
-TEST_F(EnqueueKernelLocalWorkSize, nullPointer) {
+TEST_F(EnqueueKernelLocalWorkSize, GivenNullLwsInWhenEnqueuingKernelThenSuccessIsReturned) {
     size_t globalWorkOffset[3] = {0, 999, 9999};
     size_t globalWorkSize[3] = {1, 999, 9999};
 
@@ -48,7 +48,7 @@ struct EnqueueKernelRequiredWorkSize : public HelloWorldTest<HelloWorldFixtureFa
 // Kernel specifies the optional reqd_work_group_size() attribute but it wasn't
 // specified.  We'll permit the user to not specify the local work group size
 // and pick up the correct values instead.
-TEST_F(EnqueueKernelRequiredWorkSize, unspecifiedWorkGroupSize) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqeueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t *localWorkSize = nullptr;
 
@@ -74,7 +74,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, unspecifiedWorkGroupSize) {
 }
 
 // Fully specified
-TEST_F(EnqueueKernelRequiredWorkSize, matchingRequiredWorkGroupSize) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqeueingKernelThenLwsIsSetCorrectly) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t localWorkSize[3] = {8, 4, 4};
@@ -120,7 +120,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen
 }
 
 // Incorrectly specified
-TEST_F(EnqueueKernelRequiredWorkSize, notMatchingRequiredLocalWorkGroupSize) {
+TEST_F(EnqueueKernelRequiredWorkSize, GivenInvalidRequiredWorkgroupSizeWhenEnqueuingKernelThenInvalidWorkGroupSizeErrorIsReturned) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
     size_t localWorkSize[3] = {16, 8, 1};
