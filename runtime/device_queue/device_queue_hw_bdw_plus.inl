@@ -199,7 +199,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         pIDDestination[blockIndex + i].setKernelStartPointerHigh(gpuAddress >> 32);
         pIDDestination[blockIndex + i].setKernelStartPointer((uint32_t)gpuAddress);
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
-        HardwareCommandsHelper<GfxFamily>::programBarrierEnable(ptrOffset(pIDDestination, blockIndex + i),
+        HardwareCommandsHelper<GfxFamily>::programBarrierEnable(&pIDDestination[blockIndex + i],
                                                                 pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
                                                                 parentKernel->getDevice().getHardwareInfo());
 

@@ -616,6 +616,42 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
     }
 }
 
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, GivenHasBarriersSetWhenCallingSetupIndirectStateThenAllIddHaveBarriersEnabled) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+        pKernel->createReflectionSurface();
+
+        MockContext mockContext;
+        auto devQueueHw = std::make_unique<MockDeviceQueueHw<FamilyType>>(&mockContext, device, deviceQueueProperties::minimumProperties[0]);
+        auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+
+        uint32_t parentCount = 1;
+
+        auto blockManager = pKernel->getProgram()->getBlockKernelManager();
+        auto iddCount = blockManager->getCount();
+        for (uint32_t i = 0; i < iddCount; i++) {
+            ((SPatchExecutionEnvironment *)blockManager->getBlockKernelInfo(i)->patchInfo.executionEnvironment)->HasBarriers = 1u;
+        }
+
+        auto surfaceStateHeapSize =
+            HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE,
+                                                                                 const_cast<const Kernel &>(*pKernel));
+        auto ssh = std::make_unique<IndirectHeap>(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
+
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
+
+        auto iddStartPtr = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), devQueueHw->colorCalcStateSize));
+        auto iddStartIndex = parentCount;
+        for (uint32_t i = 0; i < iddCount; i++) {
+            EXPECT_TRUE(iddStartPtr[iddStartIndex + i].getBarrierEnable());
+        }
+
+        alignedFree(ssh->getCpuBase());
+    }
+}
+
 static const char *binaryFile = "simple_block_kernel";
 static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
 
