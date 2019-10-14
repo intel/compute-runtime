@@ -23,6 +23,8 @@
 
 namespace NEO {
 
+bool (*Drm::pIsi915Version)(int fd) = Drm::isi915Version;
+int (*Drm::pClose)(int fd) = ::close;
 const DeviceDescriptor deviceDescriptorTable[] = {
 #define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType},
 #include "devices.inl"
@@ -71,26 +73,38 @@ int Drm::getDeviceFd(const int devType) {
     const char *pathPrefix;
     unsigned int startNum;
     const unsigned int maxDrmDevices = 64;
-
-    switch (devType) {
-    case 0:
-        startNum = 128;
-        pathPrefix = "/dev/dri/renderD";
-        break;
-    default:
-        startNum = 0;
-        pathPrefix = "/dev/dri/card";
-        break;
-    }
-
-    for (unsigned int i = 0; i < maxDrmDevices; i++) {
-        snprintf(fullPath, PATH_MAX, "%s%u", pathPrefix, i + startNum);
-        int fd = ::open(fullPath, O_RDWR);
-        if (fd >= 0) {
-            if (isi915Version(fd)) {
-                return fd;
+    if (DebugManager.flags.ForceDeviceId.get() == "unk") {
+        switch (devType) {
+        case 0:
+            startNum = 128;
+            pathPrefix = "/dev/dri/renderD";
+            break;
+        default:
+            startNum = 0;
+            pathPrefix = "/dev/dri/card";
+            break;
+        }
+        for (unsigned int i = 0; i < maxDrmDevices; i++) {
+            snprintf(fullPath, PATH_MAX, "%s%u", pathPrefix, i + startNum);
+            int fd = ::open(fullPath, O_RDWR);
+            if (fd >= 0) {
+                if (isi915Version(fd)) {
+                    return fd;
+                }
+                ::close(fd);
             }
-            ::close(fd);
+        }
+    } else {
+        const char *cardType[] = {"-render", "-card"};
+        for (auto param : cardType) {
+            snprintf(fullPath, PATH_MAX, "/dev/dri/by-path/pci-0000:%s%s", DebugManager.flags.ForceDeviceId.get().c_str(), param);
+            int fd = ::open(fullPath, O_RDWR);
+            if (fd >= 0) {
+                if (pIsi915Version(fd)) {
+                    return fd;
+                }
+                pClose(fd);
+            }
         }
     }
 

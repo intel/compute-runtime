@@ -48,6 +48,55 @@ void initializeTestedDevice() {
     }
 }
 
+int openRetVal = 0;
+int testOpen(const char *fullPath, int, ...) {
+    return openRetVal;
+};
+
+TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("1234");
+    struct DrmTest : public NEO::Drm {
+        using NEO::Drm::getDeviceFd;
+    };
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openFull = testOpen;
+    openRetVal = -1;
+    int fd = DrmTest::getDeviceFd(0);
+    EXPECT_EQ(fd, -1);
+}
+
+TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("1234");
+    struct DrmTest : public NEO::Drm {
+        using NEO::Drm::getDeviceFd;
+    };
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openRetVal = 1023; // fakeFd
+    openFull = testOpen;
+    int fd = DrmTest::getDeviceFd(0);
+    EXPECT_NE(fd, -1);
+}
+
+TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("1234");
+    struct DrmTest : public NEO::Drm {
+        using NEO::Drm::getDeviceFd;
+    };
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(Drm::pIsi915Version)> backupIsi915Version(&Drm::pIsi915Version);
+    VariableBackup<decltype(Drm::pClose)> backupClose(&Drm::pClose);
+    openFull = testOpen;
+    openRetVal = 1023;
+    Drm::pIsi915Version = [](int x) -> bool { return false; };
+    Drm::pClose = [](int x) -> int { return 0; };
+
+    int fd = DrmTest::getDeviceFd(0);
+    EXPECT_EQ(fd, -1);
+}
+
 TEST_F(DrmTests, getReturnsNull) {
     auto drm = Drm::get(0);
     EXPECT_EQ(drm, nullptr);

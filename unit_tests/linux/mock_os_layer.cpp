@@ -11,6 +11,7 @@
 #include <iostream>
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
+int (*openFull)(const char *pathname, int flags, ...) = nullptr;
 int (*c_ioctl)(int fd, unsigned long int request, ...) = nullptr;
 
 int fakeFd = 1023;
@@ -36,6 +37,9 @@ int ioctlSeq[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 size_t ioctlCnt = 0;
 
 int open(const char *pathname, int flags, ...) {
+    if (openFull != nullptr) {
+        return openFull(pathname, flags);
+    }
     if (c_open == nullptr) {
         c_open = (int (*)(const char *, int, ...))dlsym(RTLD_NEXT, "open");
     }
