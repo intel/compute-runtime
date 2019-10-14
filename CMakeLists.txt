@@ -100,12 +100,12 @@ if(SKIP_ALL_ULT)
 endif()
 
 # Set our build directory
-if(NOT DEFINED IGDRCL_BUILD_DIR)
-  set(IGDRCL_BUILD_DIR ${CMAKE_BINARY_DIR})
+if(NOT DEFINED NEO_BUILD_DIR)
+  set(NEO_BUILD_DIR ${CMAKE_BINARY_DIR})
 endif()
 
-if(NOT IGDRCL_BINARY_DIR)
-  set(IGDRCL_BINARY_DIR ${CMAKE_BINARY_DIR})
+if(NOT NEO_BINARY_DIR)
+  set(NEO_BINARY_DIR ${CMAKE_BINARY_DIR})
 endif()
 
 # we use c++14
@@ -116,9 +116,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_NINJA_FORCE_RESPONSE_FILE 1)
 
 # set output paths
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/lib)
 
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
@@ -279,9 +279,9 @@ if(NOT IGC__IGC_TARGETS)
     elseif(EXISTS "${IGC_DIR}/CMakeLists.txt")
         message(STATUS "IGC source dir is: ${IGC_DIR}")
 
-        set(IGC_OPTION__OUTPUT_DIR "${IGDRCL_BUILD_DIR}/igc")
+        set(IGC_OPTION__OUTPUT_DIR "${NEO_BUILD_DIR}/igc")
         set(IGC_OPTION__INCLUDE_IGC_COMPILER_TOOLS OFF)
-        add_subdirectory_unique("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
+        add_subdirectory_unique("${IGC_DIR}" "${NEO_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
 
         set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
         foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
@@ -394,7 +394,7 @@ if(NOT DEFINED GMMUMD_LIB_NAME)
     else()
       if(EXISTS "${GMM_SOURCE_DIR}/CMakeLists.txt")
         message(STATUS "GmmLib source dir is: ${GMM_SOURCE_DIR}")
-        add_subdirectory_unique("${GMM_SOURCE_DIR}" "${IGDRCL_BUILD_DIR}/gmmlib")
+        add_subdirectory_unique("${GMM_SOURCE_DIR}" "${NEO_BUILD_DIR}/gmmlib")
 
         if(NOT DEFINED GMMUMD_LIB_NAME)
           set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
@@ -743,7 +743,7 @@ endif()
 
 # Project-wide include paths
 # Please keep alphabetical order
-include_directories(${IGDRCL_BUILD_DIR})
+include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
 include_directories(${NEO_SOURCE_DIR}/core/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
@@ -780,7 +780,7 @@ else()
 	set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif(MSVC)
 
-add_subdirectory_unique(offline_compiler ${IGDRCL_BUILD_DIR}/offline_compiler)
+add_subdirectory_unique(offline_compiler ${NEO_BUILD_DIR}/offline_compiler)
 target_compile_definitions(ocloc PRIVATE MOCKABLE_VIRTUAL=)
 add_subdirectory_unique(core)
 
@@ -789,9 +789,9 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
 	set(SHARINGS_ENABLE_LIB_NAME "${LIB_NAME}_sharings_enable")
 	set(GENERATE_EXECUTABLE ${GENERATE_EXEC})
 	if(NOT BUILD_WITHOUT_RUNTIME)
-		add_subdirectory(runtime "${IGDRCL_BUILD_DIR}/${LIB_NAME}")
+		add_subdirectory(runtime "${NEO_BUILD_DIR}/${LIB_NAME}")
 	else()
-		add_subdirectory(runtime "${IGDRCL_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
+		add_subdirectory(runtime "${NEO_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
 	endif()
 	target_compile_definitions(${BUILTINS_SOURCES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
 	target_compile_definitions(${BUILTINS_BINARIES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
@@ -832,24 +832,24 @@ else()
 endif()
 
 if(DEFAULT_TESTED_PLATFORM)
-  add_subdirectory_unique(unit_tests ${IGDRCL_BUILD_DIR}/unit_tests)
+  add_subdirectory_unique(unit_tests ${NEO_BUILD_DIR}/unit_tests)
 else() 
   hide_subdir(unit_tests)
 endif()
 
 set(DONT_LINK_ELF_STATICALLY TRUE)
 if(EXISTS ${NEO_SOURCE_DIR}/../internal)
-  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${IGDRCL_BUILD_DIR}/internal)
+  add_subdirectory_unique(${NEO_SOURCE_DIR}/../internal ${NEO_BUILD_DIR}/internal)
 endif(EXISTS ${NEO_SOURCE_DIR}/../internal)
 
 add_subdirectory_unique(scripts/lint)
 
-configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
+configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 if(WIN32 AND NOT IGDRCL__IGC_FOUND)
-    configure_file(igc.opencl.h.in ${IGDRCL_BUILD_DIR}/igc.opencl.h)
+    configure_file(igc.opencl.h.in ${NEO_BUILD_DIR}/igc.opencl.h)
 endif()
-configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define
-configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)
+configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
+configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 
 hide_subdir(runtime)
 add_subdirectories()

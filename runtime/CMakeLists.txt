@@ -188,7 +188,7 @@ if(UNIX AND NOT (TARGET clang-tidy))
     TARGET clang-tidy
     POST_BUILD
     COMMAND echo clang-tidy...
-    COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} -name *.cpp | xargs --verbose -I{} -P`nproc` clang-tidy-8 -p ${IGDRCL_BINARY_DIR} {} | tee ${IGDRCL_BINARY_DIR}/clang-tidy.log
+    COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} -name *.cpp | xargs --verbose -I{} -P`nproc` clang-tidy-8 -p ${NEO_BINARY_DIR} {} | tee ${NEO_BINARY_DIR}/clang-tidy.log
     WORKING_DIRECTORY ${NEO_SOURCE_DIR}
   )
 endif()
