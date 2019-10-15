@@ -8,6 +8,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/deferred_deleter_helper.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/memory_operations_handler.h"
@@ -41,7 +42,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
                                                                                    wddm(executionEnvironment.osInterface->get()->getWddm()) {
     DEBUG_BREAK_IF(wddm == nullptr);
 
-    asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
+    asyncDeleterEnabled = isDeferredDeleterEnabled();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
     mallocRestrictions.minAddress = wddm->getWddmMinAddress();

@@ -15,6 +15,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_flags_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
