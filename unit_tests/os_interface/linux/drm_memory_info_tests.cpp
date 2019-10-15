@@ -37,12 +37,13 @@ TEST(DrmTest, whenSettingEnginesThenReturnZeroValueAndCallNoIoctls) {
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 
-TEST(DrmTest, whenSettingMemoryRegionsThenNoIoctlIsCalled) {
+TEST(DrmTest, whenSettingMemoryRegionsThenZeroIsReturnedAndNoIoctlsAreCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
     EXPECT_NE(nullptr, drm);
 
-    drm->setMemoryRegions();
+    auto ret = drm->setMemoryRegions();
 
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 

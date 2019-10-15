@@ -78,7 +78,7 @@ class Drm {
     void queryEngineInfo();
     void queryMemoryInfo();
     int setEngines();
-    void setMemoryRegions();
+    int setMemoryRegions();
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();

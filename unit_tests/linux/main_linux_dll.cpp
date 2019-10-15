@@ -277,6 +277,16 @@ TEST_F(DrmTests, failOnInvalidDeviceName) {
     EXPECT_EQ(drm, nullptr);
 }
 
+TEST_F(DrmTests, whenDrmIsCreatedThenSetMemoryRegionsDoesntFailAndDrmObjectIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    auto drm = DrmWrap::createDrm(0);
+    EXPECT_NE(drm, nullptr);
+
+    DrmWrap::closeDevice(0);
+}
+
 TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
     EXPECT_EQ((maxNBitValue<47> + 1) / 4, NEO::getSizeToReserve());
 }
