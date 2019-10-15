@@ -46,12 +46,12 @@ emerge intel-neo
 ipoldek install intel-gmmlib intel-graphics-compiler intel-compute-runtime
 ```
 
-## Ubuntu* 16.04 and 18.04 ppa
+## Ubuntu* 16.04, 18.04, 19.04 ppa
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
 apt-get update
-apt-get install intel-opencl
+apt-get install intel-opencl-icd
 ```
 
 ## Ubuntu* 19.04
