@@ -249,6 +249,14 @@ size_t Context::getNumDevices() const {
     return devices.size();
 }
 
+size_t Context::getTotalNumDevices() const {
+    size_t numAvailableDevices = 0u;
+    for (auto &device : devices) {
+        numAvailableDevices += device->getNumAvailableDevices();
+    }
+    return numAvailableDevices;
+}
+
 Device *Context::getDevice(size_t deviceOrdinal) {
     return (Device *)devices[deviceOrdinal];
 }
