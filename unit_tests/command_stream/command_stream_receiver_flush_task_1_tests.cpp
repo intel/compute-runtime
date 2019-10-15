@@ -80,7 +80,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWh
     EXPECT_EQ(0u, commandStreamReceiver.commandStream.getUsed());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSpecialCommandStreamReceiverWhenFlushTaskIsCalledThenCommandStreamReceiverStreamIsUsed) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMultiOsContextCommandStreamReceiverWhenFlushTaskIsCalledThenCommandStreamReceiverStreamIsUsed) {
     configureCSRtoNonDirtyState<FamilyType>();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.multiOsContextCapable = true;
@@ -90,7 +90,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSpecialCommandStreamReceiverW
     EXPECT_EQ(MemoryConstants::cacheLineSize, commandStreamReceiver.commandStream.getUsed());
     auto batchBufferStart = genCmdCast<typename FamilyType::MI_BATCH_BUFFER_START *>(commandStreamReceiver.commandStream.getCpuBase());
     EXPECT_NE(nullptr, batchBufferStart);
-    commandStreamReceiver.executionEnvironment.specialCommandStreamReceiver.release();
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
