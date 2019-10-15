@@ -37,7 +37,7 @@ MemObj::MemObj(Context *context,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
-    : context(context), memObjectType(memObjectType), properties(properties), flags(flags), flags_intel(flagsIntel), size(size),
+    : context(context), memObjectType(memObjectType), properties(properties), flags(flags), flagsIntel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
       graphicsAllocation(gfxAllocation) {
@@ -231,11 +231,11 @@ bool MemObj::isMemObjWithHostPtrSVM() const {
 }
 
 bool MemObj::isMemObjUncacheable() const {
-    return isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    return isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
 bool MemObj::isMemObjUncacheableForSurfaceState() const {
-    return isAnyBitSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    return isAnyBitSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
 GraphicsAllocation *MemObj::getGraphicsAllocation() const {

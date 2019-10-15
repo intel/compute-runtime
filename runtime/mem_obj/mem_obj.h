@@ -133,7 +133,7 @@ class MemObj : public BaseObject<_cl_mem> {
     MemoryProperties properties;
     MemoryPropertiesFlags memoryProperties;
     cl_mem_flags flags = 0;
-    cl_mem_flags_intel flags_intel = 0;
+    cl_mem_flags_intel flagsIntel = 0;
     size_t size;
     size_t hostPtrMinSize = 0;
     void *memoryStorage;

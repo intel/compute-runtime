@@ -22,7 +22,7 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
             propertiesStruct.flags |= static_cast<cl_mem_flags>(properties[i + 1]);
             break;
         case CL_MEM_FLAGS_INTEL:
-            propertiesStruct.flags_intel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
+            propertiesStruct.flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
             break;
         default:
             return false;
@@ -32,10 +32,10 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
     switch (objectType) {
     case MemoryPropertiesParser::ObjType::BUFFER:
         return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer) &&
-               isFieldValid(propertiesStruct.flags_intel, MemObjHelper::validFlagsForBufferIntel);
+               isFieldValid(propertiesStruct.flagsIntel, MemObjHelper::validFlagsForBufferIntel);
     case MemoryPropertiesParser::ObjType::IMAGE:
         return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage) &&
-               isFieldValid(propertiesStruct.flags_intel, MemObjHelper::validFlagsForImageIntel);
+               isFieldValid(propertiesStruct.flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
         break;
     }

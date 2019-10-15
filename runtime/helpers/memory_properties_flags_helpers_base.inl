@@ -47,7 +47,7 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(M
         memoryPropertiesFlags.flags.kernelReadAndWrite = true;
     }
     if (isValueSet(properties.flags, CL_MEM_FORCE_LINEAR_STORAGE_INTEL) ||
-        isValueSet(properties.flags_intel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL)) {
+        isValueSet(properties.flagsIntel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL)) {
         memoryPropertiesFlags.flags.forceLinearStorage = true;
     }
     if (isValueSet(properties.flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
@@ -57,14 +57,14 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(M
         memoryPropertiesFlags.flags.noAccess = true;
     }
     if (isValueSet(properties.flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
-        isValueSet(properties.flags_intel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL)) {
+        isValueSet(properties.flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL)) {
         memoryPropertiesFlags.flags.allowUnrestrictedSize = true;
     }
-    if (isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
+    if (isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
         memoryPropertiesFlags.flags.locallyUncachedResource = true;
     }
 
-    if (isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
+    if (isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
         memoryPropertiesFlags.flags.locallyUncachedInSurfaceState = true;
     }
 

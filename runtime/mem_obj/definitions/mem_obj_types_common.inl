@@ -12,7 +12,7 @@ namespace NEO {
 struct MemoryPropertiesBase {
     MemoryPropertiesBase(cl_mem_flags flags) : flags(flags) {}
     cl_mem_flags flags = 0;
-    cl_mem_flags_intel flags_intel = 0;
+    cl_mem_flags_intel flagsIntel = 0;
 };
 
 } // namespace NEO

@@ -412,7 +412,7 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &properties
 
     auto funcCreate = imageFactory[hwInfo.platform.eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto image = funcCreate(context, properties, properties.flags, properties.flags_intel, size, hostPtr, imageFormat, imageDesc,
+    auto image = funcCreate(context, properties, properties.flags, properties.flagsIntel, size, hostPtr, imageFormat, imageDesc,
                             zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
     DEBUG_BREAK_IF(nullptr == image);
     image->createFunction = funcCreate;
@@ -863,7 +863,7 @@ Image *Image::redescribeFillImage() {
     auto image = createFunction(context,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flags_intel,
+                                properties.flagsIntel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
@@ -912,7 +912,7 @@ Image *Image::redescribe() {
     auto image = createFunction(context,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
                                 properties.flags | CL_MEM_USE_HOST_PTR,
-                                properties.flags_intel,
+                                properties.flagsIntel,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,

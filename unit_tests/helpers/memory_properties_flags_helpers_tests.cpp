@@ -52,11 +52,11 @@ TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsT
     EXPECT_TRUE(properties.flags.noAccess);
 
     MemoryProperties memoryProperties;
-    memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
+    memoryProperties.flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.locallyUncachedResource);
 
-    memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
+    memoryProperties.flagsIntel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.locallyUncachedInSurfaceState);
 
@@ -69,22 +69,22 @@ TEST(MemoryPropertiesFlags, givenClMemForceLinearStorageFlagWhenCreateMemoryProp
     MemoryProperties memoryProperties;
 
     memoryProperties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties.flags_intel = 0;
+    memoryProperties.flagsIntel = 0;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.forceLinearStorage);
 
     memoryProperties.flags = 0;
-    memoryProperties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    memoryProperties.flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.forceLinearStorage);
 
     memoryProperties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    memoryProperties.flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.forceLinearStorage);
 
     memoryProperties.flags = 0;
-    memoryProperties.flags_intel = 0;
+    memoryProperties.flagsIntel = 0;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_FALSE(properties.flags.forceLinearStorage);
 }
@@ -94,22 +94,22 @@ TEST(MemoryPropertiesFlags, givenClAllowUnrestrictedSizeFlagWhenCreateMemoryProp
     MemoryProperties memoryProperties;
 
     memoryProperties.flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties.flags_intel = 0;
+    memoryProperties.flagsIntel = 0;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
 
     memoryProperties.flags = 0;
-    memoryProperties.flags_intel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    memoryProperties.flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
 
     memoryProperties.flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties.flags_intel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    memoryProperties.flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
 
     memoryProperties.flags = 0;
-    memoryProperties.flags_intel = 0;
+    memoryProperties.flagsIntel = 0;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_FALSE(properties.flags.allowUnrestrictedSize);
 }

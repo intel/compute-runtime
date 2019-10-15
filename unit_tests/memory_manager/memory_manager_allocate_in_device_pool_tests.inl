@@ -57,12 +57,12 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
     MemoryProperties properties;
-    properties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
+    properties.flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
     auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
-    properties.flags_intel = 0;
+    properties.flagsIntel = 0;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
     allocationFlags = MemoryPropertiesParser::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);

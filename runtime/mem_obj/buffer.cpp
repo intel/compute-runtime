@@ -103,7 +103,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
 
     auto pDevice = pContext->getDevice(0);
     bool allowCreateBuffersWithUnrestrictedSize = isValueSet(properties.flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
-                                                  isValueSet(properties.flags_intel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
+                                                  isValueSet(properties.flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
 
     if (size == 0 || (size > pDevice->getHardwareCapabilities().maxMemAllocSize && !allowCreateBuffersWithUnrestrictedSize)) {
         retVal = CL_INVALID_BUFFER_SIZE;
@@ -510,7 +510,7 @@ Buffer *Buffer::createBufferHw(Context *context,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(context, properties, properties.flags, properties.flags_intel, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(context, properties, properties.flags, properties.flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     DEBUG_BREAK_IF(nullptr == pBuffer);
     if (pBuffer) {

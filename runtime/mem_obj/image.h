@@ -185,7 +185,7 @@ class Image : public MemObj {
     Image(Context *context,
           const MemoryProperties &properties,
           cl_mem_flags flags,
-          cl_mem_flags_intel flags_intel,
+          cl_mem_flags_intel flagsIntel,
           size_t size,
           void *hostPtr,
           cl_image_format imageFormat,
