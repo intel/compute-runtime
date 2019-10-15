@@ -144,6 +144,8 @@ class Wddm {
     }
     void waitOnPagingFenceFromCpu();
 
+    void setGmmInputArg(void *args);
+
   protected:
     std::unique_ptr<Gdi> gdi;
     D3DKMT_HANDLE adapter = 0;
@@ -160,6 +162,7 @@ class Wddm {
     std::unique_ptr<FeatureTable> featureTable;
     std::unique_ptr<WorkaroundTable> workaroundTable;
     GMM_GFX_PARTITIONING gfxPartition;
+    ADAPTER_BDF adapterBDF;
     uint64_t systemSharedMemory = 0;
     uint64_t dedicatedVideoMemory = 0;
     uint32_t maxRenderFrequency = 0;

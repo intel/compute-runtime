@@ -25,6 +25,7 @@ class OSInterface {
     static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
     unsigned int getDeviceHandle() const;
+    void setGmmInputArgs(void *args);
 
   protected:
     OSInterfaceImpl *osInterfaceImpl = nullptr;

@@ -12,6 +12,8 @@
 
 namespace NEO {
 class GmmClientContext;
+struct HardwareInfo;
+
 class GmmClientContextBase {
   public:
     virtual ~GmmClientContextBase();
@@ -22,8 +24,8 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static std::unique_ptr<GmmClientContext> create(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) {
-        return std::make_unique<T>(clientType, gmmEntries);
+    static std::unique_ptr<GmmClientContext> create(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) {
+        return std::make_unique<T>(hwInfo, initFunc, destroyFunc);
     }
 
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
@@ -31,7 +33,7 @@ class GmmClientContextBase {
 
   protected:
     GMM_CLIENT_CONTEXT *clientContext;
-    GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
-    GmmExportEntries &gmmEntries;
+    GmmClientContextBase(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc);
+    decltype(&GmmDestroy) destroyFunc;
 };
 } // namespace NEO

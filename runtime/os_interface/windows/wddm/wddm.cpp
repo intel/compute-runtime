@@ -161,6 +161,7 @@ bool Wddm::queryAdapterInfo() {
         SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);
 
         memcpy_s(&gfxPartition, sizeof(gfxPartition), &adapterInfo.GfxPartition, sizeof(GMM_GFX_PARTITIONING));
+        memcpy_s(&adapterBDF, sizeof(adapterBDF), &adapterInfo.stAdapterBDF, sizeof(ADAPTER_BDF));
 
         deviceRegistryPath = adapterInfo.DeviceRegistryPath;
 
@@ -970,6 +971,10 @@ bool Wddm::configureDeviceAddressSpaceImpl() {
 void Wddm::waitOnPagingFenceFromCpu() {
     while (currentPagingFenceValue > *getPagingFenceAddress())
         ;
+}
+
+void Wddm::setGmmInputArg(void *args) {
+    reinterpret_cast<GMM_INIT_IN_ARGS *>(args)->stAdapterBDF = this->adapterBDF;
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {

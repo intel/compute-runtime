@@ -52,7 +52,8 @@ std::thread::id tempThreadID;
 } // namespace NEO
 namespace Os {
 extern const char *gmmDllName;
-extern const char *gmmEntryName;
+extern const char *gmmInitFuncName;
+extern const char *gmmDestroyFuncName;
 } // namespace Os
 
 using namespace NEO;
@@ -446,7 +447,8 @@ int main(int argc, char **argv) {
 #endif
     if (!useMockGmm) {
         Os::gmmDllName = GMM_UMD_DLL;
-        Os::gmmEntryName = GMM_ENTRY_NAME;
+        Os::gmmInitFuncName = GMM_INIT_NAME;
+        Os::gmmDestroyFuncName = GMM_DESTROY_NAME;
     } else {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }

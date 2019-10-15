@@ -24,6 +24,7 @@ class GraphicsAllocation;
 class WddmMock : public Wddm {
   public:
     using Wddm::adapter;
+    using Wddm::adapterBDF;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
     using Wddm::device;

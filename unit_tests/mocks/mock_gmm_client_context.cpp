@@ -8,6 +8,6 @@
 #include "mock_gmm_client_context.h"
 
 namespace NEO {
-MockGmmClientContext::MockGmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries) : MockGmmClientContextBase(clientType, gmmExportEntries) {
+MockGmmClientContext::MockGmmClientContext(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) : MockGmmClientContextBase(hwInfo, initFunc, destroyFunc) {
 }
 } // namespace NEO

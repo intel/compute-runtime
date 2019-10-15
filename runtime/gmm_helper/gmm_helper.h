@@ -17,8 +17,6 @@ class GmmClientContext;
 class GraphicsAllocation;
 class OsLibrary;
 struct HardwareInfo;
-struct FeatureTable;
-struct WorkaroundTable;
 struct ImageInfo;
 
 class GmmHelper {
@@ -50,15 +48,15 @@ class GmmHelper {
     static uint32_t getRenderMultisamplesCount(uint32_t numSamples);
     static GMM_YUV_PLANE convertPlane(OCLPlane oclPlane);
 
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(GMM_CLIENT, GmmExportEntries &);
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmDestroy));
 
   protected:
     void loadLib();
-    void initContext(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable, const GT_SYSTEM_INFO *pGtSysInfo);
 
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;
-    GmmExportEntries gmmEntries = {};
+    decltype(&InitializeGmm) initGmmFunc;
+    decltype(&GmmDestroy) destroyGmmFunc;
 };
 } // namespace NEO

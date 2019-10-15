@@ -8,5 +8,5 @@
 #include "gmm_client_context.h"
 
 namespace NEO {
-GmmClientContext::GmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) : GmmClientContextBase(clientType, gmmEntries){};
+GmmClientContext::GmmClientContext(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) : GmmClientContextBase(hwInfo, initFunc, destroyFunc){};
 } // namespace NEO

@@ -11,6 +11,6 @@
 namespace NEO {
 class MockGmmClientContext : public MockGmmClientContextBase {
   public:
-    MockGmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries);
+    MockGmmClientContext(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc);
 };
 } // namespace NEO

@@ -33,21 +33,6 @@ GmmHelper *GmmHelper::getInstance() {
     return platform()->peekExecutionEnvironment()->getGmmHelper();
 }
 
-void GmmHelper::initContext(const PLATFORM *platform,
-                            const FeatureTable *featureTable,
-                            const WorkaroundTable *workaroundTable,
-                            const GT_SYSTEM_INFO *pGtSysInfo) {
-    _SKU_FEATURE_TABLE gmmFtrTable = {};
-    _WA_TABLE gmmWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, featureTable);
-    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, workaroundTable);
-    loadLib();
-    bool success = GMM_SUCCESS == gmmEntries.pfnCreateSingletonContext(*platform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
-    UNRECOVERABLE_IF(!success);
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA, gmmEntries);
-    UNRECOVERABLE_IF(!gmmClientContext);
-}
-
 uint32_t GmmHelper::getMOCS(uint32_t type) {
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
@@ -91,10 +76,12 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
     return GMM_NO_PLANE;
 }
 GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
-    initContext(&pHwInfo->platform, &pHwInfo->featureTable, &pHwInfo->workaroundTable, &pHwInfo->gtSystemInfo);
+    loadLib();
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(const_cast<HardwareInfo *>(pHwInfo), this->initGmmFunc, this->destroyGmmFunc);
+    UNRECOVERABLE_IF(!gmmClientContext);
 }
-GmmHelper::~GmmHelper() {
-    gmmEntries.pfnDestroySingletonContext();
-};
+
+GmmHelper::~GmmHelper() = default;
+
 decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;
 } // namespace NEO

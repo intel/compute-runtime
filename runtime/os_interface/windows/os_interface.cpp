@@ -27,6 +27,10 @@ uint32_t OSInterface::getDeviceHandle() const {
     return static_cast<uint32_t>(osInterfaceImpl->getDeviceHandle());
 }
 
+void OSInterface::setGmmInputArgs(void *args) {
+    this->get()->getWddm()->setGmmInputArg(args);
+}
+
 OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;
 
 D3DKMT_HANDLE OSInterface::OSInterfaceImpl::getAdapterHandle() const {

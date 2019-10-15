@@ -27,4 +27,6 @@ uint32_t OSInterface::getDeviceHandle() const {
     return 0;
 }
 
+void OSInterface::setGmmInputArgs(void *args) {}
+
 } // namespace NEO

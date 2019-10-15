@@ -11,6 +11,6 @@
 namespace NEO {
 class GmmClientContext : public GmmClientContextBase {
   public:
-    GmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
+    GmmClientContext(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc);
 };
 } // namespace NEO
