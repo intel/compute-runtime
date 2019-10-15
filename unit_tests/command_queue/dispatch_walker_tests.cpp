@@ -37,7 +37,8 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(0);
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pDevice, 0);
+        context = std::make_unique<MockContext>(pDevice);
+        CommandQueueFixture::SetUp(context.get(), pDevice, 0);
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
@@ -80,6 +81,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
 
     void TearDown() override {
         CommandQueueFixture::TearDown();
+        context.reset();
         DeviceFixture::TearDown();
     }
 
@@ -92,6 +94,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
         return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
     }
 
+    std::unique_ptr<MockContext> context;
     std::unique_ptr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader = {};
@@ -1218,7 +1221,7 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
 }
 
 HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
-    MockContext context;
+    auto &context = pCmdQ->getContext();
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     auto builtIns = executionEnvironment->getBuiltIns();
     BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
@@ -1274,7 +1277,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
 }
 
 HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
-    MockContext context;
+    auto &context = pCmdQ->getContext();
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     auto builtIns = executionEnvironment->getBuiltIns();
     BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
