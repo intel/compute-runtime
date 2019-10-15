@@ -161,24 +161,18 @@ TEST_F(DrmTimeTest, GetCpuGpuTimeCpuFails) {
 
 TEST_F(DrmTimeTest, detect) {
     auto drm = new DrmMockCustom;
-    OSTimeLinux::TimestampFunction t1 = &OSTimeLinux::getGpuTime32;
-    void **p1 = (void **)&t1;
-    OSTimeLinux::TimestampFunction t2 = &OSTimeLinux::getGpuTimeSplitted;
-    void **p2 = (void **)&t2;
-    OSTimeLinux::TimestampFunction t3 = &OSTimeLinux::getGpuTime36;
-    void **p3 = (void **)&t3;
     osTime->updateDrm(drm);
 
     {
-        void **p = (void **)&(osTime->getGpuTime);
-        EXPECT_EQ(*p, *p3);
+        auto p = osTime->getGpuTime;
+        EXPECT_EQ(p, &OSTimeLinux::getGpuTime36);
     }
 
     {
         drm->ioctl_res = -1;
         osTime->timestampTypeDetect();
-        void **p = (void **)&(osTime->getGpuTime);
-        EXPECT_EQ(*p, *p1);
+        auto p = osTime->getGpuTime;
+        EXPECT_EQ(p, &OSTimeLinux::getGpuTime32);
     }
 
     DrmMockCustom::IoctlResExt ioctlToPass = {1, 0};
@@ -187,8 +181,8 @@ TEST_F(DrmTimeTest, detect) {
         drm->ioctl_res = -1;
         drm->ioctl_res_ext = &ioctlToPass; // 2nd ioctl is successful
         osTime->timestampTypeDetect();
-        void **p = (void **)&(osTime->getGpuTime);
-        EXPECT_EQ(*p, *p2);
+        auto p = osTime->getGpuTime;
+        EXPECT_EQ(p, &OSTimeLinux::getGpuTimeSplitted);
         drm->ioctl_res_ext = &drm->NONE;
     }
     delete drm;

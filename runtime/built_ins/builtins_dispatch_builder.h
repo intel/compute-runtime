@@ -75,6 +75,7 @@ class BuiltinDispatchInfoBuilder {
 
     // returns true if argument should be updated in kernel exposed to user code
     virtual bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const {
+        err = 0;
         return true;
     }
 
