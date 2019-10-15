@@ -402,7 +402,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     if (isStatusCompletedByTermination(transitionStatus) == false) {
         //if we are event on top of the tree , obtain taskLevel from CSR
         if (taskLevel == Event::eventNotReady) {
-            this->taskLevel = getTaskLevel();
+            this->taskLevel = getTaskLevel(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
             taskLevelToPropagate = this->taskLevel;
         } else {
             taskLevelToPropagate = taskLevel + 1;

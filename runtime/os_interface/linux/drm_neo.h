@@ -30,7 +30,7 @@ namespace NEO {
 class DeviceFactory;
 struct HardwareInfo;
 
-struct DeviceDescriptor {
+struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
     void (*setupHardwareInfo)(HardwareInfo *, bool);

@@ -71,7 +71,7 @@ inline void *alignedMalloc(size_t bytes, size_t alignment) {
 
     DBG_LOG(LogAlignedAllocations, __FUNCTION__, "Pointer:", reinterpret_cast<void *>(pOriginalMemory), "size:", sizeToAlloc);
     // Return result
-    return reinterpret_cast<void *>(pAlignedMemory);
+    return reinterpret_cast<void *>(pAlignedMemory); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 inline void alignedFree(void *ptr) {
