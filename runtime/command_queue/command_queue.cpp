@@ -72,7 +72,7 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
         if (device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported) {
-            bcsEngine = &device->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
+            bcsEngine = &device->getDeviceById(0)->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
         }
     }
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
@@ -375,6 +376,24 @@ HWTEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComm
     EXPECT_EQ(HwHelperHw<FamilyType>::lowPriorityEngineType, osContext.getEngineType());
     EXPECT_TRUE(osContext.isLowPriority());
 
+    clReleaseCommandQueue(cmdQ);
+}
+
+using LowPriorityCommandQueueTest = ::testing::Test;
+HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPriorityCommandQueueThenEngineFromFirstSubdeviceIsTaken) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    MockContext context;
+    cl_queue_properties properties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    EXPECT_EQ(2u, context.getDevice(0)->getNumAvailableDevices());
+    auto cmdQ = clCreateCommandQueueWithProperties(&context, context.getDevice(0), properties, nullptr);
+
+    auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
+    auto subDevice = context.getDevice(0)->getDeviceById(0);
+    auto engine = subDevice->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
+
+    EXPECT_EQ(engine.commandStreamReceiver, &commandQueueObj->getGpgpuCommandStreamReceiver());
+    EXPECT_EQ(engine.osContext, &commandQueueObj->getGpgpuCommandStreamReceiver().getOsContext());
     clReleaseCommandQueue(cmdQ);
 }
 

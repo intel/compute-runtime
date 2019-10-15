@@ -216,6 +216,34 @@ TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenD
     EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
 }
 
+using CommandQueueWithSubDevicesTest = ::testing::Test;
+HWTEST_F(CommandQueueWithSubDevicesTest, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsCreatedThenBcsIsTakenFromFirstSubDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+    HardwareInfo hwInfo = *platformDevices[0];
+    bool createBcsEngine = !hwInfo.capabilityTable.blitterOperationsSupported;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    EXPECT_EQ(2u, device->getNumAvailableDevices());
+    std::unique_ptr<OsContext> bcsOsContext;
+
+    auto subDevice = device->getDeviceById(0);
+    if (createBcsEngine) {
+        auto &engine = subDevice->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
+        bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+        engine.osContext = bcsOsContext.get();
+        engine.commandStreamReceiver->setupContext(*bcsOsContext);
+    }
+    auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
+
+    CommandQueue cmdQ(nullptr, device.get(), 0);
+
+    EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver());
+    EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver());
+    EXPECT_EQ(bcsEngine.osContext, &cmdQ.getBcsCommandStreamReceiver()->getOsContext());
+}
+
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = new MockContext;
