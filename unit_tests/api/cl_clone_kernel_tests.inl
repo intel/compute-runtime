@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/file_io.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/file_io.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "cl_api_tests.h"

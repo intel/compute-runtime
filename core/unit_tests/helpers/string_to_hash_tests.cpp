@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/hash.h"
+#include "core/helpers/hash.h"
 #include "runtime/helpers/string_helpers.h"
 
 #include "gtest/gtest.h"

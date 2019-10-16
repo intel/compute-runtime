@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/file_io.h"
+#include "core/helpers/file_io.h"
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_program.h"

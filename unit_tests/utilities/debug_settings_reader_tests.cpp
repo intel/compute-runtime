@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/file_io.h"
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/helpers/file_io.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/ocl_reg_path.h"
 #include "test.h"

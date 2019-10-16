@@ -49,7 +49,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
-  ${NEO_SOURCE_DIR}/runtime/helpers/file_io.cpp
+  ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
   ${NEO_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.cpp
   ${NEO_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.h
   ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.cpp

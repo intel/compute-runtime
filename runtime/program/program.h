@@ -7,12 +7,12 @@
 
 #pragma once
 #include "core/compiler_interface/linker.h"
+#include "core/helpers/stdio.h"
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/stdio.h"
 #include "runtime/helpers/string_helpers.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/kernel_info.h"

@@ -5,17 +5,17 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
+#include "core/helpers/hash.h"
+#include "core/helpers/string.h"
+#include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/helpers/hw_info.h"
 #include "test.h"
-#include <core/helpers/aligned_memory.h>
-#include <core/helpers/string.h>
-#include <runtime/compiler_interface/binary_cache.h>
-#include <runtime/helpers/hash.h>
-#include <runtime/helpers/hw_info.h>
-#include <unit_tests/fixtures/device_fixture.h>
-#include <unit_tests/global_environment.h>
-#include <unit_tests/mocks/mock_context.h>
-#include <unit_tests/mocks/mock_program.h>
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/global_environment.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_program.h"
 
 #include <array>
 #include <list>

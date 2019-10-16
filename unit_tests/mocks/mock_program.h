@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/hash.h"
 #include "core/helpers/string.h"
-#include "runtime/helpers/hash.h"
 #include "runtime/helpers/options.h"
 #include "runtime/program/program.h"
 

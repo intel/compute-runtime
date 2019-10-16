@@ -7,9 +7,9 @@
 
 #include "unit_tests/mocks/mock_program.h"
 
+#include "core/helpers/hash.h"
 #include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/hash.h"
 #include "runtime/program/create.inl"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"

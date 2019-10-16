@@ -8,6 +8,7 @@
 #include "unit_tests/program/program_tests.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/hash.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
@@ -18,7 +19,6 @@
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/hash.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"

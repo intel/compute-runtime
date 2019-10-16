@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/file_io.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/file_io.h"
 #include "runtime/program/program.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"

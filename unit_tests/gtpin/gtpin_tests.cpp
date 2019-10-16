@@ -6,6 +6,8 @@
  */
 
 #include "core/helpers/basic_math.h"
+#include "core/helpers/file_io.h"
+#include "core/helpers/hash.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_defs.h"
@@ -13,8 +15,6 @@
 #include "runtime/gtpin/gtpin_hw_helper.h"
 #include "runtime/gtpin/gtpin_init.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/file_io.h"
-#include "runtime/helpers/hash.h"
 #include "runtime/helpers/options.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"

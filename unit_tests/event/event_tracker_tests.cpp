@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/file_io.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/event/event.h"
 #include "runtime/event/event_tracker.h"
-#include "runtime/helpers/file_io.h"
 
 #include "event_fixture.h"
 

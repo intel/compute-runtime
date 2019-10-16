@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/file_io.h"
 #include "core/utilities/debug_file_reader.h"
-#include "runtime/helpers/file_io.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

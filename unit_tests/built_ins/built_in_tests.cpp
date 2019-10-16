@@ -5,6 +5,8 @@
  *
  */
 
+#include "core/helpers/file_io.h"
+#include "core/helpers/hash.h"
 #include "core/helpers/string.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
@@ -14,8 +16,6 @@
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/dispatch_info_builder.h"
-#include "runtime/helpers/file_io.h"
-#include "runtime/helpers/hash.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"

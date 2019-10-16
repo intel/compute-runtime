@@ -8,7 +8,7 @@
 #include "file_io.h"
 
 #include "core/helpers/debug_helpers.h"
-#include "runtime/helpers/stdio.h"
+#include "core/helpers/stdio.h"
 
 #include <cstring>
 #include <new>

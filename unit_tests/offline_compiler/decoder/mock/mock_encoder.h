@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/hash.h"
 #include "offline_compiler/decoder/binary_encoder.h"
-#include "runtime/helpers/hash.h"
 
 #include "mock_iga_wrapper.h"
 

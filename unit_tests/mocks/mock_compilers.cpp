@@ -7,7 +7,7 @@
 
 #include "mock_compilers.h"
 
-#include "runtime/helpers/file_io.h"
+#include "core/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_inc_base.h"

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "runtime/helpers/stdio.h"
 
 #include <cstdint>
 #include <memory>

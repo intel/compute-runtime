@@ -34,8 +34,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/engine_node_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.h
@@ -43,7 +41,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
@@ -79,7 +76,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_plus.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.h

@@ -21,14 +21,12 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_default_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h
@@ -45,8 +43,6 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp

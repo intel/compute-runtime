@@ -7,10 +7,10 @@
 
 #include "binary_decoder.h"
 
+#include "core/helpers/file_io.h"
 #include "core/helpers/ptr_math.h"
 #include "elf/reader.h"
 #include "offline_compiler/offline_compiler.h"
-#include "runtime/helpers/file_io.h"
 
 #include "helper.h"
 

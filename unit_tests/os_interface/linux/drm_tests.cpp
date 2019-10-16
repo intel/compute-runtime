@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/file_io.h"
+#include "core/helpers/file_io.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
