@@ -47,7 +47,7 @@ class CreateFromGlTexture : public ::testing::Test {
         imgInfo = {};
         clContext.setSharingFunctions(glSharing->sharingFunctions.release());
         ASSERT_FALSE(overrideCommandStreamReceiverCreation);
-        clContext.setMemoryManager(&tempMM);
+        clContext.memoryManager = &tempMM;
     }
 
     void TearDown() override {

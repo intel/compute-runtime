@@ -134,12 +134,12 @@ class BufferWithWddmMemory : public ::testing::Test,
     void SetUp() {
         WddmMemoryManagerFixture::SetUp();
         tmp = context.getMemoryManager();
-        context.setMemoryManager(memoryManager.get());
+        context.memoryManager = memoryManager.get();
         flags = 0;
     }
 
     void TearDown() {
-        context.setMemoryManager(tmp);
+        context.memoryManager = tmp;
         WddmMemoryManagerFixture::TearDown();
     }
 

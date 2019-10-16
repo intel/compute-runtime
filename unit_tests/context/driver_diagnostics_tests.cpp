@@ -353,7 +353,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticValueWhenContextIsCreatedT
     auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
     EXPECT_TRUE(!!context->isProvidingPerformanceHints());
-    auto driverDiagnostics = context->getDriverDiagnostics();
+    auto driverDiagnostics = context->driverDiagnostics;
     ASSERT_NE(nullptr, driverDiagnostics);
     EXPECT_TRUE(driverDiagnostics->validFlags(hintLevel));
     context->release();
@@ -421,7 +421,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenConte
     auto retValue = CL_SUCCESS;
     auto context = Context::create<MockContext>(validProperties, DeviceVector(&clDevice, 1), callbackFunction, (void *)userData, retVal);
     EXPECT_EQ(CL_SUCCESS, retValue);
-    auto driverDiagnostics = context->getDriverDiagnostics();
+    auto driverDiagnostics = context->driverDiagnostics;
     ASSERT_NE(nullptr, driverDiagnostics);
     EXPECT_TRUE(driverDiagnostics->validFlags(hintLevel));
     EXPECT_FALSE(driverDiagnostics->validFlags(2));

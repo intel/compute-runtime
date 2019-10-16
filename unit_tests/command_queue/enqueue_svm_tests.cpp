@@ -1349,7 +1349,7 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemcpyThenAllocIsDecommit
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
     auto memoryManager = context->getMemoryManager();
-    context->setMemoryManager(mockMemoryManager.get());
+    context->memoryManager = mockMemoryManager.get();
     auto srcSvm = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     mockMemoryManager->getPageFaultManager()->insertAllocation(srcSvm, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
     mockMemoryManager->getPageFaultManager()->insertAllocation(ptrSVM, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
@@ -1363,7 +1363,7 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemcpyThenAllocIsDecommit
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 2);
 
     context->getSVMAllocsManager()->freeSVMAlloc(srcSvm);
-    context->setMemoryManager(memoryManager);
+    context->memoryManager = memoryManager;
 }
 
 TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommitted) {
@@ -1371,7 +1371,7 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommi
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
     mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
     auto memoryManager = context->getMemoryManager();
-    context->setMemoryManager(mockMemoryManager.get());
+    context->memoryManager = mockMemoryManager.get();
     mockMemoryManager->getPageFaultManager()->insertAllocation(ptrSVM, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 1);
 
@@ -1382,5 +1382,5 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommi
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 1);
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 1);
 
-    context->setMemoryManager(memoryManager);
+    context->memoryManager = memoryManager;
 }

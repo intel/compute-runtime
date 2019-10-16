@@ -389,9 +389,9 @@ TEST(Context, givenContextWhenCheckIfAllocationsAreMultiStorageThenReturnProperV
     MockContext context;
     EXPECT_TRUE(context.areMultiStorageAllocationsPreferred());
 
-    context.setContextType(ContextType::CONTEXT_TYPE_SPECIALIZED);
+    context.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     EXPECT_FALSE(context.areMultiStorageAllocationsPreferred());
 
-    context.setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
+    context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     EXPECT_TRUE(context.areMultiStorageAllocationsPreferred());
 }

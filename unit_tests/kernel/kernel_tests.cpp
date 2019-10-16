@@ -2626,7 +2626,7 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
     auto &capabilityTable = hwInfo->capabilityTable;
     auto context = clUniquePtr(new MockContext(device.get()));
-    context->setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
+    context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";

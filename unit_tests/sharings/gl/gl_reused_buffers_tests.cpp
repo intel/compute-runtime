@@ -207,11 +207,11 @@ TEST_F(GlReusedBufferTests, givenGraphicsAllocationCreationReturnsNullptrWhenAcq
 
     bufferInfoOutput.globalShareHandle = 41;
     dllParam->loadBuffer(bufferInfoOutput);
-    context.setMemoryManager(failingMemoryManager.get());
+    context.memoryManager = failingMemoryManager.get();
     auto result = glBuffer->acquire(clBuffer.get());
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, result);
     EXPECT_EQ(nullptr, clBuffer->getGraphicsAllocation());
 
-    context.setMemoryManager(suceedingMemoryManager);
+    context.memoryManager = suceedingMemoryManager;
 }

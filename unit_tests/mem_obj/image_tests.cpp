@@ -670,7 +670,7 @@ TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) 
 TEST_P(CreateImageHostPtr, checkWritingOutsideAllocatedMemoryWhileCreatingImage) {
     auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
     pDevice->injectMemoryManager(mockMemoryManager);
-    context->setMemoryManager(mockMemoryManager);
+    context->memoryManager = mockMemoryManager;
     mockMemoryManager->redundancyRatio = 2;
     memset(pHostPtr, 1, testImageDimensions * testImageDimensions * elementSize * 4);
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
@@ -1486,7 +1486,7 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
 
     MockContext context;
     OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.setMemoryManager(&memoryManager);
+    context.memoryManager = &memoryManager;
 
     cl_image_desc imgDesc = {};
     imgDesc.image_height = 4;
@@ -1519,7 +1519,7 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
 
     MockContext context;
     OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.setMemoryManager(&memoryManager);
+    context.memoryManager = &memoryManager;
 
     cl_image_desc imgDesc = {};
     imgDesc.image_height = 1;

@@ -472,13 +472,13 @@ TYPED_TEST_P(D3DTests, getPreferD3DSharedResources) {
     size_t size = 0;
     auto param = this->pickParam(CL_CONTEXT_D3D10_PREFER_SHARED_RESOURCES_KHR, CL_CONTEXT_D3D11_PREFER_SHARED_RESOURCES_KHR);
 
-    ctx->forcePreferD3dSharedResources(1u);
+    ctx->preferD3dSharedResources = 1u;
     auto retVal = ctx->getInfo(param, sizeof(retBool), &retBool, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), size);
     EXPECT_EQ(1u, retBool);
 
-    ctx->forcePreferD3dSharedResources(0u);
+    ctx->preferD3dSharedResources = 0u;
     retVal = ctx->getInfo(param, sizeof(retBool), &retBool, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), size);

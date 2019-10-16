@@ -84,12 +84,12 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         dbgRestore = new DebugManagerStateRestore();
         PlatformFixture::SetUp();
         context = new MockContext(pPlatform->getDevice(0));
-        context->forcePreferD3dSharedResources(true);
+        context->preferD3dSharedResources = true;
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
         context->setSharingFunctions(mockSharingFcns);
-        context->setMemoryManager(mockMM.get());
+        context->memoryManager = mockMM.get();
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0);
         DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
 

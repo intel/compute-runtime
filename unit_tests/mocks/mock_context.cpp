@@ -75,10 +75,6 @@ void MockContext::setSharingFunctions(SharingFunctions *sharingFunctions) {
     this->sharingFunctions[sharingFunctions->getId()].reset(sharingFunctions);
 }
 
-void MockContext::setContextType(ContextType contextType) {
-    this->contextType = contextType;
-}
-
 void MockContext::releaseSharingFunctions(SharingType sharing) {
     this->sharingFunctions[sharing].release();
 }

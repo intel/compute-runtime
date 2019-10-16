@@ -14,6 +14,10 @@
 namespace NEO {
 class MockContext : public Context {
   public:
+    using Context::contextType;
+    using Context::driverDiagnostics;
+    using Context::memoryManager;
+    using Context::preferD3dSharedResources;
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
     MockContext(Device *device, bool noSpecialQueue = false);
@@ -23,21 +27,11 @@ class MockContext : public Context {
     MockContext();
     ~MockContext();
 
-    void setMemoryManager(MemoryManager *mm) {
-        memoryManager = mm;
-    }
-
     void clearSharingFunctions();
     void setSharingFunctions(SharingFunctions *sharingFunctions);
-    void setContextType(ContextType contextType);
     void releaseSharingFunctions(SharingType sharing);
     void resetSharingFunctions(SharingType sharing);
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
-
-    cl_bool peekPreferD3dSharedResources() { return preferD3dSharedResources; }
-
-    void forcePreferD3dSharedResources(cl_bool value) { preferD3dSharedResources = value; }
-    DriverDiagnostics *getDriverDiagnostics() { return this->driverDiagnostics; }
 
   private:
     Device *device;

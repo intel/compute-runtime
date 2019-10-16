@@ -58,7 +58,7 @@ TEST(BufferTests, doPinIsSet) {
         auto retVal = CL_INVALID_OPERATION;
         mm->expectedSize = size;
         mm->HPExpectedSize = 0u;
-        context.setMemoryManager(mm.get());
+        context.memoryManager = mm.get();
 
         auto buffer = Buffer::create(
             &context,
@@ -81,7 +81,7 @@ TEST(BufferTests, doPinIsSetForHostPtr) {
         auto size = MemoryConstants::pageSize * 32;
         mm->expectedSize = 0u;
         mm->HPExpectedSize = size;
-        context.setMemoryManager(mm.get());
+        context.memoryManager = mm.get();
 
         // memory must be aligned to use zero-copy
         void *bff = alignedMalloc(size, MemoryConstants::pageSize);

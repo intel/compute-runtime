@@ -92,8 +92,8 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         PlatformFixture::SetUp();
         memoryManager = std::make_unique<MockMM>(*pPlatform->peekExecutionEnvironment());
         context = new MockContext(pPlatform->getDevice(0));
-        context->forcePreferD3dSharedResources(true);
-        context->setMemoryManager(memoryManager.get());
+        context->preferD3dSharedResources = true;
+        context->memoryManager = memoryManager.get();
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3D9>>();
         context->setSharingFunctions(mockSharingFcns);

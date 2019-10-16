@@ -124,7 +124,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromWrongHandleTh
     auto tempMemoryManager = clContext->getMemoryManager();
     tempMM->useForcedGmm = false;
     auto memoryManager = std::unique_ptr<FailingMemoryManager>(new FailingMemoryManager());
-    clContext->setMemoryManager(memoryManager.get());
+    clContext->memoryManager = memoryManager.get();
 
     auto retVal = CL_SUCCESS;
     auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), (cl_mem_flags)0, GL_TEXTURE_1D, 0, textureId, &retVal);
@@ -132,7 +132,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromWrongHandleTh
     EXPECT_EQ(nullptr, glTexture);
     EXPECT_EQ(CL_INVALID_GL_OBJECT, retVal);
 
-    clContext->setMemoryManager(tempMemoryManager);
+    clContext->memoryManager = tempMemoryManager;
 }
 
 GLboolean OSAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {

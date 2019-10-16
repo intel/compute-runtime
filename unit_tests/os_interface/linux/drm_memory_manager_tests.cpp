@@ -737,7 +737,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
     memoryManager->setForce32BitAllocations(true);
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
     memoryManager->setForce32BitAllocations(true);
 
     auto size = MemoryConstants::pageSize;
@@ -769,7 +769,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
     memoryManager->setForce32BitAllocations(true);
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     auto size = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x1000);
@@ -830,7 +830,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
             DebugManager.flags.Force32bitAddressing.set(true);
             MockContext context;
             memoryManager->setForce32BitAllocations(true);
-            context.setMemoryManager(memoryManager);
+            context.memoryManager = memoryManager;
 
             auto size = MemoryConstants::pageSize;
             void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -950,7 +950,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
     memoryManager->setForce32BitAllocations(true);
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     size_t size = 2 * GB;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -992,7 +992,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
     memoryManager->setForce32BitAllocations(true);
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     size_t size = 2 * GB;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -1034,7 +1034,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationT
     mock->ioctl_expected.total = -1;
     mock->outputFd = 1337;
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     size_t size = 1u;
     auto retVal = CL_SUCCESS;
@@ -1119,7 +1119,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZe
     mock->ioctl_expected.gemClose = 1;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1165,7 +1165,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
     mock->ioctl_expected.gemClose = 1;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1205,7 +1205,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAndAllocationFailsThenReturnNullptr) {
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1246,7 +1246,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
     mock->ioctl_expected.gemClose = 2;
 
     MockContext context(device);
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1292,7 +1292,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
     mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1324,7 +1324,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1367,7 +1367,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     mock->ioctl_expected.gemClose = 1;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1412,7 +1412,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;

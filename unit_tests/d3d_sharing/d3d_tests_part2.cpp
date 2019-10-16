@@ -276,7 +276,7 @@ TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, ctx.get());
-    EXPECT_EQ(1u, ctx->peekPreferD3dSharedResources());
+    EXPECT_EQ(1u, ctx->preferD3dSharedResources);
     EXPECT_NE(nullptr, ctx->getSharing<D3DSharingFunctions<TypeParam>>());
 }
 

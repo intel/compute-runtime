@@ -133,7 +133,7 @@ class HwHelperTestsGen12LpBuffer : public ::testing::Test {
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
         device.reset(Device::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
-        context->setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
+        context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     }
 
     cl_int retVal = CL_SUCCESS;
