@@ -300,25 +300,6 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
 }
 
 struct EnqueueCopyBufferHw : public ::testing::Test {
-    template <typename FamilyType>
-    struct MyCmdQStateless : public CommandQueueHw<FamilyType> {
-        using CommandQueueHw<FamilyType>::commandStream;
-        MyCmdQStateless(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
-
-        bool forceStateless(size_t size) override {
-            return true;
-        }
-    };
-
-    template <typename FamilyType>
-    struct MyCmdQStatefull : public CommandQueueHw<FamilyType> {
-        using CommandQueueHw<FamilyType>::commandStream;
-        MyCmdQStatefull(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
-
-        bool forceStateless(size_t size) override {
-            return false;
-        }
-    };
 
     void SetUp() override {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
@@ -341,8 +322,8 @@ HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessT
     if (is32bit) {
         GTEST_SKIP();
     }
-    auto cmdQ = std::make_unique<MyCmdQStateless<FamilyType>>(context.get(), device.get());
 
+    auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto retVal = cmdQ->enqueueCopyBuffer(
         srcBuffer.get(),
         dstBuffer.get(),
@@ -356,16 +337,15 @@ HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using EnqueueCopyBufferStatefullTest = EnqueueCopyBufferHw;
+using EnqueueCopyBufferStatefulTest = EnqueueCopyBufferHw;
 
-HWTEST_F(EnqueueCopyBufferStatefullTest, givenBuffersWhenCopyingBufferStatefullThenSuccessIsReturned) {
+HWTEST_F(EnqueueCopyBufferStatefulTest, givenBuffersWhenCopyingBufferStatefulThenSuccessIsReturned) {
 
     if (is32bit) {
         GTEST_SKIP();
     }
 
-    auto cmdQ = std::make_unique<MyCmdQStatefull<FamilyType>>(context.get(), device.get());
-
+    auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     auto retVal = cmdQ->enqueueCopyBuffer(
         srcBuffer.get(),
         dstBuffer.get(),

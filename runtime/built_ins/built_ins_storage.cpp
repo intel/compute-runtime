@@ -28,6 +28,8 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
         return "copy_buffer_to_buffer_stateless.igdrcl_built_in";
     case EBuiltInOps::CopyBufferRect:
         return "copy_buffer_rect.igdrcl_built_in";
+    case EBuiltInOps::CopyBufferRectStateless:
+        return "copy_buffer_rect_stateless.igdrcl_built_in";
     case EBuiltInOps::FillBuffer:
         return "fill_buffer.igdrcl_built_in";
     case EBuiltInOps::CopyBufferToImage3d:

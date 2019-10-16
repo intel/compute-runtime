@@ -396,6 +396,21 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
 
   protected:
     Kernel *kernelBytes[3];
+    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {};
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltInOps::CopyBufferRect> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+        : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib) {
+        populate(context, device,
+                 EBuiltInOps::CopyBufferRectStateless,
+                 "-cl-intel-greater-than-4GB-buffer-required",
+                 "CopyBufferRectBytes2d", kernelBytes[0],
+                 "CopyBufferRectBytes2d", kernelBytes[1],
+                 "CopyBufferRectBytes3d", kernelBytes[2]);
+    }
 };
 
 template <>
@@ -785,6 +800,9 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
         break;
     case EBuiltInOps::CopyBufferRect:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRect>>(*this, context, device); });
+        break;
+    case EBuiltInOps::CopyBufferRectStateless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRectStateless>>(*this, context, device); });
         break;
     case EBuiltInOps::FillBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBuffer>>(*this, context, device); });

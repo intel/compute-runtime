@@ -368,3 +368,107 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DTh
     enqueueCopyBufferRect3D<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
+
+struct EnqueueCopyBufferRectHw : public ::testing::Test {
+    void SetUp() override {
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+        srcBuffer = std::unique_ptr<Buffer>(BufferHelper<EnqueueCopyBufferRectTest::BufferRect>::create(context.get()));
+        dstBuffer = std::unique_ptr<Buffer>(BufferHelper<EnqueueCopyBufferRectTest::BufferRect>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Buffer> srcBuffer;
+    std::unique_ptr<Buffer> dstBuffer;
+    const size_t rowPitch = 100;
+    const size_t slicePitch = 100 * 100;
+
+    std::array<size_t, 3> srcOrigin = {{0, 0, 0}};
+    std::array<size_t, 3> dstOrigin = {{0, 0, 0}};
+    std::array<size_t, 3> region = {{50, 50, 1}};
+
+  protected:
+    template <typename FamilyType>
+    cl_int enqueueCopyBufferRectHw(CommandQueueHw<FamilyType> *cmdQ) {
+
+        auto retVal = CL_SUCCESS;
+
+        retVal = clEnqueueCopyBufferRect(
+            cmdQ,
+            srcBuffer.get(),
+            dstBuffer.get(),
+            srcOrigin.data(),
+            dstOrigin.data(),
+            region.data(),
+            rowPitch,
+            slicePitch,
+            rowPitch,
+            slicePitch,
+            0,
+            nullptr,
+            nullptr);
+
+        return retVal;
+    }
+};
+
+using EnqueueCopyBufferRectStateless = EnqueueCopyBufferRectHw;
+
+HWTEST_F(EnqueueCopyBufferRectStateless, GivenValidParametersWhenCopyingBufferRectStatelessThenSuccessIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateless<FamilyType>(context.get(), device.get()));
+
+    auto retVal = enqueueCopyBufferRectHw(cmdQ.get());
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqueueCopyBufferRectStateful = EnqueueCopyBufferRectHw;
+
+HWTEST_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned) {
+
+    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateful<FamilyType>(context.get(), device.get()));
+
+    auto retVal = enqueueCopyBufferRectHw(cmdQ.get());
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueCopyBufferRectStateless, WhenCopyingBufferRectStatelessThenStatelessKernelIsUsed) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateless<FamilyType>(context.get(), device.get()));
+
+    // Extract the kernel used
+    MultiDispatchInfo multiDispatchInfo;
+    auto &builder = cmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless,
+                                                                                                              cmdQ->getContext(),
+                                                                                                              cmdQ->getDevice());
+    ASSERT_NE(nullptr, &builder);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcBuffer.get();
+    dc.dstMemObj = dstBuffer.get();
+    dc.srcOffset = srcOrigin.data();
+    dc.dstOffset = dstOrigin.data();
+    dc.size = region.data();
+    dc.srcRowPitch = rowPitch;
+    dc.srcSlicePitch = slicePitch;
+    dc.dstRowPitch = rowPitch;
+    dc.dstSlicePitch = slicePitch;
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    EXPECT_NE(0u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+}

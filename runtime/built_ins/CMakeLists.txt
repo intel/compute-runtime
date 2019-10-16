@@ -25,6 +25,7 @@ set_property(GLOBAL PROPERTY RUNTIME_SRCS_BUILT_INS ${RUNTIME_SRCS_BUILT_INS})
 set(RUNTIME_SRCS_BUILT_IN_KERNELS
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/aux_translation.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect.igdrcl_built_in
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect_stateless.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer_stateless.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d.igdrcl_built_in

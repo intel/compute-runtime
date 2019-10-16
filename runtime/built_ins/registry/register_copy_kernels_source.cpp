@@ -38,6 +38,15 @@ static RegisterEmbeddedResource registerCopyBufferRectSrc(
 #include "runtime/built_ins/kernels/copy_buffer_rect.igdrcl_built_in"
         ));
 
+static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::CopyBufferRectStateless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "runtime/built_ins/kernels/copy_buffer_rect_stateless.igdrcl_built_in"
+        ));
+
 static RegisterEmbeddedResource registerFillBufferSrc(
     createBuiltinResourceName(
         EBuiltInOps::FillBuffer,
