@@ -118,9 +118,7 @@ TEST(DeviceGetCapsTest, validate) {
     EXPECT_EQ(16u, caps.maxSubGroups[1]);
     EXPECT_EQ(32u, caps.maxSubGroups[2]);
 
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
-    auto subGroupsSupported = hwHelper.allowsIndependentForwardProgress();
-    if (device->getEnabledClVersion() >= 21 && subGroupsSupported) {
+    if (device->getEnabledClVersion() >= 21) {
         EXPECT_TRUE(caps.independentForwardProgress != 0);
     } else {
         EXPECT_FALSE(caps.independentForwardProgress != 0);
@@ -357,13 +355,7 @@ TEST(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsC
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
-    auto subGroupsSupported = hwHelper.allowsIndependentForwardProgress();
-    if (subGroupsSupported) {
-        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
-    } else {
-        EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
-    }
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
 }
 
 TEST(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrSubgroupsExtension) {

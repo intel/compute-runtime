@@ -233,10 +233,4 @@ bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, const cl_image_d
     return !(imageType == CL_MEM_OBJECT_IMAGE1D || imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
              imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer);
 }
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::allowsIndependentForwardProgress() {
-    return true;
-}
-
 } // namespace NEO
