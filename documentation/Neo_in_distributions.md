@@ -6,7 +6,7 @@
 pacman -S intel-compute-runtime
 ```
 
-## Centos* 7, Red Hat Enterprise Linux* 7
+## Centos* 7, 8, Red Hat Enterprise Linux* 7
 
 ```
 yum install yum-plugin-copr
@@ -26,7 +26,7 @@ swupd bundle-add computer-vision-basic
 cave resolve --execute intel-compute-runtime
 ```
 
-## Fedora* 30, 31, rawhide
+## Fedora* 30, 31, rawhide, Red Hat Enterprise Linux* 8 Beta, Mageia* 7
 
 ```
 dnf install dnf-plugins-core
@@ -38,6 +38,20 @@ dnf install intel-opencl
 
 ```
 emerge intel-neo
+```
+
+## OpenSUSE Leap 15.1
+
+```
+zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-leap-15.1/jdanecki-intel-opencl-opensuse-leap-15.1.repo
+zypper install intel-opencl
+```
+
+## OpenSUSE tumbleweed
+
+```
+zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-tumbleweed/jdanecki-intel-opencl-opensuse-tumbleweed.repo
+zypper install intel-opencl
 ```
 
 ## PLD Linux*
