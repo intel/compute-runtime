@@ -19,7 +19,7 @@ using namespace NEO;
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 
-TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_null_kernel) {
+TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingKernelThenInvalidKernelErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
     auto retVal = clEnqueueNDRangeKernel(
         pCmdQ,
@@ -152,7 +152,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_invalid_event_list_count) {
+TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingKernelThenInvalidEventWaitListErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
 
     auto retVal = clEnqueueNDRangeKernel(
@@ -169,7 +169,7 @@ TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_invalid_event_list_count) {
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
-TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_invalidWorkGroupSize) {
+TEST_F(EnqueueKernelTest, GivenInvalidWorkGroupSizeWhenEnqueuingKernelThenInvalidWorkGroupSizeErrorIsReturned) {
     size_t globalWorkSize[3] = {12, 12, 12};
     size_t localWorkSize[3] = {11, 12, 12};
 
