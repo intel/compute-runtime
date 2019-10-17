@@ -190,6 +190,18 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithAubDumpAndAubCaptureFileNameHasBeenSpecifiedThenItShouldBeUsedToOpenTheFileWithAubCapture) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
+
+    using TbxCsrWithAubDump = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
+    std::unique_ptr<TbxCsrWithAubDump> tbxCsrWithAubDump(static_cast<TbxCsrWithAubDump *>(
+        TbxCommandStreamReceiverHw<FamilyType>::create("aubfile", true, *pDevice->executionEnvironment)));
+
+    EXPECT_TRUE(tbxCsrWithAubDump->aubManager->isOpen());
+    EXPECT_STREQ("aubcapture_file_name.aub", tbxCsrWithAubDump->aubManager->getFileName().c_str());
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentHasAlreadyBeenCalledForGraphicsAllocationThenItShouldNotPushAllocationForResidencyAgainToCsr) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
