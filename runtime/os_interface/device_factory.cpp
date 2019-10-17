@@ -16,8 +16,8 @@ namespace NEO {
 
 bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     auto totalDeviceCount = 1u;
-    if (DebugManager.flags.CreateMultipleDevices.get()) {
-        totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        totalDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
     }
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     auto hwInfoConst = *platformDevices;

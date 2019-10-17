@@ -190,7 +190,7 @@ bool Platform::initialize() {
     }
 
     this->fillGlobalDispatchTable();
-    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleDevices.get() > 1 && !this->devices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
+    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleRootDevices.get() > 1 && !this->devices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
 }

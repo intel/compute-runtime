@@ -75,10 +75,10 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
     EXPECT_EQ(nullptr, device);
 }
 
-TEST(SubDevicesTest, givenCreateMultipleDevicesFlagsEnabledWhenDevicesAreCreatedThenEachHasUniqueDeviceIndex) {
+TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCreatedThenEachHasUniqueDeviceIndex) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleDevices.set(2);
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
     DebugManager.flags.CreateMultipleSubDevices.set(3);
     VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
     platform()->initialize();

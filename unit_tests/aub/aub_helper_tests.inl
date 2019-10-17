@@ -41,12 +41,12 @@ TEST(AubHelper, GivenMultipleDevicesWhenGettingDeviceCountThenCorrectValueIsRetu
     GT_SYSTEM_INFO sysInfo = {};
     PLATFORM platform = {};
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
-    DebugManager.flags.CreateMultipleDevices.set(2);
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
 
     uint32_t devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
-    DebugManager.flags.CreateMultipleDevices.set(0);
+    DebugManager.flags.CreateMultipleRootDevices.set(0);
     devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }

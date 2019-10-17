@@ -14,7 +14,7 @@ namespace NEO {
 void DeviceHelper::getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize) {}
 
 uint32_t DeviceHelper::getDevicesCount(const HardwareInfo *pHwInfo) {
-    return DebugManager.flags.CreateMultipleDevices.get() > 0 ? DebugManager.flags.CreateMultipleDevices.get() : 1u;
+    return DebugManager.flags.CreateMultipleRootDevices.get() > 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
 }
 
 uint32_t DeviceHelper::getEnginesCount(const HardwareInfo &hwInfo) {

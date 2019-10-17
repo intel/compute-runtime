@@ -27,8 +27,8 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     unsigned int devNum = 0;
     size_t requiredDeviceCount = 1;
 
-    if (DebugManager.flags.CreateMultipleDevices.get()) {
-        requiredDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        requiredDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
     Drm *drm = Drm::create(devNum);

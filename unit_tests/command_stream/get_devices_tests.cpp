@@ -40,7 +40,7 @@ struct GetDevicesTest : ::testing::Test {
 
 HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleDevices.set(expectedDevices);
+    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
         const char *hwPrefix = hardwarePrefix[productFamilyIndex];
         if (hwPrefix == nullptr) {
@@ -141,7 +141,7 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
 
 HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleDevices.set(expectedDevices);
+    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
         CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
         std::string productFamily("unk");
