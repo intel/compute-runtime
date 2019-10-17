@@ -298,6 +298,35 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureActiveStatesAreDet
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureEnabled());
 }
 
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureActiveStatesAreDeterminedThenGetSubCaptureStatusReturnsCorrectValues) {
+    AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
+    AubSubCaptureStatus aubSubCaptureStatus{};
+
+    aubSubCaptureManager.setSubCaptureWasActiveInPreviousEnqueue(false);
+    aubSubCaptureManager.setSubCaptureIsActive(false);
+    aubSubCaptureStatus = aubSubCaptureManager.getSubCaptureStatus();
+    EXPECT_FALSE(aubSubCaptureStatus.wasActiveInPreviousEnqueue);
+    EXPECT_FALSE(aubSubCaptureStatus.isActive);
+
+    aubSubCaptureManager.setSubCaptureWasActiveInPreviousEnqueue(false);
+    aubSubCaptureManager.setSubCaptureIsActive(true);
+    aubSubCaptureStatus = aubSubCaptureManager.getSubCaptureStatus();
+    EXPECT_FALSE(aubSubCaptureStatus.wasActiveInPreviousEnqueue);
+    EXPECT_TRUE(aubSubCaptureStatus.isActive);
+
+    aubSubCaptureManager.setSubCaptureWasActiveInPreviousEnqueue(true);
+    aubSubCaptureManager.setSubCaptureIsActive(false);
+    aubSubCaptureStatus = aubSubCaptureManager.getSubCaptureStatus();
+    EXPECT_TRUE(aubSubCaptureStatus.wasActiveInPreviousEnqueue);
+    EXPECT_FALSE(aubSubCaptureStatus.isActive);
+
+    aubSubCaptureManager.setSubCaptureIsActive(true);
+    aubSubCaptureManager.setSubCaptureWasActiveInPreviousEnqueue(true);
+    aubSubCaptureStatus = aubSubCaptureManager.getSubCaptureStatus();
+    EXPECT_TRUE(aubSubCaptureStatus.wasActiveInPreviousEnqueue);
+    EXPECT_TRUE(aubSubCaptureStatus.isActive);
+}
+
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenGetSubCaptureFileNameIsCalledAndAubCaptureFileNameIsSpecifiedThenItReturnsTheSpecifiedFileName) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
@@ -534,7 +563,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpec
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 }
 
-TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfacIsCalledThenLockShouldBeAcquired) {
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfaceIsCalledThenLockShouldBeAcquired) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
     DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
@@ -550,6 +579,10 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfacIsCalledThenLo
 
     aubSubCaptureManager.isLocked = false;
     aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    EXPECT_TRUE(aubSubCaptureManager.isLocked);
+
+    aubSubCaptureManager.isLocked = false;
+    aubSubCaptureManager.getSubCaptureStatus();
     EXPECT_TRUE(aubSubCaptureManager.isLocked);
 
     aubSubCaptureManager.isLocked = false;

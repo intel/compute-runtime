@@ -41,9 +41,9 @@ void HardwareContextController::expectMemory(uint64_t gfxAddress, const void *sr
 }
 
 void HardwareContextController::submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize,
-                                       uint32_t memoryBank, uint64_t entryBits) {
+                                       uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) {
     for (auto &hardwareContext : hardwareContexts) {
-        hardwareContext->submitBatchBuffer(batchBufferGpuAddress);
+        hardwareContext->submitBatchBuffer(batchBufferGpuAddress, overrideRingHead);
     }
 }
 

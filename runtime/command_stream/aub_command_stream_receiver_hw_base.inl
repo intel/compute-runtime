@@ -392,7 +392,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
 
     if (hardwareContextController) {
         if (batchBufferSize) {
-            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
+            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k, false);
         }
         return;
     }

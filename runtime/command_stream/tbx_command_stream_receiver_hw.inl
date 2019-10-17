@@ -206,6 +206,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     auto currentOffset = batchBuffer.usedSize;
     DEBUG_BREAK_IF(currentOffset < batchBuffer.startOffset);
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
+    auto overrideRingHead = false;
 
     auto submissionTaskCount = this->taskCount + 1;
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
@@ -215,13 +216,23 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     // Write allocations for residency
     processResidency(allocationsForResidency);
 
-    if (subCaptureManager && !subCaptureManager->isSubCaptureEnabled()) {
+    if (subCaptureManager) {
         if (aubManager) {
-            aubManager->pause(true);
+            auto status = subCaptureManager->getSubCaptureStatus();
+            if (!status.wasActiveInPreviousEnqueue && status.isActive) {
+                overrideRingHead = true;
+            }
+            if (!status.wasActiveInPreviousEnqueue && !status.isActive) {
+                aubManager->pause(true);
+            }
         }
     }
 
-    submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+    submitBatchBuffer(
+        batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer,
+        this->getMemoryBank(batchBuffer.commandBufferAllocation),
+        this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
+        overrideRingHead);
 
     if (subCaptureManager) {
         pollForCompletion();
@@ -232,10 +243,10 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
+void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) {
     if (hardwareContextController) {
         if (batchBufferSize) {
-            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
+            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k, overrideRingHead);
         }
         return;
     }

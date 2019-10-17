@@ -60,6 +60,12 @@ AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const Multi
     return {subCaptureIsActive, subCaptureWasActiveInPreviousEnqueue};
 }
 
+AubSubCaptureStatus AubSubCaptureManager::getSubCaptureStatus() const {
+    auto guard = this->lock();
+
+    return {this->subCaptureIsActive, this->subCaptureWasActiveInPreviousEnqueue};
+}
+
 const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo) {
     auto guard = this->lock();
 

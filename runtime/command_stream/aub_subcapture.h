@@ -60,6 +60,8 @@ class AubSubCaptureManager {
 
     AubSubCaptureStatus checkAndActivateSubCapture(const MultiDispatchInfo &dispatchInfo);
 
+    AubSubCaptureStatus getSubCaptureStatus() const;
+
     const std::string &getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo);
 
     AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon);

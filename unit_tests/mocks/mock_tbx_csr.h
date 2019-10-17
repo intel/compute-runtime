@@ -41,8 +41,9 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
-    void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
-        TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
+    void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits, overrideRingHead);
+        overrideRingHeadPassed = overrideRingHead;
         submitBatchBufferCalled = true;
     }
     void pollForCompletion() override {
@@ -57,6 +58,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;
     bool submitBatchBufferCalled = false;
+    bool overrideRingHeadPassed = false;
     bool pollForCompletionCalled = false;
     bool expectMemoryEqualCalled = false;
     bool expectMemoryNotEqualCalled = false;

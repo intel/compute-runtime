@@ -1190,7 +1190,7 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCall
     EXPECT_FALSE(mockHwContext0->writeAndSubmitCalled);
     EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
 
-    hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1);
+    hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1, false);
 
     EXPECT_TRUE(mockHwContext0->submitCalled);
     EXPECT_FALSE(mockHwContext0->writeAndSubmitCalled);
@@ -1234,7 +1234,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     hwContextContainer.initialize();
     hwContextContainer.pollForCompletion();
     hwContextContainer.expectMemory(1, reinterpret_cast<const void *>(0x123), 2, 0);
-    hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1);
+    hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1, false);
     hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
 
     EXPECT_TRUE(mockHwContext0->initializeCalled);

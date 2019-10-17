@@ -23,7 +23,7 @@ class HardwareContextController {
     void initialize();
     void pollForCompletion();
     void expectMemory(uint64_t gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
-    void submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
+    void submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize);
 
     void dumpBufferBIN(uint64_t gfxAddress, size_t size);
