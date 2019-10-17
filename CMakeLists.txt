@@ -816,7 +816,6 @@ set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
 set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
 set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
-add_subdirectory_unique(elf)
 if(DONT_CARE_OF_VIRTUALS)
     message(STATUS "All targets will use virtuals")
 

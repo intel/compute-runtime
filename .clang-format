@@ -50,7 +50,7 @@ ExperimentalAutoDetectBinPacking: false
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
 IncludeBlocks:   Regroup
 IncludeCategories:
-  - Regex:           '^.(common|core|documentation|elf|manifests|offline_compiler|public|runtime|scripts|unit_tests)/'
+  - Regex:           '^.(common|core|documentation|manifests|offline_compiler|public|runtime|scripts|unit_tests)/'
     Priority:        1
   - Regex:           '^"test\.h"$'
     Priority:        1

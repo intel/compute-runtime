@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "elf/types.h"
+#include "core/elf/types.h"
 
 #include "helper.h"
 #include "iga_wrapper.h"

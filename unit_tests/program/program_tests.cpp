@@ -7,6 +7,7 @@
 
 #include "unit_tests/program/program_tests.h"
 
+#include "core/elf/reader.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/ptr_math.h"
@@ -14,7 +15,6 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/gmm_helper/gmm_helper.h"

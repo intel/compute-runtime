@@ -7,10 +7,10 @@
 
 #include "offline_compiler.h"
 
+#include "core/elf/writer.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/string.h"
-#include "elf/writer.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/os_interface/debug_settings_manager.h"

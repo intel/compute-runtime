@@ -5,8 +5,8 @@
  *
  */
 
-#include "elf/reader.h"
-#include "elf/writer.h"
+#include "core/elf/reader.h"
+#include "core/elf/writer.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 
 #include "gtest/gtest.h"

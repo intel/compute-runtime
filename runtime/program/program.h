@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/compiler_interface/linker.h"
+#include "core/elf/reader.h"
+#include "core/elf/writer.h"
 #include "core/helpers/stdio.h"
-#include "elf/reader.h"
-#include "elf/writer.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/base_object.h"

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "elf/types.h"
-#include "elf/writer.h"
+#include "core/elf/types.h"
+#include "core/elf/writer.h"
 
 namespace NEO {
 

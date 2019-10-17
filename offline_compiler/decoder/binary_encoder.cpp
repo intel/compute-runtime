@@ -7,10 +7,10 @@
 
 #include "binary_encoder.h"
 
+#include "core/elf/writer.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
-#include "elf/writer.h"
 #include "offline_compiler/offline_compiler.h"
 
 #include "CL/cl.h"
