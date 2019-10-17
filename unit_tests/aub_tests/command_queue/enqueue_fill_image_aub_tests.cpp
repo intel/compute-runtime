@@ -175,7 +175,9 @@ HWTEST_P(AubFillImage, simple) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     image.reset(Image::create(
         context.get(),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         nullptr,

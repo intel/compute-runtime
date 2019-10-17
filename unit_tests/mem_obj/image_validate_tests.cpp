@@ -669,7 +669,7 @@ TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIs
     Image *image;
     imageFormat.image_channel_order = 0;
     imageFormat.image_channel_data_type = 0;
-    image = Image::validateAndCreateImage(&context, 0, 0, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, {}, 0, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
@@ -680,7 +680,7 @@ TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateIm
     cl_int retVal = CL_SUCCESS;
     Image *image;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    image = Image::validateAndCreateImage(&context, CL_MEM_READ_WRITE, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
 }
@@ -708,7 +708,7 @@ TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCa
     std::unique_ptr<Image> image = nullptr;
     image.reset(Image::validateAndCreateImage(
         &context,
-        flags,
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
         0,
         &imageFormat,

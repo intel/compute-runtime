@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
@@ -51,7 +52,9 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         image.reset(Image::create(
             &context,
+            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
             flags,
+            0,
             surfaceFormat,
             &imageDesc,
             nullptr,
@@ -189,7 +192,9 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto bigImage = std::unique_ptr<Image>(Image::create(&context,
+                                                         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
                                                          flags,
+                                                         0,
                                                          surfaceFormat,
                                                          &imageDesc,
                                                          nullptr,

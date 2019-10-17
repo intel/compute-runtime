@@ -72,7 +72,9 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Image> image(Image::create(
         context,
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         nullptr,

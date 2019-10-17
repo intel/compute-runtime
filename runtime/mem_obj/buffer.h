@@ -49,7 +49,7 @@ class Buffer : public MemObj {
     ~Buffer() override;
 
     static void validateInputAndCreateBuffer(cl_context &context,
-                                             MemoryProperties properties,
+                                             MemoryPropertiesFlags memoryProperties,
                                              cl_mem_flags flags,
                                              cl_mem_flags_intel flagsIntel,
                                              size_t size,
@@ -64,7 +64,9 @@ class Buffer : public MemObj {
                           cl_int &errcodeRet);
 
     static Buffer *create(Context *context,
-                          MemoryProperties properties,
+                          MemoryPropertiesFlags properties,
+                          cl_mem_flags flags,
+                          cl_mem_flags_intel flagsIntel,
                           size_t size,
                           void *hostPtr,
                           cl_int &errcodeRet);
@@ -75,7 +77,9 @@ class Buffer : public MemObj {
                                       GraphicsAllocation *graphicsAllocation);
 
     static Buffer *createBufferHw(Context *context,
-                                  MemoryProperties properties,
+                                  MemoryPropertiesFlags memoryProperties,
+                                  cl_mem_flags flags,
+                                  cl_mem_flags_intel flagsIntel,
                                   size_t size,
                                   void *memoryStorage,
                                   void *hostPtr,

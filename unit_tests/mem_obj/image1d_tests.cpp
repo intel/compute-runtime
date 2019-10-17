@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "test.h"
@@ -76,7 +77,9 @@ HWTEST_P(CreateImage1DType, validTypes) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         context,
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         nullptr,

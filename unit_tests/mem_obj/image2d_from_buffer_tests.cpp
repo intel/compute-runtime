@@ -56,7 +56,7 @@ class Image2dFromBufferTest : public DeviceFixture, public ::testing::Test {
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
         auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        return Image::create(&context, flags, surfaceFormat, &imageDesc, NULL, retVal);
+        return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

@@ -143,7 +143,9 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
     auto retVal = CL_INVALID_VALUE;
     srcImage.reset(Image::create(
         context.get(),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         srcMemory,

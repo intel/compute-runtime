@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
@@ -69,7 +70,7 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
     imgDesc.image_height = 5;
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    auto sampleImg = Image::create(context.get(), 0, surfaceFormat, &imgDesc, nullptr, retVal);
+    auto sampleImg = Image::create(context.get(), {}, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_mem memObj = sampleImg;
@@ -91,7 +92,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].accessQualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
@@ -130,7 +131,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].accessQualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
@@ -150,7 +151,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndReadOnlyArgWhenCheckCo
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].accessQualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
@@ -166,7 +167,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndWriteOnlyArgWhenCheck
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].accessQualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
@@ -183,7 +184,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     imgDesc.image_height = 5;
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    auto img = Image::create(context.get(), 0, surfaceFormat, &imgDesc, nullptr, retVal);
+    auto img = Image::create(context.get(), {}, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     img->setMcsAllocation(mcsAlloc);
@@ -211,7 +212,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSettedArgWhenUnSetCalledThenArgIsUnset
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
@@ -248,7 +249,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
-    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;

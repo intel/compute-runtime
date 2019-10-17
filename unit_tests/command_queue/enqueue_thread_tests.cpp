@@ -8,6 +8,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
@@ -213,7 +214,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> dstImage(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> dstImage(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, dstImage.get());
 
     size_t dstOrigin[3] = {1024u, 1, 0};
@@ -237,9 +238,9 @@ HWTEST_F(EnqueueThreading, enqueueCopyImage) {
     imageDesc.image_width = 1024u;
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> srcImage(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> srcImage(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> dstImage(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
     size_t srcOrigin[3] = {1024u, 1, 0};
@@ -265,7 +266,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> srcImage(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> srcImage(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
     std::unique_ptr<Buffer> dstBuffer(Buffer::create(context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
@@ -304,7 +305,7 @@ HWTEST_F(EnqueueThreading, enqueueFillImage) {
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> image(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     size_t origin[3] = {1024u, 1, 0};
@@ -350,7 +351,7 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> image(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     void *ptr = ::alignedMalloc(1024u, 4096);
@@ -400,7 +401,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
 
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    std::unique_ptr<Image> image(Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     void *ptr = ::alignedMalloc(1024u, 4096);

@@ -52,14 +52,16 @@ class Image : public MemObj {
     ~Image() override;
 
     static Image *create(Context *context,
-                         const MemoryProperties &properties,
+                         const MemoryPropertiesFlags &memoryProperties,
+                         cl_mem_flags flags,
+                         cl_mem_flags_intel flagsIntel,
                          const SurfaceFormatInfo *surfaceFormat,
                          const cl_image_desc *imageDesc,
                          const void *hostPtr,
                          cl_int &errcodeRet);
 
     static Image *validateAndCreateImage(Context *context,
-                                         const MemoryProperties &properties,
+                                         const MemoryPropertiesFlags &memoryProperties,
                                          cl_mem_flags flags,
                                          cl_mem_flags_intel flagsIntel,
                                          const cl_image_format *imageFormat,
@@ -67,7 +69,8 @@ class Image : public MemObj {
                                          const void *hostPtr,
                                          cl_int &errcodeRet);
 
-    static Image *createImageHw(Context *context, const MemoryProperties &properties, size_t size, void *hostPtr,
+    static Image *createImageHw(Context *context, const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags,
+                                cl_mem_flags_intel flagsIntel, size_t size, void *hostPtr,
                                 const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
                                 bool isObjectRedescribed, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);

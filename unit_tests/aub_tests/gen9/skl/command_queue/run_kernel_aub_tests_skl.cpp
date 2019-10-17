@@ -332,7 +332,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto srcImage = Image::create(
         context,
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         srcMemory,
@@ -341,7 +343,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
 
     auto refImage = Image::create(
         context,
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         refMemory,

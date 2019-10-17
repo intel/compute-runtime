@@ -57,6 +57,8 @@ GEN12LPTEST_F(GEN12LPAUBParentKernelFixture, EnqueueParentKernel) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
         Image *image = Image::create(
             pContext,
+            {},
+            0,
             0,
             surfaceFormat,
             &desc,

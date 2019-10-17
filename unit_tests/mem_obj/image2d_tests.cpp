@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -56,7 +57,7 @@ class CreateImage2DTest : public DeviceFixture,
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        return Image::create(context, flags, surfaceFormat, &imageDesc, nullptr, retVal);
+        return Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

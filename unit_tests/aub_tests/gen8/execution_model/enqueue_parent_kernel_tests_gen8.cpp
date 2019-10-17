@@ -57,6 +57,8 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
         std::unique_ptr<Image> image(Image::create(
             pContext,
+            {},
+            0,
             0,
             surfaceFormat,
             &desc,

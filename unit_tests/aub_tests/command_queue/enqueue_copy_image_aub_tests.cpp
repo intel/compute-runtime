@@ -86,7 +86,9 @@ HWTEST_P(AUBCopyImage, simple) {
     auto retVal = CL_INVALID_VALUE;
     srcImage.reset(Image::create(
         context.get(),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         srcMemory,
@@ -95,7 +97,9 @@ HWTEST_P(AUBCopyImage, simple) {
 
     dstImage.reset(Image::create(
         context.get(),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
         flags,
+        0,
         surfaceFormat,
         &imageDesc,
         dstMemory,

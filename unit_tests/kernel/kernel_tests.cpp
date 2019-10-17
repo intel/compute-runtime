@@ -14,6 +14,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/kernel.h"
@@ -2050,7 +2051,8 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
 
     cl_int retVal;
     MockContext context;
-    std::unique_ptr<NEO::Image> imageNV12(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<NEO::Image> imageNV12(Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+                                                        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageNV12->getMediaPlaneType(), 0u);
 
     //create Y plane
@@ -2063,7 +2065,8 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     imageDesc.image_depth = 0;
     imageDesc.mem_object = imageNV12.get();
 
-    std::unique_ptr<NEO::Image> imageY(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<NEO::Image> imageY(Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+                                                     flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
 
     auto pKernelInfo = std::make_unique<KernelInfo>();

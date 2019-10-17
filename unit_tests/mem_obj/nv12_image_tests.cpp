@@ -76,7 +76,8 @@ class Nv12ImageTest : public testing::Test {
 
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        return Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal);
+        return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+                             flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -390,7 +391,8 @@ HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
     // Create Parent NV12 image
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto imageNV12 = Image::create(contextWithMockCmdQ, flags, surfaceFormat, &imageDesc, hostPtr, retVal);
+    auto imageNV12 = Image::create(contextWithMockCmdQ, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+                                   flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal);
 
     EXPECT_EQ(imageNV12->isTiledAllocation() ? 2u : 0u, cmdQ->EnqueueWriteImageCounter);
 

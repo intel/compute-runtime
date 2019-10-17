@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "test.h"
@@ -60,7 +61,7 @@ class ImageFromSubBufferTest : public DeviceFixture, public ::testing::Test {
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
         auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        return Image::create(&context, flags, surfaceFormat, &imageDesc, NULL, retVal);
+        return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
