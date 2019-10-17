@@ -96,25 +96,25 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
     CommandQueue *pCmdQ2 = nullptr;
 };
 
-HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenTwoDifferentWalkersAreCreated) {
     parseWalkers<FamilyType>();
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveOnePS) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
     parseWalkers<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     parseWalkers<FamilyType>();
