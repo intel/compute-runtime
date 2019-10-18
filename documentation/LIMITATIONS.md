@@ -24,7 +24,7 @@ The driver has the following functional delta compared to previously released dr
 _Currently no plan to implement. If interested in these features, please use SRB5 to evaluate and provide feedback._
 
 #### Other capabilities
-* OpenGL sharing with MESA driver - _will implement in the future (no specific timeline)_
+* OpenGL sharing with MESA driver - _implementation is WIP (no comitted completion date)_
 * CL_MEM_SVM_FINE_GRAIN_BUFFER (if using unpatched i915) - _patch is WIP_
 * Creation of OpenCL context spanning both CPU and GPU devices is currently not supported
 
