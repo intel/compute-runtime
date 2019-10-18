@@ -117,10 +117,8 @@ const HardwareInfo EHL_1x2x4::hwInfo = {
 GT_SYSTEM_INFO EHL_1x2x4::gtSystemInfo = {0};
 void EHL_1x2x4::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 8;
-    gtSysInfo->ThreadCount = 7 * EHL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * EHL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 1280;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -150,10 +148,8 @@ const HardwareInfo EHL_1x4x4::hwInfo = {
 GT_SYSTEM_INFO EHL_1x4x4::gtSystemInfo = {0};
 void EHL_1x4x4::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 16;
-    gtSysInfo->ThreadCount = 7 * EHL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * EHL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 4;
     gtSysInfo->L3CacheSizeInKb = 1280;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -183,10 +179,8 @@ const HardwareInfo EHL_1x4x8::hwInfo = {
 GT_SYSTEM_INFO EHL_1x4x8::gtSystemInfo = {0};
 void EHL_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 32;
-    gtSysInfo->ThreadCount = 7 * EHL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * EHL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 4;
     gtSysInfo->L3CacheSizeInKb = 1280;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -207,6 +201,7 @@ void EHL_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo EHL::hwInfo = EHL_1x4x8::hwInfo;
+const std::string EHL::defaultHardwareInfoConfig = "1x4x8";
 
 void setupEHLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x4x8") {

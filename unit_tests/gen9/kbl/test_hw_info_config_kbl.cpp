@@ -9,55 +9,14 @@
 
 using namespace NEO;
 
-TEST(KblHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorrect) {
+TEST(KblHwInfoConfig, givenHwInfoErrorneousConfigString) {
     if (IGFX_KABYLAKE != productFamily) {
         return;
     }
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "1x3x8";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(3u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(23u, gtSystemInfo.EUCount);
-
-    strConfig = "2x3x8";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(2u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(6u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(47u, gtSystemInfo.EUCount);
-
-    strConfig = "3x3x8";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(3u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(9u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(71u, gtSystemInfo.EUCount);
-
-    strConfig = "1x2x6";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(2u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(11u, gtSystemInfo.EUCount);
-
-    strConfig = "1x3x6";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(3u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(17u, gtSystemInfo.EUCount);
-
-    strConfig = "default";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(3u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(17u, gtSystemInfo.EUCount);
-
-    strConfig = "erroneous";
+    std::string strConfig = "erroneous";
     gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);

@@ -9,41 +9,14 @@
 
 using namespace NEO;
 
-TEST(EhlHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorrect) {
+TEST(EhlHwInfoConfig, givenHwInfoErrorneousConfigString) {
     if (IGFX_ELKHARTLAKE != productFamily) {
         return;
     }
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "1x4x8";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(4u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(32u, gtSystemInfo.EUCount);
-
-    strConfig = "1x4x4";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(4u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(16u, gtSystemInfo.EUCount);
-
-    strConfig = "1x2x4";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(2u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(8u, gtSystemInfo.EUCount);
-
-    strConfig = "default";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(4u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(32u, gtSystemInfo.EUCount);
-
-    strConfig = "erroneous";
+    std::string strConfig = "erroneous";
     gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);

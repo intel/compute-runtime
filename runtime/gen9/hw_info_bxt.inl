@@ -126,10 +126,8 @@ const HardwareInfo BXT_1x2x6::hwInfo = {
 GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
 void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 12;
-    gtSysInfo->ThreadCount = 12 * BXT::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 1;
     gtSysInfo->MaxFillRate = 8;
@@ -159,10 +157,8 @@ const HardwareInfo BXT_1x3x6::hwInfo = {
 GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
 void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 18;
-    gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 1;
     gtSysInfo->MaxFillRate = 8;
@@ -183,6 +179,7 @@ void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo BXT::hwInfo = BXT_1x3x6::hwInfo;
+const std::string BXT::defaultHardwareInfoConfig = "1x3x6";
 
 void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x2x6") {

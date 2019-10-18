@@ -9,27 +9,14 @@
 
 using namespace NEO;
 
-TEST(LkfHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorrect) {
+TEST(LkfHwInfoConfig, givenHwInfoErrorneousConfigString) {
     if (IGFX_LAKEFIELD != productFamily) {
         return;
     }
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "1x8x8";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(64u, gtSystemInfo.EUCount);
-
-    strConfig = "default";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(64u, gtSystemInfo.EUCount);
-
-    strConfig = "erroneous";
+    std::string strConfig = "erroneous";
     gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);

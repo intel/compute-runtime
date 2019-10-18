@@ -22,6 +22,12 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *feature
 const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
     nullptr,
 };
+
+// Global table of default hardware info configs
+const std::string *defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
+    nullptr,
+};
+
 // Global table of family names
 const char *familyName[IGFX_MAX_CORE] = {
     nullptr,
@@ -50,6 +56,30 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
         }
     }
     return ret;
+}
+
+bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareInfo &hwInfoIn) {
+    size_t currPos = hwInfoConfig.find('x', 0);
+    if (currPos == std::string::npos) {
+        return false;
+    }
+    uint32_t sliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(0, currPos)));
+    size_t prevPos = currPos + 1;
+
+    currPos = hwInfoConfig.find('x', prevPos);
+    if (currPos == std::string::npos) {
+        return false;
+    }
+    uint32_t subSliceCount = sliceCount * static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, currPos)));
+    prevPos = currPos + 1;
+
+    uint32_t euCount = subSliceCount * static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, std::string::npos)));
+
+    hwInfoIn.gtSystemInfo.SliceCount = sliceCount;
+    hwInfoIn.gtSystemInfo.SubSliceCount = subSliceCount;
+    hwInfoIn.gtSystemInfo.EUCount = euCount;
+
+    return true;
 }
 
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {

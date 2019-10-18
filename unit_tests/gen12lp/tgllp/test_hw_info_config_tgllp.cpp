@@ -9,33 +9,14 @@
 
 using namespace NEO;
 
-TEST(TgllpHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorrect) {
+TEST(TgllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
     if (IGFX_TIGERLAKE_LP != productFamily) {
         return;
     }
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "1x6x16";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(6u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(96u, gtSystemInfo.EUCount);
-
-    strConfig = "1x2x16";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(2u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(32u, gtSystemInfo.EUCount);
-
-    strConfig = "default";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(6u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(96u, gtSystemInfo.EUCount);
-
-    strConfig = "erroneous";
+    std::string strConfig = "erroneous";
     gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);

@@ -117,10 +117,8 @@ const HardwareInfo LKF_1x8x8::hwInfo = {
 GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
 void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 64;
-    gtSysInfo->ThreadCount = 64 * LKF::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * LKF::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 8;
     gtSysInfo->L3CacheSizeInKb = 2560;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
@@ -141,6 +139,7 @@ void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo LKF::hwInfo = LKF_1x8x8::hwInfo;
+const std::string LKF::defaultHardwareInfoConfig = "1x8x8";
 
 void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x8x8") {

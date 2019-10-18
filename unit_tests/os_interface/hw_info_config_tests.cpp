@@ -29,3 +29,19 @@ void HwInfoConfigTest::SetUp() {
 void HwInfoConfigTest::TearDown() {
     PlatformFixture::TearDown();
 }
+
+TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturnsSetsProperValues) {
+    bool success = setHwInfoValuesFromConfigString("2x4x16", outHwInfo);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 2u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 8u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 128u);
+}
+
+TEST_F(HwInfoConfigTest, givenInvalidHwInfoSetHwInfoValuesFromConfigString) {
+    bool success = setHwInfoValuesFromConfigString("1", outHwInfo);
+    EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("1x3", outHwInfo);
+    EXPECT_FALSE(success);
+}

@@ -82,7 +82,8 @@ struct GfxFamilyMapper {};
 // Global table of hardware prefixes
 extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *familyName[IGFX_MAX_CORE];
-extern const char *hardwarePrefix[];
+extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
+extern const std::string *defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig);
 
@@ -95,6 +96,7 @@ struct EnableGfxFamilyHw {
 };
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn);
+bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareInfo &hwInfoIn);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
 } // namespace NEO

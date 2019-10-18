@@ -205,6 +205,18 @@ TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeWhenGetDevicesFo
     }
 }
 
+TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringGetDevicesForProductFamilyOverrideReturnsFalse) {
+    DeviceFactoryCleaner cleaner;
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.HardwareInfoOverride.set("1x3");
+
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    EXPECT_FALSE(success);
+}
+
 TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {
     DeviceFactoryCleaner cleaner;
 

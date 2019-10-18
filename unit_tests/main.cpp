@@ -309,6 +309,15 @@ int main(int argc, char **argv) {
     }
 
     HardwareInfo hwInfo = *hardwareInfo;
+
+    if (hwInfoConfig == "default") {
+        hwInfoConfig = *defaultHardwareInfoConfigTable[productFamily];
+    }
+
+    if (!setHwInfoValuesFromConfigString(hwInfoConfig, hwInfo)) {
+        return -1;
+    }
+
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
     FeatureTable featureTable = hwInfo.featureTable;

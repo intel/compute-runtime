@@ -167,7 +167,10 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     }
     if (device) {
         platformDevices[0] = device->pHwInfo;
-        device->setupHardwareInfo(const_cast<HardwareInfo *>(platformDevices[0]), true);
+        ret = drmObject->setupHardwareInfo(const_cast<DeviceDescriptor *>(device), true);
+        if (ret != 0) {
+            return nullptr;
+        }
         drmObject->setGtType(eGtType);
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,

@@ -109,10 +109,8 @@ const HardwareInfo BDW_1x2x6::hwInfo = {
 GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
 void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 12;
-    gtSysInfo->ThreadCount = 12 * BDW::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 2;
     gtSysInfo->MaxFillRate = 8;
@@ -142,10 +140,8 @@ const HardwareInfo BDW_1x3x6::hwInfo = {
 GT_SYSTEM_INFO BDW_1x3x6::gtSystemInfo = {0};
 void BDW_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 18;
-    gtSysInfo->ThreadCount = 18 * BDW::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -175,10 +171,8 @@ const HardwareInfo BDW_1x3x8::hwInfo = {
 GT_SYSTEM_INFO BDW_1x3x8::gtSystemInfo = {0};
 void BDW_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 23;
-    gtSysInfo->ThreadCount = 23 * BDW::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 2;
     gtSysInfo->MaxFillRate = 8;
@@ -208,10 +202,8 @@ const HardwareInfo BDW_2x3x8::hwInfo = {
 GT_SYSTEM_INFO BDW_2x3x8::gtSystemInfo = {0};
 void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 47;
-    gtSysInfo->ThreadCount = 47 * BDW::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 2;
-    gtSysInfo->SubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 1536;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
@@ -232,6 +224,7 @@ void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo BDW::hwInfo = BDW_1x3x8::hwInfo;
+const std::string BDW::defaultHardwareInfoConfig = "1x3x8";
 
 void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "2x3x8") {

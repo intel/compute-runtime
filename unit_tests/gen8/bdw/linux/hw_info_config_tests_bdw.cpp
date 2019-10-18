@@ -165,9 +165,13 @@ typedef ::testing::Types<BDW_1x2x6, BDW_1x3x6, BDW_1x3x8, BDW_2x3x8> bdwTestType
 TYPED_TEST_CASE(BdwHwInfoTests, bdwTestTypes);
 TYPED_TEST(BdwHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
+    DrmMock drm;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 
-    TypeParam::setupHardwareInfo(&hwInfo, false);
+    int ret = drm.setupHardwareInfo(&device, false);
+
+    EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

@@ -258,9 +258,13 @@ typedef ::testing::Types<SKL_1x2x6, SKL_1x3x6, SKL_1x3x8, SKL_2x3x8, SKL_3x3x8> 
 TYPED_TEST_CASE(SklHwInfoTests, sklTestTypes);
 TYPED_TEST(SklHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
+    DrmMock drm;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 
-    TypeParam::setupHardwareInfo(&hwInfo, false);
+    int ret = drm.setupHardwareInfo(&device, false);
+
+    EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

@@ -243,6 +243,22 @@ TEST_F(DrmTests, failOnDeviceId) {
     EXPECT_EQ(drm, nullptr);
 }
 
+TEST_F(DrmTests, failOnEuTotal) {
+    VariableBackup<decltype(failOnEuTotal)> backupfailOnEuTotal(&failOnEuTotal);
+    failOnEuTotal = -1;
+
+    auto drm = DrmWrap::createDrm(0);
+    EXPECT_EQ(drm, nullptr);
+}
+
+TEST_F(DrmTests, failOnSubsliceTotal) {
+    VariableBackup<decltype(failOnSubsliceTotal)> backupfailOnSubsliceTotal(&failOnSubsliceTotal);
+    failOnSubsliceTotal = -1;
+
+    auto drm = DrmWrap::createDrm(0);
+    EXPECT_EQ(drm, nullptr);
+}
+
 TEST_F(DrmTests, failOnRevisionId) {
     VariableBackup<decltype(failOnRevisionId)> backupFailOnRevisionId(&failOnRevisionId);
     failOnRevisionId = -1;

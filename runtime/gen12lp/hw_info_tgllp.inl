@@ -116,10 +116,8 @@ const HardwareInfo TGLLP_1x6x16::hwInfo = {
 GT_SYSTEM_INFO TGLLP_1x6x16::gtSystemInfo = {0};
 void TGLLP_1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 96;
-    gtSysInfo->ThreadCount = 96 * TGLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * TGLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 6;
     gtSysInfo->DualSubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 3840;
     gtSysInfo->L3BankCount = 8;
@@ -157,10 +155,8 @@ const HardwareInfo TGLLP_1x2x16::hwInfo = {
 GT_SYSTEM_INFO TGLLP_1x2x16::gtSystemInfo = {0};
 void TGLLP_1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 32;
-    gtSysInfo->ThreadCount = 32 * TGLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * TGLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->DualSubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
@@ -188,6 +184,7 @@ void TGLLP_1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 };
 
 const HardwareInfo TGLLP::hwInfo = TGLLP_1x6x16::hwInfo;
+const std::string TGLLP::defaultHardwareInfoConfig = "1x6x16";
 
 void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x6x16") {

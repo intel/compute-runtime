@@ -114,10 +114,8 @@ const HardwareInfo CFL_1x2x6::hwInfo = {
 GT_SYSTEM_INFO CFL_1x2x6::gtSystemInfo = {0};
 void CFL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 11;
-    gtSysInfo->ThreadCount = 11 * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 2;
     gtSysInfo->MaxFillRate = 8;
@@ -147,10 +145,8 @@ const HardwareInfo CFL_1x3x6::hwInfo = {
 GT_SYSTEM_INFO CFL_1x3x6::gtSystemInfo = {0};
 void CFL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 17;
-    gtSysInfo->ThreadCount = 17 * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -180,10 +176,8 @@ const HardwareInfo CFL_1x3x8::hwInfo = {
 GT_SYSTEM_INFO CFL_1x3x8::gtSystemInfo = {0};
 void CFL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 23;
-    gtSysInfo->ThreadCount = 23 * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -213,10 +207,8 @@ const HardwareInfo CFL_2x3x8::hwInfo = {
 GT_SYSTEM_INFO CFL_2x3x8::gtSystemInfo = {0};
 void CFL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 47;
-    gtSysInfo->ThreadCount = 47 * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
-    gtSysInfo->SubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 1536;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
@@ -246,10 +238,8 @@ const HardwareInfo CFL_3x3x8::hwInfo = {
 GT_SYSTEM_INFO CFL_3x3x8::gtSystemInfo = {0};
 void CFL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 71;
-    gtSysInfo->ThreadCount = 71 * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
     gtSysInfo->SliceCount = 3;
-    gtSysInfo->SubSliceCount = 9;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 12;
     gtSysInfo->MaxFillRate = 24;
@@ -270,6 +260,7 @@ void CFL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo CFL::hwInfo = CFL_1x3x6::hwInfo;
+const std::string CFL::defaultHardwareInfoConfig = "1x3x6";
 
 void setupCFLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x3x8") {

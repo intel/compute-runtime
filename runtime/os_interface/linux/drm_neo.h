@@ -77,6 +77,7 @@ class Drm {
     uint64_t getSliceMask(uint64_t sliceCount);
     bool queryEngineInfo();
     bool queryMemoryInfo();
+    int setupHardwareInfo(DeviceDescriptor *, bool);
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();

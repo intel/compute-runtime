@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST(GlkHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorrect) {
+TEST(GlkHwInfoConfig, givenHwInfoErrorneousConfigString) {
     if (IGFX_GEMINILAKE != productFamily) {
         return;
     }
@@ -17,27 +17,7 @@ TEST(GlkHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
-    std::string strConfig = "1x2x6";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(2u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(12u, gtSystemInfo.EUCount);
-
-    strConfig = "1x3x6";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(3u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(18u, gtSystemInfo.EUCount);
-
-    strConfig = "default";
-    gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
-    EXPECT_EQ(3u, gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(18u, gtSystemInfo.EUCount);
-
-    strConfig = "erroneous";
+    std::string strConfig = "erroneous";
     gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);

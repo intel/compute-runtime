@@ -216,9 +216,13 @@ typedef ::testing::Types<GLK_1x3x6, GLK_1x2x6> glkTestTypes;
 TYPED_TEST_CASE(GlkHwInfoTests, glkTestTypes);
 TYPED_TEST(GlkHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
+    DrmMock drm;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 
-    TypeParam::setupHardwareInfo(&hwInfo, false);
+    int ret = drm.setupHardwareInfo(&device, false);
+
+    EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

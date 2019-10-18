@@ -123,10 +123,8 @@ const HardwareInfo KBL_1x2x6::hwInfo = {
 GT_SYSTEM_INFO KBL_1x2x6::gtSystemInfo = {0};
 void KBL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 11;
-    gtSysInfo->ThreadCount = 11 * KBL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 2;
     gtSysInfo->MaxFillRate = 8;
@@ -157,10 +155,8 @@ const HardwareInfo KBL_1x3x6::hwInfo = {
 GT_SYSTEM_INFO KBL_1x3x6::gtSystemInfo = {0};
 void KBL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 17;
-    gtSysInfo->ThreadCount = 17 * KBL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -190,10 +186,8 @@ const HardwareInfo KBL_1x3x8::hwInfo = {
 GT_SYSTEM_INFO KBL_1x3x8::gtSystemInfo = {0};
 void KBL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 23;
-    gtSysInfo->ThreadCount = 23 * KBL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
@@ -223,10 +217,8 @@ const HardwareInfo KBL_2x3x8::hwInfo = {
 GT_SYSTEM_INFO KBL_2x3x8::gtSystemInfo = {0};
 void KBL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 47;
-    gtSysInfo->ThreadCount = 47 * KBL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
-    gtSysInfo->SubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 1536;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
@@ -256,10 +248,8 @@ const HardwareInfo KBL_3x3x8::hwInfo = {
 GT_SYSTEM_INFO KBL_3x3x8::gtSystemInfo = {0};
 void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 71;
-    gtSysInfo->ThreadCount = 71 * KBL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 3;
-    gtSysInfo->SubSliceCount = 9;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 12;
     gtSysInfo->MaxFillRate = 23;
@@ -280,6 +270,7 @@ void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo KBL::hwInfo = KBL_1x3x6::hwInfo;
+const std::string KBL::defaultHardwareInfoConfig = "1x3x6";
 
 void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x3x8") {

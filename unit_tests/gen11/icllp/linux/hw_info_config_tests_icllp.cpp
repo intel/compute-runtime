@@ -9,7 +9,6 @@
 #include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;
-using namespace std;
 
 struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
     void SetUp() override {
@@ -20,7 +19,7 @@ struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
     }
 };
 
-ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, configureHwInfo) {
+ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, configureHwInfoIcllp) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -66,120 +65,24 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, negative) {
     EXPECT_EQ(-1, ret);
 }
 
-using IcllpHwInfoTests = ::testing::Test;
-
-ICLLPTEST_F(IcllpHwInfoTests, icllp1x8x8systemInfo) {
-    GT_SYSTEM_INFO expectedGtSystemInfo = {};
+template <typename T>
+class IcllpHwInfoTests : public ::testing::Test {};
+typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8, ICLLP_1x1x8> icllpTestTypes;
+TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
+TYPED_TEST(IcllpHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
-    requestedGtSystemInfo = {};
+    DrmMock drm;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 
-    expectedGtSystemInfo.EUCount = 63;
-    expectedGtSystemInfo.ThreadCount = 63 * ICLLP::threadsPerEu;
-    expectedGtSystemInfo.SliceCount = 1;
-    expectedGtSystemInfo.SubSliceCount = 8;
-    expectedGtSystemInfo.L3CacheSizeInKb = 3072;
-    expectedGtSystemInfo.L3BankCount = 8;
-    expectedGtSystemInfo.MaxFillRate = 16;
-    expectedGtSystemInfo.TotalVsThreads = 336;
-    expectedGtSystemInfo.TotalHsThreads = 336;
-    expectedGtSystemInfo.TotalDsThreads = 336;
-    expectedGtSystemInfo.TotalGsThreads = 336;
-    expectedGtSystemInfo.TotalPsThreadsWindowerRange = 64;
-    expectedGtSystemInfo.CsrSizeInMb = 8;
-    expectedGtSystemInfo.MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    expectedGtSystemInfo.MaxSlicesSupported = ICLLP::maxSlicesSupported;
-    expectedGtSystemInfo.MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
-    expectedGtSystemInfo.IsL3HashModeEnabled = false;
-    expectedGtSystemInfo.IsDynamicallyPopulated = false;
+    int ret = drm.setupHardwareInfo(&device, false);
 
-    ICLLP_1x8x8::setupHardwareInfo(&hwInfo, false);
-    EXPECT_TRUE(memcmp(&requestedGtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)) == 0);
-}
-
-ICLLPTEST_F(IcllpHwInfoTests, icllp1x4x8systemInfo) {
-    HardwareInfo hwInfo;
-    GT_SYSTEM_INFO expectedGtSystemInfo = {};
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
-    requestedGtSystemInfo = {};
-
-    expectedGtSystemInfo.EUCount = 31;
-    expectedGtSystemInfo.ThreadCount = 31 * ICLLP::threadsPerEu;
-    expectedGtSystemInfo.SliceCount = 1;
-    expectedGtSystemInfo.SubSliceCount = 4;
-    expectedGtSystemInfo.L3CacheSizeInKb = 2304;
-    expectedGtSystemInfo.L3BankCount = 6;
-    expectedGtSystemInfo.MaxFillRate = 8;
-    expectedGtSystemInfo.TotalVsThreads = 364;
-    expectedGtSystemInfo.TotalHsThreads = 224;
-    expectedGtSystemInfo.TotalDsThreads = 364;
-    expectedGtSystemInfo.TotalGsThreads = 224;
-    expectedGtSystemInfo.TotalPsThreadsWindowerRange = 128;
-    expectedGtSystemInfo.CsrSizeInMb = 5;
-    expectedGtSystemInfo.MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    expectedGtSystemInfo.MaxSlicesSupported = 1;
-    expectedGtSystemInfo.MaxSubSlicesSupported = 4;
-    expectedGtSystemInfo.IsL3HashModeEnabled = false;
-    expectedGtSystemInfo.IsDynamicallyPopulated = false;
-
-    ICLLP_1x4x8::setupHardwareInfo(&hwInfo, false);
-    EXPECT_TRUE(memcmp(&requestedGtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)) == 0);
-}
-
-ICLLPTEST_F(IcllpHwInfoTests, icllp1x6x8systemInfo) {
-    GT_SYSTEM_INFO expectedGtSystemInfo = {};
-    HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
-    requestedGtSystemInfo = {};
-
-    expectedGtSystemInfo.EUCount = 47;
-    expectedGtSystemInfo.ThreadCount = 47 * ICLLP::threadsPerEu;
-    expectedGtSystemInfo.SliceCount = 1;
-    expectedGtSystemInfo.SubSliceCount = 6;
-    expectedGtSystemInfo.L3CacheSizeInKb = 2304;
-    expectedGtSystemInfo.L3BankCount = 6;
-    expectedGtSystemInfo.MaxFillRate = 8;
-    expectedGtSystemInfo.TotalVsThreads = 364;
-    expectedGtSystemInfo.TotalHsThreads = 224;
-    expectedGtSystemInfo.TotalDsThreads = 364;
-    expectedGtSystemInfo.TotalGsThreads = 224;
-    expectedGtSystemInfo.TotalPsThreadsWindowerRange = 128;
-    expectedGtSystemInfo.CsrSizeInMb = 5;
-    expectedGtSystemInfo.MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    expectedGtSystemInfo.MaxSlicesSupported = 1;
-    expectedGtSystemInfo.MaxSubSlicesSupported = 4;
-    expectedGtSystemInfo.IsL3HashModeEnabled = false;
-    expectedGtSystemInfo.IsDynamicallyPopulated = false;
-
-    ICLLP_1x6x8::setupHardwareInfo(&hwInfo, false);
-    EXPECT_TRUE(memcmp(&requestedGtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)) == 0);
-}
-
-ICLLPTEST_F(IcllpHwInfoTests, icllp1x1x8systemInfo) {
-    GT_SYSTEM_INFO expectedGtSystemInfo = {};
-    HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
-    requestedGtSystemInfo = {};
-
-    expectedGtSystemInfo.EUCount = 8;
-    expectedGtSystemInfo.ThreadCount = 8 * ICLLP::threadsPerEu;
-    expectedGtSystemInfo.SliceCount = 1;
-    expectedGtSystemInfo.SubSliceCount = 1;
-    expectedGtSystemInfo.L3CacheSizeInKb = 2304;
-    expectedGtSystemInfo.L3BankCount = 6;
-    expectedGtSystemInfo.MaxFillRate = 8;
-    expectedGtSystemInfo.TotalVsThreads = 364;
-    expectedGtSystemInfo.TotalHsThreads = 224;
-    expectedGtSystemInfo.TotalDsThreads = 364;
-    expectedGtSystemInfo.TotalGsThreads = 224;
-    expectedGtSystemInfo.TotalPsThreadsWindowerRange = 128;
-    expectedGtSystemInfo.CsrSizeInMb = 5;
-    expectedGtSystemInfo.MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    expectedGtSystemInfo.MaxSlicesSupported = 1;
-    expectedGtSystemInfo.MaxSubSlicesSupported = 4;
-    expectedGtSystemInfo.IsL3HashModeEnabled = false;
-    expectedGtSystemInfo.IsDynamicallyPopulated = false;
-
-    ICLLP_1x1x8::setupHardwareInfo(&hwInfo, false);
-    EXPECT_TRUE(memcmp(&requestedGtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)) == 0);
+    EXPECT_EQ(ret, 0);
+    EXPECT_GT(gtSystemInfo.EUCount, 0u);
+    EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
+    EXPECT_GT(gtSystemInfo.SliceCount, 0u);
+    EXPECT_GT(gtSystemInfo.SubSliceCount, 0u);
+    EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
+    EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 5u);
+    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 }

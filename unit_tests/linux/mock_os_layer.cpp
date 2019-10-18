@@ -22,6 +22,8 @@ int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |
                      I915_SCHEDULER_CAP_PREEMPTION;
 int failOnDeviceId = 0;
+int failOnEuTotal = 0;
+int failOnSubsliceTotal = 0;
 int failOnRevisionId = 0;
 int failOnSoftPin = 0;
 int failOnParamBoost = 0;
@@ -63,6 +65,14 @@ int drmGetParam(drm_i915_getparam_t *param) {
     case I915_PARAM_CHIPSET_ID:
         *param->value = deviceId;
         ret = failOnDeviceId;
+        break;
+    case I915_PARAM_EU_TOTAL:
+        *param->value = 0;
+        ret = failOnEuTotal;
+        break;
+    case I915_PARAM_SUBSLICE_TOTAL:
+        *param->value = 0;
+        ret = failOnSubsliceTotal;
         break;
     case I915_PARAM_REVISION:
         *param->value = 0x0;

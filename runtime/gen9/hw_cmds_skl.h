@@ -13,6 +13,7 @@ namespace NEO {
 struct SKL : public SKLFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
+    static const std::string defaultHardwareInfoConfig;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
     static const uint32_t threadsPerEu = 7;

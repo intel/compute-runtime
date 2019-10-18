@@ -33,6 +33,14 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     *hardwareInfo = *hwInfoConst;
 
+    if (hwInfoConfig == "default") {
+        hwInfoConfig = *defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
+    }
+
+    if (!setHwInfoValuesFromConfigString(hwInfoConfig, *hardwareInfo)) {
+        return false;
+    }
+
     hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);

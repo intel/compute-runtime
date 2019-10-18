@@ -119,10 +119,8 @@ const HardwareInfo ICLLP_1x8x8::hwInfo = {
 GT_SYSTEM_INFO ICLLP_1x8x8::gtSystemInfo = {0};
 void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 63;
-    gtSysInfo->ThreadCount = 63 * ICLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 8;
     gtSysInfo->L3CacheSizeInKb = 3072;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
@@ -131,7 +129,7 @@ void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->TotalDsThreads = 336;
     gtSysInfo->TotalGsThreads = 336;
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->CsrSizeInMb = 5;
     gtSysInfo->MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
     gtSysInfo->MaxSlicesSupported = ICLLP::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
@@ -153,10 +151,8 @@ const HardwareInfo ICLLP_1x4x8::hwInfo = {
 GT_SYSTEM_INFO ICLLP_1x4x8::gtSystemInfo = {0};
 void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 31;
-    gtSysInfo->ThreadCount = 31 * ICLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 4;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 6;
     gtSysInfo->MaxFillRate = 8;
@@ -167,8 +163,8 @@ void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->TotalPsThreadsWindowerRange = 128;
     gtSysInfo->CsrSizeInMb = 5;
     gtSysInfo->MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = 1;
-    gtSysInfo->MaxSubSlicesSupported = 4;
+    gtSysInfo->MaxSlicesSupported = ICLLP::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
     if (setupFeatureTableAndWorkaroundTable) {
@@ -186,10 +182,8 @@ const HardwareInfo ICLLP_1x6x8::hwInfo = {
 GT_SYSTEM_INFO ICLLP_1x6x8::gtSystemInfo = {0};
 void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 47;
-    gtSysInfo->ThreadCount = 47 * ICLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 6;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 6;
     gtSysInfo->MaxFillRate = 8;
@@ -200,8 +194,8 @@ void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->TotalPsThreadsWindowerRange = 128;
     gtSysInfo->CsrSizeInMb = 5;
     gtSysInfo->MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = 1;
-    gtSysInfo->MaxSubSlicesSupported = 4;
+    gtSysInfo->MaxSlicesSupported = ICLLP::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
     if (setupFeatureTableAndWorkaroundTable) {
@@ -219,10 +213,8 @@ const HardwareInfo ICLLP_1x1x8::hwInfo = {
 GT_SYSTEM_INFO ICLLP_1x1x8::gtSystemInfo = {0};
 void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->EUCount = 8;
-    gtSysInfo->ThreadCount = 8 * ICLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 6;
     gtSysInfo->MaxFillRate = 8;
@@ -233,8 +225,8 @@ void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->TotalPsThreadsWindowerRange = 128;
     gtSysInfo->CsrSizeInMb = 5;
     gtSysInfo->MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = 1;
-    gtSysInfo->MaxSubSlicesSupported = 4;
+    gtSysInfo->MaxSlicesSupported = ICLLP::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
     if (setupFeatureTableAndWorkaroundTable) {
@@ -243,6 +235,7 @@ void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 };
 
 const HardwareInfo ICLLP::hwInfo = ICLLP_1x8x8::hwInfo;
+const std::string ICLLP::defaultHardwareInfoConfig = "1x8x8";
 
 void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x8x8") {
