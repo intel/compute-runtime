@@ -31,8 +31,8 @@ cl_int Program::processSpirBinary(
     bool isSpirV) {
     programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
 
-    std::string binaryString(static_cast<const char *>(pBinary), binarySize);
-    sourceCode.swap(binaryString);
+    this->irBinary = makeCopy(pBinary, binarySize);
+    this->irBinarySize = binarySize;
 
     buildStatus = CL_BUILD_NONE;
     this->isSpirV = isSpirV;

@@ -104,14 +104,14 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_IL:
-        pSrc = sourceCode.data();
-        retSize = srcSize = sourceCode.size();
-        if (!Program::isValidSpirvBinary(pSrc, srcSize)) {
+        if (createdFrom != CreatedFrom::IL) {
             if (paramValueSizeRet) {
                 *paramValueSizeRet = 0;
             }
             return CL_SUCCESS;
         }
+        pSrc = irBinary.get();
+        retSize = srcSize = irBinarySize;
         break;
 
     case CL_PROGRAM_DEBUG_INFO_SIZES_INTEL:

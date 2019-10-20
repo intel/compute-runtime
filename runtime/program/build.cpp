@@ -69,13 +69,15 @@ cl_int Program::build(
                 break;
             }
 
-            auto inType = IGC::CodeType::oclC;
+            TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
             if ((createdFrom == CreatedFrom::IL) || (this->programBinaryType == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
-                inType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
+                inputArgs.srcType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
+                inputArgs.src = ArrayRef<const char>(irBinary.get(), irBinarySize);
+            } else {
+                inputArgs.src = ArrayRef<const char>(sourceCode.c_str(), sourceCode.size());
             }
-            TranslationInput inputArgs = {inType, IGC::CodeType::oclGenBin};
 
-            if (strcmp(sourceCode.c_str(), "") == 0) {
+            if (inputArgs.src.size() == 0) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
@@ -95,7 +97,6 @@ cl_int Program::build(
                 internalOptions.append(compilerExtensionsOptions);
             }
 
-            inputArgs.src = ArrayRef<const char>(sourceCode.c_str(), sourceCode.size());
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
             inputArgs.GTPinInput = gtpinGetIgcInit();
@@ -114,9 +115,11 @@ cl_int Program::build(
             if (retVal != CL_SUCCESS) {
                 break;
             }
-            this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
-            this->irBinarySize = compilerOuput.intermediateRepresentation.size;
-            this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
+            if (inputArgs.srcType == IGC::CodeType::oclC) {
+                this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
+                this->irBinarySize = compilerOuput.intermediateRepresentation.size;
+                this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
+            }
             this->genBinary = std::move(compilerOuput.deviceBinary.mem);
             this->genBinarySize = compilerOuput.deviceBinary.size;
             this->debugData = std::move(compilerOuput.debugData.mem);

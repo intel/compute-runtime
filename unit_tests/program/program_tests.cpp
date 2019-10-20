@@ -2642,6 +2642,39 @@ TEST_F(ProgramTests, createFromILWhenCreateProgramFromBinaryIsSuccessfulThenRetu
     prog->release();
 }
 
+TEST_F(ProgramTests, givenProgramCreatedFromILWhenCompileIsCalledThenReuseTheILInsteadOfCallingCompilerInterface) {
+    const uint32_t spirv[16] = {0x03022307};
+    cl_int errCode = 0;
+    auto prog = Program::createFromIL<MockProgram>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
+    ASSERT_NE(nullptr, prog);
+    cl_device_id deviceId = pDevice;
+    auto debugVars = NEO::getIgcDebugVars();
+    debugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(debugVars);
+    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, compilerErr);
+    gEnvironment->fclPopDebugVars();
+    prog->release();
+}
+
+TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhenCompileIsCalledThenReuseTheILInsteadOfCallingCompilerInterface) {
+    const uint32_t spirv[16] = {0x03022307};
+    cl_int errCode = 0;
+    cl_device_id deviceId = pDevice;
+    cl_context ctx = pContext;
+    size_t lengths = sizeof(spirv);
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(spirv)};
+    auto prog = Program::create<MockProgram>(ctx, 1U, &deviceId, &lengths, binaries, nullptr, errCode);
+    ASSERT_NE(nullptr, prog);
+    auto debugVars = NEO::getIgcDebugVars();
+    debugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(debugVars);
+    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, compilerErr);
+    gEnvironment->fclPopDebugVars();
+    prog->release();
+}
+
 TEST_F(ProgramTests, createFromILWhenIlIsNullptrThenReturnsInvalidBinaryError) {
     cl_int errCode = CL_SUCCESS;
     constexpr cl_int expectedErrCode = CL_INVALID_BINARY;

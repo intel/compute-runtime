@@ -158,7 +158,6 @@ T *Program::createFromIL(Context *ctx,
 
     T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false);
     errcodeRet = program->createProgramFromBinary(il, length);
-
     program->createdFrom = CreatedFrom::IL;
 
     if (errcodeRet != CL_SUCCESS) {

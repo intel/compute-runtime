@@ -70,6 +70,11 @@ cl_int Program::compile(
             break;
         }
 
+        if ((createdFrom == CreatedFrom::IL) || (this->programBinaryType == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
+            retVal = CL_SUCCESS;
+            break;
+        }
+
         buildStatus = CL_BUILD_IN_PROGRESS;
 
         options = (buildOptions != nullptr) ? buildOptions : "";

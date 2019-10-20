@@ -37,7 +37,7 @@ TEST_F(ProcessSpirBinaryTests, InvalidSizeBinary) {
     auto retVal = program->processSpirBinary(pBinary, binarySize, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(binarySize, program->sourceCode.size());
+    EXPECT_EQ(binarySize, program->irBinarySize);
 }
 
 TEST_F(ProcessSpirBinaryTests, SomeBinary) {
@@ -46,8 +46,8 @@ TEST_F(ProcessSpirBinaryTests, SomeBinary) {
     auto retVal = program->processSpirBinary(pBinary, binarySize, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, strcmp(pBinary, program->sourceCode.c_str()));
-    EXPECT_EQ(binarySize, program->sourceCode.size());
+    EXPECT_EQ(0, memcmp(pBinary, program->irBinary.get(), program->irBinarySize));
+    EXPECT_EQ(binarySize, program->irBinarySize);
 
     // Verify no built log is available
     auto pBuildLog = program->getBuildLog(program->getDevicePtr());
