@@ -14,7 +14,16 @@ matrix:
     include:
         - os: linux
           compiler: gcc
-          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5
+          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5 GEN=gen-8
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5 GEN=gen-9
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5 GEN=gen-11
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5 GEN=gen-12
         - os: linux
           compiler: clang
           env: BUILD_OS=ubuntu-16.04 COMPILER=clang-4
@@ -38,16 +47,40 @@ matrix:
           env: BUILD_OS=ubuntu-18.04 COMPILER=clang-8
         - os: linux
           compiler: gcc
-          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5 GEN=gen-8
         - os: linux
           compiler: gcc
-          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5 GEN=gen-9
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5 GEN=gen-11
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5 GEN=gen-12
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6 GEN=gen-8
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6 GEN=gen-9
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6 GEN=gen-11
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6 GEN=gen-12
         - os: linux
           compiler: gcc
           env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-8
         - os: linux
           compiler: gcc
           env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-9
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-11
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-12
 
 script: ./scripts/run-build.sh
 
