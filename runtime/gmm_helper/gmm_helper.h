@@ -7,23 +7,19 @@
 
 #pragma once
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/api/cl_types.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 
-#include <cstdint>
-#include <cstdlib>
 #include <memory>
 
 namespace NEO {
 enum class OCLPlane;
+class GmmClientContext;
+class GraphicsAllocation;
+class OsLibrary;
 struct HardwareInfo;
 struct FeatureTable;
 struct WorkaroundTable;
 struct ImageInfo;
-class GraphicsAllocation;
-class Gmm;
-class OsLibrary;
-class GmmClientContext;
 
 class GmmHelper {
   public:
