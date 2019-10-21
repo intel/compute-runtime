@@ -7,8 +7,8 @@
 
 #include "unit_tests/mocks/mock_program.h"
 
+#include "core/compiler_interface/compiler_cache.h"
 #include "core/helpers/hash.h"
-#include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/context/context.h"
 #include "runtime/program/create.inl"
 #include "unit_tests/mocks/mock_compilers.h"
@@ -22,7 +22,7 @@ std::string MockProgram::getCachedFileName() const {
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
     auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
     auto internalOpts = ArrayRef<const char>(this->internalOptions.c_str(), this->internalOptions.size());
-    return BinaryCache::getCachedFileName(hwInfo, input, opts, internalOpts);
+    return CompilerCache::getCachedFileName(hwInfo, input, opts, internalOpts);
 }
 cl_int GlobalMockSipProgram::processGenBinary() {
     return CL_SUCCESS;

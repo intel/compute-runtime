@@ -5,11 +5,12 @@
  *
  */
 
+#include "core/compiler_interface/compiler_cache.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/string.h"
-#include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "runtime/helpers/hw_info.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -24,23 +25,9 @@
 using namespace NEO;
 using namespace std;
 
-class BinaryCacheFixture
-
-{
+class CompilerCacheMock : public CompilerCache {
   public:
-    void SetUp() {
-        cache = new BinaryCache;
-    }
-
-    void TearDown() {
-        delete cache;
-    }
-    BinaryCache *cache;
-};
-
-class BinaryCacheMock : public BinaryCache {
-  public:
-    BinaryCacheMock() {
+    CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
     }
 
     bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) override {
@@ -56,25 +43,6 @@ class BinaryCacheMock : public BinaryCache {
     uint32_t cacheInvoked = 0u;
     bool loadResult = false;
 };
-
-class CompilerInterfaceCachedFixture : public DeviceFixture {
-  public:
-    void SetUp() {
-        DeviceFixture::SetUp();
-        pCompilerInterface = pDevice->getExecutionEnvironment()->getCompilerInterface();
-        ASSERT_NE(pCompilerInterface, nullptr);
-    }
-
-    void TearDown() {
-        DeviceFixture::TearDown();
-    }
-
-    CompilerInterface *pCompilerInterface;
-};
-
-typedef Test<BinaryCacheFixture> BinaryCacheHashTests;
-typedef Test<BinaryCacheFixture> BinaryCacheTests;
-typedef Test<CompilerInterfaceCachedFixture> CompilerInterfaceCachedTests;
 
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;
@@ -148,7 +116,7 @@ TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionT
     alignedFree(originalPtr);
 }
 
-TEST_F(BinaryCacheHashTests, hashShortBuffers) {
+TEST(CompilerCacheHashTests, hashShortBuffers) {
     Hash hash;
 
     std::list<uint64_t> hashes;
@@ -172,9 +140,8 @@ TEST_F(BinaryCacheHashTests, hashShortBuffers) {
     }
 }
 
-TEST_F(BinaryCacheHashTests, testUnique) {
+TEST(CompilerCacheHashTests, testUnique) {
     static const size_t bufSize = 64;
-    TranslationInput args{IGC::CodeType::undefined, IGC::CodeType::undefined};
     HardwareInfo hwInfo;
 
     std::set<std::string> hashes;
@@ -193,29 +160,27 @@ TEST_F(BinaryCacheHashTests, testUnique) {
     w2.waDoNotUseMIReportPerfCount = false;
     const WorkaroundTable *was[] = {&w1, &w2};
 
-    std::array<std::string, 4> input = {{std::string(""),
-                                         std::string("12345678901234567890123456789012"),
-                                         std::string("12345678910234567890123456789012"),
-                                         std::string("12345678901234567891023456789012")}};
+    std::array<std::string, 4> inputArray = {{std::string(""),
+                                              std::string("12345678901234567890123456789012"),
+                                              std::string("12345678910234567890123456789012"),
+                                              std::string("12345678901234567891023456789012")}};
 
-    std::array<std::string, 3> options = {{std::string(""),
-                                           std::string("--some --options"),
-                                           std::string("--some --different --options")}};
+    std::array<std::string, 3> optionsArray = {{std::string(""),
+                                                std::string("--some --options"),
+                                                std::string("--some --different --options")}};
 
-    std::array<std::string, 3> internalOptions = {{std::string(""),
-                                                   std::string("--some --options"),
-                                                   std::string("--some --different --options")}};
-
-    std::array<std::string, 1> tracingOptions = {{
-        std::string(""),
-        //        std::string("--some --options"),
-        //        std::string("--some --different --options")
-    }};
+    std::array<std::string, 3> internalOptionsArray = {{std::string(""),
+                                                        std::string("--some --options"),
+                                                        std::string("--some --different --options")}};
 
     std::unique_ptr<char> buf1(new char[bufSize]);
     std::unique_ptr<char> buf2(new char[bufSize]);
     std::unique_ptr<char> buf3(new char[bufSize]);
     std::unique_ptr<char> buf4(new char[bufSize]);
+
+    ArrayRef<char> src;
+    ArrayRef<char> apiOptions;
+    ArrayRef<char> internalOptions;
 
     for (auto platform : platforms) {
         hwInfo.platform = *platform;
@@ -226,27 +191,22 @@ TEST_F(BinaryCacheHashTests, testUnique) {
             for (auto wa : was) {
                 hwInfo.workaroundTable = *wa;
 
-                for (size_t i1 = 0; i1 < input.size(); i1++) {
-                    strcpy_s(buf1.get(), bufSize, input[i1].c_str());
-                    args.src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
-                    for (size_t i2 = 0; i2 < options.size(); i2++) {
-                        strcpy_s(buf2.get(), bufSize, options[i2].c_str());
-                        args.apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
-                        for (size_t i3 = 0; i3 < internalOptions.size(); i3++) {
-                            strcpy_s(buf3.get(), bufSize, internalOptions[i3].c_str());
-                            args.internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
-                            for (size_t i4 = 0; i4 < tracingOptions.size(); i4++) {
-                                strcpy_s(buf4.get(), bufSize, tracingOptions[i4].c_str());
-                                args.tracingOptions = buf4.get();
-                                args.tracingOptionsCount = static_cast<uint32_t>(strlen(buf4.get()));
+                for (size_t i1 = 0; i1 < inputArray.size(); i1++) {
+                    strcpy_s(buf1.get(), bufSize, inputArray[i1].c_str());
+                    src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
+                    for (size_t i2 = 0; i2 < optionsArray.size(); i2++) {
+                        strcpy_s(buf2.get(), bufSize, optionsArray[i2].c_str());
+                        apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
+                        for (size_t i3 = 0; i3 < internalOptionsArray.size(); i3++) {
+                            strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
+                            internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                                string hash = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
+                            string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
 
-                                if (hashes.find(hash) != hashes.end()) {
-                                    FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3 << ":" << i4;
-                                }
-                                hashes.emplace(hash);
+                            if (hashes.find(hash) != hashes.end()) {
+                                FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
                             }
+                            hashes.emplace(hash);
                         }
                     }
                 }
@@ -254,52 +214,46 @@ TEST_F(BinaryCacheHashTests, testUnique) {
         }
     }
 
-    string hash = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
-    string hash2 = cache->getCachedFileName(hwInfo, args.src, args.apiOptions, args.internalOptions);
+    string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    string hash2 = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
-TEST_F(BinaryCacheTests, doNotCacheEmpty) {
-    bool ret = cache->cacheBinary("some_hash", nullptr, 12u);
+TEST(CompilerCacheTests, doNotCacheEmpty) {
+    CompilerCache cache(CompilerCacheConfig{});
+    bool ret = cache.cacheBinary("some_hash", nullptr, 12u);
     EXPECT_FALSE(ret);
 
     const char *tmp1 = "Data";
-    ret = cache->cacheBinary("some_hash", tmp1, 0u);
+    ret = cache.cacheBinary("some_hash", tmp1, 0u);
     EXPECT_FALSE(ret);
 }
 
-TEST_F(BinaryCacheTests, loadNotFound) {
+TEST(CompilerCacheTests, loadNotFound) {
+    CompilerCache cache(CompilerCacheConfig{});
     size_t size;
-    auto ret = cache->loadCachedBinary("----do-not-exists----", size);
+    auto ret = cache.loadCachedBinary("----do-not-exists----", size);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(0U, size);
 }
 
-TEST_F(BinaryCacheTests, cacheThenLoad) {
+TEST(CompilerCacheTests, cacheThenLoad) {
+    CompilerCache cache(getDefaultClCompilerCacheConfig());
     static const char *hash = "SOME_HASH";
     std::unique_ptr<char> data(new char[32]);
     for (size_t i = 0; i < 32; i++)
         data.get()[i] = static_cast<char>(i);
 
-    bool ret = cache->cacheBinary(hash, static_cast<const char *>(data.get()), 32);
+    bool ret = cache.cacheBinary(hash, static_cast<const char *>(data.get()), 32);
     EXPECT_TRUE(ret);
 
     size_t size;
-    auto loadedBin = cache->loadCachedBinary(hash, size);
+    auto loadedBin = cache.loadCachedBinary(hash, size);
     EXPECT_NE(nullptr, loadedBin);
     EXPECT_NE(0U, size);
 }
 
-TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
-    std::unique_ptr<BinaryCache> cache(new BinaryCache());
-    auto res1 = pCompilerInterface->replaceBinaryCache(cache.get());
-    auto res2 = pCompilerInterface->replaceBinaryCache(res1);
-
-    EXPECT_NE(res1, res2);
-    EXPECT_EQ(res2, cache.get());
-}
-TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
-    BinaryCacheMock cache;
+TEST(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"header.h\"\n__kernel k() {}";
@@ -315,21 +269,20 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
-    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
+    std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
+    auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
 
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    MockDevice device;
+    auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, err);
 
-    pCompilerInterface->replaceBinaryCache(res1);
-
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceCachedTests, wasCached) {
-    BinaryCacheMock cache;
+TEST(CompilerInterfaceCachedTests, wasCached) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"header.h\"\n__kernel k() {}";
@@ -344,51 +297,24 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
-    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
-    cache.loadResult = true;
+    std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
+    cache->loadResult = true;
+    auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
+
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    MockDevice device;
+    auto err = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-
-    pCompilerInterface->replaceBinaryCache(res1);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
-    BinaryCacheMock cache;
-    TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-
-    auto src = "#include \"header.h\"\n__kernel k() {}";
-    inputArgs.src = ArrayRef<const char>(src, strlen(src));
-
-    MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-
-    MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
-    gEnvironment->igcPushDebugVars(igcDebugVars);
-
-    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
-    TranslationOutput translationOutput = {};
-    inputArgs.allowCaching = true;
-    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_EQ(1u, cache.cacheInvoked);
-
-    pCompilerInterface->replaceBinaryCache(res1);
-
-    gEnvironment->fclPopDebugVars();
-    gEnvironment->igcPopDebugVars();
-}
-
-TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
-    MockContext context(pDevice, true);
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
-    BinaryCacheMock cache;
+TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
+    MockDevice device;
+    MockContext context(&device, true);
+    MockProgram program(*device.getExecutionEnvironment(), &context, false);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "__kernel k() {}";
@@ -406,23 +332,22 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheW
     igcDebugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
-    auto res = pCompilerInterface->replaceBinaryCache(&cache);
-    cache.loadResult = true;
+    std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
+    cache->loadResult = true;
+    auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
-
-    pCompilerInterface->replaceBinaryCache(res);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
-    MockContext context(pDevice, true);
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
-    BinaryCacheMock cache;
+TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
+    MockDevice device;
+    MockContext context(&device, true);
+    MockProgram program(*device.getExecutionEnvironment(), &context, false);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"file.h\"\n__kernel k() {}";
@@ -433,14 +358,13 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhen
     fclDebugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
-    auto res = pCompilerInterface->replaceBinaryCache(&cache);
-    cache.loadResult = true;
+    std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
+    cache->loadResult = true;
+    auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
-
-    pCompilerInterface->replaceBinaryCache(res);
 
     gEnvironment->fclPopDebugVars();
 }

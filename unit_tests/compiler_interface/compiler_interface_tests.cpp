@@ -44,7 +44,7 @@ class CompilerInterfaceTest : public DeviceFixture,
 
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
-        bool initRet = pCompilerInterface->initialize(true);
+        bool initRet = pCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
         ASSERT_TRUE(initRet);
         pDevice->getExecutionEnvironment()->compilerInterface.reset(pCompilerInterface);
 
@@ -75,7 +75,16 @@ class CompilerInterfaceTest : public DeviceFixture,
     size_t sourceSize = 0;
 };
 
-TEST(CompilerInterface, WhenInitializeIsCalledThenFailOnlyIfOneOfRequiredCompilersIsUnavailable) {
+TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfCompilerCacheHandlerIsEmpty) {
+    MockCompilerInterface ci;
+
+    ci.failLoadFcl = false;
+    ci.failLoadIgc = false;
+    bool initSuccess = ci.initialize(nullptr, true);
+    EXPECT_FALSE(initSuccess);
+}
+
+TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfOneOfRequiredCompilersIsUnavailable) {
     bool initSuccess = false;
     bool requireFcl = true;
     MockCompilerInterface ci;
@@ -83,49 +92,49 @@ TEST(CompilerInterface, WhenInitializeIsCalledThenFailOnlyIfOneOfRequiredCompile
     ci.failLoadFcl = false;
     ci.failLoadIgc = false;
     requireFcl = true;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_TRUE(initSuccess);
 
     ci.failLoadFcl = false;
     ci.failLoadIgc = false;
     requireFcl = false;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_TRUE(initSuccess);
 
     ci.failLoadFcl = true;
     ci.failLoadIgc = false;
     requireFcl = false;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_TRUE(initSuccess);
 
     ci.failLoadFcl = true;
     ci.failLoadIgc = false;
     requireFcl = true;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_FALSE(initSuccess);
 
     ci.failLoadFcl = false;
     ci.failLoadIgc = true;
     requireFcl = true;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_FALSE(initSuccess);
 
     ci.failLoadFcl = false;
     ci.failLoadIgc = true;
     requireFcl = false;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_FALSE(initSuccess);
 
     ci.failLoadFcl = true;
     ci.failLoadIgc = true;
     requireFcl = false;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_FALSE(initSuccess);
 
     ci.failLoadFcl = true;
     ci.failLoadIgc = true;
     requireFcl = true;
-    initSuccess = ci.initialize(requireFcl);
+    initSuccess = ci.initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), requireFcl);
     EXPECT_FALSE(initSuccess);
 }
 

@@ -5,15 +5,13 @@
  *
  */
 
-#include "runtime/compiler_interface/binary_cache.h"
+#include "core/compiler_interface/compiler_cache.h"
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
 #include "core/utilities/debug_settings_reader.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/ocl_reg_path.h"
-#include "runtime/os_interface/os_inc_base.h"
 
 #include "config.h"
 #include "os_inc.h"
@@ -25,9 +23,9 @@
 #include <string>
 
 namespace NEO {
-std::mutex BinaryCache::cacheAccessMtx;
-const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
-                                                 const ArrayRef<const char> options, const ArrayRef<const char> internalOptions) {
+std::mutex CompilerCache::cacheAccessMtx;
+const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
+                                                   const ArrayRef<const char> options, const ArrayRef<const char> internalOptions) {
     Hash hash;
 
     hash.update("----", 4);
@@ -53,26 +51,20 @@ const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, con
     return stream.str();
 }
 
-BinaryCache::BinaryCache() {
-    std::string keyName = oclRegPath;
-    keyName += "cl_cache_dir";
-    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, keyName));
-    clCacheLocation = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(CL_CACHE_LOCATION));
-};
+CompilerCache::CompilerCache(const CompilerCacheConfig &cacheConfig)
+    : config(cacheConfig){};
 
-BinaryCache::~BinaryCache(){};
-
-bool BinaryCache::cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) {
+bool CompilerCache::cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) {
     if (pBinary == nullptr || binarySize == 0) {
         return false;
     }
-    std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
+    std::string filePath = config.cacheDir + PATH_SEPARATOR + kernelFileHash + config.cacheFileExtension;
     std::lock_guard<std::mutex> lock(cacheAccessMtx);
     return 0 != writeDataToFile(filePath.c_str(), pBinary, binarySize);
 }
 
-std::unique_ptr<char[]> BinaryCache::loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) {
-    std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
+std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) {
+    std::string filePath = config.cacheDir + PATH_SEPARATOR + kernelFileHash + config.cacheFileExtension;
 
     std::lock_guard<std::mutex> lock(cacheAccessMtx);
     return loadDataFromFile(filePath.c_str(), cachedBinarySize);

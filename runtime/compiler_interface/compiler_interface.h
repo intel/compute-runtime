@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/compiler_interface/compiler_cache.h"
 #include "core/helpers/string.h"
 #include "core/utilities/arrayref.h"
 #include "runtime/built_ins/sip.h"
-#include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/os_interface/os_library.h"
 
 #include "cif/common/cif_main.h"
@@ -22,7 +22,6 @@
 
 namespace NEO {
 class Device;
-class Program;
 
 struct TranslationInput {
     TranslationInput(IGC::CodeType::CodeType_t srcType, IGC::CodeType::CodeType_t outType, IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::undefined)
@@ -107,9 +106,9 @@ class CompilerInterface {
     CompilerInterface &operator=(CompilerInterface &&) = delete;
     virtual ~CompilerInterface();
 
-    static CompilerInterface *createInstance(bool requireFcl) {
+    static CompilerInterface *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
         auto instance = new CompilerInterface();
-        if (!instance->initialize(requireFcl)) {
+        if (!instance->initialize(std::move(cache), requireFcl)) {
             delete instance;
             instance = nullptr;
         }
@@ -137,10 +136,8 @@ class CompilerInterface {
 
     MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary);
 
-    BinaryCache *replaceBinaryCache(BinaryCache *newCache);
-
   protected:
-    bool initialize(bool requireFcl);
+    bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 
@@ -148,7 +145,7 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() {
         return std::unique_lock<std::mutex>{mtx};
     }
-    std::unique_ptr<BinaryCache> cache = nullptr;
+    std::unique_ptr<CompilerCache> cache = nullptr;
 
     using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
