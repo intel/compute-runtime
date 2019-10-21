@@ -91,6 +91,7 @@ class Device : public BaseObject<_cl_device_id> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     uint32_t getDeviceIndex() const { return deviceIndex; }
+    virtual uint32_t getRootDeviceIndex() const = 0;
     bool isFullRangeSvm() const {
         return executionEnvironment->isFullRangeSvm();
     }

@@ -35,6 +35,9 @@ DeviceBitfield SubDevice::getDeviceBitfieldForOsContext() const {
 uint32_t SubDevice::getNumAvailableDevices() const {
     return 1u;
 }
+uint32_t SubDevice::getRootDeviceIndex() const {
+    return this->rootDevice.getRootDeviceIndex();
+}
 Device *SubDevice::getDeviceById(uint32_t deviceId) const {
     UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
     return const_cast<SubDevice *>(this);

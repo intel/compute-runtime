@@ -22,6 +22,21 @@ TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSu
     EXPECT_EQ(1u, device->getNumAvailableDevices());
 }
 
+TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItsSubdevicesHaveProperRootIdSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+
+    EXPECT_EQ(2u, device->getNumSubDevices());
+    EXPECT_EQ(0u, device->getDeviceIndex());
+    EXPECT_EQ(1u, device->subdevices.at(0)->getDeviceIndex());
+    EXPECT_EQ(2u, device->subdevices.at(1)->getDeviceIndex());
+
+    EXPECT_EQ(0u, device->getRootDeviceIndex());
+    EXPECT_EQ(0u, device->subdevices.at(0)->getRootDeviceIndex());
+    EXPECT_EQ(0u, device->subdevices.at(1)->getRootDeviceIndex());
+}
+
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);

@@ -18,6 +18,7 @@ class SubDevice : public Device {
     void retainInternal();
     void releaseInternal();
     uint32_t getNumAvailableDevices() const override;
+    uint32_t getRootDeviceIndex() const override;
     Device *getDeviceById(uint32_t deviceId) const override;
 
   protected:

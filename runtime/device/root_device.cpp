@@ -18,6 +18,10 @@ uint32_t RootDevice::getNumSubDevices() const {
     return static_cast<uint32_t>(subdevices.size());
 }
 
+uint32_t RootDevice::getRootDeviceIndex() const {
+    return this->deviceIndex;
+}
+
 uint32_t RootDevice::getNumAvailableDevices() const {
     if (subdevices.empty()) {
         return 1u;
