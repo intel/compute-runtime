@@ -7,7 +7,7 @@ RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg; \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C3086B78CC05B8B1; \
     apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++-7 git pkg-config ninja-build intel-igc-opencl-dev
 RUN cd /root; git clone --depth 1 https://github.com/intel/gmmlib gmmlib
-RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release \
+RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7 ../neo; \
     ninja -j `nproc`
 CMD ["/bin/bash"]

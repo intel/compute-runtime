@@ -2,11 +2,11 @@ FROM docker.io/archlinux/base
 MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
 
 COPY neo /root/neo
-COPY scripts/prepare-arch-aur-gcc-8.sh /root
-COPY scripts/build-arch-dep.sh /root
+COPY scripts/prepare-arch.sh /root
 
-RUN /root/prepare-arch-aur-gcc-8.sh
+RUN /root/prepare-arch.sh
 RUN cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ../neo ; \
+    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+    -DDO_NOT_RUN_AUB_TESTS=1 ../neo ; \
     ninja -j `nproc`
 CMD ["/bin/bash"]
