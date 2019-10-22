@@ -40,7 +40,7 @@ Device *RootDevice::getDeviceById(uint32_t deviceId) const {
 
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : Device(executionEnvironment, deviceIndex) {}
 bool RootDevice::createDeviceImpl() {
-    auto numSubDevices = DeviceHelper::getDevicesCount(&getHardwareInfo());
+    auto numSubDevices = DeviceHelper::getSubDevicesCount(&getHardwareInfo());
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }
