@@ -61,7 +61,7 @@ class ImageFromSubBufferTest : public DeviceFixture, public ::testing::Test {
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
         auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
+        return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -98,7 +98,7 @@ TEST_F(ImageFromSubBufferTest, givenSubbufferWithOffsetGreaterThan4GBWhenImageIs
         region = {static_cast<size_t>(offsetExpected), size / 2};
     }
 
-    Buffer *subBufferWithBigOffset = buffer->createSubBuffer(CL_MEM_READ_WRITE, &region, retVal);
+    Buffer *subBufferWithBigOffset = buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal);
     imageDesc.mem_object = subBufferWithBigOffset;
 
     std::unique_ptr<Image> imageFromSubBuffer(createImage());

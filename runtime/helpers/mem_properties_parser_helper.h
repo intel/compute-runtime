@@ -22,7 +22,7 @@ class MemoryPropertiesParser {
         IMAGE,
     };
 
-    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct, ObjType objectType);
+    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties, cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, ObjType objectType);
 
     static AllocationProperties getAllocationProperties(MemoryPropertiesFlags memoryProperties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {

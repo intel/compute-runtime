@@ -39,7 +39,7 @@ struct GetMemObjectSubBufferInfo : public ::testing::Test {
     }
     void createSubBuffer(cl_mem_flags flags = CL_MEM_READ_WRITE) {
         cl_int retVal;
-        subBuffer = buffer->createSubBuffer(flags, &region, retVal);
+        subBuffer = buffer->createSubBuffer(flags, 0, &region, retVal);
         ASSERT_NE(nullptr, subBuffer);
     }
 

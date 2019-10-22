@@ -19,7 +19,6 @@ namespace NEO {
 class Buffer;
 class Device;
 class MemoryManager;
-struct MemoryProperties;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
                                    MemoryPropertiesFlags memoryProperties,
@@ -100,6 +99,7 @@ class Buffer : public MemObj {
                                             bool isImageRedescribed);
 
     Buffer *createSubBuffer(cl_mem_flags flags,
+                            cl_mem_flags_intel flagsIntel,
                             const cl_buffer_region *region,
                             cl_int &errcodeRet);
 

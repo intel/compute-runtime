@@ -15,101 +15,100 @@ using namespace NEO;
 TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsThenTrueIsReturned) {
     MemoryPropertiesFlags properties;
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE, 0);
     EXPECT_TRUE(properties.flags.readWrite);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_WRITE_ONLY);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_WRITE_ONLY, 0);
     EXPECT_TRUE(properties.flags.writeOnly);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_ONLY);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_ONLY, 0);
     EXPECT_TRUE(properties.flags.readOnly);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0);
     EXPECT_TRUE(properties.flags.useHostPtr);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_ALLOC_HOST_PTR);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_ALLOC_HOST_PTR, 0);
     EXPECT_TRUE(properties.flags.allocHostPtr);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_COPY_HOST_PTR);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_COPY_HOST_PTR, 0);
     EXPECT_TRUE(properties.flags.copyHostPtr);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_WRITE_ONLY);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_WRITE_ONLY, 0);
     EXPECT_TRUE(properties.flags.hostWriteOnly);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_READ_ONLY);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_READ_ONLY, 0);
     EXPECT_TRUE(properties.flags.hostReadOnly);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_NO_ACCESS);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_HOST_NO_ACCESS, 0);
     EXPECT_TRUE(properties.flags.hostNoAccess);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_KERNEL_READ_AND_WRITE);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_KERNEL_READ_AND_WRITE, 0);
     EXPECT_TRUE(properties.flags.kernelReadAndWrite);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL, 0);
     EXPECT_TRUE(properties.flags.accessFlagsUnrestricted);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_NO_ACCESS_INTEL);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_NO_ACCESS_INTEL, 0);
     EXPECT_TRUE(properties.flags.noAccess);
 
-    MemoryProperties memoryProperties;
-    memoryProperties.flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
     EXPECT_TRUE(properties.flags.locallyUncachedResource);
 
-    memoryProperties.flagsIntel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE);
     EXPECT_TRUE(properties.flags.locallyUncachedInSurfaceState);
 
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL);
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 0);
     EXPECT_TRUE(properties.flags.forceSharedPhysicalMemory);
 }
 
 TEST(MemoryPropertiesFlags, givenClMemForceLinearStorageFlagWhenCreateMemoryPropertiesFlagsThenReturnProperValue) {
-    MemoryPropertiesFlags properties;
-    MemoryProperties memoryProperties;
+    MemoryPropertiesFlags memoryProperties;
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flagsIntel = 0;
 
-    memoryProperties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties.flagsIntel = 0;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.forceLinearStorage);
+    flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    flagsIntel = 0;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
-    memoryProperties.flags = 0;
-    memoryProperties.flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.forceLinearStorage);
+    flags = 0;
+    flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
-    memoryProperties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties.flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.forceLinearStorage);
+    flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
-    memoryProperties.flags = 0;
-    memoryProperties.flagsIntel = 0;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_FALSE(properties.flags.forceLinearStorage);
+    flags = 0;
+    flagsIntel = 0;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_FALSE(memoryProperties.flags.forceLinearStorage);
 }
 
 TEST(MemoryPropertiesFlags, givenClAllowUnrestrictedSizeFlagWhenCreateMemoryPropertiesFlagsThenReturnProperValue) {
-    MemoryPropertiesFlags properties;
-    MemoryProperties memoryProperties;
+    MemoryPropertiesFlags memoryProperties;
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flagsIntel = 0;
 
-    memoryProperties.flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties.flagsIntel = 0;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
+    flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    flagsIntel = 0;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
-    memoryProperties.flags = 0;
-    memoryProperties.flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
+    flags = 0;
+    flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
-    memoryProperties.flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties.flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_TRUE(properties.flags.allowUnrestrictedSize);
+    flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
-    memoryProperties.flags = 0;
-    memoryProperties.flagsIntel = 0;
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
-    EXPECT_FALSE(properties.flags.allowUnrestrictedSize);
+    flags = 0;
+    flagsIntel = 0;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    EXPECT_FALSE(memoryProperties.flags.allowUnrestrictedSize);
 }

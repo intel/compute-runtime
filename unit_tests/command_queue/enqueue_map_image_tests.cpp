@@ -919,7 +919,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
     class MockImage : public Image {
       public:
         MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const SurfaceFormatInfo &surfaceFormat,
-                  const cl_image_format &imageFormat, const cl_image_desc &imageDesc) : Image(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), flags, 0,
+                  const cl_image_format &imageFormat, const cl_image_desc &imageDesc) : Image(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), flags, 0,
                                                                                               0, nullptr,
                                                                                               imageFormat, imageDesc,
                                                                                               true,

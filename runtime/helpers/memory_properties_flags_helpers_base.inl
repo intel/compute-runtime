@@ -13,66 +13,66 @@
 
 namespace NEO {
 
-MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(MemoryProperties properties) {
+MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
     MemoryPropertiesFlags memoryPropertiesFlags;
 
-    if (isValueSet(properties.flags, CL_MEM_READ_WRITE)) {
+    if (isValueSet(flags, CL_MEM_READ_WRITE)) {
         memoryPropertiesFlags.flags.readWrite = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_WRITE_ONLY)) {
+    if (isValueSet(flags, CL_MEM_WRITE_ONLY)) {
         memoryPropertiesFlags.flags.writeOnly = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_READ_ONLY)) {
+    if (isValueSet(flags, CL_MEM_READ_ONLY)) {
         memoryPropertiesFlags.flags.readOnly = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
+    if (isValueSet(flags, CL_MEM_USE_HOST_PTR)) {
         memoryPropertiesFlags.flags.useHostPtr = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_ALLOC_HOST_PTR)) {
+    if (isValueSet(flags, CL_MEM_ALLOC_HOST_PTR)) {
         memoryPropertiesFlags.flags.allocHostPtr = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR)) {
+    if (isValueSet(flags, CL_MEM_COPY_HOST_PTR)) {
         memoryPropertiesFlags.flags.copyHostPtr = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_HOST_WRITE_ONLY)) {
+    if (isValueSet(flags, CL_MEM_HOST_WRITE_ONLY)) {
         memoryPropertiesFlags.flags.hostWriteOnly = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY)) {
+    if (isValueSet(flags, CL_MEM_HOST_READ_ONLY)) {
         memoryPropertiesFlags.flags.hostReadOnly = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS)) {
+    if (isValueSet(flags, CL_MEM_HOST_NO_ACCESS)) {
         memoryPropertiesFlags.flags.hostNoAccess = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_KERNEL_READ_AND_WRITE)) {
+    if (isValueSet(flags, CL_MEM_KERNEL_READ_AND_WRITE)) {
         memoryPropertiesFlags.flags.kernelReadAndWrite = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_FORCE_LINEAR_STORAGE_INTEL) ||
-        isValueSet(properties.flagsIntel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL)) {
+    if (isValueSet(flags, CL_MEM_FORCE_LINEAR_STORAGE_INTEL) ||
+        isValueSet(flagsIntel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL)) {
         memoryPropertiesFlags.flags.forceLinearStorage = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
+    if (isValueSet(flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
         memoryPropertiesFlags.flags.accessFlagsUnrestricted = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_NO_ACCESS_INTEL)) {
+    if (isValueSet(flags, CL_MEM_NO_ACCESS_INTEL)) {
         memoryPropertiesFlags.flags.noAccess = true;
     }
-    if (isValueSet(properties.flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
-        isValueSet(properties.flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL)) {
+    if (isValueSet(flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
+        isValueSet(flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL)) {
         memoryPropertiesFlags.flags.allowUnrestrictedSize = true;
     }
-    if (isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
+    if (isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
         memoryPropertiesFlags.flags.locallyUncachedResource = true;
     }
 
-    if (isValueSet(properties.flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
+    if (isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE)) {
         memoryPropertiesFlags.flags.locallyUncachedInSurfaceState = true;
     }
 
-    if (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
+    if (isValueSet(flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
         memoryPropertiesFlags.flags.forceSharedPhysicalMemory = true;
     }
 
-    addExtraMemoryPropertiesFlags(memoryPropertiesFlags, properties);
+    addExtraMemoryPropertiesFlags(memoryPropertiesFlags, flags, flagsIntel);
 
     return memoryPropertiesFlags;
 }

@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-void MemoryPropertiesFlagsParser::addExtraMemoryPropertiesFlags(MemoryPropertiesFlags &propertiesFlag, MemoryProperties properties) {
+void MemoryPropertiesFlagsParser::addExtraMemoryPropertiesFlags(MemoryPropertiesFlags &propertiesFlag, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
 }
 
 } // namespace NEO

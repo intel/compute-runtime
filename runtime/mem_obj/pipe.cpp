@@ -24,7 +24,7 @@ Pipe::Pipe(Context *context,
            GraphicsAllocation *gfxAllocation)
     : MemObj(context,
              CL_MEM_OBJECT_PIPE,
-             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
              flags,
              0,
              static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace),
@@ -51,8 +51,7 @@ Pipe *Pipe::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     DEBUG_BREAK_IF(!memoryManager);
 
-    MemoryProperties memoryProperties{flags};
-    MemoryPropertiesFlags memoryPropertiesFlags = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
+    MemoryPropertiesFlags memoryPropertiesFlags = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0);
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
         AllocationProperties allocProperties =

@@ -124,6 +124,7 @@ class MemObj : public BaseObject<_cl_mem> {
     }
 
     const cl_mem_flags &getMemoryPropertiesFlags() const { return flags; }
+    const cl_mem_flags &getMemoryPropertiesFlagsIntel() const { return flagsIntel; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

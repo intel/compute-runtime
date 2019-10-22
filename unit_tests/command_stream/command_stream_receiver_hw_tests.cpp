@@ -632,7 +632,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
     const size_t subBuffer1Offset = 0x23;
     cl_buffer_region subBufferRegion1 = {subBuffer1Offset, 1};
-    auto subBuffer1 = clUniquePtr<Buffer>(buffer1->createSubBuffer(CL_MEM_READ_WRITE, &subBufferRegion1, retVal));
+    auto subBuffer1 = clUniquePtr<Buffer>(buffer1->createSubBuffer(CL_MEM_READ_WRITE, 0, &subBufferRegion1, retVal));
 
     {
         // from hostPtr

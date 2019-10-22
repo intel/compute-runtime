@@ -125,7 +125,7 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     srcImage.reset(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
         flags,
         0,
         surfaceFormat,

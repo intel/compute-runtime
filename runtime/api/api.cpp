@@ -593,7 +593,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
     propertiesStruct.flags = flags;
 
     if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer)) {
-        Buffer::validateInputAndCreateBuffer(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), flags, 0, size, hostPtr, retVal, buffer);
+        Buffer::validateInputAndCreateBuffer(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), flags, 0, size, hostPtr, retVal, buffer);
     } else {
         retVal = CL_INVALID_VALUE;
     }
@@ -620,9 +620,11 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
     cl_mem buffer = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-    MemoryProperties propertiesStruct;
-    if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER)) {
-        Buffer::validateInputAndCreateBuffer(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), propertiesStruct.flags, propertiesStruct.flagsIntel, size, hostPtr, retVal, buffer);
+    MemoryPropertiesFlags memoryProperties;
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flagsIntel = 0;
+    if (MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER)) {
+        Buffer::validateInputAndCreateBuffer(context, memoryProperties, flags, flagsIntel, size, hostPtr, retVal, buffer);
     } else {
         retVal = CL_INVALID_VALUE;
     }
@@ -660,6 +662,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
         }
 
         cl_mem_flags parentFlags = parentBuffer->getMemoryPropertiesFlags();
+        cl_mem_flags_intel parentFlagsIntel = parentBuffer->getMemoryPropertiesFlagsIntel();
 
         if (parentBuffer->isSubBuffer() == true) {
             retVal = CL_INVALID_MEM_OBJECT;
@@ -725,7 +728,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
             break;
         }
 
-        subBuffer = parentBuffer->createSubBuffer(flags, region, retVal);
+        subBuffer = parentBuffer->createSubBuffer(flags, parentFlagsIntel, region, retVal);
     } while (false);
 
     if (errcodeRet) {
@@ -765,7 +768,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
         if (isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage)) {
-            image = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), flags, 0, imageFormat, imageDesc, hostPtr, retVal);
+            image = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), flags, 0, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
         }
@@ -799,12 +802,14 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
 
     cl_mem image = nullptr;
     Context *pContext = nullptr;
-    MemoryProperties propertiesStruct{};
+    MemoryPropertiesFlags memoryProperties;
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flagsIntel = 0;
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE)) {
-            image = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), propertiesStruct.flags, propertiesStruct.flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
+        if (MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE)) {
+            image = Image::validateAndCreateImage(pContext, memoryProperties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
         }
@@ -851,7 +856,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
-        image2D = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
+        image2D = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct.flags, propertiesStruct.flagsIntel), flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
     ErrorCodeHelper err(errcodeRet, retVal);
@@ -902,7 +907,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
 
     if (retVal == CL_SUCCESS) {
         MemoryProperties propertiesStruct(flags);
-        image3D = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(propertiesStruct), flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
+        image3D = Image::validateAndCreateImage(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
     ErrorCodeHelper err(errcodeRet, retVal);
@@ -1063,7 +1068,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
     }
     if (CL_SUCCESS == retVal) {
         surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat);
-        retVal = Image::validate(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({memFlags}), surfaceFormat, imageDesc, nullptr);
+        retVal = Image::validate(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memFlags, 0), surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {
         retVal = Image::getImageParams(pContext, memFlags, surfaceFormat, imageDesc, imageRowPitch, imageSlicePitch);

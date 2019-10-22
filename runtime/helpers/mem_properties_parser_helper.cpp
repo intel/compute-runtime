@@ -7,11 +7,12 @@
 
 #include "runtime/helpers/mem_properties_parser_helper.h"
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 
-bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct, ObjType objectType) {
+bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties, cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, ObjType objectType) {
     if (properties == nullptr) {
         return true;
     }
@@ -19,23 +20,25 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
     for (int i = 0; properties[i] != 0; i += 2) {
         switch (properties[i]) {
         case CL_MEM_FLAGS:
-            propertiesStruct.flags |= static_cast<cl_mem_flags>(properties[i + 1]);
+            flags |= static_cast<cl_mem_flags>(properties[i + 1]);
             break;
         case CL_MEM_FLAGS_INTEL:
-            propertiesStruct.flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
+            flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
             break;
         default:
             return false;
         }
     }
 
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+
     switch (objectType) {
     case MemoryPropertiesParser::ObjType::BUFFER:
-        return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForBuffer) &&
-               isFieldValid(propertiesStruct.flagsIntel, MemObjHelper::validFlagsForBufferIntel);
+        return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
+               isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
     case MemoryPropertiesParser::ObjType::IMAGE:
-        return isFieldValid(propertiesStruct.flags, MemObjHelper::validFlagsForImage) &&
-               isFieldValid(propertiesStruct.flagsIntel, MemObjHelper::validFlagsForImageIntel);
+        return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
+               isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
         break;
     }

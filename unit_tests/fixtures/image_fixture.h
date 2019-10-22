@@ -76,7 +76,7 @@ struct ImageHelper {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, imgFormat);
         auto image = Image::create(
             context,
-            NEO::MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({Traits::flags}),
+            NEO::MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(Traits::flags, 0),
             Traits::flags,
             0,
             surfaceFormat,

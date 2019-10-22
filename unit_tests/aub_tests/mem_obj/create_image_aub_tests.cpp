@@ -111,7 +111,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
 
     image.reset(Image::create(
         context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
         flags,
         0,
         surfaceFormat,
@@ -230,7 +230,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
             data += passedRowPitch;
         }
 
-        image.reset(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+        image.reset(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
                                   flags, 0, surfaceFormat, &imageDesc, pHostPtr, retVal));
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
@@ -303,7 +303,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         }
         image.reset(Image::create(
             context,
-            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
             flags,
             0,
             surfaceFormat,
@@ -400,7 +400,7 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
     }
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    image.reset(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+    image.reset(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
                               flags, 0, surfaceFormat, &imageDesc, host_ptr, retVal));
 
     depthToCopy = imageDesc.image_depth;

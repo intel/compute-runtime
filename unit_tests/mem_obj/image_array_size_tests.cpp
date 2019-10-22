@@ -76,7 +76,7 @@ HWTEST_P(CreateImageArraySize, arrayTypes) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
         flags,
         0,
         surfaceFormat,
@@ -117,7 +117,7 @@ HWTEST_P(CreateImageNonArraySize, NonArrayTypes) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
         flags,
         0,
         surfaceFormat,
