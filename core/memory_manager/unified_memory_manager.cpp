@@ -126,7 +126,9 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size, const U
 
     if (supportDualStorageSharedMemory) {
         auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
-        UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
+        if (!unifiedMemoryPointer) {
+            return nullptr;
+        }
         auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
         unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
         unifiedMemoryAllocation->allocationFlagsProperty = memoryProperties.allocationFlags;

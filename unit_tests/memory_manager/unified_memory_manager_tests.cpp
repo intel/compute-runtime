@@ -203,6 +203,21 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateSharedUnifiedMemoryAllocationReturnsNullAndDoesNotChangeAllocsMap) {
+    MockCommandQueue cmdQ;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    FailMemoryManager failMemoryManager(executionEnvironment);
+    svmManager->memoryManager = &failMemoryManager;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
     MockCommandQueue cmdQ;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
