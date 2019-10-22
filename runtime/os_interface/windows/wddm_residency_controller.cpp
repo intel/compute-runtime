@@ -300,7 +300,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
 
 bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency) {
     const size_t residencyCount = allocationsForResidency.size();
-    std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * maxFragmentsCount]);
+    std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * maxFragmentsCount * maxHandleCount]);
     uint32_t totalHandlesCount = 0;
 
     auto lock = this->acquireLock();
