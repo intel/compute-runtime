@@ -22,8 +22,8 @@ class BufferObject {
     friend DrmMemoryManager;
 
   public:
-    BufferObject(Drm *drm, int handle);
-    BufferObject(Drm *drm, int handle, size_t size);
+    BufferObject(Drm *drm, int handle, uint32_t rootDeviceIndex);
+    BufferObject(Drm *drm, int handle, size_t size, uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
     bool setTiling(uint32_t mode, uint32_t stride);
@@ -49,6 +49,7 @@ class BufferObject {
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
     uint64_t peekUnmapSize() const { return unmapSize; }
     bool peekIsReusableAllocation() const { return this->isReused; }
+    uint32_t peekRootDeviceIndex() { return rootDeviceIndex; }
 
   protected:
     Drm *drm;
@@ -56,6 +57,8 @@ class BufferObject {
     std::atomic<uint32_t> refCount;
 
     int handle; // i915 gem object handle
+    uint64_t size;
+    uint32_t rootDeviceIndex = 0;
     bool isReused;
 
     //Tiling
@@ -65,7 +68,6 @@ class BufferObject {
 
     uint64_t gpuAddress = 0llu;
 
-    uint64_t size;
     void *lockedAddress; // CPU side virtual address
 
     uint64_t unmapSize = 0;

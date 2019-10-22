@@ -618,7 +618,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     }
 
     if (deviceInfo.force32BitAddressess) {
-        EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(), GSHaddress);
+        EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex()), GSHaddress);
     } else {
         if (is64bit) {
             EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);
@@ -731,7 +731,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     EXPECT_EQ(highPartGraphicsAddress, scratchBaseHighPart);
 
     if (deviceInfo.force32BitAddressess) {
-        EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(), GSHaddress);
+        EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex()), GSHaddress);
     } else {
         if (is64bit) {
             EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);

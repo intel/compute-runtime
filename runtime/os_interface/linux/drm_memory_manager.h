@@ -35,7 +35,7 @@ class DrmMemoryManager : public MemoryManager {
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; }
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getLocalMemorySize() override;
@@ -57,13 +57,13 @@ class DrmMemoryManager : public MemoryManager {
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
-    BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness);
+    BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
-    BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags);
+    BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
-    uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness);
-    MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size);
+    uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness, uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId() const;
 

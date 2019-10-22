@@ -19,13 +19,13 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::usageInfos;
 
     MockGraphicsAllocation()
-        : MemoryAllocation(AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull) {}
+        : MemoryAllocation(AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, 0) {}
 
     MockGraphicsAllocation(void *buffer, size_t sizeIn)
-        : MemoryAllocation(AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull) {}
+        : MemoryAllocation(AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, 0) {}
 
     MockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn)
-        : MemoryAllocation(AllocationType::UNKNOWN, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull) {}
+        : MemoryAllocation(AllocationType::UNKNOWN, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull, 0) {}
 
     void resetInspectionIds() {
         for (auto &usageInfo : usageInfos) {

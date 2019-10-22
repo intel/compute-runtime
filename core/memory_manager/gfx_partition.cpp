@@ -53,7 +53,7 @@ void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     }
 }
 
-void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve) {
+void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex) {
 
     /*
      * I. 64-bit builds:
@@ -125,7 +125,7 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
-            initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop);
+            initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex);
         }
     }
 

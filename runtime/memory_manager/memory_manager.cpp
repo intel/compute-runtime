@@ -26,8 +26,10 @@
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/platform.h"
 
 #include <algorithm>
 
@@ -41,7 +43,11 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
     }
     localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
-    gfxPartition = std::make_unique<GfxPartition>();
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); ++rootDeviceIndex) {
+        gfxPartitions.push_back(std::make_unique<GfxPartition>());
+    }
+
     if (this->localMemorySupported) {
         pageFaultManager = PageFaultManager::create();
     }
@@ -306,6 +312,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
+    }
+
+    if (properties.rootDeviceIndex != AllocationProperties::noDeviceSpecified) {
+        allocationData.rootDeviceIndex = properties.rootDeviceIndex;
     }
     return true;
 }

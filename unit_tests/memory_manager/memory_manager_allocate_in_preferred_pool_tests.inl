@@ -572,3 +572,15 @@ TEST(MemoryManagerTest, givenExternalHostMemoryWhenGetAllocationDataIsCalledThen
     EXPECT_FALSE(allocData.flags.allow64kbPages);
     EXPECT_EQ(allocData.hostPtr, hostPtr);
 }
+
+TEST(MemoryManagerTest, getAllocationDataProperlyHandlesRootDeviceIndexFromAllcationProperties) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{1, GraphicsAllocation::AllocationType::BUFFER};
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(allocData.rootDeviceIndex, 0u);
+
+    properties.rootDeviceIndex = 100;
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(allocData.rootDeviceIndex, properties.rootDeviceIndex);
+}

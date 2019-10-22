@@ -18,22 +18,24 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
 }
 
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
-                                       size_t sizeIn, MemoryPool::Type pool)
+                                       size_t sizeIn, MemoryPool::Type pool, uint32_t rootDeviceIndex)
     : gpuBaseAddress(baseAddress),
       gpuAddress(gpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
-      allocationType(allocationType) {
+      allocationType(allocationType),
+      rootDeviceIndex(rootDeviceIndex) {
 }
 
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn,
-                                       MemoryPool::Type pool)
+                                       MemoryPool::Type pool, uint32_t rootDeviceIndex)
     : gpuAddress(castToUint64(cpuPtrIn)),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
-      allocationType(allocationType) {
+      allocationType(allocationType),
+      rootDeviceIndex(rootDeviceIndex) {
     sharingInfo.sharedHandle = sharedHandleIn;
 }
 

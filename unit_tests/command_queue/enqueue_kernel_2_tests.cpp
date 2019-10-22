@@ -183,9 +183,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, LoadRegiste
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueKernel<FamilyType>();
-    validateStateBaseAddress<FamilyType>(this->pDevice->getGpgpuCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
+    auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    validateStateBaseAddress<FamilyType>(ultCsr.getMemoryManager()->getInternalHeapBaseAddress(ultCsr.rootDeviceIndex),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList,
-                                         context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress() : 0llu);
+                                         context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress(ultCsr.rootDeviceIndex) : 0llu);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, MediaInterfaceDescriptorLoad) {
@@ -507,7 +508,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
 
         auto GSHaddress = sba->getGeneralStateBaseAddress();
 
-        EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(), GSHaddress);
+        EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(graphicsAllocation->getRootDeviceIndex()), GSHaddress);
 
         //now re-try to see if SBA is not programmed
 
@@ -612,7 +613,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     // In scenarios with 32bit allocator and 64 bit tests this code won't work
     // due to inability to retrieve original buffer pointer as it is done in this test.
     auto memoryManager = pDevice->getMemoryManager();
-    if (!memoryManager->peekForce32BitAllocations() && !memoryManager->isLimitedRange()) {
+    if (!memoryManager->peekForce32BitAllocations() && !memoryManager->isLimitedRange(0)) {
         testing::internal::CaptureStdout();
 
         auto userEvent = make_releaseable<UserEvent>(context);

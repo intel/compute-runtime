@@ -53,7 +53,7 @@ struct MockExecutionEnvironmentWithCsr : public ExecutionEnvironment {
 
         for (uint32_t deviceIndex = 0; deviceIndex < devicesCount; deviceIndex++) {
             for (uint32_t csrIndex = 0; csrIndex < gpgpuEngines.size(); csrIndex++) {
-                rootDeviceEnvironments[0].commandStreamReceivers[deviceIndex + offset].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this, deviceIndex)));
+                rootDeviceEnvironments[0].commandStreamReceivers[deviceIndex + offset].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this, 0)));
             }
         }
     }

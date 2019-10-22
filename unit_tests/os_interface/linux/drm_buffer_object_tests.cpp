@@ -17,7 +17,7 @@ using namespace NEO;
 
 class TestedBufferObject : public BufferObject {
   public:
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 1) {
+    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, 0) {
     }
 
     void tileBy(uint32_t mode) {
@@ -161,7 +161,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
 
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
     std::unique_ptr<DrmMockCustom> drmMock(new DrmMockCustom);
-    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000));
+    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000, 0));
 
     EXPECT_EQ(0x1000u, bo->peekSize());
 }

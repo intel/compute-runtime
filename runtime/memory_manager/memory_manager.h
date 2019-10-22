@@ -77,7 +77,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) = 0;
 
-    virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
+    virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) = 0;
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; }
 
@@ -103,10 +103,10 @@ class MemoryManager {
     virtual uint64_t getLocalMemorySize() = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
-    uint64_t getInternalHeapBaseAddress() { return gfxPartition->getHeapBase(internalHeapIndex); }
-    uint64_t getExternalHeapBaseAddress() { return gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL); }
+    uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->getHeapBase(internalHeapIndex); }
+    uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTERNAL); }
 
-    bool isLimitedRange() { return gfxPartition->isLimitedRange(); }
+    bool isLimitedRange(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->isLimitedRange(); }
 
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
@@ -160,6 +160,7 @@ class MemoryManager {
     virtual void *reserveCpuAddressRange(size_t size) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size){};
     void *getReservedMemory(size_t size, size_t alignment);
+    GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
 
   protected:
     struct AllocationData {
@@ -186,6 +187,7 @@ class MemoryManager {
         size_t alignment = 0;
         StorageInfo storageInfo = {};
         ImageInfo *imgInfo = nullptr;
+        uint32_t rootDeviceIndex = 0;
     };
 
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
@@ -226,7 +228,7 @@ class MemoryManager {
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
-    std::unique_ptr<GfxPartition> gfxPartition;
+    std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
     std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
     std::unique_ptr<PageFaultManager> pageFaultManager;

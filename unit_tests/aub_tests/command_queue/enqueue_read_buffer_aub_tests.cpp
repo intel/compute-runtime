@@ -121,7 +121,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                                                   0xFFFF800400001000,
                                                                   0xFFFF800400001000,
                                                                   sizeof(srcMemory),
-                                                                  MemoryPool::MemoryNull);
+                                                                  MemoryPool::MemoryNull, 0);
 
     std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(&context,
                                                              MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0),

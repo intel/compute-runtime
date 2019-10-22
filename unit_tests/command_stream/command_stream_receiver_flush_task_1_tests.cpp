@@ -443,7 +443,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressProgrammingShouldM
     auto &cmd = *reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
 
     EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
-    EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(), cmd.getInstructionBaseAddress());
+    EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex), cmd.getInstructionBaseAddress());
     EXPECT_EQ(ioh.getCpuBase(), reinterpret_cast<void *>(cmd.getIndirectObjectBaseAddress()));
     EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
 

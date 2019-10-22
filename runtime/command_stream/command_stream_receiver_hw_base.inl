@@ -304,7 +304,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
             newGSHbase = scratchSpaceController->calculateNewGSH();
         } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
-            newGSHbase = getMemoryManager()->getExternalHeapBaseAddress();
+            newGSHbase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex);
             GSBAFor32BitProgrammed = true;
         }
 
@@ -317,7 +317,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,
             newGSHbase,
             mocsIndex,
-            getMemoryManager()->getInternalHeapBaseAddress(),
+            getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex),
             device.getGmmHelper(),
             dispatchFlags);
 

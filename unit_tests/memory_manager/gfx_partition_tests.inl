@@ -86,7 +86,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVM) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue<48>, reservedCpuAddressRangeSize);
+    gfxPartition.init(maxNBitValue<48>, reservedCpuAddressRangeSize, 0);
 
     uint64_t gfxTop = maxNBitValue<48> + 1;
     uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
@@ -96,7 +96,7 @@ TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVM) {
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVM) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue<47>, reservedCpuAddressRangeSize);
+    gfxPartition.init(maxNBitValue<47>, reservedCpuAddressRangeSize, 0);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
     uint64_t gfxTop = is32bit ? maxNBitValue<47> + 1 : gfxBase + gfxPartition.getReservedCpuAddressRangeSize();
@@ -107,7 +107,7 @@ TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVM) {
 
 TEST(GfxPartitionTest, testGfxPartitionLimitedRange) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue<47 - 1>, reservedCpuAddressRangeSize);
+    gfxPartition.init(maxNBitValue<47 - 1>, reservedCpuAddressRangeSize, 0);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : 0ull;
     uint64_t gfxTop = maxNBitValue<47 - 1> + 1;
@@ -122,5 +122,5 @@ TEST(GfxPartitionTest, testGfxPartitionUnsupportedRange) {
     }
 
     MockGfxPartition gfxPartition;
-    EXPECT_THROW(gfxPartition.init(maxNBitValue<48 + 1>, reservedCpuAddressRangeSize), std::exception);
+    EXPECT_THROW(gfxPartition.init(maxNBitValue<48 + 1>, reservedCpuAddressRangeSize, 0), std::exception);
 }

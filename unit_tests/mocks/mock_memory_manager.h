@@ -38,7 +38,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::getAllocationData;
     using MemoryManager::getBanksCount;
-    using MemoryManager::gfxPartition;
+    using MemoryManager::gfxPartitions;
     using MemoryManager::localMemoryUsageBankSelector;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::pageFaultManager;
@@ -103,7 +103,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
 
-    void forceLimitedRangeAllocator(uint64_t range) { gfxPartition->init(range, 0); }
+    void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) { getGfxPartition(rootDeviceIndex)->init(range, 0, 0); }
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
@@ -184,7 +184,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
         return nullptr;
     }
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
         return nullptr;
     }
 

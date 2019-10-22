@@ -30,7 +30,8 @@ struct AllocationProperties {
     size_t alignment = 0;
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
-    uint32_t deviceIndex = AllocationProperties::noDeviceSpecified;
+    uint32_t subDeviceIndex = AllocationProperties::noDeviceSpecified;
+    uint32_t rootDeviceIndex = AllocationProperties::noDeviceSpecified;
     bool multiStorageResource = false;
 
     AllocationProperties(size_t size,
@@ -48,7 +49,7 @@ struct AllocationProperties {
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
                          bool isMultiStorageAllocation)
-        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {
+        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified, AllocationProperties::noDeviceSpecified) {
         this->multiStorageResource = isMultiStorageAllocation;
     }
 
@@ -56,8 +57,9 @@ struct AllocationProperties {
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
                          bool multiOsContextCapable,
-                         uint32_t deviceIndex)
-        : size(size), allocationType(allocationType), deviceIndex(deviceIndex) {
+                         uint32_t subDeviceIndex,
+                         uint32_t rootDeviceIndex)
+        : size(size), allocationType(allocationType), subDeviceIndex(subDeviceIndex), rootDeviceIndex(rootDeviceIndex) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
