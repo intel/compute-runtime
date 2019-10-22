@@ -189,6 +189,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::unique_ptr<HardwareInfo>) +
+                                                  sizeof(std::unique_ptr<RootDeviceEnvironment[]>) +
                                                   (is64bit ? 88 : 48),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 

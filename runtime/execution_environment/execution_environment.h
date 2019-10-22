@@ -6,14 +6,13 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_constants.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/utilities/reference_tracked_object.h"
 #include "runtime/helpers/common_types.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 
 #include <mutex>
-#include <vector>
 
 namespace NEO {
 class AubCenter;
@@ -22,11 +21,10 @@ class CommandStreamReceiver;
 class CompilerInterface;
 class GmmHelper;
 class MemoryManager;
-class SourceLevelDebugger;
+class MemoryOperationsHandler;
 class OSInterface;
 class RootDevice;
-class MemoryOperationsHandler;
-struct EngineControl;
+class SourceLevelDebugger;
 struct HardwareInfo;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
@@ -57,6 +55,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
 
+    std::unique_ptr<RootDeviceEnvironment[]> rootDeviceEnvironments;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;

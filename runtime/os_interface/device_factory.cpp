@@ -19,6 +19,9 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         totalDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
     }
+
+    executionEnvironment.rootDeviceEnvironments = std::make_unique<RootDeviceEnvironment[]>(totalDeviceCount);
+
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     auto hwInfoConst = *platformDevices;
     getHwInfoForPlatformString(productFamily, hwInfoConst);
