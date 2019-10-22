@@ -139,6 +139,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setXOffset(this->surfaceOffsets.xOffset);
     surfaceState->setYOffset(this->surfaceOffsets.yOffset);
 
+    surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+
     if (IsNV12Image(&this->getImageFormat())) {
         surfaceState->setYOffsetForUOrUvPlane(this->surfaceOffsets.yOffsetForUVplane);
         surfaceState->setXOffsetForUOrUvPlane(this->surfaceOffsets.xOffset);

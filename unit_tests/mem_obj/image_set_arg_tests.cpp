@@ -353,6 +353,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
     EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
+    EXPECT_EQ(0u, surfaceState->getCoherencyType());
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
