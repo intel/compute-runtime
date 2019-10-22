@@ -134,6 +134,10 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::megaByte, true)));
@@ -167,6 +171,10 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     auto drmContextId = memoryManager->getDefaultDrmContextId();
     ASSERT_NE(nullptr, memoryManager->getPinBB());
     EXPECT_NE(0u, drmContextId);
@@ -199,6 +207,10 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
     mock->ioctl_expected.gemWait = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, false)));
@@ -214,6 +226,10 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
     mock->ioctl_expected.gemClose = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, true)));
     ASSERT_NE(nullptr, alloc);
@@ -230,6 +246,10 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.gemWait = 1;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     allocationData.size = 10 * MB;
@@ -249,6 +269,10 @@ TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIs
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning
@@ -556,11 +580,15 @@ TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledP
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesReturnsInvalidHostPointerError) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
-                                                                                                          false,
-                                                                                                          true,
-                                                                                                          *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    *executionEnvironment));
 
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = 1;
@@ -573,7 +601,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
 
-    MemoryManager::AllocationStatus result = testedMemoryManager->populateOsHandles(storage);
+    MemoryManager::AllocationStatus result = memoryManager->populateOsHandles(storage);
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
     mock->testIoctls();
@@ -583,16 +611,19 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
 
     storage.fragmentStorageData[0].freeTheFragment = true;
-    testedMemoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenPinningFailWithErrorDifferentThanEfaultThenPopulateOsHandlesReturnsError) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
-                                                                                                          false,
-                                                                                                          true,
-                                                                                                          *executionEnvironment));
-
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = 1;
@@ -605,7 +636,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
 
-    MemoryManager::AllocationStatus result = testedMemoryManager->populateOsHandles(storage);
+    MemoryManager::AllocationStatus result = memoryManager->populateOsHandles(storage);
 
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, result);
     mock->testIoctls();
@@ -615,7 +646,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
 
     storage.fragmentStorageData[0].freeTheFragment = true;
-    testedMemoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
@@ -2382,7 +2413,10 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
                                                                                                     false,
                                                                                                     true,
                                                                                                     *executionEnvironment));
-
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
@@ -2441,11 +2475,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     this->mock->ioctl_expected.gemUserptr = 1;
     EXPECT_THROW(
         {
-            std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false,
-                                                                                                   false,
-                                                                                                   true,
-                                                                                                   *executionEnvironment));
-            EXPECT_NE(nullptr, testedMemoryManager.get());
+            std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false,
+                                                                                             false,
+                                                                                             true,
+                                                                                             *executionEnvironment));
+            EXPECT_NE(nullptr, memoryManager.get());
         },
         std::exception);
     this->mock->ioctl_res = 0;
@@ -2455,9 +2489,13 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledThenHostMemoryIsValidated) {
 
-    std::unique_ptr<DrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager.get());
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, memoryManager.get());
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
@@ -2466,7 +2504,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     OsHandleStorage handleStorage;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
-    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
 
     mock->testIoctls();
@@ -2474,7 +2512,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
 
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledWithFirstFragmentAlreadyAllocatedThenNewBosAreValidated) {
@@ -2495,12 +2533,16 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
         size_t numberOfBosPinned;
     };
 
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager.get());
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, memoryManager.get());
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     PinBufferObject *pinBB = new PinBufferObject(this->mock.get());
-    testedMemoryManager->injectPinBB(pinBB);
+    memoryManager->injectPinBB(pinBB);
 
     mock->reset();
     mock->ioctl_expected.gemUserptr = 2;
@@ -2520,7 +2562,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     handleStorage.fragmentStorageData[2].cpuPtr = reinterpret_cast<void *>(0x4000);
     handleStorage.fragmentStorageData[2].fragmentSize = 4096;
 
-    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
 
     mock->testIoctls();
@@ -2536,7 +2578,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryEnabledWhenHostPtrAllocationIsCreatedWithoutForcingPinThenBufferObjectIsPinned) {
@@ -2545,6 +2587,10 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
     mock->ioctl_expected.gemClose = 2;
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     size_t size = 10 * MB;
@@ -2558,20 +2604,24 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenValidHostPointerIsPassedToPopulateThenSuccessIsReturned) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
-                                                                                                          false,
-                                                                                                          true,
-                                                                                                          *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    *executionEnvironment));
 
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = 1;
-    auto result = testedMemoryManager->populateOsHandles(storage);
+    auto result = memoryManager->populateOsHandles(storage);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
 
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    testedMemoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage);
 }
 
 TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmallAllocationIsCreatedThenBufferObjectIsPinned) {
@@ -2581,6 +2631,10 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     mock->ioctl_expected.gemClose = 2;    // 1 pinBB, 1 small allocation
 
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning but pinning is used for host memory validation
@@ -2600,6 +2654,10 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAl
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_res = -1;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, false, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     EXPECT_EQ(nullptr, memoryManager->getPinBB());
     mock->ioctl_res = 0;
 
@@ -2693,6 +2751,10 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationEnabledWhenAllocationIsCreatedThenBufferObjectIsPinnedOnlyOnce) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
@@ -2715,6 +2777,10 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationDisabledWhenAllocationIsCreatedThenBufferObjectIsNotPinned) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, false, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -2735,9 +2801,13 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesMarksFragmentsToFree) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager.get());
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, memoryManager.get());
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     mock->reset();
 
@@ -2761,7 +2831,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[2].cpuPtr = reinterpret_cast<void *>(0x4000);
     handleStorage.fragmentStorageData[2].fragmentSize = 4096;
 
-    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage);
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
 
     mock->testIoctls();
@@ -2777,13 +2847,17 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesDoesNotStoreTheFragments) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     mock->reset();
 
@@ -2807,12 +2881,12 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[2].cpuPtr = reinterpret_cast<void *>(0x4000);
     handleStorage.fragmentStorageData[2].fragmentSize = 4096;
 
-    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage);
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
 
     mock->testIoctls();
 
-    auto hostPtrManager = static_cast<MockHostPtrManager *>(testedMemoryManager->getHostPtrManager());
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
     EXPECT_EQ(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[1].cpuPtr));
@@ -2822,13 +2896,17 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenPopulateOsHandlesSucceedsThenFragmentIsStoredInHostPtrManager) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    memoryManager->registeredEngines = EngineControlContainer{this->device->engines};
+    for (auto engine : memoryManager->registeredEngines) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
@@ -2839,22 +2917,22 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
 
-    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
 
     mock->testIoctls();
 
-    auto hostPtrManager = static_cast<MockHostPtrManager *>(testedMemoryManager->getHostPtrManager());
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
     EXPECT_NE(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[0].cpuPtr));
 
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageAndResidencyIsSetToNullptr) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
-    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     OsHandleStorage handleStorage;
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
@@ -2870,7 +2948,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCl
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
 
-    testedMemoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage);
 
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(nullptr, handleStorage.fragmentStorageData[i].osHandleStorage);

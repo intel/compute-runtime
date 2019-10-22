@@ -396,10 +396,6 @@ void MemoryManager::unregisterEngineForCsr(CommandStreamReceiver *commandStreamR
     }
 }
 
-CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {
-    return peekExecutionEnvironment().commandStreamReceivers[deviceId][defaultEngineIndex].get();
-}
-
 void *MemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
     if (!graphicsAllocation) {
         return nullptr;

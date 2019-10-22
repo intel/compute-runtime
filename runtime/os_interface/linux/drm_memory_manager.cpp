@@ -684,8 +684,8 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle) {
 }
 
 uint32_t DrmMemoryManager::getDefaultDrmContextId() const {
-    auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
-    return osContextLinux.getDrmContextIds()[0];
+    auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex].osContext);
+    return osContextLinux->getDrmContextIds()[0];
 }
 
 } // namespace NEO

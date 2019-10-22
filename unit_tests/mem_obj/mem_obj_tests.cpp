@@ -153,12 +153,13 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     auto memoryManager = context.getDevice(0)->getExecutionEnvironment()->memoryManager.get();
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->updateTaskCount(2, context.getDevice(0)->getDefaultEngine().osContext->getContextId());
-    *(memoryManager->getDefaultCommandStreamReceiver(0)->getTagAddress()) = 1;
+    auto defaultEngine = context.getDevice(0)->getDefaultEngine();
+    allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
+    *(defaultEngine.commandStreamReceiver->getTagAddress()) = 1;
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({CL_MEM_COPY_HOST_PTR});
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
-    auto &allocationList = memoryManager->getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = defaultEngine.commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
@@ -196,7 +197,7 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    auto &allocationList = memoryManager.getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = context.getDevice(0)->getDefaultEngine().commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
@@ -214,7 +215,7 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    auto &allocationList = memoryManager.getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = context.getDevice(0)->getDefaultEngine().commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 

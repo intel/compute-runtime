@@ -145,11 +145,6 @@ TEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGetCSIsCalledThe
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
 }
 
-TEST_F(CommandStreamReceiverTest, memoryManagerHasAccessToCSR) {
-    auto *memoryManager = commandStreamReceiver->getMemoryManager();
-    EXPECT_EQ(commandStreamReceiver, memoryManager->getDefaultCommandStreamReceiver(0));
-}
-
 HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTaskCountFromCsr) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *memoryManager = csr.getMemoryManager();

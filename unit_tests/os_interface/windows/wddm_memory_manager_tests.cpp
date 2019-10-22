@@ -1627,7 +1627,6 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(executionEnvironment);
     auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr, aub_stream::ENGINE_RCS, 1, preemptionMode, false);
     csr->setupContext(*osContext);
-    EXPECT_EQ(csr, executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
 
     auto tagAllocator = csr->getEventPerfCountAllocator(100);
     auto allocation = tagAllocator->getTag()->getBaseGraphicsAllocation();

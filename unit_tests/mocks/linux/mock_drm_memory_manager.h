@@ -48,6 +48,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::supportsMultiStorageResources;
     using DrmMemoryManager::unlockResourceInLocalMemoryImpl;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
+    using MemoryManager::registeredEngines;
     using MemoryManager::useInternal32BitAllocator;
 
     TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,

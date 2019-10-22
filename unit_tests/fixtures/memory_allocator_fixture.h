@@ -26,7 +26,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->initializeCommandStreamReceiver(0, 0);
         memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        csr = memoryManager->getDefaultCommandStreamReceiver(0);
+        csr = executionEnvironment->commandStreamReceivers[0][0].get();
         auto engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
         auto osContext = memoryManager->createAndRegisterOsContext(csr, engineType, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
         csr->setupContext(*osContext);
@@ -39,6 +39,6 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
   protected:
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-    MockMemoryManager *memoryManager;
-    CommandStreamReceiver *csr;
+    MockMemoryManager *memoryManager = nullptr;
+    CommandStreamReceiver *csr = nullptr;
 };
