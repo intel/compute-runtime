@@ -5,10 +5,10 @@
  *
  */
 
-#include "runtime/compiler_interface/compiler_interface.h"
+#include "core/compiler_interface/compiler_interface.h"
 
 #include "core/compiler_interface/compiler_cache.h"
-#include "runtime/compiler_interface/compiler_interface.inl"
+#include "core/compiler_interface/compiler_interface.inl"
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"

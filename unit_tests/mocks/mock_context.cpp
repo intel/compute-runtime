@@ -7,10 +7,10 @@
 
 #include "unit_tests/mocks/mock_context.h"
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/sharings/sharing.h"

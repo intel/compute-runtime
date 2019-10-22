@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"

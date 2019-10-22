@@ -6,7 +6,6 @@
 
 set(IGDRCL_SRCS_tests_compiler_interface
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config_tests.cpp
 )
 

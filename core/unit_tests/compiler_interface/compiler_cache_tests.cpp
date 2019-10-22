@@ -6,10 +6,10 @@
  */
 
 #include "core/compiler_interface/compiler_cache.h"
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/string.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "runtime/helpers/hw_info.h"
 #include "test.h"

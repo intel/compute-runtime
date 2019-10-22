@@ -6,12 +6,8 @@
 
 set(RUNTIME_SRCS_COMPILER_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/create_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config.cpp
 )
 

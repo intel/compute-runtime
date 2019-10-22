@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/compiler_interface/compiler_interface.h"
+#include "core/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"

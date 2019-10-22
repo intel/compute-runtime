@@ -7,11 +7,11 @@
 
 #include "platform.h"
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/root_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/execution_environment/execution_environment.h"

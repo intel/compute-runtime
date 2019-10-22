@@ -7,13 +7,13 @@
 
 #include "runtime/context/context.h"
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"

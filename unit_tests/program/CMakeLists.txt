@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,6 +19,7 @@ set(IGDRCL_SRCS_tests_program
   ${CMAKE_CURRENT_SOURCE_DIR}/program_data_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_from_binary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/program_nonuniform.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/program_spec_constants_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_block_kernels_tests.cpp

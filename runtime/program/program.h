@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/linker.h"
 #include "core/elf/reader.h"
 #include "core/elf/writer.h"
 #include "core/helpers/stdio.h"
 #include "runtime/api/cl_types.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/string_helpers.h"
 #include "runtime/program/block_kernel_manager.h"

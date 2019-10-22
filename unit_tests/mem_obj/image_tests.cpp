@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"

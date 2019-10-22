@@ -7,12 +7,12 @@
 
 #include "program.h"
 
+#include "core/compiler_interface/compiler_interface.h"
 #include "core/elf/writer.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
