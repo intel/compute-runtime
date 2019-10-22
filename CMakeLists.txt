@@ -24,7 +24,7 @@ if(NOT PROJECT_NAME)
     set(PROJECT_NAME igdrcl)
 endif()
 
-  
+
 project(${PROJECT_NAME})
 
 if(CMAKE_CONFIGURATION_TYPES)
@@ -55,6 +55,14 @@ endif(TR_DEPRECATED)
 if(RELEASE_WITH_REGKEYS)
     add_definitions(-D_RELEASE_BUILD_WITH_REGKEYS)
 endif(RELEASE_WITH_REGKEYS)
+
+if(DEFINED NEO_EXTRA_DEFINES)
+    string(REPLACE "," ";" NEO_EXTRA_DEFINES "${NEO_EXTRA_DEFINES}")
+    foreach(_tmp ${NEO_EXTRA_DEFINES})
+        message(STATUS "adding extra define: ${_tmp}")
+        add_definitions(-D${_tmp})
+    endforeach()
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "CMAKE_BUILD_TYPE not specified, using Release")
@@ -833,7 +841,7 @@ endif()
 
 if(DEFAULT_TESTED_PLATFORM)
   add_subdirectory_unique(unit_tests ${NEO_BUILD_DIR}/unit_tests)
-else() 
+else()
   hide_subdir(unit_tests)
 endif()
 
