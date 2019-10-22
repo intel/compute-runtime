@@ -123,6 +123,18 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNul
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnifiedMemoryAllocationReturnsNullAndDoesNotChangeAllocsMap) {
+    FailMemoryManager failMemoryManager(executionEnvironment);
+    svmManager->memoryManager = &failMemoryManager;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;

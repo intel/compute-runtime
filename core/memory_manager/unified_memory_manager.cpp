@@ -101,6 +101,9 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const Unified
                                                  false};
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
+    if (!unifiedMemoryAllocation) {
+        return nullptr;
+    }
 
     SvmAllocationData allocData;
     allocData.gpuAllocation = unifiedMemoryAllocation;
