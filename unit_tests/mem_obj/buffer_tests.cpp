@@ -719,6 +719,31 @@ struct BcsBufferTests : public ::testing::Test {
     };
 
     template <typename FamilyType>
+    class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
+      public:
+        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+
+        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+            EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
+            EXPECT_EQ(0u, flushStampToWait);
+            EXPECT_FALSE(useQuickKmdSleep);
+            EXPECT_FALSE(forcePowerSavingMode);
+            waitForTaskCountWithKmdNotifyFallbackCalled++;
+        }
+
+        void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) override {
+            EXPECT_EQ(1u, waitForTaskCountWithKmdNotifyFallbackCalled);
+            EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
+            waitForTaskCountAndCleanAllocationListCalled++;
+        }
+
+        uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
+        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+        CommandStreamReceiver *gpgpuCsr = nullptr;
+    };
+
+    template <typename FamilyType>
     void SetUpT() {
         if (is32bit) {
             GTEST_SKIP();
@@ -1122,21 +1147,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCal
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
-    class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
-      public:
-        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
-
-        void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) override {
-            EXPECT_TRUE(gpgpuCsr->getTemporaryAllocations().peekIsEmpty());
-            EXPECT_EQ(*this->getTagAddress(), requiredTaskCount);
-            waitForTaskCountAndCleanAllocationListCalled++;
-        }
-
-        uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
-        CommandStreamReceiver *gpgpuCsr = nullptr;
-    };
-
-    auto myMockCsr = new MyMockCsr(*device->getExecutionEnvironment());
+    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment());
     myMockCsr->taskCount = 1234;
     myMockCsr->initializeTagAllocation();
     myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
@@ -1160,6 +1171,37 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait)
     EXPECT_FALSE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
 
     cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedEnqueueWhenUsingBcsThenWaitForValidTaskCountOnBlockingCall) {
+    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment());
+    myMockCsr->taskCount = 1234;
+    myMockCsr->initializeTagAllocation();
+    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
+    bcsMockContext->bcsCsr.reset(myMockCsr);
+
+    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    cmdQ->bcsEngine = &bcsEngineControl;
+    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
+    myMockCsr->gpgpuCsr = &gpgpuCsr;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    UserEvent userEvent;
+    cl_event waitlist = &userEvent;
+
+    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, &waitlist, nullptr);
+
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
+
+    cmdQ->finish();
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
 }
 

@@ -173,9 +173,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
-    void blitBuffer(const BlitProperties &blitProperites) override {
+    uint32_t blitBuffer(const BlitProperties &blitProperites) override {
         blitBufferCalled++;
-        CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
+        return CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
     }
 
     bool createPerDssBackedBuffer(Device &device) override {

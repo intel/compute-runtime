@@ -214,10 +214,11 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         return completionStamp;
     }
 
-    void blitBuffer(const BlitProperties &blitProperites) override {
+    uint32_t blitBuffer(const BlitProperties &blitProperites) override {
         if (!skipBlitCalls) {
-            CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
+            return CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
         }
+        return taskCount;
     }
 
     bool skipBlitCalls = false;
@@ -286,7 +287,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
-    void blitBuffer(const BlitProperties &blitProperites) override{};
+    uint32_t blitBuffer(const BlitProperties &blitProperites) override { return taskCount; };
 
     void setOSInterface(OSInterface *osInterface);
 

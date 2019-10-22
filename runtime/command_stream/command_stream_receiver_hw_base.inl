@@ -795,7 +795,7 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitProperites) {
+uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitProperites) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -845,6 +845,8 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitPr
         waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
+
+    return newTaskCount;
 }
 
 template <typename GfxFamily>

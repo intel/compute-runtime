@@ -257,7 +257,9 @@ void CommandWithoutKernel::dispatchBlitOperation() {
     blitProperties.csrDependencies.push_back(barrierTimestampPacketNodes.get());
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes.get();
 
-    bcsCsr->blitBuffer(blitProperties);
+    auto bcsTaskCount = bcsCsr->blitBuffer(blitProperties);
+
+    commandQueue.updateBcsTaskCount(bcsTaskCount);
 }
 
 CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
