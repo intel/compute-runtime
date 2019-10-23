@@ -59,6 +59,12 @@ TEST(LocalID, PerThreadSizeLocalIDs_SIMD32) {
     EXPECT_EQ(6 * sizeof(GRF), getPerThreadSizeLocalIDs(simd));
 }
 
+TEST(LocalID, PerThreadSizeLocalIDs_SIMD1) {
+    uint32_t simd = 1;
+
+    EXPECT_EQ(sizeof(GRF), getPerThreadSizeLocalIDs(simd));
+}
+
 struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int, int>> {
     void SetUp() override {
         simd = std::get<0>(GetParam());

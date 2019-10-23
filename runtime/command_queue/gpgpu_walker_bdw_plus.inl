@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/simd_helper.h"
 #include "runtime/command_queue/gpgpu_walker_base.inl"
 #include "runtime/helpers/engine_node_helper.h"
 
@@ -43,7 +44,7 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 
     walkerCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
     walkerCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
-    walkerCmd->setSimdSize(static_cast<SIMD_SIZE>(simd >> 4));
+    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE<GfxFamily>>(simd));
 
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));

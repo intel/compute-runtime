@@ -52,8 +52,10 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
         LocalIDHelper::generateSimd32(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     } else if (simd == 16) {
         LocalIDHelper::generateSimd16(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
-    } else {
+    } else if (simd == 8) {
         LocalIDHelper::generateSimd8(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
+    } else {
+        generateLocalIDsForSimdOne(buffer, localWorkgroupSize, dimensionsOrder);
     }
 }
 
@@ -114,4 +116,23 @@ inline void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16
         offset += 3 * rowWidth;
     }
 }
+
+void generateLocalIDsForSimdOne(void *b, const std::array<uint16_t, 3> &localWorkgroupSize,
+                                const std::array<uint8_t, 3> &dimensionsOrder) {
+    uint32_t xDimNum = dimensionsOrder[0];
+    uint32_t yDimNum = dimensionsOrder[1];
+    uint32_t zDimNum = dimensionsOrder[2];
+
+    for (int i = 0; i < localWorkgroupSize[zDimNum]; i++) {
+        for (int j = 0; j < localWorkgroupSize[yDimNum]; j++) {
+            for (int k = 0; k < localWorkgroupSize[xDimNum]; k++) {
+                static_cast<uint16_t *>(b)[0] = k;
+                static_cast<uint16_t *>(b)[1] = j;
+                static_cast<uint16_t *>(b)[2] = i;
+                b = ptrOffset(b, sizeof(GRF));
+            }
+        }
+    }
+}
+
 } // namespace NEO

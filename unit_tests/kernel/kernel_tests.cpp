@@ -2163,6 +2163,16 @@ TEST_F(KernelExecutionEnvironmentTest, getMaxSimdReturns1WhenExecutionEnvironmen
     this->pKernelInfo->patchInfo.executionEnvironment = oldExcEnv;
 }
 
+TEST_F(KernelExecutionEnvironmentTest, getMaxSimdReturns1WhenLargestCompilledSimdSizeEqualOne) {
+
+    executionEnvironment.LargestCompiledSIMDSize = 1;
+
+    auto oldExcEnv = this->pKernelInfo->patchInfo.executionEnvironment;
+
+    EXPECT_EQ(1U, this->pKernelInfo->getMaxSimdSize());
+    this->pKernelInfo->patchInfo.executionEnvironment = oldExcEnv;
+}
+
 TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWorkGroupSizeIsZero) {
     auto maxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
     auto oldRequiredWorkGroupSizeX = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeX;

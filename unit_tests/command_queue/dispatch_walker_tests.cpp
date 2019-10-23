@@ -124,6 +124,27 @@ HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDime
     EXPECT_EQ(3u, computeDimensions(workItems3D));
 }
 
+HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWalkerIsSetTo32Value) {
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    LinearStream linearStream(&gfxAllocation);
+
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE *computeWalker = static_cast<WALKER_TYPE *>(linearStream.getSpace(sizeof(WALKER_TYPE)));
+    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+
+    size_t globalOffsets[] = {0, 0, 0};
+    size_t startWorkGroups[] = {0, 0, 0};
+    size_t numWorkGroups[] = {1, 1, 1};
+    size_t localWorkSizesIn[] = {32, 1, 1};
+    uint32_t simd = 1;
+    iOpenCL::SPatchThreadPayload threadPayload;
+
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
+        computeWalker, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, threadPayload, 5u);
+    EXPECT_EQ(computeWalker->getSimdSize(), 32 >> 4);
+}
+
 HWTEST_F(DispatchWalkerTest, WhenDispatchingWalkerThenCommandStreamMemoryIsntChanged) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());

@@ -34,14 +34,16 @@ inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
                    ? 5
                    : simd == 16
                          ? 4
-                         : 3;
+                         : simd == 8
+                               ? 3
+                               : 0;
 
     return result;
 }
 
 inline size_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t numChannels = 3) {
     auto numGRFSPerThread = getGRFsPerThread(simd);
-    auto returnSize = numChannels * numGRFSPerThread * sizeof(GRF);
+    auto returnSize = numGRFSPerThread * sizeof(GRF) * (simd == 1 ? 1 : numChannels);
     returnSize = std::max(returnSize, sizeof(GRF));
     return returnSize;
 }
@@ -68,4 +70,7 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
 void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd);
 
 bool isCompatibleWithLayoutForImages(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd);
+
+void generateLocalIDsForSimdOne(void *b, const std::array<uint16_t, 3> &localWorkgroupSize,
+                                const std::array<uint8_t, 3> &dimensionsOrder);
 } // namespace NEO

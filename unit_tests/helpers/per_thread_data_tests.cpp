@@ -252,3 +252,50 @@ TEST(PerThreadDataTest, generateLocalIDs) {
     alignedFree(buffer);
     alignedFree(reference);
 }
+
+TEST(PerThreadDataTest, givenSimdEqualOneWhenSetingLocalIdsInPerThreadDataThenIdsAreSetInCorrectOrder) {
+    uint32_t simd = 1;
+    uint32_t numChannels = 3;
+    uint32_t localWorkSize = 24;
+
+    size_t localWorkSizes[3] = {3, 4, 2};
+
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
+
+    auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
+    auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
+    memset(buffer, 0, sizeOverSizedBuffer);
+
+    // Setup reference filled with zeros
+    auto reference = static_cast<char *>(alignedMalloc(sizePerThreadDataTotal, 16));
+    memset(reference, 0, sizePerThreadDataTotal);
+
+    LinearStream stream(buffer, sizeOverSizedBuffer / 2);
+    PerThreadDataHelper::sendPerThreadData(
+        stream,
+        simd,
+        numChannels,
+        localWorkSizes,
+        {{0, 1, 2}},
+        false);
+
+    auto bufferPtr = buffer;
+    for (uint16_t i = 0; i < localWorkSizes[2]; i++) {
+        for (uint16_t j = 0; j < localWorkSizes[1]; j++) {
+            for (uint16_t k = 0; k < localWorkSizes[0]; k++) {
+                uint16_t ids[] = {k, j, i};
+                int result = memcmp(bufferPtr, ids, sizeof(uint16_t) * 3);
+                EXPECT_EQ(0, result);
+                bufferPtr += sizeof(GRF);
+            }
+        }
+    }
+    // Check if buffer overrun happend, only first sizePerThreadDataTotal bytes can be overwriten, following should be same as reference.
+    for (auto i = sizePerThreadDataTotal; i < sizeOverSizedBuffer; i += sizePerThreadDataTotal) {
+        int result = memcmp(buffer + i, reference, sizePerThreadDataTotal);
+        EXPECT_EQ(0, result);
+    }
+
+    alignedFree(buffer);
+    alignedFree(reference);
+}

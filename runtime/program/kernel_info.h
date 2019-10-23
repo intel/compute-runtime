@@ -169,7 +169,7 @@ struct KernelInfo {
     size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
         const auto executionEnvironment = patchInfo.executionEnvironment;
-        if (executionEnvironment == nullptr) {
+        if (executionEnvironment == nullptr || executionEnvironment->LargestCompiledSIMDSize == 1) {
             return 1;
         }
 
