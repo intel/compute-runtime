@@ -16,7 +16,7 @@ using Gen12LpKernelTest = Test<DeviceFixture>;
 GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsTrue) {
     MockKernelWithInternals mockKernel(*pDevice);
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
-    EXPECT_TRUE(retVal);
+    EXPECT_FALSE(retVal);
 }
 using Gen12LpHardwareCommandsTest = testing::Test;
 GEN12LPTEST_F(Gen12LpHardwareCommandsTest, givenGen12LpPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {

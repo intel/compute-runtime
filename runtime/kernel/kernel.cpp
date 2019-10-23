@@ -2225,7 +2225,8 @@ void Kernel::resolveArgs() {
 }
 
 bool Kernel::canTransformImages() const {
-    return device.getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE;
+    return device.getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE &&
+           device.getHardwareInfo().platform.eRenderCoreFamily <= IGFX_GEN11LP_CORE;
 }
 
 void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation) {
