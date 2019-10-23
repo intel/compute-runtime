@@ -72,6 +72,11 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
   ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
+target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC
+  ""
+  ${IGDRCL__IGC_COMPILE_DEFINITIONS}
+)
+
 if(WIN32)
   set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
