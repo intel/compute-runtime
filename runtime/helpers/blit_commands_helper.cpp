@@ -46,13 +46,17 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
                                                                      CommandStreamReceiver &commandStreamReceiver,
                                                                      const BuiltinOpParams &builtinOpParams,
                                                                      bool blocking) {
-    GraphicsAllocation *hostAllocation = builtinOpParams.mapAllocation;
     GraphicsAllocation *gpuAllocation = nullptr;
     size_t copyOffset = 0;
     size_t memObjOffset = 0;
 
     void *hostPtr = nullptr;
     size_t hostPtrOffset = 0;
+
+    GraphicsAllocation *hostAllocation = builtinOpParams.hostPtrAllocation;
+    if (builtinOpParams.mapAllocation) {
+        hostAllocation = builtinOpParams.mapAllocation;
+    }
 
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         // write buffer

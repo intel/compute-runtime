@@ -93,6 +93,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     dc.srcOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
     dc.mapAllocation = mapAllocation;
+    dc.hostPtrAllocation = hostPtrSurf.getAllocation();
     builder.buildDispatchInfos(dispatchInfo, dc);
 
     if (context->isProvidingPerformanceHints()) {
