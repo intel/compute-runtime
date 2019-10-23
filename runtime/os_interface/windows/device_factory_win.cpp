@@ -23,12 +23,12 @@ size_t DeviceFactory::numDevices = 0;
 bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     numDevices = 0;
 
-    auto totalDeviceCount = 1u;
+    auto numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        totalDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
-    executionEnvironment.rootDeviceEnvironments = std::make_unique<RootDeviceEnvironment[]>(totalDeviceCount);
+    executionEnvironment.rootDeviceEnvironments.resize(numRootDevices);
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
@@ -40,7 +40,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setWddm(wddm.release());
 
-    numDevices = totalDeviceCount;
+    numDevices = numRootDevices;
     DeviceFactory::numDevices = numDevices;
 
     return true;

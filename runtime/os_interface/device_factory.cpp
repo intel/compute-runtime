@@ -15,12 +15,12 @@
 namespace NEO {
 
 bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    auto totalDeviceCount = 1u;
+    auto numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        totalDeviceCount = DebugManager.flags.CreateMultipleRootDevices.get();
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
-    executionEnvironment.rootDeviceEnvironments = std::make_unique<RootDeviceEnvironment[]>(totalDeviceCount);
+    executionEnvironment.rootDeviceEnvironments.resize(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     auto hwInfoConst = *platformDevices;
@@ -37,7 +37,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
-    numDevices = totalDeviceCount;
+    numDevices = numRootDevices;
     DeviceFactory::numDevices = numDevices;
     auto csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr > 0) {

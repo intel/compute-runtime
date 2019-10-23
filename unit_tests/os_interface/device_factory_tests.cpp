@@ -148,6 +148,7 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesI
 
     ASSERT_TRUE(success);
     EXPECT_EQ(requiredDeviceCount, numDevices);
+    EXPECT_EQ(requiredDeviceCount, executionEnvironment->rootDeviceEnvironments.size());
 }
 
 TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesForProductFamilyOverrideIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {

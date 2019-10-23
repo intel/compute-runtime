@@ -55,10 +55,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
 
-    std::unique_ptr<RootDeviceEnvironment[]> rootDeviceEnvironments;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
+    std::vector<RootDeviceEnvironment> rootDeviceEnvironments;
     std::unique_ptr<AubCenter> aubCenter;
     CsrContainer commandStreamReceivers;
     std::unique_ptr<BuiltIns> builtins;
