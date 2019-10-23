@@ -710,6 +710,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (this->dispatchHints != 0) {
+        dispatchFlags.engineHints = this->dispatchHints;
         dispatchFlags.epilogueRequired = true;
     }
 

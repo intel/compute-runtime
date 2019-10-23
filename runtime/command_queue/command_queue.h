@@ -425,7 +425,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     uint64_t getSliceCount() const { return sliceCount; }
 
-    // extend dispatch hints
     uint64_t dispatchHints = 0;
 
   protected:

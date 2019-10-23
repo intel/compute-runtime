@@ -1103,4 +1103,5 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIs
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(csr.recordedDispatchFlags.epilogueRequired, true);
+    EXPECT_EQ(csr.recordedDispatchFlags.engineHints, 1u);
 }
