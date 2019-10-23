@@ -463,7 +463,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     LinearStream *commandStream = nullptr;
 
-    bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
     bool requiresCacheFlushAfterWalker = false;
     bool multiEngineQueue = false;
