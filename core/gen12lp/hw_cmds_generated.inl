@@ -811,7 +811,8 @@ STATIC_ASSERT(36 == sizeof(MEDIA_VFE_STATE));
 typedef struct tagMI_ARB_CHECK {
     union tagTheStructure {
         struct tagCommon {
-            uint32_t Pre_FetchDisable : BITFIELD_RANGE(0, 0);
+            // DWORD 0
+            uint32_t PreParserDisable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_1 : BITFIELD_RANGE(1, 7);
             uint32_t MaskBits : BITFIELD_RANGE(8, 15);
             uint32_t Reserved_16 : BITFIELD_RANGE(16, 22);
@@ -837,17 +838,17 @@ typedef struct tagMI_ARB_CHECK {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 1);
+        UNRECOVERABLE_IF(index >= 1);
         return TheStructure.RawData[index];
     }
-    inline void setPreFetchDisable(const uint32_t value) {
-        TheStructure.Common.Pre_FetchDisable = value;
+    inline void setPreParserDisable(const bool value) {
+        TheStructure.Common.PreParserDisable = value;
     }
-    inline uint32_t getPreFetchDisable(void) const {
-        return TheStructure.Common.Pre_FetchDisable;
+    inline bool getPreParserDisable(void) const {
+        return TheStructure.Common.PreParserDisable;
     }
     inline void setMaskBits(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xff00);
+        UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.MaskBits = value;
     }
     inline uint32_t getMaskBits(void) const {
@@ -859,27 +860,38 @@ STATIC_ASSERT(4 == sizeof(MI_ARB_CHECK));
 typedef struct tagMI_ATOMIC {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t AtomicOpcode : BITFIELD_RANGE(8, 15);
             uint32_t ReturnDataControl : BITFIELD_RANGE(16, 16);
             uint32_t CsStall : BITFIELD_RANGE(17, 17);
             uint32_t InlineData : BITFIELD_RANGE(18, 18);
             uint32_t DataSize : BITFIELD_RANGE(19, 20);
-            uint32_t Post_SyncOperation : BITFIELD_RANGE(21, 21);
+            uint32_t PostSyncOperation : BITFIELD_RANGE(21, 21);
             uint32_t MemoryType : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint32_t MemoryAddress : BITFIELD_RANGE(2, 31);
+            // DWORD 2
             uint32_t MemoryAddressHigh : BITFIELD_RANGE(0, 15);
             uint32_t Reserved_80 : BITFIELD_RANGE(16, 31);
+            // DWORD 3
             uint32_t Operand1DataDword0;
+            // DWORD 4
             uint32_t Operand2DataDword0;
+            // DWORD 5
             uint32_t Operand1DataDword1;
+            // DWORD 6
             uint32_t Operand2DataDword1;
+            // DWORD 7
             uint32_t Operand1DataDword2;
+            // DWORD 8
             uint32_t Operand2DataDword2;
+            // DWORD 9
             uint32_t Operand1DataDword3;
+            // DWORD 10
             uint32_t Operand2DataDword3;
         } Common;
         uint32_t RawData[11];
@@ -916,8 +928,7 @@ typedef struct tagMI_ATOMIC {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_INLINE_DATA_0;
         TheStructure.Common.DataSize = DATA_SIZE_DWORD;
-        TheStructure.Common.Post_SyncOperation =
-            POST_SYNC_OPERATION_NO_POST_SYNC_OPERATION;
+        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_POST_SYNC_OPERATION;
         TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_ATOMIC;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
@@ -928,7 +939,7 @@ typedef struct tagMI_ATOMIC {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 11);
+        UNRECOVERABLE_IF(index >= 11);
         return TheStructure.RawData[index];
     }
     inline void setDwordLength(const DWORD_LENGTH value) {
@@ -938,26 +949,28 @@ typedef struct tagMI_ATOMIC {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
     }
     inline void setAtomicOpcode(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xff00);
+        UNRECOVERABLE_IF(value > 0xff);
         TheStructure.Common.AtomicOpcode = value;
     }
     inline uint32_t getAtomicOpcode(void) const {
         return TheStructure.Common.AtomicOpcode;
     }
-    inline void setReturnDataControl(const uint32_t value) {
+    inline void setReturnDataControl(const bool value) {
         TheStructure.Common.ReturnDataControl = value;
     }
-    inline uint32_t getReturnDataControl(void) const {
+    inline bool getReturnDataControl(void) const {
         return TheStructure.Common.ReturnDataControl;
     }
-    inline void setCsStall(const uint32_t value) {
+    inline void setCsStall(const bool value) {
         TheStructure.Common.CsStall = value;
     }
-    inline uint32_t getCsStall(void) const { return TheStructure.Common.CsStall; }
-    inline void setInlineData(const uint32_t value) {
+    inline bool getCsStall(void) const {
+        return TheStructure.Common.CsStall;
+    }
+    inline void setInlineData(const bool value) {
         TheStructure.Common.InlineData = value;
     }
-    inline uint32_t getInlineData(void) const {
+    inline bool getInlineData(void) const {
         return TheStructure.Common.InlineData;
     }
     inline void setDataSize(const DATA_SIZE value) {
@@ -967,11 +980,10 @@ typedef struct tagMI_ATOMIC {
         return static_cast<DATA_SIZE>(TheStructure.Common.DataSize);
     }
     inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
-        TheStructure.Common.Post_SyncOperation = value;
+        TheStructure.Common.PostSyncOperation = value;
     }
     inline POST_SYNC_OPERATION getPostSyncOperation(void) const {
-        return static_cast<POST_SYNC_OPERATION>(
-            TheStructure.Common.Post_SyncOperation);
+        return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
     }
     inline void setMemoryType(const MEMORY_TYPE value) {
         TheStructure.Common.MemoryType = value;
@@ -984,13 +996,14 @@ typedef struct tagMI_ATOMIC {
         MEMORYADDRESS_ALIGN_SIZE = 0x4,
     } MEMORYADDRESS;
     inline void setMemoryAddress(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xfffffffcL);
+        UNRECOVERABLE_IF(value > 0xffffffff);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
     inline uint32_t getMemoryAddress(void) const {
         return TheStructure.Common.MemoryAddress << MEMORYADDRESS_BIT_SHIFT;
     }
     inline void setMemoryAddressHigh(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.MemoryAddressHigh = value;
     }
     inline uint32_t getMemoryAddressHigh(void) const {
@@ -1050,6 +1063,7 @@ STATIC_ASSERT(44 == sizeof(MI_ATOMIC));
 typedef struct tagMI_BATCH_BUFFER_END {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t EndContext : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_1 : BITFIELD_RANGE(1, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
@@ -1074,14 +1088,14 @@ typedef struct tagMI_BATCH_BUFFER_END {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 1);
+        UNRECOVERABLE_IF(index >= 1);
         return TheStructure.RawData[index];
     }
     inline void setEndContext(const bool value) {
         TheStructure.Common.EndContext = value;
     }
     inline bool getEndContext(void) const {
-        return (TheStructure.Common.EndContext);
+        return TheStructure.Common.EndContext;
     }
 } MI_BATCH_BUFFER_END;
 STATIC_ASSERT(4 == sizeof(MI_BATCH_BUFFER_END));
@@ -1089,37 +1103,37 @@ STATIC_ASSERT(4 == sizeof(MI_BATCH_BUFFER_END));
 typedef struct tagMI_BATCH_BUFFER_START {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t AddressSpaceIndicator : BITFIELD_RANGE(8, 8);
-            uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
-            uint32_t ResourceStreamerEnable : BITFIELD_RANGE(10, 10);
-            uint32_t Reserved_11 : BITFIELD_RANGE(11, 14);
+            uint32_t Reserved_9 : BITFIELD_RANGE(9, 14);
             uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
-            uint32_t AddOffsetEnable : BITFIELD_RANGE(16, 16);
-            uint32_t Reserved_17 : BITFIELD_RANGE(17, 18);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 18);
             uint32_t EnableCommandCache : BITFIELD_RANGE(19, 19);
             uint32_t PoshEnable : BITFIELD_RANGE(20, 20);
             uint32_t PoshStart : BITFIELD_RANGE(21, 21);
-            uint32_t SecondLevelBatchBuffer : BITFIELD_RANGE(22, 22);
+            uint32_t Reserved_22 : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t BatchBufferStartAddress : BITFIELD_RANGE(2, 47);
-            uint64_t BatchBufferStartAddress_Reserved_80 : BITFIELD_RANGE(48, 63);
+            uint64_t BatchBufferStartAddress : BITFIELD_RANGE(2, 63);
         } Common;
         struct tagMi_Mode_Nestedbatchbufferenableis0 {
+            // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 21);
             uint32_t SecondLevelBatchBuffer : BITFIELD_RANGE(22, 22);
             uint32_t Reserved_23 : BITFIELD_RANGE(23, 31);
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            // DWORD 1
+            uint64_t Reserved_32;
         } Mi_Mode_Nestedbatchbufferenableis0;
         struct tagMi_Mode_Nestedbatchbufferenableis1 {
+            // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 21);
             uint32_t NestedLevelBatchBuffer : BITFIELD_RANGE(22, 22);
             uint32_t Reserved_23 : BITFIELD_RANGE(23, 31);
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            // DWORD 1
+            uint64_t Reserved_32;
         } Mi_Mode_Nestedbatchbufferenableis1;
         uint32_t RawData[3];
     } TheStructure;
@@ -1148,9 +1162,9 @@ typedef struct tagMI_BATCH_BUFFER_START {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.AddressSpaceIndicator = ADDRESS_SPACE_INDICATOR_GGTT;
-        TheStructure.Common.SecondLevelBatchBuffer = SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+        TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH;
         TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = NESTED_LEVEL_BATCH_BUFFER_CHAIN;
     }
     static tagMI_BATCH_BUFFER_START sInit(void) {
@@ -1159,7 +1173,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 3);
+        UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
     inline void setAddressSpaceIndicator(const ADDRESS_SPACE_INDICATOR value) {
@@ -1168,47 +1182,29 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline ADDRESS_SPACE_INDICATOR getAddressSpaceIndicator(void) const {
         return static_cast<ADDRESS_SPACE_INDICATOR>(TheStructure.Common.AddressSpaceIndicator);
     }
-    inline void setResourceStreamerEnable(const bool value) {
-        TheStructure.Common.ResourceStreamerEnable = value;
-    }
-    inline bool getResourceStreamerEnable(void) const {
-        return TheStructure.Common.ResourceStreamerEnable;
-    }
-    inline void setPredicationEnable(const uint32_t value) {
+    inline void setPredicationEnable(const bool value) {
         TheStructure.Common.PredicationEnable = value;
     }
-    inline uint32_t getPredicationEnable(void) const {
+    inline bool getPredicationEnable(void) const {
         return TheStructure.Common.PredicationEnable;
     }
-    inline void setAddOffsetEnable(const bool value) {
-        TheStructure.Common.AddOffsetEnable = value;
-    }
-    inline bool getAddOffsetEnable(void) const {
-        return TheStructure.Common.AddOffsetEnable;
-    }
-    inline void setEnableCommandCache(const uint32_t value) {
+    inline void setEnableCommandCache(const bool value) {
         TheStructure.Common.EnableCommandCache = value;
     }
-    inline uint32_t getEnableCommandCache(void) const {
+    inline bool getEnableCommandCache(void) const {
         return TheStructure.Common.EnableCommandCache;
     }
-    inline void setPoshEnable(const uint32_t value) {
+    inline void setPoshEnable(const bool value) {
         TheStructure.Common.PoshEnable = value;
     }
-    inline uint32_t getPoshEnable(void) const {
+    inline bool getPoshEnable(void) const {
         return TheStructure.Common.PoshEnable;
     }
-    inline void setPoshStart(const uint32_t value) {
+    inline void setPoshStart(const bool value) {
         TheStructure.Common.PoshStart = value;
     }
-    inline uint32_t getPoshStart(void) const {
+    inline bool getPoshStart(void) const {
         return TheStructure.Common.PoshStart;
-    }
-    inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
-        TheStructure.Common.SecondLevelBatchBuffer = value;
-    }
-    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer(void) const {
-        return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.Common.SecondLevelBatchBuffer);
     }
     typedef enum tagBATCHBUFFERSTARTADDRESS {
         BATCHBUFFERSTARTADDRESS_BIT_SHIFT = 0x2,
@@ -1217,14 +1213,20 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline void setBatchBufferStartAddress(const uint64_t value) {
         TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
     inline uint64_t getBatchBufferStartAddress(void) const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
+    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
+        TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
+    }
     inline uint64_t getBatchBufferStartAddressGraphicsaddress472(void) const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
+    }
+    inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
+        TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = value;
+    }
+    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer(void) const {
+        return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer);
     }
     inline void setNestedLevelBatchBuffer(const NESTED_LEVEL_BATCH_BUFFER value) {
         TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = value;
@@ -1234,7 +1236,6 @@ typedef struct tagMI_BATCH_BUFFER_START {
     }
 } MI_BATCH_BUFFER_START;
 STATIC_ASSERT(12 == sizeof(MI_BATCH_BUFFER_START));
-
 typedef struct tagMI_LOAD_REGISTER_IMM {
     union tagTheStructure {
         struct tagCommon {
