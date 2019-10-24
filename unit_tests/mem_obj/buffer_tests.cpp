@@ -887,15 +887,15 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBu
     auto mapAllocation = bufferForBlt->getMapAllocation();
     EXPECT_NE(nullptr, mapAllocation);
 
-    mockCmdQ->kernelParams.mapAllocation = nullptr;
+    mockCmdQ->kernelParams.transferAllocation = nullptr;
     auto mapPtr = clEnqueueMapBuffer(mockCmdQ, bufferForBlt.get(), true, 0, 0, 1, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.mapAllocation);
+    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
 
-    mockCmdQ->kernelParams.mapAllocation = nullptr;
+    mockCmdQ->kernelParams.transferAllocation = nullptr;
     retVal = clEnqueueUnmapMemObject(mockCmdQ, bufferForBlt.get(), mapPtr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.mapAllocation);
+    EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {

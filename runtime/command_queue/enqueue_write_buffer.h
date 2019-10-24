@@ -88,8 +88,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     dc.dstMemObj = buffer;
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
-    dc.mapAllocation = mapAllocation;
-    dc.hostPtrAllocation = hostPtrSurf.getAllocation();
+    dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
     builder.buildDispatchInfos(dispatchInfo, dc);
 
     enqueueHandler<CL_COMMAND_WRITE_BUFFER>(

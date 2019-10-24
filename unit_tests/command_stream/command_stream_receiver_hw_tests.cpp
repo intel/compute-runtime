@@ -766,7 +766,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         builtinOpParams.dstMemObj = buffer.get();
         builtinOpParams.srcPtr = mapPtr;
         builtinOpParams.size.x = 1;
-        builtinOpParams.mapAllocation = mapAllocation;
+        builtinOpParams.transferAllocation = mapAllocation;
 
         auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                     csr, builtinOpParams, true);
@@ -778,7 +778,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         builtinOpParams.srcMemObj = buffer.get();
         builtinOpParams.dstPtr = mapPtr;
         builtinOpParams.size.x = 1;
-        builtinOpParams.mapAllocation = mapAllocation;
+        builtinOpParams.transferAllocation = mapAllocation;
 
         auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr,
                                                                                     csr, builtinOpParams, true);
