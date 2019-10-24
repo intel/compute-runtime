@@ -146,12 +146,10 @@ bool Platform::initialize() {
     this->platformInfo.reset(new PlatformInfo);
 
     this->devices.resize(numDevicesReturned);
-    auto deviceIndex = 0u;
     for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<RootDevice>(executionEnvironment, deviceIndex++);
+        auto pDevice = Device::create<RootDevice>(executionEnvironment, deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
-            deviceIndex += pDevice->getNumSubDevices();
             this->devices[deviceOrdinal] = pDevice;
 
             this->platformInfo->extensions = pDevice->getDeviceInfo().deviceExtensions;

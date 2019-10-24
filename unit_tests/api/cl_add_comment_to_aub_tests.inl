@@ -28,7 +28,7 @@ TEST_F(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsR
 }
 
 TEST_F(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
-    pPlatform->peekExecutionEnvironment()->aubCenter.reset(new MockAubCenter());
+    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0].aubCenter.reset(new MockAubCenter());
 
     auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -46,7 +46,7 @@ TEST_F(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCom
     auto mockAubCenter = new MockAubCenter();
     auto mockAubManager = new AubManagerCommentMock;
     mockAubCenter->aubManager.reset(mockAubManager);
-    pPlatform->peekExecutionEnvironment()->aubCenter.reset(mockAubCenter);
+    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0].aubCenter.reset(mockAubCenter);
 
     EXPECT_FALSE(mockAubManager->addCommentCalled);
 

@@ -64,43 +64,4 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     bool expectMemoryNotEqualCalled = false;
     bool makeCoherentCalled = false;
 };
-
-struct TbxExecutionEnvironment {
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-    GraphicsAllocation *commandBuffer = nullptr;
-    template <typename CsrType>
-    CsrType *getCsr() {
-        return static_cast<CsrType *>(executionEnvironment->commandStreamReceivers[0][0].get());
-    }
-    ~TbxExecutionEnvironment() {
-        if (commandBuffer) {
-            executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
-        }
-    }
-};
-
-template <typename CsrType>
-std::unique_ptr<TbxExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer) {
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
-    executionEnvironment->aubCenter.reset(new AubCenter());
-
-    executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>(*platformDevices[0], *executionEnvironment));
-    executionEnvironment->initializeMemoryManager();
-    if (createTagAllocation) {
-        executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
-    }
-
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->commandStreamReceivers[0][0].get(),
-                                                                                     getChosenEngineType(*platformDevices[0]), 1,
-                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    executionEnvironment->commandStreamReceivers[0][0]->setupContext(*osContext);
-
-    std::unique_ptr<TbxExecutionEnvironment> tbxExecutionEnvironment(new TbxExecutionEnvironment);
-    if (allocateCommandBuffer) {
-        tbxExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    }
-    tbxExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
-    return tbxExecutionEnvironment;
-}
 } // namespace NEO

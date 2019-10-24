@@ -519,7 +519,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
     EXPECT_FALSE(interceptor.newDeviceCalled);
 }
 
-TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSourceLevelDebugger) {
+TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenNotCreatingNewSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
     if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
@@ -529,6 +529,7 @@ TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSo
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment->rootDeviceEnvironments.resize(2);
 
         std::unique_ptr<Device> device1(Device::create<MockDevice>(executionEnvironment, 0u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
@@ -541,7 +542,7 @@ TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSo
     }
 }
 
-TEST(SourceLevelDebugger, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameSourceLevelDebugger) {
+TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReuseTheSameSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
     if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
@@ -549,6 +550,7 @@ TEST(SourceLevelDebugger, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheS
         DebuggerLibrary::setDebuggerActive(true);
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment->rootDeviceEnvironments.resize(2);
         std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getSourceLevelDebugger();
         std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(executionEnvironment, 1u));

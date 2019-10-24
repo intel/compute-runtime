@@ -36,7 +36,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
 
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
     executionEnvironment.initAubCenter(this->localMemoryEnabled, "", this->getType());
-    auto aubCenter = executionEnvironment.aubCenter.get();
+    auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
     aubManager = aubCenter->getAubManager();
@@ -161,7 +161,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment);
 
-        auto aubCenter = executionEnvironment.aubCenter.get();
+        auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
         UNRECOVERABLE_IF(nullptr == aubCenter);
 
         auto subCaptureCommon = aubCenter->getSubCaptureCommon();

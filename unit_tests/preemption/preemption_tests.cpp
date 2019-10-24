@@ -461,10 +461,10 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-    platformImpl->peekExecutionEnvironment()->commandStreamReceivers.resize(1);
-    platformImpl->peekExecutionEnvironment()->commandStreamReceivers[0].resize(2);
-    executionEnvironment->commandStreamReceivers[0][1].reset(new MockUltCsr(*executionEnvironment));
-    executionEnvironment->commandStreamReceivers[0][0].reset(new MockUltCsr(*executionEnvironment));
+    platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
+    platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].resize(2);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1].reset(new MockUltCsr(*executionEnvironment));
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].reset(new MockUltCsr(*executionEnvironment));
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDeviceReturnedDebuggerActive>(executionEnvironment, 0));
     EXPECT_EQ(nullptr, mockDevice);

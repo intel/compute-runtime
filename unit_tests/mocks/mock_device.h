@@ -27,6 +27,7 @@ class MockDevice : public RootDevice {
     using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
+    using Device::internalDeviceIndex;
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);
@@ -83,6 +84,8 @@ class MockDevice : public RootDevice {
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
+        executionEnvironment->rootDeviceEnvironments.resize(numRootDevices);
         pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
         executionEnvironment->setHwInfo(pHwInfo);
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, 0u);

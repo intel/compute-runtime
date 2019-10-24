@@ -23,10 +23,10 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         MemoryManagementFixture::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->setHwInfo(*platformDevices);
-        executionEnvironment->initializeCommandStreamReceiver(0, 0);
+        executionEnvironment->initializeCommandStreamReceiver(0, 0, 0);
         memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        csr = executionEnvironment->commandStreamReceivers[0][0].get();
+        csr = executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get();
         auto engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
         auto osContext = memoryManager->createAndRegisterOsContext(csr, engineType, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
         csr->setupContext(*osContext);

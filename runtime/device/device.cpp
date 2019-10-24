@@ -41,8 +41,8 @@ void DeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
     }
 }
 
-Device::Device(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
-    : executionEnvironment(executionEnvironment), deviceIndex(deviceIndex) {
+Device::Device(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex)
+    : executionEnvironment(executionEnvironment), internalDeviceIndex(internalDeviceIndex) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
@@ -125,22 +125,22 @@ bool Device::createEngines() {
     auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
-        if (!createEngine(getDeviceIndex(), deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
+        if (!createEngine(deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
             return false;
         }
     }
     return true;
 }
 
-bool Device::createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType) {
+bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType) {
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
 
-    if (!executionEnvironment->initializeCommandStreamReceiver(deviceIndex, deviceCsrIndex)) {
+    if (!executionEnvironment->initializeCommandStreamReceiver(getRootDeviceIndex(), internalDeviceIndex, deviceCsrIndex)) {
         return false;
     }
 
-    auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[deviceIndex][deviceCsrIndex].get();
+    auto commandStreamReceiver = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()].commandStreamReceivers[internalDeviceIndex][deviceCsrIndex].get();
 
     bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, engineType,

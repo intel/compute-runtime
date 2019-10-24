@@ -29,13 +29,12 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
-    EXPECT_EQ(0u, device->getDeviceIndex());
-    EXPECT_EQ(1u, device->subdevices.at(0)->getDeviceIndex());
-    EXPECT_EQ(2u, device->subdevices.at(1)->getDeviceIndex());
-
+    EXPECT_EQ(0u, device->internalDeviceIndex);
     EXPECT_EQ(0u, device->getRootDeviceIndex());
     EXPECT_EQ(0u, device->subdevices.at(0)->getRootDeviceIndex());
+    EXPECT_EQ(1u, device->subdevices.at(0)->getInternalDeviceIndex());
     EXPECT_EQ(0u, device->subdevices.at(1)->getRootDeviceIndex());
+    EXPECT_EQ(2u, device->subdevices.at(1)->getInternalDeviceIndex());
 }
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
@@ -45,10 +44,6 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
-
-    EXPECT_EQ(0u, device->getDeviceIndex());
-    EXPECT_EQ(1u, device->subdevices.at(0)->getDeviceIndex());
-    EXPECT_EQ(2u, device->subdevices.at(1)->getDeviceIndex());
 
     EXPECT_EQ(2u, device->getNumAvailableDevices());
     EXPECT_EQ(1u, device->subdevices.at(0)->getNumAvailableDevices());
@@ -96,14 +91,11 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
 TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCreatedThenEachHasUniqueDeviceIndex) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    DebugManager.flags.CreateMultipleRootDevices.set(2);
     VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
     platform()->initialize();
-    auto device = static_cast<RootDevice *>(platform()->getDevice(0));
-    EXPECT_EQ(0u, device->getDeviceIndex());
-    EXPECT_EQ(2u, device->getNumSubDevices());
-    EXPECT_EQ(1u, device->getDeviceById(0)->getDeviceIndex());
-    EXPECT_EQ(2u, device->getDeviceById(1)->getDeviceIndex());
+    EXPECT_EQ(0u, platform()->getDevice(0)->getRootDeviceIndex());
+    EXPECT_EQ(1u, platform()->getDevice(1)->getRootDeviceIndex());
 }
 
 TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDeviceId) {

@@ -49,11 +49,11 @@ struct MockExecutionEnvironmentWithCsr : public ExecutionEnvironment {
         setHwInfo(&hwInfo);
         auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
         auto offset = devicesCount > 1 ? 1u : 0u;
-        commandStreamReceivers.resize(devicesCount + offset);
+        rootDeviceEnvironments[0].commandStreamReceivers.resize(devicesCount + offset);
 
         for (uint32_t deviceIndex = 0; deviceIndex < devicesCount; deviceIndex++) {
             for (uint32_t csrIndex = 0; csrIndex < gpgpuEngines.size(); csrIndex++) {
-                commandStreamReceivers[deviceIndex + offset].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this)));
+                rootDeviceEnvironments[0].commandStreamReceivers[deviceIndex + offset].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this)));
             }
         }
     }

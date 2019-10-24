@@ -648,7 +648,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
-    pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
+    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment);
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
@@ -839,7 +839,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectation
 
     auto mockStream = std::make_unique<MockAubFileStream>();
     MyMockAubCsr myMockCsr(std::string(), true, *pDevice->getExecutionEnvironment());
-    myMockCsr.setupContext(pDevice->getExecutionEnvironment()->commandStreamReceivers[0][0]->getOsContext());
+    myMockCsr.setupContext(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->getOsContext());
     myMockCsr.stream = mockStream.get();
 
     myMockCsr.expectMemoryNotEqual(mockAddress, mockAddress, 1);
@@ -896,7 +896,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);

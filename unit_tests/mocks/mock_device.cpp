@@ -21,9 +21,9 @@ bool MockDevice::createSingleDevice = true;
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment);
-    executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()].resize(defaultEngineIndex + 1);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex].reset(commandStreamReceiver);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(internalDeviceIndex + 1);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex].resize(defaultEngineIndex + 1);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][defaultEngineIndex].reset(commandStreamReceiver);
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->engines.resize(defaultEngineIndex + 1);
     this->engines[defaultEngineIndex] = {commandStreamReceiver, nullptr};
@@ -70,7 +70,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
-    UNRECOVERABLE_IF(getDeviceIndex() != 0u);
+    UNRECOVERABLE_IF(internalDeviceIndex != 0u);
 
     auto osContext = this->engines[engineIndex].osContext;
     auto memoryManager = executionEnvironment->memoryManager.get();
@@ -81,15 +81,15 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex].reset(newCsr);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->initializeTagAllocation();
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex].reset(newCsr);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex]->initializeTagAllocation();
 
     if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-        executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->createPreemptionAllocation();
+        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex]->createPreemptionAllocation();
     }
 }
 
-MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {
+MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex) : MockDevice(executionEnvironment, internalDeviceIndex) {
     this->mockMemoryManager.reset(new MockAllocSysMemAgnosticMemoryManager(*executionEnvironment));
 }
 FailDevice::FailDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)

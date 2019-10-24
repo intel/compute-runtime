@@ -9,6 +9,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h

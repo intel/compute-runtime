@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "core/helpers/common_types.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/common_types.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/performance_counters.h"
@@ -90,7 +90,6 @@ class Device : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
-    uint32_t getDeviceIndex() const { return deviceIndex; }
     virtual uint32_t getRootDeviceIndex() const = 0;
     bool isFullRangeSvm() const {
         return executionEnvironment->isFullRangeSvm();
@@ -100,10 +99,13 @@ class Device : public BaseObject<_cl_device_id> {
     }
     virtual uint32_t getNumAvailableDevices() const = 0;
     virtual Device *getDeviceById(uint32_t deviceId) const = 0;
+    uint32_t getInternalDeviceIndex() const {
+        return internalDeviceIndex;
+    }
 
   protected:
     Device() = delete;
-    Device(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    Device(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex);
 
     template <typename T>
     static T *createDeviceInternals(T *device) {
@@ -117,7 +119,7 @@ class Device : public BaseObject<_cl_device_id> {
     virtual bool createDeviceImpl();
     virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
     virtual bool createEngines();
-    bool createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
+    bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
@@ -136,7 +138,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    const uint32_t deviceIndex;
+    const uint32_t internalDeviceIndex;
     uint32_t defaultEngineIndex = 0;
 };
 

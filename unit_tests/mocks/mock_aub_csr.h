@@ -166,7 +166,7 @@ struct AubExecutionEnvironment {
     GraphicsAllocation *commandBuffer = nullptr;
     template <typename CsrType>
     CsrType *getCsr() {
-        return static_cast<CsrType *>(executionEnvironment->commandStreamReceivers[0][0].get());
+        return static_cast<CsrType *>(executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());
     }
     ~AubExecutionEnvironment() {
         if (commandBuffer) {
@@ -179,19 +179,19 @@ template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->setHwInfo(*platformDevices);
-    executionEnvironment->aubCenter.reset(new AubCenter());
+    executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
 
-    executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment));
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment));
     executionEnvironment->initializeMemoryManager();
     if (createTagAllocation) {
-        executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
+        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->initializeTagAllocation();
     }
 
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->commandStreamReceivers[0][0].get(),
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get(),
                                                                                      getChosenEngineType(*platformDevices[0]), 1,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    executionEnvironment->commandStreamReceivers[0][0]->setupContext(*osContext);
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->setupContext(*osContext);
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {

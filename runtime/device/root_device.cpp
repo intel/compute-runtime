@@ -20,7 +20,7 @@ uint32_t RootDevice::getNumSubDevices() const {
 }
 
 uint32_t RootDevice::getRootDeviceIndex() const {
-    return this->deviceIndex;
+    return rootDeviceIndex;
 }
 
 uint32_t RootDevice::getNumAvailableDevices() const {
@@ -38,20 +38,20 @@ Device *RootDevice::getDeviceById(uint32_t deviceId) const {
     return subdevices[deviceId].get();
 };
 
-RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : Device(executionEnvironment, deviceIndex) {}
+RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment, 0u), rootDeviceIndex(rootDeviceIndex) {}
 bool RootDevice::createDeviceImpl() {
     auto numSubDevices = DeviceHelper::getSubDevicesCount(&getHardwareInfo());
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }
-    subdevices.reserve(numSubDevices);
+    subdevices.resize(numSubDevices);
     for (auto i = 0u; i < numSubDevices; i++) {
 
-        auto subDevice = Device::create<SubDevice>(executionEnvironment, deviceIndex + i + 1, i, *this);
+        auto subDevice = Device::create<SubDevice>(executionEnvironment, i + 1, i, *this);
         if (!subDevice) {
             return false;
         }
-        subdevices.push_back(std::unique_ptr<SubDevice>(subDevice));
+        subdevices[i].reset(subDevice);
     }
     auto status = Device::createDeviceImpl();
     if (!status) {
@@ -71,7 +71,7 @@ unique_ptr_if_unused<Device> RootDevice::release() {
 }
 DeviceBitfield RootDevice::getDeviceBitfieldForOsContext() const {
     DeviceBitfield deviceBitfield;
-    deviceBitfield.set(deviceIndex);
+    deviceBitfield.set(internalDeviceIndex);
     return deviceBitfield;
 }
 

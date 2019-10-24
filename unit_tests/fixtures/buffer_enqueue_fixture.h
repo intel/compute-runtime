@@ -37,8 +37,8 @@ struct BufferEnqueueFixture : public HardwareParse,
     void initializeFixture() {
         auto mockCsr = new MockCsrHw2<FamilyType>(*executionEnvironment);
 
-        executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
+        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
+        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
 
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

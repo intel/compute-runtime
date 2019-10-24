@@ -8,14 +8,12 @@
 #pragma once
 #include "core/execution_environment/root_device_environment.h"
 #include "core/utilities/reference_tracked_object.h"
-#include "runtime/helpers/common_types.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 
 #include <mutex>
 
 namespace NEO {
-class AubCenter;
 class BuiltIns;
 class CommandStreamReceiver;
 class CompilerInterface;
@@ -42,7 +40,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     void initGmm();
-    bool initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex);
+    bool initializeCommandStreamReceiver(uint32_t rootDeviceIndex, uint32_t internalDeviceIndex, uint32_t deviceCsrIndex);
     MOCKABLE_VIRTUAL bool initializeRootCommandStreamReceiver(RootDevice &rootDevice);
     void initializeMemoryManager();
     void initSourceLevelDebugger();
@@ -58,9 +56,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
-    std::vector<RootDeviceEnvironment> rootDeviceEnvironments;
-    std::unique_ptr<AubCenter> aubCenter;
-    CsrContainer commandStreamReceivers;
+    std::vector<RootDeviceEnvironment> rootDeviceEnvironments{1};
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

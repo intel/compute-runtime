@@ -6,6 +6,7 @@
 
 set(NEO_CORE_EXECUTION_ENVIRONMENT
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/root_device_environment.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/root_device_environment.h
 )
 

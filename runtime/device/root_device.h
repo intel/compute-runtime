@@ -14,7 +14,7 @@ class SubDevice;
 
 class RootDevice : public Device {
   public:
-    RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex);
     ~RootDevice() override;
     bool createDeviceImpl() override;
     uint32_t getNumAvailableDevices() const override;
@@ -30,5 +30,6 @@ class RootDevice : public Device {
     DeviceBitfield getDeviceBitfieldForOsContext() const override;
     bool createEngines() override;
     std::vector<std::unique_ptr<SubDevice>> subdevices;
+    const uint32_t rootDeviceIndex;
 };
 } // namespace NEO

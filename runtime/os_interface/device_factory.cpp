@@ -19,7 +19,6 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
-
     executionEnvironment.rootDeviceEnvironments.resize(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
@@ -42,7 +41,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     auto csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr > 0) {
         executionEnvironment.initAubCenter(DebugManager.flags.EnableLocalMemory.get(), "", static_cast<CommandStreamReceiverType>(csr));
-        auto aubCenter = executionEnvironment.aubCenter.get();
+        auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
         executionEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
     }
     return true;

@@ -119,7 +119,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCo
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnTwoRcsEnginesAndOneCcsEngine) {
-    EXPECT_EQ(3u, pDevice->getExecutionEnvironment()->commandStreamReceivers[0].size());
+    EXPECT_EQ(3u, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances();
     EXPECT_EQ(3u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
