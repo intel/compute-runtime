@@ -47,6 +47,7 @@ STATIC_ASSERT(4 == sizeof(BINDING_TABLE_STATE));
 typedef struct tagGPGPU_WALKER {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t PredicateEnable : BITFIELD_RANGE(8, 8);
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
@@ -56,12 +57,16 @@ typedef struct tagGPGPU_WALKER {
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t InterfaceDescriptorOffset : BITFIELD_RANGE(0, 5);
             uint32_t Reserved_38 : BITFIELD_RANGE(6, 31);
+            // DWORD 2
             uint32_t IndirectDataLength : BITFIELD_RANGE(0, 16);
             uint32_t Reserved_81 : BITFIELD_RANGE(17, 31);
+            // DWORD 3
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
             uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
+            // DWORD 4
             uint32_t ThreadWidthCounterMaximum : BITFIELD_RANGE(0, 5);
             uint32_t Reserved_134 : BITFIELD_RANGE(6, 7);
             uint32_t ThreadHeightCounterMaximum : BITFIELD_RANGE(8, 13);
@@ -69,15 +74,25 @@ typedef struct tagGPGPU_WALKER {
             uint32_t ThreadDepthCounterMaximum : BITFIELD_RANGE(16, 21);
             uint32_t Reserved_150 : BITFIELD_RANGE(22, 29);
             uint32_t SimdSize : BITFIELD_RANGE(30, 31);
+            // DWORD 5
             uint32_t ThreadGroupIdStartingX;
+            // DWORD 6
             uint32_t Reserved_192;
+            // DWORD 7
             uint32_t ThreadGroupIdXDimension;
+            // DWORD 8
             uint32_t ThreadGroupIdStartingY;
+            // DWORD 9
             uint32_t Reserved_288;
+            // DWORD 10
             uint32_t ThreadGroupIdYDimension;
+            // DWORD 11
             uint32_t ThreadGroupIdStartingResumeZ;
+            // DWORD 12
             uint32_t ThreadGroupIdZDimension;
+            // DWORD 13
             uint32_t RightExecutionMask;
+            // DWORD 14
             uint32_t BottomExecutionMask;
         } Common;
         uint32_t RawData[15];
@@ -102,10 +117,6 @@ typedef struct tagGPGPU_WALKER {
         SIMD_SIZE_SIMD16 = 0x1,
         SIMD_SIZE_SIMD32 = 0x2,
     } SIMD_SIZE;
-    typedef enum tagPATCH_CONSTANTS {
-        INDIRECTDATASTARTADDRESS_BYTEOFFSET = 0xc,
-        INDIRECTDATASTARTADDRESS_INDEX = 0x3,
-    } PATCH_CONSTANTS;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
@@ -121,60 +132,66 @@ typedef struct tagGPGPU_WALKER {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 15);
+        UNRECOVERABLE_IF(index >= 15);
         return TheStructure.RawData[index];
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;
     }
     inline bool getPredicateEnable(void) const {
-        return (TheStructure.Common.PredicateEnable);
+        return TheStructure.Common.PredicateEnable;
     }
     inline void setIndirectParameterEnable(const bool value) {
         TheStructure.Common.IndirectParameterEnable = value;
     }
     inline bool getIndirectParameterEnable(void) const {
-        return (TheStructure.Common.IndirectParameterEnable);
+        return TheStructure.Common.IndirectParameterEnable;
     }
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
     inline uint32_t getInterfaceDescriptorOffset(void) const {
-        return (TheStructure.Common.InterfaceDescriptorOffset);
+        return TheStructure.Common.InterfaceDescriptorOffset;
     }
     inline void setIndirectDataLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1ffff);
         TheStructure.Common.IndirectDataLength = value;
     }
     inline uint32_t getIndirectDataLength(void) const {
-        return (TheStructure.Common.IndirectDataLength);
+        return TheStructure.Common.IndirectDataLength;
     }
     typedef enum tagINDIRECTDATASTARTADDRESS {
         INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
         INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
     } INDIRECTDATASTARTADDRESS;
     inline void setIndirectDataStartAddress(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffff);
         TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline uint32_t getIndirectDataStartAddress(void) const {
-        return (TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT);
+        return TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline void setThreadWidthCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
         TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
     }
     inline uint32_t getThreadWidthCounterMaximum(void) const {
-        return (TheStructure.Common.ThreadWidthCounterMaximum + 1);
+        return TheStructure.Common.ThreadWidthCounterMaximum + 1;
     }
     inline void setThreadHeightCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
         TheStructure.Common.ThreadHeightCounterMaximum = value - 1;
     }
     inline uint32_t getThreadHeightCounterMaximum(void) const {
-        return (TheStructure.Common.ThreadHeightCounterMaximum + 1);
+        return TheStructure.Common.ThreadHeightCounterMaximum + 1;
     }
     inline void setThreadDepthCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
         TheStructure.Common.ThreadDepthCounterMaximum = value;
     }
     inline uint32_t getThreadDepthCounterMaximum(void) const {
-        return (TheStructure.Common.ThreadDepthCounterMaximum);
+        return TheStructure.Common.ThreadDepthCounterMaximum;
     }
     inline void setSimdSize(const SIMD_SIZE value) {
         TheStructure.Common.SimdSize = value;
@@ -186,49 +203,49 @@ typedef struct tagGPGPU_WALKER {
         TheStructure.Common.ThreadGroupIdStartingX = value;
     }
     inline uint32_t getThreadGroupIdStartingX(void) const {
-        return (TheStructure.Common.ThreadGroupIdStartingX);
+        return TheStructure.Common.ThreadGroupIdStartingX;
     }
     inline void setThreadGroupIdXDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdXDimension = value;
     }
     inline uint32_t getThreadGroupIdXDimension(void) const {
-        return (TheStructure.Common.ThreadGroupIdXDimension);
+        return TheStructure.Common.ThreadGroupIdXDimension;
     }
     inline void setThreadGroupIdStartingY(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdStartingY = value;
     }
     inline uint32_t getThreadGroupIdStartingY(void) const {
-        return (TheStructure.Common.ThreadGroupIdStartingY);
+        return TheStructure.Common.ThreadGroupIdStartingY;
     }
     inline void setThreadGroupIdYDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdYDimension = value;
     }
     inline uint32_t getThreadGroupIdYDimension(void) const {
-        return (TheStructure.Common.ThreadGroupIdYDimension);
+        return TheStructure.Common.ThreadGroupIdYDimension;
     }
     inline void setThreadGroupIdStartingResumeZ(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdStartingResumeZ = value;
     }
     inline uint32_t getThreadGroupIdStartingResumeZ(void) const {
-        return (TheStructure.Common.ThreadGroupIdStartingResumeZ);
+        return TheStructure.Common.ThreadGroupIdStartingResumeZ;
     }
     inline void setThreadGroupIdZDimension(const uint32_t value) {
         TheStructure.Common.ThreadGroupIdZDimension = value;
     }
     inline uint32_t getThreadGroupIdZDimension(void) const {
-        return (TheStructure.Common.ThreadGroupIdZDimension);
+        return TheStructure.Common.ThreadGroupIdZDimension;
     }
     inline void setRightExecutionMask(const uint32_t value) {
         TheStructure.Common.RightExecutionMask = value;
     }
     inline uint32_t getRightExecutionMask(void) const {
-        return (TheStructure.Common.RightExecutionMask);
+        return TheStructure.Common.RightExecutionMask;
     }
     inline void setBottomExecutionMask(const uint32_t value) {
         TheStructure.Common.BottomExecutionMask = value;
     }
     inline uint32_t getBottomExecutionMask(void) const {
-        return (TheStructure.Common.BottomExecutionMask);
+        return TheStructure.Common.BottomExecutionMask;
     }
 } GPGPU_WALKER;
 STATIC_ASSERT(60 == sizeof(GPGPU_WALKER));
@@ -236,10 +253,13 @@ STATIC_ASSERT(60 == sizeof(GPGPU_WALKER));
 typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 5);
             uint32_t KernelStartPointer : BITFIELD_RANGE(6, 31);
+            // DWORD 1
             uint32_t KernelStartPointerHigh : BITFIELD_RANGE(0, 15);
             uint32_t Reserved_48 : BITFIELD_RANGE(16, 31);
+            // DWORD 2
             uint32_t Reserved_64 : BITFIELD_RANGE(0, 6);
             uint32_t SoftwareExceptionEnable : BITFIELD_RANGE(7, 7);
             uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
@@ -253,21 +273,28 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
             uint32_t DenormMode : BITFIELD_RANGE(19, 19);
             uint32_t ThreadPreemptionDisable : BITFIELD_RANGE(20, 20);
             uint32_t Reserved_85 : BITFIELD_RANGE(21, 31);
+            // DWORD 3
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 1);
             uint32_t SamplerCount : BITFIELD_RANGE(2, 4);
             uint32_t SamplerStatePointer : BITFIELD_RANGE(5, 31);
+            // DWORD 4
             uint32_t BindingTableEntryCount : BITFIELD_RANGE(0, 4);
             uint32_t BindingTablePointer : BITFIELD_RANGE(5, 15);
             uint32_t Reserved_144 : BITFIELD_RANGE(16, 31);
+            // DWORD 5
             uint32_t ConstantUrbEntryReadOffset : BITFIELD_RANGE(0, 15);
             uint32_t ConstantIndirectUrbEntryReadLength : BITFIELD_RANGE(16, 31);
+            // DWORD 6
             uint32_t NumberOfThreadsInGpgpuThreadGroup : BITFIELD_RANGE(0, 9);
-            uint32_t Reserved_202 : BITFIELD_RANGE(10, 15);
+            uint32_t Reserved_202 : BITFIELD_RANGE(10, 12);
+            uint32_t OverDispatchControl : BITFIELD_RANGE(13, 14);
+            uint32_t Reserved_207 : BITFIELD_RANGE(15, 15);
             uint32_t SharedLocalMemorySize : BITFIELD_RANGE(16, 20);
             uint32_t BarrierEnable : BITFIELD_RANGE(21, 21);
             uint32_t RoundingMode : BITFIELD_RANGE(22, 23);
             uint32_t Reserved_216 : BITFIELD_RANGE(24, 31);
-            uint32_t Cross_ThreadConstantDataReadLength : BITFIELD_RANGE(0, 7);
+            // DWORD 7
+            uint32_t CrossThreadConstantDataReadLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_232 : BITFIELD_RANGE(8, 31);
         } Common;
         uint32_t RawData[8];
@@ -299,6 +326,12 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         SAMPLER_COUNT_BETWEEN_9_AND_12_SAMPLERS_USED = 0x3,
         SAMPLER_COUNT_BETWEEN_13_AND_16_SAMPLERS_USED = 0x4,
     } SAMPLER_COUNT;
+    typedef enum tagOVER_DISPATCH_CONTROL {
+        OVER_DISPATCH_CONTROL_NONE = 0x0,
+        OVER_DISPATCH_CONTROL_LOW = 0x1,
+        OVER_DISPATCH_CONTROL_HIGH = 0x2,
+        OVER_DISPATCH_CONTROL_NORMAL = 0x3,
+    } OVER_DISPATCH_CONTROL;
     typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
         SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K = 0x0,
         SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K = 0x1,
@@ -315,16 +348,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         ROUNDING_MODE_RD = 0x2,
         ROUNDING_MODE_RTZ = 0x3,
     } ROUNDING_MODE;
-    typedef enum tagPATCH_CONSTANTS {
-        KERNELSTARTPOINTER_BYTEOFFSET = 0x0,
-        KERNELSTARTPOINTER_INDEX = 0x0,
-        KERNELSTARTPOINTERHIGH_BYTEOFFSET = 0x4,
-        KERNELSTARTPOINTERHIGH_INDEX = 0x1,
-        SAMPLERSTATEPOINTER_BYTEOFFSET = 0xc,
-        SAMPLERSTATEPOINTER_INDEX = 0x3,
-        BINDINGTABLEPOINTER_BYTEOFFSET = 0x10,
-        BINDINGTABLEPOINTER_INDEX = 0x4,
-    } PATCH_CONSTANTS;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
@@ -333,6 +356,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
         TheStructure.Common.ThreadPreemptionDisable = THREAD_PREEMPTION_DISABLE_DISABLE;
         TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
+        TheStructure.Common.OverDispatchControl = OVER_DISPATCH_CONTROL_NONE;
         TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
     }
@@ -342,7 +366,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 8);
+        UNRECOVERABLE_IF(index >= 8);
         return TheStructure.RawData[index];
     }
     typedef enum tagKERNELSTARTPOINTER {
@@ -351,34 +375,35 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     } KERNELSTARTPOINTER;
     inline void setKernelStartPointer(const uint64_t value) {
         DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.KernelStartPointer = (uint32_t)value >> KERNELSTARTPOINTER_BIT_SHIFT;
+        TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value) >> KERNELSTARTPOINTER_BIT_SHIFT;
     }
     inline uint32_t getKernelStartPointer(void) const {
-        return (TheStructure.Common.KernelStartPointer << KERNELSTARTPOINTER_BIT_SHIFT);
+        return TheStructure.Common.KernelStartPointer << KERNELSTARTPOINTER_BIT_SHIFT;
     }
     inline void setKernelStartPointerHigh(const uint32_t value) {
-        TheStructure.Common.KernelStartPointerHigh = value;
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.KernelStartPointerHigh = static_cast<uint32_t>(value);
     }
     inline uint32_t getKernelStartPointerHigh(void) const {
-        return (TheStructure.Common.KernelStartPointerHigh);
+        return TheStructure.Common.KernelStartPointerHigh;
     }
     inline void setSoftwareExceptionEnable(const bool value) {
         TheStructure.Common.SoftwareExceptionEnable = value;
     }
     inline bool getSoftwareExceptionEnable(void) const {
-        return (TheStructure.Common.SoftwareExceptionEnable);
+        return TheStructure.Common.SoftwareExceptionEnable;
     }
     inline void setMaskStackExceptionEnable(const bool value) {
         TheStructure.Common.MaskStackExceptionEnable = value;
     }
     inline bool getMaskStackExceptionEnable(void) const {
-        return (TheStructure.Common.MaskStackExceptionEnable);
+        return TheStructure.Common.MaskStackExceptionEnable;
     }
     inline void setIllegalOpcodeExceptionEnable(const bool value) {
         TheStructure.Common.IllegalOpcodeExceptionEnable = value;
     }
     inline bool getIllegalOpcodeExceptionEnable(void) const {
-        return (TheStructure.Common.IllegalOpcodeExceptionEnable);
+        return TheStructure.Common.IllegalOpcodeExceptionEnable;
     }
     inline void setFloatingPointMode(const FLOATING_POINT_MODE value) {
         TheStructure.Common.FloatingPointMode = value;
@@ -420,47 +445,57 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         SAMPLERSTATEPOINTER_BIT_SHIFT = 0x5,
         SAMPLERSTATEPOINTER_ALIGN_SIZE = 0x20,
     } SAMPLERSTATEPOINTER;
-    inline void setSamplerStatePointer(const uint64_t value) {
-        DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.SamplerStatePointer = (uint32_t)value >> SAMPLERSTATEPOINTER_BIT_SHIFT;
+    inline void setSamplerStatePointer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffff);
+        TheStructure.Common.SamplerStatePointer = static_cast<uint32_t>(value) >> SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getSamplerStatePointer(void) const {
-        return (TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT);
+        return TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline void setBindingTableEntryCount(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1f);
         TheStructure.Common.BindingTableEntryCount = value;
     }
     inline uint32_t getBindingTableEntryCount(void) const {
-        return (TheStructure.Common.BindingTableEntryCount);
+        return TheStructure.Common.BindingTableEntryCount;
     }
     typedef enum tagBINDINGTABLEPOINTER {
         BINDINGTABLEPOINTER_BIT_SHIFT = 0x5,
         BINDINGTABLEPOINTER_ALIGN_SIZE = 0x20,
     } BINDINGTABLEPOINTER;
-    inline void setBindingTablePointer(const uint64_t value) {
-        DEBUG_BREAK_IF(value >= 0x100000000);
-        TheStructure.Common.BindingTablePointer = (uint32_t)value >> BINDINGTABLEPOINTER_BIT_SHIFT;
+    inline void setBindingTablePointer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.BindingTablePointer = static_cast<uint32_t>(value) >> BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getBindingTablePointer(void) const {
-        return (TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT);
+        return TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline void setConstantUrbEntryReadOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.ConstantUrbEntryReadOffset = value;
     }
     inline uint32_t getConstantUrbEntryReadOffset(void) const {
-        return (TheStructure.Common.ConstantUrbEntryReadOffset);
+        return TheStructure.Common.ConstantUrbEntryReadOffset;
     }
     inline void setConstantIndirectUrbEntryReadLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.ConstantIndirectUrbEntryReadLength = value;
     }
     inline uint32_t getConstantIndirectUrbEntryReadLength(void) const {
-        return (TheStructure.Common.ConstantIndirectUrbEntryReadLength);
+        return TheStructure.Common.ConstantIndirectUrbEntryReadLength;
     }
     inline void setNumberOfThreadsInGpgpuThreadGroup(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3ff);
         TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup = value;
     }
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup(void) const {
-        return (TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup);
+        return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
+    }
+    inline void setOverDispatchControl(const OVER_DISPATCH_CONTROL value) {
+        TheStructure.Common.OverDispatchControl = value;
+    }
+    inline OVER_DISPATCH_CONTROL getOverDispatchControl(void) const {
+        return static_cast<OVER_DISPATCH_CONTROL>(TheStructure.Common.OverDispatchControl);
     }
     inline void setSharedLocalMemorySize(const SHARED_LOCAL_MEMORY_SIZE value) {
         TheStructure.Common.SharedLocalMemorySize = value;
@@ -472,7 +507,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         TheStructure.Common.BarrierEnable = (value > 0u) ? 1u : 0u;
     }
     inline bool getBarrierEnable(void) const {
-        return (TheStructure.Common.BarrierEnable);
+        return TheStructure.Common.BarrierEnable;
     }
     inline void setRoundingMode(const ROUNDING_MODE value) {
         TheStructure.Common.RoundingMode = value;
@@ -481,10 +516,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         return static_cast<ROUNDING_MODE>(TheStructure.Common.RoundingMode);
     }
     inline void setCrossThreadConstantDataReadLength(const uint32_t value) {
-        TheStructure.Common.Cross_ThreadConstantDataReadLength = value;
+        UNRECOVERABLE_IF(value > 0xff);
+        TheStructure.Common.CrossThreadConstantDataReadLength = value;
     }
     inline uint32_t getCrossThreadConstantDataReadLength(void) const {
-        return (TheStructure.Common.Cross_ThreadConstantDataReadLength);
+        return TheStructure.Common.CrossThreadConstantDataReadLength;
     }
 } INTERFACE_DESCRIPTOR_DATA;
 STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));
@@ -492,14 +528,18 @@ STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));
 typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 15);
             uint32_t Subopcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t Reserved_32;
+            // DWORD 2
             uint32_t InterfaceDescriptorTotalLength : BITFIELD_RANGE(0, 16);
             uint32_t Reserved_81 : BITFIELD_RANGE(17, 31);
+            // DWORD 3
             uint32_t InterfaceDescriptorDataStartAddress;
         } Common;
         uint32_t RawData[4];
@@ -519,10 +559,10 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    typedef enum tagPATCH_CONSTANTS {
-        INTERFACEDESCRIPTORDATASTARTADDRESS_BYTEOFFSET = 0xc,
-        INTERFACEDESCRIPTORDATASTARTADDRESS_INDEX = 0x3,
-    } PATCH_CONSTANTS;
+    typedef enum tagINTERFACE_DESCRIPTOR_TOTAL_LENGTH {
+        INTERFACE_DESCRIPTOR_TOTAL_LENGTH_1_64_INTERFACE_DESCRIPTOR_ENTRIES_MIN = 0x20,
+        INTERFACE_DESCRIPTOR_TOTAL_LENGTH_1_64_INTERFACE_DESCRIPTOR_ENTRIES_MAX = 0x800,
+    } INTERFACE_DESCRIPTOR_TOTAL_LENGTH;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
@@ -537,20 +577,21 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 4);
+        UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
     }
     inline void setInterfaceDescriptorTotalLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1ffff);
         TheStructure.Common.InterfaceDescriptorTotalLength = value;
     }
     inline uint32_t getInterfaceDescriptorTotalLength(void) const {
-        return (TheStructure.Common.InterfaceDescriptorTotalLength);
+        return TheStructure.Common.InterfaceDescriptorTotalLength;
     }
     inline void setInterfaceDescriptorDataStartAddress(const uint32_t value) {
         TheStructure.Common.InterfaceDescriptorDataStartAddress = value;
     }
     inline uint32_t getInterfaceDescriptorDataStartAddress(void) const {
-        return (TheStructure.Common.InterfaceDescriptorDataStartAddress);
+        return TheStructure.Common.InterfaceDescriptorDataStartAddress;
     }
 } MEDIA_INTERFACE_DESCRIPTOR_LOAD;
 STATIC_ASSERT(16 == sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD));
@@ -558,11 +599,13 @@ STATIC_ASSERT(16 == sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD));
 typedef struct tagMEDIA_STATE_FLUSH {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 15);
             uint32_t Subopcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t InterfaceDescriptorOffset : BITFIELD_RANGE(0, 5);
             uint32_t Reserved_38 : BITFIELD_RANGE(6, 6);
             uint32_t FlushToGo : BITFIELD_RANGE(7, 7);
@@ -599,20 +642,21 @@ typedef struct tagMEDIA_STATE_FLUSH {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 2);
+        UNRECOVERABLE_IF(index >= 2);
         return TheStructure.RawData[index];
     }
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
     inline uint32_t getInterfaceDescriptorOffset(void) const {
-        return (TheStructure.Common.InterfaceDescriptorOffset);
+        return TheStructure.Common.InterfaceDescriptorOffset;
     }
     inline void setFlushToGo(const bool value) {
         TheStructure.Common.FlushToGo = value;
     }
     inline bool getFlushToGo(void) const {
-        return (TheStructure.Common.FlushToGo);
+        return TheStructure.Common.FlushToGo;
     }
 } MEDIA_STATE_FLUSH;
 STATIC_ASSERT(8 == sizeof(MEDIA_STATE_FLUSH));
