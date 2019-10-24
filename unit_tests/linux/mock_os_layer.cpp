@@ -184,6 +184,9 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
             case DRM_IOCTL_VERSION:
                 res = drmVersion(va_arg(vl, drm_version_t *));
                 break;
+            default:
+                res = drmOtherRequests(request, vl);
+                break;
             }
         }
         va_end(vl);

@@ -28,6 +28,7 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${NEO_SOURCE_DIR}/runtime/dll/linux/options.cpp
   ${NEO_SOURCE_DIR}/runtime/dll/linux/os_interface.cpp
   ${NEO_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
   ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
@@ -61,3 +62,4 @@ foreach(target_name linux_tests linux_dll_tests)
   )
   add_dependencies(unit_tests igdrcl_${target_name})
 endforeach()
+add_subdirectories()

@@ -27,6 +27,8 @@ extern int (*c_open)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
 extern int (*c_ioctl)(int __fd, unsigned long int __request, ...);
 
+extern int drmOtherRequests(unsigned long int request, va_list vl);
+
 extern int fakeFd;
 extern int haveDri;  // index of dri to serve, -1 - none
 extern int deviceId; // known DeviceID
