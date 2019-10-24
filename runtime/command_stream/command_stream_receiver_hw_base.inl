@@ -827,7 +827,6 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &bl
 
     makeResident(*blitProperites.srcAllocation);
     makeResident(*blitProperites.dstAllocation);
-    makeResident(*commandStream.getGraphicsAllocation());
     makeResident(*tagAllocation);
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
