@@ -184,7 +184,7 @@ struct MultiDispatchInfo {
     Kernel *peekParentKernel() const;
     Kernel *peekMainKernel() const;
 
-    void setBuiltinOpParams(BuiltinOpParams builtinOpParams) {
+    void setBuiltinOpParams(const BuiltinOpParams &builtinOpParams) {
         this->builtinOpParams = builtinOpParams;
     }
 
