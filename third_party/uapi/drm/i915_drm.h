@@ -1513,6 +1513,8 @@ struct drm_i915_gem_context_param {
 	 */
 #define I915_CONTEXT_PARAM_SSEU		0x7
 
+#define I915_CONTEXT_PARAM_PERSISTENCE 0xb
+
 /*
  * Not all clients may want to attempt automatic recover of a context after
  * a hang (for example, some clients may only submit very small incremental

@@ -85,6 +85,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             }
             return this->StoredRetValForSetSSEU;
         }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
+            return 0;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {

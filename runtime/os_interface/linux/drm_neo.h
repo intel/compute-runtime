@@ -89,6 +89,7 @@ class Drm {
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
+    void setNonPersistent(uint32_t drmContextId);
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
