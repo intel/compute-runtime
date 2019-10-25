@@ -113,18 +113,18 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
     CommandQueue *pCmdQ2 = nullptr;
 };
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
+HWTEST_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenTwoDifferentWalkersAreCreated) {
     parseWalkers<FamilyType>();
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveOnePS) {
+HWTEST_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     parseWalkers<FamilyType>();
 
@@ -164,7 +164,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
     }
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, DISABLED_shouldHaveAPipecontrolBetweenWalkers) {
+HWTEST_F(TwoOOQsTwoDependentWalkers, DISABLED_GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;

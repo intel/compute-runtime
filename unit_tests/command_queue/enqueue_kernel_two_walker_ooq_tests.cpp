@@ -17,26 +17,26 @@ struct OOQFixtureFactory : public HelloWorldFixtureFactory {
 
 typedef TwoWalkerTest<OOQFixtureFactory> OOQWithTwoWalkers;
 
-HWTEST_F(OOQWithTwoWalkers, shouldHaveTwoWalkers) {
+HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenTwoDifferentWalkersAreCreated) {
     enqueueTwoKernels<FamilyType>();
 
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(OOQWithTwoWalkers, shouldHaveOnePS) {
+HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists) {
     enqueueTwoKernels<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
     enqueueTwoKernels<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(OOQWithTwoWalkers, shouldntHaveAPipecontrolBetweenWalkers) {
+HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(itorWalker1, itorWalker2);
