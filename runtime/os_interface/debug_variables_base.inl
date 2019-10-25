@@ -107,6 +107,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memo
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelAdvancedVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_advanced_motion_estimation extension")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsSupport, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsForReadWriteBuffers, -1, "Use Blitter engine for Read/Write Buffers operations. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalker, -1, "-1: platform behavior, 0: disabled, 1: enabled. Adds dedicated cache flush command after WALKER command when surfaces used by kernel require to flush the cache")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLocalMemory, -1, "-1: default behavior, 0: disabled, 1: enabled, Allows allocating graphics memory in Local Memory")
