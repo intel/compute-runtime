@@ -1239,19 +1239,22 @@ STATIC_ASSERT(12 == sizeof(MI_BATCH_BUFFER_START));
 typedef struct tagMI_LOAD_REGISTER_IMM {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t ByteWriteDisables : BITFIELD_RANGE(8, 11);
             uint32_t Reserved_12 : BITFIELD_RANGE(12, 16);
             uint32_t MmioRemapEnable : BITFIELD_RANGE(17, 17);
-            uint32_t Reserved_13 : BITFIELD_RANGE(18, 18);
+            uint32_t Reserved_18 : BITFIELD_RANGE(18, 18);
             uint32_t AddCsMmioStartOffset : BITFIELD_RANGE(19, 19);
             uint32_t Reserved_20 : BITFIELD_RANGE(20, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22);
-            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
-            uint32_t DataDword;
+            // DWORD 1
+            uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
+            uint64_t RegisterOffset : BITFIELD_RANGE(2, 22);
+            uint64_t Reserved_55 : BITFIELD_RANGE(23, 31);
+            // DWORD 2
+            uint64_t DataDword : BITFIELD_RANGE(32, 63);
         } Common;
         uint32_t RawData[3];
     } TheStructure;
@@ -1276,36 +1279,15 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 3);
+        UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
     inline void setByteWriteDisables(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.ByteWriteDisables = value;
     }
     inline uint32_t getByteWriteDisables(void) const {
-        return (TheStructure.Common.ByteWriteDisables);
-    }
-    inline void setAddCsMmioStartOffset(const uint32_t value) {
-        TheStructure.Common.AddCsMmioStartOffset = value;
-    }
-    inline uint32_t getAddCsMmioStartOffset(void) const {
-        return (TheStructure.Common.AddCsMmioStartOffset);
-    }
-    typedef enum tagREGISTEROFFSET {
-        REGISTEROFFSET_BIT_SHIFT = 0x2,
-        REGISTEROFFSET_ALIGN_SIZE = 0x4,
-    } REGISTEROFFSET;
-    inline void setRegisterOffset(const uint32_t value) {
-        TheStructure.Common.RegisterOffset = value >> REGISTEROFFSET_BIT_SHIFT;
-    }
-    inline uint32_t getRegisterOffset(void) const {
-        return (TheStructure.Common.RegisterOffset << REGISTEROFFSET_BIT_SHIFT);
-    }
-    inline void setDataDword(const uint32_t value) {
-        TheStructure.Common.DataDword = value;
-    }
-    inline uint32_t getDataDword(void) const {
-        return (TheStructure.Common.DataDword);
+        return TheStructure.Common.ByteWriteDisables;
     }
     inline void setMmioRemapEnable(const bool value) {
         TheStructure.Common.MmioRemapEnable = value;
@@ -1313,12 +1295,36 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
     inline bool getMmioRemapEnable(void) const {
         return TheStructure.Common.MmioRemapEnable;
     }
+    inline void setAddCsMmioStartOffset(const bool value) {
+        TheStructure.Common.AddCsMmioStartOffset = value;
+    }
+    inline bool getAddCsMmioStartOffset(void) const {
+        return TheStructure.Common.AddCsMmioStartOffset;
+    }
+    typedef enum tagREGISTEROFFSET {
+        REGISTEROFFSET_BIT_SHIFT = 0x2,
+        REGISTEROFFSET_ALIGN_SIZE = 0x4,
+    } REGISTEROFFSET;
+    inline void setRegisterOffset(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0x7fffffL);
+        TheStructure.Common.RegisterOffset = value >> REGISTEROFFSET_BIT_SHIFT;
+    }
+    inline uint64_t getRegisterOffset(void) const {
+        return TheStructure.Common.RegisterOffset << REGISTEROFFSET_BIT_SHIFT;
+    }
+    inline void setDataDword(const uint64_t value) {
+        TheStructure.Common.DataDword = value;
+    }
+    inline uint64_t getDataDword(void) const {
+        return TheStructure.Common.DataDword;
+    }
 } MI_LOAD_REGISTER_IMM;
 STATIC_ASSERT(12 == sizeof(MI_LOAD_REGISTER_IMM));
 
 typedef struct tagMI_LOAD_REGISTER_MEM {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 16);
             uint32_t MmioRemapEnable : BITFIELD_RANGE(17, 17);
@@ -1329,9 +1335,11 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
             uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint32_t RegisterAddress : BITFIELD_RANGE(2, 22);
             uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
+            // DWORD 2
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
             uint64_t MemoryAddress : BITFIELD_RANGE(2, 63);
         } Common;
@@ -1358,7 +1366,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 4);
+        UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
     }
     inline void setMmioRemapEnable(const bool value) {
@@ -1367,10 +1375,10 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     inline bool getMmioRemapEnable(void) const {
         return TheStructure.Common.MmioRemapEnable;
     }
-    inline void setAddCsMmioStartOffset(const uint32_t value) {
+    inline void setAddCsMmioStartOffset(const bool value) {
         TheStructure.Common.AddCsMmioStartOffset = value;
     }
-    inline uint32_t getAddCsMmioStartOffset(void) const {
+    inline bool getAddCsMmioStartOffset(void) const {
         return TheStructure.Common.AddCsMmioStartOffset;
     }
     inline void setAsyncModeEnable(const bool value) {
@@ -1390,7 +1398,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         REGISTERADDRESS_ALIGN_SIZE = 0x4,
     } REGISTERADDRESS;
     inline void setRegisterAddress(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7ffffc);
+        UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.RegisterAddress = value >> REGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getRegisterAddress(void) const {
@@ -1401,7 +1409,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
         MEMORYADDRESS_ALIGN_SIZE = 0x4,
     } MEMORYADDRESS;
     inline void setMemoryAddress(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0xfffffffffffffffcL);
+        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
     inline uint64_t getMemoryAddress(void) const {
@@ -1413,6 +1421,7 @@ STATIC_ASSERT(16 == sizeof(MI_LOAD_REGISTER_MEM));
 typedef struct tagMI_LOAD_REGISTER_REG {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t MmioRemapEnableSource : BITFIELD_RANGE(16, 16);
@@ -1422,9 +1431,11 @@ typedef struct tagMI_LOAD_REGISTER_REG {
             uint32_t Reserved_20 : BITFIELD_RANGE(20, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint32_t SourceRegisterAddress : BITFIELD_RANGE(2, 22);
             uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
+            // DWORD 2
             uint32_t Reserved_64 : BITFIELD_RANGE(0, 1);
             uint32_t DestinationRegisterAddress : BITFIELD_RANGE(2, 22);
             uint32_t Reserved_87 : BITFIELD_RANGE(23, 31);
@@ -1452,7 +1463,7 @@ typedef struct tagMI_LOAD_REGISTER_REG {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 3);
+        UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
     inline void setMmioRemapEnableSource(const bool value) {
@@ -1467,16 +1478,16 @@ typedef struct tagMI_LOAD_REGISTER_REG {
     inline bool getMmioRemapEnableDestination(void) const {
         return TheStructure.Common.MmioRemapEnableDestination;
     }
-    inline void setAddCsMmioStartOffsetSource(const uint32_t value) {
+    inline void setAddCsMmioStartOffsetSource(const bool value) {
         TheStructure.Common.AddCsMmioStartOffsetSource = value;
     }
-    inline uint32_t getAddCsMmioStartOffsetSource(void) const {
+    inline bool getAddCsMmioStartOffsetSource(void) const {
         return TheStructure.Common.AddCsMmioStartOffsetSource;
     }
-    inline void setAddCsMmioStartOffsetDestination(const uint32_t value) {
+    inline void setAddCsMmioStartOffsetDestination(const bool value) {
         TheStructure.Common.AddCsMmioStartOffsetDestination = value;
     }
-    inline uint32_t getAddCsMmioStartOffsetDestination(void) const {
+    inline bool getAddCsMmioStartOffsetDestination(void) const {
         return TheStructure.Common.AddCsMmioStartOffsetDestination;
     }
     typedef enum tagSOURCEREGISTERADDRESS {
@@ -1484,7 +1495,7 @@ typedef struct tagMI_LOAD_REGISTER_REG {
         SOURCEREGISTERADDRESS_ALIGN_SIZE = 0x4,
     } SOURCEREGISTERADDRESS;
     inline void setSourceRegisterAddress(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7ffffc);
+        UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.SourceRegisterAddress = value >> SOURCEREGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getSourceRegisterAddress(void) const {
@@ -1495,7 +1506,7 @@ typedef struct tagMI_LOAD_REGISTER_REG {
         DESTINATIONREGISTERADDRESS_ALIGN_SIZE = 0x4,
     } DESTINATIONREGISTERADDRESS;
     inline void setDestinationRegisterAddress(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7ffffc);
+        UNRECOVERABLE_IF(value > 0x7fffff);
         TheStructure.Common.DestinationRegisterAddress = value >> DESTINATIONREGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getDestinationRegisterAddress(void) const {
