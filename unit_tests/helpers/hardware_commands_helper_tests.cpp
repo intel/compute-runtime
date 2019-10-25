@@ -1076,6 +1076,37 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     delete[] mockDsh;
 }
 
+using HardwareCommandsWaTest = ::testing::Test;
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsWaTest, GivenTgllpA0WhenSettingKernelStartOffsetThenAdditionalOffsetIsSet) {
+    const uint64_t defaultKernelStartOffset = 0;
+    const uint64_t additionalOffsetDueToFfid = 0x1234;
+    SPatchThreadPayload threadPayload{};
+    threadPayload.OffsetToSkipSetFFIDGP = additionalOffsetDueToFfid;
+    auto hwInfo = *platformDevices[0];
+
+    hwInfo.platform.eProductFamily = IGFX_TIGERLAKE_LP;
+    __REVID revIds[] = {REVISION_A0, REVISION_A1};
+    for (auto revId : revIds) {
+        hwInfo.platform.usRevId = revId;
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        MockKernelWithInternals mockKernelWithInternals{*device};
+        mockKernelWithInternals.kernelInfo.patchInfo.threadPayload = &threadPayload;
+
+        for (auto isCcsUsed : ::testing::Bool()) {
+            uint64_t kernelStartOffset = defaultKernelStartOffset;
+            HardwareCommandsHelper<FamilyType>::setKernelStartOffset(kernelStartOffset, false, mockKernelWithInternals.kernelInfo, false,
+                                                                     false, *mockKernelWithInternals.mockKernel, isCcsUsed);
+
+            if ((revId == REVISION_A0) && isCcsUsed) {
+                EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);
+            } else {
+                EXPECT_EQ(defaultKernelStartOffset, kernelStartOffset);
+            }
+        }
+    }
+}
+
 using HardwareCommandsHelperTests = ::testing::Test;
 
 HWTEST_F(HardwareCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSemaphoreWaitThenSetupAllFields) {
