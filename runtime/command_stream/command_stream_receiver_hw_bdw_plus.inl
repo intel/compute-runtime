@@ -54,6 +54,9 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::adjustComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, void *const stateComputeMode) {}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
     scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(executionEnvironment, *internalAllocationStorage.get());
 }

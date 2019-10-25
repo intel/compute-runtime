@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver_hw_bdw_plus.inl"
+#include "runtime/command_stream/command_stream_receiver_hw_tgllp_plus.inl"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/gen12lp/helpers_gen12lp.h"
 #include "runtime/gen12lp/hw_cmds.h"
@@ -38,34 +39,13 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
     }
 
     size_t size = 0;
-    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles) {
+    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged) {
         size += sizeof(typename Family::STATE_COMPUTE_MODE);
         if (csrSizeRequestFlags.hasSharedHandles) {
             size += sizeof(typename Family::PIPE_CONTROL);
         }
     }
     return size;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
-    typedef typename Family::STATE_COMPUTE_MODE STATE_COMPUTE_MODE;
-    typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
-
-    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles) {
-        auto stateComputeMode = stream.getSpaceForCmd<STATE_COMPUTE_MODE>();
-        *stateComputeMode = Family::cmdInitStateComputeMode;
-        STATE_COMPUTE_MODE::FORCE_NON_COHERENT coherencyValue = !dispatchFlags.requiresCoherency ? STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT : STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED;
-        stateComputeMode->setForceNonCoherent(coherencyValue);
-        stateComputeMode->setMaskBits(Family::stateComputeModeForceNonCoherentMask);
-
-        this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
-
-        if (csrSizeRequestFlags.hasSharedHandles) {
-            auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
-            *pc = Family::cmdInitPipeControl;
-        }
-    }
 }
 
 template <>

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_command_stream
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
 add_subdirectories()
