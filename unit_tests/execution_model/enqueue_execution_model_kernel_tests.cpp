@@ -310,12 +310,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
                 auto dstBindingTable = reinterpret_cast<BINDING_TABLE_STATE *>(dstBlockBti);
 
                 auto srcBlockBti = ptrOffset(pBlockInfo->heapInfo.pSsh, pBlockInfo->patchInfo.bindingTableState->Offset);
-                auto srcBindingTable = reinterpret_cast<BINDING_TABLE_STATE *>(srcBlockBti);
+                auto srcBindingTable = reinterpret_cast<const BINDING_TABLE_STATE *>(srcBlockBti);
                 for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(); ++i) {
                     uint32_t dstSurfaceStatePointer = dstBindingTable[i].getSurfaceStatePointer();
                     uint32_t srcSurfaceStatePointer = srcBindingTable[i].getSurfaceStatePointer();
                     auto *dstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh->getCpuBase(), dstSurfaceStatePointer));
-                    auto *srcSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pBlockInfo->heapInfo.pSsh, srcSurfaceStatePointer));
+                    auto *srcSurfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pBlockInfo->heapInfo.pSsh, srcSurfaceStatePointer));
                     EXPECT_EQ(0, memcmp(srcSurfaceState, dstSurfaceState, sizeof(RENDER_SURFACE_STATE)));
                 }
 

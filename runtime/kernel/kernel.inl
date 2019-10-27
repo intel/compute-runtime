@@ -6,6 +6,7 @@
  */
 
 #include "runtime/kernel/kernel.h"
+#include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/printf_handler.h"
 
 namespace NEO {

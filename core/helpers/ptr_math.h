@@ -47,14 +47,33 @@ inline void *addrToPtr(IntegerAddressType addr) {
     return ptrReturn;
 }
 
-inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, uintptr_t patchValue) {
-    if (patchSize == sizeof(uint64_t)) {
-        uint64_t *curbeAddress = (uint64_t *)memoryToBePatched;
-        *curbeAddress = patchValue;
-    } else {
-        uint32_t *curbeAddress = (uint32_t *)memoryToBePatched;
-        *curbeAddress = (uint32_t)patchValue;
+struct PatchStoreOperation {
+    template <typename T>
+    void operator()(T *memory, T value) {
+        *memory = value;
     }
+};
+
+struct PatchIncrementOperation {
+    template <typename T>
+    void operator()(T *memory, T value) {
+        *memory += value;
+    }
+};
+
+template <typename PatchOperationT = PatchStoreOperation>
+inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, uint64_t patchValue) {
+    if (patchSize == sizeof(uint64_t)) {
+        uint64_t *curbeAddress = reinterpret_cast<uint64_t *>(memoryToBePatched);
+        PatchOperationT{}(curbeAddress, patchValue);
+    } else {
+        uint32_t *curbeAddress = reinterpret_cast<uint32_t *>(memoryToBePatched);
+        PatchOperationT{}(curbeAddress, static_cast<uint32_t>(patchValue));
+    }
+}
+
+inline void patchIncrement(void *memoryToBePatched, uint32_t patchSize, uint64_t patchIncrementValue) {
+    patchWithRequiredSize<PatchIncrementOperation>(memoryToBePatched, patchSize, patchIncrementValue);
 }
 
 inline uint64_t castToUint64(void *address) {

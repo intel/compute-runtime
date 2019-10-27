@@ -525,9 +525,9 @@ TEST_P(DataParameterTest, DataParameterTests) {
 
     buildAndDecode();
 
-    if (pKernelInfo->patchInfo.dataParameterBuffers.size() > 0) {
-        EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-        EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    if (pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size() > 0) {
+        EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Token);
+        EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Type);
         if (pKernelInfo->kernelArgInfo.size() == dataParameterToken.ArgumentNumber + 1) {
             if (GetParam() == DATA_PARAMETER_BUFFER_STATEFUL) {
                 EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
@@ -553,7 +553,7 @@ TEST_F(KernelDataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
     dataParameterToken.DataSize = sizeof(uint32_t);
     dataParameterToken.LocationIndex = 0x0;
     dataParameterToken.LocationIndex2 = 0x0;
-    dataParameterToken.Offset = 0;
+    dataParameterToken.Offset = 128;
     dataParameterToken.SourceOffset = 8;
 
     pPatchList = &dataParameterToken;
@@ -561,9 +561,9 @@ TEST_F(KernelDataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
 
     buildAndDecode();
 
-    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_BUFFER_OFFSET, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
+    EXPECT_EQ_VAL(pKernelInfo->kernelArgInfo[1].offsetBufferOffset, dataParameterToken.Offset);
 }
 
 TEST_F(KernelDataParameterTest, givenDataParameterBufferStatefulWhenDecodingThenSetArgAsPureStateful) {
@@ -578,10 +578,9 @@ TEST_F(KernelDataParameterTest, givenDataParameterBufferStatefulWhenDecodingThen
 
     buildAndDecode();
 
-    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_BUFFER_STATEFUL, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-    EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
+    EXPECT_TRUE(pKernelInfo->kernelArgInfo[1].pureStatefulBufferAccess);
 }
 
 TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParameterIsIgnored) {
@@ -601,7 +600,7 @@ TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParamete
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(0u, pKernelInfo->patchInfo.dataParameterBuffers.size());
+    EXPECT_EQ_VAL(0u, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
 }
 
 TEST_F(KernelDataTest, DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES) {
@@ -625,10 +624,10 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES)
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ(alignment, pKernelInfo->kernelArgInfo[argumentNumber].slmAlignment);
+    ASSERT_EQ(1U, pKernelInfo->kernelArgInfo[argumentNumber].kernelArgPatchInfoVector.size());
     EXPECT_EQ(offsetCrossThread, pKernelInfo->kernelArgInfo[argumentNumber].kernelArgPatchInfoVector[0].crossthreadOffset);
 }
 
@@ -653,9 +652,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_WIDTH) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_WIDTH, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ(offsetImgWidth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgWidth);
 }
 
@@ -680,8 +678,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_HEIGHT) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_HEIGHT, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImgHeight, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgHeight);
 }
@@ -707,8 +705,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DEPTH) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_DEPTH, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImgDepth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgDepth);
 }
@@ -734,8 +732,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_SAMPLES) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_NUM_SAMPLES, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumSamples, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumSamples);
 }
@@ -761,8 +759,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumMipLevels, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumMipLevels);
 }
@@ -788,8 +786,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DATA_TYPE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetChannelDataType, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelDataType);
 }
@@ -815,8 +813,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_CHANNEL_ORDER) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_CHANNEL_ORDER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetChannelOrder, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelOrder);
 }
@@ -842,8 +840,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_ARRAY_SIZE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_ARRAY_SIZE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetImageArraySize, pKernelInfo->kernelArgInfo[argumentNumber].offsetArraySize);
 }
@@ -869,8 +867,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_WORK_DIMENSIONS) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_WORK_DIMENSIONS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetWorkDim, pKernelInfo->workloadInfo.workDimOffset);
 }
@@ -896,10 +894,9 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SIMD_SIZE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_SIMD_SIZE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
+
     EXPECT_EQ(offsetSimdSize, pKernelInfo->workloadInfo.simdSizeOffset);
 }
 
@@ -924,8 +921,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_PRIVATE_MEMORY_STATELESS_SIZE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_PRIVATE_MEMORY_STATELESS_SIZE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -950,8 +946,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -976,8 +971,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRES
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
@@ -1002,8 +996,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_NUM_WORK_GROUPS) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_NUM_WORK_GROUPS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->workloadInfo.numWorkGroupsOffset[argumentNumber]);
 }
@@ -1029,8 +1023,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_MAX_WORKGROUP_SIZE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_MAX_WORKGROUP_SIZE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->workloadInfo.maxWorkGroupSizeOffset);
 }
@@ -1057,10 +1051,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_ADDRESS_MODE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_SAMPLER_ADDRESS_MODE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
-    ASSERT_EQ(1u, pKernelInfo->kernelArgInfo.size());
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(1U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode);
 }
@@ -1087,10 +1079,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
-    ASSERT_EQ(2u, pKernelInfo->kernelArgInfo.size());
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerSnapWa);
 }
@@ -1117,10 +1107,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
-
-    ASSERT_EQ(2u, pKernelInfo->kernelArgInfo.size());
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerNormalizedCoords);
 }
@@ -1157,8 +1145,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_KERNEL_ARGUMENT) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_KERNEL_ARGUMENT, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Token);
+    EXPECT_EQ_VAL(DATA_PARAMETER_KERNEL_ARGUMENT, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs[0]->Type);
 
     ASSERT_EQ(1u, pKernelInfo->kernelArgInfo.size());
     ASSERT_EQ(2u, pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.size());
@@ -1273,8 +1261,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_MB_BLOCK_TYPE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_VME_MB_BLOCK_TYPE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeMbBlockType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeMbBlockType);
 }
@@ -1300,8 +1288,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SUBPIXEL_MODE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_VME_SUBPIXEL_MODE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSubpixelMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSubpixelMode);
 }
@@ -1327,8 +1315,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SAD_ADJUST_MODE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_VME_SAD_ADJUST_MODE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSadAdjustMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSadAdjustMode);
 }
@@ -1354,8 +1342,8 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SEARCH_PATH_TYPE) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(DATA_PARAMETER_VME_SEARCH_PATH_TYPE, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    ASSERT_EQ(2U, pKernelInfo->kernelArgInfo.size());
 
     EXPECT_EQ(offsetVmeSearchPathType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSearchPathType);
 }
@@ -1372,6 +1360,8 @@ TEST_F(KernelDataTest, PATCH_TOKEN_STATE_SIP) {
 
     buildAndDecode();
 
+    EXPECT_EQ(0U, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
+    EXPECT_EQ(0U, pKernelInfo->kernelArgInfo.size());
     EXPECT_EQ_VAL(token.SystemKernelOffset, pKernelInfo->systemKernelOffset);
 }
 

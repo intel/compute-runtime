@@ -38,47 +38,24 @@ extern std::unordered_map<std::string, uint32_t> addressQualifierMap;
 extern std::map<std::string, size_t> typeSizeMap;
 
 struct WorkloadInfo {
-    uint32_t globalWorkOffsetOffsets[3];
-    uint32_t globalWorkSizeOffsets[3];
-    uint32_t localWorkSizeOffsets[3];
-    uint32_t localWorkSizeOffsets2[3];
-    uint32_t enqueuedLocalWorkSizeOffsets[3];
-    uint32_t numWorkGroupsOffset[3];
-    uint32_t maxWorkGroupSizeOffset;
-    uint32_t workDimOffset;
-    uint32_t slmStaticSize = 0;
-    uint32_t simdSizeOffset;
-    uint32_t parentEventOffset;
-    uint32_t preferredWkgMultipleOffset;
-
     static const uint32_t undefinedOffset;
     static const uint32_t invalidParentEvent;
 
-    WorkloadInfo() {
-        globalWorkOffsetOffsets[0] = undefinedOffset;
-        globalWorkOffsetOffsets[1] = undefinedOffset;
-        globalWorkOffsetOffsets[2] = undefinedOffset;
-        globalWorkSizeOffsets[0] = undefinedOffset;
-        globalWorkSizeOffsets[1] = undefinedOffset;
-        globalWorkSizeOffsets[2] = undefinedOffset;
-        localWorkSizeOffsets[0] = undefinedOffset;
-        localWorkSizeOffsets[1] = undefinedOffset;
-        localWorkSizeOffsets[2] = undefinedOffset;
-        localWorkSizeOffsets2[0] = undefinedOffset;
-        localWorkSizeOffsets2[1] = undefinedOffset;
-        localWorkSizeOffsets2[2] = undefinedOffset;
-        enqueuedLocalWorkSizeOffsets[0] = undefinedOffset;
-        enqueuedLocalWorkSizeOffsets[1] = undefinedOffset;
-        enqueuedLocalWorkSizeOffsets[2] = undefinedOffset;
-        numWorkGroupsOffset[0] = undefinedOffset;
-        numWorkGroupsOffset[1] = undefinedOffset;
-        numWorkGroupsOffset[2] = undefinedOffset;
-        maxWorkGroupSizeOffset = undefinedOffset;
-        workDimOffset = undefinedOffset;
-        simdSizeOffset = undefinedOffset;
-        parentEventOffset = undefinedOffset;
-        preferredWkgMultipleOffset = undefinedOffset;
-    }
+    uint32_t globalWorkOffsetOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t globalWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t localWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t localWorkSizeOffsets2[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t enqueuedLocalWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t numWorkGroupsOffset[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
+    uint32_t maxWorkGroupSizeOffset = undefinedOffset;
+    uint32_t workDimOffset = undefinedOffset;
+    uint32_t slmStaticSize = 0;
+    uint32_t simdSizeOffset = undefinedOffset;
+    uint32_t parentEventOffset = undefinedOffset;
+    uint32_t preferredWkgMultipleOffset = undefinedOffset;
+    uint32_t privateMemoryStatelessSizeOffset = undefinedOffset;
+    uint32_t localMemoryStatelessWindowSizeOffset = undefinedOffset;
+    uint32_t localMemoryStatelessWindowStartAddressOffset = undefinedOffset;
 };
 
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
@@ -115,24 +92,12 @@ struct DebugData {
 
 struct KernelInfo {
   public:
-    KernelInfo() {
-        heapInfo = {};
-        patchInfo = {};
-        workloadInfo = {};
-        kernelArgInfo = {};
-        kernelNonArgInfo = {};
-        childrenKernelsIdOffset = {};
-        reqdWorkGroupSize[0] = WorkloadInfo::undefinedOffset;
-        reqdWorkGroupSize[1] = WorkloadInfo::undefinedOffset;
-        reqdWorkGroupSize[2] = WorkloadInfo::undefinedOffset;
-    }
-
+    KernelInfo() = default;
     KernelInfo(const KernelInfo &) = delete;
     KernelInfo &operator=(const KernelInfo &) = delete;
-
     ~KernelInfo();
 
-    cl_int storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo);
+    void storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo);
     void storeKernelArgument(const SPatchDataParameterBuffer *pDataParameterKernelArg);
     void storeKernelArgument(const SPatchStatelessGlobalMemoryObjectKernelArgument *pStatelessGlobalKernelArg);
     void storeKernelArgument(const SPatchImageMemoryObjectKernelArgument *pImageMemObjKernelArg);
@@ -140,6 +105,7 @@ struct KernelInfo {
     void storeKernelArgument(const SPatchStatelessConstantMemoryObjectKernelArgument *pStatelessConstMemObjKernelArg);
     void storeKernelArgument(const SPatchStatelessDeviceQueueKernelArgument *pStatelessDeviceQueueKernelArg);
     void storeKernelArgument(const SPatchSamplerKernelArgument *pSamplerKernelArg);
+    void storePatchToken(const SPatchExecutionEnvironment *execEnv);
     void storePatchToken(const SPatchAllocateStatelessPrivateSurface *pStatelessPrivateSurfaceArg);
     void storePatchToken(const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pStatelessConstantMemorySurfaceWithInitializationArg);
     void storePatchToken(const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pStatelessGlobalMemorySurfaceWithInitializationArg);
@@ -216,18 +182,18 @@ struct KernelInfo {
 
     std::string name;
     std::string attributes;
-    HeapInfo heapInfo;
-    PatchInfo patchInfo;
+    HeapInfo heapInfo = {};
+    PatchInfo patchInfo = {};
     std::vector<KernelArgInfo> kernelArgInfo;
     std::vector<KernelArgInfo> kernelNonArgInfo;
-    WorkloadInfo workloadInfo;
+    WorkloadInfo workloadInfo = {};
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     bool usesSsh = false;
     bool requiresSshForBuffers = false;
     bool isValid = false;
     bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
-    size_t reqdWorkGroupSize[3];
+    size_t reqdWorkGroupSize[3] = {WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset};
     size_t requiredSubGroupSize = 0;
     std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
     std::array<uint8_t, 3> workgroupDimensionsOrder = {{0, 1, 2}};

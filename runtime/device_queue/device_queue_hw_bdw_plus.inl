@@ -6,6 +6,7 @@
  */
 
 #include "runtime/device_queue/device_queue_hw_base.inl"
+#include "runtime/program/block_kernel_manager.h"
 
 namespace NEO {
 

@@ -13,25 +13,11 @@
 namespace NEO {
 
 struct HeapInfo {
-    const SKernelBinaryHeaderCommon *pKernelHeader;
-    const void *pKernelHeap;
-    const void *pGsh;
-    const void *pDsh;
-    void *pSsh;
-    const void *pPatchList;
-    const void *pBlob;
-    size_t blobSize;
-
-    HeapInfo() {
-        pKernelHeader = nullptr;
-        pKernelHeap = nullptr;
-        pGsh = nullptr;
-        pDsh = nullptr;
-        pSsh = nullptr;
-        pPatchList = nullptr;
-        pBlob = nullptr;
-        blobSize = 0;
-    }
+    const SKernelBinaryHeaderCommon *pKernelHeader = nullptr;
+    const void *pKernelHeap = nullptr;
+    const void *pGsh = nullptr;
+    const void *pDsh = nullptr;
+    const void *pSsh = nullptr;
 };
 
 } // namespace NEO

@@ -133,6 +133,10 @@ class StackVec {
         return onStackSize;
     }
 
+    bool empty() const {
+        return 0U == size();
+    }
+
     size_t capacity() const {
         if (dynamicMem) {
             return dynamicMem->capacity();

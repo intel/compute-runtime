@@ -18,6 +18,8 @@
 #include "runtime/device/device.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/program/block_kernel_manager.h"
+#include "runtime/program/kernel_info.h"
 
 #include <sstream>
 
@@ -53,8 +55,6 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
     constantSurface = nullptr;
     globalSurface = nullptr;
     globalVarTotalSize = 0;
-    programScopePatchListSize = 0;
-    programScopePatchList = nullptr;
     programOptionVersion = 12u;
     allowNonUniform = false;
     char paramValue[32] = {};
@@ -252,14 +252,6 @@ cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, co
         }
     }
     return CL_INVALID_SPEC_ID;
-}
-
-void Program::getProgramCompilerVersion(
-    SProgramBinaryHeader *pSectionData,
-    uint32_t &binaryVersion) const {
-    if (pSectionData != nullptr) {
-        binaryVersion = pSectionData->Version;
-    }
 }
 
 bool Program::isValidLlvmBinary(

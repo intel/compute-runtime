@@ -25,7 +25,7 @@ class GmmHelper;
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
-    virtual uint32_t getBindingTableStateSurfaceStatePointer(void *pBindingTable, uint32_t index) = 0;
+    virtual uint32_t getBindingTableStateSurfaceStatePointer(const void *pBindingTable, uint32_t index) = 0;
     virtual size_t getBindingTableStateSize() const = 0;
     virtual uint32_t getBindingTableStateAlignement() const = 0;
     virtual size_t getInterfaceDescriptorDataSize() const = 0;
@@ -88,10 +88,10 @@ class HwHelperHw : public HwHelper {
 
     static const aub_stream::EngineType lowPriorityEngineType;
 
-    uint32_t getBindingTableStateSurfaceStatePointer(void *pBindingTable, uint32_t index) override {
+    uint32_t getBindingTableStateSurfaceStatePointer(const void *pBindingTable, uint32_t index) override {
         using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
-        BINDING_TABLE_STATE *bindingTableState = static_cast<BINDING_TABLE_STATE *>(pBindingTable);
+        const BINDING_TABLE_STATE *bindingTableState = static_cast<const BINDING_TABLE_STATE *>(pBindingTable);
         return bindingTableState[index].getRawData(0);
     }
 

@@ -1417,14 +1417,17 @@ TEST(StackVec, Clear) {
     DummyFNode nd2(&destructorCounter);
     DummyFNode nd3(&destructorCounter);
     StackVec<DummyFNode, 3> v;
+    EXPECT_TRUE(v.empty());
     v.push_back(nd1);
     v.push_back(nd2);
     v.push_back(nd3);
     ASSERT_EQ(0U, destructorCounter);
     ASSERT_EQ(3U, v.size());
+    EXPECT_FALSE(v.empty());
     v.clear();
     ASSERT_EQ(3U, destructorCounter);
     ASSERT_EQ(0U, v.size());
+    EXPECT_TRUE(v.empty());
 
     StackVec<DummyFNode, 1> v2;
     v2.push_back(nd1);
@@ -1561,11 +1564,13 @@ TEST(ArrayRef, WrapContainers) {
     ASSERT_EQ(35, sum(carray));
 
     ArrayRef<int> ar2;
+    EXPECT_TRUE(ar2.empty());
     ASSERT_EQ(0U, ar2.size());
     ASSERT_EQ(nullptr, ar2.begin());
     ASSERT_EQ(nullptr, ar2.end());
 
     ar2 = carray;
+    EXPECT_FALSE(ar2.empty());
     ASSERT_EQ(sizeof(carray) / sizeof(carray[0]), ar2.size());
     ASSERT_EQ(35, sum(ar2));
 

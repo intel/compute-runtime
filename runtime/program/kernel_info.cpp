@@ -8,6 +8,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/device/device.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/dispatch_info.h"
@@ -202,44 +203,57 @@ KernelInfo::~KernelInfo() {
     delete[] crossThreadData;
 }
 
-cl_int KernelInfo::storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo) {
-    cl_int retVal = CL_SUCCESS;
-
-    if (pkernelArgInfo == nullptr) {
-        retVal = CL_INVALID_BINARY;
-    } else {
-        uint32_t argNum = pkernelArgInfo->ArgumentNumber;
-        auto pCurArgAttrib = ptrOffset(
-            reinterpret_cast<const char *>(pkernelArgInfo),
-            sizeof(SPatchKernelArgumentInfo));
-
-        resizeKernelArgInfoAndRegisterParameter(argNum);
-
-        kernelArgInfo[argNum].addressQualifierStr = pCurArgAttrib;
-        pCurArgAttrib += pkernelArgInfo->AddressQualifierSize;
-
-        kernelArgInfo[argNum].accessQualifierStr = pCurArgAttrib;
-        pCurArgAttrib += pkernelArgInfo->AccessQualifierSize;
-
-        kernelArgInfo[argNum].name = pCurArgAttrib;
-        pCurArgAttrib += pkernelArgInfo->ArgumentNameSize;
-
-        {
-            auto argType = strchr(pCurArgAttrib, ';');
-            DEBUG_BREAK_IF(argType == nullptr);
-
-            kernelArgInfo[argNum].typeStr.assign(pCurArgAttrib, argType - pCurArgAttrib);
-            pCurArgAttrib += pkernelArgInfo->TypeNameSize;
-
-            ++argType;
-        }
-
-        kernelArgInfo[argNum].typeQualifierStr = pCurArgAttrib;
-
-        patchInfo.kernelArgumentInfo.push_back(pkernelArgInfo);
+void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
+    this->patchInfo.executionEnvironment = execEnv;
+    if (execEnv->RequiredWorkGroupSizeX != 0) {
+        this->reqdWorkGroupSize[0] = execEnv->RequiredWorkGroupSizeX;
+        this->reqdWorkGroupSize[1] = execEnv->RequiredWorkGroupSizeY;
+        this->reqdWorkGroupSize[2] = execEnv->RequiredWorkGroupSizeZ;
+        DEBUG_BREAK_IF(!(execEnv->RequiredWorkGroupSizeY > 0));
+        DEBUG_BREAK_IF(!(execEnv->RequiredWorkGroupSizeZ > 0));
+    }
+    this->workgroupWalkOrder[0] = 0;
+    this->workgroupWalkOrder[1] = 1;
+    this->workgroupWalkOrder[2] = 2;
+    if (execEnv->WorkgroupWalkOrderDims) {
+        constexpr auto dimensionMask = 0b11;
+        constexpr auto dimensionSize = 2;
+        this->workgroupWalkOrder[0] = execEnv->WorkgroupWalkOrderDims & dimensionMask;
+        this->workgroupWalkOrder[1] = (execEnv->WorkgroupWalkOrderDims >> dimensionSize) & dimensionMask;
+        this->workgroupWalkOrder[2] = (execEnv->WorkgroupWalkOrderDims >> dimensionSize * 2) & dimensionMask;
+        this->requiresWorkGroupOrder = true;
     }
 
-    return retVal;
+    for (uint32_t i = 0; i < 3; ++i) {
+        // inverts the walk order mapping (from ORDER_ID->DIM_ID to DIM_ID->ORDER_ID)
+        this->workgroupDimensionsOrder[this->workgroupWalkOrder[i]] = i;
+    }
+
+    if (execEnv->CompiledForGreaterThan4GBBuffers == false) {
+        this->requiresSshForBuffers = true;
+    }
+}
+
+void KernelInfo::storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo) {
+    if (pkernelArgInfo == nullptr) {
+        return;
+    }
+
+    uint32_t argNum = pkernelArgInfo->ArgumentNumber;
+    resizeKernelArgInfoAndRegisterParameter(argNum);
+
+    auto inlineData = PatchTokenBinary::getInlineData(pkernelArgInfo);
+
+    kernelArgInfo[argNum].addressQualifierStr = std::string(inlineData.addressQualifier.begin(), inlineData.addressQualifier.end()).c_str();
+    kernelArgInfo[argNum].accessQualifierStr = std::string(inlineData.accessQualifier.begin(), inlineData.accessQualifier.end()).c_str();
+    kernelArgInfo[argNum].name = std::string(inlineData.argName.begin(), inlineData.argName.end()).c_str();
+
+    auto argTypeDelim = strchr(inlineData.typeName.begin(), ';');
+    DEBUG_BREAK_IF(argTypeDelim == nullptr);
+    kernelArgInfo[argNum].typeStr = std::string(inlineData.typeName.begin(), ptrDiff(argTypeDelim, inlineData.typeName.begin())).c_str();
+    kernelArgInfo[argNum].typeQualifierStr = std::string(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.end()).c_str();
+
+    patchInfo.kernelArgumentInfo.push_back(pkernelArgInfo);
 }
 
 void KernelInfo::storeKernelArgument(
@@ -380,6 +394,7 @@ void KernelInfo::storePatchToken(const SPatchString *pStringArg) {
 }
 
 void KernelInfo::storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo) {
+    this->patchInfo.pKernelAttributesInfo = pKernelAttributesInfo;
     attributes = reinterpret_cast<const char *>(pKernelAttributesInfo) + sizeof(SPatchKernelAttributesInfo);
 
     auto start = attributes.find("intel_reqd_sub_group_size(");

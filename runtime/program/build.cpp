@@ -13,6 +13,7 @@
 #include "runtime/helpers/validators.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
+#include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
@@ -195,15 +196,6 @@ cl_int Program::build(const cl_device_id device, const char *buildOptions, bool 
         ki->builtinDispatchBuilder = fit->second;
     }
     return ret;
-}
-
-cl_int Program::build(
-    const char *pKernelData,
-    size_t kernelDataSize) {
-    cl_int retVal = CL_SUCCESS;
-    processKernel(pKernelData, 0U, retVal);
-
-    return retVal;
 }
 
 void Program::extractInternalOptions(std::string &options) {

@@ -11,6 +11,7 @@
 #include "core/helpers/hash.h"
 #include "runtime/context/context.h"
 #include "runtime/program/create.inl"
+#include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 

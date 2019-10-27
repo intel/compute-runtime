@@ -7,6 +7,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
+#include "runtime/program/block_kernel_manager.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
@@ -67,16 +68,16 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
         auto blockKernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel_dispatch_0");
         EXPECT_EQ(nullptr, blockKernelInfo);
 
-        std::vector<const KernelInfo *> blockKernelInfos(mockProgram->getNumberOfBlocks());
+        std::vector<const KernelInfo *> blockKernelInfos(mockProgram->blockKernelManager->getCount());
 
-        for (size_t i = 0; i < mockProgram->getNumberOfBlocks(); i++) {
-            const KernelInfo *blockKernelInfo = mockProgram->getBlockKernelInfo(i);
+        for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
+            const KernelInfo *blockKernelInfo = mockProgram->blockKernelManager->getBlockKernelInfo(i);
             EXPECT_NE(nullptr, blockKernelInfo);
             blockKernelInfos[i] = blockKernelInfo;
         }
 
         bool blockKernelFound = false;
-        for (size_t i = 0; i < mockProgram->getNumberOfBlocks(); i++) {
+        for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
             if (blockKernelInfos[i]->name.find("simple_block_kernel_dispatch") != std::string::npos) {
                 blockKernelFound = true;
                 break;

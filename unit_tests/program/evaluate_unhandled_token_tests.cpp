@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/program.h"
@@ -89,7 +90,7 @@ inline std::vector<char> CreateBinary(bool addUnhandledProgramScopePatchToken, b
             kernelName.push_back('\0');
         }
         iOpenCL::SKernelBinaryHeaderCommon kernBinHeader = {};
-        kernBinHeader.CheckSum = 0;
+        kernBinHeader.CheckSum = 0U;
         kernBinHeader.ShaderHashCode = 0;
         kernBinHeader.KernelNameSize = static_cast<uint32_t>(kernelName.size());
         kernBinHeader.PatchListSize = 0;
@@ -99,19 +100,21 @@ inline std::vector<char> CreateBinary(bool addUnhandledProgramScopePatchToken, b
         kernBinHeader.SurfaceStateHeapSize = 0;
         kernBinHeader.KernelUnpaddedSize = 0;
 
-        if (false == addUnhandledKernelScopePatchToken) {
-            PushBackToken(ret, kernBinHeader);
-            ret.insert(ret.end(), kernelName.begin(), kernelName.end());
-        } else {
-            kernBinHeader.PatchListSize = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
-            PushBackToken(ret, kernBinHeader);
-            ret.insert(ret.end(), kernelName.begin(), kernelName.end());
-
+        auto headerOffset = ret.size();
+        PushBackToken(ret, kernBinHeader);
+        ret.insert(ret.end(), kernelName.begin(), kernelName.end());
+        uint32_t patchListSize = 0;
+        if (addUnhandledKernelScopePatchToken) {
             iOpenCL::SPatchItemHeader unhandledToken = {};
             unhandledToken.Size = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
             unhandledToken.Token = static_cast<uint32_t>(unhandledTokenId);
             PushBackToken(ret, unhandledToken);
+            patchListSize = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
         }
+        iOpenCL::SKernelBinaryHeaderCommon *kernHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(ret.data() + headerOffset);
+        kernHeader->PatchListSize = patchListSize;
+        auto kernelData = reinterpret_cast<const uint8_t *>(kernHeader);
+        kernHeader->CheckSum = NEO::PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(kernelData, reinterpret_cast<const uint8_t *>(&*ret.rbegin()) + 1));
     }
 
     return ret;
@@ -156,6 +159,6 @@ TEST(EvaluateUnhandledToken, WhenDecodingKernelBinaryIfUnhandledTokenIsFoundAndI
 TEST(EvaluateUnhandledToken, WhenDecodingKernelBinaryIfUnhandledTokenIsFoundAndIsUnsafeToSkipThenDecodingFails) {
     int lastUnhandledTokenFound = -1;
     auto retVal = GetDecodeErrorCode(CreateBinary(false, true, unhandledTokenId), false, -7, lastUnhandledTokenFound);
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
     EXPECT_EQ(unhandledTokenId, lastUnhandledTokenFound);
 }

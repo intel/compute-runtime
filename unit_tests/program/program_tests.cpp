@@ -18,6 +18,7 @@
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/indirect_heap/indirect_heap.h"
@@ -1564,7 +1565,6 @@ TEST_F(ProgramPatchTokenTests, DISABLED_ConstantMemorySurface) {
         false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, pProgram->getProgramScopePatchListSize());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1882,12 +1882,6 @@ TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreate
     EXPECT_THAT(pProgram->getInternalOptions(), Not(testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg "))));
 }
 
-TEST_F(ProgramTests, ProgramCtorSetsProperProgramScopePatchListSize) {
-
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
-    EXPECT_EQ((size_t)0, program.getProgramScopePatchListSize());
-}
-
 TEST_F(ProgramTests, GivenContextWhenCreateProgramThenIncrementContextRefCount) {
     auto initialApiRefCount = pContext->getReference();
     auto initialInternalRefCount = pContext->getRefInternalCount();
@@ -2062,7 +2056,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
         pKHdr->CheckSum = 0;
         pKHdr->ShaderHashCode = 0;
         pKHdr->KernelNameSize = 8;
-        pKHdr->PatchListSize = 24;
+        pKHdr->PatchListSize = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
         pKHdr->KernelHeapSize = 0;
         pKHdr->GeneralStateHeapSize = 0;
         pKHdr->DynamicStateHeapSize = 0;
@@ -2082,7 +2076,11 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
         pPatch->Offset = 0x40;
         pPatch->LocationIndex = iOpenCL::INVALID_INDEX;
         pPatch->LocationIndex2 = iOpenCL::INVALID_INDEX;
-        binSize += sizeof(SPatchGlobalMemoryObjectKernelArgument);
+        binSize += pPatch->Size;
+        pBin += pPatch->Size;
+
+        ArrayRef<const uint8_t> kernelBlob(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin));
+        pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(kernelBlob);
 
         // Decode prepared program binary
         pProgram->genBinary = makeCopy(&genBin[0], binSize);
@@ -2147,6 +2145,8 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     pPatch->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
 
     binSize += sizeof(SPatchAllocateLocalSurface);
+    pBin += sizeof(SPatchAllocateLocalSurface);
+    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
 
     // Decode prepared program binary
     program->genBinary = makeCopy(&genBin[0], binSize);
@@ -2186,11 +2186,12 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
         pBin += sizeof(SProgramBinaryHeader);
         binSize += sizeof(SProgramBinaryHeader);
 
+        uint32_t patchTokenSize = sizeof(iOpenCL::SPatchGtpinFreeGRFInfo) + GRF_INFO_SIZE;
         SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
         pKHdr->CheckSum = 0;
         pKHdr->ShaderHashCode = 0;
         pKHdr->KernelNameSize = 8;
-        pKHdr->PatchListSize = 24;
+        pKHdr->PatchListSize = patchTokenSize;
         pKHdr->KernelHeapSize = 0;
         pKHdr->GeneralStateHeapSize = 0;
         pKHdr->DynamicStateHeapSize = 0;
@@ -2205,9 +2206,12 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
 
         SPatchGtpinFreeGRFInfo *pPatch = (SPatchGtpinFreeGRFInfo *)pBin;
         pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_FREE_GRF_INFO;
-        pPatch->Size = sizeof(iOpenCL::SPatchGtpinFreeGRFInfo) + GRF_INFO_SIZE;
+        pPatch->Size = patchTokenSize;
         pPatch->BufferSize = GRF_INFO_SIZE;
+
         binSize += pPatch->Size;
+        pBin += pPatch->Size;
+        pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
 
         // Decode prepared program binary
         pProgram->genBinary = makeCopy(&genBin[0], binSize);
@@ -2423,32 +2427,6 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProgramTests, GetProgramCompilerVersion) {
-    auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-
-    // Create example header of OpenCL Program Binary
-    cl_device_id deviceId = pContext->getDevice(0);
-    Device *pDevice = castToObject<Device>(deviceId);
-    struct SProgramBinaryHeader prgHdr;
-    prgHdr.Magic = iOpenCL::MAGIC_CL;
-    prgHdr.Version = 12;
-    prgHdr.Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    prgHdr.GPUPointerSizeInBytes = 8;
-    prgHdr.NumberOfKernels = 1;
-    prgHdr.SteppingId = 0;
-    prgHdr.PatchListSize = 0;
-
-    // Check whether Program Binary version is returned correctly
-    uint32_t binaryVersion = 0;
-    program->getProgramCompilerVersion(&prgHdr, binaryVersion);
-    EXPECT_EQ(binaryVersion, 12u);
-
-    // Check whether Program Binary version is left intact
-    binaryVersion = 1;
-    program->getProgramCompilerVersion(nullptr, binaryVersion);
-    EXPECT_EQ(binaryVersion, 1u);
-}
-
 TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenNoSurfaceIsCreated) {
     MockProgram *program = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
@@ -2465,7 +2443,7 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
     privateSurfaceBlock->PerThreadPrivateMemorySize = 0;
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
 
-    program->addBlockKernel(infoBlock);
+    program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
@@ -2491,7 +2469,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
     privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
 
-    program->addBlockKernel(infoBlock);
+    program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
@@ -2517,7 +2495,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
     privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
 
-    program->addBlockKernel(infoBlock);
+    program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
@@ -2551,7 +2529,7 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
     privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
     infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
 
-    program->addBlockKernel(infoBlock);
+    program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     GraphicsAllocation *privateSurface = program->getDevice(0).getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_NE(nullptr, privateSurface);

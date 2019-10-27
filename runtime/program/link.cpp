@@ -7,6 +7,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/elf/writer.h"
+#include "core/utilities/stackvec.h"
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/validators.h"

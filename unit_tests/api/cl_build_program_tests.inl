@@ -9,6 +9,7 @@
 #include "core/helpers/file_io.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
+#include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"

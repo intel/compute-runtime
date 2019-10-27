@@ -13,6 +13,7 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/device/device.h"
+#include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 
 namespace NEO {

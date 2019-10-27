@@ -2459,7 +2459,7 @@ TEST_F(KernelCrossThreadTests, patchBlocksSimdSize) {
     kernel->executionEnvironmentBlock.CompiledSIMD16 = 1;
     kernel->executionEnvironmentBlock.CompiledSIMD32 = 0;
     infoBlock->patchInfo.executionEnvironment = &kernel->executionEnvironmentBlock;
-    kernel->mockProgram->addBlockKernel(infoBlock);
+    kernel->mockProgram->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     // patch block's simd size
     kernel->mockKernel->patchBlocksSimdSize();
@@ -2469,7 +2469,7 @@ TEST_F(KernelCrossThreadTests, patchBlocksSimdSize) {
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     // check of block's simd size has been patched correctly
-    EXPECT_EQ(kernel->mockProgram->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
+    EXPECT_EQ(kernel->mockProgram->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
 
     delete kernel;
 }

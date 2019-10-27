@@ -10,6 +10,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 
 void KernelDataTest::buildAndDecode() {
     cl_int error = CL_SUCCESS;
@@ -78,15 +79,21 @@ void KernelDataTest::buildAndDecode() {
     pCurPtr += sizeof(SPatchDataParameterStream);
 
     // now build a program with this kernel data
-    error = program->build(pKernelData, kernelDataSize);
+    iOpenCL::SProgramBinaryHeader header = {};
+    NEO::PatchTokenBinary::ProgramFromPatchtokens programFromPatchtokens;
+    programFromPatchtokens.decodeStatus = PatchTokenBinary::DecoderError::Success;
+    programFromPatchtokens.header = &header;
+    programFromPatchtokens.kernels.resize(1);
+    auto &kernelFromPatchtokens = *programFromPatchtokens.kernels.rbegin();
+    auto kernelBlob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(pKernelData), kernelDataSize);
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelBlob, kernelFromPatchtokens);
+    EXPECT_TRUE(decodeSuccess);
+
+    program->populateKernelInfo(programFromPatchtokens, 0, error);
     EXPECT_EQ(CL_SUCCESS, error);
 
     // extract the kernel info
     pKernelInfo = program->Program::getKernelInfo(kernelName.c_str());
-
-    // validate kernel info
-    // vaidate entire set of data
-    EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pBlob, pKernelData, kernelDataSize));
 
     // validate header
     EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pKernelHeader, &kernelBinaryHeader, sizeof(SKernelBinaryHeaderCommon)));
@@ -106,9 +113,6 @@ void KernelDataTest::buildAndDecode() {
     }
     if (pSsh != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pSsh, pSsh, sshSize));
-    }
-    if (pPatchList != nullptr) {
-        EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pPatchList, pPatchList, patchListSize));
     }
     if (kernelHeapSize) {
         auto kernelAllocation = pKernelInfo->getGraphicsAllocation();

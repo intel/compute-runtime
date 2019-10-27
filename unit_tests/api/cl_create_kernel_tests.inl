@@ -7,6 +7,7 @@
 
 #include "core/helpers/file_io.h"
 #include "runtime/context/context.h"
+#include "runtime/program/kernel_info.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_program.h"
 

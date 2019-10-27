@@ -8,6 +8,7 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_defs.h"
@@ -2329,8 +2330,12 @@ TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGt
     pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_INFO;
     pPatch->Size = sizeof(iOpenCL::SPatchItemHeader);
     binSize += sizeof(iOpenCL::SPatchItemHeader);
+    pBin += sizeof(iOpenCL::SPatchItemHeader);
+
+    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
     // Decode prepared program binary
     pProgram->genBinary = makeCopy(&genBin[0], binSize);
+    pProgram->genBinarySize = binSize;
     retVal = pProgram->processGenBinary();
     auto kernelInfo = pProgram->getKernelInfo("TstCopy");
     EXPECT_NE(kernelInfo->igcInfoForGtpin, nullptr);

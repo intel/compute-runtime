@@ -8,29 +8,28 @@
 #pragma once
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/linker.h"
-#include "core/elf/reader.h"
 #include "core/elf/writer.h"
-#include "core/helpers/stdio.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/string_helpers.h"
-#include "runtime/program/block_kernel_manager.h"
-#include "runtime/program/kernel_info.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
-#include "igfxfmid.h"
 #include "patch_list.h"
 
 #include <map>
 #include <string>
 #include <vector>
 
-#define OCLRT_ALIGN(a, b) ((((a) % (b)) != 0) ? ((a) - ((a) % (b)) + (b)) : (a))
-
 namespace NEO {
+namespace PatchTokenBinary {
+struct ProgramFromPatchtokens;
+}
+
+class BlockKernelManager;
+class BuiltinDispatchInfoBuilder;
 class Context;
 class CompilerInterface;
 class ExecutionEnvironment;
+struct KernelInfo;
 template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;
@@ -52,8 +51,6 @@ constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
         return CL_LINK_PROGRAM_FAILURE;
     }
 }
-
-bool isSafeToSkipUnhandledToken(unsigned int token);
 
 class Program : public BaseObject<_cl_program> {
   public:
@@ -122,8 +119,6 @@ class Program : public BaseObject<_cl_program> {
     cl_int build(const cl_device_id device, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
-    cl_int build(const char *pKernelData, size_t kernelDataSize);
-
     MOCKABLE_VIRTUAL cl_int processGenBinary();
 
     cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
@@ -191,10 +186,6 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
-    size_t getProgramScopePatchListSize() const {
-        return programScopePatchListSize;
-    }
-
     GraphicsAllocation *getConstantSurface() const {
         return constantSurface;
     }
@@ -255,31 +246,22 @@ class Program : public BaseObject<_cl_program> {
         return this->linkerInput.get();
     }
 
+    MOCKABLE_VIRTUAL bool isSafeToSkipUnhandledToken(unsigned int token) const;
+
   protected:
     Program(ExecutionEnvironment &executionEnvironment);
 
-    MOCKABLE_VIRTUAL bool isSafeToSkipUnhandledToken(unsigned int token) const;
-
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize);
-
-    bool optionsAreNew(const char *options) const;
-
-    cl_int processElfHeader(const CLElfLib::SElf64Header *pElfHeader,
-                            cl_program_binary_type &binaryType, uint32_t &numSections);
-
-    void getProgramCompilerVersion(SProgramBinaryHeader *pSectionData, uint32_t &binaryVersion) const;
 
     cl_int resolveProgramBinary();
 
     MOCKABLE_VIRTUAL cl_int linkBinary();
 
-    cl_int parseProgramScopePatchList();
+    MOCKABLE_VIRTUAL cl_int isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const;
+    void processProgramScopeMetadata(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram);
+    void populateKernelInfo(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram, uint32_t kernelNum, cl_int &retVal);
 
     MOCKABLE_VIRTUAL cl_int rebuildProgramFromIr();
-
-    cl_int parsePatchList(KernelInfo &pKernelInfo, uint32_t kernelNum);
-
-    size_t processKernel(const void *pKernelBlob, uint32_t kernelNum, cl_int &retVal);
 
     bool validateGenBinaryDevice(GFXCORE_FAMILY device) const;
     bool validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenBinaryHeader) const;
@@ -321,10 +303,6 @@ class Program : public BaseObject<_cl_program> {
     std::vector<KernelInfo *> kernelInfoArray;
     std::vector<KernelInfo *> parentKernelInfoArray;
     std::vector<KernelInfo *> subgroupKernelInfoArray;
-    BlockKernelManager *blockKernelManager;
-
-    const void *programScopePatchList;
-    size_t programScopePatchListSize;
 
     GraphicsAllocation *constantSurface;
     GraphicsAllocation *globalSurface;
@@ -340,8 +318,6 @@ class Program : public BaseObject<_cl_program> {
     std::string options;
     std::string internalOptions;
     static const std::vector<std::string> internalOptionsToExtract;
-    std::string hashFileName;
-    std::string hashFilePath;
 
     uint32_t programOptionVersion;
     bool allowNonUniform;
@@ -356,6 +332,7 @@ class Program : public BaseObject<_cl_program> {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsValues;
 
+    BlockKernelManager *blockKernelManager;
     ExecutionEnvironment &executionEnvironment;
     Context *context;
     Device *pDevice;
@@ -363,6 +340,5 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn;
     bool kernelDebugEnabled = false;
-    friend class OfflineCompiler;
 };
 } // namespace NEO

@@ -17,6 +17,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/program/block_kernel_manager.h"
 
 #include <cstring>
 
@@ -129,6 +130,43 @@ template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel()); });
+}
+
+template <typename GfxFamily>
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::Type heapType, const Kernel &kernel) {
+    typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
+
+    size_t totalSize = 0;
+    BlockKernelManager *blockManager = kernel.getProgram()->getBlockKernelManager();
+    uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
+    uint32_t maxBindingTableCount = 0;
+
+    if (heapType == IndirectHeap::SURFACE_STATE) {
+        totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1;
+
+        for (uint32_t i = 0; i < blockCount; i++) {
+            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+            totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+            totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+
+            maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
+        }
+    }
+
+    if (heapType == IndirectHeap::INDIRECT_OBJECT || heapType == IndirectHeap::SURFACE_STATE) {
+        BuiltIns &builtIns = *kernel.getDevice().getExecutionEnvironment()->getBuiltIns();
+        SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
+
+        if (heapType == IndirectHeap::INDIRECT_OBJECT) {
+            totalSize += getSizeRequiredIOH(scheduler);
+        } else {
+            totalSize += getSizeRequiredSSH(scheduler);
+
+            totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
+            totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+        }
+    }
+    return totalSize;
 }
 
 template <typename GfxFamily>

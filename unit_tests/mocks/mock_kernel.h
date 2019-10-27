@@ -11,6 +11,7 @@
 #include "runtime/device/device.h"
 #include "runtime/kernel/grf_config.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/program/block_kernel_manager.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -532,7 +533,7 @@ class MockParentKernel : public Kernel {
         infoBlock->heapInfo.pDsh = (void *)new uint64_t[64];
         infoBlock->crossThreadData = new char[crossThreadOffsetBlock > crossThreadSize ? crossThreadOffsetBlock : crossThreadSize];
 
-        mockProgram->addBlockKernel(infoBlock);
+        mockProgram->blockKernelManager->addBlockKernelInfo(infoBlock);
         parent->mockProgram = mockProgram;
 
         return parent;

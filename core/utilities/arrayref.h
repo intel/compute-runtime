@@ -45,8 +45,22 @@ class ArrayRef {
 
     ArrayRef() = default;
 
+    ArrayRef(const ArrayRef &src)
+        : begIt(src.begIt), endIt(src.endIt) {
+    }
+
+    ArrayRef &operator=(const ArrayRef &src) {
+        this->begIt = src.begIt;
+        this->endIt = src.endIt;
+        return *this;
+    }
+
     size_t size() const {
         return endIt - begIt;
+    }
+
+    bool empty() const {
+        return (0U == size());
     }
 
     DataType &operator[](std::size_t idx) {

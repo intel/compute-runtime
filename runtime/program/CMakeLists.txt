@@ -19,6 +19,8 @@ set(RUNTIME_SRCS_PROGRAM
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens.h
   ${CMAKE_CURRENT_SOURCE_DIR}/link.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patch_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.cpp

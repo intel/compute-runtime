@@ -54,7 +54,7 @@ struct PatchInfo {
     const SPatchInterfaceDescriptorData *interfaceDescriptorData = nullptr;
     const SPatchSamplerStateArray *samplerStateArray = nullptr;
     const SPatchBindingTableState *bindingTableState = nullptr;
-    ::std::vector<const SPatchDataParameterBuffer *> dataParameterBuffers;
+    ::std::vector<const SPatchDataParameterBuffer *> dataParameterBuffersKernelArgs;
     ::std::vector<const SPatchStatelessGlobalMemoryObjectKernelArgument *>
         statelessGlobalMemObjKernelArgs;
     ::std::vector<const SPatchImageMemoryObjectKernelArgument *>
@@ -74,9 +74,6 @@ struct PatchInfo {
     const SPatchAllocateSystemThreadSurface *pAllocateSystemThreadSurface = nullptr;
     ::std::unordered_map<uint32_t, std::string> stringDataMap;
     ::std::vector<const SPatchKernelArgumentInfo *> kernelArgumentInfo;
-
-    PatchInfo() {
-    }
 };
 
 } // namespace NEO

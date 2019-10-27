@@ -336,7 +336,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndDataParameterBuf
     dataParameterBuffer.SourceOffset = 0;
     dataParameterBuffer.Type = iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT;
 
-    info.patchInfo.dataParameterBuffers.push_back(&dataParameterBuffer);
+    info.patchInfo.dataParameterBuffersKernelArgs.push_back(&dataParameterBuffer);
     info.storeKernelArgument(&dataParameterBuffer);
 
     std::vector<IGIL_KernelCurbeParams> curbeParams;
@@ -669,7 +669,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
 
     EXPECT_TRUE(kernel.isParentKernel);
 
-    program.addBlockKernel(blockInfo);
+    program.blockKernelManager->addBlockKernelInfo(blockInfo);
 
     kernel.createReflectionSurface();
     auto reflectionSurface = kernel.getKernelReflectionSurface();
@@ -734,7 +734,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQ
 
     EXPECT_TRUE(kernel.isParentKernel);
 
-    program.addBlockKernel(blockInfo);
+    program.blockKernelManager->addBlockKernelInfo(blockInfo);
 
     kernel.createReflectionSurface();
     auto reflectionSurface = kernel.getKernelReflectionSurface();
@@ -1978,7 +1978,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
 
     parentKernel->patchBlocksCurbeWithConstantValues();
 
-    auto *blockInfo = parentKernel->mockProgram->getBlockKernelInfo(0);
+    auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
     uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->DataParamOffset;
 
@@ -2012,7 +2012,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
 
     parentKernel->patchBlocksCurbeWithConstantValues();
 
-    auto *blockInfo = parentKernel->mockProgram->getBlockKernelInfo(0);
+    auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
     uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->DataParamOffset;
     uint64_t *pCurbe = (uint64_t *)ptrOffset(reflectionSurface->getUnderlyingBuffer(), constBufferOffset + blockPatchOffset);
@@ -2045,7 +2045,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     parentKernel->patchBlocksCurbeWithConstantValues();
 
-    auto *blockInfo = parentKernel->mockProgram->getBlockKernelInfo(0);
+    auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
     uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->DataParamOffset;
 
@@ -2088,7 +2088,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
     parentKernel->patchBlocksCurbeWithConstantValues();
 
-    auto *blockInfo = parentKernel->mockProgram->getBlockKernelInfo(0);
+    auto *blockInfo = parentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0);
 
     uint32_t blockPatchOffset = blockInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->DataParamOffset;
 

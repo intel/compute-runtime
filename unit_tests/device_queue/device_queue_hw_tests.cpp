@@ -796,7 +796,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getProfilingEndCmdsSi
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOffsetIsAddedToBlockKernelStartPointer) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*pContext));
-    KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->getBlockKernelInfo(0));
+    KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0));
     blockInfo->createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
     ASSERT_NE(nullptr, blockInfo->getGraphicsAllocation());
     const_cast<SPatchThreadPayload *>(blockInfo->patchInfo.threadPayload)->OffsetToSkipSetFFIDGP = 0x1234;

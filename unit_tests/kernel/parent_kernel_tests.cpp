@@ -75,7 +75,7 @@ TEST(ParentKernelTest, patchBlocksSimdSize) {
     void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
-    EXPECT_EQ(program->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
+    EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
 }
 
 TEST(ParentKernelTest, hasDeviceEnqueue) {
@@ -104,7 +104,7 @@ TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
     void *blockSimdSize = ptrOffset(parentKernel->getCrossThreadData(), parentKernel->getKernelInfo().childrenKernelsIdOffset[0].second);
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
-    EXPECT_EQ(program->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
+    EXPECT_EQ(program->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) {
@@ -194,7 +194,7 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
     infoBlock->heapInfo.pDsh = (void *)new uint64_t[64];
     infoBlock->crossThreadData = new char[crossThreadOffsetBlock];
 
-    program->addBlockKernel(infoBlock);
+    program->blockKernelManager->addBlockKernelInfo(infoBlock);
 
     parentKernel->initialize();
 

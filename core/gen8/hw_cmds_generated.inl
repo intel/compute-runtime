@@ -30,6 +30,10 @@ typedef struct tagBINDING_TABLE_STATE {
         DEBUG_BREAK_IF(index >= 1);
         return TheStructure.RawData[index];
     }
+    inline const uint32_t &getRawData(const uint32_t index) const {
+        DEBUG_BREAK_IF(index >= 1);
+        return TheStructure.RawData[index];
+    }
     typedef enum tagSURFACESTATEPOINTER {
         SURFACESTATEPOINTER_BIT_SHIFT = 0x6,
         SURFACESTATEPOINTER_ALIGN_SIZE = 0x40,

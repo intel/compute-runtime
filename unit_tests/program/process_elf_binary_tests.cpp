@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/elf/reader.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/string.h"
 #include "runtime/device/device.h"

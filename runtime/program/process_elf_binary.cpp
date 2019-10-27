@@ -9,6 +9,7 @@
 #include "core/elf/reader.h"
 #include "core/elf/writer.h"
 #include "core/helpers/string.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 
 #include "program.h"
 
@@ -61,12 +62,12 @@ cl_int Program::processElfBinary(
                 break;
 
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY:
-                if (sectionHeader.DataSize > 0 && validateGenBinaryHeader(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)))) {
+                if (sectionHeader.DataSize > 0 && validateGenBinaryHeader(reinterpret_cast<iOpenCL::SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)))) {
                     this->genBinary = makeCopy(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
                     this->genBinarySize = static_cast<size_t>(sectionHeader.DataSize);
                     isCreatedFromBinary = true;
                 } else {
-                    getProgramCompilerVersion(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)), binaryVersion);
+                    binaryVersion = reinterpret_cast<iOpenCL::SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset))->Version;
                     return CL_INVALID_BINARY;
                 }
                 break;
