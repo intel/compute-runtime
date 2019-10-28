@@ -490,7 +490,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
-    uint32_t blitBuffer(const BlitProperties &blitProperites) override { return taskCount; };
+    uint32_t blitBuffer(const BlitProperties &blitProperties) override { return taskCount; };
 
     CompletionStamp flushTask(
         LinearStream &commandStream,

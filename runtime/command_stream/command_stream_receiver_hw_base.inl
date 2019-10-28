@@ -795,28 +795,28 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitProperites) {
+uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitProperties) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     auto lock = obtainUniqueOwnership();
-    bool updateTimestampPacket = blitProperites.outputTimestampPacket != nullptr;
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperites.copySize,
-                                                                                        blitProperites.csrDependencies,
+    bool updateTimestampPacket = blitProperties.outputTimestampPacket != nullptr;
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize,
+                                                                                        blitProperties.csrDependencies,
                                                                                         updateTimestampPacket));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
 
-    TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, blitProperites.csrDependencies);
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
-    BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperites, commandStream);
+    BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream);
 
     HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
 
     if (updateTimestampPacket) {
-        UNRECOVERABLE_IF(blitProperites.outputTimestampPacket->peekNodes().size() != 1);
-        auto timestampPacketGpuAddress = blitProperites.outputTimestampPacket->peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        UNRECOVERABLE_IF(blitProperties.outputTimestampPacket->peekNodes().size() != 1);
+        auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0);
     }
 
@@ -825,8 +825,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &bl
 
     alignToCacheLine(commandStream);
 
-    makeResident(*blitProperites.srcAllocation);
-    makeResident(*blitProperites.dstAllocation);
+    makeResident(*blitProperties.srcAllocation);
+    makeResident(*blitProperties.dstAllocation);
     makeResident(*tagAllocation);
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
@@ -840,7 +840,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &bl
     auto flushStampToWait = flushStamp->peekStamp();
 
     lock.unlock();
-    if (blitProperites.blocking) {
+    if (blitProperties.blocking) {
         waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
