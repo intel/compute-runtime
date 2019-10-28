@@ -11,6 +11,10 @@
 
 namespace NEO {
 
+bool SpecialUltHelperGen12lp::shouldCompressionBeEnabledAfterConfigureHardwareCustom(const HardwareInfo &hwInfo) {
+    return hwInfo.featureTable.ftrE2ECompression;
+}
+
 bool SpecialUltHelperGen12lp::shouldEnableHdcFlush(PRODUCT_FAMILY productFamily) {
     return true;
 }
