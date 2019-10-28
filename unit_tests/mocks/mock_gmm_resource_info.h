@@ -59,6 +59,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getAuxQPitch() override { return auxQPitch; }
 
+    uint32_t getMipTailStartLodSurfaceState() override { return mipTailStartLod; }
+
     GMM_RESOURCE_FORMAT getResourceFormat() override { return mockResourceCreateParams.Format; }
 
     GMM_SURFACESTATE_FORMAT getResourceFormatSurfaceState() override { return (GMM_SURFACESTATE_FORMAT)0; }
@@ -90,6 +92,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     void setUnifiedAuxPitchTiles(uint32_t value);
     void setAuxQPitch(uint32_t value);
+    void setMipTailStartLod(uint32_t newMipTailStartLod) { mipTailStartLod = newMipTailStartLod; }
 
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
@@ -109,6 +112,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t qPitch = 0;
     uint32_t unifiedAuxPitch = 0;
     uint32_t auxQPitch = 0;
+    uint32_t mipTailStartLod = 0;
 };
 } // namespace NEO
 

@@ -68,6 +68,8 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint64_t getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE auxType) { return resourceInfo->GetUnifiedAuxSurfaceOffset(auxType); }
 
+    MOCKABLE_VIRTUAL uint32_t getMipTailStartLodSurfaceState() { return resourceInfo->GetMipTailStartLodSurfaceState(); }
+
     MOCKABLE_VIRTUAL bool is64KBPageSuitable() const { return resourceInfo->Is64KBPageSuitable(); }
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekHandle() const { return resourceInfo.get(); }

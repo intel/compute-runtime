@@ -2637,6 +2637,13 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline uint32_t getMipCountLod(void) const {
         return (TheStructure.Common.MipCountLod);
     }
+    inline void setMipTailStartLod(const uint32_t value) {
+        UNRECOVERABLE_IF(true);
+    }
+    inline uint32_t getMipTailStartLod(void) const {
+        UNRECOVERABLE_IF(true);
+        return 0;
+    }
     inline void setSurfaceMinLod(const uint32_t value) {
         TheStructure.Common.SurfaceMinLod = value;
     }

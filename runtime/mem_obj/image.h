@@ -353,5 +353,8 @@ class ImageHw : public Image {
         return inputShaderChannel;
     }
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
+
+  protected:
+    void setMipTailStartLod(RENDER_SURFACE_STATE *surfaceState);
 };
 } // namespace NEO

@@ -99,6 +99,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setMinimumArrayElement(minimumArrayElement);
     surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
     surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
+    setMipTailStartLod(surfaceState);
 
     // SurfaceQpitch is in rows but must be a multiple of VALIGN
     surfaceState->setSurfaceQpitch(qPitch);
@@ -286,5 +287,14 @@ void ImageHw<GfxFamily>::setClearColorParams(RENDER_SURFACE_STATE *surfaceState,
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setMipTailStartLod(RENDER_SURFACE_STATE *surfaceState) {
+    surfaceState->setMipTailStartLod(0);
+
+    if (auto gmm = getGraphicsAllocation()->getDefaultGmm()) {
+        surfaceState->setMipTailStartLod(gmm->gmmResourceInfo->getMipTailStartLodSurfaceState());
+    }
 }
 } // namespace NEO
