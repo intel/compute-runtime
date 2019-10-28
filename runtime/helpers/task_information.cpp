@@ -220,6 +220,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3AndL1On;
     }
 
+    if (commandQueue.dispatchHints != 0) {
+        dispatchFlags.engineHints = commandQueue.dispatchHints;
+        dispatchFlags.epilogueRequired = true;
+    }
+
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     gtpinNotifyPreFlushTask(&commandQueue);
