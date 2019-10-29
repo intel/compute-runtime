@@ -81,7 +81,7 @@ inline typename Family::PIPE_CONTROL *CommandStreamReceiverHw<Family>::addPipeCo
     pCmd->setDcFlushEnable(true);
 
     if (Gen12LPHelpers::hdcFlushForPipeControlBeforeStateBaseAddressRequired(executionEnvironment.getHardwareInfo()->platform.eProductFamily)) {
-        pCmd->setHdcFlushEnable(true);
+        pCmd->setHdcPipelineFlush(true);
     }
     return pCmd;
 }

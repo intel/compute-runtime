@@ -50,7 +50,7 @@ GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigR
 GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, whenProgrammingMiSemaphoreWaitThenSetRegisterPollModeMemoryPoll) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     MI_SEMAPHORE_WAIT miSemaphoreWait = FamilyType::cmdInitMiSemaphoreWait;
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL, miSemaphoreWait.getRegisterPollMode());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL, miSemaphoreWait.getRegisterPollMode());
 }
 
 using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
@@ -71,5 +71,5 @@ GEN12LPTEST_F(UltCommandStreamReceiverTest, givenStateBaseAddressWhenItIsRequire
     EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
 
     const bool expectedHdcFlushEnable = SpecialUltHelperGen12lp::shouldEnableHdcFlush(::productFamily);
-    EXPECT_EQ(expectedHdcFlushEnable, pipeControlCmd->getHdcFlushEnable());
+    EXPECT_EQ(expectedHdcFlushEnable, pipeControlCmd->getHdcPipelineFlush());
 }
