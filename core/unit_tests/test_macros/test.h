@@ -522,19 +522,19 @@ extern GFXCORE_FAMILY renderCoreFamily;
 
 #ifdef TESTS_GEN8
 #define GEN8TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN8_CORE, test_fixture, test_name)
-#define GEN8TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN8_CORE, test_fixture, test_name)
+#define GEN8TEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN8_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN9
 #define GEN9TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN9_CORE, test_fixture, test_name)
-#define GEN9TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN9_CORE, test_fixture, test_name)
+#define GEN9TEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN9_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN11
 #define GEN11TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN11_CORE, test_fixture, test_name)
-#define GEN11TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN11_CORE, test_fixture, test_name)
+#define GEN11TEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN11_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN12LP
 #define GEN12LPTEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN12LP_CORE, test_fixture, test_name)
-#define GEN12LPTEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN12LP_CORE, test_fixture, test_name)
+#define GEN12LPTEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN12LP_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
