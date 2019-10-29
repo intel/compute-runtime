@@ -46,10 +46,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    MultiDispatchInfo dispatchInfo;
+    auto eBuiltInOps = EBuiltInOps::FillBuffer;
+    if (forceStateless(size)) {
+        eBuiltInOps = EBuiltInOps::FillBufferStateless;
+    }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                                                                        this->getContext(), this->getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,
+                                                                                                        this->getContext(),
+                                                                                                        this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
@@ -60,6 +64,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     dc.dstMemObj = buffer;
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
+
+    MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
     MemObjSurface s1(buffer);

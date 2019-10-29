@@ -1,0 +1,49 @@
+/*
+ * Copyright (C) 2019 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+R"===(
+// assumption is local work size = pattern size
+__kernel void FillBufferBytes(
+    __global uchar* pDst,
+    ulong dstOffsetInBytes,
+    const __global uchar* pPattern )
+{
+    size_t dstIndex = get_global_id(0) + dstOffsetInBytes;
+    size_t srcIndex = get_local_id(0);
+    pDst[dstIndex] = pPattern[srcIndex];
+}
+
+__kernel void FillBufferLeftLeftover(
+    __global uchar* pDst,
+    ulong dstOffsetInBytes,
+    const __global uchar* pPattern,
+    const size_t patternSizeInEls )
+{
+    size_t gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
+}
+
+__kernel void FillBufferMiddle(
+    __global uchar* pDst,
+    ulong dstOffsetInBytes,
+    const __global uint* pPattern,
+    const ulong patternSizeInEls )
+{
+    size_t gid = get_global_id(0);
+    ((__global uint*)(pDst + dstOffsetInBytes))[gid] = pPattern[ gid & (patternSizeInEls - 1) ];
+}
+
+__kernel void FillBufferRightLeftover(
+    __global uchar* pDst,
+    ulong dstOffsetInBytes,
+    const __global uchar* pPattern,
+    const ulong patternSizeInEls )
+{
+    size_t gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
+}
+)==="

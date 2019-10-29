@@ -34,6 +34,7 @@ set(RUNTIME_SRCS_BUILT_IN_KERNELS
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image2d.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image3d.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer.igdrcl_built_in
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer_stateless.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image1d.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image2d.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image3d.igdrcl_built_in

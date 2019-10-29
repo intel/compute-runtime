@@ -56,6 +56,15 @@ static RegisterEmbeddedResource registerFillBufferSrc(
 #include "runtime/built_ins/kernels/fill_buffer.igdrcl_built_in"
         ));
 
+static RegisterEmbeddedResource registerFillBufferStatelessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::FillBufferStateless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "runtime/built_ins/kernels/fill_buffer_stateless.igdrcl_built_in"
+        ));
+
 static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
     createBuiltinResourceName(
         EBuiltInOps::CopyBufferToImage3d,

@@ -367,6 +367,35 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
+HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKernelIsUsed) {
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{EnqueueFillBufferTraits::patternSize});
+
+    // Extract the kernel used
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
+    auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless,
+                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+    ASSERT_NE(nullptr, &builder);
+
+    BuiltinOpParams dc;
+    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+    dc.srcMemObj = &patternMemObj;
+    dc.dstMemObj = buffer;
+    dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
+    dc.size = {EnqueueFillBufferTraits::size, 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo;
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    EXPECT_NE(0u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+
+    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+}
+
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeCopied) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
@@ -504,4 +533,66 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
+}
+
+struct EnqueueFillBufferHw : public ::testing::Test {
+
+    void SetUp() override {
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+
+        dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Buffer> dstBuffer;
+    const uint8_t pattern[1] = {0x55};
+    const size_t patternSize = sizeof(pattern);
+    const size_t offset = 0;
+    const size_t size = patternSize;
+};
+
+using EnqeueFillBufferStatelessTest = EnqueueFillBufferHw;
+
+HWTEST_F(EnqeueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessThenSuccessIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    auto retVal = pCmdQ->enqueueFillBuffer(
+        dstBuffer.get(),
+        pattern,
+        patternSize,
+        offset,
+        size,
+        0,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqeueFillBufferStatefullTest = EnqueueFillBufferHw;
+
+HWTEST_F(EnqeueFillBufferStatefullTest, givenBuffersWhenFillingBufferStatefullThenSuccessIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    auto retVal = pCmdQ->enqueueFillBuffer(
+        dstBuffer.get(),
+        pattern,
+        patternSize,
+        offset,
+        size,
+        0,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
 }

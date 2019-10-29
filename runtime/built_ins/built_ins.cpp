@@ -417,7 +417,7 @@ template <>
 class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib), kernLeftLeftover(nullptr), kernMiddle(nullptr), kernRightLeftover(nullptr) {
+        : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::FillBuffer,
                  "",
@@ -484,9 +484,24 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    Kernel *kernLeftLeftover;
-    Kernel *kernMiddle;
-    Kernel *kernRightLeftover;
+    Kernel *kernLeftLeftover = nullptr;
+    Kernel *kernMiddle = nullptr;
+    Kernel *kernRightLeftover = nullptr;
+
+    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib) {}
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps::FillBuffer> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
+        populate(context, device,
+                 EBuiltInOps::FillBufferStateless,
+                 "-cl-intel-greater-than-4GB-buffer-required",
+                 "FillBufferLeftLeftover", kernLeftLeftover,
+                 "FillBufferMiddle", kernMiddle,
+                 "FillBufferRightLeftover", kernRightLeftover);
+    }
 };
 
 template <>
@@ -806,6 +821,9 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
         break;
     case EBuiltInOps::FillBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBuffer>>(*this, context, device); });
+        break;
+    case EBuiltInOps::FillBufferStateless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBufferStateless>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyBufferToImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3d>>(*this, context, device); });
