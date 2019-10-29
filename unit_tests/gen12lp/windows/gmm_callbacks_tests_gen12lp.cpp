@@ -33,7 +33,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptu
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     executionEnvironment->initializeMemoryManager();
-    auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment);
+    auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0);
     uint64_t address = 0xFEDCBA9876543210;
     size_t size = 1024;
 
@@ -46,7 +46,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenWddmCsrWhenWriteL3CalledThenWriteTw
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment);
+    UltCommandStreamReceiver<FamilyType> csr(*executionEnvironment, 0);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 
@@ -79,7 +79,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment);
+    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 
@@ -106,7 +106,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetR
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
-    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment);
+    UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);
     uint8_t buffer[128] = {};
     csr.commandStream.replaceBuffer(buffer, 128);
 

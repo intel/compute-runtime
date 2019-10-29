@@ -217,7 +217,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
-        CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+        CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : DestructorCounted(destructorId, executionEnvironment, rootDeviceIndex) {}
     };
     struct BuiltinsMock : public DestructorCounted<BuiltIns, 2> {
         BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -237,7 +237,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::make_unique<AubCenterMock>(destructorId);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment));
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment, 0));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);

@@ -19,10 +19,10 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 
     TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, mode) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, mode) {
     }
     TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive) {
     }
 
     void overrideDispatchPolicy(DispatchMode overrideValue) {

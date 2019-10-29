@@ -71,7 +71,7 @@ struct KmdNotifyTests : public ::testing::Test {
     template <typename Family>
     class MockKmdNotifyCsr : public UltCommandStreamReceiver<Family> {
       public:
-        MockKmdNotifyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
+        MockKmdNotifyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0) {}
         MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
         MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
     };

@@ -193,7 +193,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
@@ -240,7 +240,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDeviceWithThreadGroupPreempti
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment);
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -764,8 +764,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 
 template <typename FamilyType>
 struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> {
-    CommandStreamReceiverHwLog(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment),
-                                                                             flushCount(0) {
+    CommandStreamReceiverHwLog(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, rootDeviceIndex),
+                                                                                                       flushCount(0) {
     }
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
@@ -777,7 +777,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 };
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce) {
-    CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment);
+    CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     commandStreamReceiver.initializeTagAllocation();
     commandStreamReceiver.createPreemptionAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
@@ -873,7 +873,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
 HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment);
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands

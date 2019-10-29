@@ -17,7 +17,7 @@ using namespace NEO;
 
 void MemoryManagerWithCsrFixture::SetUp() {
     executionEnvironment.setHwInfo(*platformDevices);
-    csr = new MockCommandStreamReceiver(this->executionEnvironment);
+    csr = new MockCommandStreamReceiver(this->executionEnvironment, 0);
     memoryManager = new MockMemoryManager(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     csr->tagAddress = &currentGpuTag;

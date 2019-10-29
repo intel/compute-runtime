@@ -37,10 +37,10 @@ class TbxStream : public AubMemDump::AubStream {
 };
 
 struct TbxCommandStreamReceiver {
-    static CommandStreamReceiver *create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
     using TbxStream = NEO::TbxStream;
 };
 
-typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 } // namespace NEO

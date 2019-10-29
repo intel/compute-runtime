@@ -25,7 +25,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::writeMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     MockTbxCsr(ExecutionEnvironment &executionEnvironment)
-        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment) {}
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0) {}
 
     void initializeEngine() {
         TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();

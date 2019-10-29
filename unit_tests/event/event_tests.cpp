@@ -974,7 +974,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     };
 
     int32_t executionStamp = 0;
-    auto csr = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
+    auto csr = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(csr);
 
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
@@ -1392,7 +1392,7 @@ TEST_F(EventTest, addChildForEventCompleted) {
 
 HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
-        MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
+        MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0) {}
         MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
     };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
@@ -1419,7 +1419,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
 
 HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
-        MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
+        MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0) {}
         MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
     };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();

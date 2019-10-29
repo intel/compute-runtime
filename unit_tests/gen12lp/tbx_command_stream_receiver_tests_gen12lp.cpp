@@ -16,7 +16,7 @@ using namespace NEO;
 using Gen12LPTbxCommandStreamReceiverTests = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, givenNullPtrGraphicsAlloctionWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
-    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment);
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     GraphicsAllocation *allocation = nullptr;
     auto bits = tbxCsr->getPPGTTAdditionalBits(allocation);
     constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit);
@@ -25,7 +25,7 @@ GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, givenNullPtrGraphicsAlloctio
 }
 
 GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, givenGraphicsAlloctionWWhenGetPPGTTAdditionalBitsIsCalledThenAppropriateValueIsReturned) {
-    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment);
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     MockGraphicsAllocation allocation(nullptr, 0);
     auto bits = tbxCsr->getPPGTTAdditionalBits(&allocation);
     constexpr uint64_t expectedBits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit);
@@ -37,7 +37,7 @@ GEN12LPTEST_F(Gen12LPTbxCommandStreamReceiverTests, whenAskedForPollForCompletio
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {
       public:
         MyMockTbxHw(ExecutionEnvironment &executionEnvironment)
-            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment) {}
+            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment, 0) {}
         using TbxCommandStreamReceiverHw<FamilyType>::getpollNotEqualValueForPollForCompletion;
         using TbxCommandStreamReceiverHw<FamilyType>::getMaskAndValueForPollForCompletion;
     };

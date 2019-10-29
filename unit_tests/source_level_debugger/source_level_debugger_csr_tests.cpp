@@ -29,7 +29,7 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
         hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
         hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
 
-        auto mockCsr = new MockCsrHw2<FamilyType>(*executionEnvironment);
+        auto mockCsr = new MockCsrHw2<FamilyType>(*executionEnvironment, 0);
 
         executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
         executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));

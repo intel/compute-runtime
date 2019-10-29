@@ -23,7 +23,7 @@ using namespace NEO;
 TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -40,7 +40,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
 TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -60,7 +60,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
 TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -74,7 +74,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
 TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -164,7 +164,7 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }
-    MockCsr1(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment) {}
+    MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
     DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     using CommandStreamReceiver::timestampPacketWriteEnabled;
 };

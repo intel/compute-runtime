@@ -33,7 +33,7 @@ GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigR
     MockContext ctx(pDevice);
     MockKernelWithInternals kernel(*pDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment);
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 

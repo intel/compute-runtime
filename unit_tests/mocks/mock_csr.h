@@ -37,8 +37,8 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
 
     MockCsrBase() = delete;
 
-    MockCsrBase(int32_t &execStamp, ExecutionEnvironment &executionEnvironment)
-        : BaseUltCsrClass(executionEnvironment), executionStamp(&execStamp), flushTaskStamp(-1) {
+    MockCsrBase(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
+        : BaseUltCsrClass(executionEnvironment, rootDeviceIndex), executionStamp(&execStamp), flushTaskStamp(-1) {
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
@@ -97,7 +97,7 @@ using MockCsrHw = MockCsrBase<GfxFamily>;
 template <typename GfxFamily>
 class MockCsrAub : public MockCsrBase<GfxFamily> {
   public:
-    MockCsrAub(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : MockCsrBase<GfxFamily>(execStamp, executionEnvironment) {}
+    MockCsrAub(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : MockCsrBase<GfxFamily>(execStamp, executionEnvironment, rootDeviceIndex) {}
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;
     }
@@ -111,7 +111,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 
     MockCsr() = delete;
     MockCsr(const HardwareInfo &hwInfoIn) = delete;
-    MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : BaseClass(execStamp, executionEnvironment) {
+    MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : BaseClass(execStamp, executionEnvironment, rootDeviceIndex) {
     }
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
@@ -157,6 +157,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::isPreambleSent;
@@ -168,7 +169,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;
 
-    MockCsrHw2(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment) {}
+    MockCsrHw2(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
 
     SubmissionAggregator *peekSubmissionAggregator() {
         return this->submissionAggregator.get();

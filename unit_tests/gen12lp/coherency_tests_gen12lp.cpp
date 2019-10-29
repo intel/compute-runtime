@@ -21,7 +21,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<TGLLPFamily> {
         using CommandStreamReceiver::commandStream;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<TGLLPFamily>(executionEnvironment){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<TGLLPFamily>(executionEnvironment, 0){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 

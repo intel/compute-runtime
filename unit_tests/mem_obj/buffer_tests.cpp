@@ -690,7 +690,7 @@ struct BcsBufferTests : public ::testing::Test {
       public:
         BcsMockContext(Device *device) : MockContext(device) {
             bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
-            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment()));
+            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex()));
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
         }
@@ -1137,7 +1137,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCal
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment());
+    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     myMockCsr->taskCount = 1234;
     myMockCsr->initializeTagAllocation();
     myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
@@ -1176,7 +1176,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait)
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedEnqueueWhenUsingBcsThenWaitForValidTaskCountOnBlockingCall) {
-    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment());
+    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     myMockCsr->taskCount = 1234;
     myMockCsr->initializeTagAllocation();
     myMockCsr->setupContext(*bcsMockContext->bcsOsContext);

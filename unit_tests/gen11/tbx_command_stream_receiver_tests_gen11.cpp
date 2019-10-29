@@ -17,7 +17,7 @@ GEN11TEST_F(Gen11TbxCommandStreamReceiverTests, whenAskedForPollForCompletionPar
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {
       public:
         MyMockTbxHw(ExecutionEnvironment &executionEnvironment)
-            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment) {}
+            : TbxCommandStreamReceiverHw<FamilyType>(executionEnvironment, 0) {}
         using TbxCommandStreamReceiverHw<FamilyType>::getpollNotEqualValueForPollForCompletion;
         using TbxCommandStreamReceiverHw<FamilyType>::getMaskAndValueForPollForCompletion;
     };

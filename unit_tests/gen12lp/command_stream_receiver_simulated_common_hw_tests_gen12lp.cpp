@@ -28,7 +28,7 @@ class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> {
 };
 
 GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhewGlobalMmiosAreInitializedThenMOCSRegistersAreConfigured) {
-    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment);
+    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
     csrSimulatedCommonHw.stream = stream.get();
@@ -102,7 +102,7 @@ GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubComman
 }
 
 GEN12LPTEST_F(Gen12LPCommandStreamReceiverSimulatedCommonHwTests, givenAubCommandStreamReceiverWhenGlobalMmiosAreInitializedThenLNCFRegistersAreConfigured) {
-    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment);
+    MockSimulatedCsrHw<FamilyType> csrSimulatedCommonHw(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
 
     auto stream = std::make_unique<MockAubStreamMockMmioWrite>();
     csrSimulatedCommonHw.stream = stream.get();

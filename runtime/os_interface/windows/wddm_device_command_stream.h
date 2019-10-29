@@ -21,7 +21,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
 
   public:
-    WddmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment);
+    WddmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
     virtual ~WddmCommandStreamReceiver();
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;

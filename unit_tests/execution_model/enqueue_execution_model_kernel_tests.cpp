@@ -107,7 +107,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelWithPrivate
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t executionStamp = 0;
-        auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
+        auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
         pDevice->resetCommandStreamReceiver(mockCSR);
 
         size_t kernelRequiringPrivateSurface = pKernel->getProgram()->getBlockKernelManager()->getCount();
@@ -381,7 +381,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenPar
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
         int32_t executionStamp = 0;
-        auto mockCSR = new MockCsrBase<FamilyType>(executionStamp, *pDevice->executionEnvironment);
+        auto mockCSR = new MockCsrBase<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
         pDevice->resetCommandStreamReceiver(mockCSR);
 
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
@@ -538,7 +538,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedToNo
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
         pDevice->resetCommandStreamReceiver(mockCsr);
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
@@ -562,7 +562,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedWith
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
 
         BuiltinKernelsSimulation::SchedulerSimulation<FamilyType>::enabled = false;
 
@@ -579,7 +579,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedWith
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKernelIsSubmittedThenItIsFlushed) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
+        auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
         mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
@@ -605,7 +605,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueueMarks
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
         pDevice->resetCommandStreamReceiver(mockCsr);
 
         mockCsr->setMediaVFEStateDirty(false);

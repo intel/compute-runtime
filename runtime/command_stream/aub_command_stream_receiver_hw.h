@@ -68,9 +68,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
     MOCKABLE_VIRTUAL void dumpAllocation(GraphicsAllocation &gfxAllocation);
 
-    static CommandStreamReceiver *create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
-    AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
+    AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
     ~AUBCommandStreamReceiverHw() override;
 
     AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;

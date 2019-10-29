@@ -20,7 +20,7 @@ bool MockDevice::createSingleDevice = true;
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment);
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex());
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(internalDeviceIndex + 1);
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex].resize(defaultEngineIndex + 1);
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][defaultEngineIndex].reset(commandStreamReceiver);

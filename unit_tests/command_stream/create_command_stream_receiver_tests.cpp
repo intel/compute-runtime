@@ -32,7 +32,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment)));
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0)));
 
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());

@@ -62,7 +62,7 @@ class CommandStreamReceiver {
         samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
     };
     using MutexType = std::recursive_mutex;
-    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment);
+    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
     virtual ~CommandStreamReceiver();
 
     virtual FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) = 0;
@@ -244,6 +244,8 @@ class CommandStreamReceiver {
     uint32_t requiredScratchSize = 0;
     uint32_t requiredPrivateScratchSize = 0;
 
+    const uint32_t rootDeviceIndex;
+
     int8_t lastSentCoherencyRequest = -1;
     int8_t lastMediaSamplerConfig = -1;
 
@@ -262,5 +264,5 @@ class CommandStreamReceiver {
     bool localMemoryEnabled = false;
 };
 
-typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 } // namespace NEO

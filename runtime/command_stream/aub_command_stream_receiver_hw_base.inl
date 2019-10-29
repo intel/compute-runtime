@@ -39,8 +39,8 @@
 namespace NEO {
 
 template <typename GfxFamily>
-AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
-    : BaseClass(executionEnvironment),
+AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
+    : BaseClass(executionEnvironment, rootDeviceIndex),
       standalone(standalone) {
 
     executionEnvironment.initAubCenter(this->isLocalMemoryEnabled(), fileName, this->getType());
@@ -275,8 +275,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment) {
-    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment);
+CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment, rootDeviceIndex);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {
         csr->openFile(fileName);

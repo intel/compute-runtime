@@ -17,7 +17,7 @@ namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
 
-CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
     auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily];
     if (funcCreate == nullptr) {
         return nullptr;
@@ -29,19 +29,19 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
     }
     switch (csr) {
     case CSR_HW:
-        commandStreamReceiver = funcCreate(false, executionEnvironment);
+        commandStreamReceiver = funcCreate(false, executionEnvironment, rootDeviceIndex);
         break;
     case CSR_AUB:
-        commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment);
+        commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment, rootDeviceIndex);
         break;
     case CSR_TBX:
-        commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment);
+        commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment, rootDeviceIndex);
         break;
     case CSR_HW_WITH_AUB:
-        commandStreamReceiver = funcCreate(true, executionEnvironment);
+        commandStreamReceiver = funcCreate(true, executionEnvironment, rootDeviceIndex);
         break;
     case CSR_TBX_WITH_AUB:
-        commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment);
+        commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment, rootDeviceIndex);
         break;
     default:
         break;

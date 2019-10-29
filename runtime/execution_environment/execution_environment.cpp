@@ -31,7 +31,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     builtins.reset();
     rootDeviceEnvironments.clear();
 }
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
 void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!rootDeviceEnvironments[0].aubCenter) {
@@ -57,7 +57,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t rootDeviceIn
     if (this->rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers[internalDeviceIndex][deviceCsrIndex]) {
         return true;
     }
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(*this));
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(*this, rootDeviceIndex));
     if (!commandStreamReceiver) {
         return false;
     }

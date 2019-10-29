@@ -34,8 +34,8 @@ namespace NEO {
 // Global table of CommandStreamReceiver factories for HW and tests
 CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
-    : executionEnvironment(executionEnvironment) {
+CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
+    : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     residencyAllocations.reserve(20);
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;

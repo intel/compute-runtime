@@ -20,7 +20,7 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<ICLFamily> {
         using CommandStreamReceiver::commandStream;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment, 0){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 

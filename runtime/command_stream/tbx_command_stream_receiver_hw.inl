@@ -31,8 +31,8 @@
 namespace NEO {
 
 template <typename GfxFamily>
-TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
-    : BaseClass(executionEnvironment) {
+TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
+    : BaseClass(executionEnvironment, rootDeviceIndex) {
 
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
     executionEnvironment.initAubCenter(this->localMemoryEnabled, "", this->getType());
@@ -147,7 +147,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
         auto hwInfo = executionEnvironment.getHardwareInfo();
@@ -159,7 +159,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         }
         executionEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment);
+        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment, rootDeviceIndex);
 
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
         UNRECOVERABLE_IF(nullptr == aubCenter);
@@ -179,7 +179,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
             }
         }
     } else {
-        csr = new TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment);
+        csr = new TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex);
     }
 
     if (!csr->aubManager) {

@@ -65,7 +65,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
 
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment);
+        auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(*executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         device->resetCommandStreamReceiver(mockCsr);

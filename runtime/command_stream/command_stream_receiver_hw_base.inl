@@ -36,8 +36,8 @@
 namespace NEO {
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
-    : CommandStreamReceiver(executionEnvironment) {
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
+    : CommandStreamReceiver(executionEnvironment, rootDeviceIndex) {
 
     auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
     localMemoryEnabled = hwHelper.getEnableLocalMemory(peekHwInfo());

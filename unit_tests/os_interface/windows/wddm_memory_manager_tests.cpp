@@ -1613,7 +1613,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
-    auto csr = createCommandStream(executionEnvironment);
+    auto csr = createCommandStream(executionEnvironment, 0);
     auto wddm = new WddmMock();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     auto hwInfo = *platformDevices[0];

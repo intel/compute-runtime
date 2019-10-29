@@ -55,14 +55,12 @@ struct MockAubCsrToTestDumpContext : public AUBCommandStreamReceiverHw<GfxFamily
 
 template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
-    MockAubCsr(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
-        : AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment){};
-
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::latestSentTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
+    using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
 
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
@@ -182,7 +180,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
 
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment));
+    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment, 0));
     executionEnvironment->initializeMemoryManager();
     if (createTagAllocation) {
         executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->initializeTagAllocation();

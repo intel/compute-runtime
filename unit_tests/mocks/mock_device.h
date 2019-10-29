@@ -16,7 +16,7 @@ namespace NEO {
 class OSTime;
 class FailMemoryManager;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
 class MockDevice : public RootDevice {
   public:

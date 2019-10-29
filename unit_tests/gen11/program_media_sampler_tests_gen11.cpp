@@ -23,7 +23,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     struct myCsr : public CommandStreamReceiverHw<ICLFamily> {
         using CommandStreamReceiver::commandStream;
         using CommandStreamReceiverHw<ICLFamily>::programMediaSampler;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<ICLFamily>(executionEnvironment, 0){};
         void overrideLastVmeSubliceConfig(bool value) {
             lastVmeSubslicesConfig = value;
         }

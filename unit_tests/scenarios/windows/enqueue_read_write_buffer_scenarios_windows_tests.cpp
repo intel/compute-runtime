@@ -36,7 +36,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
 
     template <typename FamilyType>
     void initializeFixture() {
-        auto wddmCsr = new WddmCommandStreamReceiver<FamilyType>(*executionEnvironment);
+        auto wddmCsr = new WddmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0);
 
         executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
         executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(wddmCsr));

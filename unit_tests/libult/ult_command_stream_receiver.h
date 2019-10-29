@@ -75,10 +75,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     virtual ~UltCommandStreamReceiver() override {
     }
 
-    UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : BaseClass(executionEnvironment), recursiveLockCounter(0),
-                                                                           recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
-    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
-        return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment);
+    UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : BaseClass(executionEnvironment, rootDeviceIndex), recursiveLockCounter(0),
+                                                                                                     recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
+    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+        return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex);
     }
 
     virtual GmmPageTableMngr *createPageTableManager() override {

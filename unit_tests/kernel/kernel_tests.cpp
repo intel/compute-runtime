@@ -465,7 +465,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override { return false; }
 
-    CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
+    CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
         executionEnvironment.initializeMemoryManager();
     }
@@ -548,7 +548,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
 
     // Test it
     auto executionEnvironment = pDevice->getExecutionEnvironment();
-    std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment));
+    std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment, 0));
     csr->setupContext(*pDevice->getDefaultEngine().osContext);
     csr->residency.clear();
     EXPECT_EQ(0u, csr->residency.size());

@@ -63,7 +63,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, *executionEnvironment);
+    MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, *executionEnvironment, 0);
     executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment->initializeMemoryManager();
     auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];

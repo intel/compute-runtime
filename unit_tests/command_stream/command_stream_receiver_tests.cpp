@@ -228,7 +228,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment);
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
@@ -236,16 +236,16 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThen
     DebugManagerStateRestore restore;
 
     DebugManager.flags.EnableTimestampPacket.set(true);
-    CommandStreamReceiverHw<FamilyType> csr1(*pDevice->executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr1(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
 
     DebugManager.flags.EnableTimestampPacket.set(false);
-    CommandStreamReceiverHw<FamilyType> csr2(*pDevice->executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr2(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
-    CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 
@@ -301,7 +301,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<MockCommandStreamReceiver>(executionEnvironment));
+    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0));
     auto csr = executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0][0].get();
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     csr->setTagAllocation(mockGraphicsAllocation);
@@ -312,7 +312,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    auto csr = new MockCommandStreamReceiver(executionEnvironment);
+    auto csr = new MockCommandStreamReceiver(executionEnvironment, 0);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
@@ -330,7 +330,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
     DebugManager.flags.EnableNullHardware.set(true);
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    auto csr = new MockCommandStreamReceiver(executionEnvironment);
+    auto csr = new MockCommandStreamReceiver(executionEnvironment, 0);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
@@ -344,7 +344,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
 TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment);
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
 
     constexpr size_t setSize = 6;
     uint8_t setA1[setSize] = {4, 3, 2, 1, 2, 10};
@@ -600,7 +600,7 @@ HWTEST_P(CommandStreamReceiverWithAubSubCaptureTest, givenCommandStreamReceiverW
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
-    MyMockCsr mockCsr(executionEnvironment);
+    MyMockCsr mockCsr(executionEnvironment, 0);
 
     mockCsr.programForAubSubCapture(wasActiveInPreviousEnqueue, isActive);
 
@@ -623,7 +623,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST(CommandStreamReceiverDeviceIndexTest, givenCsrWithOsContextWhenGetDeviceIndexThenGetHighestEnabledBitInDeviceBitfield) {
     ExecutionEnvironment executioneEnvironment;
     executioneEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executioneEnvironment);
+    MockCommandStreamReceiver csr(executioneEnvironment, 0);
     auto osContext = executioneEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b10, PreemptionMode::Disabled, false);
 
     csr.setupContext(*osContext);
@@ -633,7 +633,7 @@ TEST(CommandStreamReceiverDeviceIndexTest, givenCsrWithOsContextWhenGetDeviceInd
 TEST(CommandStreamReceiverDeviceIndexTest, givenOsContextWithNoDeviceBitfieldWhenGettingDeviceIndexThenZeroIsReturned) {
     ExecutionEnvironment executioneEnvironment;
     executioneEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executioneEnvironment);
+    MockCommandStreamReceiver csr(executioneEnvironment, 0);
     auto osContext = executioneEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b00, PreemptionMode::Disabled, false);
 
     csr.setupContext(*osContext);

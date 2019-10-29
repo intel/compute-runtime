@@ -309,7 +309,6 @@ class MockCompilerInterface : public CompilerInterface {
         return std::unique_lock<std::mutex>(mtx);
     }
 
-
     void SetIgcMain(CIF::CIFMain *main) {
         this->igcMain.release();
         this->igcMain.reset(main);

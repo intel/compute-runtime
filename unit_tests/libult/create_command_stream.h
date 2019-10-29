@@ -12,6 +12,6 @@ extern bool overrideCommandStreamReceiverCreation;
 extern bool overrideDeviceWithDefaultHardwareInfo;
 extern bool overrideMemoryManagerCreation;
 
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 extern bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 } // namespace NEO

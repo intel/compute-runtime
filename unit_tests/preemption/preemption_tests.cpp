@@ -442,7 +442,7 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
     class MockUltCsr : public UltCommandStreamReceiver<FamilyType> {
 
       public:
-        MockUltCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment) {
+        MockUltCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0) {
         }
 
         bool createPreemptionAllocation() override {
