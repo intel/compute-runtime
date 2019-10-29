@@ -49,7 +49,7 @@ struct EnqueueMapBufferTest : public DeviceFixture,
     char srcMemory[128];
 };
 
-TEST_F(EnqueueMapBufferTest, checkPointer) {
+TEST_F(EnqueueMapBufferTest, GivenBufferAddressesWhenMappingBufferThenCpuAndGpuAddressAreEqualWhenZeroCopyIsUsed) {
     auto mapFlags = CL_MAP_READ;
     auto size = 0;
     auto offset = 0;
@@ -84,7 +84,7 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedThenReturnHo
     EXPECT_EQ(ptr, ptrOffset(hostPtr, offset));
 }
 
-TEST_F(EnqueueMapBufferTest, checkRetVal) {
+TEST_F(EnqueueMapBufferTest, GivenCmdqAndValidArgsWhenMappingBufferThenSuccessIsReturned) {
     auto mapFlags = CL_MAP_READ;
     auto size = 0;
     auto offset = 0;
@@ -103,7 +103,7 @@ TEST_F(EnqueueMapBufferTest, checkRetVal) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueMapBufferTest, NonZeroCopyBufferMapping) {
+TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
     //size not aligned to cacheline size
     int bufferSize = 20;
     void *ptrHost = malloc(bufferSize);
@@ -177,7 +177,7 @@ TEST_F(EnqueueMapBufferTest, NonZeroCopyBufferMapping) {
     free(ptrHost);
 }
 
-TEST_F(EnqueueMapBufferTest, NonZeroCopyBufferMappingWithOffset_UnMapMustSucceed) {
+TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWithOffsetWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
     //size not aligned to cacheline size
     int bufferSize = 20;
     void *ptrHost = malloc(bufferSize);
@@ -232,7 +232,7 @@ TEST_F(EnqueueMapBufferTest, NonZeroCopyBufferMappingWithOffset_UnMapMustSucceed
     free(ptrHost);
 }
 
-TEST_F(EnqueueMapBufferTest, MapBufferReturnsSuccess) {
+TEST_F(EnqueueMapBufferTest, GivenValidArgsWhenMappingBufferThenSuccessIsReturned) {
     auto buffer = clCreateBuffer(
         BufferDefaults::context,
         CL_MEM_READ_WRITE,
@@ -593,7 +593,7 @@ TEST_F(EnqueueMapBufferTest, GivenWrongMemObjectWhenMapIsCalledThenInvalidMemObj
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-HWTEST_F(EnqueueMapBufferTest, MapBufferEventProperties) {
+HWTEST_F(EnqueueMapBufferTest, GivenPtrToReturnEventWhenMappingBufferThenEventIsNotNull) {
     cl_event eventReturned = NULL;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
