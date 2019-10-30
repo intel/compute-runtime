@@ -77,6 +77,7 @@ Wddm::Wddm() {
 }
 
 Wddm::~Wddm() {
+    temporaryResources.reset();
     resetPageTableManager(nullptr);
     destroyPagingQueue();
     destroyDevice();
