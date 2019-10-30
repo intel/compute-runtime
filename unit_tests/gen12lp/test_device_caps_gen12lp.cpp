@@ -107,5 +107,5 @@ TGLLPTEST_F(TglLpUsDeviceIdTest, GivenTGLLPWhenCheckftr64KBpagesThenTrue) {
 }
 
 TGLLPTEST_F(TglLpUsDeviceIdTest, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
