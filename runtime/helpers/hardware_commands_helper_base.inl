@@ -185,4 +185,6 @@ void HardwareCommandsHelper<GfxFamily>::programBarrierEnable(INTERFACE_DESCRIPTO
     pInterfaceDescriptor->setBarrierEnable(value);
 }
 
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo) {}
 } // namespace NEO

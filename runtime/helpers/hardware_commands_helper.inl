@@ -167,6 +167,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                          kernel.getDevice().getHardwareInfo());
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
+    HardwareCommandsHelper<GfxFamily>::adjustInterfaceDescriptorData(pInterfaceDescriptor, kernel.getDevice().getHardwareInfo());
 
     pInterfaceDescriptor->setBindingTableEntryCount(bindingTablePrefetchSize);
 
