@@ -892,12 +892,14 @@ STATIC_ASSERT(20 == sizeof(MI_STORE_DATA_IMM));
 typedef struct tagSTATE_SIP {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 3);
             uint64_t SystemInstructionPointer : BITFIELD_RANGE(4, 63);
         } Common;
@@ -918,11 +920,7 @@ typedef struct tagSTATE_SIP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    typedef enum tagPATCH_CONSTANTS {
-        SYSTEMINSTRUCTIONPOINTER_BYTEOFFSET = 0x4,
-        SYSTEMINSTRUCTIONPOINTER_INDEX = 0x1,
-    } PATCH_CONSTANTS;
-    void init() {
+    inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_SIP;
@@ -930,43 +928,47 @@ typedef struct tagSTATE_SIP {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-    static tagSTATE_SIP sInit() {
+    static tagSTATE_SIP sInit(void) {
         STATE_SIP state;
         state.init();
         return state;
     }
-    inline uint32_t &getRawData(uint32_t const index) {
-        DEBUG_BREAK_IF(index >= 3);
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
     typedef enum tagSYSTEMINSTRUCTIONPOINTER {
         SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
         SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
     } SYSTEMINSTRUCTIONPOINTER;
-    inline uint64_t getSystemInstructionPointer() const {
-        return (uint64_t)TheStructure.Common.SystemInstructionPointer << SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
-    }
-    inline void setSystemInstructionPointer(uint64_t value) {
+    inline void setSystemInstructionPointer(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.SystemInstructionPointer = value >> SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
+    }
+    inline uint64_t getSystemInstructionPointer(void) const {
+        return (uint64_t)TheStructure.Common.SystemInstructionPointer << SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
 } STATE_SIP;
 STATIC_ASSERT(12 == sizeof(STATE_SIP));
+
 typedef struct tagGPGPU_CSR_BASE_ADDRESS {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 11);
             uint64_t GpgpuCsrBaseAddress : BITFIELD_RANGE(12, 63);
         } Common;
         uint32_t RawData[3];
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_UNNAMED_1 = 0x1,
+        DWORD_LENGTH_LENGTH_1 = 0x1,
     } DWORD_LENGTH;
     typedef enum tag_3D_COMMAND_SUB_OPCODE {
         _3D_COMMAND_SUB_OPCODE_GPGPU_CSR_BASE_ADDRESS = 0x4,
@@ -980,13 +982,9 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    typedef enum tagPATCH_CONSTANTS {
-        GPGPUCSRBASEADDRESS_BYTEOFFSET = 0x4,
-        GPGPUCSRBASEADDRESS_INDEX = 0x1,
-    } PATCH_CONSTANTS;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_UNNAMED_1;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_LENGTH_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_GPGPU_CSR_BASE_ADDRESS;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
@@ -997,19 +995,20 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
         state.init();
         return state;
     }
-    inline uint32_t &getRawData(uint32_t const index) {
-        DEBUG_BREAK_IF(index >= 3);
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
     typedef enum tagGPGPUCSRBASEADDRESS {
-        GPGPUCSRBASEADDRESS_BIT_SHIFT = 0xC,
+        GPGPUCSRBASEADDRESS_BIT_SHIFT = 0xc,
         GPGPUCSRBASEADDRESS_ALIGN_SIZE = 0x1000,
     } GPGPUCSRBASEADDRESS;
-    inline uint64_t getGpgpuCsrBaseAddress() const {
-        return (uint64_t)TheStructure.Common.GpgpuCsrBaseAddress << GPGPUCSRBASEADDRESS_BIT_SHIFT;
-    }
-    inline void setGpgpuCsrBaseAddress(uint64_t value) {
+    inline void setGpgpuCsrBaseAddress(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.GpgpuCsrBaseAddress = value >> GPGPUCSRBASEADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getGpgpuCsrBaseAddress(void) const {
+        return (uint64_t)TheStructure.Common.GpgpuCsrBaseAddress << GPGPUCSRBASEADDRESS_BIT_SHIFT;
     }
 } GPGPU_CSR_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(GPGPU_CSR_BASE_ADDRESS));
