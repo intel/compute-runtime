@@ -53,7 +53,7 @@ struct EnqueueMapImageParamsTest : public EnqueueMapImageTest,
                                    public ::testing::WithParamInterface<uint32_t> {
 };
 
-TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
+TEST_F(EnqueueMapImageTest, GivenTiledImageWhenMappingImageThenPointerIsReused) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
@@ -241,7 +241,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
     mockImage.releaseAllocatedMapPtr();
 }
 
-TEST_F(EnqueueMapImageTest, checkPointer) {
+TEST_F(EnqueueMapImageTest, WhenMappingImageThenCpuAndGpuAddressAreEqualWhenZeroCopyIsUsed) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
@@ -273,7 +273,7 @@ TEST_F(EnqueueMapImageTest, checkPointer) {
     EXPECT_EQ(imageSlicePitch, imageSlicePitchRef);
 }
 
-TEST_F(EnqueueMapImageTest, checkRetVal) {
+TEST_F(EnqueueMapImageTest, GivenCmdqAndValidArgsWhenMappingImageThenSuccessIsReturned) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
@@ -435,7 +435,7 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     clReleaseEvent(unmapEventReturned);
 }
 
-HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
+HWTEST_F(EnqueueMapImageTest, GivenPtrToReturnEventWhenMappingImageThenEventIsNotNull) {
     if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
         GTEST_SKIP();
     }
@@ -1025,7 +1025,7 @@ struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
     Image *image = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueMapImageTypeTest, blockingEnqueueRequiresPCWithDCFlushSetAfterWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueMapImageTypeTest, GiveRequirementForPipeControlWorkaroundWhenMappingImageThenAdditionalPipeControlIsProgrammed) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     // Set taskCount to 1 to call finish on map operation
