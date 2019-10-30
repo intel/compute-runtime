@@ -37,7 +37,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
-        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
         executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
@@ -46,7 +46,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
-        memoryManager = new DrmMemoryManager(gemCloseWorkerActive,
+        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
                                              DebugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
@@ -104,7 +104,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment);
         ASSERT_NE(nullptr, csr);
-        mm = new DrmMemoryManager(gemCloseWorkerInactive,
+        mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
                                   DebugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);

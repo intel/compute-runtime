@@ -19,7 +19,7 @@ class DrmMemoryManager;
 class BufferObject;
 class Thread;
 
-enum gemCloseWorkerMode {
+enum class gemCloseWorkerMode {
     gemCloseWorkerInactive,
     gemCloseWorkerActive
 };
