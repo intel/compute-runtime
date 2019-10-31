@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "mem_obj_types.h"
+#include "public/cl_ext_private.h"
+
 #include "memory_properties_flags.h"
 
 namespace NEO {

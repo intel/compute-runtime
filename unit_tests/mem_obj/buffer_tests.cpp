@@ -8,6 +8,7 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "public/cl_ext_private.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/user_event.h"
@@ -38,7 +39,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mem_obj_types.h"
 
 using namespace NEO;
 

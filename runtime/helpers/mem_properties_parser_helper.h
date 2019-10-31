@@ -7,9 +7,9 @@
 
 #pragma once
 #include "common/helpers/bit_helpers.h"
+#include "public/cl_ext_private.h"
 #include "runtime/memory_manager/allocation_properties.h"
 
-#include "mem_obj_types.h"
 #include "memory_properties_flags.h"
 
 namespace NEO {

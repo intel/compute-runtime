@@ -14,7 +14,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 
 #include "CL/cl.h"
-#include "mem_obj_types.h"
 #include "memory_properties_flags.h"
 
 namespace NEO {
