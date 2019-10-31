@@ -1259,11 +1259,11 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
 
     MultiDispatchInfo multiDispatchInfo;
     MemObjsForAuxTranslation memObjsForAuxTranslation;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     memObjsForAuxTranslation.insert(&mockBuffer[0]);
     memObjsForAuxTranslation.insert(&mockBuffer[1]);
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
@@ -1315,11 +1315,11 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredTh
 
     MultiDispatchInfo multiDispatchInfo;
     MemObjsForAuxTranslation memObjsForAuxTranslation;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     memObjsForAuxTranslation.insert(&mockBuffer[0]);
     memObjsForAuxTranslation.insert(&mockBuffer[1]);
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);

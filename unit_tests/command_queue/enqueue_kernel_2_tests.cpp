@@ -673,16 +673,16 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
       public:
         using CommandQueueHw<FamilyType>::commandStream;
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
-                                    AuxTranslationDirection auxTranslationDirection) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, auxTranslationDirection);
+        void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
+            CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
             auxTranslationDirections.push_back(auxTranslationDirection);
             Kernel *lastKernel = nullptr;
             for (const auto &dispatchInfo : multiDispatchInfo) {
                 lastKernel = dispatchInfo.getKernel();
                 dispatchInfos.emplace_back(dispatchInfo);
             }
-            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), memObjsForAuxTranslation, auxTranslationDirection);
+            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), *multiDispatchInfo.getMemObjsForAuxTranslation(),
+                                                      auxTranslationDirection);
         }
 
         void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
@@ -801,6 +801,36 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     auto kernelAfter = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
     EXPECT_EQ("fullCopy", kernelAfter->getKernelInfo().name);
     EXPECT_TRUE(kernelAfter->isBuiltIn);
+}
+
+HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableSetWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DisableAuxTranslationBuiltinDispatch.set(true);
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    size_t gws[3] = {1, 0, 0};
+    MockBuffer buffer;
+    cl_mem clMem = &buffer;
+
+    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    mockKernel.kernelInfo.kernelArgInfo.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.mockKernel->initialize();
+    mockKernel.mockKernel->auxTranslationRequired = true;
+    mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
+
+    // aux builtin not dispatched before NDR
+    EXPECT_EQ(0u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0)));
+
+    // only NDR is dispatched
+    EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1)));
+    auto kernel = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
+    EXPECT_FALSE(kernel->isBuiltIn);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker) {

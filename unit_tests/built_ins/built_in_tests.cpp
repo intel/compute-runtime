@@ -260,6 +260,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTrans
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
     mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
@@ -267,7 +268,6 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTrans
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
@@ -307,6 +307,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslat
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
     mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
@@ -314,7 +315,6 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslat
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     for (auto &buffer : mockBuffer) {
@@ -357,8 +357,8 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPic
     std::vector<Kernel *> builtinKernels;
 
     MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
     for (auto &buffer : mockBuffer) {
         memObjsForAuxTranslation.insert(&buffer);
@@ -391,8 +391,8 @@ HWTEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchIn
     MockBuffer mockBuffer;
 
     MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
     memObjsForAuxTranslation.insert(&mockBuffer);
 
@@ -427,9 +427,9 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
     MemObjsForAuxTranslation memObjsForAuxTranslation;
     BuiltinOpParams builtinOpsParams;
     MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     MockBuffer mockBuffer[7];
 
-    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
@@ -500,13 +500,12 @@ HWTEST_F(BuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetVali
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     MultiDispatchInfo multiDispatchInfo;
     MemObjsForAuxTranslation memObjsForAuxTranslation;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParamsToAux;
-    builtinOpParamsToAux.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     BuiltinOpParams builtinOpParamsToNonAux;
-    builtinOpParamsToNonAux.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     cl_int retVal = CL_SUCCESS;
@@ -558,9 +557,9 @@ HWTEST_F(BuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSet
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     MultiDispatchInfo multiDispatchInfo;
     MemObjsForAuxTranslation memObjsForAuxTranslation;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParams;
-    builtinOpParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     cl_int retVal = CL_SUCCESS;
@@ -604,9 +603,9 @@ HWTEST_F(BuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSet
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     MultiDispatchInfo multiDispatchInfo;
     MemObjsForAuxTranslation memObjsForAuxTranslation;
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParams;
-    builtinOpParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     cl_int retVal = CL_SUCCESS;

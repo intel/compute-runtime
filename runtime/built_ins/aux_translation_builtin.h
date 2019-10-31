@@ -21,11 +21,11 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     template <typename GfxFamily>
     bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
         size_t kernelInstanceNumber = 0;
-        size_t numMemObjectsToTranslate = operationParams.memObjsForAuxTranslation->size();
+        size_t numMemObjectsToTranslate = multiDispatchInfo.getMemObjsForAuxTranslation()->size();
         resizeKernelInstances(numMemObjectsToTranslate);
         multiDispatchInfo.setBuiltinOpParams(operationParams);
 
-        for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
+        for (auto &memObj : *multiDispatchInfo.getMemObjsForAuxTranslation()) {
             DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
             size_t allocationSize = alignUp(memObj->getSize(), 512);
 

@@ -392,8 +392,7 @@ class CommandQueueHw : public CommandQueue {
     cl_int enqueueMarkerForReadWriteOperation(MemObj *memObj, void *ptr, cl_command_type commandType, cl_bool blocking, cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList, cl_event *event);
 
-    MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
-                                                 AuxTranslationDirection auxTranslationDirection);
+    MOCKABLE_VIRTUAL void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection);
 
     MOCKABLE_VIRTUAL bool forceStateless(size_t size);
 

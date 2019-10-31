@@ -102,13 +102,16 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
 }
 
 template <typename Family>
-void CommandQueueHw<Family>::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
-                                                    AuxTranslationDirection auxTranslationDirection) {
+void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo,
+                                                           AuxTranslationDirection auxTranslationDirection) {
+    if (DebugManager.flags.DisableAuxTranslationBuiltinDispatch.get()) {
+        return;
+    }
+
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
     auto &auxTranslationBuilder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(builder);
     BuiltinOpParams dispatchParams;
 
-    dispatchParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
 
     auxTranslationBuilder.buildDispatchInfosForAuxTranslation<Family>(multiDispatchInfo, dispatchParams);

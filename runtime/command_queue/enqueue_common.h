@@ -63,8 +63,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
             builtInLock.takeOwnership(builder, this->context);
             kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
+            multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
             if (!memObjsForAuxTranslation.empty()) {
-                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
             }
         }
 
@@ -84,7 +85,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         if (kernel->isAuxTranslationRequired()) {
             if (!memObjsForAuxTranslation.empty()) {
                 UNRECOVERABLE_IF(kernel->isParentKernel);
-                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::NonAuxToAux);
             }
         }
     }

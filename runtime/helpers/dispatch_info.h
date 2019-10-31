@@ -192,10 +192,19 @@ struct MultiDispatchInfo {
         return builtinOpParams;
     }
 
+    void setMemObjsForAuxTranslation(const MemObjsForAuxTranslation &memObjsForAuxTranslation) {
+        this->memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    }
+
+    const MemObjsForAuxTranslation *getMemObjsForAuxTranslation() const {
+        return memObjsForAuxTranslation;
+    }
+
   protected:
     BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
+    const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
     Kernel *mainKernel = nullptr;
 };
 } // namespace NEO
