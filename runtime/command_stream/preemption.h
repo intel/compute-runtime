@@ -65,8 +65,6 @@ class PreemptionHelper {
 template <typename GfxFamily>
 struct PreemptionConfig {
     static const uint32_t mmioAddress;
-    static const uint32_t maskVal;
-    static const uint32_t maskShift;
     static const uint32_t mask;
 
     static const uint32_t threadGroupVal;

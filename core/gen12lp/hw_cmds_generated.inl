@@ -1273,6 +1273,7 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_IMM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+        TheStructure.Common.MmioRemapEnable = true; // this field is manually set
     }
     static tagMI_LOAD_REGISTER_IMM sInit(void) {
         MI_LOAD_REGISTER_IMM state;

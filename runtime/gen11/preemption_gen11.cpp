@@ -14,18 +14,6 @@ namespace NEO {
 typedef ICLFamily GfxFamily;
 
 template <>
-struct PreemptionConfig<GfxFamily> {
-    static constexpr uint32_t mmioAddress = 0x2580;
-    static constexpr uint32_t maskVal = (1 << 1) | (1 << 2);
-    static constexpr uint32_t maskShift = 16;
-    static constexpr uint32_t mask = maskVal << maskShift;
-
-    static constexpr uint32_t threadGroupVal = (1 << 1);
-    static constexpr uint32_t cmdLevelVal = (1 << 2);
-    static constexpr uint32_t midThreadVal = 0;
-};
-
-template <>
 size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) {
     return 0;
 }

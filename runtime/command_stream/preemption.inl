@@ -136,4 +136,19 @@ template <typename GfxFamily>
 void PreemptionHelper::programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode) {
 }
 
+template <typename GfxFamily>
+constexpr uint32_t PreemptionConfig<GfxFamily>::mmioAddress = 0x2580;
+
+template <typename GfxFamily>
+constexpr uint32_t PreemptionConfig<GfxFamily>::mask = ((1 << 1) | (1 << 2)) << 16;
+
+template <typename GfxFamily>
+constexpr uint32_t PreemptionConfig<GfxFamily>::threadGroupVal = (1 << 1);
+
+template <typename GfxFamily>
+constexpr uint32_t PreemptionConfig<GfxFamily>::cmdLevelVal = (1 << 2);
+
+template <typename GfxFamily>
+constexpr uint32_t PreemptionConfig<GfxFamily>::midThreadVal = 0;
+
 } // namespace NEO

@@ -169,3 +169,25 @@ GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibil
 
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
+
+using LriHelperTestsGen12Lp = ::testing::Test;
+
+GEN12LPTEST_F(LriHelperTestsGen12Lp, whenProgrammingLriCommandThenExpectMmioRemapEnable) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint32_t address = 0x8888;
+    uint32_t data = 0x1234;
+
+    auto expectedLri = FamilyType::cmdInitLoadRegisterImm;
+    expectedLri.setRegisterOffset(address);
+    expectedLri.setDataDword(data);
+    expectedLri.setMmioRemapEnable(true);
+
+    auto lri = LriHelper<FamilyType>::program(&stream, address, data);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
+    EXPECT_EQ(lri, stream.getCpuBase());
+    EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
+}
