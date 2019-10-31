@@ -2,40 +2,35 @@
 
 ## Building
 
-*Instructions assume clean Centos 7.4.1708 installation.**
+*Instructions assume clean Centos 8.0.1905 installation.**
 
-1. Download & install required dependencies
+1. Download & install required packages
 
 Example:
 
 ```shell
-sudo yum groups install  "Development Tools"
-sudo yum install centos-release-scl epel-release
-sudo yum install devtoolset-4-gcc-c++ cmake3 ninja-build
-sudo /usr/sbin/alternatives --install /usr/bin/cmake cmake /usr/bin/cmake3 50
+sudo dnf install gcc-c++ cmake git make
 ```
 
 2. Install required dependencies
 
-Neo requires [Intel(R) Graphics Compiler for OpenCL(TM)](https://github.com/intel/intel-graphics-compiler) and [Intel(R) Graphics Memory Management](https://github.com/intel/gmmlib) to be installed on your system.
+Neo requires:
+- [Intel(R) Graphics Compiler for OpenCL(TM)](https://github.com/intel/intel-graphics-compiler)
+- [Intel(R) Graphics Memory Management](https://github.com/intel/gmmlib)
 
-Please visit IGC and GmmLib repositories to build and install intel-igc-opencl-devel and intel-gmmlib-devel packages including all required dependencies
+Please visit theirs repositories for building and instalation instructions or use packages from 
+[copr repository](https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl)
+Use versions compatible with selected [Neo release](https://github.com/intel/compute-runtime/releases)
 
 3. Create workspace folder and download sources:
 
 Example:
-```
-	workspace
-	  |- neo                https://github.com/intel/compute-runtime
-```
-
-Example:
 
 ```shell
+mkdir workspace
+cd workspace
 git clone https://github.com/intel/compute-runtime neo
 ```
-
-Note: Instructions for compiling *Intel Graphics Compiler* copied from https://github.com/intel/intel-graphics-compiler/blob/master/README.md 
 
 4. Create folder for build: 
 
@@ -49,22 +44,13 @@ mkdir build
 
 * [cl_intel_va_api_media_sharing](https://github.com/intel/compute-runtime/blob/master/documentation/cl_intel_va_api_media_sharing.md)
 
-6. Build complete driver:
+6. Build and install
 
 ```shell
 cd build
-scl enable devtoolset-4 "cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo"
-scl enable devtoolset-4 "make -j `nproc` package"
-```
-
-## Installing
-
-To install OpenCL driver please use rpm package generated during build
-
-Example:
-
-```shell
-sudo rpm -i intel-opencl-1.0-0.x86_64-igdrcl.rpm
+cmake -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
+make -j`nproc`
+sudo make install
 ```
 
 ___(*) Other names and brands my be claimed as property of others.___
