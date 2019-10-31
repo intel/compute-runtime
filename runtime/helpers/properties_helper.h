@@ -44,6 +44,11 @@ enum class AuxTranslationDirection {
     NonAuxToAux
 };
 
+enum class AuxTranslationMode : int32_t {
+    Builtin = 0,
+    Blit = 1
+};
+
 struct TransferProperties {
     TransferProperties() = delete;
 

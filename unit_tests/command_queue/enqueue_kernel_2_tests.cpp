@@ -804,9 +804,9 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     EXPECT_TRUE(kernelAfter->isBuiltIn);
 }
 
-HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableSetWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
+HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DisableAuxTranslationBuiltinDispatch.set(true);
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
 
     MockKernelWithInternals mockKernel(*pDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pDevice);

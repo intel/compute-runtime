@@ -170,6 +170,8 @@ class HwHelperHw : public HwHelper {
 
     bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) override;
 
+    static AuxTranslationMode getAuxTranslationMode();
+
   protected:
     HwHelperHw() = default;
 };

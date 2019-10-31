@@ -152,6 +152,15 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
+AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
+    if (DebugManager.flags.ForceAuxTranslationMode.get() != -1) {
+        return static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());
+    }
+
+    return AuxTranslationMode::Builtin;
+}
+
+template <typename Family>
 typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
                                                                                                        POST_SYNC_OPERATION operation,
                                                                                                        uint64_t gpuAddress,

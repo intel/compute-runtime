@@ -104,7 +104,7 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
 template <typename Family>
 void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo,
                                                            AuxTranslationDirection auxTranslationDirection) {
-    if (DebugManager.flags.DisableAuxTranslationBuiltinDispatch.get()) {
+    if (HwHelperHw<Family>::getAuxTranslationMode() != AuxTranslationMode::Builtin) {
         return;
     }
 
