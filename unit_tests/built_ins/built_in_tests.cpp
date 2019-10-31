@@ -89,8 +89,8 @@ class BuiltInTests
         allBuiltIns.append(src, start, size);
     }
 
-    bool compareBultinOpParams(const BuiltinOpParams &left,
-                               const BuiltinOpParams &right) {
+    bool compareBuiltinOpParams(const BuiltinOpParams &left,
+                                const BuiltinOpParams &right) {
         return left.srcPtr == right.srcPtr &&
                left.dstPtr == right.dstPtr &&
                left.size == right.size &&
@@ -249,7 +249,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
         }
         i++;
     }
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     delete srcPtr;
     delete dstPtr;
 }
@@ -293,7 +293,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTrans
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // always pick different kernel
     EXPECT_EQ(3u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[1]);
@@ -340,7 +340,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslat
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // always pick different kernel
     EXPECT_EQ(3u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[1]);
@@ -375,7 +375,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPic
     for (auto &dispatchInfo : multiDispatchInfo) {
         builtinKernels.push_back(dispatchInfo.getKernel());
     }
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // nonAux vs Aux instance
     EXPECT_EQ(6u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[3]);
@@ -669,7 +669,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
     size_t middleSize = dst.getSize() / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
 
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
@@ -694,7 +694,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
 
     EXPECT_EQ(dispatchInfo->getKernel()->getKernelInfo().name, "CopyBufferToBufferLeftLeftover");
 
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
@@ -728,7 +728,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
     size_t middleElSize = sizeof(uint32_t) * 4;
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     alignedFree(dstPtr);
 }
 
@@ -763,7 +763,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
     size_t middleElSize = sizeof(uint32_t) * 4;
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
-    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     alignedFree(srcPtr);
 }
 

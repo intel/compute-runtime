@@ -2575,7 +2575,7 @@ class Program32BitTests : public ProgramTests {
     }
 };
 
-TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBultinIsCreatedThenNoFlagsArePassedAsInternalOptions) {
+TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBuiltinIsCreatedThenNoFlagsArePassedAsInternalOptions) {
     MockProgram pProgram(*pDevice->getExecutionEnvironment());
     auto &internalOptions = pProgram.getInternalOptions();
     EXPECT_THAT(internalOptions, testing::HasSubstr(std::string("")));

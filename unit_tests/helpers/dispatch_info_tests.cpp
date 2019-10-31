@@ -292,7 +292,7 @@ TEST_F(DispatchInfoTest, givenKernelWhenMultiDispatchInfoIsCreatedThenQueryParen
         MultiDispatchInfo multiDispatchInfo(baseKernel.get());
         multiDispatchInfo.push(builtInDispatchInfo);
         EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
-        EXPECT_EQ(baseKernel.get(), multiDispatchInfo.peekMainKernel()); // dont pick bultin kernel
+        EXPECT_EQ(baseKernel.get(), multiDispatchInfo.peekMainKernel()); // dont pick builtin kernel
 
         multiDispatchInfo.push(baseDispatchInfo);
         EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
