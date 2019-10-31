@@ -29,6 +29,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_ioctl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler.cpp

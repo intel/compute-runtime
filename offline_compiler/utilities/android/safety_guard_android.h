@@ -10,15 +10,14 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <execinfo.h>
 #include <setjmp.h>
 #include <signal.h>
 
 static jmp_buf jmpbuf;
 
-class SafetyGuardLinux {
+class SafetyGuardAndroid {
   public:
-    SafetyGuardLinux() {
+    SafetyGuardAndroid() {
         struct sigaction sigact;
 
         sigact.sa_sigaction = sigAction;
@@ -28,19 +27,6 @@ class SafetyGuardLinux {
     }
 
     static void sigAction(int sig_num, siginfo_t *info, void *ucontext) {
-        const int callstackDepth = 30;
-        void *addresses[callstackDepth];
-        char **callstack;
-        int backtraceSize = 0;
-
-        backtraceSize = backtrace(addresses, callstackDepth);
-        callstack = backtrace_symbols(addresses, backtraceSize);
-
-        for (int i = 0; i < backtraceSize; ++i) {
-            printf("[%d]: %s\n", i, callstack[i]);
-        }
-
-        free(callstack);
         longjmp(jmpbuf, 1);
     }
 

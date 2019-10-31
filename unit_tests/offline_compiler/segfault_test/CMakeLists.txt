@@ -36,10 +36,7 @@ if(MSVC)
   target_link_libraries(ocloc_segfault_test dbghelp)
 endif()
 if(UNIX)
-  target_link_libraries(ocloc_segfault_test dl)
-  if (NOT ANDROID)
-    target_link_libraries(ocloc_segfault_test pthread)
-  endif()
+  target_link_libraries(ocloc_segfault_test dl pthread)
 endif()
 
 set(CLOC_SEGFAULT_TEST_INCLUDES

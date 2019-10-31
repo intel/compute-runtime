@@ -44,6 +44,16 @@ set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
 )
 
+set(RUNTIME_SRCS_DLL_ANDROID ${RUNTIME_SRCS_DLL_LINUX})
+
+list(APPEND RUNTIME_SRCS_DLL_LINUX
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_ioctl.cpp
+)
+
+list(APPEND RUNTIME_SRCS_DLL_ANDROID
+  ${CMAKE_CURRENT_SOURCE_DIR}/android/drm_neo_ioctl.cpp
+)
+
 set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/create_wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/environment_variables.cpp
@@ -62,6 +72,8 @@ if(WIN32)
     list(APPEND RUNTIME_SRCS_DLL_WINDOWS ${NEO_DLL_RC_FILE})
   endif()
   target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_WINDOWS})
+elseif(ANDROID)
+  target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_ANDROID})
 else()
   target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_LINUX})
 endif()

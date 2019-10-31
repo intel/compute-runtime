@@ -21,20 +21,6 @@ const char *Drm::sysFsDefaultGpuPath = "/drm/card0";
 const char *Drm::maxGpuFrequencyFile = "/gt_max_freq_mhz";
 const char *Drm::configFileName = "/config";
 
-int Drm::ioctl(unsigned long request, void *arg) {
-    int ret;
-    SYSTEM_ENTER();
-    do {
-#if defined(__ANDROID__)
-        ret = ::ioctl(fd, static_cast<unsigned int>(request), arg);
-#else
-        ret = ::ioctl(fd, request, arg);
-#endif
-    } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
-    SYSTEM_LEAVE(request);
-    return ret;
-}
-
 int Drm::getParamIoctl(int param, int *dstValue) {
     drm_i915_getparam_t getParam = {};
     getParam.param = param;
