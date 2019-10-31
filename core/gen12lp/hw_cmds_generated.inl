@@ -1236,6 +1236,7 @@ typedef struct tagMI_BATCH_BUFFER_START {
     }
 } MI_BATCH_BUFFER_START;
 STATIC_ASSERT(12 == sizeof(MI_BATCH_BUFFER_START));
+
 typedef struct tagMI_LOAD_REGISTER_IMM {
     union tagTheStructure {
         struct tagCommon {
@@ -1755,7 +1756,13 @@ STATIC_ASSERT(4 == sizeof(PIPELINE_SELECT));
 typedef struct tagRENDER_SURFACE_STATE {
     union tagTheStructure {
         struct tagCommon {
-            uint32_t Reserved_0 : BITFIELD_RANGE(0, 5);
+            // DWORD 0
+            uint32_t CubeFaceEnablePositiveZ : BITFIELD_RANGE(0, 0);
+            uint32_t CubeFaceEnableNegativeZ : BITFIELD_RANGE(1, 1);
+            uint32_t CubeFaceEnablePositiveY : BITFIELD_RANGE(2, 2);
+            uint32_t CubeFaceEnableNegativeY : BITFIELD_RANGE(3, 3);
+            uint32_t CubeFaceEnablePositiveX : BITFIELD_RANGE(4, 4);
+            uint32_t CubeFaceEnableNegativeX : BITFIELD_RANGE(5, 5);
             uint32_t MediaBoundaryPixelMode : BITFIELD_RANGE(6, 7);
             uint32_t RenderCacheReadWriteMode : BITFIELD_RANGE(8, 8);
             uint32_t SamplerL2OutOfOrderModeDisable : BITFIELD_RANGE(9, 9);
@@ -1768,25 +1775,37 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t AstcEnable : BITFIELD_RANGE(27, 27);
             uint32_t SurfaceArray : BITFIELD_RANGE(28, 28);
             uint32_t SurfaceType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t SurfaceQpitch : BITFIELD_RANGE(0, 14);
             uint32_t SampleTapDiscardDisable : BITFIELD_RANGE(15, 15);
-            uint32_t Reserved_48 : BITFIELD_RANGE(16, 17);
+            uint32_t Reserved_48 : BITFIELD_RANGE(16, 16);
+            uint32_t DoubleFetchDisable : BITFIELD_RANGE(17, 17);
             uint32_t CornerTexelMode : BITFIELD_RANGE(18, 18);
             uint32_t BaseMipLevel : BITFIELD_RANGE(19, 23);
             uint32_t MemoryObjectControlStateReserved_56 : BITFIELD_RANGE(24, 24);
-            uint32_t MemoryObjectControlStateIndexToMocsTables
-                : BITFIELD_RANGE(25, 30);
+            uint32_t MemoryObjectControlStateIndexToMocsTables : BITFIELD_RANGE(25, 30);
             uint32_t EnableUnormPathInColorPipe : BITFIELD_RANGE(31, 31);
+            // DWORD 2
             uint32_t Width : BITFIELD_RANGE(0, 13);
             uint32_t Reserved_78 : BITFIELD_RANGE(14, 15);
             uint32_t Height : BITFIELD_RANGE(16, 29);
-            uint32_t Reserved_94 : BITFIELD_RANGE(30, 31);
+            uint32_t Reserved_94 : BITFIELD_RANGE(30, 30);
+            uint32_t DepthStencilResource : BITFIELD_RANGE(31, 31);
+            // DWORD 3
             uint32_t SurfacePitch : BITFIELD_RANGE(0, 17);
-            uint32_t Reserved_114 : BITFIELD_RANGE(18, 18);
+            uint32_t NullProbingEnable : BITFIELD_RANGE(18, 18);
             uint32_t StandardTilingModeExtensions : BITFIELD_RANGE(19, 19);
             uint32_t TileAddressMappingMode : BITFIELD_RANGE(20, 20);
             uint32_t Depth : BITFIELD_RANGE(21, 31);
-            uint32_t Reserved_128;
+            // DWORD 4
+            uint32_t MultisamplePositionPaletteIndex : BITFIELD_RANGE(0, 2);
+            uint32_t NumberOfMultisamples : BITFIELD_RANGE(3, 5);
+            uint32_t MultisampledSurfaceStorageFormat : BITFIELD_RANGE(6, 6);
+            uint32_t RenderTargetViewExtent : BITFIELD_RANGE(7, 17);
+            uint32_t MinimumArrayElement : BITFIELD_RANGE(18, 28);
+            uint32_t RenderTargetAndSampleUnormRotation : BITFIELD_RANGE(29, 30);
+            uint32_t Reserved_159 : BITFIELD_RANGE(31, 31);
+            // DWORD 5
             uint32_t MipCountLod : BITFIELD_RANGE(0, 3);
             uint32_t SurfaceMinLod : BITFIELD_RANGE(4, 7);
             uint32_t MipTailStartLod : BITFIELD_RANGE(8, 11);
@@ -1798,9 +1817,11 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t YOffset : BITFIELD_RANGE(21, 23);
             uint32_t Reserved_184 : BITFIELD_RANGE(24, 24);
             uint32_t XOffset : BITFIELD_RANGE(25, 31);
+            // DWORD 6
             uint32_t Reserved_192 : BITFIELD_RANGE(0, 14);
             uint32_t YuvInterpolationEnable : BITFIELD_RANGE(15, 15);
             uint32_t Reserved_208 : BITFIELD_RANGE(16, 31);
+            // DWORD 7
             uint32_t ResourceMinLod : BITFIELD_RANGE(0, 11);
             uint32_t Reserved_236 : BITFIELD_RANGE(12, 15);
             uint32_t ShaderChannelSelectAlpha : BITFIELD_RANGE(16, 18);
@@ -1810,329 +1831,132 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t Reserved_252 : BITFIELD_RANGE(28, 29);
             uint32_t MemoryCompressionEnable : BITFIELD_RANGE(30, 30);
             uint32_t MemoryCompressionMode : BITFIELD_RANGE(31, 31);
+            // DWORD 8-9
             uint64_t SurfaceBaseAddress;
+            // DWORD 10-11
             uint64_t QuiltWidth : BITFIELD_RANGE(0, 4);
             uint64_t QuiltHeight : BITFIELD_RANGE(5, 9);
             uint64_t ClearValueAddressEnable : BITFIELD_RANGE(10, 10);
-            uint64_t Reserved_331 : BITFIELD_RANGE(11, 63);
+            uint64_t ProceduralTexture : BITFIELD_RANGE(11, 11);
+            uint64_t Reserved_332 : BITFIELD_RANGE(12, 63);
+            // DWORD 12
             uint32_t CompressionFormat : BITFIELD_RANGE(0, 4);
-            uint32_t Reserved_389 : BITFIELD_RANGE(5, 31);
-            uint32_t Reserved_416;
+            uint32_t Reserved_389 : BITFIELD_RANGE(5, 5);
+            uint32_t ClearAddressLow : BITFIELD_RANGE(6, 31);
+            // DWORD 13
+            uint32_t ClearAddressHigh : BITFIELD_RANGE(0, 15);
+            uint32_t Reserved_432 : BITFIELD_RANGE(16, 31);
+            // DWORD 14
             uint32_t Reserved_448;
+            // DWORD 15
             uint32_t Reserved_480;
         } Common;
-        struct tagSurfaceTypeIsSurftype_Cube {
-            uint32_t CubeFaceEnablePositiveZ : BITFIELD_RANGE(0, 0);
-            uint32_t CubeFaceEnableNegativeZ : BITFIELD_RANGE(1, 1);
-            uint32_t CubeFaceEnablePositiveY : BITFIELD_RANGE(2, 2);
-            uint32_t CubeFaceEnableNegativeY : BITFIELD_RANGE(3, 3);
-            uint32_t CubeFaceEnablePositiveX : BITFIELD_RANGE(4, 4);
-            uint32_t CubeFaceEnableNegativeX : BITFIELD_RANGE(5, 5);
-            uint32_t Reserved_6 : BITFIELD_RANGE(6, 31);
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } SurfaceTypeIsSurftype_Cube;
-        struct tagSurfaceTypeIsnotSurftype_Cube {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } SurfaceTypeIsnotSurftype_Cube;
-        struct tagSurfaceTypeIsnotSurftype_Strbuf {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t MultisamplePositionPaletteIndex : BITFIELD_RANGE(0, 2);
-            uint32_t NumberOfMultisamples : BITFIELD_RANGE(3, 5);
-            uint32_t MultisampledSurfaceStorageFormat : BITFIELD_RANGE(6, 6);
-            uint32_t RenderTargetViewExtent : BITFIELD_RANGE(7, 17);
-            uint32_t MinimumArrayElement : BITFIELD_RANGE(18, 28);
-            uint32_t RenderTargetAndSampleUnormRotation : BITFIELD_RANGE(29, 30);
-            uint32_t Reserved_159 : BITFIELD_RANGE(31, 31);
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } SurfaceTypeIsnotSurftype_Strbuf;
-        struct tagSurfaceTypeIsSurftype_Strbuf {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } SurfaceTypeIsSurftype_Strbuf;
-        struct tag_SurfaceFormatIsnotPlanar {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t AuxiliarySurfaceMode : BITFIELD_RANGE(0, 2);
-            uint32_t AuxiliarySurfacePitch : BITFIELD_RANGE(3, 11);
-            uint32_t Reserved_204 : BITFIELD_RANGE(12, 15);
-            uint32_t AuxiliarySurfaceQpitch : BITFIELD_RANGE(16, 30);
-            uint32_t Reserved_223 : BITFIELD_RANGE(31, 31);
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } _SurfaceFormatIsnotPlanar;
         struct tag_SurfaceFormatIsPlanar {
+            // DWORD 0
             uint32_t Reserved_0;
+            // DWORD 1
             uint32_t Reserved_32;
+            // DWORD 2
             uint32_t Reserved_64;
+            // DWORD 3
             uint32_t Reserved_96;
+            // DWORD 4
             uint32_t Reserved_128;
+            // DWORD 5
             uint32_t Reserved_160;
+            // DWORD 6
             uint32_t YOffsetForUOrUvPlane : BITFIELD_RANGE(0, 13);
             uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
             uint32_t XOffsetForUOrUvPlane : BITFIELD_RANGE(16, 29);
             uint32_t HalfPitchForChroma : BITFIELD_RANGE(30, 30);
             uint32_t SeparateUvPlaneEnable : BITFIELD_RANGE(31, 31);
+            // DWORD 7
             uint32_t Reserved_224;
+            // DWORD 8-9
             uint64_t Reserved_256;
-            uint64_t Reserved_320 : BITFIELD_RANGE(0, 31);
+            // DWORD 10
+            uint64_t Reserved_320 : BITFIELD_RANGE(0, 11);
+            uint64_t Reserved_332 : BITFIELD_RANGE(12, 31);
+            // DWORD 11
             uint64_t YOffsetForVPlane : BITFIELD_RANGE(32, 45);
             uint64_t Reserved_366 : BITFIELD_RANGE(46, 47);
             uint64_t XOffsetForVPlane : BITFIELD_RANGE(48, 61);
             uint64_t Reserved_382 : BITFIELD_RANGE(62, 63);
+            // DWORD 12
             uint32_t Reserved_384;
+            // DWORD 13
             uint32_t Reserved_416;
+            // DWORD 14
             uint32_t Reserved_448;
+            // DWORD 15
             uint32_t Reserved_480;
         } _SurfaceFormatIsPlanar;
-        struct tag_SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0 {
+        struct tag_SurfaceFormatIsnotPlanar {
+            // DWORD 0
             uint32_t Reserved_0;
+            // DWORD 1
             uint32_t Reserved_32;
+            // DWORD 2
             uint32_t Reserved_64;
+            // DWORD 3
             uint32_t Reserved_96;
+            // DWORD 4
             uint32_t Reserved_128;
+            // DWORD 5
             uint32_t Reserved_160;
-            uint32_t Reserved_192;
+            // DWORD 6
+            uint32_t AuxiliarySurfaceMode : BITFIELD_RANGE(0, 2);
+            uint32_t AuxiliarySurfacePitch : BITFIELD_RANGE(3, 11);
+            uint32_t Reserved_204 : BITFIELD_RANGE(12, 13);
+            uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
+            uint32_t AuxiliarySurfaceQpitch : BITFIELD_RANGE(16, 30);
+            uint32_t Reserved_223 : BITFIELD_RANGE(31, 31);
+            // DWORD 7
             uint32_t Reserved_224;
+            // DWORD 8-9
             uint64_t Reserved_256;
+            // DWORD 10-11
+            uint64_t Reserved_320;
+            // DWORD 12
+            uint32_t Reserved_384;
+            // DWORD 13
+            uint32_t Reserved_416;
+            // DWORD 14
+            uint32_t Reserved_448;
+            // DWORD 15
+            uint32_t Reserved_480;
+        } _SurfaceFormatIsnotPlanar;
+        struct tag_SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0 {
+            // DWORD 0
+            uint32_t Reserved_0;
+            // DWORD 1
+            uint32_t Reserved_32;
+            // DWORD 2
+            uint32_t Reserved_64;
+            // DWORD 3
+            uint32_t Reserved_96;
+            // DWORD 4
+            uint32_t Reserved_128;
+            // DWORD 5
+            uint32_t Reserved_160;
+            // DWORD 6
+            uint32_t Reserved_192;
+            // DWORD 7
+            uint32_t Reserved_224;
+            // DWORD 8-9
+            uint64_t Reserved_256;
+            // DWORD 10-11
             uint64_t Reserved_320 : BITFIELD_RANGE(0, 11);
             uint64_t AuxiliarySurfaceBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 12
             uint32_t Reserved_384;
+            // DWORD 13
             uint32_t Reserved_416;
+            // DWORD 14
             uint32_t Reserved_448;
+            // DWORD 15
             uint32_t Reserved_480;
         } _SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0;
-        struct tagMemoryCompressionEnableIs1 {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320 : BITFIELD_RANGE(0, 11);
-            uint64_t AuxiliaryTableIndexForMediaCompressedSurface
-                : BITFIELD_RANGE(21, 31);
-            uint64_t Reserved_352 : BITFIELD_RANGE(32, 63);
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } MemoryCompressionEnableIs1;
-        struct tagClearValueAddressEnableIsEnable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384 : BITFIELD_RANGE(0, 5);
-            uint32_t ClearColorAddress : BITFIELD_RANGE(6, 31);
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } ClearValueAddressEnableIsEnable;
-        struct
-            tag_AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384 : BITFIELD_RANGE(0, 5);
-            uint32_t ClearDepthAddressLow : BITFIELD_RANGE(6, 31);
-            uint32_t ClearDepthAddressHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_432 : BITFIELD_RANGE(16, 31);
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } _AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable;
-        struct
-            tag_AuxiliarySurfaceModeIsnotAux_Ccs_DAnd_AuxiliarySurfaceModeIsnotAux_Ccs_EAnd_AuxiliarySurfaceModeIsnotAux_Hiz {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } _AuxiliarySurfaceModeIsnotAux_Ccs_DAnd_AuxiliarySurfaceModeIsnotAux_Ccs_EAnd_AuxiliarySurfaceModeIsnotAux_Hiz;
-        struct tagAuxiliarySurfaceModeIsAux_Hiz {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            float HierarchicalDepthClearValue;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } AuxiliarySurfaceModeIsAux_Hiz;
-        struct tagAuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_E {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t RedClearColor;
-            uint32_t GreenClearColor;
-            uint32_t BlueClearColor;
-            uint32_t AlphaClearColor;
-        } AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_E;
-        struct
-            tag__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsDisable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t RedClearColor;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } __AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsDisable;
-        struct
-            tag__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384 : BITFIELD_RANGE(0, 4);
-            uint32_t ClearColorConversionEnable : BITFIELD_RANGE(5, 5);
-            uint32_t Reserved_390 : BITFIELD_RANGE(6, 31);
-            uint32_t ClearColorAddressHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_432 : BITFIELD_RANGE(16, 31);
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } __AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable;
-        struct
-            tag__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsEnable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t Reserved_416;
-            uint32_t Reserved_448;
-            uint32_t Reserved_480;
-        } __AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsEnable;
-        struct
-            tag__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable {
-            uint32_t Reserved_0;
-            uint32_t Reserved_32;
-            uint32_t Reserved_64;
-            uint32_t Reserved_96;
-            uint32_t Reserved_128;
-            uint32_t Reserved_160;
-            uint32_t Reserved_192;
-            uint32_t Reserved_224;
-            uint64_t Reserved_256;
-            uint64_t Reserved_320;
-            uint32_t Reserved_384;
-            uint32_t GreenClearColor;
-            uint32_t BlueClearColor;
-            uint32_t AlphaClearColor;
-        } __AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable;
         uint32_t RawData[16];
     } TheStructure;
     typedef enum tagMEDIA_BOUNDARY_PIXEL_MODE {
@@ -2146,7 +1970,6 @@ typedef struct tagRENDER_SURFACE_STATE {
     } RENDER_CACHE_READ_WRITE_MODE;
     typedef enum tagTILE_MODE {
         TILE_MODE_LINEAR = 0x0,
-        TILE_MODE_WMAJOR = 0x1,
         TILE_MODE_XMAJOR = 0x2,
         TILE_MODE_YMAJOR = 0x3,
     } TILE_MODE;
@@ -2335,7 +2158,6 @@ typedef struct tagRENDER_SURFACE_STATE {
         SURFACE_FORMAT_YCRCB_SWAPUV = 0x18f,
         SURFACE_FORMAT_YCRCB_SWAPY = 0x190,
         SURFACE_FORMAT_DXT1_RGB = 0x191,
-        SURFACE_FORMAT_FXT1 = 0x192,
         SURFACE_FORMAT_R8G8B8_UNORM = 0x193,
         SURFACE_FORMAT_R8G8B8_SNORM = 0x194,
         SURFACE_FORMAT_R8G8B8_SSCALED = 0x195,
@@ -2391,13 +2213,16 @@ typedef struct tagRENDER_SURFACE_STATE {
         SURFACE_TYPE_SURFTYPE_3D = 0x2,
         SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
         SURFACE_TYPE_SURFTYPE_BUFFER = 0x4,
-        SURFACE_TYPE_SURFTYPE_STRBUF = 0x5,
         SURFACE_TYPE_SURFTYPE_NULL = 0x7,
     } SURFACE_TYPE;
     typedef enum tagSAMPLE_TAP_DISCARD_DISABLE {
         SAMPLE_TAP_DISCARD_DISABLE_DISABLE = 0x0,
         SAMPLE_TAP_DISCARD_DISABLE_ENABLE = 0x1,
     } SAMPLE_TAP_DISCARD_DISABLE;
+    typedef enum tagNULL_PROBING_ENABLE {
+        NULL_PROBING_ENABLE_DISABLE = 0x0,
+        NULL_PROBING_ENABLE_ENABLE = 0x1,
+    } NULL_PROBING_ENABLE;
     typedef enum tagSTANDARD_TILING_MODE_EXTENSIONS {
         STANDARD_TILING_MODE_EXTENSIONS_DISABLE = 0x0,
         STANDARD_TILING_MODE_EXTENSIONS_ENABLE = 0x1,
@@ -2455,53 +2280,32 @@ typedef struct tagRENDER_SURFACE_STATE {
     } SHADER_CHANNEL_SELECT;
     typedef enum tagMEMORY_COMPRESSION_MODE {
         MEMORY_COMPRESSION_MODE_HORIZONTAL = 0x0,
-        MEMORY_COMPRESSION_MODE_VERTICAL = 0x1,
     } MEMORY_COMPRESSION_MODE;
-    typedef enum tagCLEAR_COLOR_CONVERSION_ENABLE {
-        CLEAR_COLOR_CONVERSION_ENABLE_DISABLE = 0x0,
-        CLEAR_COLOR_CONVERSION_ENABLE_ENABLE = 0x1,
-    } CLEAR_COLOR_CONVERSION_ENABLE;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MediaBoundaryPixelMode =
-            MEDIA_BOUNDARY_PIXEL_MODE_NORMAL_MODE;
-        TheStructure.Common.RenderCacheReadWriteMode =
-            RENDER_CACHE_READ_WRITE_MODE_WRITE_ONLY_CACHE;
+        TheStructure.Common.MediaBoundaryPixelMode = MEDIA_BOUNDARY_PIXEL_MODE_NORMAL_MODE;
+        TheStructure.Common.RenderCacheReadWriteMode = RENDER_CACHE_READ_WRITE_MODE_WRITE_ONLY_CACHE;
         TheStructure.Common.TileMode = TILE_MODE_LINEAR;
+        TheStructure.Common.SurfaceHorizontalAlignment = SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_16;
+        TheStructure.Common.SurfaceVerticalAlignment = SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
         TheStructure.Common.SurfaceType = SURFACE_TYPE_SURFTYPE_1D;
-        TheStructure.Common.SampleTapDiscardDisable =
-            SAMPLE_TAP_DISCARD_DISABLE_DISABLE;
-        TheStructure.Common.StandardTilingModeExtensions =
-            STANDARD_TILING_MODE_EXTENSIONS_DISABLE;
+        TheStructure.Common.SampleTapDiscardDisable = SAMPLE_TAP_DISCARD_DISABLE_DISABLE;
+        TheStructure.Common.NullProbingEnable = NULL_PROBING_ENABLE_DISABLE;
+        TheStructure.Common.StandardTilingModeExtensions = STANDARD_TILING_MODE_EXTENSIONS_DISABLE;
         TheStructure.Common.TileAddressMappingMode = TILE_ADDRESS_MAPPING_MODE_GEN9;
+        TheStructure.Common.NumberOfMultisamples = NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
+        TheStructure.Common.MultisampledSurfaceStorageFormat = MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS;
+        TheStructure.Common.RenderTargetAndSampleUnormRotation = RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION_0DEG;
         TheStructure.Common.CoherencyType = COHERENCY_TYPE_GPU_COHERENT;
         TheStructure.Common.TiledResourceMode = TILED_RESOURCE_MODE_NONE;
-        TheStructure.Common.ShaderChannelSelectAlpha =
-            SHADER_CHANNEL_SELECT_ZERO;
-        TheStructure.Common.ShaderChannelSelectBlue =
-            SHADER_CHANNEL_SELECT_ZERO;
-        TheStructure.Common.ShaderChannelSelectGreen =
-            SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.MemoryCompressionMode = MEMORY_COMPRESSION_MODE_HORIZONTAL;
+        TheStructure.Common.ShaderChannelSelectAlpha = SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.ShaderChannelSelectBlue = SHADER_CHANNEL_SELECT_ZERO;
+        TheStructure.Common.ShaderChannelSelectGreen = SHADER_CHANNEL_SELECT_ZERO;
         TheStructure.Common.ShaderChannelSelectRed = SHADER_CHANNEL_SELECT_ZERO;
-        TheStructure.Common.MemoryCompressionMode =
-            MEMORY_COMPRESSION_MODE_HORIZONTAL;
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf.NumberOfMultisamples =
-            NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .MultisampledSurfaceStorageFormat =
-            MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS;
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .RenderTargetAndSampleUnormRotation =
-            RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION_0DEG;
-        TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode =
-            AUXILIARY_SURFACE_MODE_AUX_NONE;
-        TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma =
-            HALF_PITCH_FOR_CHROMA_DISABLE;
-        TheStructure.AuxiliarySurfaceModeIsAux_Hiz.HierarchicalDepthClearValue =
-            0.0;
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable
-            .ClearColorConversionEnable = CLEAR_COLOR_CONVERSION_ENABLE_ENABLE;
+        TheStructure.Common.MemoryCompressionMode = MEMORY_COMPRESSION_MODE_HORIZONTAL;
+        TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = HALF_PITCH_FOR_CHROMA_DISABLE;
+        TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode = AUXILIARY_SURFACE_MODE_AUX_NONE;
     }
     static tagRENDER_SURFACE_STATE sInit(void) {
         RENDER_SURFACE_STATE state;
@@ -2509,23 +2313,56 @@ typedef struct tagRENDER_SURFACE_STATE {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 16);
+        UNRECOVERABLE_IF(index >= 16);
         return TheStructure.RawData[index];
+    }
+    inline void setCubeFaceEnablePositiveZ(const bool value) {
+        TheStructure.Common.CubeFaceEnablePositiveZ = value;
+    }
+    inline bool getCubeFaceEnablePositiveZ(void) const {
+        return TheStructure.Common.CubeFaceEnablePositiveZ;
+    }
+    inline void setCubeFaceEnableNegativeZ(const bool value) {
+        TheStructure.Common.CubeFaceEnableNegativeZ = value;
+    }
+    inline bool getCubeFaceEnableNegativeZ(void) const {
+        return TheStructure.Common.CubeFaceEnableNegativeZ;
+    }
+    inline void setCubeFaceEnablePositiveY(const bool value) {
+        TheStructure.Common.CubeFaceEnablePositiveY = value;
+    }
+    inline bool getCubeFaceEnablePositiveY(void) const {
+        return TheStructure.Common.CubeFaceEnablePositiveY;
+    }
+    inline void setCubeFaceEnableNegativeY(const bool value) {
+        TheStructure.Common.CubeFaceEnableNegativeY = value;
+    }
+    inline bool getCubeFaceEnableNegativeY(void) const {
+        return TheStructure.Common.CubeFaceEnableNegativeY;
+    }
+    inline void setCubeFaceEnablePositiveX(const bool value) {
+        TheStructure.Common.CubeFaceEnablePositiveX = value;
+    }
+    inline bool getCubeFaceEnablePositiveX(void) const {
+        return TheStructure.Common.CubeFaceEnablePositiveX;
+    }
+    inline void setCubeFaceEnableNegativeX(const bool value) {
+        TheStructure.Common.CubeFaceEnableNegativeX = value;
+    }
+    inline bool getCubeFaceEnableNegativeX(void) const {
+        return TheStructure.Common.CubeFaceEnableNegativeX;
     }
     inline void setMediaBoundaryPixelMode(const MEDIA_BOUNDARY_PIXEL_MODE value) {
         TheStructure.Common.MediaBoundaryPixelMode = value;
     }
     inline MEDIA_BOUNDARY_PIXEL_MODE getMediaBoundaryPixelMode(void) const {
-        return static_cast<MEDIA_BOUNDARY_PIXEL_MODE>(
-            TheStructure.Common.MediaBoundaryPixelMode);
+        return static_cast<MEDIA_BOUNDARY_PIXEL_MODE>(TheStructure.Common.MediaBoundaryPixelMode);
     }
-    inline void
-    setRenderCacheReadWriteMode(const RENDER_CACHE_READ_WRITE_MODE value) {
+    inline void setRenderCacheReadWriteMode(const RENDER_CACHE_READ_WRITE_MODE value) {
         TheStructure.Common.RenderCacheReadWriteMode = value;
     }
     inline RENDER_CACHE_READ_WRITE_MODE getRenderCacheReadWriteMode(void) const {
-        return static_cast<RENDER_CACHE_READ_WRITE_MODE>(
-            TheStructure.Common.RenderCacheReadWriteMode);
+        return static_cast<RENDER_CACHE_READ_WRITE_MODE>(TheStructure.Common.RenderCacheReadWriteMode);
     }
     inline void setSamplerL2OutOfOrderModeDisable(const bool value) {
         TheStructure.Common.SamplerL2OutOfOrderModeDisable = value;
@@ -2533,16 +2370,16 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline bool getSamplerL2OutOfOrderModeDisable(void) const {
         return TheStructure.Common.SamplerL2OutOfOrderModeDisable;
     }
-    inline void setVerticalLineStrideOffset(const uint32_t value) {
+    inline void setVerticalLineStrideOffset(const bool value) {
         TheStructure.Common.VerticalLineStrideOffset = value;
     }
-    inline uint32_t getVerticalLineStrideOffset(void) const {
+    inline bool getVerticalLineStrideOffset(void) const {
         return TheStructure.Common.VerticalLineStrideOffset;
     }
-    inline void setVerticalLineStride(const uint32_t value) {
+    inline void setVerticalLineStride(const bool value) {
         TheStructure.Common.VerticalLineStride = value;
     }
-    inline uint32_t getVerticalLineStride(void) const {
+    inline bool getVerticalLineStride(void) const {
         return TheStructure.Common.VerticalLineStride;
     }
     inline void setTileMode(const TILE_MODE value) {
@@ -2551,22 +2388,17 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline TILE_MODE getTileMode(void) const {
         return static_cast<TILE_MODE>(TheStructure.Common.TileMode);
     }
-    inline void
-    setSurfaceHorizontalAlignment(const SURFACE_HORIZONTAL_ALIGNMENT value) {
+    inline void setSurfaceHorizontalAlignment(const SURFACE_HORIZONTAL_ALIGNMENT value) {
         TheStructure.Common.SurfaceHorizontalAlignment = value;
     }
-    inline SURFACE_HORIZONTAL_ALIGNMENT
-    getSurfaceHorizontalAlignment(void) const {
-        return static_cast<SURFACE_HORIZONTAL_ALIGNMENT>(
-            TheStructure.Common.SurfaceHorizontalAlignment);
+    inline SURFACE_HORIZONTAL_ALIGNMENT getSurfaceHorizontalAlignment(void) const {
+        return static_cast<SURFACE_HORIZONTAL_ALIGNMENT>(TheStructure.Common.SurfaceHorizontalAlignment);
     }
-    inline void
-    setSurfaceVerticalAlignment(const SURFACE_VERTICAL_ALIGNMENT value) {
+    inline void setSurfaceVerticalAlignment(const SURFACE_VERTICAL_ALIGNMENT value) {
         TheStructure.Common.SurfaceVerticalAlignment = value;
     }
     inline SURFACE_VERTICAL_ALIGNMENT getSurfaceVerticalAlignment(void) const {
-        return static_cast<SURFACE_VERTICAL_ALIGNMENT>(
-            TheStructure.Common.SurfaceVerticalAlignment);
+        return static_cast<SURFACE_VERTICAL_ALIGNMENT>(TheStructure.Common.SurfaceVerticalAlignment);
     }
     inline void setSurfaceFormat(const SURFACE_FORMAT value) {
         TheStructure.Common.SurfaceFormat = value;
@@ -2597,19 +2429,23 @@ typedef struct tagRENDER_SURFACE_STATE {
         SURFACEQPITCH_ALIGN_SIZE = 0x4,
     } SURFACEQPITCH;
     inline void setSurfaceQpitch(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7fff);
+        UNRECOVERABLE_IF(value > 0x1ffff);
         TheStructure.Common.SurfaceQpitch = value >> SURFACEQPITCH_BIT_SHIFT;
     }
     inline uint32_t getSurfaceQpitch(void) const {
         return TheStructure.Common.SurfaceQpitch << SURFACEQPITCH_BIT_SHIFT;
     }
-    inline void
-    setSampleTapDiscardDisable(const SAMPLE_TAP_DISCARD_DISABLE value) {
+    inline void setSampleTapDiscardDisable(const SAMPLE_TAP_DISCARD_DISABLE value) {
         TheStructure.Common.SampleTapDiscardDisable = value;
     }
     inline SAMPLE_TAP_DISCARD_DISABLE getSampleTapDiscardDisable(void) const {
-        return static_cast<SAMPLE_TAP_DISCARD_DISABLE>(
-            TheStructure.Common.SampleTapDiscardDisable);
+        return static_cast<SAMPLE_TAP_DISCARD_DISABLE>(TheStructure.Common.SampleTapDiscardDisable);
+    }
+    inline void setDoubleFetchDisable(const bool value) {
+        TheStructure.Common.DoubleFetchDisable = value;
+    }
+    inline bool getDoubleFetchDisable(void) const {
+        return TheStructure.Common.DoubleFetchDisable;
     }
     inline void setCornerTexelMode(const bool value) {
         TheStructure.Common.CornerTexelMode = value;
@@ -2618,19 +2454,24 @@ typedef struct tagRENDER_SURFACE_STATE {
         return TheStructure.Common.CornerTexelMode;
     }
     inline void setBaseMipLevel(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xf80000);
+        UNRECOVERABLE_IF(value > 0x1f);
         TheStructure.Common.BaseMipLevel = value;
     }
     inline uint32_t getBaseMipLevel(void) const {
         return TheStructure.Common.BaseMipLevel;
     }
-    inline void
-    setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7e000000L);
-        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value >> 1;
+    inline void setMemoryObjectControlStateReserved(const uint32_t value) {
+        TheStructure.Common.MemoryObjectControlStateReserved_56 = value;
+    }
+    inline uint32_t getMemoryObjectControlStateReserved(void) const {
+        return (TheStructure.Common.MemoryObjectControlStateReserved_56);
+    }
+    inline void setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3f);
+        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value;
     }
     inline uint32_t getMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
+        return TheStructure.Common.MemoryObjectControlStateIndexToMocsTables;
     }
     inline void setMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.MemoryObjectControlStateReserved_56 = value;
@@ -2641,68 +2482,119 @@ typedef struct tagRENDER_SURFACE_STATE {
         mocs |= (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
         return (mocs);
     }
-    inline void setEnableUnormPathInColorPipe(const uint32_t value) {
+    inline void setEnableUnormPathInColorPipe(const bool value) {
         TheStructure.Common.EnableUnormPathInColorPipe = value;
     }
-    inline uint32_t getEnableUnormPathInColorPipe(void) const {
+    inline bool getEnableUnormPathInColorPipe(void) const {
         return TheStructure.Common.EnableUnormPathInColorPipe;
     }
     inline void setWidth(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fff);
         TheStructure.Common.Width = value - 1;
     }
-    inline uint32_t getWidth(void) const { return TheStructure.Common.Width + 1; }
+    inline uint32_t getWidth(void) const {
+        return TheStructure.Common.Width + 1;
+    }
     inline void setHeight(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff0000);
+        UNRECOVERABLE_IF(value > 0x3fff0000);
         TheStructure.Common.Height = value - 1;
     }
     inline uint32_t getHeight(void) const {
         return TheStructure.Common.Height + 1;
     }
+    inline void setDepthStencilResource(const bool value) {
+        TheStructure.Common.DepthStencilResource = value;
+    }
+    inline bool getDepthStencilResource(void) const {
+        return TheStructure.Common.DepthStencilResource;
+    }
     inline void setSurfacePitch(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3ffff);
+        UNRECOVERABLE_IF(value > 0x3ffff);
         TheStructure.Common.SurfacePitch = value - 1;
     }
     inline uint32_t getSurfacePitch(void) const {
         return TheStructure.Common.SurfacePitch + 1;
     }
-    inline void
-    setStandardTilingModeExtensions(const STANDARD_TILING_MODE_EXTENSIONS value) {
+    inline void setNullProbingEnable(const NULL_PROBING_ENABLE value) {
+        TheStructure.Common.NullProbingEnable = value;
+    }
+    inline NULL_PROBING_ENABLE getNullProbingEnable(void) const {
+        return static_cast<NULL_PROBING_ENABLE>(TheStructure.Common.NullProbingEnable);
+    }
+    inline void setStandardTilingModeExtensions(const STANDARD_TILING_MODE_EXTENSIONS value) {
         TheStructure.Common.StandardTilingModeExtensions = value;
     }
-    inline STANDARD_TILING_MODE_EXTENSIONS
-    getStandardTilingModeExtensions(void) const {
-        return static_cast<STANDARD_TILING_MODE_EXTENSIONS>(
-            TheStructure.Common.StandardTilingModeExtensions);
+    inline STANDARD_TILING_MODE_EXTENSIONS getStandardTilingModeExtensions(void) const {
+        return static_cast<STANDARD_TILING_MODE_EXTENSIONS>(TheStructure.Common.StandardTilingModeExtensions);
     }
     inline void setTileAddressMappingMode(const TILE_ADDRESS_MAPPING_MODE value) {
         TheStructure.Common.TileAddressMappingMode = value;
     }
     inline TILE_ADDRESS_MAPPING_MODE getTileAddressMappingMode(void) const {
-        return static_cast<TILE_ADDRESS_MAPPING_MODE>(
-            TheStructure.Common.TileAddressMappingMode);
+        return static_cast<TILE_ADDRESS_MAPPING_MODE>(TheStructure.Common.TileAddressMappingMode);
     }
     inline void setDepth(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xffe00000L);
+        UNRECOVERABLE_IF(value > 0xffe00000L);
         TheStructure.Common.Depth = value - 1;
     }
-    inline uint32_t getDepth(void) const { return TheStructure.Common.Depth + 1; }
+    inline uint32_t getDepth(void) const {
+        return TheStructure.Common.Depth + 1;
+    }
+    inline void setMultisamplePositionPaletteIndex(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7);
+        TheStructure.Common.MultisamplePositionPaletteIndex = value;
+    }
+    inline uint32_t getMultisamplePositionPaletteIndex(void) const {
+        return TheStructure.Common.MultisamplePositionPaletteIndex;
+    }
+    inline void setNumberOfMultisamples(const NUMBER_OF_MULTISAMPLES value) {
+        TheStructure.Common.NumberOfMultisamples = value;
+    }
+    inline NUMBER_OF_MULTISAMPLES getNumberOfMultisamples(void) const {
+        return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberOfMultisamples);
+    }
+    inline void setMultisampledSurfaceStorageFormat(const MULTISAMPLED_SURFACE_STORAGE_FORMAT value) {
+        TheStructure.Common.MultisampledSurfaceStorageFormat = value;
+    }
+    inline MULTISAMPLED_SURFACE_STORAGE_FORMAT getMultisampledSurfaceStorageFormat(void) const {
+        return static_cast<MULTISAMPLED_SURFACE_STORAGE_FORMAT>(TheStructure.Common.MultisampledSurfaceStorageFormat);
+    }
+    inline void setRenderTargetViewExtent(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7ff);
+        TheStructure.Common.RenderTargetViewExtent = value - 1;
+    }
+    inline uint32_t getRenderTargetViewExtent(void) const {
+        return TheStructure.Common.RenderTargetViewExtent + 1;
+    }
+    inline void setMinimumArrayElement(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7ff);
+        TheStructure.Common.MinimumArrayElement = value;
+    }
+    inline uint32_t getMinimumArrayElement(void) const {
+        return TheStructure.Common.MinimumArrayElement;
+    }
+    inline void setRenderTargetAndSampleUnormRotation(const RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION value) {
+        TheStructure.Common.RenderTargetAndSampleUnormRotation = value;
+    }
+    inline RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION getRenderTargetAndSampleUnormRotation(void) const {
+        return static_cast<RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION>(TheStructure.Common.RenderTargetAndSampleUnormRotation);
+    }
     inline void setMipCountLod(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.MipCountLod = value;
     }
     inline uint32_t getMipCountLod(void) const {
         return TheStructure.Common.MipCountLod;
     }
     inline void setSurfaceMinLod(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xf0);
+        UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.SurfaceMinLod = value;
     }
     inline uint32_t getSurfaceMinLod(void) const {
         return TheStructure.Common.SurfaceMinLod;
     }
     inline void setMipTailStartLod(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xf00);
+        UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.MipTailStartLod = value;
     }
     inline uint32_t getMipTailStartLod(void) const {
@@ -2718,8 +2610,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.TiledResourceMode = value;
     }
     inline TILED_RESOURCE_MODE getTiledResourceMode(void) const {
-        return static_cast<TILED_RESOURCE_MODE>(
-            TheStructure.Common.TiledResourceMode);
+        return static_cast<TILED_RESOURCE_MODE>(TheStructure.Common.TiledResourceMode);
     }
     inline void setEwaDisableForCube(const bool value) {
         TheStructure.Common.EwaDisableForCube = value;
@@ -2732,7 +2623,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         YOFFSET_ALIGN_SIZE = 0x4,
     } YOFFSET;
     inline void setYOffset(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xe00000);
+        UNRECOVERABLE_IF(value > 0x1f);
         TheStructure.Common.YOffset = value >> YOFFSET_BIT_SHIFT;
     }
     inline uint32_t getYOffset(void) const {
@@ -2743,7 +2634,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         XOFFSET_ALIGN_SIZE = 0x4,
     } XOFFSET;
     inline void setXOffset(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xfe000000L);
+        UNRECOVERABLE_IF(value > 0x1ff);
         TheStructure.Common.XOffset = value >> XOFFSET_BIT_SHIFT;
     }
     inline uint32_t getXOffset(void) const {
@@ -2756,7 +2647,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         return TheStructure.Common.YuvInterpolationEnable;
     }
     inline void setResourceMinLod(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xfff);
+        UNRECOVERABLE_IF(value > 0xfff);
         TheStructure.Common.ResourceMinLod = value;
     }
     inline uint32_t getResourceMinLod(void) const {
@@ -2766,29 +2657,25 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.ShaderChannelSelectAlpha = value;
     }
     inline SHADER_CHANNEL_SELECT getShaderChannelSelectAlpha(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT>(
-            TheStructure.Common.ShaderChannelSelectAlpha);
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectAlpha);
     }
     inline void setShaderChannelSelectBlue(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectBlue = value;
     }
     inline SHADER_CHANNEL_SELECT getShaderChannelSelectBlue(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT>(
-            TheStructure.Common.ShaderChannelSelectBlue);
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectBlue);
     }
     inline void setShaderChannelSelectGreen(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectGreen = value;
     }
     inline SHADER_CHANNEL_SELECT getShaderChannelSelectGreen(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT>(
-            TheStructure.Common.ShaderChannelSelectGreen);
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectGreen);
     }
     inline void setShaderChannelSelectRed(const SHADER_CHANNEL_SELECT value) {
         TheStructure.Common.ShaderChannelSelectRed = value;
     }
     inline SHADER_CHANNEL_SELECT getShaderChannelSelectRed(void) const {
-        return static_cast<SHADER_CHANNEL_SELECT>(
-            TheStructure.Common.ShaderChannelSelectRed);
+        return static_cast<SHADER_CHANNEL_SELECT>(TheStructure.Common.ShaderChannelSelectRed);
     }
     inline void setMemoryCompressionEnable(const bool value) {
         TheStructure.Common.MemoryCompressionEnable = value;
@@ -2800,8 +2687,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.MemoryCompressionMode = value;
     }
     inline MEMORY_COMPRESSION_MODE getMemoryCompressionMode(void) const {
-        return static_cast<MEMORY_COMPRESSION_MODE>(
-            TheStructure.Common.MemoryCompressionMode);
+        return static_cast<MEMORY_COMPRESSION_MODE>(TheStructure.Common.MemoryCompressionMode);
     }
     inline void setCompressionFormat(uint32_t compressionFormat) {
         UNRECOVERABLE_IF(compressionFormat > 0x1F);
@@ -2817,14 +2703,14 @@ typedef struct tagRENDER_SURFACE_STATE {
         return TheStructure.Common.SurfaceBaseAddress;
     }
     inline void setQuiltWidth(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0x1f);
+        UNRECOVERABLE_IF(value > 0x1fL);
         TheStructure.Common.QuiltWidth = value;
     }
     inline uint64_t getQuiltWidth(void) const {
         return TheStructure.Common.QuiltWidth;
     }
     inline void setQuiltHeight(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0x3e0);
+        UNRECOVERABLE_IF(value > 0x1fL);
         TheStructure.Common.QuiltHeight = value;
     }
     inline uint64_t getQuiltHeight(void) const {
@@ -2836,105 +2722,78 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline bool getClearValueAddressEnable(void) const {
         return TheStructure.Common.ClearValueAddressEnable;
     }
-    inline void setCubeFaceEnablePositiveZ(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveZ = value;
+    inline void setProceduralTexture(const bool value) {
+        TheStructure.Common.ProceduralTexture = value;
     }
-    inline bool getCubeFaceEnablePositiveZ(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveZ;
+    inline bool getProceduralTexture(void) const {
+        return TheStructure.Common.ProceduralTexture;
     }
-    inline void setCubeFaceEnableNegativeZ(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeZ = value;
+    typedef enum tagCLEARADDRESSLOW {
+        CLEARADDRESSLOW_BIT_SHIFT = 0x6,
+        CLEARADDRESSLOW_ALIGN_SIZE = 0x40,
+    } CLEARADDRESSLOW;
+    inline void setClearColorAddress(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffff);
+        TheStructure.Common.ClearAddressLow = value >> CLEARADDRESSLOW_BIT_SHIFT;
     }
-    inline bool getCubeFaceEnableNegativeZ(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeZ;
+    inline uint32_t getClearColorAddress(void) const {
+        return TheStructure.Common.ClearAddressLow << CLEARADDRESSLOW_BIT_SHIFT;
     }
-    inline void setCubeFaceEnablePositiveY(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveY = value;
+    inline void setClearColorAddressHigh(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.ClearAddressHigh = value;
     }
-    inline bool getCubeFaceEnablePositiveY(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveY;
+    inline uint32_t getClearColorAddressHigh(void) const {
+        return TheStructure.Common.ClearAddressHigh;
     }
-    inline void setCubeFaceEnableNegativeY(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeY = value;
+    inline void setYOffsetForUOrUvPlane(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane = value;
     }
-    inline bool getCubeFaceEnableNegativeY(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeY;
+    inline uint32_t getYOffsetForUOrUvPlane(void) const {
+        return TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane;
     }
-    inline void setCubeFaceEnablePositiveX(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveX = value;
+    inline void setXOffsetForUOrUvPlane(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane = value;
     }
-    inline bool getCubeFaceEnablePositiveX(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnablePositiveX;
+    inline uint32_t getXOffsetForUOrUvPlane(void) const {
+        return TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane;
     }
-    inline void setCubeFaceEnableNegativeX(const bool value) {
-        TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeX = value;
+    inline void setHalfPitchForChroma(const HALF_PITCH_FOR_CHROMA value) {
+        TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = value;
     }
-    inline bool getCubeFaceEnableNegativeX(void) const {
-        return TheStructure.SurfaceTypeIsSurftype_Cube.CubeFaceEnableNegativeX;
+    inline HALF_PITCH_FOR_CHROMA getHalfPitchForChroma(void) const {
+        return static_cast<HALF_PITCH_FOR_CHROMA>(TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma);
     }
-    inline void setMultisamplePositionPaletteIndex(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7);
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .MultisamplePositionPaletteIndex = value;
+    inline void setSeparateUvPlaneEnable(const bool value) {
+        TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable = value;
     }
-    inline uint32_t getMultisamplePositionPaletteIndex(void) const {
-        return TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .MultisamplePositionPaletteIndex;
+    inline bool getSeparateUvPlaneEnable(void) const {
+        return TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable;
     }
-    inline void setNumberOfMultisamples(const NUMBER_OF_MULTISAMPLES value) {
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf.NumberOfMultisamples = value;
+    inline void setYOffsetForVPlane(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0x3fffL);
+        TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane = value;
     }
-    inline NUMBER_OF_MULTISAMPLES getNumberOfMultisamples(void) const {
-        return static_cast<NUMBER_OF_MULTISAMPLES>(
-            TheStructure.SurfaceTypeIsnotSurftype_Strbuf.NumberOfMultisamples);
+    inline uint64_t getYOffsetForVPlane(void) const {
+        return TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane;
     }
-    inline void setMultisampledSurfaceStorageFormat(
-        const MULTISAMPLED_SURFACE_STORAGE_FORMAT value) {
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .MultisampledSurfaceStorageFormat = value;
+    inline void setXOffsetForVPlane(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0x3fffL);
+        TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane = value;
     }
-    inline MULTISAMPLED_SURFACE_STORAGE_FORMAT
-    getMultisampledSurfaceStorageFormat(void) const {
-        return static_cast<MULTISAMPLED_SURFACE_STORAGE_FORMAT>(
-            TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-                .MultisampledSurfaceStorageFormat);
-    }
-    inline void setRenderTargetViewExtent(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3ff80);
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf.RenderTargetViewExtent =
-            value - 1;
-    }
-    inline uint32_t getRenderTargetViewExtent(void) const {
-        return TheStructure.SurfaceTypeIsnotSurftype_Strbuf.RenderTargetViewExtent +
-               1;
-    }
-    inline void setMinimumArrayElement(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x1ffc0000);
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf.MinimumArrayElement = value;
-    }
-    inline uint32_t getMinimumArrayElement(void) const {
-        return TheStructure.SurfaceTypeIsnotSurftype_Strbuf.MinimumArrayElement;
-    }
-    inline void setRenderTargetAndSampleUnormRotation(
-        const RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION value) {
-        TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-            .RenderTargetAndSampleUnormRotation = value;
-    }
-    inline RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION
-    getRenderTargetAndSampleUnormRotation(void) const {
-        return static_cast<RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION>(
-            TheStructure.SurfaceTypeIsnotSurftype_Strbuf
-                .RenderTargetAndSampleUnormRotation);
+    inline uint64_t getXOffsetForVPlane(void) const {
+        return TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane;
     }
     inline void setAuxiliarySurfaceMode(const AUXILIARY_SURFACE_MODE value) {
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode = value;
     }
     inline AUXILIARY_SURFACE_MODE getAuxiliarySurfaceMode(void) const {
-        return static_cast<AUXILIARY_SURFACE_MODE>(
-            TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode);
+        return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode);
     }
     inline void setAuxiliarySurfacePitch(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xff8);
+        UNRECOVERABLE_IF(value > 0x1ff);
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfacePitch = value - 1;
     }
     inline uint32_t getAuxiliarySurfacePitch(void) const {
@@ -2945,191 +2804,22 @@ typedef struct tagRENDER_SURFACE_STATE {
         AUXILIARYSURFACEQPITCH_ALIGN_SIZE = 0x4,
     } AUXILIARYSURFACEQPITCH;
     inline void setAuxiliarySurfaceQpitch(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x7fff0000L);
-        TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch =
-            value >> AUXILIARYSURFACEQPITCH_BIT_SHIFT;
+        UNRECOVERABLE_IF(value > 0x1ffff);
+        TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch = value >> AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
     inline uint32_t getAuxiliarySurfaceQpitch(void) const {
-        return TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch
-               << AUXILIARYSURFACEQPITCH_BIT_SHIFT;
-    }
-    inline void setYOffsetForUOrUvPlane(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff);
-        TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane = value;
-    }
-    inline uint32_t getYOffsetForUOrUvPlane(void) const {
-        return TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane;
-    }
-    inline void setXOffsetForUOrUvPlane(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff0000);
-        TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane = value;
-    }
-    inline uint32_t getXOffsetForUOrUvPlane(void) const {
-        return TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane;
-    }
-    inline void setHalfPitchForChroma(const HALF_PITCH_FOR_CHROMA value) {
-        TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = value;
-    }
-    inline HALF_PITCH_FOR_CHROMA getHalfPitchForChroma(void) const {
-        return static_cast<HALF_PITCH_FOR_CHROMA>(
-            TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma);
-    }
-    inline void setSeparateUvPlaneEnable(const bool value) {
-        TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable = value;
-    }
-    inline bool getSeparateUvPlaneEnable(void) const {
-        return TheStructure._SurfaceFormatIsPlanar.SeparateUvPlaneEnable;
-    }
-    inline void setYOffsetForVPlane(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff00000000L);
-        TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane = value;
-    }
-    inline uint64_t getYOffsetForVPlane(void) const {
-        return TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane;
-    }
-    inline void setXOffsetForVPlane(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff000000000000L);
-        TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane = value;
-    }
-    inline uint64_t getXOffsetForVPlane(void) const {
-        return TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane;
+        return TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch << AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
     typedef enum tagAUXILIARYSURFACEBASEADDRESS {
         AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT = 0xc,
         AUXILIARYSURFACEBASEADDRESS_ALIGN_SIZE = 0x1000,
     } AUXILIARYSURFACEBASEADDRESS;
     inline void setAuxiliarySurfaceBaseAddress(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0xfffffffffffff000L);
-        TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0
-            .AuxiliarySurfaceBaseAddress =
-            value >> AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
+        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
+        TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress = value >> AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAuxiliarySurfaceBaseAddress(void) const {
-        return TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0
-                   .AuxiliarySurfaceBaseAddress
-               << AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
-    }
-    inline void
-    setAuxiliaryTableIndexForMediaCompressedSurface(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0xffe00000L);
-        TheStructure.MemoryCompressionEnableIs1
-            .AuxiliaryTableIndexForMediaCompressedSurface = value;
-    }
-    inline uint64_t getAuxiliaryTableIndexForMediaCompressedSurface(void) const {
-        return TheStructure.MemoryCompressionEnableIs1
-            .AuxiliaryTableIndexForMediaCompressedSurface;
-    }
-    typedef enum tagCLEARCOLORADDRESS {
-        CLEARCOLORADDRESS_BIT_SHIFT = 0x6,
-        CLEARCOLORADDRESS_ALIGN_SIZE = 0x40,
-    } CLEARCOLORADDRESS;
-    inline void setClearColorAddress(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xffffffc0L);
-        TheStructure.ClearValueAddressEnableIsEnable.ClearColorAddress =
-            value >> CLEARCOLORADDRESS_BIT_SHIFT;
-    }
-    inline uint32_t getClearColorAddress(void) const {
-        return TheStructure.ClearValueAddressEnableIsEnable.ClearColorAddress
-               << CLEARCOLORADDRESS_BIT_SHIFT;
-    }
-    typedef enum tagCLEARDEPTHADDRESSLOW {
-        CLEARDEPTHADDRESSLOW_BIT_SHIFT = 0x6,
-        CLEARDEPTHADDRESSLOW_ALIGN_SIZE = 0x40,
-    } CLEARDEPTHADDRESSLOW;
-    inline void setClearDepthAddressLow(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xffffffc0L);
-        TheStructure
-            ._AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable
-            .ClearDepthAddressLow = value >> CLEARDEPTHADDRESSLOW_BIT_SHIFT;
-    }
-    inline uint32_t getClearDepthAddressLow(void) const {
-        return TheStructure
-                   ._AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable
-                   .ClearDepthAddressLow
-               << CLEARDEPTHADDRESSLOW_BIT_SHIFT;
-    }
-    inline void setClearDepthAddressHigh(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0xffff);
-        TheStructure
-            ._AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable
-            .ClearDepthAddressHigh = value;
-    }
-    inline uint32_t getClearDepthAddressHigh(void) const {
-        return TheStructure
-            ._AuxiliarySurfaceModeIsAux_HizAnd_ClearValueAddressEnableIsEnable
-            .ClearDepthAddressHigh;
-    }
-    inline void setHierarchicalDepthClearValue(const float value) {
-        TheStructure.AuxiliarySurfaceModeIsAux_Hiz.HierarchicalDepthClearValue =
-            value;
-    }
-    inline float getHierarchicalDepthClearValue(void) const {
-        return TheStructure.AuxiliarySurfaceModeIsAux_Hiz
-            .HierarchicalDepthClearValue;
-    }
-    inline void setRedClearColor(const uint32_t value) {
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsDisable
-            .RedClearColor = value;
-    }
-    inline uint32_t getRedClearColor(void) const {
-        return TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EOrAuxiliarySurfaceModeIsAux_HizAndClearValueAddressEnableIsDisable
-            .RedClearColor;
-    }
-    inline void
-    setClearColorConversionEnable(const CLEAR_COLOR_CONVERSION_ENABLE value) {
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable
-            .ClearColorConversionEnable = value;
-    }
-    inline CLEAR_COLOR_CONVERSION_ENABLE
-    getClearColorConversionEnable(void) const {
-        return static_cast<CLEAR_COLOR_CONVERSION_ENABLE>(
-            TheStructure
-                .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable
-                .ClearColorConversionEnable);
-    }
-    inline void setClearColorAddressHigh(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable
-            .ClearColorAddressHigh = value;
-    }
-    inline uint32_t getClearColorAddressHigh(void) const {
-        return TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsEnable
-            .ClearColorAddressHigh;
-    }
-    inline void setGreenClearColor(const uint32_t value) {
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .GreenClearColor = value;
-    }
-    inline uint32_t getGreenClearColor(void) const {
-        return TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .GreenClearColor;
-    }
-    inline void setBlueClearColor(const uint32_t value) {
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .BlueClearColor = value;
-    }
-    inline uint32_t getBlueClearColor(void) const {
-        return TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .BlueClearColor;
-    }
-    inline void setAlphaClearColor(const uint32_t value) {
-        TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .AlphaClearColor = value;
-    }
-    inline uint32_t getAlphaClearColor(void) const {
-        return TheStructure
-            .__AuxiliarySurfaceModeIsAux_Ccs_DOrAuxiliarySurfaceModeIsAux_Ccs_EAndClearValueAddressEnableIsDisable
-            .AlphaClearColor;
+        return TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress << AUXILIARYSURFACEBASEADDRESS_BIT_SHIFT;
     }
 } RENDER_SURFACE_STATE;
 STATIC_ASSERT(64 == sizeof(RENDER_SURFACE_STATE));
