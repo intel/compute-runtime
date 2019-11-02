@@ -11,15 +11,15 @@
 #include "unit_tests/mocks/mock_program.h"
 
 namespace NEO {
-void ProgramFixture::CreateProgramWithSource(cl_context pContext,
-                                             cl_device_id *pDeviceList,
-                                             const std::string &SourceFileName) {
+void ProgramFixture::CreateProgramWithSource(cl_context context,
+                                             cl_device_id *deviceList,
+                                             const std::string &sourceFileName) {
     Cleanup();
     cl_int retVal = CL_SUCCESS;
     std::string testFile;
 
     testFile.append(clFiles);
-    testFile.append(SourceFileName);
+    testFile.append(sourceFileName);
     ASSERT_EQ(true, fileExists(testFile));
 
     knownSource = loadDataFromFile(
@@ -31,7 +31,7 @@ void ProgramFixture::CreateProgramWithSource(cl_context pContext,
 
     const char *sources[1] = {knownSource.get()};
     pProgram = Program::create<MockProgram>(
-        pContext,
+        context,
         1,
         sources,
         &knownSourceSize,

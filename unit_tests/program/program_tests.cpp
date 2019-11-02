@@ -2975,6 +2975,35 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     EXPECT_EQ(0, memcmp(spirv, spvSectionData, spvSectionDataSize));
 }
 
+TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
+    auto device = castToObject<Device>(pContext->getDevice(0));
+
+    auto compilerInterface = new MockCompilerInterface();
+    pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
+    auto compilerMain = new MockCIFMain();
+    compilerInterface->SetIgcMain(compilerMain);
+    compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+
+    MockCompilerDebugVars debugVars = {};
+    char binaryToReturn[] = "abcdfghijklmnop";
+    debugVars.binaryToReturn = binaryToReturn;
+    debugVars.binaryToReturnSize = sizeof(binaryToReturn);
+    gEnvironment->igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
+
+    auto program = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    program->setDevice(device);
+    uint32_t ir[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->irBinary = makeCopy(ir, sizeof(ir));
+    program->irBinarySize = sizeof(ir);
+    EXPECT_EQ(nullptr, program->genBinary);
+    EXPECT_EQ(0U, program->genBinarySize);
+    program->rebuildProgramFromIr();
+    ASSERT_NE(nullptr, program->genBinary);
+    ASSERT_EQ(sizeof(binaryToReturn), program->genBinarySize);
+    EXPECT_EQ(0, memcmp(binaryToReturn, program->genBinary.get(), program->genBinarySize));
+}
+
 TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreRemovedFromBuildOptions) {
     ExecutionEnvironment executionEnvironment;
     MockProgram pProgram(executionEnvironment);

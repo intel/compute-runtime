@@ -188,11 +188,18 @@ cl_int Program::rebuildProgramFromIr() {
     inputArgs.apiOptions = ArrayRef<const char>(options);
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions);
 
-    TranslationOutput output = {};
-    auto err = pCompilerInterface->link(*this->pDevice, inputArgs, output);
+    TranslationOutput compilerOuput = {};
+    auto err = pCompilerInterface->link(*this->pDevice, inputArgs, compilerOuput);
+    this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+    this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
     if (TranslationOutput::ErrorCode::Success != err) {
         return asClError(err);
     }
+
+    this->genBinary = std::move(compilerOuput.deviceBinary.mem);
+    this->genBinarySize = compilerOuput.deviceBinary.size;
+    this->debugData = std::move(compilerOuput.debugData.mem);
+    this->debugDataSize = compilerOuput.debugData.size;
 
     auto retVal = processGenBinary();
     if (retVal != CL_SUCCESS) {

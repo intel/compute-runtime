@@ -693,7 +693,7 @@ struct LockListener {
         : device(device) {
     }
 
-    static void Listener(MockCompilerInterface &compInt) {
+    static void listener(MockCompilerInterface &compInt) {
         auto data = (LockListener *)compInt.lockListenerData;
         auto deviceCtx = CIF::RAII::UPtr(new MockDeviceCtx);
         EXPECT_TRUE(compInt.getDeviceContexts<DeviceCtx>().empty());
@@ -733,7 +733,7 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContex
     using ListenerT = LockListener<IGC::FclOclDeviceCtxTagOCL, MockFclOclDeviceCtx>;
     ListenerT listenerData(device);
     this->pCompilerInterface->lockListenerData = &listenerData;
-    this->pCompilerInterface->lockListener = ListenerT::Listener;
+    this->pCompilerInterface->lockListener = ListenerT::listener;
 
     auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_NE(nullptr, ret.get());
@@ -790,7 +790,7 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewIgcTranslationContex
     using ListenerT = LockListener<IGC::IgcOclDeviceCtxTagOCL, MockIgcOclDeviceCtx>;
     ListenerT listenerData{device};
     this->pCompilerInterface->lockListenerData = &listenerData;
-    this->pCompilerInterface->lockListener = ListenerT::Listener;
+    this->pCompilerInterface->lockListener = ListenerT::listener;
 
     auto ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, ret.get());
@@ -900,7 +900,7 @@ TEST_F(CompilerInterfaceTest, IsCompilerAvailable) {
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(IGC::CodeType::llvmLl, IGC::CodeType::oclGenBin));
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(IGC::CodeType::elf, IGC::CodeType::llvmBc));
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(IGC::CodeType::elf, IGC::CodeType::oclGenBin));
-    this->pCompilerInterface->fclMain = std::move(befIgcImain);
+    this->pCompilerInterface->fclMain = std::move(befFclImain);
 
     befIgcImain = std::move(this->pCompilerInterface->igcMain);
     befFclImain = std::move(this->pCompilerInterface->fclMain);
@@ -916,7 +916,7 @@ TEST_F(CompilerInterfaceTest, IsCompilerAvailable) {
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(IGC::CodeType::elf, IGC::CodeType::llvmBc));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(IGC::CodeType::elf, IGC::CodeType::oclGenBin));
     this->pCompilerInterface->igcMain = std::move(befIgcImain);
-    this->pCompilerInterface->fclMain = std::move(befIgcImain);
+    this->pCompilerInterface->fclMain = std::move(befFclImain);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFailsGracefully) {
