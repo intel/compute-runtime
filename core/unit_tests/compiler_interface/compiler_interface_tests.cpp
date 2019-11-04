@@ -455,7 +455,7 @@ struct TranslationCtxMock {
                                                                  CIF::Builtins::BufferSimple *options,
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount) {
+                                                                 uint32_t tracingOptionsCount) { // NOLINT(readability-identifier-naming)
         this->receivedSrc = src;
         this->receivedOpt = options;
         this->receivedIntOpt = internalOptions;
@@ -488,7 +488,7 @@ struct TranslationCtxMock {
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
                                                                  uint32_t tracingOptionsCount,
-                                                                 void *gtpinInit) {
+                                                                 void *gtpinInit) { // NOLINT(readability-identifier-naming)
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
     CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
@@ -498,7 +498,7 @@ struct TranslationCtxMock {
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
                                                                  uint32_t tracingOptionsCount,
-                                                                 void *gtPinInput) {
+                                                                 void *gtPinInput) { // NOLINT(readability-identifier-naming)
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
 };
@@ -679,7 +679,7 @@ TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndN
 template <typename DeviceCtxBase, typename TranslationCtx>
 struct MockCompilerDeviceCtx : DeviceCtxBase {
     TranslationCtx *CreateTranslationCtxImpl(CIF::Version_t ver, IGC::CodeType::CodeType_t inType,
-                                             IGC::CodeType::CodeType_t outType) override {
+                                             IGC::CodeType::CodeType_t outType) override { // NOLINT(readability-identifier-naming)
         returned = new TranslationCtx;
         return returned;
     }
@@ -994,7 +994,7 @@ struct SpecConstantsTranslationCtxMock {
     CIF::Builtins::BufferSimple *receivedOutSpecConstantsIds = nullptr;
     CIF::Builtins::BufferSimple *receivedOutSpecConstantsSizes = nullptr;
 
-    bool GetSpecConstantsInfoImpl(CIFBuffer *src, CIFBuffer *outSpecConstantsIds, CIFBuffer *outSpecConstantsSizes) {
+    bool GetSpecConstantsInfoImpl(CIFBuffer *src, CIFBuffer *outSpecConstantsIds, CIFBuffer *outSpecConstantsSizes) { // NOLINT(readability-identifier-naming)
         this->receivedSrc = src;
         this->receivedOutSpecConstantsIds = outSpecConstantsIds;
         this->receivedOutSpecConstantsSizes = outSpecConstantsSizes;
