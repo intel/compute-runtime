@@ -93,15 +93,15 @@ TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidate
 }
 
 TEST(WddmAllocationTest, givenAllocationTypeWhenPassedToWddmAllocationConstructorThenAllocationTypeIsStored) {
-    WddmAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, nullptr, MemoryPool::MemoryNull, 0};
+    WddmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, nullptr, MemoryPool::MemoryNull};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
 }
 
 TEST(WddmAllocationTest, givenMemoryPoolWhenPassedToWddmAllocationConstructorThenMemoryPoolIsStored) {
-    WddmAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, nullptr, MemoryPool::System64KBPages, 0};
+    WddmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, nullptr, MemoryPool::System64KBPages};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 
-    WddmAllocation allocation2{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, 0u, MemoryPool::SystemCpuInaccessible, 0};
+    WddmAllocation allocation2{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0, 0u, MemoryPool::SystemCpuInaccessible};
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
 }
 
@@ -961,7 +961,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
 
-    WddmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull, 0);
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
@@ -977,7 +977,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 
     setMapGpuVaFailConfigFcn(0, 1);
 
-    WddmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull, 0);
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
@@ -993,7 +993,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 
     setMapGpuVaFailConfigFcn(0, 2);
 
-    WddmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull, 0);
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, ptr, size, nullptr, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);

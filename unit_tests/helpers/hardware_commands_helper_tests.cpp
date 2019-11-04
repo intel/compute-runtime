@@ -694,12 +694,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
 
     // setup global memory
     char globalBuffer[16];
-    GraphicsAllocation gfxGlobalAlloc(GraphicsAllocation::AllocationType::UNKNOWN, globalBuffer, castToUint64(globalBuffer), 0llu, sizeof(globalBuffer), MemoryPool::MemoryNull, 0);
+    GraphicsAllocation gfxGlobalAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, globalBuffer, castToUint64(globalBuffer), 0llu, sizeof(globalBuffer), MemoryPool::MemoryNull);
     program.setGlobalSurface(&gfxGlobalAlloc);
 
     // setup constant memory
     char constBuffer[16];
-    GraphicsAllocation gfxConstAlloc(GraphicsAllocation::AllocationType::UNKNOWN, constBuffer, castToUint64(constBuffer), 0llu, sizeof(constBuffer), MemoryPool::MemoryNull, 0);
+    GraphicsAllocation gfxConstAlloc(0, GraphicsAllocation::AllocationType::UNKNOWN, constBuffer, castToUint64(constBuffer), 0llu, sizeof(constBuffer), MemoryPool::MemoryNull);
     program.setConstantSurface(&gfxConstAlloc);
 
     // create kernel

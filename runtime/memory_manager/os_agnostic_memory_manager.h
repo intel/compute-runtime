@@ -20,18 +20,18 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
-    MemoryAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, rootDeviceIndex),
+    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
+                     MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool),
           id(0), uncacheable(false) {}
 
-    MemoryAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, rootDeviceIndex),
+    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool),
           id(0), uncacheable(false) {}
 
-    MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required)
-        : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool, rootDeviceIndex),
+    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
+                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, pMem, gpuAddress, 0u, memSize, pool),
           id(count), uncacheable(uncacheable) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;

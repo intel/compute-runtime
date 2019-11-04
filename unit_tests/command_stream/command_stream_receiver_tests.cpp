@@ -297,7 +297,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
     bool destructorCalled = false;
 
-    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
+    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);

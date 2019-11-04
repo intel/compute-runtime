@@ -80,9 +80,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, uint32_t rootDeviceIndex);
+    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool);
 
-    GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, uint32_t rootDeviceIndex);
+    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool);
 
     uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
     void *getUnderlyingBuffer() const { return cpuPtr; }
@@ -265,6 +265,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     friend class SubmissionAggregator;
 
+    const uint32_t rootDeviceIndex;
     AllocationInfo allocationInfo;
     AubInfo aubInfo;
     SharingInfo sharingInfo;
@@ -281,7 +282,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;
-    uint32_t rootDeviceIndex = 0;
 
     std::array<UsageInfo, maxOsContextCount> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};

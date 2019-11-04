@@ -17,25 +17,25 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     DebugManager.logAllocation(this);
 }
 
-GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
-                                       size_t sizeIn, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-    : gpuBaseAddress(baseAddress),
+GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
+                                       size_t sizeIn, MemoryPool::Type pool)
+    : rootDeviceIndex(rootDeviceIndex),
+      gpuBaseAddress(baseAddress),
       gpuAddress(gpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
-      allocationType(allocationType),
-      rootDeviceIndex(rootDeviceIndex) {
+      allocationType(allocationType) {
 }
 
-GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn,
-                                       MemoryPool::Type pool, uint32_t rootDeviceIndex)
-    : gpuAddress(castToUint64(cpuPtrIn)),
+GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn,
+                                       MemoryPool::Type pool)
+    : rootDeviceIndex(rootDeviceIndex),
+      gpuAddress(castToUint64(cpuPtrIn)),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
-      allocationType(allocationType),
-      rootDeviceIndex(rootDeviceIndex) {
+      allocationType(allocationType) {
     sharingInfo.sharedHandle = sharedHandleIn;
 }
 

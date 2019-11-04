@@ -335,7 +335,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
-    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, true);
@@ -372,7 +372,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
@@ -404,7 +404,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionEnabledAn
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
@@ -436,7 +436,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, false);
@@ -467,7 +467,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
     allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;

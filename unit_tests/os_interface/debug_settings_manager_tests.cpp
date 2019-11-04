@@ -942,7 +942,7 @@ TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringT
     FullyEnabledTestDebugManager debugManager;
     auto input = GetParam();
 
-    GraphicsAllocation graphicsAllocation(input.type, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
+    GraphicsAllocation graphicsAllocation(0, input.type, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -956,7 +956,7 @@ INSTANTIATE_TEST_CASE_P(AllAllocationTypes,
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStringIllegalValueThenILLEGAL_VALUEIsReturned) {
     FullyEnabledTestDebugManager debugManager;
 
-    GraphicsAllocation graphicsAllocation(static_cast<GraphicsAllocation::AllocationType>(999), nullptr, 0u, 0, MemoryPool::MemoryNull, true);
+    GraphicsAllocation graphicsAllocation(0, static_cast<GraphicsAllocation::AllocationType>(999), nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -966,7 +966,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDisabledThennullptrReturned) {
     FullyDisabledTestDebugManager debugManager;
 
-    GraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
+    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -974,6 +974,6 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDis
 }
 
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
-    GraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
+    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
 }

@@ -24,7 +24,7 @@ class MockDrmAllocation : public DrmAllocation {
     using DrmAllocation::bufferObjects;
     using DrmAllocation::memoryPool;
 
-    MockDrmAllocation(AllocationType allocationType, MemoryPool::Type pool) : DrmAllocation(allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool, 0) {
+    MockDrmAllocation(AllocationType allocationType, MemoryPool::Type pool) : DrmAllocation(0, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
     }
 };
 

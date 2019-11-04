@@ -63,7 +63,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    DrmAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, cpuPtr, size, 1u, MemoryPool::MemoryNull, 0);
+    DrmAllocation gfxAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -1981,7 +1981,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnNullAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutBufferObjectThenReturnNullPtr) {
-    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, (osHandle)0u, MemoryPool::MemoryNull, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2000,7 +2000,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2011,7 +2011,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
-    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, (osHandle)0u, MemoryPool::MemoryNull, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2028,7 +2028,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2044,7 +2044,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllo
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull, 0);
+    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, true);
@@ -3059,18 +3059,18 @@ TEST_F(DrmMemoryManagerBasic, givenLocalMemoryDisabledWhenAllocateInDevicePoolIs
 }
 
 TEST(DrmAllocationTest, givenAllocationTypeWhenPassedToDrmAllocationConstructorThenAllocationTypeIsStored) {
-    DrmAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull, 0};
+    DrmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
 
-    DrmAllocation allocation2{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::MemoryNull, 0};
+    DrmAllocation allocation2{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::MemoryNull};
     EXPECT_EQ(GraphicsAllocation::AllocationType::UNKNOWN, allocation2.getAllocationType());
 }
 
 TEST(DrmAllocationTest, givenMemoryPoolWhenPassedToDrmAllocationConstructorThenMemoryPoolIsStored) {
-    DrmAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::System64KBPages, 0};
+    DrmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::System64KBPages};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 
-    DrmAllocation allocation2{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible, 0};
+    DrmAllocation allocation2{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible};
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
 }
 

@@ -25,15 +25,15 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
-    WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, rootDeviceIndex) {
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool) {
         trimCandidateListPositions.fill(trimListUnusedPosition);
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
     }
 
-    WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, rootDeviceIndex) {
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool) {
         trimCandidateListPositions.fill(trimListUnusedPosition);
     }
 

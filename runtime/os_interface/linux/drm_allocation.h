@@ -19,18 +19,18 @@ using BufferObjects = std::array<BufferObject *, maxHandleCount>;
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, ptrIn, sizeIn, sharedHandle, pool, rootDeviceIndex),
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, ptrIn, sizeIn, sharedHandle, pool),
           bufferObjects({{bo}}) {
     }
 
-    DrmAllocation(AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool, rootDeviceIndex),
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, ptrIn, gpuAddress, 0, sizeIn, pool),
           bufferObjects({{bo}}) {
     }
 
-    DrmAllocation(AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, uint32_t rootDeviceIndex)
-        : GraphicsAllocation(allocationType, ptrIn, gpuAddress, 0, sizeIn, pool, rootDeviceIndex),
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, ptrIn, gpuAddress, 0, sizeIn, pool),
           bufferObjects(bos) {
     }
 
