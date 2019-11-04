@@ -16,7 +16,7 @@ using namespace NEO;
 
 using MarkerTest = Test<CommandEnqueueFixture>;
 
-HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
+HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeControlIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -47,7 +47,7 @@ HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
     EXPECT_EQ(cmdList.rend(), itorCmd);
 }
 
-HWTEST_F(MarkerTest, CS_GT_CQ_ShouldNotAddPipeControl) {
+HWTEST_F(MarkerTest, GivenCsrAndCmdqWithDifferentTaskLevelsWhenEnqueingMarkerThenPipeControlIsNotAdded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Set task levels to known values.
@@ -76,7 +76,7 @@ HWTEST_F(MarkerTest, CS_GT_CQ_ShouldNotAddPipeControl) {
     ASSERT_EQ(cmdList.end(), itorCmd);
 }
 
-TEST_F(MarkerTest, returnsEvent) {
+TEST_F(MarkerTest, WhenEnqueingMarkerThenEventIsReturned) {
     cl_uint numEventsInWaitList = 0;
     const cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
@@ -99,7 +99,7 @@ TEST_F(MarkerTest, returnsEvent) {
     }
 }
 
-HWTEST_F(MarkerTest, returnedEventShouldHaveEqualDepthToLastCommandPacketInCommandQueue) {
+HWTEST_F(MarkerTest, WhenEnqueingMarkerThenReturnedEventShouldHaveEqualDepthToLastCommandPacketInCommandQueue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Set task levels to known values.
@@ -123,7 +123,7 @@ HWTEST_F(MarkerTest, returnedEventShouldHaveEqualDepthToLastCommandPacketInComma
     EXPECT_EQ(pCmdQ->taskLevel, pEvent->taskLevel);
 }
 
-HWTEST_F(MarkerTest, eventWithWaitDependenciesShouldSync) {
+HWTEST_F(MarkerTest, GivenEventWithWaitDependenciesWhenEnqueingMarkerThenCsrLevelAndCmdqLevelShouldSync) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint32_t initialTaskLevel = 7;
 
