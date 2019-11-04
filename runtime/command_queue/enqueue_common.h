@@ -862,12 +862,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitProperties);
-        auto bcsCsr = getBcsCommandStreamReceiver();
-
-        enqueueProperties.blitProperties->csrDependencies.makeResident(*bcsCsr);
-        previousTimestampPacketNodes->makeResident(*bcsCsr);
-        timestampPacketContainer->makeResident(*bcsCsr);
-        this->bcsTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitProperties);
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitProperties);
     }
 
     DispatchFlags dispatchFlags(

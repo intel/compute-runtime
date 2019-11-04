@@ -254,8 +254,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 void CommandWithoutKernel::dispatchBlitOperation() {
     auto bcsCsr = commandQueue.getBcsCommandStreamReceiver();
 
-    makeTimestampPacketsResident(*bcsCsr);
-
     auto &blitProperties = kernelOperation->blitProperties;
     blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *bcsCsr, CsrDependencies::DependenciesType::All);
     blitProperties.csrDependencies.push_back(previousTimestampPacketNodes.get());
