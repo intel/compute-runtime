@@ -680,3 +680,57 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadBufferWhenHostPtrAllocation
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
+
+struct EnqueueReadBufferHw : public ::testing::Test {
+
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+        srcBuffer.reset(BufferHelper<>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Buffer> srcBuffer;
+};
+
+using EnqeueReadBufferStatelessTest = EnqueueReadBufferHw;
+
+HWTEST_F(EnqeueReadBufferStatelessTest, WhenReadingBufferStatelessThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                           CL_FALSE,
+                                           0,
+                                           MemoryConstants::cacheLineSize,
+                                           missAlignedPtr,
+                                           nullptr,
+                                           0,
+                                           nullptr,
+                                           nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqeueReadBufferStatefulTest = EnqueueReadBufferHw;
+
+HWTEST_F(EnqeueReadBufferStatefulTest, WhenReadingBufferStatefulThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                           CL_FALSE,
+                                           0,
+                                           MemoryConstants::cacheLineSize,
+                                           missAlignedPtr,
+                                           nullptr,
+                                           0,
+                                           nullptr,
+                                           nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
