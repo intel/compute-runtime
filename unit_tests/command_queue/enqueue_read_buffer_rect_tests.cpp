@@ -14,6 +14,7 @@
 #include "unit_tests/command_queue/enqueue_read_buffer_rect_fixture.h"
 #include "unit_tests/fixtures/buffer_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
+#include "unit_tests/mocks/mock_buffer.h"
 
 #include "reg_configs_common.h"
 
@@ -608,4 +609,77 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadBufferRectWhenHostPtrAlloca
         nullptr);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
+
+struct EnqueueReadBufferRectHw : public ::testing::Test {
+
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    MockBuffer srcBuffer;
+
+    size_t bufferOrigin[3] = {0, 0, 0};
+    size_t hostOrigin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    size_t bufferRowPitch = 10;
+    size_t bufferSlicePitch = 0;
+    size_t hostRowPitch = 10;
+    size_t hostSlicePitch = 10;
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
+};
+
+using EnqeueReadBufferRectStatelessTest = EnqueueReadBufferRectHw;
+
+HWTEST_F(EnqeueReadBufferRectStatelessTest, WhenReadingBufferRectStatelessThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    auto retVal = pCmdQ->enqueueReadBufferRect(&srcBuffer,
+                                               CL_FALSE,
+                                               bufferOrigin,
+                                               hostOrigin,
+                                               region,
+                                               bufferRowPitch,
+                                               bufferSlicePitch,
+                                               hostRowPitch,
+                                               hostSlicePitch,
+                                               missAlignedPtr,
+                                               0,
+                                               nullptr,
+                                               nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqeueReadBufferRectStatefulTest = EnqueueReadBufferRectHw;
+
+HWTEST_F(EnqeueReadBufferRectStatefulTest, WhenReadingBufferRectStatefulThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    srcBuffer.size = static_cast<size_t>(smallSize);
+    auto retVal = pCmdQ->enqueueReadBufferRect(&srcBuffer,
+                                               CL_FALSE,
+                                               bufferOrigin,
+                                               hostOrigin,
+                                               region,
+                                               bufferRowPitch,
+                                               bufferSlicePitch,
+                                               hostRowPitch,
+                                               hostSlicePitch,
+                                               missAlignedPtr,
+                                               0,
+                                               nullptr,
+                                               nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
