@@ -488,3 +488,57 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferWhenHostPtrAllocatio
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
+
+struct EnqueueWriteBufferHw : public ::testing::Test {
+
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+        srcBuffer.reset(BufferHelper<>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Buffer> srcBuffer;
+};
+
+using EnqeueReadWriteStatelessTest = EnqueueWriteBufferHw;
+
+HWTEST_F(EnqeueReadWriteStatelessTest, WhenWritingBufferStatelessThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    auto retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                            CL_FALSE,
+                                            0,
+                                            MemoryConstants::cacheLineSize,
+                                            missAlignedPtr,
+                                            nullptr,
+                                            0,
+                                            nullptr,
+                                            nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqeueWriteBufferStatefulTest = EnqueueWriteBufferHw;
+
+HWTEST_F(EnqeueWriteBufferStatefulTest, WhenWritingBufferStatefulThenSuccessIsReturned) {
+
+    auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
+    auto retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                            CL_FALSE,
+                                            0,
+                                            MemoryConstants::cacheLineSize,
+                                            missAlignedPtr,
+                                            nullptr,
+                                            0,
+                                            nullptr,
+                                            nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
