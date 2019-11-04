@@ -2490,14 +2490,14 @@ typedef struct tagRENDER_SURFACE_STATE {
         return TheStructure.Common.EnableUnormPathInColorPipe;
     }
     inline void setWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        DEBUG_BREAK_IF(value > 0x3fff);
         TheStructure.Common.Width = value - 1;
     }
     inline uint32_t getWidth(void) const {
         return TheStructure.Common.Width + 1;
     }
     inline void setHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff0000);
+        DEBUG_BREAK_IF(value > 0x3fff0000);
         TheStructure.Common.Height = value - 1;
     }
     inline uint32_t getHeight(void) const {
@@ -2535,7 +2535,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         return static_cast<TILE_ADDRESS_MAPPING_MODE>(TheStructure.Common.TileAddressMappingMode);
     }
     inline void setDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffe00000L);
+        DEBUG_BREAK_IF(value > 0xffe00000L);
         TheStructure.Common.Depth = value - 1;
     }
     inline uint32_t getDepth(void) const {
