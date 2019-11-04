@@ -2468,10 +2468,10 @@ typedef struct tagRENDER_SURFACE_STATE {
     }
     inline void setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x3f);
-        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value;
+        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value >> 1;
     }
     inline uint32_t getMemoryObjectControlStateIndexToMocsTables(void) const {
-        return TheStructure.Common.MemoryObjectControlStateIndexToMocsTables;
+        return (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
     }
     inline void setMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.MemoryObjectControlStateReserved_56 = value;
