@@ -36,7 +36,7 @@ GEN8TEST_F(MediaKernelTest, givenGen8CsrWhenEnqueueVmeKernelThenVmeSubslicesConf
     EXPECT_FALSE(csr->lastVmeSubslicesConfig);
 }
 
-GEN8TEST_F(MediaKernelTest, gen8CmdSizeForMediaSampler) {
+GEN8TEST_F(MediaKernelTest, GivenGen8WhenGettingCmdSizeForMediaSamplerThenZeroIsReturned) {
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     csr->lastVmeSubslicesConfig = false;
