@@ -40,6 +40,14 @@ dnf install intel-opencl
 emerge intel-neo
 ```
 
+## NixOS
+
+```
+nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+nix-channel --update
+nix-env -i intel-compute-runtime
+```
+
 ## OpenSUSE Leap 15.1
 
 ```
