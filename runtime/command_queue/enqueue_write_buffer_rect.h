@@ -33,7 +33,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo dispatchInfo;
     auto isMemTransferNeeded = true;
     if (buffer->isMemObjZeroCopy()) {
         size_t bufferOffset;
@@ -45,8 +44,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
         return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), CL_COMMAND_WRITE_BUFFER_RECT, blockingWrite,
                                                   numEventsInWaitList, eventWaitList, event);
     }
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
-                                                                                                        this->getContext(), this->getDevice());
+
+    auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
+    if (forceStateless(buffer->getSize())) {
+        eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
+    }
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,
+                                                                                                        this->getContext(),
+                                                                                                        this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
@@ -80,6 +85,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.srcSlicePitch = hostSlicePitch;
     dc.dstRowPitch = bufferRowPitch;
     dc.dstSlicePitch = bufferSlicePitch;
+
+    MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
     enqueueHandler<CL_COMMAND_WRITE_BUFFER_RECT>(
