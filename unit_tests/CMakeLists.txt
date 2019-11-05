@@ -31,6 +31,7 @@ endif()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_custom_target(unit_tests)
+add_custom_target(prepare_test_kernels)
 add_custom_target(run_unit_tests ALL)
 
 set(IGDRCL_SRCS_tests_local
@@ -175,6 +176,7 @@ endfunction()
 add_dependencies(unit_tests
   igdrcl_tests
   test_dynamic_lib
+  prepare_test_kernels
 )
 
 set_target_properties(igdrcl_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
@@ -184,6 +186,7 @@ if(UNIX)
 endif()
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
@@ -198,10 +201,10 @@ else()
   endif()
 endif()
 
-function(neo_gen_kernels target platform_name suffix)
+function(neo_gen_kernels platform_name_with_type platform_name suffix)
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
 
-  set(results)
+  set(kernels_to_compile)
   foreach(filepath ${ARGN})
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
@@ -221,14 +224,14 @@ function(neo_gen_kernels target platform_name suffix)
       DEPENDS ${filepath} ocloc
     )
 
-    list(APPEND results ${output_files})
+    list(APPEND kernels_to_compile ${output_files})
   endforeach()
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+  list(APPEND kernels_to_compile_${platform_name_with_type} ${kernels_to_compile})
+  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_options target platform_name suffix filepath)
-  set(results)
+function(neo_gen_kernels_with_options platform_name_with_type platform_name suffix filepath)
+  set(kernels_to_compile)
   foreach(filearg ${filepath})
     get_filename_component(filename ${filearg} NAME)
     get_filename_component(basename ${filearg} NAME_WE)
@@ -254,15 +257,15 @@ function(neo_gen_kernels_with_options target platform_name suffix filepath)
         DEPENDS ${filearg} ocloc
       )
 
-      list(APPEND results ${output_files})
+      list(APPEND kernels_to_compile ${output_files})
     endforeach()
   endforeach()
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+  list(APPEND kernels_to_compile_${platform_name_with_type} ${kernels_to_compile})
+  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_internal_options target platform_name suffix filepath)
-  set(results)
+function(neo_gen_kernels_with_internal_options platform_name_with_type platform_name suffix filepath)
+  set(kernels_to_compile)
   foreach(filearg ${filepath})
     get_filename_component(filename ${filearg} NAME)
     get_filename_component(basename ${filearg} NAME_WE)
@@ -287,18 +290,18 @@ function(neo_gen_kernels_with_internal_options target platform_name suffix filep
         DEPENDS ${filearg} ocloc
       )
 
-      list(APPEND results ${output_files})
+      list(APPEND kernels_to_compile ${output_files})
     endforeach()
   endforeach()
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+  list(APPEND kernels_to_compile_${platform_name_with_type} ${kernels_to_compile})
+  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
 set(TEST_KERNEL_kernel_debug_enable
   "-cl-kernel-debug-enable"
 )
 
-function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix filepath)
+function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platform_name suffix filepath)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
   get_filename_component(base_workdir ${filepath} DIRECTORY)
@@ -306,7 +309,6 @@ function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix fi
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
-  set(results)
   string(REPLACE " " "_" argwospaces ${TEST_KERNEL_kernel_debug_enable})
 
   set(outputpath_base "${outputdir}/${argwospaces}_${suffix}")
@@ -324,19 +326,17 @@ function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix fi
     DEPENDS ${filepath} ocloc
   )
 
-  list(APPEND results ${output_files})
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+  list(APPEND kernels_to_compile_${platform_name_with_type} ${output_files})
+  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernel_from_ll target platform_name suffix filepath output_name compile_options)
+function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix filepath output_name compile_options)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
 
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
-  set(results)
   set(outputpath_base "${outputdir}/${output_name}_${suffix}")
   set(output_files
     ${outputpath_base}.bin
@@ -351,10 +351,8 @@ function(neo_gen_kernel_from_ll target platform_name suffix filepath output_name
     DEPENDS ${filepath} ocloc
   )
 
-  list(APPEND results ${output_files})
-
-  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
+  list(APPEND kernels_to_compile_${platform_name_with_type} ${output_files})
+  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
 set(TEST_KERNEL test_files/CopyBuffer_simd8.cl)
@@ -450,25 +448,6 @@ endmacro()
 macro(macro_for_each_platform)
   PLATFORM_TESTED_WITH_APPVERIFIER(${GEN_TYPE} ${PLATFORM_IT} TESTED_WITH_APPVERIFIER)
   apply_macro_for_each_test_config("UNIT_TESTS")
-  foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-    if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-      add_dependencies(unit_tests test_kernels_${family_name_with_type})
-      add_dependencies(unit_tests test_kernel_${family_name_with_type})
-      add_dependencies(unit_tests test_kernel_stateless_${family_name_with_type})
-      if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-        add_dependencies(unit_tests test_kernel_debug_enable_${family_name_with_type})
-      endif()
-      PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
-      if(PLATFORM_SUPPORTS_2_0)
-        add_dependencies(unit_tests test_kernel_2_0_${family_name_with_type})
-      endif()
-      PLATFORM_HAS_VME(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_VME)
-      if(PLATFORM_SUPPORTS_VME)
-        add_dependencies(unit_tests test_kernel_vme_${family_name_with_type})
-      endif()
-    endif()
-  endforeach()
 endmacro()
 
 macro(macro_for_each_gen)
@@ -481,17 +460,17 @@ macro(macro_for_each_gen)
       set(PLATFORM_VME_LOWER ${DEFAULT_SUPPORTED_VME_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
 
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-        neo_gen_kernels(test_kernels_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
-        neo_gen_kernels_with_options(test_kernel_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
+        neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
+        neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
         # Temporarily disabled debug kernel generation on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-          neo_gen_kernel_with_kernel_debug_options(test_kernel_debug_enable_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL})
+          neo_gen_kernel_with_kernel_debug_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL})
         endif()
         # Gen9lp needs extra -m32 flag
         if( ("${GEN_TYPE_LOWER}" STREQUAL "gen9") AND ("${PLATFORM_TYPE_LOWER}" STREQUAL "lp"))
-          neo_gen_kernels_with_internal_options(test_kernel_stateless_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
+          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
         else()
-          neo_gen_kernels_with_internal_options(test_kernel_stateless_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options})
+          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options})
         endif()
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)
@@ -503,20 +482,21 @@ macro(macro_for_each_gen)
 
         # Temporarily disabled sip kernel generation
         # if("${GEN_TYPE_LOWER}" STREQUAL "gen9" )
-        #   neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
-        #   add_dependencies(unit_tests test_kernel_sip_debug_local_${family_name_with_type})
+        #   neo_gen_kernel_from_ll(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
         # endif()
 
-        # neo_gen_kernel_from_ll(test_kernel_sip_debug_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
-        # add_dependencies(unit_tests test_kernel_sip_debug_${family_name_with_type})
+        # neo_gen_kernel_from_ll(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
 
         if(PLATFORM_2_0_LOWER)
-          neo_gen_kernels_with_options(test_kernel_2_0_${family_name_with_type} ${PLATFORM_2_0_LOWER} ${family_name_with_type} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
+          neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_2_0_LOWER} ${family_name_with_type} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
         endif()
         if(PLATFORM_VME_LOWER)
-          neo_gen_kernels(test_kernel_vme_${family_name_with_type} ${PLATFORM_VME_LOWER} ${family_name_with_type} ${TEST_KERNEL_VME})
+          neo_gen_kernels(${family_name_with_type} ${PLATFORM_VME_LOWER} ${family_name_with_type} ${TEST_KERNEL_VME})
         endif()
       endif()
+      add_custom_target(prepare_test_kernels_${family_name_with_type} DEPENDS ${kernels_to_compile_${family_name_with_type}} copy_compiler_files)
+      set_target_properties(prepare_test_kernels_${family_name_with_type} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${family_name_with_type}")
+      add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type})
     endif()
   endforeach()
   apply_macro_for_each_platform()
