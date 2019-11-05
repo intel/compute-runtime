@@ -31,7 +31,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     builtins.reset();
     rootDeviceEnvironments.clear();
 }
-extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
 void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!rootDeviceEnvironments[0].aubCenter) {
@@ -45,27 +44,6 @@ void ExecutionEnvironment::initGmm() {
 }
 void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     *this->hwInfo = *hwInfo;
-}
-bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t rootDeviceIndex, uint32_t internalDeviceIndex, uint32_t deviceCsrIndex) {
-    if (internalDeviceIndex + 1 > rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers.size()) {
-        rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers.resize(internalDeviceIndex + 1);
-    }
-
-    if (deviceCsrIndex + 1 > rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers[internalDeviceIndex].size()) {
-        rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers[internalDeviceIndex].resize(deviceCsrIndex + 1);
-    }
-    if (this->rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers[internalDeviceIndex][deviceCsrIndex]) {
-        return true;
-    }
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(*this, rootDeviceIndex));
-    if (!commandStreamReceiver) {
-        return false;
-    }
-    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo)) {
-        commandStreamReceiver->createPageTableManager();
-    }
-    this->rootDeviceEnvironments[rootDeviceIndex].commandStreamReceivers[internalDeviceIndex][deviceCsrIndex] = std::move(commandStreamReceiver);
-    return true;
 }
 void ExecutionEnvironment::initializeMemoryManager() {
     if (this->memoryManager) {

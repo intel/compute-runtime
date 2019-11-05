@@ -17,14 +17,12 @@ using namespace NEO;
 
 void MemoryManagerWithCsrFixture::SetUp() {
     executionEnvironment.setHwInfo(*platformDevices);
-    csr = new MockCommandStreamReceiver(this->executionEnvironment, 0);
+    csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment, 0);
     memoryManager = new MockMemoryManager(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     csr->tagAddress = &currentGpuTag;
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
-    auto osContext = memoryManager->createAndRegisterOsContext(csr, engine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), engine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     csr->setupContext(*osContext);
 }
 

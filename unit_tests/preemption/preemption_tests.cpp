@@ -457,14 +457,12 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
         bool isSourceLevelDebuggerActive() const override {
             return true;
         }
+        std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
+            return std::make_unique<MockUltCsr>(*executionEnvironment);
+        }
     };
 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-
-    platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].resize(2);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1].reset(new MockUltCsr(*executionEnvironment));
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].reset(new MockUltCsr(*executionEnvironment));
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDeviceReturnedDebuggerActive>(executionEnvironment, 0));
     EXPECT_EQ(nullptr, mockDevice);

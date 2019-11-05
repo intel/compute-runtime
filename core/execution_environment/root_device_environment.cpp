@@ -8,7 +8,6 @@
 #include "core/execution_environment/root_device_environment.h"
 
 #include "runtime/aub/aub_center.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 
 namespace NEO {
 

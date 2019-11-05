@@ -1380,7 +1380,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
-    memoryManager->createAndRegisterOsContext(csr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
@@ -1566,7 +1566,7 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenC
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto &defaultCommandStreamReceiver = device->getGpgpuCommandStreamReceiver();
-    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1]);
+    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device->commandStreamReceivers[1]);
     auto memoryManager = executionEnvironment->memoryManager.get();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     auto notReadyTaskCount = *nonDefaultCommandStreamReceiver.getTagAddress() + 1;

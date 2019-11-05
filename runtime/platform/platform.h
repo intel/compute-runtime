@@ -18,6 +18,7 @@
 namespace NEO {
 
 class CompilerInterface;
+class RootDevice;
 class Device;
 class AsyncEventsHandler;
 class ExecutionEnvironment;
@@ -66,6 +67,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     cl_uint state = StateNone;
     void fillGlobalDispatchTable();
     MOCKABLE_VIRTUAL void initializationLoopHelper(){};
+    MOCKABLE_VIRTUAL RootDevice *createRootDevice(uint32_t rootDeviceIndex) const;
     std::unique_ptr<PlatformInfo> platformInfo;
     DeviceVector devices;
     std::string compilerExtensions;

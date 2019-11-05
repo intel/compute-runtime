@@ -147,7 +147,7 @@ bool Platform::initialize() {
 
     this->devices.resize(numDevicesReturned);
     for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<RootDevice>(executionEnvironment, deviceOrdinal);
+        auto pDevice = createRootDevice(deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;
@@ -247,6 +247,10 @@ AsyncEventsHandler *Platform::getAsyncEventsHandler() {
 std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler) {
     asyncEventsHandler.swap(handler);
     return handler;
+}
+
+RootDevice *Platform::createRootDevice(uint32_t rootDeviceIndex) const {
+    return Device::create<RootDevice>(executionEnvironment, rootDeviceIndex);
 }
 
 } // namespace NEO

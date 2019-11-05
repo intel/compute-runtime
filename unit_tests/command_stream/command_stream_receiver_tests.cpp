@@ -300,21 +300,17 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0));
-    auto csr = executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0][0].get();
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     csr->setTagAllocation(mockGraphicsAllocation);
     EXPECT_FALSE(destructorCalled);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0][0].reset(nullptr);
+    csr.reset(nullptr);
     EXPECT_TRUE(destructorCalled);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    auto csr = new MockCommandStreamReceiver(executionEnvironment, 0);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
@@ -329,9 +325,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    auto csr = new MockCommandStreamReceiver(executionEnvironment, 0);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
@@ -371,8 +365,8 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
 
-    auto &commandStreamReceiver0 = *executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0];
-    auto &commandStreamReceiver1 = *executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1];
+    auto &commandStreamReceiver0 = *device->commandStreamReceivers[0];
+    auto &commandStreamReceiver1 = *device->commandStreamReceivers[1];
 
     auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
     auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();

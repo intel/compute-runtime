@@ -17,21 +17,22 @@
 using namespace NEO;
 
 bool MockDevice::createSingleDevice = true;
+decltype(&createCommandStream) MockSubDevice::createCommandStreamReceiverFunc = createCommandStream;
+decltype(&createCommandStream) MockDevice::createCommandStreamReceiverFunc = createCommandStream;
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex());
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(internalDeviceIndex + 1);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex].resize(defaultEngineIndex + 1);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][defaultEngineIndex].reset(commandStreamReceiver);
+    commandStreamReceivers.resize(1);
+    commandStreamReceivers[0].reset(commandStreamReceiver);
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
-    this->engines.resize(defaultEngineIndex + 1);
-    this->engines[defaultEngineIndex] = {commandStreamReceiver, nullptr};
+    this->engines.resize(1);
+    this->engines[0] = {commandStreamReceiver, nullptr};
     initializeCaps();
 }
 
-MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
-    : RootDevice(executionEnvironment, deviceIndex) {
+MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
+    : RootDevice(executionEnvironment, rootDeviceIndex) {
     auto &hwInfo = getHardwareInfo();
     bool enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
@@ -70,7 +71,6 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
-    UNRECOVERABLE_IF(internalDeviceIndex != 0u);
 
     auto osContext = this->engines[engineIndex].osContext;
     auto memoryManager = executionEnvironment->memoryManager.get();
@@ -81,11 +81,11 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     memoryManager->getRegisteredEngines().emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex].reset(newCsr);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex]->initializeTagAllocation();
+    commandStreamReceivers[engineIndex].reset(newCsr);
+    commandStreamReceivers[engineIndex]->initializeTagAllocation();
 
     if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[internalDeviceIndex][engineIndex]->createPreemptionAllocation();
+        commandStreamReceivers[engineIndex]->createPreemptionAllocation();
     }
 }
 

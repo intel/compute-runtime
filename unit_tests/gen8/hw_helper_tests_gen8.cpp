@@ -55,5 +55,5 @@ GEN8TEST_F(HwHelperTestGen8, whenGetConfigureAddressSpaceModeThenReturnZero) {
 
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
-    EXPECT_EQ(2u, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
+    EXPECT_EQ(2u, pDevice->engines.size());
 }

@@ -21,8 +21,6 @@
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -81,13 +79,6 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
     device->decRefInternal();
 }
 
-TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesCommandStreamReceiverInExecutionEnvironment) {
-    Platform platform;
-    auto executionEnvironment = platform.peekExecutionEnvironment();
-    platform.initialize();
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());
-}
-
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
     Platform platform;
     auto executionEnvironment = platform.peekExecutionEnvironment();
@@ -101,42 +92,6 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
     std::unique_ptr<Device> device(Device::create<RootDevice>(executionEnvironment, 0u));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamReceiverIsCalledThenItIsInitalized) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
-    executionEnvironment->rootDeviceEnvironments.resize(2);
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 0);
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]);
-    executionEnvironment->initializeCommandStreamReceiver(1, 0, 0);
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[1].commandStreamReceivers[0][0]);
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledWithDifferentDeviceIndexesThenInternalStorageIsResized) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
-    EXPECT_EQ(0u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.size());
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 0);
-    EXPECT_EQ(1u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.size());
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]);
-    executionEnvironment->initializeCommandStreamReceiver(0, 1, 0);
-    EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.size());
-    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[1][0]);
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultipleTimesForTheSameIndexThenCommandStreamReceiverIsReused) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
-    EXPECT_EQ(0u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.size());
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 1);
-
-    auto currentCommandStreamReceiver = executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1].get();
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 1);
-
-    EXPECT_EQ(currentCommandStreamReceiver, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][1].get());
-    EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
-    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
@@ -177,7 +132,6 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     const HardwareInfo *hwInfo = platformDevices[0];
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 0);
     auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
     executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported());
@@ -185,7 +139,6 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initializeCommandStreamReceiver(0, 0, 0);
     executionEnvironment->initializeMemoryManager();
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
@@ -201,23 +154,20 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct MockExecutionEnvironment : ExecutionEnvironment {
         using ExecutionEnvironment::gmmHelper;
     };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 8> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 7> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, hwInfo) {}
     };
-    struct OsInterfaceMock : public DestructorCounted<OSInterface, 7> {
+    struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 6> {
+    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 5> {
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 5> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 4> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
     };
-    struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
+    struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
-    };
-    struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
-        CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : DestructorCounted(destructorId, executionEnvironment, rootDeviceIndex) {}
     };
     struct BuiltinsMock : public DestructorCounted<BuiltIns, 2> {
         BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -231,19 +181,17 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setHwInfo(*platformDevices);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::make_unique<AubCenterMock>(destructorId);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment, 0));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(9u, destructorId);
+    EXPECT_EQ(8u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManager) {
@@ -256,34 +204,6 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReus
     std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(executionEnvironment, 1u));
     EXPECT_NE(&commandStreamReceiver, &device2->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
-}
-
-typedef ::testing::Test ExecutionEnvironmentHw;
-
-HWTEST_F(ExecutionEnvironmentHw, givenHwHelperInputWhenInitializingCsrThenCreatePageTableManagerIfAllowed) {
-    HardwareInfo localHwInfo = *platformDevices[0];
-    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.setHwInfo(&localHwInfo);
-    executionEnvironment.initializeCommandStreamReceiver(0, 0, 0);
-    auto csr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());
-    EXPECT_FALSE(csr0->createPageTableManagerCalled);
-
-    auto hwInfo = executionEnvironment.getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
-    hwInfo->capabilityTable.ftrRenderCompressedImages = false;
-    executionEnvironment.initializeCommandStreamReceiver(0, 1, 0);
-    auto csr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[1][0].get());
-    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(*hwInfo), csr1->createPageTableManagerCalled);
-
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
-    hwInfo->capabilityTable.ftrRenderCompressedImages = true;
-    executionEnvironment.initializeCommandStreamReceiver(0, 2, 0);
-    auto csr2 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[2][0].get());
-    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(*hwInfo), csr2->createPageTableManagerCalled);
 }
 
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {

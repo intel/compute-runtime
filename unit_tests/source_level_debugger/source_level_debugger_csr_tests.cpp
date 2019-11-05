@@ -25,21 +25,19 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
     template <typename FamilyType>
     auto createCSR() {
         hwInfo = nullptr;
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsrHw2<FamilyType>>();
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
         hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
         hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
 
-        auto mockCsr = new MockCsrHw2<FamilyType>(*executionEnvironment, 0);
-
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
         auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(mockMemoryManager);
 
         device.reset(Device::create<MockDevice>(executionEnvironment, 0));
         device->setSourceLevelDebuggerActive(true);
 
-        return mockCsr;
+        return static_cast<MockCsrHw2<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     }
 
     std::unique_ptr<MockDevice> device;

@@ -36,16 +36,13 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
 
     template <typename FamilyType>
     void initializeFixture() {
-        auto wddmCsr = new WddmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0);
-
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(wddmCsr));
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<WddmCommandStreamReceiver<FamilyType>>();
 
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
         device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
-
         context = std::make_unique<MockContext>(device.get());
 
         const size_t bufferMisalignment = 1;

@@ -17,11 +17,12 @@ namespace NEO {
 struct DispatchFlagsTests : public ::testing::Test {
     template <typename CsrType>
     void SetUpImpl() {
-        auto executionEnvironment = new MockExecutionEnvironmentWithCsr<CsrType>(**platformDevices, 1u);
-        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0));
+        environmentWrapper.setCsrType<CsrType>();
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context = std::make_unique<MockContext>(device.get());
     }
 
+    EnvironmentWithCsrWrapper environmentWrapper;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
     DebugManagerStateRestore restore;

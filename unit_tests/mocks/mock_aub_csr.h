@@ -162,9 +162,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
 struct AubExecutionEnvironment {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     GraphicsAllocation *commandBuffer = nullptr;
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
     template <typename CsrType>
     CsrType *getCsr() {
-        return static_cast<CsrType *>(executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get());
+        return static_cast<CsrType *>(commandStreamReceiver.get());
     }
     ~AubExecutionEnvironment() {
         if (commandBuffer) {
@@ -179,23 +180,23 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     executionEnvironment->setHwInfo(*platformDevices);
     executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
 
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment, 0));
     executionEnvironment->initializeMemoryManager();
+    auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, 0);
     if (createTagAllocation) {
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->initializeTagAllocation();
+        commandStreamReceiver->initializeTagAllocation();
     }
 
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].get(),
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
                                                                                      getChosenEngineType(*platformDevices[0]), 1,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->setupContext(*osContext);
+    commandStreamReceiver->setupContext(*osContext);
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {
         aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     }
     aubExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
+    aubExecutionEnvironment->commandStreamReceiver = std::move(commandStreamReceiver);
     return aubExecutionEnvironment;
 }
 } // namespace NEO

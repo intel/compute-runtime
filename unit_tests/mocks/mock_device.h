@@ -7,8 +7,10 @@
 
 #pragma once
 #include "runtime/device/root_device.h"
+#include "runtime/device/sub_device.h"
 #include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 
@@ -18,8 +20,18 @@ class FailMemoryManager;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
+struct MockSubDevice : public SubDevice {
+    using SubDevice::SubDevice;
+
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
+        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex()));
+    }
+    static decltype(&createCommandStream) createCommandStreamReceiverFunc;
+};
+
 class MockDevice : public RootDevice {
   public:
+    using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
     using Device::deviceInfo;
@@ -27,7 +39,7 @@ class MockDevice : public RootDevice {
     using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
-    using Device::internalDeviceIndex;
+    using RootDevice::createEngines;
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);
@@ -39,7 +51,7 @@ class MockDevice : public RootDevice {
 
     bool getCpuTime(uint64_t *timeStamp) { return true; };
     MockDevice();
-    MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex);
 
     void setPreemptionMode(PreemptionMode mode) {
         preemptionMode = mode;
@@ -73,10 +85,10 @@ class MockDevice : public RootDevice {
     }
 
     template <typename T>
-    static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) {
+    static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
         executionEnvironment->setHwInfo(pHwInfo);
-        T *device = new T(executionEnvironment, deviceIndex);
+        T *device = new T(executionEnvironment, rootDeviceIndex);
         executionEnvironment->memoryManager = std::move(device->mockMemoryManager);
         return createDeviceInternals(device);
     }
@@ -90,6 +102,24 @@ class MockDevice : public RootDevice {
         executionEnvironment->setHwInfo(pHwInfo);
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, 0u);
     }
+    bool initializeRootCommandStreamReceiver() override {
+        if (callBaseInitializeRootCommandStreamReceiver) {
+            return RootDevice::initializeRootCommandStreamReceiver();
+        }
+        return initializeRootCommandStreamReceiverReturnValue;
+    }
+
+    SubDevice *createSubDevice(uint32_t subDeviceIndex) override {
+        return Device::create<MockSubDevice>(executionEnvironment, subDeviceIndex, *this);
+    }
+
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
+        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex()));
+    }
+    static decltype(&createCommandStream) createCommandStreamReceiverFunc;
+
+    bool callBaseInitializeRootCommandStreamReceiver = true;
+    bool initializeRootCommandStreamReceiverReturnValue = false;
 
     std::unique_ptr<MemoryManager> mockMemoryManager;
 };
@@ -117,5 +147,21 @@ class FailDeviceAfterOne : public MockDevice {
 class MockAlignedMallocManagerDevice : public MockDevice {
   public:
     MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+};
+
+struct EnvironmentWithCsrWrapper {
+    template <typename CsrType>
+    void setCsrType() {
+        createSubDeviceCsrFuncBackup = EnvironmentWithCsrWrapper::createCommandStreamReceiver<CsrType>;
+        createRootDeviceCsrFuncBackup = EnvironmentWithCsrWrapper::createCommandStreamReceiver<CsrType>;
+    }
+
+    template <typename CsrType>
+    static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+        return new CsrType(executionEnvironment, 0);
+    }
+
+    VariableBackup<decltype(MockSubDevice::createCommandStreamReceiverFunc)> createSubDeviceCsrFuncBackup{&MockSubDevice::createCommandStreamReceiverFunc};
+    VariableBackup<decltype(MockDevice::createCommandStreamReceiverFunc)> createRootDeviceCsrFuncBackup{&MockDevice::createCommandStreamReceiverFunc};
 };
 } // namespace NEO

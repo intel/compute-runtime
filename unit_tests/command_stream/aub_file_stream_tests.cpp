@@ -359,7 +359,7 @@ HWTEST_F(AubFileStreamTests, givenNewTaskSinceLastPollWhenDeletingAubCsrThenCall
     aubCsr->pollForCompletionTaskCount = 49;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
-    aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].reset();
+    aubExecutionEnvironment->commandStreamReceiver.reset();
     EXPECT_TRUE(aubStream->registerPollCalled);
 }
 
@@ -373,7 +373,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTaskSinceLastPollWhenDeletingAubCsrThenDo
     aubCsr->pollForCompletionTaskCount = 50;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
-    aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0].reset();
+    aubExecutionEnvironment->commandStreamReceiver.reset();
     EXPECT_FALSE(aubStream->registerPollCalled);
 }
 
@@ -666,7 +666,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCalledThenPageWalkIsCallingStreamsExpectMemory) {
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    aubCsr->setupContext(pDevice->executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->getOsContext());
+    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
 
     aubCsr->stream = mockAubFileStream.get();
 
@@ -689,7 +689,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenE
 
     aubCsr->aubManager = nullptr;
     aubCsr->stream = mockAubFileStream.get();
-    aubCsr->setupContext(pDevice->executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->getOsContext());
+    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
     aubCsr->initFile(fileName);
 
     aubCsr->expectMMIO(5, 10);
@@ -705,7 +705,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenExpe
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(fileName.c_str(), true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
 
     aubCsr->stream = mockAubFileStream.get();
-    aubCsr->setupContext(pDevice->executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][0]->getOsContext());
+    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
     aubCsr->initFile(fileName);
 
     aubCsr->expectMMIO(5, 10);

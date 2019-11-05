@@ -19,7 +19,6 @@ struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
     using MemoryAllocatorFixture::TearDown;
     void SetUp() override {
         MemoryAllocatorFixture::SetUp();
-        csr->initializeTagAllocation();
         storage = csr->getInternalAllocationStorage();
     }
     InternalAllocationStorage *storage;

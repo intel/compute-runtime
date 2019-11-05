@@ -12,10 +12,10 @@
 #include "runtime/os_interface/device_factory.h"
 
 #include <mutex>
+#include <vector>
 
 namespace NEO {
 class BuiltIns;
-class CommandStreamReceiver;
 class CompilerInterface;
 class GmmHelper;
 class MemoryManager;
@@ -40,8 +40,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     void initGmm();
-    bool initializeCommandStreamReceiver(uint32_t rootDeviceIndex, uint32_t internalDeviceIndex, uint32_t deviceCsrIndex);
-    MOCKABLE_VIRTUAL bool initializeRootCommandStreamReceiver(RootDevice &rootDevice);
     void initializeMemoryManager();
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);

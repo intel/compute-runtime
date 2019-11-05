@@ -15,6 +15,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -171,12 +172,12 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 }
 
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto memoryManager = device->getMemoryManager();
     auto numEnginesForDevice = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
     if (device->getNumAvailableDevices() > 1) {
         numEnginesForDevice *= device->getNumAvailableDevices();
-        numEnginesForDevice += device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size();
+        numEnginesForDevice += device->engines.size();
     }
     EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEnginesCount());
 }
@@ -226,16 +227,11 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
-    EXPECT_EQ(1u, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.size());
-    EXPECT_EQ(1u, executionEnvironment->rootDeviceEnvironments[1].commandStreamReceivers.size());
-    EXPECT_EQ(numGpgpuEngines, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
-    EXPECT_EQ(numGpgpuEngines, executionEnvironment->rootDeviceEnvironments[1].commandStreamReceivers[0].size());
+    EXPECT_EQ(numGpgpuEngines, device1->commandStreamReceivers.size());
+    EXPECT_EQ(numGpgpuEngines, device2->commandStreamReceivers.size());
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(numGpgpuEngines); i++) {
-        EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][i]);
-        EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[1].commandStreamReceivers[0][i]);
-        EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers[0][i].get(), device1->engines[i].commandStreamReceiver);
-        EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[1].commandStreamReceivers[0][i].get(), device2->engines[i].commandStreamReceiver);
+        EXPECT_NE(device2->engines[i].commandStreamReceiver, device1->engines[i].commandStreamReceiver);
     }
 }
 
@@ -262,4 +258,34 @@ TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsAre
 TEST(DeviceCreation, givenDeviceWhenCheckingEnginesCountThenNumberGreaterThanZeroIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_GT(DeviceHelper::getEnginesCount(device->getHardwareInfo()), 0u);
+}
+
+using DeviceHwTest = ::testing::Test;
+
+HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableManagerIfAllowed) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.setHwInfo(&localHwInfo);
+    std::unique_ptr<MockDevice> device;
+    device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
+    auto &csr0 = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_FALSE(csr0.createPageTableManagerCalled);
+
+    auto hwInfo = executionEnvironment.getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+    hwInfo->capabilityTable.ftrRenderCompressedImages = false;
+    device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
+    auto &csr1 = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(*hwInfo), csr1.createPageTableManagerCalled);
+
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    hwInfo->capabilityTable.ftrRenderCompressedImages = true;
+    device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
+    auto &csr2 = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(*hwInfo), csr2.createPageTableManagerCalled);
 }

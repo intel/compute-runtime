@@ -29,16 +29,13 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     EXPECT_EQ(2u, device->getNumSubDevices());
-    EXPECT_EQ(0u, device->internalDeviceIndex);
     EXPECT_EQ(0u, device->getRootDeviceIndex());
 
     EXPECT_EQ(0u, device->subdevices.at(0)->getRootDeviceIndex());
     EXPECT_EQ(0u, device->subdevices.at(0)->getSubDeviceIndex());
-    EXPECT_EQ(1u, device->subdevices.at(0)->getInternalDeviceIndex());
 
     EXPECT_EQ(0u, device->subdevices.at(1)->getRootDeviceIndex());
     EXPECT_EQ(1u, device->subdevices.at(1)->getSubDeviceIndex());
-    EXPECT_EQ(2u, device->subdevices.at(1)->getInternalDeviceIndex());
 }
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
@@ -149,44 +146,21 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     EXPECT_THROW(subDevice->getDeviceById(1), std::exception);
 }
 
-TEST(SubDevicesTest, givenRootDeviceWithSubdevicesWhenSetupRootEngineOnceAgainThenDontOverrideEngine) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
-    EXPECT_EQ(2u, device->getNumSubDevices());
-    auto subDevice = device->subdevices.at(0).get();
-
-    auto subDeviceEngine = subDevice->getDefaultEngine();
-    auto rootDeviceEngine = device->getDefaultEngine();
-
-    EXPECT_NE(subDeviceEngine.commandStreamReceiver, rootDeviceEngine.commandStreamReceiver);
-    EXPECT_NE(subDeviceEngine.osContext, rootDeviceEngine.osContext);
-
-    device->setupRootEngine(subDeviceEngine);
-    rootDeviceEngine = device->getDefaultEngine();
-
-    EXPECT_NE(subDeviceEngine.commandStreamReceiver, rootDeviceEngine.commandStreamReceiver);
-    EXPECT_NE(subDeviceEngine.osContext, rootDeviceEngine.osContext);
-}
-
-TEST(SubDevicesTest, givenRootDeviceWithoutEngineWhenSetupRootEngine) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    MockDevice device(executionEnvironment, 0);
-    EXPECT_EQ(0u, device.engines.size());
-    EngineControl dummyEngine{reinterpret_cast<CommandStreamReceiver *>(0x123), reinterpret_cast<OsContext *>(0x456)};
-    device.setupRootEngine(dummyEngine);
-    EXPECT_EQ(1u, device.engines.size());
-    EXPECT_EQ(dummyEngine.commandStreamReceiver, device.engines[0].commandStreamReceiver);
-    EXPECT_EQ(dummyEngine.osContext, device.engines[0].osContext);
-
-    device.engines.clear();
-}
-
-TEST(SubDevicesTest, givenRootDeviceWhenExecutionEnvironmentInitializesRootCommandStreamReceiverThenDeviceDoesntCreateExtraEngines) {
+TEST(RootDevicesTest, givenRootDeviceWhenInitializeRootCommandStreamReceiverReturnsTrueThenDeviceDoesntCreateExtraEngines) {
     auto executionEnvironment = new MockExecutionEnvironment;
-    executionEnvironment->initRootCommandStreamReceiver = true;
-    executionEnvironment->initializeMemoryManager();
-    std::unique_ptr<MockDevice> device(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0u));
-    EXPECT_EQ(0u, device->engines.size());
+    MockDevice device(executionEnvironment, 0);
+    device.callBaseInitializeRootCommandStreamReceiver = false;
+    device.initializeRootCommandStreamReceiverReturnValue = true;
+    EXPECT_EQ(0u, device.engines.size());
+    device.createEngines();
+    EXPECT_EQ(0u, device.engines.size());
+}
+TEST(RootDevicesTest, givenRootDeviceWhenInitializeRootCommandStreamReceiverReturnsFalseThenDeviceCreatesExtraEngines) {
+    auto executionEnvironment = new MockExecutionEnvironment;
+    MockDevice device(executionEnvironment, 0);
+    device.callBaseInitializeRootCommandStreamReceiver = false;
+    device.initializeRootCommandStreamReceiverReturnValue = false;
+    EXPECT_EQ(0u, device.engines.size());
+    device.createEngines();
+    EXPECT_LT(0u, device.engines.size());
 }

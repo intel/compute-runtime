@@ -99,13 +99,10 @@ class Device : public BaseObject<_cl_device_id> {
     }
     virtual uint32_t getNumAvailableDevices() const = 0;
     virtual Device *getDeviceById(uint32_t deviceId) const = 0;
-    uint32_t getInternalDeviceIndex() const {
-        return internalDeviceIndex;
-    }
 
   protected:
     Device() = delete;
-    Device(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex);
+    Device(ExecutionEnvironment *executionEnvironment);
 
     template <typename T>
     static T *createDeviceInternals(T *device) {
@@ -121,6 +118,7 @@ class Device : public BaseObject<_cl_device_id> {
     virtual bool createEngines();
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 
+    MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
@@ -132,13 +130,13 @@ class Device : public BaseObject<_cl_device_id> {
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
 
+    std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;
 
     std::string exposedBuiltinKernels = "";
 
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    const uint32_t internalDeviceIndex;
     uint32_t defaultEngineIndex = 0;
 };
 

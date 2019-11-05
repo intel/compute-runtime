@@ -39,8 +39,6 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
-        executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-        executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
         csr->setupContext(*osContext);
 
         // Memory manager creates pinBB with ioctl, expect one call
@@ -61,7 +59,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     void TearDownT() {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
-        executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.clear();
+        delete csr;
         ::testing::Mock::VerifyAndClearExpectations(mock.get());
         // Memory manager closes pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))

@@ -10,9 +10,7 @@
 #include <memory>
 #include <vector>
 namespace NEO {
-class CommandStreamReceiver;
 struct EngineControl;
-using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 using EngineControlContainer = std::vector<EngineControl>;
 using DeviceBitfield = std::bitset<32>;
 } // namespace NEO

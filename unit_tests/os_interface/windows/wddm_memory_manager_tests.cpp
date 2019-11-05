@@ -1615,7 +1615,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
-    auto csr = createCommandStream(executionEnvironment, 0);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0));
     auto wddm = new WddmMock();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     auto hwInfo = *platformDevices[0];
@@ -1624,16 +1624,14 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setWddm(wddm);
     executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.resize(1);
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(executionEnvironment);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr, aub_stream::ENGINE_RCS, 1, preemptionMode, false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1, preemptionMode, false);
     csr->setupContext(*osContext);
 
     auto tagAllocator = csr->getEventPerfCountAllocator(100);
     auto allocation = tagAllocator->getTag()->getBaseGraphicsAllocation();
     allocation->updateTaskCount(1, csr->getOsContext().getContextId());
-    executionEnvironment.rootDeviceEnvironments[0].commandStreamReceivers.clear();
+    csr.reset();
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());
 }
 

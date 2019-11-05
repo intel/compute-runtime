@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex, uint32_t subDeviceIndex, RootDevice &rootDevice) : Device(executionEnvironment, deviceIndex), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {}
+SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice) : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {}
 void SubDevice::retain() {
     rootDevice.incRefInternal();
     Device::retain();

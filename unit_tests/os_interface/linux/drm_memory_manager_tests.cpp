@@ -504,7 +504,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWhenHandleFenceCompletionThenCall
 
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -545,7 +545,7 @@ TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
     mock->ioctl_expected.contextGetParam = 2;
     EXPECT_EQ(hostMemorySize, systemSharedMemorySize);
     mock->testIoctls();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
 }
 
 TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
@@ -1267,7 +1267,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
 }
 
 HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
@@ -1682,7 +1682,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCreatesAreCalledThenGraphicsAllocationsAreReturned) {

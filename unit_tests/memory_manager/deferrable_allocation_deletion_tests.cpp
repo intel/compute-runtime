@@ -78,7 +78,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
 }
 
 HWTEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenApplyDeletionThenWaitForBothContextsAndFlushNotReadyCsr) {
-    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device->getExecutionEnvironment()->rootDeviceEnvironments[0].commandStreamReceivers[0][1]);
+    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*device->commandStreamReceivers[1]);
     auto nonDefaultOsContextId = nonDefaultCommandStreamReceiver.getOsContext().getContextId();
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     *hwTag = 0u;

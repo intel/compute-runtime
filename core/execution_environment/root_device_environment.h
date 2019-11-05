@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/common_types.h"
+#include <memory>
 
 namespace NEO {
 
@@ -18,6 +18,5 @@ struct RootDeviceEnvironment {
     RootDeviceEnvironment(RootDeviceEnvironment &&);
     ~RootDeviceEnvironment();
     std::unique_ptr<AubCenter> aubCenter;
-    CsrContainer commandStreamReceivers;
 };
 } // namespace NEO

@@ -16,6 +16,7 @@ set(RUNTIME_SRCS_DEVICE
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/root_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/root_device.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/root_device_initialize.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sub_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sub_device.h
 )

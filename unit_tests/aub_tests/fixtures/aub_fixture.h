@@ -43,8 +43,6 @@ class AUBFixture : public CommandQueueHwFixture {
             this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
         }
 
-        executionEnvironment->rootDeviceEnvironments[0].commandStreamReceivers.resize(deviceIndex + 1);
-
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
         device->resetCommandStreamReceiver(this->csr);
 
