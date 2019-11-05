@@ -31,9 +31,13 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     EXPECT_EQ(2u, device->getNumSubDevices());
     EXPECT_EQ(0u, device->internalDeviceIndex);
     EXPECT_EQ(0u, device->getRootDeviceIndex());
+
     EXPECT_EQ(0u, device->subdevices.at(0)->getRootDeviceIndex());
+    EXPECT_EQ(0u, device->subdevices.at(0)->getSubDeviceIndex());
     EXPECT_EQ(1u, device->subdevices.at(0)->getInternalDeviceIndex());
+
     EXPECT_EQ(0u, device->subdevices.at(1)->getRootDeviceIndex());
+    EXPECT_EQ(1u, device->subdevices.at(1)->getSubDeviceIndex());
     EXPECT_EQ(2u, device->subdevices.at(1)->getInternalDeviceIndex());
 }
 
