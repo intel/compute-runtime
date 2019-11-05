@@ -27,6 +27,7 @@
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -893,4 +894,36 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInNonSubCaptureModeWhenCheckAndActiva
     auto status = tbxCsr.checkAndActivateAubSubCapture(dispatchInfo);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCorrectly) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+
+    MockContext context(pDevice);
+
+    MockTbxCsr<FamilyType> tbxCsr0{*pDevice->executionEnvironment};
+    tbxCsr0.initializeTagAllocation();
+    MockTbxCsr<FamilyType> tbxCsr1{*pDevice->executionEnvironment};
+    tbxCsr1.initializeTagAllocation();
+
+    MockOsContext osContext0(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    tbxCsr0.setupContext(osContext0);
+    EngineControl engineControl0{&tbxCsr0, &osContext0};
+
+    MockOsContext osContext1(1, 1, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false);
+    tbxCsr1.setupContext(osContext0);
+    EngineControl engineControl1{&tbxCsr1, &osContext1};
+
+    MockCommandQueueHw<FamilyType> cmdQ(&context, pDevice, nullptr);
+    cmdQ.gpgpuEngine = &engineControl0;
+    cmdQ.bcsEngine = &engineControl1;
+
+    cl_int error = CL_SUCCESS;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));
+
+    uint32_t hostPtr = 0;
+    error = cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, error);
 }

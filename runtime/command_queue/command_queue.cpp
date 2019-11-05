@@ -146,12 +146,12 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
     latestTaskCountWaited = taskCountToWait;
 
-    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
-
     if (auto bcsCsr = getBcsCommandStreamReceiver()) {
         bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCount, 0, false, false);
         bcsCsr->waitForTaskCountAndCleanAllocationList(bcsTaskCount, TEMPORARY_ALLOCATION);
     }
+
+    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
 
     WAIT_LEAVE()
 }
