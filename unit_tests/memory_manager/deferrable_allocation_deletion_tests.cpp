@@ -151,3 +151,20 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenDeletionIsApp
     EXPECT_TRUE(deletion.apply());
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
+
+TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngineWhenDeletionIsAppliedThenReturnTrue) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    allocation->updateTaskCount(2u, defaultOsContextId);
+    EXPECT_TRUE(allocation->isUsed());
+    DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
+
+    device.reset();
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments.clear();
+    EXPECT_EQ(0u, memoryManager->registeredEngines.size());
+    EXPECT_TRUE(allocation->isUsed());
+
+    memoryManager->freeGraphicsMemoryCalled = 0u;
+    EXPECT_TRUE(deletion.apply());
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
+}

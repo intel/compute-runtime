@@ -18,6 +18,7 @@ DeferrableAllocationDeletion::DeferrableAllocationDeletion(MemoryManager &memory
                                                                                                                                    graphicsAllocation(graphicsAllocation) {}
 bool DeferrableAllocationDeletion::apply() {
     if (graphicsAllocation.isUsed()) {
+        bool isStillUsed = false;
         for (auto &engine : memoryManager.getRegisteredEngines()) {
             auto contextId = engine.osContext->getContextId();
             if (graphicsAllocation.isUsedByOsContext(contextId)) {
@@ -25,11 +26,12 @@ bool DeferrableAllocationDeletion::apply() {
                 if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
                     graphicsAllocation.releaseUsageInOsContext(contextId);
                 } else {
+                    isStillUsed = true;
                     engine.commandStreamReceiver->flushBatchedSubmissions();
                 }
             }
         }
-        if (graphicsAllocation.isUsed()) {
+        if (isStillUsed) {
             return false;
         }
     }
