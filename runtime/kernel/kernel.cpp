@@ -345,7 +345,7 @@ cl_int Kernel::initialize() {
                 kernelArgHandlers[i] = &Kernel::setArgSampler;
                 kernelArguments[i].type = SAMPLER_OBJ;
                 DEBUG_BREAK_IF(!(*argInfo.typeStr.c_str() == '\0' || argInfo.typeStr.find("sampler") != std::string::npos));
-            } else if ((argInfo.typeStr.find("*") != std::string::npos) || argInfo.isBuffer) {
+            } else if (argInfo.isBuffer) {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
                 usingBuffers = true;

@@ -495,6 +495,7 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsBuffer) {
     kernelInfo->kernelArgInfo.resize(1);
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
     kernelInfo->kernelArgInfo[0].typeStr = "uint8 *buffer";
+    kernelInfo->kernelArgInfo.at(0).isBuffer = true;
 
     kernel->initialize();
 

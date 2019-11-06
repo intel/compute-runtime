@@ -2643,6 +2643,7 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
+    kernel.kernelInfo.kernelArgInfo.at(0).isBuffer = true;
 
     capabilityTable.ftrRenderCompressedBuffers = false;
     kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = true;
@@ -2678,6 +2679,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
+    kernel.kernelInfo.kernelArgInfo.at(0).isBuffer = true;
 
     kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
