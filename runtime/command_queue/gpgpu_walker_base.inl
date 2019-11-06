@@ -200,9 +200,8 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
     if (blitEnqueue) {
-        return TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
+        return TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
     }
-
     size_t expectedSizeCS = 0;
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {

@@ -1155,7 +1155,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferOperationWithoutKernelWhenEstimati
                                                                                     true, *cmdQ, multiDispatchInfo);
     auto copyBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, csrDependencies, false, false,
                                                                                    true, *cmdQ, multiDispatchInfo);
-    auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>();
+    auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
     EXPECT_EQ(expectedSize, readBufferCmdsSize);
     EXPECT_EQ(expectedSize, writeBufferCmdsSize);

@@ -47,8 +47,12 @@ struct TimestampPacketStorage {
     }
 
     bool isCompleted() const {
-        return packets[0].contextEnd != 1 &&
-               packets[0].globalEnd != 1;
+        for (uint32_t i = 0; i < packetsUsed; i++) {
+            if ((packets[0].contextEnd & 1) || (packets[0].globalEnd & 1)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void initialize() {
@@ -59,16 +63,18 @@ struct TimestampPacketStorage {
             packet.globalEnd = 1u;
         }
         implicitDependenciesCount.store(0);
+        packetsUsed = 1;
     }
 
     void incImplicitDependenciesCount() { implicitDependenciesCount++; }
 
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
     std::atomic<uint32_t> implicitDependenciesCount{0u};
+    uint32_t packetsUsed = 1;
 };
 #pragma pack()
 
-static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
+static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 2) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableClass {
@@ -105,7 +111,10 @@ struct TimestampPacketHelper {
         auto compareAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
-        HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
+        for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
+            uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
+            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress + compareOffset, 1);
+        }
 
         timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
 
@@ -137,22 +146,31 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(const MemObjsForAuxTranslation *memObjsForAuxTranslation) {
-        return memObjsForAuxTranslation->size() * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
+        return memObjsForAuxTranslation->size() * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForNodeDependency() {
+    static size_t getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue() {
         return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC);
     }
 
     template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSizeForNodeDependency(TagNode<TimestampPacketStorage> &timestampPacketNode) {
+        size_t totalMiSemaphoreWaitSize = timestampPacketNode.tagForCpuAccess->packetsUsed * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+
+        return totalMiSemaphoreWaitSize + sizeof(typename GfxFamily::MI_ATOMIC);
+    }
+
+    template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies) {
-        size_t totalNodesCount = 0;
+        size_t totalCommandsSize = 0;
         for (auto timestampPacketContainer : csrDependencies) {
-            totalNodesCount += timestampPacketContainer->peekNodes().size();
+            for (auto &node : timestampPacketContainer->peekNodes()) {
+                totalCommandsSize += getRequiredCmdStreamSizeForNodeDependency<GfxFamily>(*node);
+            }
         }
 
-        return totalNodesCount * getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
+        return totalCommandsSize;
     }
 };
 
