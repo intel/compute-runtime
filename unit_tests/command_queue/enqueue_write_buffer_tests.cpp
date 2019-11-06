@@ -15,6 +15,7 @@
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 
@@ -497,12 +498,13 @@ struct EnqueueWriteBufferHw : public ::testing::Test {
         }
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
-        srcBuffer.reset(BufferHelper<>::create(context.get()));
     }
 
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
-    std::unique_ptr<Buffer> srcBuffer;
+    MockBuffer srcBuffer;
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
 using EnqeueReadWriteStatelessTest = EnqueueWriteBufferHw;
@@ -511,7 +513,8 @@ HWTEST_F(EnqeueReadWriteStatelessTest, WhenWritingBufferStatelessThenSuccessIsRe
 
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
-    auto retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    auto retVal = pCmdQ->enqueueWriteBuffer(&srcBuffer,
                                             CL_FALSE,
                                             0,
                                             MemoryConstants::cacheLineSize,
@@ -530,7 +533,8 @@ HWTEST_F(EnqeueWriteBufferStatefulTest, WhenWritingBufferStatefulThenSuccessIsRe
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
-    auto retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+    srcBuffer.size = static_cast<size_t>(smallSize);
+    auto retVal = pCmdQ->enqueueWriteBuffer(&srcBuffer,
                                             CL_FALSE,
                                             0,
                                             MemoryConstants::cacheLineSize,

@@ -47,7 +47,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     }
 
     auto eBuiltInOps = EBuiltInOps::FillBuffer;
-    if (forceStateless(size)) {
+    if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::FillBufferStateless;
     }
 

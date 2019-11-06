@@ -1254,3 +1254,21 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
 HWTEST_F(CommandQueueHwTest, givenDefaultHwCommandQueueThenCacheFlushAfterWalkerIsNotNeeded) {
     EXPECT_FALSE(pCmdQ->getRequiresCacheFlushAfterWalker());
 }
+
+HWTEST_F(CommandQueueHwTest, givenSizeWhenForceStatelessIsCalledThenCorrectValueIsReturned) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    struct MockCommandQueueHw : public CommandQueueHw<FamilyType> {
+        using CommandQueueHw<FamilyType>::forceStateless;
+    };
+
+    MockCommandQueueHw *pCmdQHw = reinterpret_cast<MockCommandQueueHw *>(pCmdQ);
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    EXPECT_TRUE(pCmdQHw->forceStateless(static_cast<size_t>(bigSize)));
+
+    uint64_t smallSize = bigSize - 1;
+    EXPECT_FALSE(pCmdQHw->forceStateless(static_cast<size_t>(smallSize)));
+}

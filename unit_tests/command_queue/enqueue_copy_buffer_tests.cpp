@@ -16,6 +16,7 @@
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_buffer.h"
 
 #include "reg_configs_common.h"
 
@@ -303,30 +304,29 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
 struct EnqueueCopyBufferHw : public ::testing::Test {
 
     void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
-
-        srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
         dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
     }
 
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
-    std::unique_ptr<Buffer> srcBuffer;
     std::unique_ptr<Buffer> dstBuffer;
+    MockBuffer srcBuffer;
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
 using EnqueueCopyBufferStatelessTest = EnqueueCopyBufferHw;
 
 HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessThenSuccessIsReturned) {
-
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    srcBuffer.size = static_cast<size_t>(bigSize);
     auto retVal = cmdQ->enqueueCopyBuffer(
-        srcBuffer.get(),
+        &srcBuffer,
         dstBuffer.get(),
         0,
         0,
@@ -341,14 +341,10 @@ HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessT
 using EnqueueCopyBufferStatefulTest = EnqueueCopyBufferHw;
 
 HWTEST_F(EnqueueCopyBufferStatefulTest, givenBuffersWhenCopyingBufferStatefulThenSuccessIsReturned) {
-
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    srcBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = cmdQ->enqueueCopyBuffer(
-        srcBuffer.get(),
+        &srcBuffer,
         dstBuffer.get(),
         0,
         0,

@@ -34,7 +34,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     MultiDispatchInfo dispatchInfo;
     auto eBuiltInOpsType = EBuiltInOps::CopyBufferToBuffer;
 
-    if (forceStateless(size)) {
+    if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
         eBuiltInOpsType = EBuiltInOps::CopyBufferToBufferStateless;
     }
 

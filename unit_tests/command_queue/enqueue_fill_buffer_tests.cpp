@@ -20,6 +20,7 @@
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_buffer.h"
 
 #include "reg_configs_common.h"
 
@@ -539,32 +540,31 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
 struct EnqueueFillBufferHw : public ::testing::Test {
 
     void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
-
-        dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
     }
 
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
-    std::unique_ptr<Buffer> dstBuffer;
     const uint8_t pattern[1] = {0x55};
     const size_t patternSize = sizeof(pattern);
     const size_t offset = 0;
     const size_t size = patternSize;
+    MockBuffer dstBuffer;
+    uint64_t bigSize = 4ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
 };
 
 using EnqeueFillBufferStatelessTest = EnqueueFillBufferHw;
 
 HWTEST_F(EnqeueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessThenSuccessIsReturned) {
-
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    dstBuffer.size = static_cast<size_t>(bigSize);
     auto retVal = pCmdQ->enqueueFillBuffer(
-        dstBuffer.get(),
+        &dstBuffer,
         pattern,
         patternSize,
         offset,
@@ -579,14 +579,10 @@ HWTEST_F(EnqeueFillBufferStatelessTest, givenBuffersWhenFillingBufferStatelessTh
 using EnqeueFillBufferStatefullTest = EnqueueFillBufferHw;
 
 HWTEST_F(EnqeueFillBufferStatefullTest, givenBuffersWhenFillingBufferStatefullThenSuccessIsReturned) {
-
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    dstBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = pCmdQ->enqueueFillBuffer(
-        dstBuffer.get(),
+        &dstBuffer,
         pattern,
         patternSize,
         offset,

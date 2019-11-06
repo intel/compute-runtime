@@ -51,7 +51,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     }
 
     auto eBuiltInOps = EBuiltInOps::CopyBufferToBuffer;
-    if (forceStateless(size)) {
+    if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
     }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,

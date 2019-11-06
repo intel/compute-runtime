@@ -97,10 +97,6 @@ template <typename FamilyType>
 struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
     CommandQueueStateless(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
 
-    bool forceStateless(size_t size) override {
-        return true;
-    }
-
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
         EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
@@ -111,10 +107,6 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 template <typename FamilyType>
 struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
     CommandQueueStateful(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
-
-    bool forceStateless(size_t size) override {
-        return false;
-    }
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
