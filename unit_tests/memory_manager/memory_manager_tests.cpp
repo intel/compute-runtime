@@ -51,6 +51,11 @@ TEST(MemoryManagerTest, whenCreatingOsAgnosticMemoryManagerThenSupportsMultiStor
     EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
 }
 
+TEST(MemoryManagerTest, whenCreatingAllocPropertiesForMultiStorageResourceThenMultiStorageResourcesFlagIsSetToTrue) {
+    AllocationProperties properties{false, 0u, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, false, true, 0, 0};
+    EXPECT_TRUE(properties.multiStorageResource);
+}
+
 TEST(MemoryBank, givenDifferentDeviceOrdinalsWhenGettingBankThenCorrectBanksAreReturned) {
     auto bank = MemoryBanks::getBank(0);
     EXPECT_EQ(MemoryBanks::MainBank, bank);
@@ -865,7 +870,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0u, 0u);
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0u, 0u);
     EXPECT_EQ(properties.subDeviceIndex, 0u);
     EXPECT_EQ(properties.rootDeviceIndex, 0u);
 

@@ -1562,7 +1562,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledA
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0u, 0u);
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0u, 0u);
     ASSERT_EQ(properties.subDeviceIndex, 0u);
     ASSERT_EQ(properties.rootDeviceIndex, 0u);
 

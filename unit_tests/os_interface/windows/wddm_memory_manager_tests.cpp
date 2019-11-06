@@ -215,7 +215,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
 
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
 
-    AllocationProperties properties(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
@@ -235,8 +235,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocatio
 
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
 
-    AllocationProperties propertiesBuffer(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
-    AllocationProperties propertiesImage(false, 0, GraphicsAllocation::AllocationType::SHARED_IMAGE, false, 0, 0);
+    AllocationProperties propertiesBuffer(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
+    AllocationProperties propertiesImage(false, 0, GraphicsAllocation::AllocationType::SHARED_IMAGE, false, false, 0, 0);
 
     AllocationProperties *propertiesArray[2] = {&propertiesBuffer, &propertiesImage};
 
@@ -264,7 +264,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryImplCalled);
 
-    AllocationProperties properties(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
 
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     EXPECT_EQ(nullptr, allocation);
@@ -441,7 +441,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
@@ -492,7 +492,7 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
 
     memoryManager->setForce32BitAllocations(true);
 
-    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, true);
     ASSERT_NE(nullptr, gpuAllocation);
@@ -515,7 +515,7 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32Bit
 
     memoryManager->setForce32BitAllocations(true);
 
-    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -535,7 +535,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
     auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     EXPECT_NE(nullptr, gpuAllocation);
     auto expectedDestroyHandle = gpuAllocation->resourceHandle;
@@ -557,7 +557,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, size, false));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(size, gpuAllocation->getUnderlyingBufferSize());
@@ -574,7 +574,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
 
     wddm->failOpenSharedHandle = true;
 
-    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, 0, 0);
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0, 0);
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false);
     EXPECT_EQ(nullptr, gpuAllocation);
 }
