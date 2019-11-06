@@ -33,7 +33,7 @@ class MigrateMemObjectsFixture
 
 typedef Test<MigrateMemObjectsFixture> MigrateMemObjectsTest;
 
-TEST_F(MigrateMemObjectsTest, ValidInputsReturnsNullEvent) {
+TEST_F(MigrateMemObjectsTest, GivenNullEventWhenMigratingEventsThenSuccessIsReturned) {
 
     MockBuffer buffer;
 
@@ -48,7 +48,7 @@ TEST_F(MigrateMemObjectsTest, ValidInputsReturnsNullEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MigrateMemObjectsTest, ValidInputsAndBlockedOnEventReturnsNullEvent) {
+TEST_F(MigrateMemObjectsTest, GivenValidEventListWhenMigratingEventsThenSuccessIsReturned) {
 
     MockBuffer buffer;
 
@@ -66,7 +66,7 @@ TEST_F(MigrateMemObjectsTest, ValidInputsAndBlockedOnEventReturnsNullEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MigrateMemObjectsTest, ValidInputsReturnsNonNullEvent) {
+TEST_F(MigrateMemObjectsTest, GivenEventPointerWhenMigratingEventsThenEventIsReturned) {
 
     MockBuffer buffer;
 
