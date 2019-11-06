@@ -6,8 +6,9 @@
  */
 
 #include "core/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
-#include "runtime/platform/platform.h"
+#include "runtime/gmm_helper/resource_info.h"
 
 #include "gmm_client_context.h"
 
@@ -18,9 +19,22 @@ GmmPageTableMngr::~GmmPageTableMngr() {
     }
 }
 
-GmmPageTableMngr::GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = platform()->peekGmmClientContext()->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(translationTableCb, translationTableFlags);
+bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
+    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
+    ddiUpdateAuxTable.BaseGpuVA = gpuVa;
+    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
+    ddiUpdateAuxTable.DoNotWait = true;
+    ddiUpdateAuxTable.Map = map ? 1u : 0u;
+
+    return updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
+}
+
+void GmmPageTableMngr::initPageTableManagerRegisters() {
+    if (!initialized) {
+        initContextAuxTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+
+        initialized = true;
+    }
 }
 
 } // namespace NEO

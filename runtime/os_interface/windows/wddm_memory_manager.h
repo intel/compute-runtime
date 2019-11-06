@@ -54,8 +54,6 @@ class WddmMemoryManager : public MemoryManager {
 
     bool isMemoryBudgetExhausted() const override;
 
-    bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override;
-
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;

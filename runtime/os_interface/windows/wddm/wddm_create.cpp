@@ -8,7 +8,7 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
-Wddm *Wddm::createWddm() {
-    return new Wddm();
+Wddm *Wddm::createWddm(RootDeviceEnvironment &rootDeviceEnvironment) {
+    return new Wddm(rootDeviceEnvironment);
 }
 } // namespace NEO

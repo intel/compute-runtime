@@ -27,7 +27,7 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
         hwInfo = nullptr;
         EnvironmentWithCsrWrapper environment;
         environment.setCsrType<MockCsrHw2<FamilyType>>();
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
         hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
 

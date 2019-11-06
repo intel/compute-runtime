@@ -6,7 +6,11 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/gmm_helper/gmm_helper.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/buffer.h"
@@ -22,6 +26,8 @@
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
@@ -1369,4 +1375,67 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
     EXPECT_TRUE(isResident<FamilyType>(bo));
 
     mm->freeGraphicsMemory(allocation);
+}
+
+template <typename GfxFamily>
+struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
+    using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableMngrIsCalledThenCreatePageTableManager) {
+    executionEnvironment.prepareRootDeviceEnvironments(2);
+    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
+    auto pageTableManager = csr->createPageTableManager();
+    EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenInitializePageTableMngrRegistersIsCalledThenInitializePageTableManager) {
+    executionEnvironment.prepareRootDeviceEnvironments(2);
+    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
+    csr->createPageTableManager();
+    auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[1];
+
+    MockGmmPageTableMngr *mockMngr = static_cast<MockGmmPageTableMngr *>(rootDeviceEnvironment->pageTableManager.get());
+    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(::testing::_, ::testing::_)).Times(1);
+
+    EXPECT_FALSE(rootDeviceEnvironment->pageTableManager->initialized);
+    LinearStream linearStream = {};
+    rootDeviceEnvironment->pageTableManager->initPageTableManagerRegisters();
+    EXPECT_TRUE(rootDeviceEnvironment->pageTableManager->initialized);
+
+    rootDeviceEnvironment->pageTableManager->initPageTableManagerRegisters();
+    EXPECT_TRUE(rootDeviceEnvironment->pageTableManager->initialized);
+
+    rootDeviceEnvironment->pageTableManager.reset(nullptr);
+    EXPECT_EQ(rootDeviceEnvironment->pageTableManager, nullptr);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
+    auto mockMngr = new MockGmmPageTableMngr();
+    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
+    auto gmm = std::make_unique<MockGmm>();
+    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
+    EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
+    auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), true);
+    EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
+    EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
+    EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);
+    EXPECT_EQ(ddiUpdateAuxTable.Map, 1u);
+
+    EXPECT_TRUE(result);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
+    auto mockMngr = new MockGmmPageTableMngr();
+    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(mockMngr);
+    auto gmm = std::make_unique<MockGmm>();
+    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
+    EXPECT_CALL(*mockMngr, updateAuxTable(::testing::_)).Times(1).WillOnce(::testing::Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {ddiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
+    auto result = executionEnvironment.rootDeviceEnvironments[0]->pageTableManager->updateAuxTable(0, gmm.get(), false);
+    EXPECT_EQ(ddiUpdateAuxTable.BaseGpuVA, 0ull);
+    EXPECT_EQ(ddiUpdateAuxTable.BaseResInfo, gmm->gmmResourceInfo->peekHandle());
+    EXPECT_EQ(ddiUpdateAuxTable.DoNotWait, true);
+    EXPECT_EQ(ddiUpdateAuxTable.Map, 0u);
+
+    EXPECT_TRUE(result);
 }

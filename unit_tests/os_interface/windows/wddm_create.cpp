@@ -8,7 +8,7 @@
 #include "unit_tests/mocks/mock_wddm.h"
 
 namespace NEO {
-Wddm *Wddm::createWddm() {
-    return new WddmMock();
+Wddm *Wddm::createWddm(RootDeviceEnvironment &rootDeviceEnvironment) {
+    return new WddmMock(rootDeviceEnvironment);
 }
 } // namespace NEO

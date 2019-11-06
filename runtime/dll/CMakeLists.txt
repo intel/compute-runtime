@@ -26,6 +26,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${NEO_SOURCE_DIR}/core/utilities/clflush.cpp
   ${NEO_SOURCE_DIR}/core/utilities/debug_settings_reader_creator.cpp
   ${NEO_SOURCE_DIR}/runtime/api/api.cpp
+  ${NEO_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${NEO_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
   ${NEO_SOURCE_DIR}/runtime/helpers/built_ins_helper.cpp
   ${NEO_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
@@ -52,7 +53,6 @@ set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/sys_calls.cpp
   ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
-  ${NEO_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${NEO_SOURCE_DIR}/runtime/os_interface/windows/wddm/wddm_calls.cpp
   ${NEO_SOURCE_DIR}/runtime/os_interface/windows/wddm/wddm_create.cpp
 )

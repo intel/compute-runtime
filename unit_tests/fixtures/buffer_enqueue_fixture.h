@@ -26,7 +26,7 @@ struct BufferEnqueueFixture : public HardwareParse,
     }
 
     void SetUp() override {
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     }
 
     void TearDown() override {

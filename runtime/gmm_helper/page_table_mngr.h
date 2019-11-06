@@ -8,33 +8,37 @@
 #pragma once
 #include "core/gmm_helper/gmm_lib.h"
 
+#include "External/Common/GmmPageTableMgr.h"
+
 #include <functional>
 #include <memory>
 
 namespace NEO {
+class Gmm;
+class LinearStream;
 class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
 
     static GmmPageTableMngr *create(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
-    MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
-        return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
-    }
+    MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle);
 
-    MOCKABLE_VIRTUAL GMM_STATUS initContextTRTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
-        return pageTableManager->InitContextTRTableRegister(initialBBHandle, engineType);
-    }
+    bool updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map);
+    void initPageTableManagerRegisters();
+
+    bool initialized = false;
+
+  protected:
+    GmmPageTableMngr() = default;
 
     MOCKABLE_VIRTUAL GMM_STATUS updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) {
         return pageTableManager->UpdateAuxTable(ddiUpdateAuxTable);
     }
-    MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle) {
-        pageTableManager->GmmSetCsrHandle(csrHandle);
-    }
 
-  protected:
-    GmmPageTableMngr() = default;
+    MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
+        return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
+    }
 
     GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
     GMM_CLIENT_CONTEXT *clientContext = nullptr;

@@ -36,17 +36,17 @@ using namespace ::testing;
 void WddmMemoryManagerFixture::SetUp() {
     GdiDllFixture::SetUp();
 
-    wddm = static_cast<WddmMock *>(Wddm::createWddm());
+    executionEnvironment = platformImpl->peekExecutionEnvironment();
+    wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
     if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
-        wddm->resetPageTableManager(GmmPageTableMngr::create(0, &dummyTTCallbacks));
+        executionEnvironment->rootDeviceEnvironments[0]->pageTableManager.reset(GmmPageTableMngr::create(0, &dummyTTCallbacks));
     }
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);
     constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
     wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
 
-    executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(wddm);
     executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
@@ -107,8 +107,8 @@ TEST(WddmAllocationTest, givenMemoryPoolWhenPassedToWddmAllocationConstructorThe
 
 TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
     HardwareInfo *hwInfo;
-    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm()));
+    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get())));
     uint64_t base = 0x56000;
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);
@@ -121,8 +121,8 @@ TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
 
 TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
     HardwareInfo *hwInfo;
-    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-    auto wddm = std::make_unique<WddmMock>();
+    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+    auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0].get());
     executionEnvironment->osInterface->get()->setWddm(wddm.release());
     bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(true);
@@ -1302,8 +1302,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
 
 TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeapInternalBaseIsReturned) {
     HardwareInfo *hwInfo;
-    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-    auto wddm = new WddmMock();
+    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
+    auto wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
     executionEnvironment->osInterface->get()->setWddm(wddm);
     executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     auto hwInfoMock = *platformDevices[0];
@@ -1439,9 +1439,9 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
     WddmMemoryManager memoryManager(*executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm->resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties(1, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY));
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
@@ -1462,12 +1462,12 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
     std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
-    WddmMock wddm;
+    WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[1].get());
     auto hwInfo = *platformDevices[0];
     wddm.init(hwInfo);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm.resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
@@ -1494,9 +1494,9 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 123;
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm->resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties(1, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY)));
     wddmAlloc->setGpuAddress(gpuVa);
     wddmAlloc->getDefaultGmm()->isRenderCompressed = true;
 
@@ -1519,7 +1519,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleasei
     WddmMemoryManager memoryManager(*executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm->resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     wddmAlloc->getDefaultGmm()->isRenderCompressed = false;
@@ -1533,12 +1533,12 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
     std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
-    WddmMock wddm;
+    WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[0].get());
     auto hwInfo = *platformDevices[0];
     wddm.init(hwInfo);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm.resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
@@ -1550,7 +1550,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
-    WddmMock wddm;
+    WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[1].get());
     auto hwInfo = *platformDevices[0];
     wddm.init(hwInfo);
 
@@ -1565,7 +1565,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     WddmMemoryManager memoryManager(*executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
-    wddm->resetPageTableManager(mockMngr);
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
 
     auto myGmm = new Gmm(reinterpret_cast<void *>(123), 4096u, false);
     myGmm->isRenderCompressed = false;
@@ -1576,6 +1576,30 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     wddmAlloc->setDefaultGmm(myGmm);
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
+
+    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
+    EXPECT_TRUE(result);
+    memoryManager.freeGraphicsMemory(wddmAlloc);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsSetThenUpdateAuxTable) {
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
+    WddmMemoryManager memoryManager(*executionEnvironment);
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.reset(mockMngr);
+
+    auto myGmm = new Gmm(reinterpret_cast<void *>(123), 4096u, false);
+    myGmm->isRenderCompressed = true;
+    myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
+
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    delete wddmAlloc->getDefaultGmm();
+    wddmAlloc->setDefaultGmm(myGmm);
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1);
 
     auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
     EXPECT_TRUE(result);
@@ -1626,7 +1650,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0));
-    auto wddm = new WddmMock();
+    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);

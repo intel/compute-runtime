@@ -75,7 +75,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) = 0;
 
-    virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; }
+    virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);
 
     void *lockResource(GraphicsAllocation *graphicsAllocation);
     void unlockResource(GraphicsAllocation *graphicsAllocation);

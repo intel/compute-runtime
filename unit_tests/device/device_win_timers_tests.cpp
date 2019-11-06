@@ -5,8 +5,10 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/mocks/mock_ostime_win.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -20,7 +22,9 @@ namespace ULT {
 typedef ::testing::Test MockOSTimeWinTest;
 
 TEST_F(MockOSTimeWinTest, DynamicResolution) {
-    auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock(rootDeviceEnvironment));
     auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     auto hwInfo = mDev->getHardwareInfo();

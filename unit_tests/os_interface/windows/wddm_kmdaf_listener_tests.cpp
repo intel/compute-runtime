@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -26,7 +27,7 @@ class WddmWithKmDafMock : public Wddm {
     using Wddm::gdi;
     using Wddm::mapGpuVirtualAddress;
 
-    WddmWithKmDafMock() : Wddm() {
+    WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(rootDeviceEnvironment) {
         kmDafListener.reset(new KmDafListenerMock);
     }
 
@@ -39,7 +40,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        wddmWithKmDafMock.reset(new WddmWithKmDafMock());
+        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get()));
         wddmWithKmDafMock->gdi.reset(new MockGdi());
         auto hwInfo = *platformDevices[0];
         wddmWithKmDafMock->init(hwInfo);

@@ -28,7 +28,7 @@ namespace NEO {
 struct WddmFixture : ::testing::Test {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
         executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
@@ -55,7 +55,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         GdiDllFixture::SetUp();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
@@ -87,7 +87,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
 struct WddmInstrumentationGmmFixture {
     void SetUp() {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get())));
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>();
         wddm->gmmMemory.reset(gmmMem);
     }

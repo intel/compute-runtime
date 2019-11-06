@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/os_interface.h"
@@ -12,6 +13,7 @@
 #include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"

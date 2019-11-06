@@ -134,20 +134,10 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
     ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
 
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(TT_TYPE::TRTT | TT_TYPE::AUXTT, &ttCallbacks);
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);
-    this->wddm->resetPageTableManager(gmmPageTableMngr);
+    this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;
-}
-
-template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::initPageTableManagerRegisters(LinearStream &csr) {
-    if (wddm->getPageTableManager() && !pageTableManagerInitialized) {
-        wddm->getPageTableManager()->initContextTRTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-        wddm->getPageTableManager()->initContextAuxTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-
-        pageTableManagerInitialized = true;
-    }
 }
 
 template <typename GfxFamily>

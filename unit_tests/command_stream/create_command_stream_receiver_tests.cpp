@@ -24,7 +24,7 @@ struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<Command
 HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetToValidTypeThenTheFuntionReturnsCommandStreamReceiver) {
     DebugManagerStateRestore stateRestorer;
     HardwareInfo *hwInfo = nullptr;
-    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
 
     CommandStreamReceiverType csrType = GetParam();

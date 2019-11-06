@@ -7,6 +7,7 @@
 
 #include "unit_tests/mocks/mock_wddm.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
@@ -17,7 +18,7 @@
 
 using namespace NEO;
 
-WddmMock::WddmMock() : Wddm() {
+WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(rootDeviceEnvironment) {
     this->temporaryResources = std::make_unique<MockWddmResidentAllocationsContainer>(this);
 }
 
@@ -272,4 +273,8 @@ void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, u
     size -= size % MemoryConstants::pageSize;
     virtualAllocAddress += size;
     return tmp;
+}
+
+GmockWddm::GmockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {
+    virtualAllocAddress = NEO::windowsMinAddress;
 }

@@ -22,7 +22,6 @@ namespace NEO {
 class Gdi;
 class Gmm;
 class GmmMemory;
-class GmmPageTableMngr;
 class OsContextWin;
 class SettingsReader;
 class WddmAllocation;
@@ -33,6 +32,7 @@ class WddmResidentAllocationsContainer;
 struct AllocationStorageData;
 struct HardwareInfo;
 struct KmDafListener;
+struct RootDeviceEnvironment;
 struct MonitoredFence;
 struct OsHandleStorage;
 
@@ -58,7 +58,7 @@ class Wddm {
 
     virtual ~Wddm();
 
-    static Wddm *createWddm();
+    static Wddm *createWddm(RootDeviceEnvironment &rootDeviceEnvironment);
     bool init(HardwareInfo &outHardwareInfo);
 
     MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
@@ -131,10 +131,6 @@ class Wddm {
 
     std::unique_ptr<SettingsReader> registryReader;
 
-    GmmPageTableMngr *getPageTableManager() const { return pageTableManager.get(); }
-    void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
-    bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
-
     uintptr_t getWddmMinAddress() const {
         return this->minAddress;
     }
@@ -181,6 +177,7 @@ class Wddm {
     uint32_t maxRenderFrequency = 0;
     bool instrumentationEnabled = false;
     std::string deviceRegistryPath;
+    RootDeviceEnvironment &rootDeviceEnvironment;
 
     unsigned long hwContextId = 0;
     LUID adapterLuid;
@@ -188,7 +185,7 @@ class Wddm {
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress = 0;
 
-    Wddm();
+    Wddm(RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool openAdapter();
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);
@@ -204,8 +201,6 @@ class Wddm {
     static GetSystemInfoFcn getSystemInfo;
     static VirtualFreeFcn virtualFreeFnc;
     static VirtualAllocFcn virtualAllocFnc;
-
-    std::unique_ptr<GmmPageTableMngr> pageTableManager;
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;

@@ -52,7 +52,7 @@ void PerformanceCountersFixture::SetUp() {
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
     osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-    osInterface->get()->setWddm(new WddmMock());
+    osInterface->get()->setWddm(new WddmMock(*rootDeviceEnvironment));
     device->setOSTime(new MockOSTimeWin(osInterface.get()));
 }
 

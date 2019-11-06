@@ -9,6 +9,7 @@
 
 #include "runtime/aub/aub_center.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace NEO {
 

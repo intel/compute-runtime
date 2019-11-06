@@ -8,6 +8,7 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/interlocked_max.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
@@ -60,15 +61,14 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm() {
+Wddm::Wddm(RootDeviceEnvironment &rootDeviceEnvironment) : rootDeviceEnvironment(rootDeviceEnvironment) {
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
     gfxPlatform.reset(new PLATFORM);
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
-
-    registryReader.reset(new RegistryReader(false, "System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
+    this->registryReader.reset(new RegistryReader(false, "System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
     adapterLuid.HighPart = 0;
     adapterLuid.LowPart = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
@@ -78,7 +78,6 @@ Wddm::Wddm() {
 
 Wddm::~Wddm() {
     temporaryResources.reset();
-    resetPageTableManager(nullptr);
     destroyPagingQueue();
     destroyDevice();
     closeAdapter();
@@ -398,8 +397,8 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
 
     kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, adapter, device, handle, MapGPUVA.VirtualAddress, gdi->escape);
 
-    if (gmm->isRenderCompressed && pageTableManager.get()) {
-        return updateAuxTable(gpuPtr, gmm, true);
+    if (gmm->isRenderCompressed && rootDeviceEnvironment.pageTableManager.get()) {
+        return rootDeviceEnvironment.pageTableManager->updateAuxTable(gpuPtr, gmm, true);
     }
 
     return true;
@@ -904,19 +903,6 @@ void Wddm::releaseReservedAddress(void *reservedAddress) {
         auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
         DEBUG_BREAK_IF(!status);
     }
-}
-
-bool Wddm::updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map) {
-    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-    ddiUpdateAuxTable.BaseGpuVA = gpuVa;
-    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
-    ddiUpdateAuxTable.DoNotWait = true;
-    ddiUpdateAuxTable.Map = map ? 1u : 0u;
-    return pageTableManager->updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
-}
-
-void Wddm::resetPageTableManager(GmmPageTableMngr *newPageTableManager) {
-    pageTableManager.reset(newPageTableManager);
 }
 
 bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {

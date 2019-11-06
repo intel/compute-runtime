@@ -11,17 +11,24 @@
 
 #include "gmock/gmock.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
     MockGmmPageTableMngr() = default;
 
     MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
-        : translationTableFlags(translationTableFlags), translationTableCb(*translationTableCb){};
+        : translationTableFlags(translationTableFlags) {
+        if (translationTableCb) {
+            this->translationTableCb = *translationTableCb;
+        }
+    };
 
     MOCK_METHOD2(initContextAuxTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
-
-    MOCK_METHOD2(initContextTRTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
 
     MOCK_METHOD1(updateAuxTable, GMM_STATUS(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable));
 
@@ -30,8 +37,12 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     uint32_t setCsrHanleCalled = 0;
     void *passedCsrHandle = nullptr;
 
-    GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};
     unsigned int translationTableFlags = 0;
+    GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};
 };
 
 } // namespace NEO
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

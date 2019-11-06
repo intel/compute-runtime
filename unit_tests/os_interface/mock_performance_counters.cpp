@@ -7,6 +7,9 @@
 
 #include "mock_performance_counters.h"
 
+#include "core/execution_environment/root_device_environment.h"
+#include "runtime/os_interface/os_interface.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 using namespace MetricsLibraryApi;
 
 namespace NEO {
@@ -338,6 +341,20 @@ void PerformanceCountersMetricsLibraryFixture::SetUp() {
 void PerformanceCountersMetricsLibraryFixture::TearDown() {
     device->setPerfCounters(nullptr);
     PerformanceCountersFixture::TearDown();
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::PerformanceCountersFixture
+//////////////////////////////////////////////////////
+PerformanceCountersFixture::PerformanceCountersFixture() {
+    executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::~PerformanceCountersFixture
+//////////////////////////////////////////////////////
+PerformanceCountersFixture::~PerformanceCountersFixture() {
 }
 
 //////////////////////////////////////////////////////

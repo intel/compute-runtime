@@ -215,10 +215,14 @@ struct PerformanceCountersDeviceFixture {
     decltype(&PerformanceCounters::create) createFunc;
 };
 
+struct MockExecutionEnvironment;
+struct RootDeviceEnvironment;
 /////////////////////////////////////////////////////
 // PerformanceCountersFixture
 //////////////////////////////////////////////////////
 struct PerformanceCountersFixture {
+    PerformanceCountersFixture();
+    ~PerformanceCountersFixture();
     virtual void SetUp();
     virtual void TearDown();
     virtual void createPerfCounters();
@@ -228,6 +232,8 @@ struct PerformanceCountersFixture {
     std::unique_ptr<MockCommandQueue> queue;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<PerformanceCounters> performanceCountersBase;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
 };
 
 //////////////////////////////////////////////////////

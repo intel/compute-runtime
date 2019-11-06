@@ -491,7 +491,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
 
         HardwareInfo *hwInfo = nullptr;
-        ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
         hwInfo->capabilityTable.instrumentationEnabled = true;
         unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0));

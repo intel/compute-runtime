@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/options.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -16,6 +17,7 @@
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/registry_reader_tests.h"
 
@@ -49,7 +51,7 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
     auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex);
     if (!executionEnvironment.osInterface) {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        auto wddm = new WddmMock();
+        auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         auto hwInfo = *executionEnvironment.getHardwareInfo();
         wddm->init(hwInfo);
         executionEnvironment.osInterface->get()->setWddm(wddm);
@@ -121,8 +123,10 @@ TEST(DriverInfo, GivenDriverInfoWhenThenReturnNonNullptr) {
 
 TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriverInfoWindowsNotNullptr) {
 
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm());
+    osInterface->get()->setWddm(Wddm::createWddm(rootDeviceEnvironment));
     EXPECT_NE(nullptr, osInterface->get()->getWddm());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));

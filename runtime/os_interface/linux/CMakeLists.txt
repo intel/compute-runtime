@@ -45,6 +45,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_linux.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
 )

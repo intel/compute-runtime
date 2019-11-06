@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/deferred_deleter_helper.h"
@@ -17,6 +18,7 @@
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
@@ -333,8 +335,9 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     if (defaultGmm) {
-        if (defaultGmm->isRenderCompressed && wddm->getPageTableManager()) {
-            auto status = wddm->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
+        auto index = gfxAllocation->getRootDeviceIndex();
+        if (defaultGmm->isRenderCompressed && executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
+            auto status = executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
             DEBUG_BREAK_IF(!status);
         }
     }
@@ -491,10 +494,6 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage 
 
 uint64_t WddmMemoryManager::getSystemSharedMemory() {
     return wddm->getSystemSharedMemory();
-}
-
-bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
-    return wddm->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
 }
 
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {

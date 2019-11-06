@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "public/cl_gl_private_intel.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/os_interface/os_interface.h"
@@ -15,6 +16,7 @@
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
@@ -79,14 +81,16 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupConte
 
 struct GlArbSyncEventOsTest : public ::testing::Test {
     void SetUp() override {
+        rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(executionEnvironment);
         sharing.GLContextHandle = 0x2cU;
         sharing.GLDeviceHandle = 0x3cU;
-        wddm = new WddmMock();
+        wddm = new WddmMock(*rootDeviceEnvironment);
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         osInterface.get()->setWddm(wddm);
     }
-
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
     GlSharingFunctionsMock sharing;
     MockGdi *gdi = nullptr;
     WddmMock *wddm = nullptr;
@@ -209,7 +213,7 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbS
     MockOSInterface mockOsInterface;
     MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
 
-    auto wddm = new WddmMock();
+    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
     auto hwInfo = *platformDevices[0];
@@ -238,7 +242,7 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
         }
     };
 
-    auto wddm = new WddmMock();
+    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
     auto hwInfo = *platformDevices[0];
@@ -268,7 +272,7 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
         }
     };
 
-    auto wddm = new WddmMock();
+    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
     auto hwInfo = *platformDevices[0];

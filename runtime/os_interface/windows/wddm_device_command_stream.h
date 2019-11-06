@@ -36,11 +36,9 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     GmmPageTableMngr *createPageTableManager() override;
 
   protected:
-    void initPageTableManagerRegisters(LinearStream &csr) override;
     void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;
-    bool pageTableManagerInitialized = false;
 };
 } // namespace NEO

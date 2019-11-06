@@ -27,7 +27,7 @@ using namespace NEO;
 struct DeviceCommandStreamLeaksTest : ::testing::Test {
     void SetUp() override {
         HardwareInfo *hwInfo = nullptr;
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     }
 

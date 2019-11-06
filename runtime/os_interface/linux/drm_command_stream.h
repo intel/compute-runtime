@@ -43,6 +43,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
     DrmMemoryManager *getMemoryManager() const;
+    GmmPageTableMngr *createPageTableManager() override;
 
     gemCloseWorkerMode peekGemCloseWorkerOperationMode() const {
         return this->gemCloseWorkerOperationMode;

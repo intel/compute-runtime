@@ -7,7 +7,9 @@
 
 #include "unit_tests/os_interface/windows/os_interface_win_tests.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 TEST_F(OsInterfaceTest, GivenWindowsWhenOsSupportFor64KBpagesIsBeingQueriedThenTrueIsReturned) {
@@ -22,7 +24,9 @@ TEST_F(OsInterfaceTest, GivenWindowsWhenCreateEentIsCalledThenValidEventHandleIs
 }
 
 TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedTrimCallbackIsRegisteredMemoryOperationsHandlerCreated) {
-    auto wddm = new WddmMock;
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = new WddmMock(rootDeviceEnvironment);
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
@@ -36,7 +40,9 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
 }
 
 TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet) {
-    auto wddm = new WddmMock;
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = new WddmMock(rootDeviceEnvironment);
     osInterface->get()->setWddm(wddm);
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);

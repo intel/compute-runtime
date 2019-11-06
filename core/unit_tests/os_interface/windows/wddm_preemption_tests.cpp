@@ -29,7 +29,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
     }
 
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
         executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);

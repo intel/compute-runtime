@@ -31,7 +31,7 @@ struct MockAubCsrToTestNotifyAubCapture : public AUBCommandStreamReceiverHw<GfxF
 
 GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCsrWithoutAubDumpWhenNotifyAubCaptureCallbackIsCalledThenDoNothing) {
     HardwareInfo *hwInfo = nullptr;
-    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     executionEnvironment->initializeMemoryManager();
     auto csr = std::make_unique<WddmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0);
     uint64_t address = 0xFEDCBA9876543210;

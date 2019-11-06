@@ -7,6 +7,8 @@
 
 #include "runtime/memory_manager/memory_manager.h"
 
+#include "core/execution_environment/root_device_environment.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_helper.h"
@@ -19,6 +21,7 @@
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/image.h"
@@ -326,6 +329,14 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     }
     FileLoggerInstance().logAllocation(allocation);
     return allocation;
+}
+
+bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
+    auto index = graphicsAllocation->getRootDeviceIndex();
+    if (executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {
+        return executionEnvironment.rootDeviceEnvironments[index]->pageTableManager->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
+    }
+    return false;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {

@@ -27,7 +27,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
 
     void SetUp() override {
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
-        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     }
 
     void TearDown() override {

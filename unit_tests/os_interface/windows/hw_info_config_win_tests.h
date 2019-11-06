@@ -14,15 +14,23 @@
 
 namespace NEO {
 
+struct MockExecutionEnvironment;
+struct RootDeviceEnvironment;
+
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
 struct HwInfoConfigTestWindows : public HwInfoConfigTest {
+    HwInfoConfigTestWindows();
+    ~HwInfoConfigTestWindows();
+
     void SetUp() override;
     void TearDown() override;
 
     std::unique_ptr<OSInterface> osInterface;
     DummyHwConfig hwConfig;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
 };
 
 } // namespace NEO

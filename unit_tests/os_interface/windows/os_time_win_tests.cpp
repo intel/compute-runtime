@@ -5,7 +5,9 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/os_interface/windows/os_interface.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
@@ -85,7 +87,9 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
 }
 
 TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
-    auto wddm = new WddmMock;
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = new WddmMock(rootDeviceEnvironment);
     TimeStampData CPUGPUTime01 = {0};
     TimeStampData CPUGPUTime02 = {0};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());

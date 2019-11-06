@@ -8,6 +8,7 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/cache_policy.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
@@ -21,6 +22,7 @@
 #include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
@@ -259,7 +261,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
-    initPageTableManagerRegisters(commandStreamCSR);
+    if (executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager.get()) {
+        executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters();
+    }
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);

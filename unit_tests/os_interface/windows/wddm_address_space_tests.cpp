@@ -6,15 +6,17 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/options.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"
 
 using namespace NEO;
 
 class WddmMockReserveAddress : public WddmMock {
   public:
-    WddmMockReserveAddress() : WddmMock() {}
+    WddmMockReserveAddress(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {}
 
     void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override {
         if (returnGood != 0) {
@@ -55,7 +57,9 @@ class WddmMockReserveAddress : public WddmMock {
 };
 
 TEST(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress(rootDeviceEnvironment));
     size_t size = 0x1000;
     void *reserve = nullptr;
 
@@ -72,7 +76,9 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddr
 }
 
 TEST(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress(rootDeviceEnvironment));
     size_t size = 0x1000;
     void *reserve = nullptr;
 
@@ -85,7 +91,9 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
 }
 
 TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress(rootDeviceEnvironment));
     size_t size = 0x1000;
     void *reserve = nullptr;
 
@@ -102,7 +110,9 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenRetu
 }
 
 TEST(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress(rootDeviceEnvironment));
     size_t size = 0x1000;
     void *reserve = nullptr;
 
@@ -119,7 +129,9 @@ TEST(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenRetu
 }
 
 TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress(rootDeviceEnvironment));
     size_t size = 0x1000;
     void *reserve = nullptr;
 

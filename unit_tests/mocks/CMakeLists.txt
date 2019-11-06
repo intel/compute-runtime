@@ -43,6 +43,8 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
@@ -72,6 +74,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
+  ${NEO_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr_impl.cpp
 )
 
 if(WIN32)
@@ -82,8 +85,6 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
@@ -97,6 +98,7 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
+    ${NEO_SOURCE_DIR}/runtime/os_interface/linux/page_table_manager_functions.cpp
   )
 endif()
 

@@ -7,9 +7,11 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/cache_policy.h"
+#include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/event/event.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/image.h"
@@ -2016,4 +2018,20 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNo
 
     result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
     EXPECT_EQ(!executionEnvironment->isFullRangeSvm(), result);
+}
+
+using PageTableManagerTest = ::testing::Test;
+
+HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhenMapAuxGpuVAIsCalledThenItReturnsTrue) {
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(2);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
+    MockGmm gmm;
+    allocation.setDefaultGmm(&gmm);
+    bool mapped = memoryManager->mapAuxGpuVA(&allocation);
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+
+    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo), mapped);
 }

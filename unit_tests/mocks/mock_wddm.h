@@ -41,7 +41,7 @@ class WddmMock : public Wddm {
     using Wddm::temporaryResources;
     using Wddm::wddmInterface;
 
-    WddmMock();
+    WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock();
 
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
@@ -115,8 +115,8 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
 
-    NTSTATUS createAllocationStatus;
-    bool mapGpuVaStatus;
+    NTSTATUS createAllocationStatus = STATUS_SUCCESS;
+    bool mapGpuVaStatus = true;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
     bool callBaseMapGpuVa = true;
@@ -127,9 +127,7 @@ class WddmMock : public Wddm {
 };
 
 struct GmockWddm : WddmMock {
-    GmockWddm() {
-        virtualAllocAddress = NEO::windowsMinAddress;
-    }
+    GmockWddm(RootDeviceEnvironment &rootDeviceEnvironment);
     ~GmockWddm() = default;
     bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
         return true;

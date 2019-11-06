@@ -12,8 +12,9 @@
 
 namespace NEO {
 
-ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo) {
+ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_t rootDeviceEnvironments) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(rootDeviceEnvironments);
     size_t numDevicesReturned = 0;
     hwInfo = nullptr;
     DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);

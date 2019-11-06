@@ -31,6 +31,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h

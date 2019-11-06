@@ -9,6 +9,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -25,7 +26,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         GdiDllFixture::SetUp();
 
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
         osInterface = std::make_unique<OSInterface>();
         osInterface->get()->setWddm(wddm);
 
