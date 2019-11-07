@@ -419,11 +419,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto boHandle = openFd.handle;
     auto bo = findAndReferenceSharedBufferObject(boHandle);
 
-    uint32_t rootDeviceIndex = AllocationProperties::noDeviceSpecified == properties.rootDeviceIndex ? 0 : properties.rootDeviceIndex;
-
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);
-        bo = createSharedBufferObject(boHandle, size, requireSpecificBitness, rootDeviceIndex);
+        bo = createSharedBufferObject(boHandle, size, requireSpecificBitness, properties.rootDeviceIndex);
 
         if (!bo) {
             return nullptr;
@@ -434,12 +432,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     lock.unlock();
 
-    auto drmAllocation = new DrmAllocation(rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
+    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
                                            handle, MemoryPool::SystemCpuInaccessible);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
-        drmAllocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress(rootDeviceIndex)));
+        drmAllocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress(properties.rootDeviceIndex)));
     }
 
     if (properties.imgInfo) {

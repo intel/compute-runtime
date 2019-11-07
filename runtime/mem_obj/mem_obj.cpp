@@ -319,9 +319,9 @@ bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObject, size_t of
     return isMemTransferNeeded;
 }
 
-void *MemObj::getBasePtrForMap() {
+void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
     if (associatedMemObject) {
-        return associatedMemObject->getBasePtrForMap();
+        return associatedMemObject->getBasePtrForMap(rootDeviceIndex);
     }
     if (getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR) {
         return getHostPtr();
@@ -332,7 +332,7 @@ void *MemObj::getBasePtrForMap() {
         } else {
             auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
             setAllocatedMapPtr(memory);
-            AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+            AllocationProperties properties{rootDeviceIndex, false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
             setMapAllocation(allocation);
             return getAllocatedMapPtr();

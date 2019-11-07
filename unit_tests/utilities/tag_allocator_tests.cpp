@@ -39,7 +39,7 @@ class MockTagAllocator : public TagAllocator<timeStamps> {
     using TagAllocator<timeStamps>::deferredTags;
     using TagAllocator<timeStamps>::releaseDeferredTags;
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(memMngr, tagCount, tagAlignment) {
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(0, memMngr, tagCount, tagAlignment) {
     }
 
     GraphicsAllocation *getGraphicsAllocation(size_t id = 0) {
@@ -342,9 +342,9 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(memoryManager, 1, 1);
-    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(memoryManager, 1, 1);
-    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(memoryManager, 1, 1);
+    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1);
+    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1);
+    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1);
 
     auto timestampPacketTag = timestampPacketAllocator.getTag();
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();

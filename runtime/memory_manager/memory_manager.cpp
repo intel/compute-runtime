@@ -120,13 +120,13 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
     if (!paddingAllocation) {
-        paddingAllocation = allocateGraphicsMemoryWithProperties({paddingBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+        paddingAllocation = allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), paddingBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
     }
     return createPaddedAllocation(inputGraphicsAllocation, sizeWithPadding);
 }
 
 GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    return allocateGraphicsMemoryWithProperties({sizeWithPadding, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    return allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), sizeWithPadding, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
 }
 
 void MemoryManager::freeSystemMemory(void *ptr) {
@@ -314,9 +314,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         allocationData.hostPtr = nullptr;
     }
 
-    if (properties.rootDeviceIndex != AllocationProperties::noDeviceSpecified) {
-        allocationData.rootDeviceIndex = properties.rootDeviceIndex;
-    }
+    allocationData.rootDeviceIndex = properties.rootDeviceIndex;
+
     return true;
 }
 

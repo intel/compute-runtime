@@ -14,8 +14,8 @@
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
-ScratchSpaceController::ScratchSpaceController(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
-    : executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
+ScratchSpaceController::ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
+    : rootDeviceIndex(rootDeviceIndex), executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
     auto hwInfo = executionEnvironment.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(hwInfo);

@@ -24,9 +24,9 @@ class MemoryPropertiesParser {
 
     static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties, cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, ObjType objectType);
 
-    static AllocationProperties getAllocationProperties(MemoryPropertiesFlags memoryProperties, bool allocateMemory,
+    static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryPropertiesFlags memoryProperties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {
-        AllocationProperties allocationProperties(allocateMemory, size, type, multiStorageResource);
+        AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource);
         fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;
     }

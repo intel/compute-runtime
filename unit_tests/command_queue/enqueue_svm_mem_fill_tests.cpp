@@ -34,7 +34,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
         SVMAllocsManager::SvmAllocationProperties svmProperties;
         svmProperties.coherent = true;
-        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties);
+        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, svmProperties);
         ASSERT_NE(nullptr, svmPtr);
         auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
         ASSERT_NE(nullptr, svmData);

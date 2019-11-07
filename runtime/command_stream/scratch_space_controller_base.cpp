@@ -18,8 +18,8 @@
 #include "runtime/os_interface/os_context.h"
 
 namespace NEO {
-ScratchSpaceControllerBase::ScratchSpaceControllerBase(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
-    : ScratchSpaceController(environment, allocationStorage) {
+ScratchSpaceControllerBase::ScratchSpaceControllerBase(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
+    : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
 }
 
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
@@ -46,7 +46,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
 }
 
 void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({scratchSizeBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE});
+    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE});
     UNRECOVERABLE_IF(scratchAllocation == nullptr);
 }
 

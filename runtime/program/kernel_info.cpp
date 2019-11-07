@@ -475,10 +475,10 @@ uint32_t KernelInfo::getConstantBufferSize() const {
     return patchInfo.dataParameterStream ? patchInfo.dataParameterStream->DataParameterStreamSize : 0;
 }
 
-bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
+bool KernelInfo::createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager *memoryManager) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
-    kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
+    kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
     if (!kernelAllocation) {
         return false;
     }

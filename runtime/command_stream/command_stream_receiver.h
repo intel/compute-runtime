@@ -189,6 +189,8 @@ class CommandStreamReceiver {
 
     bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
 
+    uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
+
   protected:
     void cleanupResources();
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;

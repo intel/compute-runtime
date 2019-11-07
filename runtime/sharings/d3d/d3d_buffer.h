@@ -38,7 +38,7 @@ class D3DBuffer : public D3DSharing<D3D> {
         }
 
         sharingFcns->getSharedHandle(bufferStaging, &sharedHandle);
-        AllocationProperties properties = {false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false};
+        AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(), false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false};
         auto alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), properties, true);
 
         auto d3dBufferObj = new D3DBuffer<D3D>(context, d3dBuffer, bufferStaging, sharedResource);

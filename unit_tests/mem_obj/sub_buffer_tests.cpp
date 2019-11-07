@@ -169,9 +169,9 @@ TEST_F(SubBufferTest, givenBufferWithHostPtrWhenSubbufferGetsMapPtrThenExpectBuf
     ASSERT_NE(nullptr, subBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    void *mapPtr = subBuffer->getBasePtrForMap();
+    void *mapPtr = subBuffer->getBasePtrForMap(0);
     EXPECT_EQ(pHostPtr, mapPtr);
-    mapPtr = subBuffer->getBasePtrForMap();
+    mapPtr = subBuffer->getBasePtrForMap(0);
     EXPECT_EQ(pHostPtr, mapPtr);
 
     subBuffer->release();
@@ -189,8 +189,8 @@ TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectB
     ASSERT_NE(nullptr, subBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    void *mapPtr = subBuffer->getBasePtrForMap();
-    void *bufferMapPtr = buffer->getBasePtrForMap();
+    void *mapPtr = subBuffer->getBasePtrForMap(0);
+    void *bufferMapPtr = buffer->getBasePtrForMap(0);
     EXPECT_EQ(bufferMapPtr, mapPtr);
     auto mapAllocation = subBuffer->getMapAllocation();
     auto bufferMapAllocation = buffer->getMapAllocation();
@@ -198,7 +198,7 @@ TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectB
     EXPECT_EQ(bufferMapAllocation, mapAllocation);
     EXPECT_EQ(bufferMapPtr, mapAllocation->getUnderlyingBuffer());
 
-    mapPtr = subBuffer->getBasePtrForMap();
+    mapPtr = subBuffer->getBasePtrForMap(0);
     EXPECT_EQ(bufferMapPtr, mapPtr);
 
     subBuffer->release();

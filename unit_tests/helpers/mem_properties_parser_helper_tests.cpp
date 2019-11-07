@@ -172,7 +172,7 @@ TEST(MemoryPropertiesParser, givenInvalidFlagsIntelWhenParsingMemoryPropertiesFo
 }
 
 TEST(MemoryPropertiesParser, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
-    AllocationProperties allocationProperties{0, GraphicsAllocation::AllocationType::BUFFER};
+    AllocationProperties allocationProperties{0, 0, GraphicsAllocation::AllocationType::BUFFER};
 
     for (auto uncached : ::testing::Bool()) {
         for (auto readOnly : ::testing::Bool()) {

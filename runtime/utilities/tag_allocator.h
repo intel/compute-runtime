@@ -51,9 +51,11 @@ class TagAllocator {
   public:
     using NodeType = TagNode<TagType>;
 
-    TagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize = sizeof(TagType)) : memoryManager(memMngr),
-                                                                                                                   tagCount(tagCount),
-                                                                                                                   tagAlignment(tagAlignment) {
+    TagAllocator(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount,
+                 size_t tagAlignment, size_t tagSize = sizeof(TagType)) : rootDeviceIndex(rootDeviceIndex),
+                                                                          memoryManager(memMngr),
+                                                                          tagCount(tagCount),
+                                                                          tagAlignment(tagAlignment) {
 
         this->tagSize = alignUp(tagSize, tagAlignment);
         populateFreeTags();
@@ -108,6 +110,7 @@ class TagAllocator {
     std::vector<GraphicsAllocation *> gfxAllocations;
     std::vector<NodeType *> tagPoolMemory;
 
+    const uint32_t rootDeviceIndex;
     MemoryManager *memoryManager;
     size_t tagCount;
     size_t tagAlignment;
@@ -132,7 +135,7 @@ class TagAllocator {
         size_t allocationSizeRequired = tagCount * tagSize;
 
         auto allocationType = TagType::getAllocationType();
-        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({allocationSizeRequired, allocationType});
+        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, allocationSizeRequired, allocationType});
         gfxAllocations.push_back(graphicsAllocation);
 
         uint64_t gpuBaseAddress = graphicsAllocation->getGpuAddress();

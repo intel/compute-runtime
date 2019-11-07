@@ -122,7 +122,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
         heap[i] = static_cast<char>(i);
     }
 
-    auto retVal = kernelInfo.createKernelAllocation(&memoryManager);
+    auto retVal = kernelInfo.createKernelAllocation(0, &memoryManager);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
@@ -142,7 +142,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     MyMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
-    auto retVal = kernelInfo.createKernelAllocation(&memoryManager);
+    auto retVal = kernelInfo.createKernelAllocation(0, &memoryManager);
     EXPECT_FALSE(retVal);
 }
 

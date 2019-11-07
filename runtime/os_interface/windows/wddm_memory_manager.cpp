@@ -254,8 +254,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
-    uint32_t rootDeviceIndex = properties.rootDeviceIndex == AllocationProperties::noDeviceSpecified ? 0 : properties.rootDeviceIndex;
-    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, rootDeviceIndex);
+    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) {

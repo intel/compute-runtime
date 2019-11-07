@@ -84,8 +84,8 @@ bool MemObjHelper::parseUnifiedMemoryProperties(cl_mem_properties_intel *propert
     return true;
 }
 
-AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties) {
-    AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
+AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties) {
+    AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
     MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties);
     return allocationProperties;
 }

@@ -79,7 +79,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(context.get()));
-    auto ptr = image->getBasePtrForMap();
+    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;
@@ -91,7 +91,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
 
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrThenFinishIsCalled) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
-    auto ptr = image->getBasePtrForMap();
+    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;
@@ -118,7 +118,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
     MockEvent<UserEvent> mockEvent(context.get());
     mockEvent.setStatus(0);
     cl_event clEvent = &mockEvent;
-    auto ptr = image->getBasePtrForMap();
+    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;

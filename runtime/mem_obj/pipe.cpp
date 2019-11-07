@@ -8,6 +8,7 @@
 #include "runtime/mem_obj/pipe.h"
 
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
@@ -54,8 +55,9 @@ Pipe *Pipe::create(Context *context,
     MemoryPropertiesFlags memoryPropertiesFlags = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0);
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
+        auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
         AllocationProperties allocProperties =
-            MemoryPropertiesParser::getAllocationProperties(memoryPropertiesFlags, true, size, GraphicsAllocation::AllocationType::PIPE, false);
+            MemoryPropertiesParser::getAllocationProperties(rootDeviceIndex, memoryPropertiesFlags, true, size, GraphicsAllocation::AllocationType::PIPE, false);
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;

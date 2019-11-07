@@ -194,7 +194,7 @@ HWTEST_F(MultipleMapImageTest, givenNotMappedPtrWhenUnmapedThenReturnError) {
     EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->mappingOnCpuAllowed());
 
     EXPECT_EQ(0u, image->mapOperationsHandler.size());
-    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), image->getBasePtrForMap(), 0, nullptr, nullptr);
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), image->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -340,7 +340,7 @@ HWTEST_F(MultipleMapImageTest, givenInvalidPtrWhenUnmappedOnCpuThenReturnError) 
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), image->getBasePtrForMap(), 0, nullptr, nullptr);
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), image->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 

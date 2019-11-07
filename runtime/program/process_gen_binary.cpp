@@ -861,7 +861,7 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo, uint32_t kernelNum) {
     }
 
     if (kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && this->pDevice) {
-        retVal = kernelInfo.createKernelAllocation(this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
+        retVal = kernelInfo.createKernelAllocation(this->pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
     }
 
     if (this->pDevice && kernelInfo.workloadInfo.slmStaticSize > this->pDevice->getDeviceInfo().localMemSize) {
@@ -884,7 +884,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
         svmProps.coherent = false;
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
-        auto ptr = ctx->getSVMAllocsManager()->createSVMAlloc(size, svmProps);
+        auto ptr = ctx->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), size, svmProps);
         UNRECOVERABLE_IF(ptr == nullptr);
         auto svmAlloc = ctx->getSVMAllocsManager()->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(svmAlloc == nullptr);
@@ -896,7 +896,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
     } else {
         UNRECOVERABLE_IF(device == nullptr);
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
-        auto gpuAlloc = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({size, allocationType});
+        auto gpuAlloc = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), size, allocationType});
         UNRECOVERABLE_IF(gpuAlloc == nullptr);
         memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
         return gpuAlloc;

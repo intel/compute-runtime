@@ -211,7 +211,7 @@ class Program : public BaseObject<_cl_program> {
         return blockKernelManager;
     }
 
-    void allocateBlockPrivateSurfaces();
+    void allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex);
     void freeBlockResources();
     void cleanCurrentKernelInfo();
 

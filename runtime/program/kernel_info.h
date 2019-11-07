@@ -212,7 +212,7 @@ struct KernelInfo {
         return -1;
     }
 
-    bool createKernelAllocation(MemoryManager *memoryManager);
+    bool createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager *memoryManager);
 
     std::string name;
     std::string attributes;

@@ -30,7 +30,7 @@ TEST_F(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
                                                                     GraphicsAllocation::AllocationType::KERNEL_ISA};
     for (auto allocationType : allocationTypes) {
         for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
-            AllocationProperties properties{true, MemoryConstants::pageSize, allocationType, false, false, 0, rootDeviceIndex};
+            AllocationProperties properties{rootDeviceIndex, true, MemoryConstants::pageSize, allocationType, false, false, 0};
 
             auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
             ASSERT_NE(gfxAllocation, nullptr);

@@ -22,7 +22,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     pHeader->KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
-    kernel.kernelInfo.createKernelAllocation(pDevice->getMemoryManager());
+    kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
@@ -53,7 +53,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     pHeader->KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
-    kernel.kernelInfo.createKernelAllocation(pDevice->getMemoryManager());
+    kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
@@ -83,7 +83,7 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     pHeader->KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
-    kernel.kernelInfo.createKernelAllocation(pDevice->getMemoryManager());
+    kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
@@ -115,7 +115,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     const size_t initialHeapSize = 0x40;
     pHeader->KernelHeapSize = initialHeapSize;
 
-    kernel.kernelInfo.createKernelAllocation(memoryManager);
+    kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), memoryManager);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
 
     uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;

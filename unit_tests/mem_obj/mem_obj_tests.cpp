@@ -118,7 +118,7 @@ TEST(MemObj, givenHostPtrAndUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnHostP
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
                   1, nullptr, &hostPtr, nullptr, true, false, false);
 
-    EXPECT_EQ(&hostPtr, memObj.getBasePtrForMap());
+    EXPECT_EQ(&hostPtr, memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST(MemObj, givenHostPtrWithoutUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnAllocatedPtr) {
@@ -128,8 +128,8 @@ TEST(MemObj, givenHostPtrWithoutUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnA
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   1, nullptr, &hostPtr, nullptr, true, false, false);
 
-    EXPECT_NE(&hostPtr, memObj.getBasePtrForMap());
-    EXPECT_EQ(memObj.getAllocatedMapPtr(), memObj.getBasePtrForMap());
+    EXPECT_NE(&hostPtr, memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
+    EXPECT_EQ(memObj.getAllocatedMapPtr(), memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
@@ -483,7 +483,7 @@ TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
                   1, nullptr, nullptr, nullptr, true, false, false);
 
-    void *mapPtr = memObj.getBasePtrForMap();
+    void *mapPtr = memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapPtr);
     auto mapAllocation = memObj.getMapAllocation();
     ASSERT_NE(nullptr, mapAllocation);

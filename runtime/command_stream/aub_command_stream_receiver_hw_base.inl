@@ -308,7 +308,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
         nullptr, [&](GraphicsAllocation *ptr) { this->getMemoryManager()->freeGraphicsMemory(ptr); });
     if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
-        flatBatchBuffer.reset(this->flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, this->dispatchMode));
+        flatBatchBuffer.reset(this->flatBatchBufferHelper->flattenBatchBuffer(this->rootDeviceIndex, batchBuffer, sizeBatchBuffer, this->dispatchMode));
         if (flatBatchBuffer.get() != nullptr) {
             pBatchBuffer = flatBatchBuffer->getUnderlyingBuffer();
             batchBufferGpuAddress = flatBatchBuffer->getGpuAddress();

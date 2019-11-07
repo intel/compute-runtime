@@ -9,6 +9,7 @@
 
 #include "public/cl_gl_private_intel.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/buffer.h"
@@ -128,7 +129,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
     }
 
     if (!graphicsAllocation) {
-        AllocationProperties properties = {false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false};
+        AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(), false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false};
         // couldn't find allocation for reuse - create new
         graphicsAllocation =
             context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(bufferInfo.globalShareHandle, properties, true);

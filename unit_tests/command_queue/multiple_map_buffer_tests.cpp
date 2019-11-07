@@ -164,7 +164,7 @@ HWTEST_F(MultipleMapBufferTest, givenNotMappedPtrWhenUnmapedOnGpuThenReturnError
     EXPECT_FALSE(buffer->mappingOnCpuAllowed());
 
     EXPECT_EQ(0u, buffer->mapOperationsHandler.size());
-    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), buffer->getBasePtrForMap(), 0, nullptr, nullptr);
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), buffer->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -293,7 +293,7 @@ HWTEST_F(MultipleMapBufferTest, givenInvalidPtrWhenUnmappedOnCpuThenReturnError)
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());
 
-    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), buffer->getBasePtrForMap(), 0, nullptr, nullptr);
+    retVal = clEnqueueUnmapMemObject(cmdQ.get(), buffer.get(), buffer->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 

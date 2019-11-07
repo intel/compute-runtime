@@ -26,7 +26,7 @@ void DeviceQueueHw<GfxFamily>::allocateSlbBuffer() {
     slbSize += (4 * MemoryConstants::pageSize); // +4 pages spec restriction
     slbSize = alignUp(slbSize, MemoryConstants::pageSize);
 
-    slbBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({slbSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER});
+    slbBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), slbSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER});
 }
 
 template <typename GfxFamily>

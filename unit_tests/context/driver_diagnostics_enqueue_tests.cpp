@@ -664,7 +664,7 @@ TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThen
     if (!pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm) {
         GTEST_SKIP();
     }
-    void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {});
+    void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(0, 256, {});
 
     pCmdQ->enqueueSVMMap(CL_FALSE, 0, svmPtr, 256, 0, nullptr, nullptr, false);
 

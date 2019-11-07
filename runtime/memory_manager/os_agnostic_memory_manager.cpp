@@ -151,9 +151,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
-    uint32_t rootDeviceIndex = properties.rootDeviceIndex == AllocationProperties::noDeviceSpecified ? 0 : properties.rootDeviceIndex;
     auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, reinterpret_cast<void *>(1), 1,
-                                                     4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible, rootDeviceIndex,
+                                                     4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible, properties.rootDeviceIndex,
                                                      false, false, requireSpecificBitness);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);

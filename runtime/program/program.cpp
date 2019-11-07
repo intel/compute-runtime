@@ -361,7 +361,7 @@ void Program::separateBlockKernels() {
     allKernelInfos.clear();
 }
 
-void Program::allocateBlockPrivateSurfaces() {
+void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
     size_t blockCount = blockKernelManager->getCount();
 
     for (uint32_t i = 0; i < blockCount; i++) {
@@ -372,7 +372,7 @@ void Program::allocateBlockPrivateSurfaces() {
 
             if (privateSize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
                 privateSize *= getDevice(0).getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
-                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE});
+                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE});
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }
         }

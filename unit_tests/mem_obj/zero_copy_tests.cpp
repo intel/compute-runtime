@@ -174,7 +174,7 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     EXPECT_EQ(nullptr, buffer->getAllocatedMapPtr());
     auto bufferAllocation = buffer->getGraphicsAllocation()->getUnderlyingBuffer();
 
-    auto mapAllocation = buffer->getBasePtrForMap();
+    auto mapAllocation = buffer->getBasePtrForMap(0);
     EXPECT_EQ(mapAllocation, buffer->getAllocatedMapPtr());
     EXPECT_NE(mapAllocation, bufferAllocation);
 }

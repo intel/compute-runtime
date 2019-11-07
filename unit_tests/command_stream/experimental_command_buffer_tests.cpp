@@ -13,6 +13,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
 
@@ -258,9 +259,10 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
 
     //Make two allocations, since CSR will try to reuse it also
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     MockExperimentalCommandBuffer *mockExCmdBuffer = static_cast<MockExperimentalCommandBuffer *>(commandStreamReceiver.experimentalCmdBuffer.get());
@@ -350,4 +352,20 @@ HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCom
     commandStreamReceiver.setExperimentalCmdBuffer(std::move(std::unique_ptr<ExperimentalCommandBuffer>(nullptr)));
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
+}
+
+TEST(ExperimentalCommandBufferRootDeviceIndexTest, experimentalCommandBufferGraphicsAllocationsHaveCorrectRootDeviceIndex) {
+    const uint32_t expectedRootDeviceIndex = 101;
+
+    // Setup
+    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments.resize(2 * expectedRootDeviceIndex);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, expectedRootDeviceIndex));
+    auto experimentalCommandBuffer = std::make_unique<MockExperimentalCommandBuffer>(&device->getGpgpuCommandStreamReceiver());
+
+    ASSERT_NE(nullptr, experimentalCommandBuffer);
+    EXPECT_EQ(expectedRootDeviceIndex, experimentalCommandBuffer->experimentalAllocation->getRootDeviceIndex());
+    EXPECT_EQ(expectedRootDeviceIndex, experimentalCommandBuffer->timestamps->getRootDeviceIndex());
 }

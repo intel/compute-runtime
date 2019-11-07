@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -154,7 +154,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
         uint32_t colorCalcSizeDevQueue = DeviceQueue::colorCalcStateSize;
         EXPECT_EQ(colorCalcSizeDevQueue, usedDSHBeforeSubmit);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -195,7 +195,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -233,7 +233,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
         pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -274,7 +274,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
         pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -327,7 +327,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
         queueDsh.getSpace(usedSize);
         queueIoh.getSpace(usedSize);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
@@ -375,7 +375,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
 
         void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);

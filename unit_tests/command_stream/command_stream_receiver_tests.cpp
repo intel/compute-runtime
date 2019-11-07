@@ -483,7 +483,7 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallingEnsureCommandBufferAllocationThenDoNotReallocate) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
@@ -498,7 +498,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallin
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocate) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
@@ -507,7 +507,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocateAndAlignSizeTo64kb) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
@@ -522,7 +522,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 }
 
 TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsureCommandBufferAllocationThenSizesOfAllocationAndCommandBufferAreCorrect) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 350u);
@@ -544,7 +544,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoAllocations
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsForReuseWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
 
@@ -557,7 +557,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsFo
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReusableAllocationWhenCallingEnsureCommandBufferAllocationThenObtainAllocationMemoryManager) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
 
@@ -632,4 +632,68 @@ TEST(CommandStreamReceiverDeviceIndexTest, givenOsContextWithNoDeviceBitfieldWhe
 
     csr.setupContext(*osContext);
     EXPECT_EQ(0u, csr.getDeviceIndex());
+}
+
+TEST(CommandStreamReceiverRootDeviceIndexTest, commandStreamGraphicsAllocationsHaveCorrectRootDeviceIndex) {
+    const uint32_t expectedRootDeviceIndex = 101;
+
+    // Setup
+    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments.resize(2 * expectedRootDeviceIndex);
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, expectedRootDeviceIndex));
+    auto commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
+
+    ASSERT_NE(nullptr, commandStreamReceiver);
+    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getRootDeviceIndex());
+
+    // Linear stream / Command buffer
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    LinearStream commandStream{allocation};
+
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
+    EXPECT_EQ(allocation, commandStream.getGraphicsAllocation());
+    EXPECT_EQ(128u, commandStream.getMaxAvailableSpace());
+    EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
+
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 1024u, 0u);
+    EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
+    EXPECT_EQ(0u, commandStream.getMaxAvailableSpace() % MemoryConstants::pageSize64k);
+    EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
+    memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
+
+    // Debug surface
+    auto debugSurface = commandStreamReceiver->allocateDebugSurface(MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, debugSurface);
+    EXPECT_EQ(expectedRootDeviceIndex, debugSurface->getRootDeviceIndex());
+
+    // Indirect heaps
+    IndirectHeap::Type heapTypes[]{IndirectHeap::DYNAMIC_STATE, IndirectHeap::GENERAL_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::SURFACE_STATE};
+    for (auto heapType : heapTypes) {
+        IndirectHeap *heap = nullptr;
+        commandStreamReceiver->allocateHeapMemory(heapType, MemoryConstants::pageSize, heap);
+        ASSERT_NE(nullptr, heap);
+        ASSERT_NE(nullptr, heap->getGraphicsAllocation());
+        EXPECT_EQ(expectedRootDeviceIndex, heap->getGraphicsAllocation()->getRootDeviceIndex());
+        memoryManager->freeGraphicsMemory(heap->getGraphicsAllocation());
+        delete heap;
+    }
+
+    // Tag allocation
+    ASSERT_NE(nullptr, commandStreamReceiver->getTagAllocation());
+    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getTagAllocation()->getRootDeviceIndex());
+
+    // Preemption allocation
+    if (nullptr == commandStreamReceiver->getPreemptionAllocation()) {
+        commandStreamReceiver->createPreemptionAllocation();
+    }
+    EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getPreemptionAllocation()->getRootDeviceIndex());
+
+    // HostPtr surface
+    char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    HostPtrSurface surface(memory, sizeof(memory), true);
+    EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
+    ASSERT_NE(nullptr, surface.getAllocation());
+    EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
 }

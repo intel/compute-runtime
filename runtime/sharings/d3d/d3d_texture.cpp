@@ -65,13 +65,14 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     GraphicsAllocation *alloc = nullptr;
     auto memoryManager = context->getMemoryManager();
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
 
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
-        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, 0);
+        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
-        AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
@@ -128,13 +129,14 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     GraphicsAllocation *alloc = nullptr;
     auto memoryManager = context->getMemoryManager();
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
 
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
-        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, 0);
+        alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
-        AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_context.h"
@@ -183,7 +184,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         createPerDssBackedBufferCalled++;
         bool result = BaseClass::createPerDssBackedBuffer(device);
         if (!perDssBackedBuffer) {
-            AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP};
+            AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP};
             perDssBackedBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(properties);
         }
         return result;

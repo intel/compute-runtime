@@ -2467,7 +2467,7 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 
     program->addBlockKernel(infoBlock);
 
-    program->allocateBlockPrivateSurfaces();
+    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
@@ -2493,7 +2493,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     program->addBlockKernel(infoBlock);
 
-    program->allocateBlockPrivateSurfaces();
+    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(0));
 
@@ -2519,13 +2519,13 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 
     program->addBlockKernel(infoBlock);
 
-    program->allocateBlockPrivateSurfaces();
+    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
     GraphicsAllocation *privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
 
     EXPECT_NE(nullptr, privateSurface);
 
-    program->allocateBlockPrivateSurfaces();
+    program->allocateBlockPrivateSurfaces(pDevice->getRootDeviceIndex());
 
     GraphicsAllocation *privateSurface2 = program->getBlockKernelManager()->getPrivateSurface(0);
 
