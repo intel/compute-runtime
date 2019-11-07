@@ -18,6 +18,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/csr_deps.h"
+#include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/task_information.inl"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -254,13 +255,14 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 void CommandWithoutKernel::dispatchBlitOperation() {
     auto bcsCsr = commandQueue.getBcsCommandStreamReceiver();
 
-    auto &blitProperties = kernelOperation->blitProperties;
+    UNRECOVERABLE_IF(kernelOperation->blitPropertiesContainer.size() != 1);
+    auto &blitProperties = *kernelOperation->blitPropertiesContainer.begin();
     blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *bcsCsr, CsrDependencies::DependenciesType::All);
     blitProperties.csrDependencies.push_back(previousTimestampPacketNodes.get());
     blitProperties.csrDependencies.push_back(barrierTimestampPacketNodes.get());
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes.get();
 
-    auto bcsTaskCount = bcsCsr->blitBuffer(blitProperties);
+    auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false);
 
     commandQueue.updateBcsTaskCount(bcsTaskCount);
 }

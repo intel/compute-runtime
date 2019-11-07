@@ -24,6 +24,7 @@
 namespace NEO {
 
 class EventBuilder;
+struct EnqueueProperties;
 
 template <typename GfxFamily>
 class CommandQueueHw : public CommandQueue {

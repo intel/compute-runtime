@@ -32,6 +32,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/engine_node_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp

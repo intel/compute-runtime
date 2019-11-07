@@ -700,8 +700,12 @@ struct BcsBufferTests : public ::testing::Test {
         BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                         *bcsCsr, memory, 0, nullptr,
-                                                                                        hostPtr, 0, true, 0, size);
-            bcsCsr->blitBuffer(blitProperties);
+                                                                                        hostPtr, 0, 0, size);
+
+            BlitPropertiesContainer container;
+            container.push_back(blitProperties);
+            bcsCsr->blitBuffer(container, true);
+
             return BlitOperationResult::Success;
         }
         std::unique_ptr<OsContext> bcsOsContext;
@@ -1094,9 +1098,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenP
     for (auto &cmd : hwParser.cmdList) {
         if (auto miFlushDwCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
             EXPECT_TRUE(blitCmdFound);
-            EXPECT_EQ(miFlushDwCmdsCount == 1,
+            EXPECT_EQ(miFlushDwCmdsCount == 0,
                       timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
-            EXPECT_EQ(miFlushDwCmdsCount == 1,
+            EXPECT_EQ(miFlushDwCmdsCount == 0,
                       0u == miFlushDwCmd->getImmediateData());
             miFlushDwCmdsCount++;
         } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {

@@ -30,11 +30,19 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
         numberOfBlits++;
     }
 
-    size_t size = TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
-                  (sizeof(typename GfxFamily::XY_COPY_BLT) * numberOfBlits) +
-                  sizeof(typename GfxFamily::MI_FLUSH_DW) +
-                  (sizeof(typename GfxFamily::MI_FLUSH_DW) * static_cast<size_t>(updateTimestampPacket)) +
-                  sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
+           (sizeof(typename GfxFamily::XY_COPY_BLT) * numberOfBlits) +
+           (sizeof(typename GfxFamily::MI_FLUSH_DW) * static_cast<size_t>(updateTimestampPacket));
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
+    size_t size = 0;
+    for (auto &blitProperties : blitPropertiesContainer) {
+        size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
+                                                                        blitProperties.outputTimestampPacket != nullptr);
+    }
+    size += sizeof(typename GfxFamily::MI_FLUSH_DW) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     return alignUp(size, MemoryConstants::cacheLineSize);
 }

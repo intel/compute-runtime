@@ -75,7 +75,7 @@ struct KernelOperation {
     IndirectHeapUniquePtrT ioh{nullptr, resourceCleaner};
     IndirectHeapUniquePtrT ssh{nullptr, resourceCleaner};
 
-    BlitProperties blitProperties;
+    BlitPropertiesContainer blitPropertiesContainer;
     bool blitEnqueue = false;
     size_t surfaceStateHeapSizeEM = 0;
 };

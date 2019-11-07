@@ -74,7 +74,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    uint32_t blitBuffer(const BlitProperties &blitProperties) override;
+    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) override;
 
     bool isMultiOsContextCapable() const override;
 

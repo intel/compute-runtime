@@ -19,6 +19,7 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info_builder.h"
+#include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/task_information.h"
@@ -192,7 +193,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     TimestampPacketContainer barrierTimestampPacketNode;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     CsrDependencies csrDeps;
-    BlitProperties blitProperties;
+    BlitPropertiesContainer blitPropertiesContainer;
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         csrDeps.fillFromEventsRequest(eventsRequest, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
@@ -226,8 +227,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool flushDependenciesForNonKernelCommand = false;
 
     if (blitEnqueue) {
-        blitProperties = processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, barrierTimestampPacketNode,
-                                                       eventsRequest, commandStream, commandType, blockQueue);
+        blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, barrierTimestampPacketNode,
+                                                                        eventsRequest, commandStream, commandType, blockQueue));
     } else if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, devQueueHw, csrDeps, blockedCommandsData.get(),
@@ -256,7 +257,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CompletionStamp completionStamp = {Event::eventNotReady, taskLevel, 0};
 
     const EnqueueProperties enqueueProperties(blitEnqueue, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                              flushDependenciesForNonKernelCommand, &blitProperties);
+                                              flushDependenciesForNonKernelCommand, &blitPropertiesContainer);
 
     if (!blockQueue) {
         csrDeps.makeResident(getGpgpuCommandStreamReceiver());
@@ -448,7 +449,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     auto blitCommandStreamReceiver = getBcsCommandStreamReceiver();
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, *blitCommandStreamReceiver,
-                                                                                multiDispatchInfo.peekBuiltinOpParams(), false);
+                                                                                multiDispatchInfo.peekBuiltinOpParams());
     if (!queueBlocked) {
         blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *blitCommandStreamReceiver,
                                                              CsrDependencies::DependenciesType::All);
@@ -777,7 +778,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
     if (blockedCommandsData) {
         if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
-            blockedCommandsData->blitProperties = *enqueueProperties.blitProperties;
+            blockedCommandsData->blitPropertiesContainer = *enqueueProperties.blitPropertiesContainer;
             blockedCommandsData->blitEnqueue = true;
         }
 
@@ -861,8 +862,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     }
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
-        UNRECOVERABLE_IF(!enqueueProperties.blitProperties);
-        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitProperties);
+        UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false);
     }
 
     DispatchFlags dispatchFlags(
