@@ -2693,6 +2693,19 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     }
 }
 
+TEST(KernelTest, givenKernelWithPairArgumentWhenItIsInitializedThenPatchImmediateIsUsedAsArgHandler) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    MockKernelWithInternals kernel(*device, context.get());
+    kernel.kernelInfo.kernelArgInfo.resize(1);
+    kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "pair<char*, int>";
+
+    kernel.mockKernel->initialize();
+    EXPECT_EQ(&Kernel::setArgImmediate, kernel.mockKernel->kernelArgHandlers[0]);
+}
+
 TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
