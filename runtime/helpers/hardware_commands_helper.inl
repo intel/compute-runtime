@@ -31,13 +31,24 @@ bool HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequ
 }
 
 template <typename GfxFamily>
-uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
-    auto value = std::max(valueIn, 1024u);
+uint32_t HardwareCommandsHelper<GfxFamily>::alignSlmSize(uint32_t slmSize) {
+    if (slmSize == 0u) {
+        return 0u;
+    }
+    slmSize = std::max(slmSize, 1024u);
+    slmSize = Math::nextPowerOfTwo(slmSize);
+    UNRECOVERABLE_IF(slmSize > 64u * KB);
+    return slmSize;
+}
+
+template <typename GfxFamily>
+uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t slmSize) {
+    auto value = std::max(slmSize, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);
     value = value - 9;
     DEBUG_BREAK_IF(value > 7);
-    return value * !!valueIn;
+    return value * !!slmSize;
 }
 
 template <typename GfxFamily>

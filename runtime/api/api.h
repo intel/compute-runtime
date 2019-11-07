@@ -1015,6 +1015,17 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     size_t *globalVariableSizeRet,
     void **globalVariablePointerRet);
 
+cl_int CL_API_CALL clGetExecutionInfoIntel(
+    cl_command_queue commandQueue,
+    cl_kernel kernel,
+    cl_uint workDim,
+    const size_t *globalWorkOffset,
+    const size_t *localWorkSize,
+    cl_execution_info_intel paramName,
+    size_t paramValueSize,
+    void *paramValue,
+    size_t *paramValueSizeRet);
+
 // OpenCL 2.2
 
 cl_int CL_API_CALL clSetProgramSpecializationConstant(

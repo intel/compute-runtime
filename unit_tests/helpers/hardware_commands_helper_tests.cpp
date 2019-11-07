@@ -927,7 +927,47 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
     delete pKernel;
 }
 
-HWTEST_F(HardwareCommandsTest, slmValueScenarios) {
+HWTEST_F(HardwareCommandsTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+    if (::renderCoreFamily == IGFX_GEN8_CORE) {
+        EXPECT_EQ(0u, HardwareCommandsHelper<FamilyType>::alignSlmSize(0));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1024));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1025));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(2048));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(2049));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(4096));
+        EXPECT_EQ(8192u, HardwareCommandsHelper<FamilyType>::alignSlmSize(4097));
+        EXPECT_EQ(8192u, HardwareCommandsHelper<FamilyType>::alignSlmSize(8192));
+        EXPECT_EQ(16384u, HardwareCommandsHelper<FamilyType>::alignSlmSize(8193));
+        EXPECT_EQ(16384u, HardwareCommandsHelper<FamilyType>::alignSlmSize(12288));
+        EXPECT_EQ(16384u, HardwareCommandsHelper<FamilyType>::alignSlmSize(16384));
+        EXPECT_EQ(32768u, HardwareCommandsHelper<FamilyType>::alignSlmSize(16385));
+        EXPECT_EQ(32768u, HardwareCommandsHelper<FamilyType>::alignSlmSize(24576));
+        EXPECT_EQ(32768u, HardwareCommandsHelper<FamilyType>::alignSlmSize(32768));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(32769));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(49152));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(65535));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(65536));
+    } else {
+        EXPECT_EQ(0u, HardwareCommandsHelper<FamilyType>::alignSlmSize(0));
+        EXPECT_EQ(1024u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1));
+        EXPECT_EQ(1024u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1024));
+        EXPECT_EQ(2048u, HardwareCommandsHelper<FamilyType>::alignSlmSize(1025));
+        EXPECT_EQ(2048u, HardwareCommandsHelper<FamilyType>::alignSlmSize(2048));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(2049));
+        EXPECT_EQ(4096u, HardwareCommandsHelper<FamilyType>::alignSlmSize(4096));
+        EXPECT_EQ(8192u, HardwareCommandsHelper<FamilyType>::alignSlmSize(4097));
+        EXPECT_EQ(8192u, HardwareCommandsHelper<FamilyType>::alignSlmSize(8192));
+        EXPECT_EQ(16384u, HardwareCommandsHelper<FamilyType>::alignSlmSize(8193));
+        EXPECT_EQ(16384u, HardwareCommandsHelper<FamilyType>::alignSlmSize(16384));
+        EXPECT_EQ(32768u, HardwareCommandsHelper<FamilyType>::alignSlmSize(16385));
+        EXPECT_EQ(32768u, HardwareCommandsHelper<FamilyType>::alignSlmSize(32768));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(32769));
+        EXPECT_EQ(65536u, HardwareCommandsHelper<FamilyType>::alignSlmSize(65536));
+    }
+}
+
+HWTEST_F(HardwareCommandsTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     if (::renderCoreFamily == IGFX_GEN8_CORE) {
         EXPECT_EQ(0u, HardwareCommandsHelper<FamilyType>::computeSlmValues(0));
         EXPECT_EQ(1u, HardwareCommandsHelper<FamilyType>::computeSlmValues(1));

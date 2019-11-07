@@ -18,8 +18,8 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_flags_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
@@ -34,14 +34,14 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_filename_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_flags_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_properties_parser_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_flags_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl

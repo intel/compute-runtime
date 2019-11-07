@@ -398,6 +398,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
 
+    uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const;
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;

@@ -69,6 +69,10 @@ class HwHelper {
     virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual bool requiresAuxResolves() const = 0;
     virtual bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) = 0;
+    virtual uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) = 0;
+    virtual uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
+                                                   uint32_t threadsPerEu) = 0;
+    virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -169,6 +173,12 @@ class HwHelperHw : public HwHelper {
     bool requiresAuxResolves() const override;
 
     bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) override;
+
+    uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) override;
+
+    uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount, uint32_t threadsPerEu) override;
+
+    uint32_t alignSlmSize(uint32_t slmSize) override;
 
     static AuxTranslationMode getAuxTranslationMode();
 

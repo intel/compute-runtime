@@ -37,7 +37,7 @@ void Kernel::ReflectionSurfaceHelper::patchBlocksCurbe<true>(void *reflectionSur
 template void Kernel::patchReflectionSurface<true>(DeviceQueue *, PrintfHandler *);
 
 bool MockKernel::isPatched() const {
-    return true;
+    return isPatchedOverride;
 }
 
 bool MockKernel::canTransformImages() const {

@@ -246,6 +246,7 @@ class MockKernel : public Kernel {
     mutable uint32_t releaseOwnershipCalls = 0;
 
     bool canKernelTransformImages = true;
+    bool isPatchedOverride = true;
 
   protected:
     KernelInfo *kernelInfoAllocated = nullptr;

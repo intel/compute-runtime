@@ -68,6 +68,9 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 //Used with createBuffer
 #define CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL (1 << 23)
 
+typedef cl_uint cl_execution_info_intel;
+#define CL_EXECUTION_INFO_MAX_WORKGROUP_COUNT_INTEL 0x10100
+
 /******************************
 *        UNIFIED MEMORY       *
 *******************************/

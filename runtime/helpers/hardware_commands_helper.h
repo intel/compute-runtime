@@ -35,7 +35,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
 
-    static uint32_t computeSlmValues(uint32_t valueIn);
+    static uint32_t alignSlmSize(uint32_t slmSize);
+    static uint32_t computeSlmValues(uint32_t slmSize);
 
     static INTERFACE_DESCRIPTOR_DATA *getInterfaceDescriptor(
         const IndirectHeap &indirectHeap,

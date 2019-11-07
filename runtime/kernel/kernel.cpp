@@ -10,6 +10,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/helpers/kernel_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/accelerators/intel_accelerator.h"
@@ -972,6 +973,31 @@ void Kernel::setUnifiedMemoryExecInfo(GraphicsAllocation *unifiedMemoryAllocatio
 
 void Kernel::clearUnifiedMemoryExecInfo() {
     kernelUnifiedMemoryGfxAllocations.clear();
+}
+
+uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const {
+    auto &hardwareInfo = getDevice().getHardwareInfo();
+    auto executionEnvironment = kernelInfo.patchInfo.executionEnvironment;
+    auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
+    if (dssCount == 0) {
+        dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
+    }
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto availableThreadCount = hwHelper.calculateAvailableThreadCount(
+        hardwareInfo.platform.eProductFamily,
+        ((executionEnvironment != nullptr) ? executionEnvironment->NumGRFRequired : GrfConfig::DefaultGrfNumber),
+        hardwareInfo.gtSystemInfo.EUCount, hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
+
+    auto hasBarriers = ((executionEnvironment != nullptr) ? executionEnvironment->HasBarriers : 0u);
+    return KernelHelper::getMaxWorkGroupCount(kernelInfo.getMaxSimdSize(),
+                                              availableThreadCount,
+                                              dssCount,
+                                              dssCount * KB * hardwareInfo.capabilityTable.slmSize,
+                                              hwHelper.alignSlmSize(slmTotalSize),
+                                              static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
+                                              hwHelper.getBarriersCountFromHasBarriers(hasBarriers),
+                                              workDim,
+                                              localWorkSize);
 }
 
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {

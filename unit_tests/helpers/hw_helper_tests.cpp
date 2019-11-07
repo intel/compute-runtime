@@ -717,3 +717,19 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidVal
         EXPECT_FALSE(helper.tilingAllowed(false, imgDesc, false));
     }
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingGetBarriersCountFromHasBarrierThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(0u, hwHelper.getBarriersCountFromHasBarriers(0u));
+    EXPECT_EQ(1u, hwHelper.getBarriersCountFromHasBarriers(1u));
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto result = hwHelper.calculateAvailableThreadCount(
+        hardwareInfo.platform.eProductFamily,
+        0,
+        hardwareInfo.gtSystemInfo.EUCount,
+        hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
+}

@@ -65,4 +65,10 @@ uint32_t HwHelperHw<GfxFamily>::getMocsIndex(GmmHelper &gmmHelper, bool l3enable
     return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
 }
 
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
+                                                              uint32_t threadsPerEu) {
+    return threadsPerEu * euCount;
+}
+
 } // namespace NEO

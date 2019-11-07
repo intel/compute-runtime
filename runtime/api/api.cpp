@@ -8,6 +8,7 @@
 #include "api.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/kernel_helpers.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
@@ -3873,6 +3874,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceFunctionPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetExecutionInfoIntel);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
@@ -5070,6 +5072,57 @@ cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uin
 
     if (retVal == CL_SUCCESS) {
         retVal = pProgram->setProgramSpecializationConstant(specId, specSize, specValue);
+    }
+
+    return retVal;
+}
+
+cl_int CL_API_CALL clGetExecutionInfoIntel(cl_command_queue commandQueue,
+                                           cl_kernel kernel,
+                                           cl_uint workDim,
+                                           const size_t *globalWorkOffset,
+                                           const size_t *localWorkSize,
+                                           cl_execution_info_intel paramName,
+                                           size_t paramValueSize,
+                                           void *paramValue,
+                                           size_t *paramValueSizeRet) {
+
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
+                   "globalWorkOffset[0]", DebugManager.getInput(globalWorkOffset, 0),
+                   "globalWorkOffset[1]", DebugManager.getInput(globalWorkOffset, 1),
+                   "globalWorkOffset[2]", DebugManager.getInput(globalWorkOffset, 2),
+                   "localWorkSize", DebugManager.getSizes(localWorkSize, workDim, true),
+                   "paramName", paramName, "paramValueSize", paramValueSize,
+                   "paramValue", paramValue, "paramValueSizeRet", paramValueSizeRet);
+
+    retVal = validateObjects(commandQueue, kernel);
+
+    if (CL_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+    if (!pKernel->isPatched()) {
+        retVal = CL_INVALID_KERNEL;
+        return retVal;
+    }
+
+    TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
+    switch (paramName) {
+    case CL_EXECUTION_INFO_MAX_WORKGROUP_COUNT_INTEL:
+        if ((paramValueSize < sizeof(uint32_t)) || (paramValue == nullptr)) {
+            retVal = CL_INVALID_VALUE;
+            return retVal;
+        }
+        *reinterpret_cast<uint32_t *>(paramValue) = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
+        if (paramValueSizeRet != nullptr) {
+            *paramValueSizeRet = sizeof(uint32_t);
+        }
+        break;
+    default:
+        retVal = CL_INVALID_VALUE;
     }
 
     return retVal;

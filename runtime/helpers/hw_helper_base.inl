@@ -242,4 +242,15 @@ bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, const cl_image_d
     return !(imageType == CL_MEM_OBJECT_IMAGE1D || imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
              imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer);
 }
+
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) {
+    return HardwareCommandsHelper<GfxFamily>::alignSlmSize(slmSize);
+}
+
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getBarriersCountFromHasBarriers(uint32_t hasBarriers) {
+    return hasBarriers;
+}
+
 } // namespace NEO
