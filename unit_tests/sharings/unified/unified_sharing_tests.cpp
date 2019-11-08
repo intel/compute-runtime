@@ -24,8 +24,9 @@ TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhe
     cl_int retVal{};
 
     const cl_context_properties context_props[] = {
-        static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle),
-        0, 0, 0};
+        static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle), 0,
+        CL_CONTEXT_INTEROP_USER_SYNC, 1,
+        0};
 
     auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(context_props, allDevs,
                                                                              nullptr, nullptr, retVal));
@@ -70,16 +71,31 @@ TEST(UnifiedSharingTests, givenExternalDeviceGroupHandleWhenProcessingBySharingC
     EXPECT_EQ(nullptr, builder.contextData);
 }
 
-TEST(UnifiedSharingTests, givenBuilderWithContextDataWhenFinalizingPropertiesBySharingContextBuilderThenRegisterSharingInContextAndClearContextData) {
+TEST(UnifiedSharingTests, givenContextWithUserSyncWhenFinalizingPropertiesBySharingContextBuilderThenRegisterSharingInContextAndClearContextData) {
     MockUnifiedSharingContextBuilder builder{};
     builder.contextData = std::make_unique<UnifiedCreateContextProperties>();
 
     MockContext context{};
+    context.setInteropUserSyncEnabled(true);
     cl_int retVal{};
     bool result = builder.finalizeProperties(context, retVal);
     EXPECT_TRUE(result);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context.sharingFunctions[UnifiedSharingFunctions::sharingId]);
+    EXPECT_EQ(nullptr, builder.contextData);
+}
+
+TEST(UnifiedSharingTests, givenContextWithoutUserSyncWhenFinalizingPropertiesBySharingContextBuilderThenDoNotRegisterSharingInContextAndClearContextData) {
+    MockUnifiedSharingContextBuilder builder{};
+    builder.contextData = std::make_unique<UnifiedCreateContextProperties>();
+
+    MockContext context{};
+    context.setInteropUserSyncEnabled(false);
+    cl_int retVal{};
+    bool result = builder.finalizeProperties(context, retVal);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, context.sharingFunctions[UnifiedSharingFunctions::sharingId]);
     EXPECT_EQ(nullptr, builder.contextData);
 }
 

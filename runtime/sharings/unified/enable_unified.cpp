@@ -33,7 +33,9 @@ bool UnifiedSharingContextBuilder::processProperties(cl_context_properties &prop
 
 bool UnifiedSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
     if (contextData.get() != nullptr) {
-        context.registerSharing(new UnifiedSharingFunctions());
+        if (context.getInteropUserSyncEnabled()) {
+            context.registerSharing(new UnifiedSharingFunctions());
+        }
         contextData.reset(nullptr);
     }
     return true;
