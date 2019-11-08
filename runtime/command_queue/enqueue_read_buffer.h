@@ -80,7 +80,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
+            auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
