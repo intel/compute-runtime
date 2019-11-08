@@ -36,8 +36,8 @@ class UnifiedSharing : public SharingHandler {
     UnifiedSharingHandleType getExternalMemoryType() { return memoryType; }
 
   protected:
-    int synchronizeHandler(UpdateData &updateData) override;
-    void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) override;
+    void synchronizeObject(UpdateData &updateData) override;
+    void releaseResource(MemObj *memObject) override;
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

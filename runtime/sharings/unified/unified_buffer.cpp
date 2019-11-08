@@ -31,14 +31,7 @@ Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags 
     return Buffer::createSharedBuffer(context, flags, sharingHandler, graphicsAllocation);
 }
 
-void UnifiedBuffer::synchronizeObject(UpdateData &updateData) {
-    // Acquiring is not implemented yet
-}
-
 GraphicsAllocation *UnifiedBuffer::createGraphicsAllocation(Context *context, void *handle) {
     auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, 0);
     return graphicsAllocation;
-}
-
-void UnifiedBuffer::releaseResource(MemObj *memObject) {
 }

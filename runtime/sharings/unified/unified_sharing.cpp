@@ -23,13 +23,11 @@ UnifiedSharing::UnifiedSharing(UnifiedSharingFunctions *sharingFunctions, Unifie
       memoryType(memoryType) {
 }
 
-int UnifiedSharing::synchronizeHandler(UpdateData &updateData) {
-    synchronizeObject(updateData);
-    return CL_SUCCESS;
+void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
+    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
-void UnifiedSharing::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
-    updateData->synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+void UnifiedSharing::releaseResource(MemObj *memObject) {
 }
 
 template <>

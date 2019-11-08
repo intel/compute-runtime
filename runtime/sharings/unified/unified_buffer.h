@@ -18,10 +18,8 @@ class UnifiedBuffer : public UnifiedSharing {
 
   public:
     static Buffer *createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description, cl_int *errcodeRet);
-    void synchronizeObject(UpdateData &updateData) override;
 
   protected:
-    void releaseResource(MemObj *memObject) override;
     static GraphicsAllocation *createGraphicsAllocation(Context *context, void *handle);
 };
 } // namespace NEO

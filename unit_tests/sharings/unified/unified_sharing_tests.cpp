@@ -111,9 +111,11 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
         unsigned int synchronizeObjectCalled = 0u;
         unsigned int releaseResourceCalled = 0u;
         void synchronizeObject(UpdateData &updateData) override {
+            UnifiedSharing::synchronizeObject(updateData);
             synchronizeObjectCalled++;
         }
         void releaseResource(MemObj *memObject) override {
+            UnifiedSharing::releaseResource(memObject);
             releaseResourceCalled++;
         };
     };
