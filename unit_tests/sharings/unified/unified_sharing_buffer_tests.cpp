@@ -7,16 +7,12 @@
 
 #include "runtime/sharings/unified/unified_buffer.h"
 #include "unit_tests/sharings/unified/unified_sharing_fixtures.h"
+#include "unit_tests/sharings/unified/unified_sharing_mocks.h"
 
 using UnifiedSharingBufferTestsWithMemoryManager = UnifiedSharingFixture<true, true>;
 using UnifiedSharingBufferTestsWithInvalidMemoryManager = UnifiedSharingFixture<true, false>;
 
 TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnifiedBufferThenItCanBeAcquiredAndReleased) {
-    struct MockSharingHandler : UnifiedBuffer {
-        using UnifiedBuffer::acquireCount;
-        using UnifiedBuffer::UnifiedBuffer;
-    };
-
     cl_mem_flags flags{};
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
@@ -25,7 +21,7 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnifiedBufferThenItCanBe
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     UnifiedSharingFunctions sharingFunctions;
-    MockSharingHandler *sharingHandler = new MockSharingHandler(&sharingFunctions, UnifiedSharingHandleType::Win32Nt);
+    MockUnifiedBuffer *sharingHandler = new MockUnifiedBuffer(&sharingFunctions, UnifiedSharingHandleType::Win32Nt);
     buffer->setSharingHandler(sharingHandler);
 
     ASSERT_EQ(0u, sharingHandler->acquireCount);

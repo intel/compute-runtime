@@ -8,6 +8,7 @@ set(IGDRCL_SRCS_tests_sharings_unified
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_fixtures.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_mocks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sharings_unified})
