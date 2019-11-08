@@ -19,7 +19,7 @@ using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueReadBuffer;
 
-TEST_F(EnqueueReadBuffer, eventShouldBeReturned) {
+TEST_F(EnqueueReadBuffer, GivenPointerToEventListWhenReadingBufferThenEventIsReturned) {
     cl_bool blockingRead = CL_TRUE;
     size_t offset = 0;
     size_t size = sizeof(cl_float);
@@ -58,7 +58,7 @@ TEST_F(EnqueueReadBuffer, eventShouldBeReturned) {
     delete pEvent;
 }
 
-TEST_F(EnqueueReadBuffer, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+TEST_F(EnqueueReadBuffer, WhenReadingBufferThenEventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
