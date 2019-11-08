@@ -59,7 +59,9 @@ struct AllocationProperties {
                          bool multiOsContextCapable,
                          uint32_t subDeviceIndex,
                          uint32_t rootDeviceIndex)
-        : size(size), allocationType(allocationType), subDeviceIndex(subDeviceIndex), rootDeviceIndex(rootDeviceIndex) {
+        : size(size), allocationType(allocationType) {
+        this->subDeviceIndex = subDeviceIndex;
+        this->rootDeviceIndex = rootDeviceIndex;
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
