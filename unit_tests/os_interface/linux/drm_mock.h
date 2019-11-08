@@ -22,8 +22,7 @@ using namespace NEO;
 class DrmMock : public Drm {
   public:
     using Drm::checkQueueSliceSupport;
-    using Drm::getInstanceFromRegion;
-    using Drm::getMemoryTypeFromRegion;
+    using Drm::engineInfo;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
     using Drm::preemptionSupported;
@@ -75,6 +74,9 @@ class DrmMock : public Drm {
     inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) const {
         return (1u << (type + 16)) | (1u << instance);
     }
+
+    static inline uint16_t getMemoryTypeFromRegion(uint32_t region) { return Math::log2(region >> 16); };
+    static inline uint16_t getInstanceFromRegion(uint32_t region) { return Math::log2(region & 0xFFFF); };
 
     static const int mockFd = 33;
 

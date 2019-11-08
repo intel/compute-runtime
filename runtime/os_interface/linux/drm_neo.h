@@ -75,10 +75,8 @@ class Drm {
     bool setQueueSliceCount(uint64_t sliceCount);
     void checkQueueSliceSupport();
     uint64_t getSliceMask(uint64_t sliceCount);
-    void queryEngineInfo();
-    void queryMemoryInfo();
-    int setEngines();
-    int setMemoryRegions();
+    bool queryEngineInfo();
+    bool queryMemoryInfo();
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
@@ -107,9 +105,6 @@ class Drm {
 
     std::string getSysFsPciPath(int deviceID);
     void *query(uint32_t queryId);
-
-    static inline uint16_t getMemoryTypeFromRegion(uint32_t region) { return Math::log2(region >> 16); };
-    static inline uint16_t getInstanceFromRegion(uint32_t region) { return Math::log2(region & 0xFFFF); };
 
 #pragma pack(1)
     struct PCIConfig {

@@ -17,33 +17,23 @@ struct MemoryInfoImpl : public NEO::MemoryInfo {
     ~MemoryInfoImpl() override{};
 };
 
-TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlIsCalled) {
+TEST(DrmTest, whenQueryingEngineInfoThenEngineInfoIsNotCreatedAndNoIoctlsAreCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
     EXPECT_NE(nullptr, drm);
 
-    drm->queryMemoryInfo();
+    EXPECT_TRUE(drm->queryEngineInfo());
+
+    EXPECT_EQ(nullptr, drm->engineInfo.get());
+    EXPECT_EQ(0u, drm->ioctlCallsCount);
+}
+
+TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlsAreCalled) {
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    EXPECT_NE(nullptr, drm);
+
+    EXPECT_TRUE(drm->queryMemoryInfo());
 
     EXPECT_EQ(nullptr, drm->memoryInfo.get());
-    EXPECT_EQ(0u, drm->ioctlCallsCount);
-}
-
-TEST(DrmTest, whenSettingEnginesThenReturnZeroValueAndCallNoIoctls) {
-    auto drm = std::make_unique<DrmMock>();
-    EXPECT_NE(nullptr, drm);
-
-    auto ret = drm->setEngines();
-
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, drm->ioctlCallsCount);
-}
-
-TEST(DrmTest, whenSettingMemoryRegionsThenZeroIsReturnedAndNoIoctlsAreCalled) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
-    EXPECT_NE(nullptr, drm);
-
-    auto ret = drm->setMemoryRegions();
-
-    EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 

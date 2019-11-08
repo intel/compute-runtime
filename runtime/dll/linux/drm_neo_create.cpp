@@ -195,17 +195,13 @@ Drm *Drm::create(int32_t deviceOrdinal) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    drmObject->queryEngineInfo();
-    ret = drmObject->setEngines();
-    if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to set engines\n");
+    if (!drmObject->queryEngineInfo()) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
     if (HwHelper::get(device->pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
-        drmObject->queryMemoryInfo();
-        ret = drmObject->setMemoryRegions();
-        if (ret != 0) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to set memory regions\n");
+        if (!drmObject->queryMemoryInfo()) {
+            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
         }
     }
 
