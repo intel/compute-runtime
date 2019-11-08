@@ -855,10 +855,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         previousTimestampPacketNodes->makeResident(getGpgpuCommandStreamReceiver());
     }
 
-    auto requiresCoherency = false;
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
         surface->makeResident(getGpgpuCommandStreamReceiver());
-        requiresCoherency |= surface->IsCoherent;
     }
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
