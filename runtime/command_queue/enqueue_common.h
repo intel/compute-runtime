@@ -91,6 +91,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         }
     }
 
+    if (HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(multiDispatchInfo)) {
+        setupBlitAuxTranslation(multiDispatchInfo);
+    }
+
     enqueueHandler<commandType>(surfaces, blocking, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
 }
 
@@ -219,8 +223,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
+    if (HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(multiDispatchInfo)) {
+        processDispatchForBlitAuxTranslation(multiDispatchInfo, blitPropertiesContainer, timestampPacketDependencies,
+                                             eventsRequest, blockQueue);
+    }
+
     if (eventBuilder.getEvent() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
+        eventBuilder.getEvent()->addTimestampPacketNodes(timestampPacketDependencies.nonAuxToAuxNodes);
     }
 
     bool flushDependenciesForNonKernelCommand = false;
@@ -273,6 +283,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStreamStart,
                 blocking,
                 multiDispatchInfo,
+                enqueueProperties,
                 timestampPacketDependencies,
                 eventsRequest,
                 eventBuilder,
@@ -462,6 +473,51 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
 }
 
 template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const MultiDispatchInfo &multiDispatchInfo,
+                                                                     BlitPropertiesContainer &blitPropertiesContainer,
+                                                                     TimestampPacketDependencies &timestampPacketDependencies,
+                                                                     const EventsRequest &eventsRequest, bool queueBlocked) {
+    auto nodesAllocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    auto numBuffers = multiDispatchInfo.getMemObjsForAuxTranslation()->size();
+    blitPropertiesContainer.resize(numBuffers * 2);
+
+    auto bufferIndex = 0;
+    for (auto &buffer : *multiDispatchInfo.getMemObjsForAuxTranslation()) {
+        {
+            // Aux to NonAux
+            blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+                                                                                                        buffer->getGraphicsAllocation());
+            auto auxToNonAuxNode = nodesAllocator->getTag();
+            timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
+            blitPropertiesContainer[bufferIndex].outputTimestampPacket = auxToNonAuxNode;
+        }
+
+        {
+            // NonAux to Aux
+            blitPropertiesContainer[bufferIndex + numBuffers] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
+                                                                                                                     buffer->getGraphicsAllocation());
+            auto nonAuxToAuxNode = nodesAllocator->getTag();
+            timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
+            blitPropertiesContainer[bufferIndex + numBuffers].outputTimestampPacket = nonAuxToAuxNode;
+        }
+        bufferIndex++;
+    }
+
+    if (!queueBlocked) {
+        getGpgpuCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
+        timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
+
+        // wait for barrier and events before AuxToNonAux
+        blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
+        blitPropertiesContainer[0].csrDependencies.fillFromEventsRequest(eventsRequest, *getBcsCommandStreamReceiver(),
+                                                                         CsrDependencies::DependenciesType::All);
+
+        // wait for NDR before NonAuxToAux
+        blitPropertiesContainer[numBuffers].csrDependencies.push_back(this->timestampPacketContainer.get());
+    }
+}
+
+template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
                                                              size_t numSurfaces,
                                                              LinearStream *commandStream,
@@ -578,6 +634,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     size_t commandStreamStart,
     bool &blocking,
     const MultiDispatchInfo &multiDispatchInfo,
+    const EnqueueProperties &enqueueProperties,
     TimestampPacketDependencies &timestampPacketDependencies,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
@@ -669,7 +726,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     DispatchFlags dispatchFlags(
         {},                                                                                         //csrDependencies
-        nullptr,                                                                                    //barrierTimestampPacketNodes
+        &timestampPacketDependencies.barrierNodes,                                                  //barrierTimestampPacketNodes
         {},                                                                                         //pipelineSelectArgs
         this->flushStamp->getStampReference(),                                                      //flushStampReference
         getThrottle(),                                                                              //throttle
@@ -713,6 +770,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyPreFlushTask(this);
+    }
+
+    if (enqueueProperties.blitPropertiesContainer->size() > 0) {
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false);
     }
 
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "preemption = %d.\n", static_cast<int>(dispatchFlags.preemptionMode));

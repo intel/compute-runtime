@@ -673,6 +673,8 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     class MyCmdQ : public CommandQueueHw<FamilyType> {
       public:
         using CommandQueueHw<FamilyType>::commandStream;
+        using CommandQueueHw<FamilyType>::gpgpuEngine;
+        using CommandQueueHw<FamilyType>::bcsEngine;
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
         void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
@@ -807,9 +809,12 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
 HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     MockKernelWithInternals mockKernel(*pDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    cmdQ.bcsEngine = cmdQ.gpgpuEngine;
+
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;
     cl_mem clMem = &buffer;

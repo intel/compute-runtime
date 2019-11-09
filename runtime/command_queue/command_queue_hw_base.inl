@@ -122,4 +122,19 @@ bool CommandQueueHw<Family>::forceStateless(size_t size) {
     return size >= 4ull * MemoryConstants::gigaByte;
 }
 
+template <typename Family>
+void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo) {
+    multiDispatchInfo.begin()->dispatchInitCommands.registerMethod(
+        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
+
+    multiDispatchInfo.begin()->dispatchInitCommands.registerCommandsSizeEstimationMethod(
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family>);
+
+    multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerMethod(
+        TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
+
+    multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerCommandsSizeEstimationMethod(
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family>);
+}
+
 } // namespace NEO

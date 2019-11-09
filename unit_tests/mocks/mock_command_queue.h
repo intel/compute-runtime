@@ -75,6 +75,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::bcsEngine;
+    using BaseClass::bcsTaskCount;
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
     using BaseClass::multiEngineQueue;
@@ -130,8 +131,12 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         kernelParams = dispatchInfo.peekBuiltinOpParams();
         lastCommandType = commandType;
+
         for (auto &di : dispatchInfo) {
             lastEnqueuedKernels.push_back(di.getKernel());
+            if (storeMultiDispatchInfo) {
+                storedMultiDispatchInfo.push(di);
+            }
         }
     }
 
@@ -144,9 +149,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
+    MultiDispatchInfo storedMultiDispatchInfo;
     size_t EnqueueWriteImageCounter = 0;
     size_t EnqueueWriteBufferCounter = 0;
     bool blockingWriteBuffer = false;
+    bool storeMultiDispatchInfo = false;
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
     bool cpuDataTransferHandlerCalled = false;

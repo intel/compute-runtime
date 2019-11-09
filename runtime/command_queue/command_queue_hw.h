@@ -334,6 +334,7 @@ class CommandQueueHw : public CommandQueue {
                                       size_t commandStreamStart,
                                       bool &blocking,
                                       const MultiDispatchInfo &multiDispatchInfo,
+                                      const EnqueueProperties &enqueueProperties,
                                       TimestampPacketDependencies &timestampPacketDependencies,
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
@@ -391,6 +392,7 @@ class CommandQueueHw : public CommandQueue {
                                               const cl_event *eventWaitList, cl_event *event);
 
     MOCKABLE_VIRTUAL void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection);
+    void setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo);
 
     MOCKABLE_VIRTUAL bool forceStateless(size_t size);
 
@@ -419,6 +421,10 @@ class CommandQueueHw : public CommandQueue {
         }
         return commandStream;
     }
+
+    void processDispatchForBlitAuxTranslation(const MultiDispatchInfo &multiDispatchInfo, BlitPropertiesContainer &blitPropertiesContainer,
+                                              TimestampPacketDependencies &timestampPacketDependencies, const EventsRequest &eventsRequest,
+                                              bool queueBlocked);
 
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);

@@ -94,6 +94,8 @@ class TimestampPacketContainer : public NonCopyableClass {
 struct TimestampPacketDependencies : public NonCopyableClass {
     TimestampPacketContainer previousEnqueueNodes;
     TimestampPacketContainer barrierNodes;
+    TimestampPacketContainer auxToNonAuxNodes;
+    TimestampPacketContainer nonAuxToAuxNodes;
 };
 
 struct TimestampPacketHelper {
@@ -121,6 +123,23 @@ struct TimestampPacketHelper {
         }
     }
 
+    template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
+    static void programSemaphoreWithImplicitDependencyForAuxTranslation(LinearStream &cmdStream,
+                                                                        const TimestampPacketDependencies *timestampPacketDependencies) {
+        auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
+                              ? timestampPacketDependencies->auxToNonAuxNodes
+                              : timestampPacketDependencies->nonAuxToAuxNodes;
+
+        for (auto &node : container.peekNodes()) {
+            TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node);
+        }
+    }
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(const MemObjsForAuxTranslation *memObjsForAuxTranslation) {
+        return memObjsForAuxTranslation->size() * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
+    }
+
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependency() {
         return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC);
@@ -136,4 +155,5 @@ struct TimestampPacketHelper {
         return totalNodesCount * getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
     }
 };
+
 } // namespace NEO

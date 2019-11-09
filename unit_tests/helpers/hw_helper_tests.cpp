@@ -14,12 +14,14 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include <chrono>
@@ -679,6 +681,26 @@ TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned)
     } else {
         EXPECT_EQ(expectedMocsForL3andL1on, mocsIndex);
     }
+}
+
+HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
+    DebugManagerStateRestore restore;
+    MockBuffer buffer;
+    MemObjsForAuxTranslation memObjects;
+    MultiDispatchInfo multiDispatchInfo;
+
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    multiDispatchInfo.setMemObjsForAuxTranslation(memObjects);
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    memObjects.insert(&buffer);
+    EXPECT_TRUE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
 }
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {

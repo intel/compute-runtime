@@ -62,10 +62,14 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
   protected:
     using RegisteredMethodDispatcherT = RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT,
                                                                    DispatchInfo::EstimateCommandsMethodT>;
-
     template <typename GfxFamily, bool dcFlush>
-    static void dispatchPipeControl(LinearStream &linearStream) {
+    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *) {
         PipeControlHelper<GfxFamily>::addPipeControl(linearStream, dcFlush);
+    }
+
+    template <typename GfxFamily>
+    static size_t getSizeForSinglePipeControl(const MemObjsForAuxTranslation *) {
+        return PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl();
     }
 
     template <typename GfxFamily>
@@ -75,7 +79,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
         } else {
             dispatcher.registerMethod(this->dispatchPipeControl<GfxFamily, false>);
         }
-        dispatcher.registerCommandsSizeEstimationMethod(PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl);
+        dispatcher.registerCommandsSizeEstimationMethod(this->getSizeForSinglePipeControl<GfxFamily>);
     }
 
     void resizeKernelInstances(size_t size) const;

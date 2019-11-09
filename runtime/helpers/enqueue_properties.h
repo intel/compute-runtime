@@ -30,6 +30,7 @@ struct EnqueueProperties {
 
         if (hasKernels) {
             operation = Operation::GpuKernel;
+            this->blitPropertiesContainer = blitPropertiesContainer;
             return;
         }
 

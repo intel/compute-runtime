@@ -180,6 +180,8 @@ class HwHelperHw : public HwHelper {
 
     static AuxTranslationMode getAuxTranslationMode();
 
+    static bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
+
   protected:
     HwHelperHw() = default;
 };

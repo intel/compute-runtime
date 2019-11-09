@@ -14,6 +14,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_interface.h"
@@ -160,6 +161,13 @@ AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
     }
 
     return AuxTranslationMode::Builtin;
+}
+
+template <typename Family>
+bool HwHelperHw<Family>::isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo) {
+    return (HwHelperHw<Family>::getAuxTranslationMode() == AuxTranslationMode::Blit) &&
+           multiDispatchInfo.getMemObjsForAuxTranslation() &&
+           (multiDispatchInfo.getMemObjsForAuxTranslation()->size() > 0);
 }
 
 template <typename Family>

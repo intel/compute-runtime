@@ -20,12 +20,13 @@
 namespace NEO {
 
 class Kernel;
+struct TimestampPacketDependencies;
 
 class DispatchInfo {
 
   public:
-    using DispatchCommandMethodT = void(LinearStream &commandStream);
-    using EstimateCommandsMethodT = size_t(void);
+    using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies);
+    using EstimateCommandsMethodT = size_t(const MemObjsForAuxTranslation *);
 
     DispatchInfo() = default;
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
