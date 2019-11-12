@@ -72,7 +72,7 @@ HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontReg
 
     auto blockedCommandsData = std::unique_ptr<KernelOperation>(blockedCommandsDataForDependencyFlush);
     Surface *surfaces[] = {nullptr};
-    mockCmdQ->enqueueBlocked(CL_COMMAND_MARKER, surfaces, size_t(0), multiDispatchInfo, &previousTimestampPacketNodes,
+    mockCmdQ->enqueueBlocked(CL_COMMAND_MARKER, surfaces, size_t(0), multiDispatchInfo, previousTimestampPacketNodes,
                              barrierTimestampPacketNodes, blockedCommandsData, enqueuePropertiesForDependencyFlush, eventsRequest,
                              eventBuilder, std::unique_ptr<PrintfHandler>(nullptr));
     EXPECT_FALSE(blockedCommandsDataForDependencyFlush->blitEnqueue);
@@ -102,7 +102,7 @@ HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBl
 
     auto blockedCommandsData = std::unique_ptr<KernelOperation>(blockedCommandsDataForBlitEnqueue);
     Surface *surfaces[] = {nullptr};
-    mockCmdQ->enqueueBlocked(CL_COMMAND_READ_BUFFER, surfaces, size_t(0), multiDispatchInfo, &previousTimestampPacketNodes,
+    mockCmdQ->enqueueBlocked(CL_COMMAND_READ_BUFFER, surfaces, size_t(0), multiDispatchInfo, previousTimestampPacketNodes,
                              barrierTimestampPacketNodes, blockedCommandsData, enqueuePropertiesForBlitEnqueue, eventsRequest,
                              eventBuilder, std::unique_ptr<PrintfHandler>(nullptr));
     EXPECT_TRUE(blockedCommandsDataForBlitEnqueue->blitEnqueue);

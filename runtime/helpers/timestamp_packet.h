@@ -71,10 +71,12 @@ struct TimestampPacketStorage {
 static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
-class TimestampPacketContainer : public NonCopyableOrMovableClass {
+class TimestampPacketContainer : public NonCopyableClass {
   public:
     using Node = TagNode<TimestampPacketStorage>;
     TimestampPacketContainer() = default;
+    TimestampPacketContainer(TimestampPacketContainer &&) = default;
+    TimestampPacketContainer &operator=(TimestampPacketContainer &&) = default;
     MOCKABLE_VIRTUAL ~TimestampPacketContainer();
 
     const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }

@@ -32,7 +32,7 @@ struct TagNode : public IDNode<TagNode<TagType>> {
 
     void incRefCount() { refCount++; }
 
-    void returnTag() {
+    MOCKABLE_VIRTUAL void returnTag() {
         allocator->returnTag(this);
     }
 

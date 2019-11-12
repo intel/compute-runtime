@@ -94,7 +94,7 @@ class Command : public IFNode<Command> {
     virtual LinearStream *getCommandStream() {
         return nullptr;
     }
-    void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous, TimestampPacketContainer &barrier);
+    void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &&previous, TimestampPacketContainer &&barrier);
     void setEventsRequest(EventsRequest &eventsRequest);
     void makeTimestampPacketsResident(CommandStreamReceiver &commandStreamReceiver);
 

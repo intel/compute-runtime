@@ -341,15 +341,15 @@ void Command::setEventsRequest(EventsRequest &eventsRequest) {
     }
 }
 
-void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous, TimestampPacketContainer &barrier) {
+void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &&previous, TimestampPacketContainer &&barrier) {
     currentTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     currentTimestampPacketNodes->assignAndIncrementNodesRefCounts(current);
 
     previousTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
-    previousTimestampPacketNodes->assignAndIncrementNodesRefCounts(previous);
+    *previousTimestampPacketNodes = std::move(previous);
 
     barrierTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
-    barrierTimestampPacketNodes->assignAndIncrementNodesRefCounts(barrier);
+    *barrierTimestampPacketNodes = std::move(barrier);
 }
 
 Command::~Command() {

@@ -16,4 +16,14 @@ class NonCopyableOrMovableClass {
     NonCopyableOrMovableClass(NonCopyableOrMovableClass &&) = delete;
     NonCopyableOrMovableClass &operator=(NonCopyableOrMovableClass &&) = delete;
 };
+
+class NonCopyableClass {
+  public:
+    NonCopyableClass() = default;
+    NonCopyableClass(const NonCopyableClass &) = delete;
+    NonCopyableClass &operator=(const NonCopyableClass &) = delete;
+
+    NonCopyableClass(NonCopyableClass &&) = default;
+    NonCopyableClass &operator=(NonCopyableClass &&) = default;
+};
 } // namespace NEO
