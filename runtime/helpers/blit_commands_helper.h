@@ -19,7 +19,10 @@ class Context;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 class LinearStream;
-class TimestampPacketContainer;
+struct TimestampPacketStorage;
+
+template <typename TagType>
+struct TagNode;
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
@@ -41,7 +44,7 @@ struct BlitProperties {
 
     static BlitterConstants::BlitDirection obtainBlitDirection(uint32_t commandType);
 
-    TimestampPacketContainer *outputTimestampPacket = nullptr;
+    TagNode<TimestampPacketStorage> *outputTimestampPacket = nullptr;
     BlitterConstants::BlitDirection blitDirection;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;

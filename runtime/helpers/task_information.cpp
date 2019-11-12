@@ -260,7 +260,7 @@ void CommandWithoutKernel::dispatchBlitOperation(TimestampPacketContainer &barri
     blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *bcsCsr, CsrDependencies::DependenciesType::All);
     blitProperties.csrDependencies.push_back(previousTimestampPacketNodes.get());
     blitProperties.csrDependencies.push_back(&barrierTimestampPacketNodes);
-    blitProperties.outputTimestampPacket = currentTimestampPacketNodes.get();
+    blitProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
 
     auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false);
 

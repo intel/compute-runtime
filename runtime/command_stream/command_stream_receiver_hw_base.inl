@@ -816,10 +816,9 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream);
 
         if (blitProperties.outputTimestampPacket) {
-            UNRECOVERABLE_IF(blitProperties.outputTimestampPacket->peekNodes().size() != 1);
-            auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
             HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0);
-            blitProperties.outputTimestampPacket->makeResident(*this);
+            makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
 
         blitProperties.csrDependencies.makeResident(*this);

@@ -457,9 +457,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
         blitProperties.csrDependencies.push_back(&barrierTimestampPacketNode);
     }
 
-    blitProperties.outputTimestampPacket = timestampPacketContainer.get();
-
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
+    blitProperties.outputTimestampPacket = currentTimestampPacketNode;
     TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode);
 
     return blitProperties;
