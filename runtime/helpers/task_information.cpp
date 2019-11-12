@@ -252,14 +252,14 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-void CommandWithoutKernel::dispatchBlitOperation() {
+void CommandWithoutKernel::dispatchBlitOperation(TimestampPacketContainer &barrierTimestampPacketNodes) {
     auto bcsCsr = commandQueue.getBcsCommandStreamReceiver();
 
     UNRECOVERABLE_IF(kernelOperation->blitPropertiesContainer.size() != 1);
     auto &blitProperties = *kernelOperation->blitPropertiesContainer.begin();
     blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *bcsCsr, CsrDependencies::DependenciesType::All);
     blitProperties.csrDependencies.push_back(previousTimestampPacketNodes.get());
-    blitProperties.csrDependencies.push_back(barrierTimestampPacketNodes.get());
+    blitProperties.csrDependencies.push_back(&barrierTimestampPacketNodes);
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes.get();
 
     auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false);
@@ -283,14 +283,18 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     auto lockCSR = commandStreamReceiver.obtainUniqueOwnership();
+    TimestampPacketContainer barrierTimestampPacketNodes;
 
     if (kernelOperation->blitEnqueue) {
-        dispatchBlitOperation();
+        if (commandStreamReceiver.isStallingPipeControlOnNextFlushRequired()) {
+            barrierTimestampPacketNodes.add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
+        }
+        dispatchBlitOperation(barrierTimestampPacketNodes);
     }
 
     DispatchFlags dispatchFlags(
         {},                                                   //csrDependencies
-        barrierTimestampPacketNodes.get(),                    //barrierTimestampPacketNodes
+        &barrierTimestampPacketNodes,                         //barrierTimestampPacketNodes
         {},                                                   //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),         //flushStampReference
         commandQueue.getThrottle(),                           //throttle
@@ -341,15 +345,12 @@ void Command::setEventsRequest(EventsRequest &eventsRequest) {
     }
 }
 
-void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &&previous, TimestampPacketContainer &&barrier) {
+void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &&previous) {
     currentTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     currentTimestampPacketNodes->assignAndIncrementNodesRefCounts(current);
 
     previousTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     *previousTimestampPacketNodes = std::move(previous);
-
-    barrierTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
-    *barrierTimestampPacketNodes = std::move(barrier);
 }
 
 Command::~Command() {
@@ -377,9 +378,6 @@ void Command::makeTimestampPacketsResident(CommandStreamReceiver &commandStreamR
     }
     if (previousTimestampPacketNodes) {
         previousTimestampPacketNodes->makeResident(commandStreamReceiver);
-    }
-    if (barrierTimestampPacketNodes) {
-        barrierTimestampPacketNodes->makeResident(commandStreamReceiver);
     }
 }
 

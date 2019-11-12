@@ -205,7 +205,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
         }
 
-        if (blitEnqueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+        if (blitEnqueue && !blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
             auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
             barrierTimestampPacketNode.add(allocator->getTag());
         }
@@ -346,7 +346,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        numSurfaceForResidency,
                        multiDispatchInfo,
                        previousTimestampPacketNodes,
-                       barrierTimestampPacketNode,
                        blockedCommandsData,
                        enqueueProperties,
                        eventsRequest,
@@ -741,7 +740,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     size_t surfaceCount,
     const MultiDispatchInfo &multiDispatchInfo,
     TimestampPacketContainer &previousTimestampPacketNodes,
-    TimestampPacketContainer &barrierTimestampPacketNode,
     std::unique_ptr<KernelOperation> &blockedCommandsData,
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
@@ -820,8 +818,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
             event->incRefInternal();
         }
-        command->setTimestampPacketNode(*timestampPacketContainer, std::move(previousTimestampPacketNodes),
-                                        std::move(barrierTimestampPacketNode));
+        command->setTimestampPacketNode(*timestampPacketContainer, std::move(previousTimestampPacketNodes));
         command->setEventsRequest(eventsRequest);
     }
     outEvent->setCommand(std::move(command));
@@ -846,7 +843,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     bool &blocking,
     const EnqueueProperties &enqueueProperties,
     TimestampPacketContainer *previousTimestampPacketNodes,
-    const TimestampPacketContainer &barrierTimestampPacketNodes,
+    TimestampPacketContainer &barrierTimestampPacketNodes,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     uint32_t taskLevel) {

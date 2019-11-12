@@ -1031,6 +1031,56 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
 }
 
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    UserEvent userEvent0, userEvent1;
+    cl_event waitlist0[] = {&userEvent0};
+    cl_event waitlist1[] = {&userEvent1};
+
+    cmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr);
+    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist0, nullptr);
+    cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist1, nullptr);
+
+    auto pipeControlLookup = [](LinearStream &stream, size_t offset) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(stream, offset);
+
+        bool stallingPipeControlFound = false;
+        for (auto &cmd : hwParser.cmdList) {
+            if (auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(cmd)) {
+                if (pipeControlCmd->getPostSyncOperation() != PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+                    continue;
+                }
+
+                stallingPipeControlFound = true;
+                EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+                break;
+            }
+        }
+
+        return stallingPipeControlFound;
+    };
+
+    auto &csrStream = cmdQ->getGpgpuCommandStreamReceiver().getCS(0);
+    EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
+    userEvent0.setStatus(CL_COMPLETE);
+    EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired());
+    EXPECT_TRUE(pipeControlLookup(csrStream, 0));
+
+    auto csrOffset = csrStream.getUsed();
+    userEvent1.setStatus(CL_COMPLETE);
+    EXPECT_FALSE(pipeControlLookup(csrStream, csrOffset));
+    cmdQ->isQueueBlocked();
+}
+
 HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlockedBlitEnqueueThenWaitPipeControlOnBcsEngine) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

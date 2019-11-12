@@ -345,7 +345,6 @@ class CommandQueueHw : public CommandQueue {
                         size_t surfacesCount,
                         const MultiDispatchInfo &multiDispatchInfo,
                         TimestampPacketContainer &previousTimestampPacketNodes,
-                        TimestampPacketContainer &barrierTimestampPacketNode,
                         std::unique_ptr<KernelOperation> &blockedCommandsData,
                         const EnqueueProperties &enqueueProperties,
                         EventsRequest &eventsRequest,
@@ -359,7 +358,7 @@ class CommandQueueHw : public CommandQueue {
                                                 bool &blocking,
                                                 const EnqueueProperties &enqueueProperties,
                                                 TimestampPacketContainer *previousTimestampPacketNodes,
-                                                const TimestampPacketContainer &barrierTimestampPacketNodes,
+                                                TimestampPacketContainer &barrierTimestampPacketNodes,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
                                                 uint32_t taskLevel);
