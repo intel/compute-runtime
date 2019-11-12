@@ -836,6 +836,10 @@ cl_int Kernel::setArg(uint32_t argIndex, uint32_t argVal) {
     return setArg(argIndex, sizeof(argVal), &argVal);
 }
 
+cl_int Kernel::setArg(uint32_t argIndex, uint64_t argVal) {
+    return setArg(argIndex, sizeof(argVal), &argVal);
+}
+
 cl_int Kernel::setArg(uint32_t argIndex, cl_mem argVal) {
     return setArg(argIndex, sizeof(argVal), &argVal);
 }

@@ -671,6 +671,100 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStatelessIsUsedThenParamsAreCorrect) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless, *pContext, *pDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    MultiDispatchInfo multiDispatchInfo;
+    BuiltinOpParams builtinOpsParams;
+
+    builtinOpsParams.srcMemObj = &srcBuffer;
+    builtinOpsParams.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    builtinOpsParams.dstMemObj = &dstBuffer;
+    builtinOpsParams.dstOffset = {0, 0, 0};
+    builtinOpsParams.size = {static_cast<size_t>(size), 0, 0};
+
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
+}
+
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectStatelessIsUsedThenParamsAreCorrect) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless, *pContext, *pDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {static_cast<size_t>(size), 1, 1};
+    dc.srcRowPitch = static_cast<size_t>(size);
+    dc.srcSlicePitch = 0;
+    dc.dstRowPitch = static_cast<size_t>(size);
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo;
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedThenParamsAreCorrect) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless, *pContext, *pDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.size = {static_cast<size_t>(size), 0, 0};
+
+    MultiDispatchInfo multiDispatchInfo;
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pContext, *pDevice);
 

@@ -225,6 +225,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
+    cl_int setArg(uint32_t argIndex, uint64_t argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue, uint32_t mipLevel);
 
