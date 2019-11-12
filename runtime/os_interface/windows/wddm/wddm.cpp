@@ -82,6 +82,7 @@ Wddm::~Wddm() {
     destroyPagingQueue();
     destroyDevice();
     closeAdapter();
+    UNRECOVERABLE_IF(temporaryResources.get())
 }
 
 bool Wddm::init(HardwareInfo &outHardwareInfo) {
