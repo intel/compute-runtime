@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_command_stream
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
 

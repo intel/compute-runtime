@@ -289,6 +289,18 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddres
     EXPECT_EQ(0u, scratchController->calculateNewGSH());
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenKernelExecInfothreadArbitfationPoliciesWhenCallGetThreadArbitationPolicyThenRetunProperValueEuSchedulingMode) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    uint32_t retVal = UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(ThreadArbitrationPolicy::RoundRobin);
+    EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobin), retVal);
+
+    retVal = UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
+    EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::AgeBased), retVal);
+
+    retVal = UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(ThreadArbitrationPolicy::RoundRobinAfterDependency);
+    EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobinAfterDependency), retVal);
+}
+
 struct BcsTests : public CommandStreamReceiverHwTest {
     void SetUp() override {
         CommandStreamReceiverHwTest::SetUp();

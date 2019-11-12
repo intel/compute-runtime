@@ -10,7 +10,9 @@
 #include "core/helpers/preamble.h"
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/stackvec.h"
+#include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
+#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
@@ -346,14 +348,10 @@ class Kernel : public BaseObject<_cl_kernel> {
     const bool isParentKernel;
     const bool isSchedulerKernel;
 
-    template <typename GfxFamily>
-    uint32_t getThreadArbitrationPolicy() {
-        if (kernelInfo.patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired) {
-            return PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
-        } else {
-            return ThreadArbitrationPolicy::AgeBased;
-        }
+    uint32_t getThreadArbitrationPolicy() const {
+        return threadArbitrationPolicy;
     }
+
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 
     bool is32Bit() const {
@@ -397,6 +395,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     void clearUnifiedMemoryExecInfo();
 
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
+    void setThreadArbitrationPolicy(uint32_t propertyValue) {
+        this->threadArbitrationPolicy = propertyValue;
+    }
 
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const;
 
@@ -521,6 +522,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
+    uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;

@@ -18,8 +18,8 @@ struct ComputeModeRequirements : public ::testing::Test {
     template <typename FamilyType>
     struct myCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiver::commandStream;
-        using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
         using CommandStreamReceiverHw<FamilyType>::lastSentThreadArbitrationPolicy;
+        using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
         myCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
     };
@@ -28,12 +28,7 @@ struct ComputeModeRequirements : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void overrideComputeModeRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles) {
-        overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, false, 128u);
-    }
-
-    template <typename FamilyType>
-    void overrideComputeModeRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles, bool modifyThreadArbitrationPolicy) {
+    void overrideComputeModeRequest(bool reqestChanged, bool requireCoherency, bool hasSharedHandles, bool modifyThreadArbitrationPolicy = false) {
         overrideComputeModeRequest<FamilyType>(reqestChanged, requireCoherency, hasSharedHandles, false, 128u);
         if (modifyThreadArbitrationPolicy) {
             getCsrHw<FamilyType>()->lastSentThreadArbitrationPolicy = getCsrHw<FamilyType>()->requiredThreadArbitrationPolicy;
@@ -78,6 +73,6 @@ struct ComputeModeRequirements : public ::testing::Test {
 
     CommandStreamReceiver *csr = nullptr;
     std::unique_ptr<MockDevice> device;
-    DispatchFlags flags{{}, nullptr, {}, nullptr, QueueThrottle::MEDIUM, PreemptionMode::Disabled, GrfConfig::DefaultGrfNumber, L3CachingSettings::l3CacheOn, QueueSliceCount::defaultSliceCount, false, false, false, false, false, false, false, false, false, false};
+    DispatchFlags flags{{}, nullptr, {}, nullptr, QueueThrottle::MEDIUM, PreemptionMode::Disabled, GrfConfig::DefaultGrfNumber, L3CachingSettings::l3CacheOn, ThreadArbitrationPolicy::NotPresent, QueueSliceCount::defaultSliceCount, false, false, false, false, false, false, false, false, false, false};
     GraphicsAllocation *alloc = nullptr;
 };

@@ -41,6 +41,11 @@ uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
 }
 
 template <typename GfxFamily>
+inline uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(uint32_t policy) {
+    return policy;
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
     return usedScratchGpuAddress == retrievedGshAddress;
 }

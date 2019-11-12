@@ -12,6 +12,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -486,6 +487,36 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
                                                                  nullptr,
                                                                  nullptr);
     EXPECT_TRUE(pDevice->getUltCommandStreamReceiver<FamilyType>().checkAndActivateAubSubCaptureCalled);
+
+    mockCmdQ->release();
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySetThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+
+    MockKernelWithInternals kernelInternals(*pDevice, context);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    uint32_t euThreadSetting = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
+    size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
+    clSetKernelExecInfo(
+        kernel,                                              // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
+        ptrSizeInBytes,                                      // size_t param_value_size
+        &euThreadSetting                                     // const void *param_value
+    );
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
+
+    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
+                                                                 0,
+                                                                 false,
+                                                                 multiDispatchInfo,
+                                                                 0,
+                                                                 nullptr,
+                                                                 nullptr);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(euThreadSetting)), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
 
     mockCmdQ->release();
 }

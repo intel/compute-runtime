@@ -37,6 +37,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::numberOfBindingTableStates;
     using Kernel::svmAllocationsRequireCacheFlush;
+    using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
 
     struct BlockPatchValues {
@@ -256,10 +257,10 @@ class MockKernel : public Kernel {
 //class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(const Device &deviceArg, Context *context = nullptr, bool addDefaultArg = false) {
+    MockKernelWithInternals(const Device &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment newExecutionEnvironment = {}) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
         memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
-        memset(&executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
+        memcpy(&executionEnvironment, &newExecutionEnvironment, sizeof(SPatchExecutionEnvironment));
         memset(&executionEnvironmentBlock, 0, sizeof(SPatchExecutionEnvironment));
         memset(&dataParameterStream, 0, sizeof(SPatchDataParameterStream));
         memset(&mediaVfeState, 0, sizeof(SPatchMediaVFEState));
@@ -318,6 +319,11 @@ class MockKernelWithInternals {
             kernelInfo.kernelArgInfo[0].offsetHeap = 64;
         }
     }
+
+    MockKernelWithInternals(const Device &deviceArg, SPatchExecutionEnvironment newExecutionEnvironment) : MockKernelWithInternals(deviceArg, nullptr, false, newExecutionEnvironment) {
+        mockKernel->initialize();
+    }
+
     ~MockKernelWithInternals() {
         mockKernel->decRefInternal();
         mockProgram->decRefInternal();

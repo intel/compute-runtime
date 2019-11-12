@@ -322,4 +322,5 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
 
     EXPECT_TRUE(mockCsr->passedDispatchFlags.epilogueRequired);
     EXPECT_EQ(1234u, mockCsr->passedDispatchFlags.engineHints);
+    EXPECT_EQ(kernel.mockKernel->getThreadArbitrationPolicy(), mockCsr->passedDispatchFlags.threadArbitrationPolicy);
 }

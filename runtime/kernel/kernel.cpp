@@ -310,7 +310,11 @@ cl_int Kernel::initialize() {
                 Buffer::setSurfaceState(&getDevice(), surfaceState, 0, nullptr);
             }
         }
-
+        if (kernelInfo.patchInfo.executionEnvironment) {
+            if (!kernelInfo.patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired) {
+                setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
+            }
+        }
         patchBlocksSimdSize();
 
         provideInitializationHints();

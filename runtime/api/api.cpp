@@ -4449,6 +4449,11 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         }
         break;
     }
+    case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL: {
+        auto propertyValue = *static_cast<const uint32_t *>(paramValue);
+        pKernel->setThreadArbitrationPolicy(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(propertyValue));
+        return retVal;
+    }
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
         retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clSetKernelExecInfo, &retVal);
