@@ -14,6 +14,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
@@ -162,6 +163,22 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesF
 
     ASSERT_TRUE(success);
     EXPECT_EQ(requiredDeviceCount, numDevices);
+}
+
+TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeForTgllpProductFamilyWhenGetDevicesForProductFamilyOverrideIsCalledThenAubCenterIsInitializedCorrectly) {
+    DeviceFactoryCleaner cleaner;
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    DebugManager.flags.ProductFamilyOverride.set("tgllp");
+
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    ASSERT_TRUE(success);
+
+    EXPECT_TRUE(executionEnvironment.initAubCenterCalled);
+    EXPECT_FALSE(executionEnvironment.localMemoryEnabledReceived);
 }
 
 TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {
