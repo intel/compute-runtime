@@ -30,7 +30,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     KernelOperation *blockedCommandsData,
     TagNode<HwTimeStamps> *hwTimeStamps,
     TagNode<HwPerfCounter> *hwPerfCounter,
-    TimestampPacketContainer *previousTimestampPacketNodes,
+    TimestampPacketDependencies *timestampPacketDependencies,
     TimestampPacketContainer *currentTimestampPacketNodes,
     uint32_t commandType) {
 

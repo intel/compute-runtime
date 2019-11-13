@@ -334,7 +334,7 @@ class CommandQueueHw : public CommandQueue {
                                       size_t commandStreamStart,
                                       bool &blocking,
                                       const MultiDispatchInfo &multiDispatchInfo,
-                                      TimestampPacketContainer *previousTimestampPacketNodes,
+                                      TimestampPacketDependencies &timestampPacketDependencies,
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       uint32_t taskLevel,
@@ -357,8 +357,7 @@ class CommandQueueHw : public CommandQueue {
                                                 size_t commandStreamStart,
                                                 bool &blocking,
                                                 const EnqueueProperties &enqueueProperties,
-                                                TimestampPacketContainer *previousTimestampPacketNodes,
-                                                TimestampPacketContainer &barrierTimestampPacketNodes,
+                                                TimestampPacketDependencies &timestampPacketDependencies,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
                                                 uint32_t taskLevel);
@@ -367,8 +366,7 @@ class CommandQueueHw : public CommandQueue {
                                       LinearStream *commandStream,
                                       CsrDependencies &csrDeps);
     BlitProperties processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
-                                                 TimestampPacketContainer &previousTimestampPacketNodes,
-                                                 TimestampPacketContainer &barrierTimestampPacketNode,
+                                                 TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,
                                                  LinearStream &commandStream,
                                                  uint32_t commandType, bool queueBlocked);
@@ -450,6 +448,6 @@ class CommandQueueHw : public CommandQueue {
                                    DeviceQueueHw<GfxFamily> *devQueueHw,
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
-                                   TimestampPacketContainer &previousTimestampPacketNodes);
+                                   TimestampPacketDependencies &timestampPacketDependencies);
 };
 } // namespace NEO

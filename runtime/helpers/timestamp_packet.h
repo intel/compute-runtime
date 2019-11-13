@@ -91,6 +91,11 @@ class TimestampPacketContainer : public NonCopyableClass {
     std::vector<Node *> timestampPacketNodes;
 };
 
+struct TimestampPacketDependencies : public NonCopyableClass {
+    TimestampPacketContainer previousEnqueueNodes;
+    TimestampPacketContainer barrierNodes;
+};
+
 struct TimestampPacketHelper {
     template <typename GfxFamily>
     static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode) {
