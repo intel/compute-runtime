@@ -7,7 +7,7 @@
 
 #include "unit_tests/os_interface/hw_info_config_tests.h"
 
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 
 using namespace NEO;

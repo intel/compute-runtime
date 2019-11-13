@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
@@ -12,7 +13,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_context_controller.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/os_interface/debug_settings_manager.h"

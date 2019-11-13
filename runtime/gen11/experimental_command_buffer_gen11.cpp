@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/experimental_command_buffer.inl"
-#include "runtime/helpers/hw_helper.h"
 
 namespace NEO {
 typedef ICLFamily GfxFamily;

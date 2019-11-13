@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/metrics_library.h"
 
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/os_interface/os_inc_base.h"
 
 namespace NEO {

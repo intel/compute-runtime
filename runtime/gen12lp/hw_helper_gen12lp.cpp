@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/hw_helper_bdw_plus.inl"
 #include "runtime/aub/aub_helper_bdw_plus.inl"
 #include "runtime/gen12lp/helpers_gen12lp.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
-#include "runtime/helpers/hw_helper_bdw_plus.inl"
 
 #include "engine_node.h"
 

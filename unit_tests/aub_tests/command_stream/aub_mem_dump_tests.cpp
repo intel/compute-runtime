@@ -7,9 +7,9 @@
 
 #include "aub_mem_dump_tests.h"
 
+#include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub/aub_helper.h"
-#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 

@@ -15,7 +15,7 @@
 #ifdef HAVE_INSTRUMENTATION
 #include "runtime/event/perf_counter.h"
 #endif
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"

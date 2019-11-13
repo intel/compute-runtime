@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "unit_tests/helpers/gtest_helpers.h"

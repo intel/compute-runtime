@@ -7,8 +7,8 @@
 
 #include "performance_counters_win.h"
 
+#include "core/helpers/hw_helper.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/os_time_win.h"
 

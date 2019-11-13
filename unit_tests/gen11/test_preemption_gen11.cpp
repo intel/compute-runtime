@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_buffer.h"

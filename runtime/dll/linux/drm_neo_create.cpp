@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"

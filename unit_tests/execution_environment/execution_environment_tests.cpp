@@ -6,6 +6,7 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/destructor_counted.h"
 #include "runtime/aub/aub_center.h"
@@ -14,7 +15,6 @@
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_interface.h"

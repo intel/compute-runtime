@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/gen12lp/hw_cmds.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"

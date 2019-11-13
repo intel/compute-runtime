@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "core/helpers/hw_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

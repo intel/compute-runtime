@@ -7,7 +7,7 @@
 
 #include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/os_interface.h"
 

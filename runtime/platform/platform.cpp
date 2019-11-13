@@ -9,6 +9,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/helpers/hw_helper.h"
 #include "core/helpers/string.h"
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -19,7 +20,6 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"

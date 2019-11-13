@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/hw_helper.h"
+#include "core/helpers/hw_helper.h"
 
 #include "runtime/os_interface/debug_settings_manager.h"
 

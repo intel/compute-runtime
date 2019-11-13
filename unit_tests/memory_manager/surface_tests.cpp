@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
