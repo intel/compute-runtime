@@ -48,8 +48,8 @@ class PerformanceCounters {
     //////////////////////////////////////////////////////
     // Gpu commands.
     //////////////////////////////////////////////////////
-    uint32_t getGpuCommandsSize(const bool begin);
-    bool getGpuCommands(TagNode<HwPerfCounter> &performanceCounters, const bool begin, const uint32_t bufferSize, void *pBuffer);
+    uint32_t getGpuCommandsSize(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, const bool begin);
+    bool getGpuCommands(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, TagNode<HwPerfCounter> &performanceCounters, const bool begin, const uint32_t bufferSize, void *pBuffer);
 
     /////////////////////////////////////////////////////
     // Gpu/Api reports.

@@ -82,6 +82,11 @@ uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInf
 }
 
 template <>
+uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen12);
+}
+
+template <>
 const std::vector<aub_stream::EngineType> HwHelperHw<Family>::getGpgpuEngineInstances() const {
     constexpr std::array<aub_stream::EngineType, 3> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
                                                                              aub_stream::ENGINE_RCS, // low priority

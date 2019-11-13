@@ -54,6 +54,12 @@ bool MetricsLibrary::contextCreate(
     ContextCreateData_1_0 &createData,
     ContextHandle_1_0 &handle) {
 
+    MetricsLibraryApi::ClientOptionsData_1_0 clientOptions[1] = {};
+    clientOptions[0].Type = MetricsLibraryApi::ClientOptionsType::Compute;
+    clientOptions[0].Compute.Asynchronous = true;
+    clientData.ClientOptionsCount = 1;
+    clientData.ClientOptions = clientOptions;
+
     createData.Api = &api->functions;
     createData.ClientCallbacks = &api->callbacks;
     createData.ClientData = &clientData;

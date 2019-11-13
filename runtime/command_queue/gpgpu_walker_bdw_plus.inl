@@ -194,8 +194,13 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         size += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
     if (reservePerfCounters) {
-        size += commandQueue.getPerfCounters()->getGpuCommandsSize(true);
-        size += commandQueue.getPerfCounters()->getGpuCommandsSize(false);
+
+        const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+                                           ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                           : MetricsLibraryApi::GpuCommandBufferType::Render;
+
+        size += commandQueue.getPerfCounters()->getGpuCommandsSize(commandBufferType, true);
+        size += commandQueue.getPerfCounters()->getGpuCommandsSize(commandBufferType, false);
     }
     size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(pKernel);
 

@@ -186,7 +186,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Obtain required command buffer size.
-    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(true);
+    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
     EXPECT_NE(0u, commandsSize);
 
     // Fill command buffer.
@@ -194,7 +194,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     HwPerfCounter perfCounter = {};
     TagNode<HwPerfCounter> query = {};
     query.tagForCpuAccess = &perfCounter;
-    EXPECT_TRUE(performanceCountersBase->getGpuCommands(query, true, sizeof(buffer), buffer));
+    EXPECT_TRUE(performanceCountersBase->getGpuCommands(MetricsLibraryApi::GpuCommandBufferType::Render, query, true, sizeof(buffer), buffer));
 
     // Close library.
     performanceCountersBase->shutdown();
@@ -208,7 +208,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     performanceCountersBase->enable();
 
     // Obtain required command buffer size.
-    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(true);
+    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
     EXPECT_EQ(0u, commandsSize);
 
     // Close library.
@@ -334,7 +334,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Obtain required command buffer size.
-    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(true);
+    uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
     EXPECT_NE(0u, commandsSize);
 
     // Fill command buffer.
@@ -342,7 +342,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     TagNode<HwPerfCounter> query = {};
     HwPerfCounter perfCounter = {};
     query.tagForCpuAccess = &perfCounter;
-    EXPECT_TRUE(performanceCountersBase->getGpuCommands(query, true, sizeof(buffer), buffer));
+    EXPECT_TRUE(performanceCountersBase->getGpuCommands(MetricsLibraryApi::GpuCommandBufferType::Render, query, true, sizeof(buffer), buffer));
 
     // Obtain api report size.
     uint32_t apiReportSize = performanceCountersBase->getApiReportSize();
@@ -405,8 +405,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
     metricLibraryApi->validCreateConfigurationOa = false;
 
-    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(true));
-    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(false), 0u);
+    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true));
+    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, false), 0u);
 
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
@@ -421,8 +421,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
     metricLibraryApi->validGpuReportSize = false;
 
-    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(true));
-    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(false));
+    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true));
+    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, false));
 
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
@@ -438,8 +438,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenAllCon
     metricLibraryApi->validCreateConfigurationOa = true;
     metricLibraryApi->validCreateConfigurationUser = true;
 
-    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(true), 0u);
-    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(false), 0u);
+    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true), 0u);
+    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, false), 0u);
 
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
@@ -454,8 +454,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
     metricLibraryApi->validActivateConfigurationOa = false;
 
-    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(true));
-    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(false), 0u);
+    EXPECT_EQ(0u, performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true));
+    EXPECT_GT(performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, false), 0u);
 
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());

@@ -17,11 +17,13 @@
 #include "runtime/device/device_info.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"
+#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/mem_obj/mem_obj.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include <algorithm>
@@ -156,11 +158,14 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     TagNode<HwPerfCounter> &hwPerfCounter,
     LinearStream *commandStream) {
 
-    auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const uint32_t size = pPerformanceCounters->getGpuCommandsSize(true);
+    const auto pPerformanceCounters = commandQueue.getPerfCounters();
+    const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+                                       ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                       : MetricsLibraryApi::GpuCommandBufferType::Render;
+    const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, true);
     void *pBuffer = commandStream->getSpace(size);
 
-    pPerformanceCounters->getGpuCommands(hwPerfCounter, true, size, pBuffer);
+    pPerformanceCounters->getGpuCommands(commandBufferType, hwPerfCounter, true, size, pBuffer);
 }
 
 template <typename GfxFamily>
@@ -169,11 +174,14 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     TagNode<HwPerfCounter> &hwPerfCounter,
     LinearStream *commandStream) {
 
-    auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const uint32_t size = pPerformanceCounters->getGpuCommandsSize(false);
+    const auto pPerformanceCounters = commandQueue.getPerfCounters();
+    const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+                                       ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                       : MetricsLibraryApi::GpuCommandBufferType::Render;
+    const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, false);
     void *pBuffer = commandStream->getSpace(size);
 
-    pPerformanceCounters->getGpuCommands(hwPerfCounter, false, size, pBuffer);
+    pPerformanceCounters->getGpuCommands(commandBufferType, hwPerfCounter, false, size, pBuffer);
 }
 
 template <typename GfxFamily>

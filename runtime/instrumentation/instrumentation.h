@@ -23,7 +23,8 @@ namespace MetricsLibraryApi {
 enum class ClientApi : uint32_t { OpenCL };
 enum class ClientGen : uint32_t { Unknown,
                                   Gen9,
-                                  Gen11 };
+                                  Gen11,
+                                  Gen12 };
 enum class ValueType : uint32_t { Uint32 };
 enum class GpuConfigurationActivationType : uint32_t { Tbs,
                                                        EscapeCode };
@@ -35,7 +36,12 @@ enum class ParameterType : uint32_t { QueryHwCountersReportApiSize,
 enum class StatusCode : uint32_t { Failed,
                                    IncorrectObject,
                                    Success };
-enum class GpuCommandBufferType : uint32_t { Render };
+enum class GpuCommandBufferType : uint32_t { Render,
+                                             Compute };
+
+enum class ClientOptionsType : uint32_t {
+    Compute
+};
 
 // Dummy handles.
 struct Handle {
@@ -60,11 +66,22 @@ struct ClientDataLinux_1_0 {
     void *Reserved;
 };
 
+struct ClientOptionsComputeData_1_0 {
+    bool Asynchronous;
+};
+
+struct ClientOptionsData_1_0 {
+    ClientOptionsType Type;
+    ClientOptionsComputeData_1_0 Compute;
+};
+
 struct ClientData_1_0 {
     union {
         ClientDataWindows_1_0 Windows;
         ClientDataLinux_1_0 Linux;
     };
+    ClientOptionsData_1_0 *ClientOptions;
+    uint32_t ClientOptionsCount;
 };
 
 struct ConfigurationActivateData_1_0 {

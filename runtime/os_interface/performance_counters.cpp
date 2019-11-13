@@ -152,6 +152,7 @@ QueryHandle_1_0 PerformanceCounters::getQueryHandle() {
 // PerformanceCounters::getGpuCommandsSize
 //////////////////////////////////////////////////////
 uint32_t PerformanceCounters::getGpuCommandsSize(
+    const MetricsLibraryApi::GpuCommandBufferType commandBufferType,
     const bool begin) {
     CommandBufferData_1_0 bufferData = {};
     CommandBufferSize_1_0 bufferSize = {};
@@ -165,8 +166,8 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
     }
 
     bufferData.HandleContext = context;
-    bufferData.Type = GpuCommandBufferType::Render;
     bufferData.CommandsType = ObjectType::QueryHwCounters;
+    bufferData.Type = commandBufferType;
 
     bufferData.QueryHwCounters.Begin = begin;
     bufferData.QueryHwCounters.Handle = getQueryHandle();
@@ -181,17 +182,19 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
 // PerformanceCounters::getGpuCommands
 //////////////////////////////////////////////////////
 bool PerformanceCounters::getGpuCommands(
+    const MetricsLibraryApi::GpuCommandBufferType commandBufferType,
     TagNode<HwPerfCounter> &performanceCounters,
     const bool begin,
     const uint32_t bufferSize,
     void *pBuffer) {
+
     // Command Buffer data.
     CommandBufferData_1_0 bufferData = {};
     bufferData.HandleContext = context;
-    bufferData.Type = GpuCommandBufferType::Render;
     bufferData.CommandsType = ObjectType::QueryHwCounters;
     bufferData.Data = pBuffer;
     bufferData.Size = bufferSize;
+    bufferData.Type = commandBufferType;
 
     // Gpu memory allocation for query hw counters.
     bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.tagForCpuAccess);
