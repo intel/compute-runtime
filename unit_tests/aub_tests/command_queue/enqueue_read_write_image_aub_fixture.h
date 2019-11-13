@@ -20,10 +20,10 @@ struct AUBImageUnaligned
       public ::testing::Test {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        CommandEnqueueAUBFixture::SetUp();
     }
 
     void TearDown() override {

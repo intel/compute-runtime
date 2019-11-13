@@ -35,11 +35,11 @@ struct AUBCreateImage
     using AUBCommandStreamFixture::SetUp;
 
     void SetUp() override {
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
+        CommandStreamFixture::SetUp(pCmdQ);
 
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
         imageFormat.image_channel_order = CL_RGBA;
@@ -72,10 +72,10 @@ struct AUBCreateImage
 struct AUBCreateImageArray : public AUBCreateImage,
                              public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {
     void SetUp() override {
-        AUBCreateImage::SetUp();
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        AUBCreateImage::SetUp();
     }
     void TearDown() override {
         AUBCreateImage::TearDown();
@@ -175,10 +175,10 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
 struct AUBCreateImageHostPtr : public AUBCreateImage,
                                public ::testing::WithParamInterface<uint64_t /*cl_mem_object_type*/> {
     void SetUp() override {
-        AUBCreateImage::SetUp();
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        AUBCreateImage::SetUp();
     }
     void TearDown() override {
         AUBCreateImage::TearDown();

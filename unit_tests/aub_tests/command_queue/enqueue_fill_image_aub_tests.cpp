@@ -85,11 +85,12 @@ struct AubFillImage
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
     void SetUp() override {
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
+        CommandStreamFixture::SetUp(pCmdQ);
+
         context = std::make_unique<MockContext>(pDevice);
     }
 
