@@ -218,6 +218,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     StorageInfo storageInfo = {};
 
     static constexpr uint32_t defaultBank = 0b1u;
+    static constexpr uint32_t allBanks = 0xffffffff;
 
   protected:
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();

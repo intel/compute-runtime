@@ -5,7 +5,11 @@
  *
  */
 
+#include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/unified_memory_manager.h"
+#include "core/unified_memory/unified_memory.h"
 #include "core/unit_tests/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 
@@ -26,6 +30,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenInsertingAllocsThenAllo
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
 
     pageFaultManager->insertAllocation(alloc2, 20, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager), cmdQ);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 2u);
@@ -41,6 +46,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenInsertingAllocsThenAllo
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 2);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
 
     pageFaultManager->removeAllocation(alloc1);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
@@ -100,6 +106,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc1);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc1);
+    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainThenTransferToGpuIsCalled) {
@@ -121,6 +128,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainThenTrans
     EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc);
     EXPECT_EQ(pageFaultManager->protectedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc);
+    EXPECT_FALSE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocInGpuDomainWhenMovingToGpuDomainThenNothingIsCalled) {
@@ -139,6 +147,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocInGpuDomainWhenMovingToGpuDo
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, whenMovingToGpuDomainUntrackedAllocThenNothingIsCalled) {
@@ -152,6 +161,7 @@ TEST_F(PageFaultManagerTest, whenMovingToGpuDomainUntrackedAllocThenNothingIsCal
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
 }
 
 TEST_F(PageFaultManagerTest, givenHandlerRegisteredAndUntrackedPageFaultAddressWhenVerifyingThenFalseIsReturned) {
@@ -187,4 +197,24 @@ TEST_F(PageFaultManagerTest, givenTrackedPageFaultAddressWhenVerifyingThenProper
     EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
     EXPECT_EQ(pageFaultManager->transferToCpuAddress, alloc1);
     EXPECT_EQ(pageFaultManager->transferToCpuSize, 10u);
+    EXPECT_TRUE(pageFaultManager->isAubWritable);
+}
+
+TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledThenAllocIsAubWritable) {
+    MockExecutionEnvironment executionEnvironment;
+    if (!executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm) {
+        GTEST_SKIP();
+    }
+
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+    auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
+    void *alloc1 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(0, 10, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY), cmdQ);
+
+    pageFaultManager->baseAubWritable(false, alloc1, unifiedMemoryManager.get());
+
+    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(alloc1)->gpuAllocation;
+    EXPECT_FALSE(gpuAlloc->isAubWritable(GraphicsAllocation::allBanks));
+
+    unifiedMemoryManager->freeSVMAlloc(alloc1);
 }

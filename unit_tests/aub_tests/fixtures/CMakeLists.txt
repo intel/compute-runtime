@@ -13,5 +13,6 @@ target_sources(igdrcl_aub_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hello_world_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_fixture.h
 )
 add_subdirectories()

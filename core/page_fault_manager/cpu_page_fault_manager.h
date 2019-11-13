@@ -41,6 +41,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL bool verifyPageFault(void *ptr);
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
+    MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
     std::unordered_map<void *, PageFaultData> memoryData;
     SpinLock mtx;

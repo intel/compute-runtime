@@ -37,6 +37,12 @@ class MockPageFaultManager : public PageFaultManager {
         transferToGpuCalled++;
         transferToGpuAddress = ptr;
     }
+    void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) override {
+        isAubWritable = writable;
+    }
+    void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+        PageFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
+    }
     void baseCpuTransfer(void *ptr, size_t size, void *cmdQ) {
         PageFaultManager::transferToCpu(ptr, size, cmdQ);
     }
@@ -55,6 +61,7 @@ class MockPageFaultManager : public PageFaultManager {
     size_t transferToCpuSize = 0;
     size_t accessAllowedSize = 0;
     size_t protectedSize = 0;
+    bool isAubWritable = true;
 };
 
 template <class T>

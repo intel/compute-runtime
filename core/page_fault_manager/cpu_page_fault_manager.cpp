@@ -9,6 +9,8 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/unified_memory_manager.h"
 
 #include <mutex>
 
@@ -37,6 +39,7 @@ void PageFaultManager::moveAllocationToGpuDomain(void *ptr) {
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
         if (pageFaultData.isInGpuDomain == false) {
+            this->setAubWritable(false, ptr, pageFaultData.unifiedMemoryManager);
             this->transferToGpu(ptr, pageFaultData.cmdQ);
             this->protectCPUMemoryAccess(ptr, pageFaultData.size);
             pageFaultData.isInGpuDomain = true;
@@ -50,6 +53,7 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
         if (pageFaultData.unifiedMemoryManager == unifiedMemoryManager && pageFaultData.isInGpuDomain == false) {
+            this->setAubWritable(false, allocPtr, pageFaultData.unifiedMemoryManager);
             this->transferToGpu(allocPtr, pageFaultData.cmdQ);
             this->protectCPUMemoryAccess(allocPtr, pageFaultData.size);
             pageFaultData.isInGpuDomain = true;
@@ -64,11 +68,17 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
             this->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
+            this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
             this->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
             pageFaultData.isInGpuDomain = false;
             return true;
         }
     }
     return false;
+}
+
+void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocation;
+    gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
 }
 } // namespace NEO
