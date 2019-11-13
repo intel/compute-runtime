@@ -20,7 +20,7 @@ using namespace NEO;
 Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription extMem, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
 
-    auto graphicsAllocation = UnifiedBuffer::createGraphicsAllocation(context, extMem.handle);
+    auto graphicsAllocation = UnifiedBuffer::createGraphicsAllocation(context, extMem);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;
@@ -31,7 +31,13 @@ Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags 
     return Buffer::createSharedBuffer(context, flags, sharingHandler, graphicsAllocation);
 }
 
-GraphicsAllocation *UnifiedBuffer::createGraphicsAllocation(Context *context, void *handle) {
-    auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, 0);
-    return graphicsAllocation;
+GraphicsAllocation *UnifiedBuffer::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description) {
+    switch (description.type) {
+    case UnifiedSharingHandleType::Win32Nt: {
+        auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(description.handle, 0u);
+        return graphicsAllocation;
+    }
+    default:
+        return nullptr;
+    }
 }

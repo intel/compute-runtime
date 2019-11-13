@@ -16,12 +16,13 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnifiedBufferThenItCanBe
     cl_mem_flags flags{};
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Nt;
     cl_int retVal{};
     auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     UnifiedSharingFunctions sharingFunctions;
-    MockUnifiedBuffer *sharingHandler = new MockUnifiedBuffer(&sharingFunctions, UnifiedSharingHandleType::Win32Nt);
+    MockUnifiedBuffer *sharingHandler = new MockUnifiedBuffer(&sharingFunctions, desc.type);
     buffer->setSharingHandler(sharingHandler);
 
     ASSERT_EQ(0u, sharingHandler->acquireCount);
@@ -43,7 +44,36 @@ TEST_F(UnifiedSharingBufferTestsWithInvalidMemoryManager, givenValidContextAndAl
     cl_mem_flags flags{};
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Nt;
     cl_int retVal{};
     auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
     ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
+TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnsupportedHandleTypeWhenCreatingBufferFromSharedHandleThenReturnInvalidMemObject) {
+    cl_mem_flags flags{};
+    cl_int retVal{};
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+
+    desc.type = UnifiedSharingHandleType::Win32Shared;
+    buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+
+    desc.type = UnifiedSharingHandleType::LinuxFd;
+    buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
+TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenValidContextAndMemoryManagerWhenCreatingBufferFromSharedHandleThenReturnSuccess) {
+    cl_mem_flags flags{};
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Nt;
+    cl_int retVal{};
+    auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 }

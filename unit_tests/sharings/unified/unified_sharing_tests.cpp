@@ -139,12 +139,13 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
     cl_mem_flags flags{};
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Nt;
     cl_int retVal{};
     auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     UnifiedSharingFunctions sharingFunctions;
-    MockSharingHandler *sharingHandler = new MockSharingHandler(&sharingFunctions, UnifiedSharingHandleType::Win32Nt);
+    MockSharingHandler *sharingHandler = new MockSharingHandler(&sharingFunctions, desc.type);
     buffer->setSharingHandler(sharingHandler);
 
     ASSERT_EQ(0u, sharingHandler->synchronizeObjectCalled);

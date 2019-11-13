@@ -20,6 +20,6 @@ class UnifiedBuffer : public UnifiedSharing {
     static Buffer *createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description, cl_int *errcodeRet);
 
   protected:
-    static GraphicsAllocation *createGraphicsAllocation(Context *context, void *handle);
+    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description);
 };
 } // namespace NEO
