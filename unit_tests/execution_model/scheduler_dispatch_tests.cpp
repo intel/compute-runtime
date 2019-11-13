@@ -67,7 +67,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
             pDevice->getPreemptionMode(),
             scheduler,
             &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+            false);
 
         EXPECT_EQ(0u, *scheduler.globalWorkOffsetX);
         EXPECT_EQ(0u, *scheduler.globalWorkOffsetY);
@@ -188,7 +189,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
             pDevice->getPreemptionMode(),
             scheduler,
             &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+            false);
 
         auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
 
@@ -224,7 +226,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
             device->getPreemptionMode(),
             scheduler,
             &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-            mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+            mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+            false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream, 0);

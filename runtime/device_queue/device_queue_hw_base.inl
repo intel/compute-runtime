@@ -179,13 +179,14 @@ size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &sc
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
+void DeviceQueueHw<GfxFamily>::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed) {
     GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(commandStream,
                                                     *this,
                                                     preemptionMode,
                                                     scheduler,
                                                     ssh,
-                                                    dsh);
+                                                    dsh,
+                                                    isCcsUsed);
     return;
 }
 
@@ -234,5 +235,18 @@ size_t DeviceQueueHw<GfxFamily>::getProfilingEndCmdsSize() {
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::addDcFlushToPipeControlWa(PIPE_CONTROL *pc) {}
+
+template <typename GfxFamily>
+uint64_t DeviceQueueHw<GfxFamily>::getBlockKernelStartPointer(const Device &device, const KernelInfo *blockInfo, bool isCcsUsed) {
+    auto blockAllocation = blockInfo->getGraphicsAllocation();
+    DEBUG_BREAK_IF(!blockAllocation);
+
+    auto blockKernelStartPointer = blockAllocation ? blockAllocation->getGpuAddressToPatch() : 0llu;
+
+    if (blockAllocation && isCcsUsed && device.getHardwareInfo().workaroundTable.waUseOffsetToSkipSetFFIDGP) {
+        blockKernelStartPointer += blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+    }
+    return blockKernelStartPointer;
+}
 
 } // namespace NEO

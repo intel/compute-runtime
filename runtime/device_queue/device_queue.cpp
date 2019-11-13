@@ -147,12 +147,12 @@ void DeviceQueue::initDeviceQueue() {
 }
 
 void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel,
-                                              uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp) {
-    setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentCount);
+                                              uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp, bool isCcsUsed) {
+    setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentCount, isCcsUsed);
     addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, tagAddress, taskCount);
 }
 
-void DeviceQueue::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+void DeviceQueue::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount, bool isCcsUsed) {
     return;
 }
 
@@ -164,7 +164,7 @@ void DeviceQueue::resetDeviceQueue() {
     return;
 }
 
-void DeviceQueue::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
+void DeviceQueue::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed) {
     return;
 }
 

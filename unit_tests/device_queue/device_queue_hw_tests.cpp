@@ -541,7 +541,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectState) {
         auto usedBeforeSSH = ssh->getUsed();
         auto usedBeforeDSH = dsh->getUsed();
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, 1);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, 1, false);
         auto usedAfterSSH = ssh->getUsed();
         auto usedAfterDSH = dsh->getUsed();
 
@@ -571,7 +571,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
 
         uint32_t parentCount = 4;
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
@@ -601,7 +601,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
 
         uint32_t parentCount = 1;
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapStart, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
@@ -639,7 +639,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, GivenHasBarriersSetWhenCall
                                                                                  const_cast<const Kernel &>(*pKernel));
         auto ssh = std::make_unique<IndirectHeap>(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
 
         auto iddStartPtr = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), devQueueHw->colorCalcStateSize));
         auto iddStartIndex = parentCount;
@@ -791,4 +791,31 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getProfilingEndCmdsSi
     size_t expectedSize = sizeof(PIPE_CONTROL) + sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_LOAD_REGISTER_IMM);
 
     EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getProfilingEndCmdsSize());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOffsetIsAddedToBlockKernelStartPointer) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*pContext));
+    KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->getBlockKernelInfo(0));
+    blockInfo->createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    ASSERT_NE(nullptr, blockInfo->getGraphicsAllocation());
+    const_cast<SPatchThreadPayload *>(blockInfo->patchInfo.threadPayload)->OffsetToSkipSetFFIDGP = 0x1234;
+    const_cast<HardwareInfo &>(device->getHardwareInfo()).workaroundTable.waUseOffsetToSkipSetFFIDGP = true;
+
+    uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+    uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
+    EXPECT_EQ(expectedOffset, offset);
+
+    expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
+    EXPECT_EQ(expectedOffset, offset);
+
+    const_cast<HardwareInfo &>(device->getHardwareInfo()).workaroundTable.waUseOffsetToSkipSetFFIDGP = false;
+
+    expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
+    EXPECT_EQ(expectedOffset, offset);
+
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
+    EXPECT_EQ(expectedOffset, offset);
 }

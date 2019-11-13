@@ -98,3 +98,19 @@ TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisa
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
 }
+
+TGLLPTEST_F(TgllpHwInfo, givenA0SteppingWhenWaTableIsInitializedThenWaUseOffsetToSkipSetFFIDGPIsSet) {
+    HardwareInfo hwInfo;
+    hwInfo.platform.usRevId = REVISION_A0;
+    TGLLP::setupFeatureAndWorkaroundTable(&hwInfo);
+
+    EXPECT_TRUE(hwInfo.workaroundTable.waUseOffsetToSkipSetFFIDGP);
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenA1SteppingWhenWaTableIsInitializedThenWaUseOffsetToSkipSetFFIDGPIsNotSet) {
+    HardwareInfo hwInfo;
+    hwInfo.platform.usRevId = REVISION_A1;
+    TGLLP::setupFeatureAndWorkaroundTable(&hwInfo);
+
+    EXPECT_FALSE(hwInfo.workaroundTable.waUseOffsetToSkipSetFFIDGP);
+}

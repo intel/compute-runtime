@@ -103,9 +103,7 @@ void HardwareCommandsHelper<GfxFamily>::setKernelStartOffset(
     }
     kernelStartOffset += kernel.getStartOffset();
 
-    if ((kernel.getDevice().getHardwareInfo().platform.eProductFamily == IGFX_TIGERLAKE_LP) &&
-        (kernel.getDevice().getHardwareInfo().platform.usRevId == REVISION_A0) &&
-        isCssUsed) {
+    if (isCssUsed && kernel.getDevice().getHardwareInfo().workaroundTable.waUseOffsetToSkipSetFFIDGP) {
         kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
     }
 }

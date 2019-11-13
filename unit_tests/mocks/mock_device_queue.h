@@ -33,6 +33,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     using BaseClass::addPipeControlCmdWa;
     using BaseClass::addProfilingEndCmds;
     using BaseClass::buildSlbDummyCommands;
+    using BaseClass::getBlockKernelStartPointer;
     using BaseClass::getCSPrefetchSize;
     using BaseClass::getExecutionModelCleanupSectionSize;
     using BaseClass::getMediaStateClearCmdsSize;

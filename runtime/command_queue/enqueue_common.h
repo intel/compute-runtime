@@ -19,6 +19,7 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info_builder.h"
+#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
@@ -530,6 +531,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                                                      bool &blocking) {
     auto parentKernel = multiDispatchInfo.peekParentKernel();
     size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+    bool isCcsUsed = isCcs(gpgpuEngine->osContext->getEngineType());
 
     uint32_t taskCount = getGpgpuCommandStreamReceiver().peekTaskCount() + 1;
     devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
@@ -538,7 +540,8 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                                             (uint32_t)multiDispatchInfo.size(),
                                             getGpgpuCommandStreamReceiver().getTagAllocation()->getGpuAddress(),
                                             taskCount,
-                                            hwTimeStamps);
+                                            hwTimeStamps,
+                                            isCcsUsed);
 
     BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
     SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
@@ -560,7 +563,8 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
         preemptionMode,
         scheduler,
         &getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-        devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+        devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+        isCcsUsed);
 
     scheduler.makeResident(getGpgpuCommandStreamReceiver());
 

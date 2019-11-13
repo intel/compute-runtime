@@ -52,18 +52,18 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         return igilCmdQueue->m_controls.m_CriticalSection == DeviceQueueHw<GfxFamily>::ExecutionModelCriticalSection::Free;
     }
 
-    void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override {
+    void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount, bool isCcsUsed) override {
         indirectStateSetup = true;
-        return BaseClass::setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentIDCount);
+        return BaseClass::setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentIDCount, isCcsUsed);
     }
     void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) override {
         cleanupSectionAdded = true;
         timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tagForCpuAccess : nullptr;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, tagAddress, taskCount);
     }
-    void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
+    void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed) override {
         schedulerDispatched = true;
-        return BaseClass::dispatchScheduler(commandStream, scheduler, preemptionMode, ssh, dsh);
+        return BaseClass::dispatchScheduler(commandStream, scheduler, preemptionMode, ssh, dsh, isCcsUsed);
     }
 
     uint32_t criticalSectioncheckCounter = 0;

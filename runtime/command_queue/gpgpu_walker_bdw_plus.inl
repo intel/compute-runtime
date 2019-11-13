@@ -8,7 +8,6 @@
 #pragma once
 #include "core/helpers/simd_helper.h"
 #include "runtime/command_queue/gpgpu_walker_base.inl"
-#include "runtime/helpers/engine_node_helper.h"
 
 namespace NEO {
 
@@ -60,7 +59,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     PreemptionMode preemptionMode,
     SchedulerKernel &scheduler,
     IndirectHeap *ssh,
-    IndirectHeap *dsh) {
+    IndirectHeap *dsh,
+    bool isCcsUsed) {
 
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
@@ -125,7 +125,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     // Program the walker.  Invokes execution so all state should already be programmed
     auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
-    auto isCcsUsed = isCcs(devQueueHw.getDevice().getDefaultEngine().osContext->getEngineType());
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,

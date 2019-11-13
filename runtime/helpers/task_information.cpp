@@ -18,6 +18,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/csr_deps.h"
+#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/task_information.inl"
 #include "runtime/mem_obj/mem_obj.h"
@@ -126,6 +127,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
+    bool isCcsUsed = isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if (executionModelKernel) {
         while (!devQueue->isEMCriticalSectionFree())
@@ -158,7 +160,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
         devQueue->setupExecutionModelDispatch(*ssh, *dsh, kernel, kernelCount,
-                                              commandStreamReceiver.getTagAllocation()->getGpuAddress(), taskCount, timestamp);
+                                              commandStreamReceiver.getTagAllocation()->getGpuAddress(), taskCount, timestamp, isCcsUsed);
 
         BuiltIns &builtIns = *this->kernel->getDevice().getExecutionEnvironment()->getBuiltIns();
         SchedulerKernel &scheduler = builtIns.getSchedulerKernel(commandQueue.getContext());
@@ -178,7 +180,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
             scheduler,
             preemptionMode,
             ssh,
-            dsh);
+            dsh,
+            isCcsUsed);
 
         scheduler.makeResident(commandStreamReceiver);
 

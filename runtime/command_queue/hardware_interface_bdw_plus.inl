@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface_base.inl"
+#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/os_interface/os_context.h"
 
 namespace NEO {

@@ -68,9 +68,9 @@ class DeviceQueue : public BaseObject<_device_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp);
+    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint64_t tagAddress, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp, bool isCcsUsed);
 
-    virtual void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount);
+    virtual void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount, bool isCcsUsed);
     virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount);
 
     MOCKABLE_VIRTUAL bool isEMCriticalSectionFree() {
@@ -80,7 +80,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     }
 
     virtual void resetDeviceQueue();
-    virtual void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh);
+    virtual void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed);
     virtual IndirectHeap *getIndirectHeap(IndirectHeap::Type type);
 
     void acquireEMCriticalSection() {

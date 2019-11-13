@@ -142,7 +142,8 @@ class GpgpuWalkerHelper {
         PreemptionMode preemptionMode,
         SchedulerKernel &scheduler,
         IndirectHeap *ssh,
-        IndirectHeap *dsh);
+        IndirectHeap *dsh,
+        bool isCcsUsed);
 
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 

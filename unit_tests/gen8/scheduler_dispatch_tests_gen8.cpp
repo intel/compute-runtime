@@ -45,7 +45,8 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
             pDevice->getPreemptionMode(),
             scheduler,
             &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+            false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream, 0);

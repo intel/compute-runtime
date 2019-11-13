@@ -142,7 +142,7 @@ size_t DeviceQueueHw<GfxFamily>::getMediaStateClearCmdsSize() {
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount, bool isCcsUsed) {
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     void *pDSH = dynamicStateHeap.getCpuBase();
 
@@ -174,10 +174,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-        auto blockAllocation = pBlockInfo->getGraphicsAllocation();
-        DEBUG_BREAK_IF(!blockAllocation);
-
-        auto gpuAddress = blockAllocation ? blockAllocation->getGpuAddressToPatch() : 0llu;
+        auto blockKernelStartPointer = getBlockKernelStartPointer(getDevice(), pBlockInfo, isCcsUsed);
 
         auto bindingTableCount = pBlockInfo->patchInfo.bindingTableState->Count;
         maxBindingTableCount = std::max(maxBindingTableCount, bindingTableCount);
@@ -196,8 +193,8 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         const INTERFACE_DESCRIPTOR_DATA *pBlockID = static_cast<const INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(pBlockInfo->heapInfo.pDsh, idOffset));
 
         pIDDestination[blockIndex + i] = *pBlockID;
-        pIDDestination[blockIndex + i].setKernelStartPointerHigh(gpuAddress >> 32);
-        pIDDestination[blockIndex + i].setKernelStartPointer((uint32_t)gpuAddress);
+        pIDDestination[blockIndex + i].setKernelStartPointerHigh(blockKernelStartPointer >> 32);
+        pIDDestination[blockIndex + i].setKernelStartPointer(static_cast<uint32_t>(blockKernelStartPointer));
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
         HardwareCommandsHelper<GfxFamily>::programBarrierEnable(&pIDDestination[blockIndex + i],
                                                                 pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
