@@ -25,6 +25,7 @@ class DispatchInfo {
 
   public:
     using DispatchCommandMethodT = void(LinearStream &commandStream);
+    using EstimateCommandsMethodT = size_t(void);
 
     DispatchInfo() = default;
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
@@ -58,8 +59,8 @@ class DispatchInfo {
     bool peekCanBePartitioned() const { return canBePartitioned; }
     void setCanBePartitioned(bool canBePartitioned) { this->canBePartitioned = canBePartitioned; }
 
-    RegisteredMethodDispatcher<DispatchCommandMethodT> dispatchInitCommands;
-    RegisteredMethodDispatcher<DispatchCommandMethodT> dispatchEpilogueCommands;
+    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchInitCommands;
+    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchEpilogueCommands;
 
   protected:
     bool canBePartitioned = false;

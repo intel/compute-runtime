@@ -60,22 +60,20 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     }
 
   protected:
-    template <typename GfxFamily>
-    static void dispatchPipeControlWithDcFlush(LinearStream &linearStream) {
-        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, true);
+    using RegisteredMethodDispatcherT = RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT,
+                                                                   DispatchInfo::EstimateCommandsMethodT>;
+
+    template <typename GfxFamily, bool dcFlush>
+    static void dispatchPipeControl(LinearStream &linearStream) {
+        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, dcFlush);
     }
 
     template <typename GfxFamily>
-    static void dispatchPipeControlWithoutDcFlush(LinearStream &linearStream) {
-        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, false);
-    }
-
-    template <typename GfxFamily>
-    void registerPipeControlProgramming(RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT> &dispatcher, bool dcFlush) const {
+    void registerPipeControlProgramming(RegisteredMethodDispatcherT &dispatcher, bool dcFlush) const {
         if (dcFlush) {
-            dispatcher.registerMethod(this->dispatchPipeControlWithDcFlush<GfxFamily>);
+            dispatcher.registerMethod(this->dispatchPipeControl<GfxFamily, true>);
         } else {
-            dispatcher.registerMethod(this->dispatchPipeControlWithoutDcFlush<GfxFamily>);
+            dispatcher.registerMethod(this->dispatchPipeControl<GfxFamily, false>);
         }
         dispatcher.registerCommandsSizeEstimationMethod(PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl);
     }

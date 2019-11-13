@@ -11,11 +11,12 @@
 #include <functional>
 
 namespace NEO {
-template <typename ArgsT>
+
+template <typename MethodArgsT, typename EstimateMethodArgsT>
 class RegisteredMethodDispatcher {
   public:
-    using CommandsSizeEstimationMethodT = std::function<size_t(void)>;
-    using RegisteredMethodT = std::function<ArgsT>;
+    using CommandsSizeEstimationMethodT = std::function<EstimateMethodArgsT>;
+    using RegisteredMethodT = std::function<MethodArgsT>;
 
     void registerMethod(RegisteredMethodT method) {
         this->method = method;
@@ -32,9 +33,10 @@ class RegisteredMethodDispatcher {
         }
     }
 
-    size_t estimateCommandsSize() const {
+    template <typename... Args>
+    size_t estimateCommandsSize(Args &&... args) const {
         if (commandsEstimationMethod) {
-            return commandsEstimationMethod();
+            return commandsEstimationMethod(std::forward<Args>(args)...);
         }
         return 0;
     }
