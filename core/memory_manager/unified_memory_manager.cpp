@@ -88,7 +88,7 @@ void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, co
     if (!memoryManager->isLocalMemorySupported()) {
         return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties);
     } else {
-        return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties);
+        return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties, {});
     }
 }
 
@@ -103,10 +103,14 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, 
             allocationType = GraphicsAllocation::AllocationType::BUFFER;
         }
     }
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndex, true,
+
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
+                                                 true,
                                                  alignedSize,
                                                  allocationType,
-                                                 false};
+                                                 memoryProperties.subdeviceBitfield.count() > 1,
+                                                 memoryProperties.subdeviceBitfield.count() > 1,
+                                                 memoryProperties.subdeviceBitfield};
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
     if (!unifiedMemoryAllocation) {
@@ -134,7 +138,7 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(uint32_t rootDeviceI
     }
 
     if (supportDualStorageSharedMemory) {
-        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, {});
+        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, {}, memoryProperties);
         if (!unifiedMemoryPointer) {
             return nullptr;
         }
@@ -192,7 +196,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, si
     return allocation->getUnderlyingBuffer();
 }
 
-void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties) {
+void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
     AllocationProperties cpuProperties{rootDeviceIndex, true, alignedSize, GraphicsAllocation::AllocationType::SVM_CPU, false};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
@@ -205,7 +209,14 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
     allocationCpu->setCoherent(svmProperties.coherent);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
 
-    AllocationProperties gpuProperties{rootDeviceIndex, false, alignedSize, GraphicsAllocation::AllocationType::SVM_GPU, false};
+    AllocationProperties gpuProperties{rootDeviceIndex,
+                                       false,
+                                       alignedSize,
+                                       GraphicsAllocation::AllocationType::SVM_GPU,
+                                       unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                       false,
+                                       unifiedMemoryProperties.subdeviceBitfield};
+
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
     MemoryPropertiesParser::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);

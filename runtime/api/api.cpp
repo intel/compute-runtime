@@ -37,6 +37,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/mem_obj/pipe.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "runtime/sampler/sampler.h"
@@ -3498,6 +3499,7 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
     unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
 
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties);
 }
@@ -3535,6 +3537,7 @@ void *clSharedMemAllocINTEL(
         return nullptr;
     }
     unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
 
     if (isValueSet(unifiedMemoryProperties.allocationFlags.allAllocFlags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
         err.set(CL_INVALID_VALUE);

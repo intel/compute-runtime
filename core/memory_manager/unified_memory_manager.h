@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/common_types.h"
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/spinlock.h"
 
@@ -76,6 +77,7 @@ class SVMAllocsManager {
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         MemoryPropertiesFlags allocationFlags;
         void *device = nullptr;
+        DeviceBitfield subdeviceBitfield;
     };
 
     SVMAllocsManager(MemoryManager *memoryManager);
@@ -91,7 +93,7 @@ class SVMAllocsManager {
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
-    void *createUnifiedAllocationWithDeviceStorage(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties);
+    void *createUnifiedAllocationWithDeviceStorage(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
 
   protected:

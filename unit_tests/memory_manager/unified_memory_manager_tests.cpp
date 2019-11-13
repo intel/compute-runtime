@@ -450,3 +450,98 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotReserveCpuAddressRangeInMemoryMa
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
+
+struct MemoryManagerPropertiesCheck : public MockMemoryManager {
+    using MockMemoryManager::MockMemoryManager;
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        return this->allocateGraphicsMemoryWithProperties(properties, nullptr);
+    }
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override {
+        this->multiOsContextCapablePassed = properties.flags.multiOsContextCapable;
+        this->multiStorageResourcePassed = properties.multiStorageResource;
+        this->subDevicesBitfieldPassed = properties.subDevicesBitfield;
+        return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
+    }
+
+    bool multiOsContextCapablePassed;
+    bool multiStorageResourcePassed;
+    DeviceBitfield subDevicesBitfieldPassed;
+};
+
+struct UnifiedMemoryManagerPropertiesTest : public ::testing::Test {
+    void SetUp() override {
+        bool svmSupported = executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm;
+        if (!svmSupported) {
+            GTEST_SKIP();
+        }
+        memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+        memoryManager->pageFaultManager.reset(new MockPageFaultManager);
+    }
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<MemoryManagerPropertiesCheck> memoryManager;
+    std::unique_ptr<MockSVMAllocsManager> svmManager;
+};
+
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = DeviceBitfield(0xf);
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
+
+    EXPECT_TRUE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
+    EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfield, memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    MockCommandQueue cmdQ;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = DeviceBitfield(0x8);
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
+
+    EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
+    EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfield, memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultipleBitsSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = DeviceBitfield(0xf);
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+
+    EXPECT_TRUE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_TRUE(memoryManager->multiStorageResourcePassed);
+    EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfield, memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = DeviceBitfield(0x8);
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+
+    EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
+    EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
+    EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfield, memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
