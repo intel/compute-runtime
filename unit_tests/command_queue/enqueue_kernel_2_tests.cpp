@@ -882,3 +882,16 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
         EXPECT_EQ(1u, cmdQ.waitCalled);
     }
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledItReturnsInvalidOperation) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        MyCmdQ<FamilyType> cmdQ(context, pDevice);
+        size_t gws[3] = {1, 0, 0};
+
+        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+        parentKernel->initialize();
+
+        auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_INVALID_OPERATION, status);
+    }
+}
