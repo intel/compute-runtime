@@ -46,7 +46,9 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenInsertingAllocsThenAllo
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc2].size, 20u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc2].unifiedMemoryManager, reinterpret_cast<SVMAllocsManager *>(unifiedMemoryManager));
-    EXPECT_THROW(pageFaultManager->memoryData.at(alloc1), std::out_of_range);
+
+    auto invalidAccess = [&]() { return pageFaultManager->memoryData.at(alloc1); };
+    EXPECT_THROW(invalidAccess(), std::out_of_range);
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenRemovingProtectedAllocThenAllocIsAccessible) {
