@@ -82,6 +82,12 @@ apt-get install intel-opencl-icd
 apt-get install intel-opencl-icd
 ```
 
+## Packages mirror
+
+Starting with [release 19.43.14583](https://github.com/intel/compute-runtime/releases/tag/19.43.14583) all packages are mirrored on
+[SourceForge](https://sourceforge.net/projects/intel-compute-runtime) as older packages are automatically deleted on
+[launchpad](https://launchpad.net/~intel-opencl/+archive/ubuntu/intel-opencl) and [copr](https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl).
+
 ## Neo in docker containers
 
 Docker images are provided in [intel-opencl](https://hub.docker.com/r/intelopencl/intel-opencl) repository.
