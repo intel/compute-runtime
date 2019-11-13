@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,11 +22,11 @@ then
 	apt-get -y update
 fi
 
-apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev intel-gmmlib-dev
+apt-get install -y --allow-unauthenticated cmake ninja-build libigc-dev intel-gmmlib-dev
 if [ $? -ne 0 ]
 then
 	wait_apt
-	apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev intel-gmmlib-dev
+	apt-get install -y --allow-unauthenticated cmake ninja-build libigc-dev intel-gmmlib-dev
 fi
 
 dpkg -r ccache
