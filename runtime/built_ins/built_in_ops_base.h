@@ -20,18 +20,19 @@ constexpr Type CopyBufferRectStateless{4};
 constexpr Type FillBuffer{5};
 constexpr Type FillBufferStateless{6};
 constexpr Type CopyBufferToImage3d{7};
-constexpr Type CopyImage3dToBuffer{8};
-constexpr Type CopyImageToImage1d{9};
-constexpr Type CopyImageToImage2d{10};
-constexpr Type CopyImageToImage3d{11};
-constexpr Type FillImage1d{12};
-constexpr Type FillImage2d{13};
-constexpr Type FillImage3d{14};
-constexpr Type VmeBlockMotionEstimateIntel{15};
-constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{16};
-constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{17};
-constexpr Type Scheduler{18};
+constexpr Type CopyBufferToImage3dStateless{8};
+constexpr Type CopyImage3dToBuffer{9};
+constexpr Type CopyImageToImage1d{10};
+constexpr Type CopyImageToImage2d{11};
+constexpr Type CopyImageToImage3d{12};
+constexpr Type FillImage1d{13};
+constexpr Type FillImage2d{14};
+constexpr Type FillImage3d{15};
+constexpr Type VmeBlockMotionEstimateIntel{16};
+constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{17};
+constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{18};
+constexpr Type Scheduler{19};
 
-constexpr uint32_t MaxBaseValue{18};
+constexpr uint32_t MaxBaseValue{19};
 } // namespace EBuiltInOps
 } // namespace NEO

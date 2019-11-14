@@ -1,0 +1,176 @@
+/*
+ * Copyright (c) 2017-2019, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+R"===(
+#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
+
+__kernel void CopyBufferToImage3dBytes(__global uchar *src,
+                                       __write_only image3d_t output,
+                                       ulong srcOffset,
+                                       int4 dstOffset,
+                                       ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    write_imageui(output, dstCoord, (uint4)(*(src + LOffset + x), 0, 0, 1));
+}
+
+__kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        ulong srcOffset,
+                                        int4 dstOffset,
+                                        ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = (uint4)(0, 0, 0, 1);
+
+    if(( ulong )(src + srcOffset) & 0x00000001){
+        ushort upper = *((__global uchar*)(src + LOffset + x * 2 + 1));
+        ushort lower = *((__global uchar*)(src + LOffset + x * 2));
+        ushort combined = (upper << 8) | lower;
+        c.x = (uint)combined;
+    }
+    else{
+        c.x = (uint)(*(__global ushort*)(src + LOffset + x * 2));
+    }
+    write_imageui(output, dstCoord, c);
+}
+
+__kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        ulong srcOffset,
+                                        int4 dstOffset,
+                                        ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = (uint4)(0, 0, 0, 1);
+
+    if(( ulong )(src + srcOffset) & 0x00000003){
+        uint upper2 = *((__global uchar*)(src + LOffset + x * 4 + 3));
+        uint upper  = *((__global uchar*)(src + LOffset + x * 4 + 2));
+        uint lower2 = *((__global uchar*)(src + LOffset + x * 4 + 1));
+        uint lower  = *((__global uchar*)(src + LOffset + x * 4));
+        uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.x = combined;
+    }
+    else{
+        c.x = (*(__global uint*)(src + LOffset + x * 4));
+    }
+    write_imageui(output, dstCoord, c);
+}
+
+__kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        ulong srcOffset,
+                                        int4 dstOffset,
+                                        ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint2 c = (uint2)(0, 0);//*((__global uint2*)(src + LOffset + x * 8));
+
+    if(( ulong )(src + srcOffset) & 0x00000007){
+        uint upper2 = *((__global uchar*)(src + LOffset + x * 8 + 3));
+        uint upper  = *((__global uchar*)(src + LOffset + x * 8 + 2));
+        uint lower2 = *((__global uchar*)(src + LOffset + x * 8 + 1));
+        uint lower  = *((__global uchar*)(src + LOffset + x * 8));
+        uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.x = combined;
+        upper2 = *((__global uchar*)(src + LOffset + x * 8 + 7));
+        upper  = *((__global uchar*)(src + LOffset + x * 8 + 6));
+        lower2 = *((__global uchar*)(src + LOffset + x * 8 + 5));
+        lower  = *((__global uchar*)(src + LOffset + x * 8 + 4));
+        combined = ((uint)upper2 << 24) | ((uint)upper << 16) | ((uint)lower2 << 8) | lower;
+        c.y = combined;
+    }
+    else{
+        c = *((__global uint2*)(src + LOffset + x * 8));
+    }
+
+    write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
+}
+
+__kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
+                                         __write_only image3d_t output,
+                                         ulong srcOffset,
+                                         int4 dstOffset,
+                                         ulong2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    ulong LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = (uint4)(0, 0, 0, 0);
+
+    if(( ulong )(src + srcOffset) & 0x0000000f){
+        uint upper2 = *((__global uchar*)(src + LOffset + x * 16 + 3));
+        uint upper  = *((__global uchar*)(src + LOffset + x * 16 + 2));
+        uint lower2 = *((__global uchar*)(src + LOffset + x * 16 + 1));
+        uint lower  = *((__global uchar*)(src + LOffset + x * 16));
+        uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.x = combined;
+        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 7));
+        upper  = *((__global uchar*)(src + LOffset + x * 16 + 6));
+        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 5));
+        lower  = *((__global uchar*)(src + LOffset + x * 16 + 4));
+        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.y = combined;
+        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 11));
+        upper  = *((__global uchar*)(src + LOffset + x * 16 + 10));
+        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 9));
+        lower  = *((__global uchar*)(src + LOffset + x * 16 + 8));
+        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.z = combined;
+        upper2 = *((__global uchar*)(src + LOffset + x * 16 + 15));
+        upper  = *((__global uchar*)(src + LOffset + x * 16 + 14));
+        lower2 = *((__global uchar*)(src + LOffset + x * 16 + 13));
+        lower  = *((__global uchar*)(src + LOffset + x * 16 + 12));
+        combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+        c.w = combined;
+    }
+    else{
+        c = *((__global uint4 *)(src + LOffset + x * 16));
+    }
+
+    write_imageui(output, dstCoord, c);
+}
+)==="

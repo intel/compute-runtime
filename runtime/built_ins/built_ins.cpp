@@ -532,7 +532,7 @@ template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {
+        : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::CopyBufferToImage3d,
                  "",
@@ -544,6 +544,15 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
+        return buildDispatchInfosTyped<uint32_t>(multiDispatchInfo, operationParams);
+    }
+
+  protected:
+    Kernel *kernelBytes[5] = {nullptr};
+    BuiltInOp(BuiltIns &kernelsLib) : BuiltinDispatchInfoBuilder(kernelsLib){};
+
+    template <typename OffsetType>
+    bool buildDispatchInfosTyped(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
         multiDispatchInfo.setBuiltinOpParams(operationParams);
         DEBUG_BREAK_IF(!(((operationParams.srcPtr != nullptr) || (operationParams.srcMemObj != nullptr)) && (operationParams.dstPtr == nullptr)));
@@ -559,9 +568,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
-        auto srcRowPitch = static_cast<uint32_t>(operationParams.dstRowPitch ? operationParams.dstRowPitch : region[0] * bytesPerPixel);
+        auto srcRowPitch = static_cast<size_t>(operationParams.dstRowPitch ? operationParams.dstRowPitch : region[0] * bytesPerPixel);
 
-        auto srcSlicePitch = static_cast<uint32_t>(
+        auto srcSlicePitch = static_cast<size_t>(
             operationParams.dstSlicePitch ? operationParams.dstSlicePitch : ((dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * srcRowPitch));
 
         // Determine size of host ptr surface for residency purposes
@@ -584,7 +593,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
         kernelNoSplit3DBuilder.setArg(1, dstImageRedescribed, operationParams.dstMipLevel);
 
         // Set-up srcOffset
-        kernelNoSplit3DBuilder.setArg(2, static_cast<uint32_t>(operationParams.srcOffset.x));
+        kernelNoSplit3DBuilder.setArg(2, static_cast<OffsetType>(operationParams.srcOffset.x));
 
         // Set-up dstOrigin
         {
@@ -598,9 +607,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 
         // Set-up srcRowPitch
         {
-            uint32_t pitch[] = {
-                static_cast<uint32_t>(srcRowPitch),
-                static_cast<uint32_t>(srcSlicePitch)};
+            OffsetType pitch[] = {
+                static_cast<OffsetType>(srcRowPitch),
+                static_cast<OffsetType>(srcSlicePitch)};
             kernelNoSplit3DBuilder.setArg(4, sizeof(pitch), pitch);
         }
 
@@ -610,9 +619,26 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 
         return true;
     }
+};
 
-  protected:
-    Kernel *kernelBytes[5];
+template <>
+class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+        : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib) {
+        populate(context, device,
+                 EBuiltInOps::CopyBufferToImage3dStateless,
+                 "-cl-intel-greater-than-4GB-buffer-required",
+                 "CopyBufferToImage3dBytes", kernelBytes[0],
+                 "CopyBufferToImage3d2Bytes", kernelBytes[1],
+                 "CopyBufferToImage3d4Bytes", kernelBytes[2],
+                 "CopyBufferToImage3d8Bytes", kernelBytes[3],
+                 "CopyBufferToImage3d16Bytes", kernelBytes[4]);
+    }
+
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo, operationParams);
+    }
 };
 
 template <>
@@ -851,6 +877,9 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
         break;
     case EBuiltInOps::CopyBufferToImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3d>>(*this, context, device); });
+        break;
+    case EBuiltInOps::CopyBufferToImage3dStateless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyImage3dToBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>>(*this, context, device); });

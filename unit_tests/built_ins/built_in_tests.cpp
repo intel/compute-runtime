@@ -765,6 +765,42 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
+TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
+
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    std ::unique_ptr<Image> pDstImage(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, pDstImage.get());
+
+    auto &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3dStateless, *pContext, *pDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &srcBuffer;
+    dc.dstMemObj = pDstImage.get();
+    dc.srcOffset = {static_cast<size_t>(bigOffset), 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo;
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+    EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
+    EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+}
+
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pContext, *pDevice);
 

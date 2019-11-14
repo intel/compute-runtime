@@ -10,6 +10,7 @@
 #include "unit_tests/command_queue/enqueue_copy_buffer_to_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 #include "unit_tests/mocks/mock_builtins.h"
 
@@ -272,3 +273,62 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
 
 INSTANTIATE_TEST_CASE_P(MipMapCopyBufferToImageTest_GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet,
                         MipMapCopyBufferToImageTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+
+struct EnqueueCopyBufferToImageHw : public ::testing::Test {
+
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        context = std::make_unique<MockContext>(device.get());
+        dstImage = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Image> dstImage;
+    MockBuffer srcBuffer;
+    uint64_t bigSize = 5ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
+    uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
+
+    const size_t dstOrigin[3] = {0, 0, 0};
+    const size_t region[3] = {4, 1, 1};
+};
+
+using EnqueueCopyBufferToImageStatelessTest = EnqueueCopyBufferToImageHw;
+
+HWTEST_F(EnqueueCopyBufferToImageStatelessTest, givenBigBufferWhenCopyingBufferToImageStatelessThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    auto retVal = cmdQ->enqueueCopyBufferToImage(
+        &srcBuffer,
+        dstImage.get(),
+        static_cast<size_t>(bigOffset),
+        dstOrigin,
+        region,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+using EnqueueCopyBufferToImageStatefulTest = EnqueueCopyBufferToImageHw;
+
+HWTEST_F(EnqueueCopyBufferToImageStatefulTest, givenBigBufferWhenCopyingBufferToImageStatefulThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    srcBuffer.size = static_cast<size_t>(smallSize);
+    auto retVal = cmdQ->enqueueCopyBufferToImage(
+        &srcBuffer,
+        dstImage.get(),
+        0,
+        dstOrigin,
+        region,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}

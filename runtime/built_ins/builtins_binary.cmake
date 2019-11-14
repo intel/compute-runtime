@@ -27,6 +27,7 @@ set(GENERATED_BUILTINS
 set(GENERATED_BUILTINS_STATELESS
   "copy_buffer_to_buffer_stateless"
   "copy_buffer_rect_stateless"
+  "copy_buffer_to_image3d_stateless"
   "fill_buffer_stateless"
 )
 

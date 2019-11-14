@@ -33,10 +33,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo di;
+    auto eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3d;
+    if (forceStateless(srcBuffer->getSize())) {
+        eBuiltInOpsType = EBuiltInOps::CopyBufferToImage3dStateless;
+    }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                        this->getContext(), this->getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOpsType,
+                                                                                                        this->getContext(),
+                                                                                                        this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcBufferSurf(srcBuffer);
@@ -52,12 +56,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     if (dstImage->getImageDesc().num_mip_levels > 0) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
-    builder.buildDispatchInfos(di, dc);
+
+    MultiDispatchInfo dispatchInfo;
+    builder.buildDispatchInfos(dispatchInfo, dc);
 
     enqueueHandler<CL_COMMAND_COPY_BUFFER_TO_IMAGE>(
         surfaces,
         false,
-        di,
+        dispatchInfo,
         numEventsInWaitList,
         eventWaitList,
         event);

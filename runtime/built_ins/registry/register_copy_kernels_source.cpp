@@ -74,6 +74,15 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
 #include "runtime/built_ins/kernels/copy_buffer_to_image3d.igdrcl_built_in"
         ));
 
+static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::CopyBufferToImage3dStateless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "runtime/built_ins/kernels/copy_buffer_to_image3d_stateless.igdrcl_built_in"
+        ));
+
 static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
     createBuiltinResourceName(
         EBuiltInOps::CopyImage3dToBuffer,
