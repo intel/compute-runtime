@@ -88,6 +88,12 @@ struct AubFillImage
         if (!(platformDevices[0]->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
+        auto dataType = std::get<0>(GetParam()).type;
+        auto channelOrder = std::get<1>(GetParam());
+        if (dataType != CL_UNORM_INT8 && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
+            //sRGBA and sBGRA support only unorm int8 type
+            GTEST_SKIP();
+        }
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
 
@@ -170,8 +176,6 @@ HWTEST_P(AubFillImage, simple) {
     size_t elementSize = perChannelDataSize * numChannels;
 
     auto retVal = CL_INVALID_VALUE;
-    if (imageFormat.image_channel_data_type != CL_UNORM_INT8 && (imageFormat.image_channel_order == CL_sRGBA || imageFormat.image_channel_order == CL_sBGRA))
-        return; //sRGBA and sBGRA support only unorm int8 type, so other cases will return from the test with a success
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     image.reset(Image::create(
