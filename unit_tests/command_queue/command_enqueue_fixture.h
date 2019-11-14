@@ -114,7 +114,7 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
         if (!device.areSharedSystemAllocationsAllowed()) {
             EXPECT_FALSE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
             if (device.getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported) {
-                EXPECT_TRUE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+                EXPECT_TRUE(kernel->allBufferArgsStateful);
             }
         } else {
             EXPECT_TRUE(kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
