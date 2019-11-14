@@ -52,7 +52,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/kernel_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mem_properties_parser_helper.cpp
