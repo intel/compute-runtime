@@ -45,10 +45,6 @@ std::unique_ptr<SharingContextBuilder> UnifiedSharingBuilderFactory::createConte
     return std::make_unique<UnifiedSharingContextBuilder>();
 };
 
-std::string UnifiedSharingBuilderFactory::getExtensions() {
-    return "cl_intel_unified_sharing ";
-}
-
 void *UnifiedSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
     return nullptr;
 }
