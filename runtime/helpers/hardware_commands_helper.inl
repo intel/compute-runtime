@@ -256,7 +256,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
-    DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
+    DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
     auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
     auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
 
