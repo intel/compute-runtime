@@ -1415,7 +1415,7 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
             auto pSrc = ptrOffset(argVal, kernelArgPatchInfo.sourceOffset);
 
             DEBUG_BREAK_IF(!(ptrOffset(pDst, kernelArgPatchInfo.size) <= crossThreadDataEnd));
-            ((void)(crossThreadDataEnd));
+            UNUSED_VARIABLE(crossThreadDataEnd);
 
             if (kernelArgPatchInfo.sourceOffset < argSize) {
                 size_t maxBytesToCopy = argSize - kernelArgPatchInfo.sourceOffset;

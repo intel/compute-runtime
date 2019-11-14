@@ -30,7 +30,7 @@ class RefCounter {
     void inc() {
         CT curr = ++val;
         DEBUG_BREAK_IF(curr < 1);
-        ((void)(curr));
+        UNUSED_VARIABLE(curr);
     }
 
     bool dec() {

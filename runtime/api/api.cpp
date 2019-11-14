@@ -179,7 +179,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             pPlatform = constructPlatform();
             bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
-            ((void)(ret));
+            UNUSED_VARIABLE(ret);
         }
 
         DEBUG_BREAK_IF(pPlatform->isInitialized() != true);

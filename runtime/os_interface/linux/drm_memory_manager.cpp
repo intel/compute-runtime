@@ -282,7 +282,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     auto ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
-    ((void)(ret));
+    UNUSED_VARIABLE(ret);
 
     auto bo = new (std::nothrow) BufferObject(this->drm, create.handle, allocationData.rootDeviceIndex);
     if (!bo) {
@@ -293,7 +293,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
-    ((void)(ret2));
+    UNUSED_VARIABLE(ret2);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, nullptr, gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible);
     allocation->setDefaultGmm(gmm.release());
@@ -412,7 +412,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         int err = errno;
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(ret != 0);
-        ((void)(ret));
+        UNUSED_VARIABLE(ret);
         return nullptr;
     }
 
@@ -448,7 +448,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
 
         DEBUG_BREAK_IF(ret != 0);
-        ((void)(ret));
+        UNUSED_VARIABLE(ret);
 
         if (getTiling.tiling_mode == I915_TILING_NONE) {
             properties.imgInfo->linearStorage = true;
@@ -545,7 +545,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory() {
     getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
     auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);
-    ((void)(ret));
+    UNUSED_VARIABLE(ret);
     uint64_t gpuMemorySize = getContextParam.value;
 
     return std::min(hostMemorySize, gpuMemorySize);
@@ -603,7 +603,7 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
                 search->wait(-1);
                 auto refCount = unreference(search, true);
                 DEBUG_BREAK_IF(refCount != 1u);
-                ((void)(refCount));
+                UNUSED_VARIABLE(refCount);
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
             handleStorage.fragmentStorageData[i].osHandleStorage = nullptr;

@@ -118,7 +118,7 @@ class TagAllocator {
     MOCKABLE_VIRTUAL void returnTagToFreePool(NodeType *node) {
         NodeType *usedNode = usedTags.removeOne(*node).release();
         DEBUG_BREAK_IF(usedNode == nullptr);
-        ((void)(usedNode));
+        UNUSED_VARIABLE(usedNode);
         freeTags.pushFrontOne(*node);
     }
 
@@ -152,7 +152,7 @@ class TagAllocator {
             Start += tagSize;
         }
         DEBUG_BREAK_IF(Start > End);
-        ((void)(End));
+        UNUSED_VARIABLE(End);
         tagPoolMemory.push_back(nodesMemory);
     }
 

@@ -28,6 +28,8 @@
 #endif // _DEBUG
 #endif // !DEBUG_BREAK_IF
 
+#define UNUSED_VARIABLE(x) ((void)(x))
+
 namespace NEO {
 void debugBreak(int line, const char *file);
 [[noreturn]] void abortUnrecoverable(int line, const char *file);
