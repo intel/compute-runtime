@@ -96,7 +96,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
-    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, imageDesc, false);
+    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
     //allocate host_ptr

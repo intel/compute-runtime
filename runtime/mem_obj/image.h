@@ -106,6 +106,8 @@ class Image : public MemObj {
                                  size_t *imageRowPitch,
                                  size_t *imageSlicePitch);
 
+    static bool isImage1d(const cl_image_desc &imageDesc);
+
     static bool isImage2d(cl_mem_object_type imageType);
 
     static bool isImage2dOr2dArray(cl_mem_object_type imageType);

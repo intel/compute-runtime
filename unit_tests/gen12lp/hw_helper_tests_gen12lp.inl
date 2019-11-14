@@ -142,32 +142,24 @@ class HwHelperTestsGen12LpBuffer : public ::testing::Test {
     std::unique_ptr<Buffer> buffer;
 };
 
-GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenCompressedBufferThenCheckResourceCompatibilitySetCL_INVALID_MEM_OBJ) {
+GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenCompressedBufferThenCheckResourceCompatibilityReturnsFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
-    cl_int errCode = 0;
-
-    helper.checkResourceCompatibility(buffer.get(), errCode);
-
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, errCode);
+    EXPECT_FALSE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation()));
 }
 
-GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibilityDoesNotSetErrorCode) {
+GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibilityReturnsTrue) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
-    cl_int errCode = CL_SUCCESS;
-
-    helper.checkResourceCompatibility(buffer.get(), errCode);
-
-    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_TRUE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation()));
 }
 
 using LriHelperTestsGen12Lp = ::testing::Test;

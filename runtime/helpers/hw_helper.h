@@ -12,8 +12,6 @@
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/mem_obj/buffer.h"
 
-#include "CL/cl.h"
-
 #include <cstdint>
 #include <string>
 #include <type_traits>
@@ -45,7 +43,7 @@ class HwHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const = 0;
-    virtual void checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) = 0;
+    virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -58,7 +56,7 @@ class HwHelper {
                                                 size_t offset,
                                                 uint32_t pitch,
                                                 GraphicsAllocation *gfxAlloc,
-                                                cl_mem_flags flags,
+                                                bool isReadOnly,
                                                 uint32_t surfaceType,
                                                 bool forceNonAuxMode) = 0;
     virtual const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const = 0;
@@ -68,7 +66,7 @@ class HwHelper {
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual bool requiresAuxResolves() const = 0;
-    virtual bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) = 0;
+    virtual bool tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) = 0;
     virtual uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) = 0;
     virtual uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
                                                    uint32_t threadsPerEu) = 0;
@@ -143,7 +141,7 @@ class HwHelperHw : public HwHelper {
 
     bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const override;
 
-    void checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) override;
+    bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
 
     bool timestampPacketWriteSupported() const override;
 
@@ -156,7 +154,7 @@ class HwHelperHw : public HwHelper {
                                         size_t offset,
                                         uint32_t pitch,
                                         GraphicsAllocation *gfxAlloc,
-                                        cl_mem_flags flags,
+                                        bool isReadOnly,
                                         uint32_t surfaceType,
                                         bool forceNonAuxMode) override;
 
@@ -172,7 +170,7 @@ class HwHelperHw : public HwHelper {
 
     bool requiresAuxResolves() const override;
 
-    bool tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) override;
+    bool tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) override;
 
     uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) override;
 

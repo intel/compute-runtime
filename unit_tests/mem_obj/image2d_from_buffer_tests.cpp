@@ -405,8 +405,8 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
 HWTEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBufferSetAndAllocationTypeIsBufferNullptr) {
     class MockHwHelperHw : public HwHelperHw<FamilyType> {
       public:
-        void checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) override {
-            errorCode = CL_INVALID_MEM_OBJECT;
+        bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override {
+            return false;
         }
     };
 

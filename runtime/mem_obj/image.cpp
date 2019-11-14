@@ -187,7 +187,8 @@ Image *Image::create(Context *context,
 
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
-        imgInfo.linearStorage = !hwHelper.tilingAllowed(context->isSharedContext, *imageDesc, memoryProperties.flags.forceLinearStorage);
+        imgInfo.linearStorage = !hwHelper.tilingAllowed(context->isSharedContext, Image::isImage1d(*imageDesc),
+                                                        memoryProperties.flags.forceLinearStorage);
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        *context, true);
 
@@ -226,9 +227,8 @@ Image *Image::create(Context *context,
         bool transferNeeded = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
 
-            hwHelper.checkResourceCompatibility(parentBuffer, errcodeRet);
-
-            if (errcodeRet != CL_SUCCESS) {
+            if (!hwHelper.checkResourceCompatibility(*parentBuffer->getGraphicsAllocation())) {
+                errcodeRet = CL_INVALID_MEM_OBJECT;
                 return nullptr;
             }
 
@@ -1024,6 +1024,14 @@ const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, co
     }
     DEBUG_BREAK_IF("Invalid format");
     return nullptr;
+}
+
+bool Image::isImage1d(const cl_image_desc &imageDesc) {
+    auto imageType = imageDesc.image_type;
+    auto buffer = castToObject<Buffer>(imageDesc.buffer);
+
+    return (imageType == CL_MEM_OBJECT_IMAGE1D || imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
+            imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer);
 }
 
 bool Image::isImage2d(cl_mem_object_type imageType) {

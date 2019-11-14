@@ -51,10 +51,11 @@ bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareI
 }
 
 template <>
-void HwHelperHw<Family>::checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) {
-    if (buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
-        errorCode = CL_INVALID_MEM_OBJECT;
+bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
+    if (graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        return false;
     }
+    return true;
 }
 
 template <>

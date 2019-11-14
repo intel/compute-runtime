@@ -71,7 +71,8 @@ bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo)
 }
 
 template <typename GfxFamily>
-inline void HwHelperHw<GfxFamily>::checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) {
+inline bool HwHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
+    return true;
 }
 
 template <typename Family>
@@ -82,7 +83,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
                                                         size_t offset,
                                                         uint32_t pitch,
                                                         GraphicsAllocation *gfxAlloc,
-                                                        cl_mem_flags flags,
+                                                        bool isReadOnly,
                                                         uint32_t surfaceType,
                                                         bool forceNonAuxMode) {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
@@ -120,7 +121,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
     if ((isAligned<MemoryConstants::cacheLineSize>(bufferStateAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferStateSize)) ||
-        ((flags & CL_MEM_READ_ONLY)) != 0) {
+        isReadOnly) {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
@@ -231,16 +232,11 @@ inline bool HwHelperHw<GfxFamily>::requiresAuxResolves() const {
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, const cl_image_desc &imgDesc, bool forceLinearStorage) {
+bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
     if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext) {
         return false;
     }
-
-    auto imageType = imgDesc.image_type;
-    auto buffer = castToObject<Buffer>(imgDesc.buffer);
-
-    return !(imageType == CL_MEM_OBJECT_IMAGE1D || imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-             imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER || buffer);
+    return !isImage1d;
 }
 
 template <typename GfxFamily>
