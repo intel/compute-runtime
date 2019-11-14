@@ -65,6 +65,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override;
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
@@ -117,6 +118,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
+    bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
@@ -204,6 +206,9 @@ class FailMemoryManager : public MockMemoryManager {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
+        return nullptr;
+    }
+    GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override {
         return nullptr;
     }
     int32_t failedAllocationsCount = 0;

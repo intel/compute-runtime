@@ -32,6 +32,13 @@ class WddmAllocation : public GraphicsAllocation {
         reservedAddressRangeInfo.rangeSize = sizeIn;
     }
 
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable)
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable) {
+        trimCandidateListPositions.fill(trimListUnusedPosition);
+        reservedAddressRangeInfo.addressPtr = reservedAddr;
+        reservedAddressRangeInfo.rangeSize = sizeIn;
+    }
+
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
         : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool) {
         trimCandidateListPositions.fill(trimListUnusedPosition);
@@ -77,6 +84,7 @@ class WddmAllocation : public GraphicsAllocation {
     bool needsMakeResidentBeforeLock = false;
     D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
     uint64_t reservedSizeForGpuVirtualAddress = 0u;
+    uint32_t shareable = 0u;
 
   protected:
     std::string getHandleInfoString() const {

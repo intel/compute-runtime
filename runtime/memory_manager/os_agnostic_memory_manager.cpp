@@ -273,6 +273,25 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
         }
     }
 }
+
+GraphicsAllocation *OsAgnosticMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
+    auto gmm = std::make_unique<Gmm>(allocationData.hostPtr, allocationData.size, false);
+    GraphicsAllocation *alloc = nullptr;
+
+    auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
+    if (ptr != nullptr) {
+        alloc = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
+                                       counter, MemoryPool::SystemCpuInaccessible, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
+        counter++;
+    }
+
+    if (alloc) {
+        alloc->setDefaultGmm(gmm.release());
+    }
+
+    return alloc;
+}
+
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     GraphicsAllocation *alloc = nullptr;
 

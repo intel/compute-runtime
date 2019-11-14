@@ -284,6 +284,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
+    allocationData.flags.shareable = properties.flags.shareable;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
@@ -331,6 +332,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
+    }
+    if (allocationData.flags.shareable) {
+        return allocateShareableMemory(allocationData);
     }
     if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
         (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled())) {

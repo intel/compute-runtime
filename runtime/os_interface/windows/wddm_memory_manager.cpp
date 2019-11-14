@@ -50,6 +50,19 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     }
 }
 
+GraphicsAllocation *WddmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
+    auto gmm = std::make_unique<Gmm>(allocationData.hostPtr, allocationData.size, false);
+    auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, allocationData.type, nullptr, allocationData.size, nullptr, MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable);
+    allocation->setDefaultGmm(gmm.get());
+    if (!createWddmAllocation(allocation.get(), nullptr)) {
+        return nullptr;
+    }
+
+    gmm.release();
+
+    return allocation.release();
+}
+
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
         return allocateGraphicsMemoryWithAlignment(allocationData);
@@ -528,10 +541,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
 
 bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation) {
     for (auto handleId = 0u; handleId < allocation->getNumHandles(); handleId++) {
-        auto status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId));
+        auto status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId), allocation->shareable);
         if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
             deferredDeleter->drain(true);
-            status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId));
+            status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId), allocation->shareable);
         }
         if (status != STATUS_SUCCESS) {
             wddm->destroyAllocations(allocation->getHandles().data(), handleId, allocation->resourceHandle);

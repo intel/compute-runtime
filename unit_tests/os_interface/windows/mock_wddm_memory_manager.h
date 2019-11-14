@@ -20,6 +20,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
     using BaseClass::allocateGraphicsMemoryInDevicePool;
     using BaseClass::allocateGraphicsMemoryWithProperties;
+    using BaseClass::allocateShareableMemory;
     using BaseClass::createGraphicsAllocation;
     using BaseClass::createWddmAllocation;
     using BaseClass::gfxPartitions;

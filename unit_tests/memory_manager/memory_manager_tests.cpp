@@ -445,6 +445,22 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsM
     EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
 }
 
+TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+
+    allocationData.flags.shareable = 1u;
+    auto shareableAllocation = memoryManager->allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, shareableAllocation);
+
+    allocationData.flags.shareable = 0u;
+    auto nonShareableAllocation = memoryManager->allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, nonShareableAllocation);
+
+    memoryManager->freeGraphicsMemory(shareableAllocation);
+    memoryManager->freeGraphicsMemory(nonShareableAllocation);
+}
+
 TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphicsMemoryThenCallHandleFenceCompletion) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
@@ -1253,6 +1269,21 @@ TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAlloc
     EXPECT_NE(nullptr, imageAllocation);
     EXPECT_TRUE(memoryManager.allocateForImageCalled);
     memoryManager.freeGraphicsMemory(imageAllocation);
+}
+
+TEST(MemoryManager, givenInteProcessShareableWhenAllocatingGraphicsMemoryThenAllocateShareableIsCalled) {
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
+
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.size = 4096u;
+    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.flags.shareable = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_TRUE(memoryManager.allocateForShareableCalled);
+    memoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {

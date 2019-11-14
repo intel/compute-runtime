@@ -69,14 +69,14 @@ bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t si
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
-        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u));
+        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u), false);
     }
     return false;
 }
-NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
+NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, uint32_t shareable) {
     createAllocationResult.called++;
     if (callBaseDestroyAllocations) {
-        createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle);
+        createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle, shareable);
         createAllocationResult.success = createAllocationStatus == STATUS_SUCCESS;
     } else {
         createAllocationResult.success = true;

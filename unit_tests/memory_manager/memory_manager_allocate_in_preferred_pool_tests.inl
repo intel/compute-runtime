@@ -202,6 +202,41 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedThenAllocationIsReturned) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    AllocationData allocData;
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    properties.flags.shareable = true;
+
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(allocData.flags.shareable, 1u);
+
+    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
+    ASSERT_NE(nullptr, allocation);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsCalledAndSystemMemoryFailsThenNullAllocationIsReturned) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    AllocationData allocData;
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    properties.flags.shareable = true;
+
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(allocData.flags.shareable, 1u);
+
+    memoryManager.failAllocateSystemMemory = true;
+    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
+    ASSERT_EQ(nullptr, allocation);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32BitFlagIsAllocatedThenNon32BitAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(executionEnvironment);

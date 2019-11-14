@@ -21,7 +21,8 @@ struct AllocationProperties {
             uint32_t uncacheable : 1;
             uint32_t multiOsContextCapable : 1;
             uint32_t readOnlyMultiStorage : 1;
-            uint32_t reserved : 25;
+            uint32_t shareable : 1;
+            uint32_t reserved : 24;
         } flags;
         uint32_t allFlags = 0;
     };

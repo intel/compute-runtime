@@ -756,6 +756,19 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     EXPECT_EQ(nullptr, allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemCreate = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.flags.shareable = true;
+    auto allocation = memoryManager->allocateShareableMemory(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(0u, allocation->getGpuAddress());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     mock->ioctl_expected.gemUserptr = 3;
     mock->ioctl_expected.gemWait = 3;

@@ -272,6 +272,30 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
     return nullptr;
 }
 
+GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
+    auto gmm = std::make_unique<Gmm>(allocationData.hostPtr, allocationData.size, false);
+    size_t bufferSize = allocationData.size;
+    uint64_t gpuRange = acquireGpuRange(bufferSize, false, allocationData.rootDeviceIndex);
+
+    drm_i915_gem_create create = {0, 0, 0};
+    create.size = bufferSize;
+
+    auto ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    DEBUG_BREAK_IF(ret != 0);
+    ((void)(ret));
+
+    auto bo = new BufferObject(this->drm, create.handle, allocationData.rootDeviceIndex);
+    bo->size = bufferSize;
+    bo->gpuAddress = gpuRange;
+
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, nullptr, gpuRange, bufferSize, MemoryPool::SystemCpuInaccessible);
+    allocation->setDefaultGmm(gmm.release());
+
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+
+    return allocation;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     if (allocationData.imgInfo->linearStorage) {
         auto alloc = allocateGraphicsMemoryWithAlignment(allocationData);

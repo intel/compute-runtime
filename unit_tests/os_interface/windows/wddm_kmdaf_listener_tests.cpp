@@ -133,7 +133,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafList
     auto handle = 0u;
     auto ptr = reinterpret_cast<void *>(0x10000);
 
-    wddmWithKmDafMock->createAllocation(ptr, gmm.get(), handle);
+    wddmWithKmDafMock->createAllocation(ptr, gmm.get(), handle, false);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);

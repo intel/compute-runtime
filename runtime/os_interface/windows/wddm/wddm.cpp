@@ -435,7 +435,7 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     return status == STATUS_SUCCESS;
 }
 
-NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
+NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, uint32_t shareable) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO AllocationInfo = {0};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
@@ -456,7 +456,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     CreateAllocation.pPrivateRuntimeData = NULL;
     CreateAllocation.pPrivateDriverData = NULL;
     CreateAllocation.Flags.NonSecure = FALSE;
-    CreateAllocation.Flags.CreateShared = FALSE;
+    CreateAllocation.Flags.CreateShared = shareable ? TRUE : FALSE;
     CreateAllocation.Flags.RestrictSharedAccess = FALSE;
     CreateAllocation.Flags.CreateResource = alignedCpuPtr ? TRUE : FALSE;
     CreateAllocation.pAllocationInfo = &AllocationInfo;
