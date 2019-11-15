@@ -97,7 +97,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
         deferredDeleter->drain(true);
     }
     GraphicsAllocation *graphicsAllocation = nullptr;
-    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex);
     if (osStorage.fragmentCount > 0) {
         graphicsAllocation = createGraphicsAllocation(osStorage, allocationData);
     }
@@ -115,7 +115,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(con
 
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {
     hostPtrManager->releaseHandleStorage(graphicsAllocation->fragmentsStorage);
-    cleanOsHandles(graphicsAllocation->fragmentsStorage);
+    cleanOsHandles(graphicsAllocation->fragmentsStorage, graphicsAllocation->getRootDeviceIndex());
 }
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hash.h"
@@ -43,8 +44,8 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     : BaseClass(executionEnvironment, rootDeviceIndex),
       standalone(standalone) {
 
-    executionEnvironment.initAubCenter(this->isLocalMemoryEnabled(), fileName, this->getType());
-    auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->isLocalMemoryEnabled(), fileName, this->getType());
+    auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
     auto subCaptureCommon = aubCenter->getSubCaptureCommon();
@@ -276,13 +277,13 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 
 template <typename GfxFamily>
 CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment, rootDeviceIndex);
+    auto csr = std::make_unique<AUBCommandStreamReceiverHw<GfxFamily>>(fileName, standalone, executionEnvironment, rootDeviceIndex);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {
         csr->openFile(fileName);
     }
 
-    return csr;
+    return csr.release();
 }
 
 template <typename GfxFamily>

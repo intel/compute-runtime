@@ -21,7 +21,7 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture {
         MemoryManagementFixture::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->setHwInfo(*platformDevices);
-        executionEnvironment->rootDeviceEnvironments.resize(numRootDevices);
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
     }

@@ -572,7 +572,7 @@ TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledP
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesReturnsInvalidHostPointerError) {
@@ -607,7 +607,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
 
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
@@ -642,7 +642,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
 
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
@@ -2538,7 +2538,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
 
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledWithFirstFragmentAlreadyAllocatedThenNewBosAreValidated) {
@@ -2604,7 +2604,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryEnabledWhenHostPtrAllocationIsCreatedWithoutForcingPinThenBufferObjectIsPinned) {
@@ -2647,7 +2647,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
 }
 
 TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmallAllocationIsCreatedThenBufferObjectIsPinned) {
@@ -2873,7 +2873,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
@@ -2922,7 +2922,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
     mock->ioctl_res_ext = &mock->NONE;
 }
 
@@ -2953,7 +2953,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     EXPECT_NE(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[0].cpuPtr));
 
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageAndResidencyIsSetToNullptr) {
@@ -2974,7 +2974,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCl
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
 
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(nullptr, handleStorage.fragmentStorageData[i].osHandleStorage);

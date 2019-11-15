@@ -43,7 +43,7 @@ class WddmMemoryManager : public MemoryManager {
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
-    void cleanOsHandles(OsHandleStorage &handleStorage) override;
+    void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
 
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 

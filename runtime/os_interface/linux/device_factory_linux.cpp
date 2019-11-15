@@ -26,7 +26,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
-    executionEnvironment.rootDeviceEnvironments.resize(numRootDevices);
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
     Drm *drm = Drm::create(devNum);
     if (!drm) {

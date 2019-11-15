@@ -6,17 +6,25 @@
  */
 
 #pragma once
+#include "runtime/helpers/options.h"
+
+#include <cstdint>
 #include <memory>
+#include <string>
 
 namespace NEO {
 
 class AubCenter;
+class ExecutionEnvironment;
 
 struct RootDeviceEnvironment {
-    RootDeviceEnvironment();
+    RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
     RootDeviceEnvironment(RootDeviceEnvironment &) = delete;
-    RootDeviceEnvironment(RootDeviceEnvironment &&);
-    ~RootDeviceEnvironment();
+    MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
+
+    MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+
     std::unique_ptr<AubCenter> aubCenter;
+    ExecutionEnvironment &executionEnvironment;
 };
 } // namespace NEO

@@ -17,6 +17,7 @@ using namespace NEO;
 
 void MemoryManagerWithCsrFixture::SetUp() {
     executionEnvironment.setHwInfo(*platformDevices);
+    executionEnvironment.prepareRootDeviceEnvironments(1);
     csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment, 0);
     memoryManager = new MockMemoryManager(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);

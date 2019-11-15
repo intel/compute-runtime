@@ -914,7 +914,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     storage.fragmentStorageData[2].osHandleStorage->gmm = new Gmm(pSysMem, 4096u, false);
     storage.fragmentStorageData[2].residency = new ResidencyData;
 
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
 
     auto destroyWithResourceHandleCalled = 0u;
     D3DKMT_DESTROYALLOCATION2 *ptrToDestroyAlloc2 = nullptr;
@@ -1076,7 +1076,7 @@ TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledP
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage, 0);
 }
 
 TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
@@ -1585,7 +1585,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenCreateAllocationFailsThenAllocatedFragmentsAreNotStored) {
@@ -1610,7 +1610,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
     EXPECT_EQ(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[1].cpuPtr));
 
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
-    memoryManager->cleanOsHandles(handleStorage);
+    memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {

@@ -144,6 +144,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         pPlatform = platform();
         auto executionEnvironment = pPlatform->peekExecutionEnvironment();
         executionEnvironment->setHwInfo(*platformDevices);
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         memoryManager = new MockMemoryManagerWithFailures(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         pPlatform->initialize();

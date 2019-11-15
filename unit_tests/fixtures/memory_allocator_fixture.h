@@ -24,6 +24,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         MemoryManagementFixture::SetUp();
         executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->setHwInfo(*platformDevices);
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0u));
         memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

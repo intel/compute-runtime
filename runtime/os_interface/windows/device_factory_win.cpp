@@ -28,7 +28,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
-    executionEnvironment.rootDeviceEnvironments.resize(numRootDevices);
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());

@@ -92,6 +92,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->setHwInfo(*platformDevices);
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         mock = std::make_unique<DrmMockCustom>();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setDrm(mock.get());

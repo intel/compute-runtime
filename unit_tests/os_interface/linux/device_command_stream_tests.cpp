@@ -29,7 +29,7 @@ struct DeviceCommandStreamLeaksTest : ::testing::Test {
     void SetUp() override {
         HardwareInfo *hwInfo = nullptr;
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-        MockAubCenterFixture::setMockAubCenter(executionEnvironment);
+        MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     }
 
     ExecutionEnvironment *executionEnvironment;

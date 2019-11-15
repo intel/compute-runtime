@@ -8,11 +8,10 @@
 #include "runtime/execution_environment/execution_environment.h"
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_operations_handler.h"
-#include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -32,11 +31,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     rootDeviceEnvironments.clear();
 }
 
-void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
-    if (!rootDeviceEnvironments[0].aubCenter) {
-        rootDeviceEnvironments[0].aubCenter.reset(new AubCenter(hwInfo.get(), localMemoryEnabled, aubFileName, csrType));
-    }
-}
 void ExecutionEnvironment::initGmm() {
     if (!gmmHelper) {
         gmmHelper.reset(new GmmHelper(hwInfo.get()));
@@ -105,5 +99,16 @@ BuiltIns *ExecutionEnvironment::getBuiltIns() {
 
 bool ExecutionEnvironment::isFullRangeSvm() const {
     return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
+}
+
+void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices) {
+    if (rootDeviceEnvironments.size() < numRootDevices) {
+        rootDeviceEnvironments.resize(numRootDevices);
+    }
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        if (!rootDeviceEnvironments[rootDeviceIndex]) {
+            rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this);
+        }
+    }
 }
 } // namespace NEO

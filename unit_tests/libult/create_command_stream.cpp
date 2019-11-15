@@ -39,7 +39,7 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
 bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     if (overrideDeviceWithDefaultHardwareInfo) {
         numDevicesReturned = numPlatformDevices;
-        executionEnvironment.rootDeviceEnvironments.resize(numDevicesReturned);
+        executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numDevicesReturned));
         return getDevicesResult;
     }
 

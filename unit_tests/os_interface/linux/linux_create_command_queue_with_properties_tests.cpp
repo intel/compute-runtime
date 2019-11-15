@@ -20,6 +20,7 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
     void SetUp() override {
         UltCommandStreamReceiverTest::SetUp();
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         auto osInterface = new OSInterface();
         osInterface->get()->setDrm(drm.get());
         executionEnvironment->osInterface.reset(osInterface);

@@ -7,6 +7,7 @@
 
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
@@ -218,8 +219,10 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize());
     }
 
-    if (executionEnvironment.rootDeviceEnvironments.size() > 0) {
-        auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
+    auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
+
+    if (executionEnvironment.rootDeviceEnvironments.size() > rootDeviceIndex) {
+        auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
         if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
             aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
         }
@@ -260,10 +263,10 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
     }
     return AllocationStatus::Success;
 }
-void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
+void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
-            auto aubCenter = executionEnvironment.rootDeviceEnvironments[0].aubCenter.get();
+            auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
             if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
                 aubCenter->getAubManager()->freeMemory((uint64_t)handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize);
             }

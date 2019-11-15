@@ -428,7 +428,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
     return AllocationStatus::Success;
 }
 
-void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
+void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
 
     D3DKMT_HANDLE handles[maxFragmentsCount] = {0};
     auto allocationCount = 0;

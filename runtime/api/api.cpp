@@ -7,6 +7,7 @@
 
 #include "api.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/kernel_helpers.h"
 #include "core/memory_manager/unified_memory_manager.h"
@@ -5028,7 +5029,7 @@ cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *commen
     DBG_LOG_INPUTS("platform", platform, "comment", comment);
 
     auto executionEnvironment = ::platform()->peekExecutionEnvironment();
-    auto aubCenter = executionEnvironment->rootDeviceEnvironments[0].aubCenter.get();
+    auto aubCenter = executionEnvironment->rootDeviceEnvironments[0]->aubCenter.get();
 
     if (!comment || (aubCenter && !aubCenter->getAubManager())) {
         retVal = CL_INVALID_VALUE;

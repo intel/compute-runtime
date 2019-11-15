@@ -240,14 +240,14 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPt
     return nullptr;
 }
 
-OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr) {
+OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     auto requirements = HostPtrManager::getAllocationRequirements(ptr, size);
     UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::FATAL);
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
     if (osStorage.fragmentCount > 0) {
         if (memoryManager.populateOsHandles(osStorage) != MemoryManager::AllocationStatus::Success) {
-            memoryManager.cleanOsHandles(osStorage);
+            memoryManager.cleanOsHandles(osStorage, rootDeviceIndex);
             osStorage.fragmentCount = 0;
         }
     }

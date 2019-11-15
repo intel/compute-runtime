@@ -8,6 +8,7 @@
 #include "platform.h"
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/string.h"
@@ -183,7 +184,7 @@ bool Platform::initialize() {
     CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
         auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-        executionEnvironment->initAubCenter(enableLocalMemory, "aubfile", csrType);
+        executionEnvironment->rootDeviceEnvironments[0]->initAubCenter(enableLocalMemory, "aubfile", csrType);
     }
 
     this->fillGlobalDispatchTable();

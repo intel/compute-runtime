@@ -6,9 +6,7 @@
  */
 
 #pragma once
-#include "core/execution_environment/root_device_environment.h"
 #include "core/utilities/reference_tracked_object.h"
-#include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 
 #include <mutex>
@@ -21,8 +19,8 @@ class GmmHelper;
 class MemoryManager;
 class MemoryOperationsHandler;
 class OSInterface;
-class RootDevice;
 class SourceLevelDebugger;
+struct RootDeviceEnvironment;
 struct HardwareInfo;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
@@ -38,7 +36,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
 
-    MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     void initGmm();
     void initializeMemoryManager();
     void initSourceLevelDebugger();
@@ -46,6 +43,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
     HardwareInfo *getMutableHardwareInfo() const { return hwInfo.get(); }
     bool isFullRangeSvm() const;
+    void prepareRootDeviceEnvironments(uint32_t numRootDevices);
 
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
@@ -54,7 +52,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
-    std::vector<RootDeviceEnvironment> rootDeviceEnvironments{1};
+    std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

@@ -18,7 +18,7 @@ class MemoryManager;
 class HostPtrManager {
   public:
     FragmentStorage *getFragment(const void *inputPtr);
-    OsHandleStorage prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr);
+    OsHandleStorage prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex);
     void releaseHandleStorage(OsHandleStorage &fragments);
     bool releaseHostPtr(const void *ptr);
     void storeFragment(AllocationStorageData &storageData);

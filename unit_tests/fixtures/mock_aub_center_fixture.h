@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
@@ -20,19 +20,19 @@ struct MockAubCenterFixture {
     MockAubCenterFixture(CommandStreamReceiverType commandStreamReceiverType) : commandStreamReceiverType(commandStreamReceiverType){};
 
     void SetUp() {
-        setMockAubCenter(platformImpl->peekExecutionEnvironment(), commandStreamReceiverType);
+        setMockAubCenter(*platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0], commandStreamReceiverType);
     }
     void TearDown() {
     }
 
-    static void setMockAubCenter(ExecutionEnvironment *executionEnvironment) {
-        setMockAubCenter(executionEnvironment, CommandStreamReceiverType::CSR_AUB);
+    static void setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment) {
+        setMockAubCenter(rootDeviceEnvironment, CommandStreamReceiverType::CSR_AUB);
     }
-    static void setMockAubCenter(ExecutionEnvironment *executionEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
+    static void setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
         if (testMode != TestMode::AubTests && testMode != TestMode::AubTestsWithTbx) {
             auto mockAubCenter = std::make_unique<MockAubCenter>(platformDevices[0], false, "", commandStreamReceiverType);
             mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-            executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(mockAubCenter.release());
+            rootDeviceEnvironment.aubCenter.reset(mockAubCenter.release());
         }
     }
 

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/helpers/hardware_commands_helper.h"
+#include "runtime/helpers/options.h"
 #include "test.h"
 
 namespace NEO {

@@ -153,7 +153,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(*platformDevices, false, fileName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0);
     ASSERT_EQ(nullptr, csrWithAubDump.aubCSR);
@@ -167,17 +167,51 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0);
     ASSERT_NE(nullptr, csrWithAubDump.aubCSR);
+}
+
+using SimulatedCsrTest = ::testing::Test;
+HWTEST_F(SimulatedCsrTest, givenHwWithAubDumpCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitialized) {
+    uint32_t expectedRootDeviceIndex = 10;
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
+
+    auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
+    executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);
+
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
+    EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
+
+    auto csr = std::make_unique<CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>>>("", executionEnvironment, expectedRootDeviceIndex);
+    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+    EXPECT_NE(nullptr, rootDeviceEnvironment->aubCenter.get());
+}
+HWTEST_F(SimulatedCsrTest, givenTbxWithAubDumpCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitialized) {
+    uint32_t expectedRootDeviceIndex = 10;
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
+
+    auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
+    executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);
+
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
+    EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
+
+    auto csr = std::make_unique<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>>("", executionEnvironment, expectedRootDeviceIndex);
+    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+    EXPECT_NE(nullptr, rootDeviceEnvironment->aubCenter.get());
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNullAubManagerAvailableWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
     MockAubCenter *mockAubCenter = new MockAubCenter();
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0);
     EXPECT_NE(nullptr, csrWithAubDump.aubCSR);

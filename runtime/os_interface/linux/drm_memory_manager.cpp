@@ -593,7 +593,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     return AllocationStatus::Success;
 }
 
-void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
+void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             if (handleStorage.fragmentStorageData[i].osHandleStorage->bo) {

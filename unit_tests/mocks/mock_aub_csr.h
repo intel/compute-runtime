@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
@@ -177,8 +178,9 @@ struct AubExecutionEnvironment {
 template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setHwInfo(*platformDevices);
-    executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
     executionEnvironment->initializeMemoryManager();
     auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, 0);

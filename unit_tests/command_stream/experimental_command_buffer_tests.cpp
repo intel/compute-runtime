@@ -359,7 +359,7 @@ TEST(ExperimentalCommandBufferRootDeviceIndexTest, experimentalCommandBufferGrap
 
     // Setup
     auto executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments.resize(2 * expectedRootDeviceIndex);
+    executionEnvironment->prepareRootDeviceEnvironments(2 * expectedRootDeviceIndex);
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, expectedRootDeviceIndex));

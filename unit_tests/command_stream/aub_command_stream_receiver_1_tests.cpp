@@ -80,7 +80,7 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenAubManagerAndHardwareContextAreNull) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
-    MockExecutionEnvironment executionEnvironment(platformDevices[0], false);
+    MockExecutionEnvironment executionEnvironment(platformDevices[0], false, 1);
     executionEnvironment.initializeMemoryManager();
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, 0);
@@ -118,40 +118,40 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameFileStream) {
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto streamProvider1 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getStreamProvider();
+    auto streamProvider1 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getStreamProvider();
     EXPECT_NE(nullptr, streamProvider1);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto streamProvider2 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getStreamProvider();
+    auto streamProvider2 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getStreamProvider();
     EXPECT_NE(nullptr, streamProvider2);
     EXPECT_EQ(streamProvider1, streamProvider2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSamePhysicalAddressAllocator) {
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto physicalAddressAlocator1 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getPhysicalAddressAllocator();
+    auto physicalAddressAlocator1 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getPhysicalAddressAllocator();
     EXPECT_NE(nullptr, physicalAddressAlocator1);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto physicalAddressAlocator2 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getPhysicalAddressAllocator();
+    auto physicalAddressAlocator2 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getPhysicalAddressAllocator();
     EXPECT_NE(nullptr, physicalAddressAlocator2);
     EXPECT_EQ(physicalAddressAlocator1, physicalAddressAlocator2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameAddressMapper) {
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto addressMapper1 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getAddressMapper();
+    auto addressMapper1 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getAddressMapper();
     EXPECT_NE(nullptr, addressMapper1);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto addressMapper2 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getAddressMapper();
+    auto addressMapper2 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getAddressMapper();
     EXPECT_NE(nullptr, addressMapper2);
     EXPECT_EQ(addressMapper1, addressMapper2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameSubCaptureCommon) {
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto subCaptureCommon1 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getSubCaptureCommon();
+    auto subCaptureCommon1 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon1);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    auto subCaptureCommon2 = pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter->getSubCaptureCommon();
+    auto subCaptureCommon2 = pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter->getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon2);
     EXPECT_EQ(subCaptureCommon1, subCaptureCommon2);
 }
@@ -161,7 +161,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubMana
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex())));
     ASSERT_NE(nullptr, aubCsr);
@@ -177,7 +177,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex())));
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
@@ -194,7 +194,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex())));
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
@@ -251,7 +251,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAdressesAreGenerated) {
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
     auto engineInstance = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
     MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled, false);

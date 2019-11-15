@@ -94,38 +94,41 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
+TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.setHwInfo(*platformDevices);
-    executionEnvironment.initAubCenter(true, "test.aub", CommandStreamReceiverType::CSR_AUB);
-    EXPECT_TRUE(executionEnvironment.initAubCenterCalled);
-    EXPECT_TRUE(executionEnvironment.localMemoryEnabledReceived);
-    EXPECT_STREQ(executionEnvironment.aubFileNameReceived.c_str(), "test.aub");
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::CSR_AUB);
+    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+    EXPECT_TRUE(rootDeviceEnvironment->localMemoryEnabledReceived);
+    EXPECT_STREQ(rootDeviceEnvironment->aubFileNameReceived.c_str(), "test.aub");
 }
 
-TEST(ExecutionEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {
+TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseAubStream.set(false);
 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
-    auto aubManager = executionEnvironment->rootDeviceEnvironments[0].aubCenter->getAubManager();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
+TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
-    auto currentAubCenter = executionEnvironment->rootDeviceEnvironments[0].aubCenter.get();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    auto currentAubCenter = rootDeviceEnvironment->aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
     auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    executionEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
-    EXPECT_EQ(currentAubCenter, executionEnvironment->rootDeviceEnvironments[0].aubCenter.get());
-    EXPECT_EQ(currentAubStreamProvider, executionEnvironment->rootDeviceEnvironments[0].aubCenter->getStreamProvider());
-    EXPECT_EQ(currentAubFileStream, executionEnvironment->rootDeviceEnvironments[0].aubCenter->getStreamProvider()->getStream());
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    EXPECT_EQ(currentAubCenter, rootDeviceEnvironment->aubCenter.get());
+    EXPECT_EQ(currentAubStreamProvider, rootDeviceEnvironment->aubCenter->getStreamProvider());
+    EXPECT_EQ(currentAubFileStream, rootDeviceEnvironment->aubCenter->getStreamProvider()->getStream());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
@@ -181,11 +184,12 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setHwInfo(*platformDevices);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
-    executionEnvironment->rootDeviceEnvironments[0].aubCenter = std::make_unique<AubCenterMock>(destructorId);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
@@ -196,7 +200,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManager) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->rootDeviceEnvironments.resize(2);
+    executionEnvironment->prepareRootDeviceEnvironments(2);
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getGpgpuCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();

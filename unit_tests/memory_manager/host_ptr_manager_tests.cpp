@@ -805,11 +805,11 @@ TEST_F(HostPtrAllocationTest, whenPrepareOsHandlesForAllocationThenPopulateAsMan
     for (uint32_t expectedFragmentCount = 1; expectedFragmentCount <= 3; expectedFragmentCount++, allocationSize += MemoryConstants::pageSize) {
         auto requirements = hostPtrManager->getAllocationRequirements(cpuPtr, allocationSize);
         EXPECT_EQ(expectedFragmentCount, requirements.requiredFragmentsCount);
-        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, allocationSize, cpuPtr);
+        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, allocationSize, cpuPtr, 0);
         EXPECT_EQ(expectedFragmentCount, osStorage.fragmentCount);
         EXPECT_EQ(expectedFragmentCount, hostPtrManager->getFragmentCount());
         hostPtrManager->releaseHandleStorage(osStorage);
-        memoryManager->cleanOsHandles(osStorage);
+        memoryManager->cleanOsHandles(osStorage, 0);
         EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
     }
 }

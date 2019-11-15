@@ -57,7 +57,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
-    void cleanOsHandles(OsHandleStorage &handleStorage) override;
+    void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getLocalMemorySize() override;

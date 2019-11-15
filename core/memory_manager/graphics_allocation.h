@@ -84,7 +84,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool);
 
-    uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
+    uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void *getDriverAllocatedCpuPtr() const { return driverAllocatedCpuPointer; }
     void setDriverAllocatedCpuPtr(void *allocatedCpuPtr) { driverAllocatedCpuPointer = allocatedCpuPtr; }

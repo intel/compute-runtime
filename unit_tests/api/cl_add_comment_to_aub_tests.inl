@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
@@ -28,7 +29,7 @@ TEST_F(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsR
 }
 
 TEST_F(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
-    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0].aubCenter.reset(new MockAubCenter());
+    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->aubCenter.reset(new MockAubCenter());
 
     auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -46,7 +47,7 @@ TEST_F(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCom
     auto mockAubCenter = new MockAubCenter();
     auto mockAubManager = new AubManagerCommentMock;
     mockAubCenter->aubManager.reset(mockAubManager);
-    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0].aubCenter.reset(mockAubCenter);
+    pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
 
     EXPECT_FALSE(mockAubManager->addCommentCalled);
 

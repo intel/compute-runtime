@@ -83,6 +83,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(10);
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
     executionEnvironment.memoryManager.reset(new FailMemoryManager(10, executionEnvironment));
     auto device = Device::create<RootDevice>(&executionEnvironment, 0u);

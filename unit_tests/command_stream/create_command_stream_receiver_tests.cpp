@@ -25,7 +25,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     DebugManagerStateRestore stateRestorer;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-    MockAubCenterFixture::setMockAubCenter(executionEnvironment);
+    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
 
     CommandStreamReceiverType csrType = GetParam();
 

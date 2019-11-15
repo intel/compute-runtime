@@ -648,7 +648,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(new AubCenter());
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
@@ -896,7 +896,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    pDevice->executionEnvironment->rootDeviceEnvironments[0].aubCenter.reset(mockAubCenter);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
@@ -1031,4 +1031,22 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+using SimulatedCsrTest = ::testing::Test;
+HWTEST_F(SimulatedCsrTest, givenAubCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitalized) {
+    uint32_t expectedRootDeviceIndex = 10;
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
+
+    auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
+    executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);
+
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
+    EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
+
+    auto csr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, expectedRootDeviceIndex);
+    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
 }

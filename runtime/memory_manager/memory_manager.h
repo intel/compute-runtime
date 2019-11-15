@@ -89,7 +89,7 @@ class MemoryManager {
     virtual GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
 
     virtual AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) = 0;
-    virtual void cleanOsHandles(OsHandleStorage &handleStorage) = 0;
+    virtual void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) = 0;
 
     void freeSystemMemory(void *ptr);
 

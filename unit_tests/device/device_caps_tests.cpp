@@ -197,6 +197,7 @@ TEST(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThe
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
 
         auto executionEnvironment = new ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->builtins.reset(builtIns);
         auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(platformDevices[0], executionEnvironment, 0u));
         ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
@@ -817,6 +818,7 @@ TEST(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) 
     VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
 
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
     auto &capabilityTable = executionEnvironment.getMutableHardwareInfo()->capabilityTable;
     std::unique_ptr<MemoryManager> memoryManager;
 

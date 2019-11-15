@@ -177,8 +177,32 @@ TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeForTgllpProductF
     bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
     ASSERT_TRUE(success);
 
-    EXPECT_TRUE(executionEnvironment.initAubCenterCalled);
-    EXPECT_FALSE(executionEnvironment.localMemoryEnabledReceived);
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+
+    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+    EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
+}
+
+TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeWhenGetDevicesForProductFamilyOverrideIsCalledThenAllAubCentersAreInitializedCorrectly) {
+    DeviceFactoryCleaner cleaner;
+    DebugManagerStateRestore stateRestore;
+    auto requiredDeviceCount = 2u;
+    DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
+    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    DebugManager.flags.ProductFamilyOverride.set("tgllp");
+
+    MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
+
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    ASSERT_TRUE(success);
+    EXPECT_EQ(requiredDeviceCount, numDevices);
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < requiredDeviceCount; rootDeviceIndex++) {
+        auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get());
+        EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+        EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
+    }
 }
 
 TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {

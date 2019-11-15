@@ -49,7 +49,7 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
 struct TimestampPacketTests : public TimestampPacketSimpleTests {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        executionEnvironment->rootDeviceEnvironments.resize(2);
+        executionEnvironment->prepareRootDeviceEnvironments(2);
         device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = new MockContext(device.get());
         kernel = std::make_unique<MockKernelWithInternals>(*device, context);

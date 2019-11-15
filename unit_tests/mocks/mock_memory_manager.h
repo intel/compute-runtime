@@ -194,7 +194,7 @@ class FailMemoryManager : public MockMemoryManager {
     MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override {
         return AllocationStatus::Error;
     };
-    void cleanOsHandles(OsHandleStorage &handleStorage) override{};
+    void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
 
     uint64_t getSystemSharedMemory() override {
         return 0;

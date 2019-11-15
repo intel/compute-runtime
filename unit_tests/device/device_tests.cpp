@@ -185,7 +185,7 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
-    executionEnvironment->rootDeviceEnvironments.resize(numDevices);
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size());
 
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -211,7 +211,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
-    executionEnvironment->rootDeviceEnvironments.resize(numDevices);
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
@@ -222,7 +222,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
 TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
-    executionEnvironment->rootDeviceEnvironments.resize(numDevices);
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
@@ -268,6 +268,7 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
 
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
     executionEnvironment.initializeMemoryManager();
     executionEnvironment.setHwInfo(&localHwInfo);

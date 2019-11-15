@@ -467,6 +467,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
+        executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
     }
 
