@@ -169,7 +169,6 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedTheMove
         timestampPacketContainer1 = std::move(timestampPacketContainer0);
         EXPECT_EQ(0u, node0.returnCalls);
         EXPECT_EQ(0u, node1.returnCalls);
-        EXPECT_EQ(0u, timestampPacketContainer0.peekNodes().size());
         EXPECT_EQ(2u, timestampPacketContainer1.peekNodes().size());
         EXPECT_EQ(&node0, timestampPacketContainer1.peekNodes()[0]);
         EXPECT_EQ(&node1, timestampPacketContainer1.peekNodes()[1]);

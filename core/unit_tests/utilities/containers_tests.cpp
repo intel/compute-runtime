@@ -43,7 +43,7 @@ struct DummyDNode : IDNode<DummyDNode> {
     DummyDNode(uint32_t *destructorsCounter = nullptr)
         : destructorsCounter(destructorsCounter) {
     }
-    ~DummyDNode() {
+    ~DummyDNode() override {
         if (destructorsCounter != nullptr) {
             ++(*destructorsCounter);
         }
@@ -790,6 +790,7 @@ void iDListTestDetachSequence() {
     ASSERT_EQ(nullptr, nodes[3]->next);
 
     ASSERT_EQ(nodes[4], nodes[0]->next);
+    ASSERT_NE(nullptr, nodes[4]);
     ASSERT_EQ(nodes[0], nodes[4]->prev);
     ASSERT_EQ(nodes[0], list.peekHead());
     ASSERT_EQ(nodes[9], list.peekTail());
