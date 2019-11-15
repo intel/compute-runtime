@@ -103,7 +103,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib c
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedVaFormats, false, "Enable more formats in cl-va sharing")
 DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(bool, EnableFormatQuery, false, "Enable sharing format querying")
-DECLARE_DEBUG_VARIABLE(bool, AllowOpenFdOperations, false, "When enabled driver is allowed to call DRM_IOCTL_PRIME_HANDLE_TO_FD.")
 DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memory manager")
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_motion_estimation extension")

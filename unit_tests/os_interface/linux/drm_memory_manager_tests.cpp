@@ -148,8 +148,6 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
 }
 
 TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.AllowOpenFdOperations.set(1);
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -159,8 +157,6 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
     ASSERT_NE(allocation->getBO(), nullptr);
     ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager), static_cast<uint64_t>(1337));
 
-    DebugManager.flags.AllowOpenFdOperations.set(0);
-    ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager), 0llu);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1061,8 +1057,6 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationThenBoIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.AllowOpenFdOperations.set(1);
     mock->ioctl_expected.total = -1;
     mock->outputFd = 1337;
     MockContext context;

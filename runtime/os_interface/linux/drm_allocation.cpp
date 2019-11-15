@@ -24,11 +24,6 @@ std::string DrmAllocation::getAllocationInfoString() const {
 }
 
 uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
-    auto drmMemoryManager = static_cast<DrmMemoryManager *>(memoryManager);
-    if (DebugManager.flags.AllowOpenFdOperations.get()) {
-        return static_cast<uint64_t>(drmMemoryManager->obtainFdFromHandle(getBO()->peekHandle()));
-    } else {
-        return 0llu;
-    }
+    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle()));
 }
 } // namespace NEO
