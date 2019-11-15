@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/preemption.h"
+#include "core/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"

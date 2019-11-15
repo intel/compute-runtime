@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/command_stream/preemption.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/dispatch_info.h"

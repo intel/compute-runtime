@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/command_stream/preemption.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"

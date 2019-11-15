@@ -5,8 +5,8 @@
  *
  */
 
-#include "runtime/command_stream/preemption.h"
-#include "runtime/command_stream/preemption.inl"
+#include "core/command_stream/preemption.h"
+#include "core/command_stream/preemption.inl"
 
 namespace NEO {
 

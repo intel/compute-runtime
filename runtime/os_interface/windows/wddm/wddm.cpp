@@ -7,10 +7,10 @@
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
+#include "core/command_stream/preemption.h"
 #include "core/helpers/interlocked_max.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"

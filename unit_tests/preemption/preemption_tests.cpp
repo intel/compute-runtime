@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/preemption_fixture.h"

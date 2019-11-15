@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/preemption.h"
 #include "core/helpers/preamble.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/gen11/reg_configs.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "test.h"

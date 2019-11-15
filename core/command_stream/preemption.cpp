@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/preemption.h"
+#include "core/command_stream/preemption.h"
 
 #include "core/helpers/string.h"
 #include "runtime/built_ins/built_ins.h"

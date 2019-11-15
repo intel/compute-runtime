@@ -34,9 +34,6 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.inl
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/per_dss_backed_buffer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_base.cpp

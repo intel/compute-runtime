@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/preemption.h"
-#include "runtime/command_stream/preemption.inl"
-#include "runtime/gen12lp/hw_cmds.h"
+#include "core/command_stream/preemption.h"
+#include "core/command_stream/preemption.inl"
+#include "core/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 
-typedef TGLLPFamily GfxFamily;
+typedef ICLFamily GfxFamily;
 
 template <>
 size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/preemption.h"
+#include "core/command_stream/preemption.h"
 #include "runtime/helpers/options.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"

@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
+#include "core/command_stream/preemption.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
@@ -18,7 +19,6 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/event/user_event.h"

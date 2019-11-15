@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/preemption.h"
+#include "core/command_stream/preemption.inl"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/command_stream/preemption.h"
-#include "runtime/command_stream/preemption.inl"
 
 #include <cstring>
 

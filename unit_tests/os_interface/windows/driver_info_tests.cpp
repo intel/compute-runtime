@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/command_stream/preemption.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"

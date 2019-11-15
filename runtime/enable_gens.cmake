@@ -32,10 +32,14 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   hw_helper
   hw_info
   image
-  preemption
   sampler
   state_base_address
   tbx_command_stream_receiver
+)
+
+set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
+  preamble
+  preemption
 )
 
 macro(macro_for_each_platform)
@@ -69,9 +73,6 @@ macro(macro_for_each_gen)
   if(EXISTS "${CORE_GENX_PREFIX}/hw_cmds_generated.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_cmds_generated.inl")
   endif()
-  if(EXISTS "${CORE_GENX_PREFIX}/preamble_${GEN_TYPE_LOWER}.cpp")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/preamble_${GEN_TYPE_LOWER}.cpp")
-  endif()
   if(EXISTS "${CORE_GENX_PREFIX}/hw_cmds_generated_patched.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_cmds_generated_patched.inl")
   endif()
@@ -96,6 +97,9 @@ macro(macro_for_each_gen)
     foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_${OS_IT}})
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
     endforeach()
+  endforeach()
+  foreach(SRC_IT ${CORE_RUNTIME_SRCS_GENX_CPP_BASE})
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${CORE_GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
   endforeach()
 
   apply_macro_for_each_platform()
