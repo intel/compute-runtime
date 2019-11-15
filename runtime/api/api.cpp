@@ -3590,6 +3590,32 @@ cl_int clEnqueueMemsetINTEL(
     return retVal;
 }
 
+cl_int clEnqueueMemFillINTEL(
+    cl_command_queue commandQueue,
+    void *dstPtr,
+    const void *pattern,
+    size_t pattern_size,
+    size_t size,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+
+    auto retVal = clEnqueueSVMMemFill(commandQueue,
+                                      dstPtr,
+                                      pattern,
+                                      pattern_size,
+                                      size,
+                                      numEventsInWaitList,
+                                      eventWaitList,
+                                      event);
+    if (retVal == CL_SUCCESS && event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(CL_COMMAND_MEMFILL_INTEL);
+    }
+
+    return retVal;
+}
+
 cl_int clEnqueueMemcpyINTEL(
     cl_command_queue commandQueue,
     cl_bool blocking,
@@ -3869,6 +3895,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetMemAllocInfoINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clSetKernelArgMemPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemsetINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemFillINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemcpyINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMigrateMemINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);

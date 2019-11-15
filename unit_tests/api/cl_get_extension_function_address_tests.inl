@@ -133,6 +133,11 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemsetINTELWhenGettingE
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemsetINTEL));
 }
 
+TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemFillINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clEnqueueMemFillINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemFillINTEL));
+}
+
 TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemcpyINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemcpyINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemcpyINTEL));

@@ -114,6 +114,7 @@ typedef cl_uint cl_execution_info_intel;
 
 /* cl_command_type */
 #define CL_COMMAND_MEMSET_INTEL 0x4204
+#define CL_COMMAND_MEMFILL_INTEL 0x4204
 #define CL_COMMAND_MEMCPY_INTEL 0x4205
 #define CL_COMMAND_MIGRATEMEM_INTEL 0x4206
 #define CL_COMMAND_MEMADVISE_INTEL 0x4207

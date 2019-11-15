@@ -973,6 +973,16 @@ cl_int clEnqueueMemsetINTEL(
     const cl_event *eventWaitList,
     cl_event *event);
 
+cl_int clEnqueueMemFillINTEL(
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *pattern,
+    size_t pattern_size,
+    size_t size,
+    cl_uint num_events_in_wait_list,
+    const cl_event *event_wait_list,
+    cl_event *event);
+
 cl_int clEnqueueMemcpyINTEL(
     cl_command_queue commandQueue,
     cl_bool blocking,
