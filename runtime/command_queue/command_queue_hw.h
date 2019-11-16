@@ -345,7 +345,7 @@ class CommandQueueHw : public CommandQueue {
                         Surface **surfacesForResidency,
                         size_t surfacesCount,
                         const MultiDispatchInfo &multiDispatchInfo,
-                        TimestampPacketContainer &previousTimestampPacketNodes,
+                        TimestampPacketDependencies &timestampPacketDependencies,
                         std::unique_ptr<KernelOperation> &blockedCommandsData,
                         const EnqueueProperties &enqueueProperties,
                         EventsRequest &eventsRequest,

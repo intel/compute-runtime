@@ -94,7 +94,7 @@ class Command : public IFNode<Command> {
     virtual LinearStream *getCommandStream() {
         return nullptr;
     }
-    void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &&previous);
+    void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketDependencies &&dependencies);
     void setEventsRequest(EventsRequest &eventsRequest);
     void makeTimestampPacketsResident(CommandStreamReceiver &commandStreamReceiver);
 
@@ -105,7 +105,7 @@ class Command : public IFNode<Command> {
     CommandQueue &commandQueue;
     std::unique_ptr<KernelOperation> kernelOperation;
     std::unique_ptr<TimestampPacketContainer> currentTimestampPacketNodes;
-    std::unique_ptr<TimestampPacketContainer> previousTimestampPacketNodes;
+    std::unique_ptr<TimestampPacketDependencies> timestampPacketDependencies;
     EventsRequest eventsRequest = {0, nullptr, nullptr};
     std::vector<cl_event> eventsWaitlist;
 };
@@ -152,6 +152,6 @@ class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
-    void dispatchBlitOperation(TimestampPacketContainer &barrierTimestampPacketNodes);
+    void dispatchBlitOperation();
 };
 } // namespace NEO

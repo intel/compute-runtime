@@ -354,7 +354,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        surfacesForResidency,
                        numSurfaceForResidency,
                        multiDispatchInfo,
-                       timestampPacketDependencies.previousEnqueueNodes,
+                       timestampPacketDependencies,
                        blockedCommandsData,
                        enqueueProperties,
                        eventsRequest,
@@ -796,7 +796,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     Surface **surfaces,
     size_t surfaceCount,
     const MultiDispatchInfo &multiDispatchInfo,
-    TimestampPacketContainer &previousTimestampPacketNodes,
+    TimestampPacketDependencies &timestampPacketDependencies,
     std::unique_ptr<KernelOperation> &blockedCommandsData,
     const EnqueueProperties &enqueueProperties,
     EventsRequest &eventsRequest,
@@ -875,7 +875,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
             event->incRefInternal();
         }
-        command->setTimestampPacketNode(*timestampPacketContainer, std::move(previousTimestampPacketNodes));
+        command->setTimestampPacketNode(*timestampPacketContainer, std::move(timestampPacketDependencies));
         command->setEventsRequest(eventsRequest);
     }
     outEvent->setCommand(std::move(command));
