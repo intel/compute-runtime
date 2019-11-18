@@ -15,8 +15,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
 
-#include "hw_cmds.h"
-
 #include <new>
 
 namespace NEO {

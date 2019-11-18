@@ -13,8 +13,6 @@
 #include "runtime/event/event.h"
 #include "runtime/memory_manager/surface.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>

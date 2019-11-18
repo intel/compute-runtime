@@ -8,8 +8,6 @@
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "test.h"
 
-#include "hw_cmds.h"
-
 #include <array>
 
 using namespace NEO;

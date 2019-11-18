@@ -5,11 +5,10 @@
  *
  */
 
-#include "hw_info.h"
+#include "runtime/helpers/hw_info.h"
 
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-
-#include "hw_cmds.h"
 
 #include <algorithm>
 

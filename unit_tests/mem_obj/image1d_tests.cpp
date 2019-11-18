@@ -12,8 +12,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 static const unsigned int testImageDimensions = 32;

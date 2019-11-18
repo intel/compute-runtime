@@ -15,7 +15,6 @@
 #include "unit_tests/mocks/mock_csr.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 #include <type_traits>
 

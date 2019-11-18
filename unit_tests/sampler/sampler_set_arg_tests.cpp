@@ -17,8 +17,6 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 namespace NEO {

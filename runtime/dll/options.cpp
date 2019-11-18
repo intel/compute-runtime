@@ -7,9 +7,8 @@
 
 #include "runtime/helpers/options.h"
 
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/array_count.h"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 // AUB file folder location

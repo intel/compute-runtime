@@ -9,8 +9,6 @@
 
 #include "gtest/gtest.h"
 
-//#include "unit_tests/test_files/4265157215134882557.cl"
-
 namespace BuiltinKernelsSimulation {
 
 __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,

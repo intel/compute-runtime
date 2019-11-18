@@ -10,7 +10,6 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 
 #include "drm_command_stream.h"
-#include "hw_cmds.h"
 
 namespace NEO {
 

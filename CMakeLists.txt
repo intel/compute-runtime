@@ -788,8 +788,6 @@ include_directories(${NEO_SOURCE_DIR}/runtime/memory_manager/definitions${BRANCH
 include_directories(${NEO_SOURCE_DIR}/runtime/os_interface/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
 
-set(HW_SRC_INCLUDE_PATH ${NEO_SOURCE_DIR}/runtime/gen_common)
-
 if(HAVE_INSTRUMENTATION)
   set(IGDRCL__INSTRUMENTATION_DIR_SUFFIX ${BRANCH_DIR_SUFFIX})
   message(STATUS "Instrumentation include dirs: ${INSTRUMENTATION_INCLUDE_PATHS}")

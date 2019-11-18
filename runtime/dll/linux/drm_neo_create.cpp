@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/hw_helper.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
@@ -14,7 +15,6 @@
 #include "runtime/os_interface/linux/drm_null_device.h"
 
 #include "drm/i915_drm.h"
-#include "hw_cmds.h"
 
 #include <array>
 #include <cstdio>

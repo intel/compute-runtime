@@ -9,14 +9,13 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "runtime/device/device.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sampler/sampler.h"
-
-#include "hw_cmds.h"
 
 #include <cstdint>
 #include <cstring>

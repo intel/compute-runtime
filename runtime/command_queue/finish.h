@@ -8,9 +8,6 @@
 #pragma once
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/device/device.h"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 

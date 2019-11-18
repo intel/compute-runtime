@@ -12,7 +12,6 @@
 #include "runtime/device/device.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 namespace NEO {
 

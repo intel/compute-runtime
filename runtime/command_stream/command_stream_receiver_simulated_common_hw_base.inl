@@ -17,7 +17,6 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 
-#include "aub_mapper.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
 namespace NEO {

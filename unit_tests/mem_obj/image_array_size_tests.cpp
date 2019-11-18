@@ -13,8 +13,6 @@
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 static const unsigned int testImageDimensions = 17;

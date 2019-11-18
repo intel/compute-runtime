@@ -16,8 +16,6 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 
-#include "hw_cmds.h"
-
 #include <algorithm>
 #include <new>
 

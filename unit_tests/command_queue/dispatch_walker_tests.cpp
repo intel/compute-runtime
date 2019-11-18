@@ -26,8 +26,6 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_program.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, public ::testing::Test {

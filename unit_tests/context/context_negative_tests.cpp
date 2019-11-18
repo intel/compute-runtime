@@ -13,7 +13,6 @@
 
 #include "CL/cl_gl.h"
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 #include <memory>
 

@@ -11,9 +11,8 @@
 #pragma warning(disable : 4005)
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
-
-#include "hw_cmds.h"
 #pragma warning(pop)
 
 namespace NEO {

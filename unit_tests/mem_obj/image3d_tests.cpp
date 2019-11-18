@@ -14,8 +14,6 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
-#include "hw_cmds.h"
-
 using namespace NEO;
 
 static const unsigned int testImageDimensions = 31;

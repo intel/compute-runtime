@@ -7,6 +7,7 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -17,8 +18,6 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
-
-#include "hw_cmds.h"
 
 #include <memory>
 

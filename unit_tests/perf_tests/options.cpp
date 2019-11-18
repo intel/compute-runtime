@@ -5,10 +5,8 @@
  *
  */
 
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/array_count.h"
-
-#include "hw_cmds.h"
-#include "hw_info.h"
 
 namespace NEO {
 // IP address for TBX server

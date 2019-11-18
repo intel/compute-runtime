@@ -21,8 +21,6 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/platform/platform.h"
 
-#include "hw_cmds.h"
-
 #include <cstdlib>
 #include <cstring>
 

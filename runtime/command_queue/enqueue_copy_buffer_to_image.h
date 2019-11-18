@@ -16,8 +16,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
 
-#include "hw_cmds.h"
-
 #include <new>
 
 namespace NEO {

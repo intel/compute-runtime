@@ -15,7 +15,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 
 #include "gmock/gmock.h"
-#include "hw_cmds.h"
 
 #include <memory>
 

@@ -13,13 +13,12 @@
 #include "core/command_stream/preemption.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/device/device.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
-
-#include "hw_cmds.h"
 #pragma warning(pop)
 
 #include "runtime/os_interface/windows/gdi_interface.h"

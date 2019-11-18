@@ -25,8 +25,6 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 
-#include "hw_cmds.h"
-
 #include <cstring>
 
 namespace NEO {

@@ -33,8 +33,6 @@
 #include "runtime/program/printf_handler.h"
 #include "runtime/utilities/tag_allocator.h"
 
-#include "hw_cmds.h"
-
 #include <algorithm>
 #include <new>
 

@@ -11,7 +11,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 using namespace NEO;
 

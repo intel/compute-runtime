@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 
-#include "hw_cmds.h"
+#include "runtime/gen_common/hw_cmds.h"
 
 namespace NEO {
 

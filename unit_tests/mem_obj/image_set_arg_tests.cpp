@@ -25,7 +25,6 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gmock/gmock.h"
-#include "hw_cmds.h"
 
 using namespace NEO;
 using namespace ::testing;

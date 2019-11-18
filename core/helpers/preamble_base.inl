@@ -10,10 +10,10 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/preamble.h"
 #include "runtime/device/device.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 
-#include "hw_cmds.h"
 #include "reg_configs_common.h"
 
 #include <cstddef>

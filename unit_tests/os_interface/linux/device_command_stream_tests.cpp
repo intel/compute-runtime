@@ -19,7 +19,6 @@
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include "gtest/gtest.h"
-#include "hw_cmds.h"
 
 #include <memory>
 

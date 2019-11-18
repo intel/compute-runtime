@@ -10,7 +10,6 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-#include "hw_cmds.h"
 #include "patch_shared.h"
 
 using namespace NEO;

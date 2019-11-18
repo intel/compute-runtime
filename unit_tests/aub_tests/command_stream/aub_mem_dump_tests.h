@@ -11,10 +11,9 @@
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
+#include "runtime/gen_common/aub_mapper.h"
 #include "runtime/helpers/options.h"
 #include "test.h"
-
-#include "aub_mapper.h"
 
 namespace Os {
 extern const char *fileSeparator;

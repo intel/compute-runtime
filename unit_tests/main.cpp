@@ -23,7 +23,6 @@
 #include "global_environment.h"
 #include "gmock/gmock.h"
 #include "helpers/test_files.h"
-#include "hw_cmds.h"
 #include "mock_gmm_client_context.h"
 
 #include <algorithm>
