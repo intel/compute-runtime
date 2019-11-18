@@ -14,6 +14,5 @@ class DeferrableDeletion : public IDNode<DeferrableDeletion> {
     template <typename... Args>
     static DeferrableDeletion *create(Args... args);
     virtual bool apply() = 0;
-    virtual ~DeferrableDeletion() = default;
 };
 } // namespace NEO

@@ -23,7 +23,7 @@ struct IDNode {
           next(nullptr) {
     }
 
-    MOCKABLE_VIRTUAL ~IDNode() = default;
+    virtual ~IDNode() = default;
 
     void insertOneNext(NodeObjectType &nd) {
         nd.next = next;
