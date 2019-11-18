@@ -489,7 +489,6 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
                                                                                                         buffer->getGraphicsAllocation());
             auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
-            blitPropertiesContainer[bufferIndex].outputTimestampPacket = auxToNonAuxNode;
         }
 
         {
@@ -498,22 +497,14 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
                                                                                                                      buffer->getGraphicsAllocation());
             auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
-            blitPropertiesContainer[bufferIndex + numBuffers].outputTimestampPacket = nonAuxToAuxNode;
         }
         bufferIndex++;
     }
 
     if (!queueBlocked) {
-        getGpgpuCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
-        timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
-
-        // wait for barrier and events before AuxToNonAux
-        blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
-        blitPropertiesContainer[0].csrDependencies.fillFromEventsRequest(eventsRequest, *getBcsCommandStreamReceiver(),
-                                                                         CsrDependencies::DependenciesType::All);
-
-        // wait for NDR before NonAuxToAux
-        blitPropertiesContainer[numBuffers].csrDependencies.push_back(this->timestampPacketContainer.get());
+        BlitProperties::setupDependenciesForAuxTranslation(blitPropertiesContainer, timestampPacketDependencies,
+                                                           *this->timestampPacketContainer, eventsRequest,
+                                                           getGpgpuCommandStreamReceiver(), *getBcsCommandStreamReceiver());
     }
 }
 
@@ -832,7 +823,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     bool storeTimestampPackets = false;
 
     if (blockedCommandsData) {
-        if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+        if (enqueueProperties.blitPropertiesContainer) {
             blockedCommandsData->blitPropertiesContainer = *enqueueProperties.blitPropertiesContainer;
             blockedCommandsData->blitEnqueue = true;
         }

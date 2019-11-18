@@ -24,6 +24,10 @@ struct TimestampPacketStorage;
 template <typename TagType>
 struct TagNode;
 
+struct BlitProperties;
+struct TimestampPacketDependencies;
+using BlitPropertiesContainer = StackVec<BlitProperties, 32>;
+
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
@@ -42,6 +46,10 @@ struct BlitProperties {
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                GraphicsAllocation *allocation);
 
+    static void setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,
+                                                   TimestampPacketContainer &kernelTimestamps, const EventsRequest &eventsRequest,
+                                                   CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
+
     static BlitterConstants::BlitDirection obtainBlitDirection(uint32_t commandType);
 
     TagNode<TimestampPacketStorage> *outputTimestampPacket = nullptr;
@@ -55,8 +63,6 @@ struct BlitProperties {
     size_t srcOffset = 0;
     uint64_t copySize = 0;
 };
-
-using BlitPropertiesContainer = StackVec<BlitProperties, 32>;
 
 template <typename GfxFamily>
 struct BlitCommandsHelper {

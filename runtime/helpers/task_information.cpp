@@ -188,6 +188,16 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         this->kernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
     }
 
+    if (kernelOperation->blitPropertiesContainer.size() > 0) {
+        auto &bcsCsr = *commandQueue.getBcsCommandStreamReceiver();
+        BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
+                                                           *currentTimestampPacketNodes, eventsRequest,
+                                                           commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
+
+        auto bcsTaskCount = bcsCsr.blitBuffer(kernelOperation->blitPropertiesContainer, false);
+        commandQueue.updateBcsTaskCount(bcsTaskCount);
+    }
+
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
         nullptr,                                                                     //barrierTimestampPacketNodes
@@ -211,8 +221,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         false                                                                        //epilogueRequired
     );
 
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+    if (timestampPacketDependencies) {
         dispatchFlags.csrDependencies.fillFromEventsRequest(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+        dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies->barrierNodes;
     }
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
     if (anyUncacheableArgs) {

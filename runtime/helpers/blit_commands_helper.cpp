@@ -109,4 +109,27 @@ BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t com
                                                     : BlitterConstants::BlitDirection::BufferToHostPtr;
 }
 
+void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,
+                                                        TimestampPacketContainer &kernelTimestamps, const EventsRequest &eventsRequest,
+                                                        CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr) {
+    auto numObjects = blitPropertiesContainer.size() / 2;
+
+    for (size_t i = 0; i < numObjects; i++) {
+        blitPropertiesContainer[i].outputTimestampPacket = timestampPacketDependencies.auxToNonAuxNodes.peekNodes()[i];
+        blitPropertiesContainer[i + numObjects].outputTimestampPacket = timestampPacketDependencies.nonAuxToAuxNodes.peekNodes()[i];
+    }
+
+    gpguCsr.requestStallingPipeControlOnNextFlush();
+    auto nodesAllocator = gpguCsr.getTimestampPacketAllocator();
+    timestampPacketDependencies.barrierNodes.add(nodesAllocator->getTag());
+
+    // wait for barrier and events before AuxToNonAux
+    blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
+    blitPropertiesContainer[0].csrDependencies.fillFromEventsRequest(eventsRequest, bcsCsr,
+                                                                     CsrDependencies::DependenciesType::All);
+
+    // wait for NDR before NonAuxToAux
+    blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);
+}
+
 } // namespace NEO

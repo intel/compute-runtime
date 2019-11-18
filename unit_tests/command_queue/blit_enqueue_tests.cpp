@@ -7,6 +7,7 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "runtime/event/user_event.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -239,6 +240,80 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
     }
 }
 
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstructingBlockedCommandBufferThenEnsureCorrectOrder) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto buffer0 = createBuffer(1, true);
+    auto buffer1 = createBuffer(1, false);
+    auto buffer2 = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto initialBcsTaskCount = mockCmdQ->bcsTaskCount;
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    mockCmdQ->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, lws, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(mockCmdQ->bcsTaskCount, initialBcsTaskCount + 1);
+
+    // Gpgpu command buffer
+    {
+        auto cmdListCsr = getCmdList<FamilyType>(gpgpuCsr->getCS(0));
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+        auto cmdListQueue = getCmdList<FamilyType>(*ultCsr->lastFlushedCommandStream);
+
+        // Barrier
+        expectPipeControl<FamilyType>(cmdListCsr.begin(), cmdListCsr.end());
+
+        // Aux to NonAux
+        auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdListQueue.begin(), cmdListQueue.end());
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+        // Walker
+        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        // NonAux to Aux
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+
+        // task count
+        expectPipeControl<FamilyType>(++cmdFound, cmdListQueue.end());
+    }
+
+    // BCS command buffer
+    {
+        auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
+
+        // Barrier
+        auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdList.begin(), cmdList.end());
+
+        // Aux to NonAux
+        cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
+
+        // wait for NDR
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
+
+        // NonAux to Aux
+        cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
+
+        // taskCount
+        expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
+    }
+    EXPECT_FALSE(mockCmdQ->isQueueBlocked());
+}
+
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingCommandBufferThenSynchronizeBarrier) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -438,4 +513,161 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
 
     EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(&memObjects));
     EXPECT_EQ(dependencySize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(&memObjects));
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeBarrier) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto buffer = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    auto cmdListCsr = getCmdList<FamilyType>(gpgpuCsr->getCS(0));
+    auto pipeControl = expectPipeControl<FamilyType>(cmdListCsr.begin(), cmdListCsr.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
+
+    uint64_t low = pipeControlCmd->getAddress();
+    uint64_t high = pipeControlCmd->getAddressHigh();
+    uint64_t barrierGpuAddress = (high << 32) | low;
+
+    auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
+    auto semaphore = expectCommand<MI_SEMAPHORE_WAIT>(cmdList.begin(), cmdList.end());
+    verifySemaphore<FamilyType>(semaphore, barrierGpuAddress);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeEvents) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto buffer = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
+
+    auto event = make_releaseable<Event>(commandQueue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
+    MockTimestampPacketContainer eventDependencyContainer(*bcsCsr->getTimestampPacketAllocator(), 1);
+    auto eventDependency = eventDependencyContainer.getNode(0);
+    event->addTimestampPacketNodes(eventDependencyContainer);
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent, event.get()};
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    auto eventDependencyAddress = eventDependency->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+    auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
+
+    // Barrier
+    auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdList.begin(), cmdList.end());
+
+    // Event
+    auto semaphore = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
+    verifySemaphore<FamilyType>(semaphore, eventDependencyAddress);
+
+    cmdFound = expectCommand<XY_COPY_BLT>(++semaphore, cmdList.end());
+    expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeKernel) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto buffer = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    mockCmdQ->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    auto kernelNode = mockCmdQ->timestampPacketContainer->peekNodes()[0];
+    auto kernelNodeAddress = kernelNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+    auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
+
+    // Aux to nonAux
+    auto cmdFound = expectCommand<XY_COPY_BLT>(cmdList.begin(), cmdList.end());
+
+    // semaphore before NonAux to Aux
+    auto semaphore = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
+    verifySemaphore<FamilyType>(semaphore, kernelNodeAddress);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeBcsOutput) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    auto buffer0 = createBuffer(1, true);
+    auto buffer1 = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 2>{{buffer0.get(), buffer1.get()}});
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    uint64_t auxToNonAuxOutputAddress[2] = {};
+    uint64_t nonAuxToAuxOutputAddress[2] = {};
+    {
+        auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0));
+
+        auto cmdFound = expectCommand<XY_COPY_BLT>(cmdListBcs.begin(), cmdListBcs.end());
+
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        auto miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+        auxToNonAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
+
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+        auxToNonAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
+
+        cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdListBcs.end());
+
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+        nonAuxToAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
+
+        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+        nonAuxToAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
+    }
+
+    {
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+        auto cmdListQueue = getCmdList<FamilyType>(*ultCsr->lastFlushedCommandStream);
+
+        // Aux to NonAux
+        auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdListQueue.begin(), cmdListQueue.end());
+        verifySemaphore<FamilyType>(cmdFound, auxToNonAuxOutputAddress[0]);
+
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+        verifySemaphore<FamilyType>(cmdFound, auxToNonAuxOutputAddress[1]);
+
+        // Walker
+        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+
+        // NonAux to Aux
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+        verifySemaphore<FamilyType>(cmdFound, nonAuxToAuxOutputAddress[0]);
+
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
+        verifySemaphore<FamilyType>(cmdFound, nonAuxToAuxOutputAddress[1]);
+    }
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
 }
