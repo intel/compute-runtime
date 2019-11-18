@@ -1025,7 +1025,7 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     size_t *globalVariableSizeRet,
     void **globalVariablePointerRet);
 
-cl_int CL_API_CALL clGetExecutionInfoIntel(
+cl_int CL_API_CALL clGetExecutionInfoINTEL(
     cl_command_queue commandQueue,
     cl_kernel kernel,
     cl_uint workDim,
