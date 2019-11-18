@@ -23,9 +23,9 @@
 #define ALIGNAS(x) alignas(x)
 #endif
 
-template <typename T>
-constexpr inline T alignUp(T before, size_t alignment) {
-    T mask = static_cast<T>(alignment - 1);
+template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
+constexpr inline TNoRef alignUp(T before, size_t alignment) {
+    TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return (before + mask) & ~mask;
 }
 
@@ -34,9 +34,9 @@ constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
     return reinterpret_cast<T *>(alignUp(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
 }
 
-template <typename T>
-constexpr inline T alignDown(T before, size_t alignment) {
-    T mask = static_cast<T>(alignment - 1);
+template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
+constexpr inline TNoRef alignDown(T before, size_t alignment) {
+    TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return before & ~mask;
 }
 
