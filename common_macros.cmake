@@ -94,3 +94,11 @@ macro(get_family_name_with_type gen_type platform_type)
   string(TOLOWER ${platform_type} platform_type_lower)
   set(family_name_with_type ${gen_type_capitalized}${platform_type_lower})
 endmacro()
+
+
+macro(append_sources_from_properties list_name)
+  foreach(name ${ARGN})
+    get_property(${name} GLOBAL PROPERTY ${name})
+    list(APPEND ${list_name} ${${name}})
+  endforeach()
+endmacro()
