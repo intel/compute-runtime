@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/gmm_helper/gmm_lib.h"
+#include "core/gmm_helper/gmm_lib.h"
 
 #include <memory>
 

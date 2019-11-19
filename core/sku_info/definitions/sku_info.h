@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/sku_info/sku_info_base.h"
+#include "core/sku_info/sku_info_base.h"
 
 namespace NEO {
 struct FeatureTable : FeatureTableBase {};

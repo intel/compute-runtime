@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/sku_info/operations/sku_info_transfer.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
-#include "runtime/sku_info/operations/sku_info_transfer.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"

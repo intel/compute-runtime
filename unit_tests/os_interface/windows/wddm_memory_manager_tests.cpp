@@ -8,6 +8,7 @@
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/os_interface/os_library.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -17,7 +18,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"

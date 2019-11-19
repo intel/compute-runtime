@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/gmm_helper/gmm_lib.h"
+#include "core/gmm_helper/gmm_lib.h"
 #include "runtime/os_interface/windows/os_time_win.h"
 
 #include <d3d10_1.h>

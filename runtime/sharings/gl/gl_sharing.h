@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/os_interface/os_library.h"
 #include "runtime/helpers/windows/gl_helper.h"
-#include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/gl/gl_sharing_os.h"
 #include "runtime/sharings/sharing.h"
 

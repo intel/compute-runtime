@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/os_interface/os_library.h"
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/os_library.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"
 

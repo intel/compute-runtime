@@ -7,9 +7,9 @@
 
 #include "helper.h"
 
+#include "core/os_interface/os_library.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_inc_base.h"
-#include "runtime/os_interface/os_library.h"
 
 #include "igfxfmid.h"
 

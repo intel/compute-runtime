@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/os_interface/os_library.h"
 #include "offline_compiler/multi_command.h"
 #include "offline_compiler/offline_compiler.h"
-#include "runtime/os_interface/os_library.h"
 
 #include "decoder/binary_decoder.h"
 #include "decoder/binary_encoder.h"

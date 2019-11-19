@@ -10,6 +10,7 @@
 #include "core/command_stream/preemption.h"
 #include "core/helpers/interlocked_max.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
+#include "core/sku_info/operations/windows/sku_info_receiver.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -27,7 +28,6 @@
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/platform/platform.h"
-#include "runtime/sku_info/operations/sku_info_receiver.h"
 
 #include "gmm_memory.h"
 

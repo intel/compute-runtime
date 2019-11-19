@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/os_interface/os_library.h"
 #include "public/cl_gl_private_intel.h"
-#include "runtime/os_interface/os_library.h"
 
 #include "Gl/gl.h"
 

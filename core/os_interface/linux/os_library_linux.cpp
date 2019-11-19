@@ -5,11 +5,9 @@
  *
  */
 
-#include "runtime/os_interface/os_library.h"
+#include "core/os_interface/linux/os_library_linux.h"
 
 #include "core/helpers/debug_helpers.h"
-
-#include "os_library.h"
 
 #include <dlfcn.h>
 

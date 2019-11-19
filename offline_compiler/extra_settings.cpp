@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/os_library.h"
+#include "core/os_interface/os_library.h"
 
 #include "offline_compiler.h"
 

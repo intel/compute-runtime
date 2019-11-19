@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/os_library.h"
+#include "core/os_interface/windows/os_library_win.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 

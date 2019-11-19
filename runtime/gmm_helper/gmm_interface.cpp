@@ -6,8 +6,8 @@
  */
 
 #include "core/helpers/debug_helpers.h"
+#include "core/os_interface/os_library.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/os_interface/os_library.h"
 
 namespace Os {
 extern const char *gmmDllName;

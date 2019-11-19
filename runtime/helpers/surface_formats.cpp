@@ -7,8 +7,8 @@
 
 #include "surface_formats.h"
 
+#include "core/gmm_helper/gmm_lib.h"
 #include "runtime/api/cl_types.h"
-#include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/mem_obj/image.h"
 

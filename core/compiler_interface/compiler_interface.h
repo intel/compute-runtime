@@ -8,9 +8,9 @@
 #pragma once
 #include "core/compiler_interface/compiler_cache.h"
 #include "core/helpers/string.h"
+#include "core/os_interface/os_library.h"
 #include "core/utilities/arrayref.h"
 #include "runtime/built_ins/sip.h"
-#include "runtime/os_interface/os_library.h"
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/code_type.h"

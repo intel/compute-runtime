@@ -7,7 +7,7 @@
 
 #include "seh_exception.h"
 
-#include "runtime/os_interface/os_library.h"
+#include "core/os_interface/os_library.h"
 
 #include <memory>
 #include <string>

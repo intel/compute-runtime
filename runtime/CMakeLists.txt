@@ -32,6 +32,7 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
 add_subdirectories()
 add_subdirectory(instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX})
 include(enable_gens.cmake)
+include(core_files.cmake)
 
 # Enable SSE4/AVX2 options for files that need them
 if(MSVC)

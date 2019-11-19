@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/gmm_helper/gmm_lib.h"
 #include "runtime/api/cl_types.h"
-#include "runtime/gmm_helper/gmm_lib.h"
 
 #include "storage_info.h"
 

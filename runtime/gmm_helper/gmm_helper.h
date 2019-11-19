@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/gmm_helper/gmm_lib.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/gmm_helper/gmm_lib.h"
 
 #include <memory>
 

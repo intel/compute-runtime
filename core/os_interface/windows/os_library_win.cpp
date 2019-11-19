@@ -5,9 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/os_library.h"
-
-#include "os_library.h"
+#include "core/os_interface/windows/os_library_win.h"
 
 namespace NEO {
 

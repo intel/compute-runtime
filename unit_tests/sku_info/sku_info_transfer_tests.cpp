@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/sku_info/operations/sku_info_transfer.h"
+#include "core/sku_info/operations/sku_info_transfer.h"
 #include "unit_tests/sku_info/sku_info_base_reference.h"
 
 #include "gtest/gtest.h"

@@ -8,11 +8,11 @@
 #include "runtime/gmm_helper/client_context/gmm_client_context_base.h"
 
 #include "core/helpers/debug_helpers.h"
+#include "core/sku_info/operations/sku_info_transfer.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
-#include "runtime/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
 GmmClientContextBase::GmmClientContextBase(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) : destroyFunc(destroyFunc) {

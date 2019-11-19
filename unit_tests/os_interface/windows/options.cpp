@@ -6,7 +6,7 @@
  */
 
 #include "common/gtsysinfo.h"
-#include "runtime/os_interface/os_library.h"
+#include "core/os_interface/os_library.h"
 
 #include "igfxfmid.h"
 

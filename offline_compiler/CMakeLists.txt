@@ -10,6 +10,7 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
   ${NEO_SOURCE_DIR}/core/helpers/debug_helpers.cpp
   ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
+  ${NEO_SOURCE_DIR}/core/os_interface/os_library.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.cpp
@@ -44,12 +45,14 @@ endif()
 
 if(WIN32)
   list(APPEND CLOC_SRCS_LIB
-    ${NEO_SOURCE_DIR}/runtime/os_interface/windows/os_library.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.h
     ${NEO_SOURCE_DIR}/runtime/dll/windows/options.cpp
   )
 else()
   list(APPEND CLOC_SRCS_LIB
-    ${NEO_SOURCE_DIR}/runtime/os_interface/linux/os_library.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.h
     ${NEO_SOURCE_DIR}/runtime/dll/linux/options.cpp
   )
 endif()

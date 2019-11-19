@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/sku_info/operations/sku_info_receiver.h"
+#include "core/sku_info/operations/windows/sku_info_receiver.h"
 
 namespace NEO {
 void SkuInfoReceiver::receiveFtrTableFromAdapterInfo(FeatureTable *ftrTable, _ADAPTER_INFO *adapterInfo) {

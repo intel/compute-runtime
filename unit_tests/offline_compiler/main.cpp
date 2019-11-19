@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/os_library.h"
+#include "core/os_interface/os_library.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/test_files.h"
 

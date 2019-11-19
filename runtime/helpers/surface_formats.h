@@ -13,8 +13,8 @@
 #include "CL/cl_ext.h"
 #endif
 
+#include "core/gmm_helper/gmm_lib.h"
 #include "core/utilities/arrayref.h"
-#include "runtime/gmm_helper/gmm_lib.h"
 
 namespace NEO {
 enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
