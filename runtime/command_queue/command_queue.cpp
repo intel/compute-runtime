@@ -584,7 +584,8 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
         blitAllowed &= !!DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
     }
 
-    bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType);
+    bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType) ||
+                          (CL_COMMAND_COPY_BUFFER == cmdType);
 
     return commandAllowed && blitAllowed;
 }

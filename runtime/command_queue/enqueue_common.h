@@ -454,8 +454,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
 
     auto blitCommandStreamReceiver = getBcsCommandStreamReceiver();
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, *blitCommandStreamReceiver,
-                                                                                multiDispatchInfo.peekBuiltinOpParams());
+    auto blitProperties = BlitProperties::constructProperties(blitDirection, *blitCommandStreamReceiver,
+                                                              multiDispatchInfo.peekBuiltinOpParams());
     if (!queueBlocked) {
         blitProperties.csrDependencies.fillFromEventsRequest(eventsRequest, *blitCommandStreamReceiver,
                                                              CsrDependencies::DependenciesType::All);

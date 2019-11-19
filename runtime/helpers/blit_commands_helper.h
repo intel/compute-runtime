@@ -36,9 +36,9 @@ struct BlitProperties {
                                                                 void *hostPtr, size_t hostPtrOffset,
                                                                 size_t copyOffset, uint64_t copySize);
 
-    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
-                                                                CommandStreamReceiver &commandStreamReceiver,
-                                                                const BuiltinOpParams &builtinOpParams);
+    static BlitProperties constructProperties(BlitterConstants::BlitDirection blitDirection,
+                                              CommandStreamReceiver &commandStreamReceiver,
+                                              const BuiltinOpParams &builtinOpParams);
 
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                            size_t dstOffset, size_t srcOffset, uint64_t copySize);
