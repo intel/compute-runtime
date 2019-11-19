@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/fixtures/preemption_fixture.h"
+#include "core/unit_tests/fixtures/preemption_fixture.h"
 
 #include "core/command_stream/preemption.h"
 #include "runtime/command_queue/enqueue_common.h"

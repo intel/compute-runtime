@@ -19,7 +19,6 @@ if(TESTS_GEN8)
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen8.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen8.cpp
   )

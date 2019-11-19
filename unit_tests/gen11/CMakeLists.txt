@@ -21,7 +21,6 @@ if(TESTS_GEN11)
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_gen11.cpp
   )

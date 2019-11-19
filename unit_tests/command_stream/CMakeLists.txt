@@ -32,5 +32,11 @@ set(IGDRCL_SRCS_tests_command_stream
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
+
+get_property(NEO_CORE_SRCS_tests_preemption GLOBAL PROPERTY NEO_CORE_SRCS_tests_preemption)
+list(APPEND IGDRCL_SRCS_tests_command_stream
+   ${NEO_CORE_SRCS_tests_preemption}
+)
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
 add_subdirectories()

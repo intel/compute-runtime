@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/gen12lp/test_preemption_gen12lp.inl"
 #include "unit_tests/gen12lp/aub_command_stream_receiver_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/coherency_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/command_stream_receiver_hw_tests_gen12lp.inl"
@@ -22,5 +23,4 @@
 #include "unit_tests/gen12lp/test_device_caps_gen12lp.inl"
 #include "unit_tests/gen12lp/test_device_queue_hw_gen12lp.inl"
 #include "unit_tests/gen12lp/test_platform_caps_gen12lp.inl"
-#include "unit_tests/gen12lp/test_preemption_gen12lp.inl"
 #include "unit_tests/gen12lp/test_sample_gen12lp.inl"

@@ -7,9 +7,9 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "core/unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"

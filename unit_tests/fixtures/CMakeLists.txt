@@ -36,8 +36,6 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/scenario_test_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_fixture.h
@@ -46,6 +44,12 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/two_walker_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_command_stream_receiver_fixture.h
 )
+
+get_property(NEO_CORE_tests_fixtures GLOBAL PROPERTY NEO_CORE_tests_fixtures)
+list(APPEND IGDRCL_SRCS_tests_fixtures
+   ${NEO_CORE_tests_fixtures}
+)
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_fixtures})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_fixtures ${IGDRCL_SRCS_tests_fixtures})
 add_subdirectories()
