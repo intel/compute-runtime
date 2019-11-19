@@ -411,6 +411,11 @@ void KernelInfo::storePatchToken(const SPatchAllocateSystemThreadSurface *pSyste
     patchInfo.pAllocateSystemThreadSurface = pSystemThreadSurface;
 }
 
+void KernelInfo::storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBuffer) {
+    usesSsh |= true;
+    patchInfo.pAllocateSyncBuffer = pAllocateSyncBuffer;
+}
+
 cl_int KernelInfo::resolveKernelInfo() {
     cl_int retVal = CL_SUCCESS;
     std::unordered_map<std::string, uint32_t>::iterator iterUint;

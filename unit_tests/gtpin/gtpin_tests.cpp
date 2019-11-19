@@ -8,6 +8,7 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
+#include "runtime/api/api.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -776,6 +777,154 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
     retVal = clEnqueueNDRangeKernel(cmdQ, pKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
+
+    retVal = clFinish(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount14 + 2, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount24 + 2, CommandBufferCompleteCallbackCount);
+
+    // Cleanup
+    retVal = clReleaseKernel(kernel1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseKernel(kernel2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pSource.reset();
+
+    retVal = clReleaseMemObject(buff10);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(buff11);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(buff20);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(buff21);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseCommandQueue(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGTPinCallbacksAreCalled) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_kernel kernel1 = nullptr;
+    cl_kernel kernel2 = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    size_t sourceSize = 0;
+    std::string testFile;
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = 0;
+    cl_context context = nullptr;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd8", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd8.cl");
+    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+
+    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    ASSERT_NE(nullptr, cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Create and submit first instance of "CopyBuffer" kernel
+    int prevCount11 = KernelCreateCallbackCount;
+    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
+
+    Kernel *pKernel1 = (Kernel *)kernel1;
+    const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
+    uint64_t gtpinKernelId1 = pKernel1->getKernelId();
+    EXPECT_EQ(kInfo1.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId1);
+
+    cl_uint workDim = 1;
+    size_t localWorkSize[3] = {1, 1, 1};
+    size_t n = pKernel1->getMaxWorkGroupCount(workDim, localWorkSize);
+    auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
+    auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
+
+    retVal = clSetKernelArg(pKernel1, 0, sizeof(cl_mem), &buff10);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clSetKernelArg(pKernel1, 1, sizeof(cl_mem), &buff11);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    int prevCount12 = KernelSubmitCallbackCount;
+    int prevCount13 = CommandBufferCreateCallbackCount;
+    int prevCount14 = CommandBufferCompleteCallbackCount;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t workgroupCount[3] = {n, 1, 1};
+    retVal = clEnqueueNDRangeKernelINTEL(cmdQ, pKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
+
+    // Create and submit second instance of "CopyBuffer" kernel
+    int prevCount21 = KernelCreateCallbackCount;
+    kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
+    EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
+
+    Kernel *pKernel2 = (Kernel *)kernel2;
+    const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
+    uint64_t gtpinKernelId2 = pKernel2->getKernelId();
+    EXPECT_EQ(kInfo2.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId2);
+
+    auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
+    auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
+
+    retVal = clSetKernelArg(pKernel2, 0, sizeof(cl_mem), &buff20);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clSetKernelArg(pKernel2, 1, sizeof(cl_mem), &buff21);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    int prevCount22 = KernelSubmitCallbackCount;
+    int prevCount23 = CommandBufferCreateCallbackCount;
+    int prevCount24 = CommandBufferCompleteCallbackCount;
+    retVal = clEnqueueNDRangeKernelINTEL(cmdQ, pKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);

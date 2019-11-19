@@ -29,7 +29,6 @@ void KernelDataTest::buildAndDecode() {
                      kernelNameSize + sshSize + dshSize + gshSize + kernelHeapSize + patchListSize;
 
     kernelDataSize += sizeof(SPatchDataParameterStream);
-    program->setDevice(pDevice);
 
     pKernelData = static_cast<char *>(alignedMalloc(kernelDataSize, MemoryConstants::cacheLineSize));
     ASSERT_NE(nullptr, pKernelData);

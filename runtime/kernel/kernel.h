@@ -218,6 +218,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     void patchDefaultDeviceQueue(DeviceQueue *devQueue);
     void patchEventPool(DeviceQueue *devQueue);
     void patchBlocksSimdSize();
+    bool usesSyncBuffer();
+    void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
 
     GraphicsAllocation *getKernelReflectionSurface() const {
         return kernelReflectionSurface;

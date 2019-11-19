@@ -77,4 +77,14 @@ TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetTracingStateINTE
     auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetTracingStateINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetTracingStateINTEL));
 }
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetExecutionInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetExecutionInfoINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetExecutionInfoINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClEnqueueNDRangeKernelINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clEnqueueNDRangeKernelINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueNDRangeKernelINTEL));
+}
 } // namespace ULT

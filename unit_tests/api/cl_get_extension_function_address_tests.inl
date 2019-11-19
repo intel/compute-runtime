@@ -162,4 +162,14 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceFunctionPointerINTELW
     auto retVal = clGetExtensionFunctionAddress("clGetDeviceFunctionPointerINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceFunctionPointerINTEL));
 }
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClGetExecutionInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clGetExecutionInfoINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetExecutionInfoINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueNDRangeKernelINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clEnqueueNDRangeKernelINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueNDRangeKernelINTEL));
+}
 } // namespace ULT

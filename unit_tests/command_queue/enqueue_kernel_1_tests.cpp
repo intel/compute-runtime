@@ -6,6 +6,7 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "runtime/api/api.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
@@ -185,6 +186,156 @@ TEST_F(EnqueueKernelTest, GivenInvalidWorkGroupSizeWhenEnqueuingKernelThenInvali
         nullptr);
 
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
+}
+
+TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingKernelINTELThenInvalidKernelErrorIsReturned) {
+    size_t workgroupCount[3] = {1, 1, 1};
+    auto retVal = clEnqueueNDRangeKernelINTEL(
+        pCmdQ,
+        nullptr,
+        1,
+        nullptr,
+        workgroupCount,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernelINTELReturnsSuccess) {
+    const size_t n = 512;
+    size_t workgroupCount[3] = {2, 1, 1};
+    size_t localWorkSize[3] = {256, 1, 1};
+    cl_int retVal = CL_SUCCESS;
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
+
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+    auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &b1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseMemObject(b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(b1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseCommandQueue(pCmdQ2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDRangeKernelINTELReturnsError) {
+    const size_t n = 512;
+    size_t workgroupCount[3] = {2, 1, 1};
+    size_t localWorkSize[3] = {256, 1, 1};
+    cl_int retVal = CL_SUCCESS;
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
+
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+    auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clReleaseMemObject(b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(b1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseCommandQueue(pCmdQ2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeastFailsThenClEnqueueNDRangeKernelINTELReturnsError) {
+    const size_t n = 512;
+    size_t workgroupCount[3] = {2, 1, 1};
+    size_t localWorkSize[3] = {256, 1, 1};
+    cl_int retVal = CL_SUCCESS;
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
+
+    std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+    auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clSetKernelArg(kernel.get(), 1, 2 * sizeof(cl_mem), &b1);
+    EXPECT_NE(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(kernel->isPatched());
+    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
+
+    retVal = clReleaseMemObject(b0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(b1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseCommandQueue(pCmdQ2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingKernelINTELThenInvalidEventWaitListErrorIsReturned) {
+    size_t workgroupCount[3] = {1, 1, 1};
+
+    auto retVal = clEnqueueNDRangeKernelINTEL(
+        pCmdQ,
+        pKernel,
+        1,
+        nullptr,
+        workgroupCount,
+        nullptr,
+        1,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
 HWTEST_F(EnqueueKernelTest, bumpsTaskLevel) {

@@ -23,6 +23,7 @@ using iOpenCL::SPatchAllocateStatelessEventPoolSurface;
 using iOpenCL::SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization;
 using iOpenCL::SPatchAllocateStatelessPrintfSurface;
 using iOpenCL::SPatchAllocateStatelessPrivateSurface;
+using iOpenCL::SPatchAllocateSyncBuffer;
 using iOpenCL::SPatchAllocateSystemThreadSurface;
 using iOpenCL::SPatchBindingTableState;
 using iOpenCL::SPatchDataParameterBuffer;
@@ -66,6 +67,7 @@ struct PatchInfo {
     const SPatchExecutionEnvironment *executionEnvironment = nullptr;
     const SPatchKernelAttributesInfo *pKernelAttributesInfo = nullptr;
     const SPatchAllocateStatelessPrivateSurface *pAllocateStatelessPrivateSurface = nullptr;
+    const SPatchAllocateSyncBuffer *pAllocateSyncBuffer = nullptr;
     const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *pAllocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
     const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *pAllocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
     const SPatchAllocateStatelessPrintfSurface *pAllocateStatelessPrintfSurface = nullptr;

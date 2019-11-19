@@ -2205,6 +2205,25 @@ void Kernel::patchBlocksSimdSize() {
     }
 }
 
+bool Kernel::usesSyncBuffer() {
+    return (kernelInfo.patchInfo.pAllocateSyncBuffer != nullptr);
+}
+
+void Kernel::patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
+    auto &patchInfo = kernelInfo.patchInfo;
+    auto bufferPatchAddress = ptrOffset(getCrossThreadData(), patchInfo.pAllocateSyncBuffer->DataParamOffset);
+    patchWithRequiredSize(bufferPatchAddress, patchInfo.pAllocateSyncBuffer->DataParamSize,
+                          ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset));
+
+    if (requiresSshForBuffers()) {
+        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
+                                      patchInfo.pAllocateSyncBuffer->SurfaceStateHeapOffset);
+        auto addressToPatch = gfxAllocation->getUnderlyingBuffer();
+        auto sizeToPatch = gfxAllocation->getUnderlyingBufferSize();
+        Buffer::setSurfaceState(&device, surfaceState, sizeToPatch, addressToPatch, gfxAllocation);
+    }
+}
+
 template void Kernel::patchReflectionSurface<false>(DeviceQueue *, PrintfHandler *);
 
 bool Kernel::isPatched() const {

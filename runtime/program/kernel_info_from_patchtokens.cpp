@@ -145,6 +145,7 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessPrintfSurface);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     storeTokenIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
+    storeTokenIfNotNull(dst, src.tokens.allocateSyncBuffer);
 
     for (auto &str : src.tokens.strings) {
         dst.storePatchToken(str);

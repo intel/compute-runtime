@@ -167,6 +167,25 @@ TEST_F(KernelDataTest, WhenMediaVFEStateSlot1TokenIsParsedThenCorrectValuesAreSe
     EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediaVfeStateSlot1->ScratchSpaceOffset);
 }
 
+TEST_F(KernelDataTest, GivenSyncBufferTokenWhenParsingProgramThenTokenIsFound) {
+    SPatchAllocateSyncBuffer token;
+    token.Token = PATCH_TOKEN_ALLOCATE_SYNC_BUFFER;
+    token.Size = static_cast<uint32_t>(sizeof(SPatchAllocateSyncBuffer));
+    token.SurfaceStateHeapOffset = 32;
+    token.DataParamOffset = 1024;
+    token.DataParamSize = 2;
+
+    pPatchList = &token;
+    patchListSize = token.Size;
+
+    buildAndDecode();
+
+    EXPECT_EQ(token.Token, pKernelInfo->patchInfo.pAllocateSyncBuffer->Token);
+    EXPECT_EQ(token.SurfaceStateHeapOffset, pKernelInfo->patchInfo.pAllocateSyncBuffer->SurfaceStateHeapOffset);
+    EXPECT_EQ(token.DataParamOffset, pKernelInfo->patchInfo.pAllocateSyncBuffer->DataParamOffset);
+    EXPECT_EQ(token.DataParamSize, pKernelInfo->patchInfo.pAllocateSyncBuffer->DataParamSize);
+}
+
 TEST_F(KernelDataTest, MediaIDData) {
     iOpenCL::SPatchInterfaceDescriptorData idData;
     idData.Token = PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA;

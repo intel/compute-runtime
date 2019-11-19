@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "runtime/device/device.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/kernel_info.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
@@ -49,16 +51,17 @@ class KernelDataTest : public testing::Test {
   protected:
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
-        pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        pContext = new MockContext;
+        program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
     }
 
     void TearDown() override {
         if (pKernelInfo->kernelAllocation) {
-            pDevice->getMemoryManager()->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+            pContext->getDevice(0)->getMemoryManager()->freeGraphicsMemory(pKernelInfo->kernelAllocation);
             const_cast<KernelInfo *>(pKernelInfo)->kernelAllocation = nullptr;
         }
-        delete pDevice;
+        program.reset();
+        delete pContext;
         alignedFree(pKernelData);
     }
 
@@ -85,6 +88,6 @@ class KernelDataTest : public testing::Test {
     uint32_t kernelUnpaddedSize;
 
     std::unique_ptr<MockProgram> program;
-    MockDevice *pDevice;
+    MockContext *pContext;
     const KernelInfo *pKernelInfo;
 };

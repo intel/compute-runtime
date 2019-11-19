@@ -407,6 +407,10 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         auto tokDataP = reinterpret_cast<const SPatchDataParameterBuffer *>(token);
         decodeKernelDataParameterToken(tokDataP, out);
     } break;
+
+    case PATCH_TOKEN_ALLOCATE_SYNC_BUFFER: {
+        assignToken(out.tokens.allocateSyncBuffer, token);
+    } break;
     }
 
     return out.decodeStatus != DecoderError::InvalidBinary;

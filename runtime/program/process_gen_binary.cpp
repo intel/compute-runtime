@@ -79,6 +79,7 @@ void Program::populateKernelInfo(
     if (retVal != CL_SUCCESS) {
         return;
     }
+
     kernelInfo->gpuPointerSize = decodedProgram.header->GPUPointerSizeInBytes;
 
     if (decodedKernel.tokens.programSymbolTable) {

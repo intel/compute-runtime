@@ -1036,6 +1036,16 @@ cl_int CL_API_CALL clGetExecutionInfoINTEL(
     void *paramValue,
     size_t *paramValueSizeRet);
 
+cl_int CL_API_CALL clEnqueueNDRangeKernelINTEL(cl_command_queue commandQueue,
+                                               cl_kernel kernel,
+                                               cl_uint workDim,
+                                               const size_t *globalWorkOffset,
+                                               const size_t *workgroupCount,
+                                               const size_t *localWorkSize,
+                                               cl_uint numEventsInWaitList,
+                                               const cl_event *eventWaitList,
+                                               cl_event *event);
+
 // OpenCL 2.2
 
 cl_int CL_API_CALL clSetProgramSpecializationConstant(

@@ -18,8 +18,9 @@
 #include "engine_node.h"
 
 namespace NEO {
-class OSTime;
 class DriverInfo;
+class OSTime;
+class SyncBufferHandler;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -72,6 +73,7 @@ class Device : public BaseObject<_cl_device_id> {
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
+    void allocateSyncBufferHandler();
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
@@ -88,8 +90,10 @@ class Device : public BaseObject<_cl_device_id> {
     virtual uint32_t getRootDeviceIndex() const = 0;
     virtual uint32_t getNumAvailableDevices() const = 0;
     virtual Device *getDeviceById(uint32_t deviceId) const = 0;
+    virtual DeviceBitfield getDeviceBitfield() const = 0;
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
+    std::unique_ptr<SyncBufferHandler> syncBufferHandler;
 
   protected:
     Device() = delete;
@@ -112,8 +116,6 @@ class Device : public BaseObject<_cl_device_id> {
     virtual bool createEngines();
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
-
-    virtual DeviceBitfield getDeviceBitfield() const = 0;
 
     std::vector<unsigned int> simultaneousInterops;
     unsigned int enabledClVersion = 0u;

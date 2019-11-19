@@ -9,6 +9,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "core/program/sync_buffer_handler.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/device/device_vector.h"
@@ -60,6 +61,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
 
 Device::~Device() {
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
+    syncBufferHandler.reset();
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
@@ -203,6 +205,15 @@ double Device::getPlatformHostTimerResolution() const {
         return osTime->getHostTimerResolution();
     return 0.0;
 }
+
+void Device::allocateSyncBufferHandler() {
+    TakeOwnershipWrapper<Device> lock(*this);
+    if (syncBufferHandler.get() == nullptr) {
+        syncBufferHandler = std::make_unique<SyncBufferHandler>(*this);
+        UNRECOVERABLE_IF(syncBufferHandler.get() == nullptr);
+    }
+}
+
 GFXCORE_FAMILY Device::getRenderCoreFamily() const {
     return this->getHardwareInfo().platform.eRenderCoreFamily;
 }

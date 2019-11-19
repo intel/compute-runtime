@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/program/sync_buffer_handler.h"
 #include "core/utilities/range.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
@@ -642,6 +643,15 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         blocking = true;
         printfHandler->makeResident(getGpgpuCommandStreamReceiver());
     }
+
+    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+        auto &gws = multiDispatchInfo.begin()->getGWS();
+        auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
+        size_t workGroupsCount = (gws.x * gws.y * gws.z) /
+                                 (lws.x * lws.y * lws.z);
+        device->syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel(), getGpgpuCommandStreamReceiver());
+    }
+
     if (timestampPacketContainer) {
         timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
         timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());

@@ -3135,10 +3135,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
                    "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
+    Kernel *pKernel = nullptr;
 
     retVal = validateObjects(
         WithCastToInternal(commandQueue, &pCommandQueue),
-        kernel,
+        WithCastToInternal(kernel, &pKernel),
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
@@ -3146,7 +3147,12 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+    if (pKernel->getKernelInfo().patchInfo.pAllocateSyncBuffer != nullptr) {
+        retVal = CL_INVALID_KERNEL;
+        TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+        return retVal;
+    }
+
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyKernelSubmit(kernel, pCommandQueue);
@@ -3947,6 +3953,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceFunctionPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetExecutionInfoINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDRangeKernelINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
@@ -5195,5 +5202,72 @@ cl_int CL_API_CALL clGetExecutionInfoINTEL(cl_command_queue commandQueue,
         retVal = CL_INVALID_VALUE;
     }
 
+    return retVal;
+}
+
+cl_int CL_API_CALL clEnqueueNDRangeKernelINTEL(cl_command_queue commandQueue,
+                                               cl_kernel kernel,
+                                               cl_uint workDim,
+                                               const size_t *globalWorkOffset,
+                                               const size_t *workgroupCount,
+                                               const size_t *localWorkSize,
+                                               cl_uint numEventsInWaitList,
+                                               const cl_event *eventWaitList,
+                                               cl_event *event) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
+                   "globalWorkOffset[0]", DebugManager.getInput(globalWorkOffset, 0),
+                   "globalWorkOffset[1]", DebugManager.getInput(globalWorkOffset, 1),
+                   "globalWorkOffset[2]", DebugManager.getInput(globalWorkOffset, 2),
+                   "workgroupCount", DebugManager.getSizes(workgroupCount, workDim, false),
+                   "localWorkSize", DebugManager.getSizes(localWorkSize, workDim, true),
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+
+    CommandQueue *pCommandQueue = nullptr;
+    Kernel *pKernel = nullptr;
+
+    retVal = validateObjects(
+        WithCastToInternal(commandQueue, &pCommandQueue),
+        WithCastToInternal(kernel, &pKernel),
+        EventWaitList(numEventsInWaitList, eventWaitList));
+
+    if (CL_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    size_t globalWorkSize[3];
+    size_t requestedNumberOfWorkgroups = 1;
+    for (size_t i = 0; i < workDim; i++) {
+        globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
+        requestedNumberOfWorkgroups *= workgroupCount[i];
+    }
+
+    size_t maximalNumberOfWorkgroupsAllowed = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
+    if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
+
+    TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
+    }
+
+    pCommandQueue->getDevice().allocateSyncBufferHandler();
+
+    retVal = pCommandQueue->enqueueKernel(
+        kernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
