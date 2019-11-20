@@ -76,7 +76,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         WRITE_COMBINED
     };
 
-    virtual ~GraphicsAllocation();
+    ~GraphicsAllocation() override;
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 

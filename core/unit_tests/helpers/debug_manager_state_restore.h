@@ -39,7 +39,7 @@ class DebugManagerStateRestore {
 class RegistryReaderMock : public SettingsReader {
   public:
     RegistryReaderMock() {}
-    ~RegistryReaderMock() {}
+    ~RegistryReaderMock() override {}
 
     unsigned int forceRetValue = 1;
 

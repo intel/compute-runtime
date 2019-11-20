@@ -1,7 +1,7 @@
 ---
 Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
 # WarningsAsErrors: '.*'
-HeaderFilterRegex: 'runtime/'
+HeaderFilterRegex: '/runtime/|/core/|/offline_compiler/|/common/'
 AnalyzeTemporaryDtors: false
 CheckOptions:
   - key:             google-readability-braces-around-statements.ShortStatementLines
@@ -37,4 +37,3 @@ CheckOptions:
   - key:             modernize-use-default-member-init.UseAssignment
     value:           '1'
 ...
-

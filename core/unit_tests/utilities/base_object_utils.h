@@ -28,7 +28,7 @@ static ReleaseableObjectPtr<T> clUniquePtr(T *object) {
 }
 
 template <class _Ty, class... _Types>
-inline ReleaseableObjectPtr<_Ty> make_releaseable(_Types &&... _Args) {
-    return (ReleaseableObjectPtr<_Ty>(new _Ty(std::forward<_Types>(_Args)...)));
+inline ReleaseableObjectPtr<_Ty> make_releaseable(_Types &&... args) {
+    return (ReleaseableObjectPtr<_Ty>(new _Ty(std::forward<_Types>(args)...)));
 }
 } // namespace NEO
