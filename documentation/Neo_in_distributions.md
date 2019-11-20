@@ -111,6 +111,6 @@ but have to be in video group to access /dev/dri/card* files.
 
 * [Ubuntu*](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
 * [Centos* 8](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
-* [spec files](https://github.com/JacekDanecki/neo-specs) for rpm-based Linux distributions
+* Scripts to build or download rpm (copr) and deb (github and ppa) packages are available in [neo-specs](https://github.com/JacekDanecki/neo-specs) repository.
 
 (*) Other names and brands may be claimed as property of others.
