@@ -101,7 +101,7 @@ class MockAubManager : public aub_stream::AubManager {
         writeMemoryPageSizePassed = pageSize;
     }
 
-    void writePageTableEntries(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint,
+    void writePageTableEntries(uint64_t gfxAddress, size_t size, uint32_t memoryBanks, int hint,
                                std::vector<PageInfo> &lastLevelPages, size_t pageSize) override {
         writePageTableEntriesCalled = true;
     }
