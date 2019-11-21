@@ -460,15 +460,6 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     alignedFree(hostPtr);
 }
 
-TEST_P(CreateImageNoHostPtr, validFlags) {
-    auto image = createImageWithFlags(flags);
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
-
-    delete image;
-}
-
 TEST_P(CreateImageNoHostPtr, getImageDesc) {
     auto image = createImageWithFlags(flags);
 
@@ -484,7 +475,7 @@ TEST_P(CreateImageNoHostPtr, getImageDesc) {
     delete image;
 }
 
-TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
+TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProperties) {
     auto image = createImageWithFlags(flags);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -496,17 +487,10 @@ TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
     auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
     EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());
 
-    delete image;
-}
-
-TEST_P(CreateImageNoHostPtr, whenImageIsReadOnlyThenFlushL3IsNotRequired) {
-    auto image = clUniquePtr(createImageWithFlags(flags));
-
-    EXPECT_NE(nullptr, image);
-
-    auto allocation = image->getGraphicsAllocation();
     auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
     EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
+
+    delete image;
 }
 
 // Parameterized test that tests image creation with all flags that should be
