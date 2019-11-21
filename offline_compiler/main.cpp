@@ -77,7 +77,11 @@ int main(int numArgs, const char *argv[]) {
             }
         } else if (numArgs > 1 && (!strcmp(argv[1], "multi") || !strcmp(argv[1], "-multi"))) {
             int retValue = CL_SUCCESS;
-            auto pMulti = std::unique_ptr<MultiCommand>(MultiCommand::create(numArgs, argv, retValue));
+            std::vector<std::string> allArgs;
+            if (numArgs > 1) {
+                allArgs.assign(argv, argv + numArgs);
+            }
+            auto pMulti = std::unique_ptr<MultiCommand>(MultiCommand::create(allArgs, retValue));
             return retValue;
         } else {
             int retVal = CL_SUCCESS;

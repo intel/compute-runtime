@@ -32,9 +32,22 @@ int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &al
     } else {
         delete pCompiler;
     }
+
+    if (outputFileList != "") {
+        std::ofstream myfile(outputFileList, std::fstream::app);
+        if (myfile.is_open()) {
+            if (retVal == CL_SUCCESS)
+                myfile << getCurrentDirectoryOwn(outDirForBuilds) + OutFileName + ".bin";
+            else
+                myfile << "Unsuccesful build";
+            myfile << std::endl;
+            myfile.close();
+        } else
+            printf("Unable to open outputFileList\n");
+    }
+
     return retVal;
 }
-
 MultiCommand::MultiCommand() = default;
 
 MultiCommand::~MultiCommand() {
@@ -47,12 +60,12 @@ void MultiCommand::deleteBuildsWithWarnigs() {
     singleBuilds.clear();
 }
 
-MultiCommand *MultiCommand::create(int numArgs, const char *argv[], int &retVal) {
+MultiCommand *MultiCommand::create(const std::vector<std::string> &argv, int &retVal) {
     retVal = CL_SUCCESS;
     auto pMultiCommand = new MultiCommand();
 
     if (pMultiCommand) {
-        retVal = pMultiCommand->initialize(numArgs, argv);
+        retVal = pMultiCommand->initialize(argv);
     }
 
     if (retVal != CL_SUCCESS) {
@@ -75,7 +88,6 @@ std::string MultiCommand::eraseExtensionFromPath(std::string &filePath) {
 }
 
 void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &singleLineWithArguments, int buildId) {
-    std::string OutFileName;
     bool hasOutDir = false;
     bool hasSpecificName = false;
     for (auto arg : singleLineWithArguments) {
@@ -88,8 +100,8 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
     }
     if (!hasOutDir) {
         singleLineWithArguments.push_back("-out_dir");
-        OutDirForBuilds = eraseExtensionFromPath(pathToCMD);
-        singleLineWithArguments.push_back(OutDirForBuilds);
+        outDirForBuilds = eraseExtensionFromPath(pathToCMD);
+        singleLineWithArguments.push_back(outDirForBuilds);
     }
     if (!hasSpecificName) {
         singleLineWithArguments.push_back("-output");
@@ -100,22 +112,38 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
         singleLineWithArguments.push_back("-q");
 }
 
-int MultiCommand::initialize(int numArgs, const char *argv[]) {
+int MultiCommand::initialize(const std::vector<std::string> &allArgs) {
     int retVal = CL_SUCCESS;
+    size_t numArgs = allArgs.size();
 
-    if (!strcmp(argv[numArgs - 1], "--help")) {
-        printHelp();
-        return -1;
+    for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
+        if (allArgs[argIndex] == "-multi") {
+            if (numArgs > argIndex + 1)
+                pathToCMD = allArgs[argIndex + 1];
+            else {
+                printHelp();
+                return INVALID_COMMAND_LINE;
+            }
+            argIndex++;
+        } else if (allArgs[argIndex] == "-q") {
+            quiet = true;
+        } else if (allArgs[argIndex] == "-output_file_list") {
+            if (numArgs > argIndex + 1)
+                outputFileList = allArgs[argIndex + 1];
+            else {
+                printHelp();
+                return INVALID_COMMAND_LINE;
+            }
+            argIndex++;
+        } else if (allArgs[argIndex] == "--help") {
+            printHelp();
+            return PRINT_USAGE;
+        } else {
+            printf("Invalid option (arg %d): %s\n", argIndex, allArgs[argIndex].c_str());
+            return INVALID_COMMAND_LINE;
+            break;
+        }
     }
-
-    if (numArgs > 2)
-        pathToCMD = argv[2];
-    else {
-        printHelp();
-        return INVALID_COMMAND_LINE;
-    }
-    if (numArgs > 3 && strcmp(argv[3], "-q") == 0)
-        quiet = true;
 
     //save file with builds arguments to vector of strings, line by line
     openFileWithBuildsArguments();
@@ -124,7 +152,7 @@ int MultiCommand::initialize(int numArgs, const char *argv[]) {
             std::vector<std::string> singleLineWithArguments;
             unsigned int numberOfArg;
 
-            singleLineWithArguments.push_back(argv[0]);
+            singleLineWithArguments.push_back(allArgs[0]);
             retVal = splitLineInSeparateArgs(singleLineWithArguments, lines[i], i);
             if (retVal != CL_SUCCESS) {
                 retValues.push_back(retVal);
@@ -159,6 +187,10 @@ Usage: ocloc multi <file_name>
                 See 'ocloc compile --help' for available compile_options.
                 Results of subsequent compilations will be dumped into 
                 a directory with name indentical file_name's base name.
+
+  -output_file_list             Name of optional file containing 
+                                paths to outputs .bin files
+
 )===");
 }
 

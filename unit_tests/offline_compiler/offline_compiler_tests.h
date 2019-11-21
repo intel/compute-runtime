@@ -34,8 +34,10 @@ class MultiCommandTests : public ::testing::Test {
     }
     void createFileWithArgs(const std::vector<std::string> &, int numOfBuild);
     void deleteFileWithArgs();
+    void deleteOutFileList();
     MultiCommand *pMultiCommand;
     std::string nameOfFileWithArgs;
+    std::string outFileList;
     int retVal;
 };
 
@@ -54,6 +56,11 @@ void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singl
 
 void MultiCommandTests::deleteFileWithArgs() {
     if (remove(nameOfFileWithArgs.c_str()) != 0)
+        perror("Error deleting file");
+}
+
+void MultiCommandTests::deleteOutFileList() {
+    if (remove(outFileList.c_str()) != 0)
         perror("Error deleting file");
 }
 

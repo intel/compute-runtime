@@ -44,13 +44,12 @@ void compilerOutputRemove(const std::string &fileName, const std::string &type) 
 
 TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
-    const char *argv[] = {
+    std::vector<std::string> argv = {
         "ocloc",
         "-multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
-    int argSize = 4;
 
     std::vector<std::string> singleArgs = {
         "-file",
@@ -61,7 +60,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argSize, argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -70,13 +69,12 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
 }
 TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
-    const char *argv[] = {
+    std::vector<std::string> argv = {
         "ocloc",
         "-multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
-    int argSize = 4;
 
     std::vector<std::string> singleArgs = {
         "-file",
@@ -87,13 +85,13 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argSize, argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     for (int i = 0; i < numOfBuild; i++) {
-        std::string outFileName = pMultiCommand->OutDirForBuilds + "/build_no_" + std::to_string(i + 1);
+        std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
         EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
@@ -108,13 +106,12 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
 }
 TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
-    const char *argv[] = {
+    std::vector<std::string> argv = {
         "ocloc",
         "-multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
-    int argSize = 4;
 
     std::vector<std::string> singleArgs = {
         "-file",
@@ -127,7 +124,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    pMultiCommand = MultiCommand::create(argSize, argv, retVal);
+    pMultiCommand = MultiCommand::create(argv, retVal);
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -144,16 +141,15 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
 }
 TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
     nameOfFileWithArgs = "test_files/ImANotExistedComandFile.txt";
-    const char *argv[] = {
+    std::vector<std::string> argv = {
         "ocloc",
         "-multi",
         "test_files/ImANaughtyFile.txt",
         "-q",
     };
-    int argSize = 4;
 
     testing::internal::CaptureStdout();
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argSize, argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_STRNE(output.c_str(), "");
@@ -163,13 +159,12 @@ TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
 }
 TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
-    const char *argv[] = {
+    std::vector<std::string> argv = {
         "ocloc",
         "-multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
-    int argSize = 4;
 
     std::vector<std::string> singleArgs = {
         "-file",
@@ -180,7 +175,7 @@ TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
     testing::internal::CaptureStdout();
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argSize, argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_STRNE(output.c_str(), "");
@@ -190,7 +185,44 @@ TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
 
     deleteFileWithArgs();
 }
+TEST_F(MultiCommandTests, GoodMultiBuildTestWithOutputFileListFlag) {
+    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-multi",
+        nameOfFileWithArgs.c_str(),
+        "-q",
+        "-output_file_list",
+        "outFileList.txt",
+    };
 
+    std::vector<std::string> singleArgs = {
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    int numOfBuild = 4;
+    createFileWithArgs(singleArgs, numOfBuild);
+
+    pMultiCommand = MultiCommand::create(argv, retVal);
+
+    EXPECT_NE(nullptr, pMultiCommand);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    outFileList = pMultiCommand->outputFileList;
+    EXPECT_TRUE(fileExists(outFileList));
+
+    for (int i = 0; i < numOfBuild; i++) {
+        std::string outFileName = pMultiCommand->outDirForBuilds + "/build_no_" + std::to_string(i + 1);
+        EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
+        EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
+        EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
+    }
+
+    deleteFileWithArgs();
+    deleteOutFileList();
+    delete pMultiCommand;
+}
 TEST_F(OfflineCompilerTests, GoodArgTest) {
     std::vector<std::string> argv = {
         "ocloc",

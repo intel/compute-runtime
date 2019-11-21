@@ -22,6 +22,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
 
 set(CLOC_SRCS_UTILITIES
   ${NEO_SOURCE_DIR}/offline_compiler/utilities/safety_caller.h
+  ${NEO_SOURCE_DIR}/offline_compiler/utilities//get_current_dir.h
 )
 
 if(WIN32)
@@ -30,11 +31,13 @@ if(WIN32)
     ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
     ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
     ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_current_dir_windows.cpp
   )
 else()
   list(APPEND CLOC_SRCS_UTILITIES
     ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/safety_caller_linux.cpp
     ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/safety_guard_linux.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_current_dir_linux.cpp
   )
 endif()
 
