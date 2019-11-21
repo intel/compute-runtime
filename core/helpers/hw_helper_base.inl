@@ -25,6 +25,9 @@ template <typename Family>
 const aub_stream::EngineType HwHelperHw<Family>::lowPriorityEngineType = aub_stream::EngineType::ENGINE_RCS;
 
 template <typename Family>
+const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Builtin;
+
+template <typename Family>
 bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const {
     return size > KB;
 }
@@ -160,7 +163,7 @@ AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
         return static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());
     }
 
-    return AuxTranslationMode::Builtin;
+    return HwHelperHw<Family>::defaultAuxTranslationMode;
 }
 
 template <typename Family>
