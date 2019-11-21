@@ -13,18 +13,13 @@
 
 using namespace NEO;
 
-class GlSharingEnablerTests : public MemoryManagementFixture, public ::testing::Test {
+class GlSharingEnablerTests : public ::testing::Test {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         factory.reset(new GlSharingBuilderFactory());
         ASSERT_NE(nullptr, factory.get());
     }
 
-    void TearDown() override {
-        factory.reset(nullptr);
-        MemoryManagementFixture::TearDown();
-    }
     std::unique_ptr<GlSharingBuilderFactory> factory;
 };
 
