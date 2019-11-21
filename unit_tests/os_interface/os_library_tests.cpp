@@ -28,53 +28,40 @@ const std::string fnName = "testDynamicLibraryFunc";
 
 using namespace NEO;
 
-class OSLibraryFixture : public MemoryManagementFixture
-
-{
-  public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-    }
-};
-
-typedef Test<OSLibraryFixture> OSLibraryTest;
-
-TEST_F(OSLibraryTest, whenLibraryNameIsEmptyThenCurrentProcesIsUsedAsLibrary) {
+TEST(OSLibraryTest, whenLibraryNameIsEmptyThenCurrentProcesIsUsedAsLibrary) {
     std::unique_ptr<OsLibrary> library{OsLibrary::load("")};
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress("selfDynamicLibraryFunc");
     EXPECT_NE(nullptr, ptr);
 }
 
-TEST_F(OSLibraryTest, CreateFake) {
+TEST(OSLibraryTest, CreateFake) {
     OsLibrary *library = OsLibrary::load(fakeLibName);
     EXPECT_EQ(nullptr, library);
 }
 
-TEST_F(OSLibraryTest, whenLibraryNameIsValidThenLibraryIsLoadedCorrectly) {
+TEST(OSLibraryTest, whenLibraryNameIsValidThenLibraryIsLoadedCorrectly) {
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
-TEST_F(OSLibraryTest, whenSymbolNameIsValidThenGetProcAddressReturnsNonNullPointer) {
+TEST(OSLibraryTest, whenSymbolNameIsValidThenGetProcAddressReturnsNonNullPointer) {
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName);
     EXPECT_NE(nullptr, ptr);
 }
 
-TEST_F(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer) {
+TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer) {
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName + "invalid");
     EXPECT_EQ(nullptr, ptr);
 }
 
-TEST_F(OSLibraryTest, testFailNew) {
+using OsLibraryTestWithFailureInjection = Test<MemoryManagementFixture>;
+
+TEST_F(OsLibraryTestWithFailureInjection, testFailNew) {
     InjectedFunction method = [](size_t failureIndex) {
         std::string libName(Os::testDllName);
 
