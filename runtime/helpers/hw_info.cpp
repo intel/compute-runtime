@@ -64,16 +64,33 @@ bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareIn
         return false;
     }
     uint32_t sliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(0, currPos)));
+    if (sliceCount > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
     size_t prevPos = currPos + 1;
 
     currPos = hwInfoConfig.find('x', prevPos);
     if (currPos == std::string::npos) {
         return false;
     }
-    uint32_t subSliceCount = sliceCount * static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, currPos)));
+    uint32_t subSlicePerSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, currPos)));
+    if (subSlicePerSliceCount > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
+    uint32_t subSliceCount = subSlicePerSliceCount * sliceCount;
+    if (subSliceCount > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
     prevPos = currPos + 1;
 
-    uint32_t euCount = subSliceCount * static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, std::string::npos)));
+    uint32_t euPerSubSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, std::string::npos)));
+    if (euPerSubSliceCount > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
+    uint32_t euCount = euPerSubSliceCount * subSliceCount;
+    if (euCount > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
 
     hwInfoIn.gtSystemInfo.SliceCount = sliceCount;
     hwInfoIn.gtSystemInfo.SubSliceCount = subSliceCount;

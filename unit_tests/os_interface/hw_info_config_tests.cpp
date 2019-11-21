@@ -44,4 +44,19 @@ TEST_F(HwInfoConfigTest, givenInvalidHwInfoSetHwInfoValuesFromConfigString) {
 
     success = setHwInfoValuesFromConfigString("1x3", outHwInfo);
     EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("65536x3x8", outHwInfo);
+    EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("1x65536x8", outHwInfo);
+    EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("1x3x65536", outHwInfo);
+    EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("65535x65535x8", outHwInfo);
+    EXPECT_FALSE(success);
+
+    success = setHwInfoValuesFromConfigString("1x65535x65535", outHwInfo);
+    EXPECT_FALSE(success);
 }
