@@ -698,6 +698,13 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
         std::vector<std::tuple<Kernel *, size_t, MemObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
         uint32_t waitCalled = 0;
     };
+
+    void SetUp() {
+        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        EnqueueKernelTest::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestore;
 };
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutArgumentsWhenEnqueuedThenNoGuardKernelWithAuxTranslations) {
@@ -807,7 +814,6 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
-    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 

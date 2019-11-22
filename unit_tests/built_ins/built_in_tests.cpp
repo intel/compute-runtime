@@ -55,6 +55,7 @@ class BuiltInTests
     }
 
     void SetUp() override {
+        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -100,6 +101,7 @@ class BuiltInTests
                left.srcMemObj == right.srcMemObj;
     }
 
+    DebugManagerStateRestore restore;
     std::string allBuiltIns;
 };
 
@@ -2074,7 +2076,6 @@ TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationFor
 }
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
-    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
@@ -2084,7 +2085,6 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuilti
 }
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCodeSource) {
-    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);

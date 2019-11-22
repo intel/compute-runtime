@@ -703,6 +703,18 @@ HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenChec
     EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
 }
 
+HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_EQ(UnitTestHelper<FamilyType>::requiredAuxTranslationMode, HwHelperHw<FamilyType>::getAuxTranslationMode());
+
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    EXPECT_EQ(AuxTranslationMode::Blit, HwHelperHw<FamilyType>::getAuxTranslationMode());
+
+    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+    EXPECT_EQ(AuxTranslationMode::Builtin, HwHelperHw<FamilyType>::getAuxTranslationMode());
+}
+
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTilingSupportThenReturnValidValue) {
     bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
 
