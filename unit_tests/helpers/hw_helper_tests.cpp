@@ -769,3 +769,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingCalculate
         hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenWaForceDefaultRcsEngineIsSetWhenAdjustDefaultEngineTypeIsCalledThenRcsIsUsedAsDefaultEngine) {
+    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.workaroundTable.waForceDefaultRCSEngine = true;
+
+    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    helper.adjustDefaultEngineType(&hardwareInfo);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
+}

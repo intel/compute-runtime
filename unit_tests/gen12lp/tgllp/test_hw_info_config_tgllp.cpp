@@ -88,10 +88,26 @@ TGLLPTEST_F(TgllpHwInfo, givenA0SteppingWhenWaTableIsInitializedThenWaUseOffsetT
     EXPECT_TRUE(hwInfo.workaroundTable.waUseOffsetToSkipSetFFIDGP);
 }
 
-TGLLPTEST_F(TgllpHwInfo, givenA1SteppingWhenWaTableIsInitializedThenWaUseOffsetToSkipSetFFIDGPIsNotSet) {
+TGLLPTEST_F(TgllpHwInfo, givenBSteppingWhenWaTableIsInitializedThenWaUseOffsetToSkipSetFFIDGPIsNotSet) {
     HardwareInfo hwInfo;
-    hwInfo.platform.usRevId = REVISION_A1;
+    hwInfo.platform.usRevId = REVISION_B;
     TGLLP::setupFeatureAndWorkaroundTable(&hwInfo);
 
     EXPECT_FALSE(hwInfo.workaroundTable.waUseOffsetToSkipSetFFIDGP);
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenA0SteppingWhenWaTableIsInitializedThenWaForceDefaultRCSEngineIsSet) {
+    HardwareInfo hwInfo;
+    hwInfo.platform.usRevId = REVISION_A0;
+    TGLLP::setupFeatureAndWorkaroundTable(&hwInfo);
+
+    EXPECT_TRUE(hwInfo.workaroundTable.waForceDefaultRCSEngine);
+}
+
+TGLLPTEST_F(TgllpHwInfo, givenBSteppingWhenWaTableIsInitializedThenWaForceDefaultRCSEngineIsNotSet) {
+    HardwareInfo hwInfo;
+    hwInfo.platform.usRevId = REVISION_B;
+    TGLLP::setupFeatureAndWorkaroundTable(&hwInfo);
+
+    EXPECT_FALSE(hwInfo.workaroundTable.waForceDefaultRCSEngine);
 }

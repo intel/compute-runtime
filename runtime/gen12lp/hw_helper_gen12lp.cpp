@@ -17,7 +17,7 @@ typedef TGLLPFamily Family;
 
 template <>
 void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-    if (!pHwInfo->featureTable.ftrCCSNode) {
+    if (!pHwInfo->featureTable.ftrCCSNode || pHwInfo->workaroundTable.waForceDefaultRCSEngine) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
 }
