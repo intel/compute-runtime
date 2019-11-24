@@ -56,8 +56,8 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 }
 
 template <typename GfxFamily>
-FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    return flushStamp->peekStamp();
+bool CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    return true;
 }
 
 template <typename GfxFamily>
@@ -455,7 +455,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, this->getResidencyAllocations()));
+            this->flush(batchBuffer, this->getResidencyAllocations());
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(this->getResidencyAllocations());
         } else {
@@ -526,13 +526,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBar
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
+inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-        return;
+        return true;
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     std::unique_lock<MutexType> lockGuard(ownershipMutex);
+    bool submitResult = true;
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
     if (!commandBufferList.peekIsEmpty()) {
@@ -600,20 +601,25 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 }
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(flushDcInEpilogue);
             }
-            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit);
+
+            if (!this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit)) {
+                submitResult = false;
+                break;
+            }
 
             //after flush task level is closed
             this->taskLevel++;
 
-            flushStampUpdateHelper.updateAll(flushStamp);
+            flushStampUpdateHelper.updateAll(flushStamp->peekStamp());
 
             this->latestFlushedTaskCount = lastTaskCount;
-            this->flushStamp->setStamp(flushStamp);
             this->makeSurfacePackNonResident(surfacesForSubmit);
             resourcePackage.clear();
         }
         this->totalMemoryUsed = 0;
     }
+
+    return submitResult;
 }
 
 template <typename GfxFamily>
@@ -839,7 +845,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStream.getUsed(), &commandStream};
 
-    flushStamp->setStamp(flush(batchBuffer, getResidencyAllocations()));
+    flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());
 
     latestFlushedTaskCount = newTaskCount;

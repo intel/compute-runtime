@@ -1272,3 +1272,35 @@ HWTEST_F(CommandQueueHwTest, givenSizeWhenForceStatelessIsCalledThenCorrectValue
     uint64_t smallSize = bigSize - 1;
     EXPECT_FALSE(pCmdQHw->forceStateless(static_cast<size_t>(smallSize)));
 }
+
+class MockCommandStreamReceiverWithFailingFlushBatchedSubmission : public MockCommandStreamReceiver {
+  public:
+    using MockCommandStreamReceiver::MockCommandStreamReceiver;
+    bool flushBatchedSubmissions() override {
+        return false;
+    }
+};
+
+template <typename GfxFamily>
+struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
+    using CommandQueueHw<GfxFamily>::CommandQueueHw;
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission *csr;
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const override { return *csr; }
+};
+
+HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
+
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr);
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
+    cmdQueue.csr = &csr;
+    cl_int errorCode = cmdQueue.flush();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
+}
+
+HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr);
+    MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
+    cmdQueue.csr = &csr;
+    cl_int errorCode = cmdQueue.finish();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
+}

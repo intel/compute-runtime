@@ -114,8 +114,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : BaseClass(execStamp, executionEnvironment, rootDeviceIndex) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return 0;
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return true;
     }
 
     CompletionStamp flushTask(
@@ -185,12 +185,12 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         flushCalledCount++;
         recordedCommandBuffer->batchBuffer = batchBuffer;
         copyOfAllocations = allocationsForResidency;
         flushStamp->setStamp(flushStamp->peekStamp() + 1);
-        return flushStamp->peekStamp();
+        return true;
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
@@ -265,7 +265,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         waitForCompletionWithTimeoutCalled++;
         return true;
     }
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     bool isMultiOsContextCapable() const { return multiOsContextCapable; }
 
@@ -279,10 +279,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         DispatchFlags &dispatchFlags,
         Device &device) override;
 
-    void flushBatchedSubmissions() override {
+    bool flushBatchedSubmissions() override {
         if (flushBatchedSubmissionsCallCounter) {
             (*flushBatchedSubmissionsCallCounter)++;
         }
+        return true;
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {

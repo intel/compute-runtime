@@ -341,4 +341,7 @@ class Program : public BaseObject<_cl_program> {
     bool isBuiltIn;
     bool kernelDebugEnabled = false;
 };
+
+GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *device, size_t size, bool constant, bool globalsAreExported, const void *initData);
+
 } // namespace NEO

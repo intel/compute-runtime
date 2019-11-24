@@ -53,7 +53,7 @@ void FlushStampUpdateHelper::insert(FlushStampTrackingObj *stampObj) {
     }
 }
 
-void FlushStampUpdateHelper::updateAll(FlushStamp &flushStamp) {
+void FlushStampUpdateHelper::updateAll(const FlushStamp &flushStamp) {
     for (const auto &stamp : flushStampsToUpdate) {
         stamp->flushStamp = flushStamp;
         stamp->initialized = true;

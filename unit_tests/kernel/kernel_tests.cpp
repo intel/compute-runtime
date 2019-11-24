@@ -485,8 +485,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         }
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return flushStamp->peekStamp();
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return true;
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
@@ -506,7 +506,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
-    void flushBatchedSubmissions() override {}
+    bool flushBatchedSubmissions() override { return true; }
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_HW;

@@ -188,7 +188,9 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
 
     uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
-        this->flushBatchedSubmissions();
+        if (!this->flushBatchedSubmissions()) {
+            return false;
+        }
     }
 
     time1 = std::chrono::high_resolution_clock::now();

@@ -765,7 +765,6 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsCo
         osContext.getResidencyController().getMonitoredFence().currentFenceValue++;
     }
     getDeviceState();
-    UNRECOVERABLE_IF(!status);
 
     return status;
 }

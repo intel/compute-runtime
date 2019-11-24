@@ -148,7 +148,10 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
         auto ptr = ctx->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), size, svmProps);
-        UNRECOVERABLE_IF(ptr == nullptr);
+        DEBUG_BREAK_IF(ptr == nullptr);
+        if (ptr == nullptr) {
+            return nullptr;
+        }
         auto svmAlloc = ctx->getSVMAllocsManager()->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(svmAlloc == nullptr);
         auto gpuAlloc = svmAlloc->gpuAllocation;
@@ -158,7 +161,10 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
     } else {
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
         auto gpuAlloc = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), size, allocationType});
-        UNRECOVERABLE_IF(gpuAlloc == nullptr);
+        DEBUG_BREAK_IF(gpuAlloc == nullptr);
+        if (gpuAlloc == nullptr) {
+            return nullptr;
+        }
         memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
         return gpuAlloc;
     }

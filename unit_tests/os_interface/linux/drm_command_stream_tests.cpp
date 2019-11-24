@@ -171,8 +171,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, Flush) {
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs};
     auto availableSpacePriorToFlush = cs.getAvailableSpace();
-    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_EQ(static_cast<uint64_t>(boHandle), csr->obtainCurrentFlushStamp());
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
 }

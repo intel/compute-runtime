@@ -30,13 +30,13 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
                               uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
-    void flushBatchedSubmissions() override;
+    bool flushBatchedSubmissions() override;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);

@@ -193,7 +193,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
 }
 
 template <typename GfxFamily>
-FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (subCaptureManager) {
         if (aubManager) {
             aubManager->pause(false);
@@ -241,7 +241,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         subCaptureManager->disableSubCapture();
     }
 
-    return 0;
+    return true;
 }
 
 template <typename GfxFamily>

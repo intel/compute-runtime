@@ -39,7 +39,7 @@ class FlushStampTracker {
 class FlushStampUpdateHelper {
   public:
     void insert(FlushStampTrackingObj *stampObj);
-    void updateAll(FlushStamp &flushStamp);
+    void updateAll(const FlushStamp &flushStamp);
     size_t size() const;
 
   private:

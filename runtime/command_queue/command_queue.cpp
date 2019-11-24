@@ -68,7 +68,7 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
 
     if (device) {
         gpgpuEngine = &device->getDefaultEngine();
-        if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
         if (device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported) {
@@ -86,7 +86,7 @@ CommandQueue::~CommandQueue() {
     }
 
     if (device) {
-        auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
+        auto storageForAllocation = gpgpuEngine->commandStreamReceiver->getInternalAllocationStorage();
 
         if (commandStream) {
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);

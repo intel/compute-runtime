@@ -20,6 +20,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
@@ -1615,4 +1616,30 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferProgrammingEna
                                     *pDevice);
 
     EXPECT_EQ(0u, commandStreamReceiver.createPerDssBackedBufferCalled);
+}
+
+template <typename GfxFamily>
+class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
+  public:
+    using CommandStreamReceiverHw<GfxFamily>::latestSentTaskCount;
+    using CommandStreamReceiverHw<GfxFamily>::submissionAggregator;
+
+    MockCsrWithFailingFlush(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex) {
+        this->dispatchMode = DispatchMode::BatchedDispatch;
+        this->tagAddress = &tag;
+    }
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return false;
+    }
+    uint32_t tag = 0;
+};
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutIsCalledWhenFlushBatchedSubmissionsReturnsFailureThenItIsPropagated) {
+    MockCsrWithFailingFlush<FamilyType> mockCsr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    mockCsr.setupContext(osContext);
+    mockCsr.latestSentTaskCount = 0;
+    auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
+    mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
+    EXPECT_FALSE(mockCsr.waitForCompletionWithTimeout(false, 0, 1));
 }

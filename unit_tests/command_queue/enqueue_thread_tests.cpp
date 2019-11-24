@@ -34,7 +34,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         this->pDevice = pDevice;
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
         toFree.push_back(batchBuffer.commandBufferAllocation);
@@ -43,7 +43,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
         EXPECT_TRUE(this->ownershipMutex.try_lock());
         this->ownershipMutex.unlock();
-        return 0;
+        return true;
     }
 
     ~CommandStreamReceiverMock() override {

@@ -1920,3 +1920,28 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGetReservedMemoryIsCalledManyTimes
     memoryManager.getReservedMemory(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     EXPECT_EQ(reservedMemory, memoryManager.reservedMemory);
 }
+
+class MemoryManagerWithFailure : public MockMemoryManager {
+  public:
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        return nullptr;
+    }
+};
+
+TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfaceAlsoReturnsNullptr) {
+    MockDevice device;
+    std::unique_ptr<MemoryManager> memoryManager(new MemoryManagerWithFailure());
+    device.injectMemoryManager(memoryManager.release());
+    MockContext context(&device, true);
+
+    delete context.svmAllocsManager;
+    context.svmAllocsManager = nullptr;
+
+    GraphicsAllocation *allocation = allocateGlobalsSurface(&context, &device, 1024, false, true, nullptr);
+    EXPECT_EQ(nullptr, allocation);
+
+    context.svmAllocsManager = new SVMAllocsManager(device.getMemoryManager());
+
+    allocation = allocateGlobalsSurface(&context, &device, 1024, false, true, nullptr);
+    EXPECT_EQ(nullptr, allocation);
+}

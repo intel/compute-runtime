@@ -286,13 +286,13 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const std::
 }
 
 template <typename GfxFamily>
-FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
                 *this->tagAddress = this->peekLatestSentTaskCount();
             }
-            return 0;
+            return true;
         }
     }
 
@@ -340,7 +340,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     getAubStream()->flush();
-    return 0;
+    return true;
 }
 
 template <typename GfxFamily>

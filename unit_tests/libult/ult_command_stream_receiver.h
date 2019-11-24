@@ -93,7 +93,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::makeSurfacePackNonResident(allocationsForResidency);
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         if (recordFlusheBatchBuffer) {
             latestFlushedBatchBuffer = batchBuffer;
         }
@@ -161,9 +161,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         aubCommentMessages.push_back(message);
         addAubCommentCalled = true;
     }
-    void flushBatchedSubmissions() override {
-        CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
+    bool flushBatchedSubmissions() override {
         flushBatchedSubmissionsCalled = true;
+        return CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
     }
     void initProgrammingFlags() override {
         CommandStreamReceiverHw<GfxFamily>::initProgrammingFlags();

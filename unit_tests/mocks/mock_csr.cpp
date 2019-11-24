@@ -9,9 +9,8 @@
 
 #include "runtime/os_interface/os_interface.h"
 
-FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    FlushStamp stamp = 0;
-    return stamp;
+bool MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    return true;
 }
 
 CompletionStamp MockCommandStreamReceiver::flushTask(

@@ -583,8 +583,9 @@ HWTEST_P(CommandStreamReceiverWithAubSubCaptureTest, givenCommandStreamReceiverW
         void initProgrammingFlags() override {
             initProgrammingFlagsCalled = true;
         }
-        void flushBatchedSubmissions() override {
+        bool flushBatchedSubmissions() override {
             flushBatchedSubmissionsCalled = true;
+            return true;
         }
         bool initProgrammingFlagsCalled = false;
         bool flushBatchedSubmissionsCalled = false;

@@ -27,13 +27,12 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
 }
 
 template <typename BaseCSR>
-FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+bool CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (aubCSR) {
         aubCSR->flush(batchBuffer, allocationsForResidency);
         aubCSR->setLatestSentTaskCount(BaseCSR::peekLatestSentTaskCount());
     }
-    FlushStamp flushStamp = BaseCSR::flush(batchBuffer, allocationsForResidency);
-    return flushStamp;
+    return BaseCSR::flush(batchBuffer, allocationsForResidency);
 }
 
 template <typename BaseCSR>
