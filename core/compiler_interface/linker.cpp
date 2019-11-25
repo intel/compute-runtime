@@ -7,38 +7,11 @@
 
 #include "linker.h"
 
+#include "common/compiler_support.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 
-#if __has_include("RelocationInfo.h")
 #include "RelocationInfo.h"
-#else
-namespace vISA {
-static const uint32_t MAX_SYMBOL_NAME_LENGTH = 256;
-
-enum GenSymType { S_NOTYPE = 0,
-                  S_UNDEF = 1,
-                  S_FUNC = 2,
-                  S_GLOBAL_VAR = 3,
-                  S_GLOBAL_VAR_CONST = 4 };
-
-typedef struct {
-    uint32_t s_type;
-    uint32_t s_offset;
-    uint32_t s_size;
-    char s_name[MAX_SYMBOL_NAME_LENGTH];
-} GenSymEntry;
-
-enum GenRelocType { R_NONE = 0,
-                    R_SYM_ADDR = 1 };
-
-typedef struct {
-    uint32_t r_type;
-    uint32_t r_offset;
-    char r_symbol[MAX_SYMBOL_NAME_LENGTH];
-} GenRelocEntry;
-} // namespace vISA
-#endif
 
 #include <sstream>
 
@@ -121,6 +94,13 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
             DEBUG_BREAK_IF(true);
             return false;
         case vISA::R_SYM_ADDR:
+            relocInfo.type = RelocationInfo::Type::Address;
+            break;
+        case vISA::R_SYM_ADDR_32:
+            relocInfo.type = RelocationInfo::Type::AddressLow;
+            break;
+        case vISA::R_SYM_ADDR_32_HI:
+            relocInfo.type = RelocationInfo::Type::AddressHigh;
             break;
         }
         outRelocInfo.push_back(std::move(relocInfo));
@@ -181,7 +161,19 @@ bool Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 continue;
             }
 
-            *reinterpret_cast<uintptr_t *>(relocAddress) = symbolIt->second.gpuAddress;
+            uint64_t gpuAddressAs64bit = static_cast<uint64_t>(symbolIt->second.gpuAddress);
+            switch (relocation.type) {
+            default:
+                UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocation.type);
+                *reinterpret_cast<uintptr_t *>(relocAddress) = symbolIt->second.gpuAddress;
+                break;
+            case RelocationInfo::Type::AddressLow:
+                *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff);
+                break;
+            case RelocationInfo::Type::AddressHigh:
+                *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((gpuAddressAs64bit >> 32) & 0xffffffff);
+                break;
+            }
         }
     }
     outUnresolvedExternals.swap(unresolvedExternals);

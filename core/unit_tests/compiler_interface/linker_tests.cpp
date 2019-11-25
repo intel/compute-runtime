@@ -11,39 +11,7 @@
 
 #include <string>
 
-#if __has_include("RelocationInfo.h")
 #include "RelocationInfo.h"
-#else
-namespace vISA {
-static const uint32_t MAX_SYMBOL_NAME_LENGTH = 256;
-
-enum GenSymType {
-    S_NOTYPE = 0,
-    S_UNDEF = 1,
-    S_FUNC = 2,
-    S_GLOBAL_VAR = 3,
-    S_GLOBAL_VAR_CONST = 4
-};
-
-typedef struct {
-    uint32_t s_type;
-    uint32_t s_offset;
-    uint32_t s_size;
-    char s_name[MAX_SYMBOL_NAME_LENGTH];
-} GenSymEntry;
-
-enum GenRelocType {
-    R_NONE = 0,
-    R_SYM_ADDR = 1
-};
-
-typedef struct {
-    uint32_t r_type;
-    uint32_t r_offset;
-    char r_symbol[MAX_SYMBOL_NAME_LENGTH];
-} GenRelocEntry;
-} // namespace vISA
-#endif
 
 TEST(LinkerInputTests, givenGlobalsSymbolTableThenProperlyDecodesGlobalVariablesAndGlobalConstants) {
     NEO::LinkerInput linkerInput;
@@ -316,8 +284,18 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     relocC.r_offset = 16;
     relocC.r_type = vISA::GenRelocType::R_SYM_ADDR;
 
-    vISA::GenRelocEntry relocs[] = {relocA, relocB, relocC};
-    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, 3, 0);
+    vISA::GenRelocEntry relocCPartHigh = {};
+    relocCPartHigh.r_symbol[0] = 'C';
+    relocCPartHigh.r_offset = 28;
+    relocCPartHigh.r_type = vISA::GenRelocType::R_SYM_ADDR_32_HI;
+
+    vISA::GenRelocEntry relocCPartLow = {};
+    relocCPartLow.r_symbol[0] = 'C';
+    relocCPartLow.r_offset = 36;
+    relocCPartLow.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+
+    vISA::GenRelocEntry relocs[] = {relocA, relocB, relocC, relocCPartHigh, relocCPartLow};
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, 5, 0);
     EXPECT_TRUE(decodeRelocSuccess);
 
     NEO::Linker linker(linkerInput);
@@ -331,7 +309,8 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
     std::vector<char> instructionSegment;
-    instructionSegment.resize(64, 0);
+    uint32_t initData = 0x77777777;
+    instructionSegment.resize(64, static_cast<char>(initData));
     NEO::Linker::PatchableSegment seg0;
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
@@ -355,6 +334,17 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     EXPECT_EQ(relocatedSymbols[symGlobalVariable.s_name].gpuAddress, *reinterpret_cast<const uintptr_t *>(instructionSegment.data() + relocA.r_offset));
     EXPECT_EQ(relocatedSymbols[symGlobalConstant.s_name].gpuAddress, *reinterpret_cast<const uintptr_t *>(instructionSegment.data() + relocB.r_offset));
     EXPECT_EQ(relocatedSymbols[symExportedFunc.s_name].gpuAddress, *reinterpret_cast<const uintptr_t *>(instructionSegment.data() + relocC.r_offset));
+
+    auto funcGpuAddressAs64bit = static_cast<uint64_t>(relocatedSymbols[symExportedFunc.s_name].gpuAddress);
+    auto funcAddressLow = static_cast<uint32_t>(funcGpuAddressAs64bit & 0xffffffff);
+    auto funcAddressHigh = static_cast<uint32_t>((funcGpuAddressAs64bit >> 32) & 0xffffffff);
+    EXPECT_EQ(funcAddressLow, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartLow.r_offset));
+    EXPECT_EQ(initData, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartLow.r_offset - sizeof(uint32_t)));
+    EXPECT_EQ(initData, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartLow.r_offset + sizeof(uint32_t)));
+
+    EXPECT_EQ(funcAddressHigh, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartHigh.r_offset));
+    EXPECT_EQ(initData, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartHigh.r_offset - sizeof(uint32_t)));
+    EXPECT_EQ(initData, *reinterpret_cast<const uint32_t *>(instructionSegment.data() + relocCPartHigh.r_offset + sizeof(uint32_t)));
 }
 
 TEST(LinkerTests, givenInvalidSymbolOffsetThenRelocationFails) {

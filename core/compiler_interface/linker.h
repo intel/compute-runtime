@@ -29,6 +29,7 @@ struct SymbolInfo {
 };
 
 struct LinkerInput {
+
     union Traits {
         Traits() : packed(0) {
         }
@@ -43,8 +44,16 @@ struct LinkerInput {
     static_assert(sizeof(Traits) == sizeof(Traits::packed), "");
 
     struct RelocationInfo {
+        enum class Type : uint32_t {
+            Unknown,
+            Address,
+            AddressHigh,
+            AddressLow
+        };
+
         std::string symbolName;
         uint32_t offset = std::numeric_limits<uint32_t>::max();
+        Type type = Type::Unknown;
     };
 
     using Relocations = std::vector<RelocationInfo>;

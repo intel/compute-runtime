@@ -876,7 +876,10 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SymbolInfo::GlobalConstant};
     linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SymbolInfo::Function};
 
-    linkerInput->relocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U}, NEO::LinkerInput::RelocationInfo{"B", 16U}, NEO::LinkerInput::RelocationInfo{"C", 24U}});
+    auto relocationType = NEO::LinkerInput::RelocationInfo::Type::Address;
+    linkerInput->relocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U, relocationType},
+                                        NEO::LinkerInput::RelocationInfo{"B", 16U, relocationType},
+                                        NEO::LinkerInput::RelocationInfo{"C", 24U, relocationType}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     linkerInput->exportedFunctionsSegmentId = 0;
     NEO::ExecutionEnvironment env;
