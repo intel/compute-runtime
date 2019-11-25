@@ -24,7 +24,7 @@ enum LeakDetectionMode {
     TURN_OFF_LEAK_DETECTION
 };
 
-struct AllocationEvent {
+struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
     enum {
         CallStackSize = 16
     };

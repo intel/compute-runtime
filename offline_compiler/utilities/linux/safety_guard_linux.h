@@ -27,7 +27,7 @@ class SafetyGuardLinux {
         sigaction(SIGILL, &sigact, (struct sigaction *)NULL);
     }
 
-    static void sigAction(int sig_num, siginfo_t *info, void *ucontext) {
+    static void sigAction(int sigNum, siginfo_t *info, void *ucontext) {
         const int callstackDepth = 30;
         void *addresses[callstackDepth];
         char **callstack;
