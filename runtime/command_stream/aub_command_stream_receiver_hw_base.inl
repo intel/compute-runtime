@@ -22,6 +22,7 @@
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/neo_driver_version.h"
 #include "runtime/memory_manager/memory_banks.h"
@@ -728,6 +729,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyCont
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &gfxAllocation) {
+    if (isBcs(this->osContext->getEngineType())) {
+        return;
+    }
+
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
         if (!gfxAllocation.isAllocDumpable()) {
             return;

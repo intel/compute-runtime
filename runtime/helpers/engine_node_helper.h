@@ -12,5 +12,6 @@
 namespace NEO {
 
 bool isCcs(aub_stream::EngineType engineType);
+bool isBcs(aub_stream::EngineType engineType);
 
 } // namespace NEO
