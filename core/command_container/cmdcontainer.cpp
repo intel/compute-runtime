@@ -47,7 +47,7 @@ bool CommandContainer::initialize(Device *device) {
     heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumAvailableDevices() > 1u));
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true /* allocateMemory*/, alignedSize,
+    NEO::AllocationProperties properties{0u, true /* allocateMemory*/, alignedSize,
                                          GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                          (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                          false,
@@ -65,7 +65,7 @@ bool CommandContainer::initialize(Device *device) {
     size_t heapSize = 65536u;
 
     for (auto &allocationIndirectHeap : allocationIndirectHeaps) {
-        allocationIndirectHeap = heapHelper->getHeapAllocation(heapSize, alignedSize, device->getRootDeviceIndex());
+        allocationIndirectHeap = heapHelper->getHeapAllocation(heapSize, alignedSize, 0u);
         UNRECOVERABLE_IF(!allocationIndirectHeap);
         residencyContainer.push_back(allocationIndirectHeap);
     }
@@ -83,7 +83,6 @@ bool CommandContainer::initialize(Device *device) {
 
 void CommandContainer::addToResidencyContainer(NEO::GraphicsAllocation *alloc) {
     if (alloc == nullptr) {
-        DEBUG_BREAK_IF(true);
         return;
     }
     auto end = this->residencyContainer.end();
