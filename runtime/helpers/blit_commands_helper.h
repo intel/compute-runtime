@@ -26,7 +26,7 @@ struct TagNode;
 
 struct BlitProperties;
 struct TimestampPacketDependencies;
-using BlitPropertiesContainer = StackVec<BlitProperties, 32>;
+using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
