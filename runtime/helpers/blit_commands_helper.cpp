@@ -47,10 +47,12 @@ BlitProperties BlitProperties::constructProperties(BlitterConstants::BlitDirecti
                                                    const BuiltinOpParams &builtinOpParams) {
 
     if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection) {
+        auto dstOffset = builtinOpParams.dstOffset.x + builtinOpParams.dstMemObj->getOffset();
+        auto srcOffset = builtinOpParams.srcOffset.x + builtinOpParams.srcMemObj->getOffset();
+
         return constructPropertiesForCopyBuffer(builtinOpParams.dstMemObj->getGraphicsAllocation(),
                                                 builtinOpParams.srcMemObj->getGraphicsAllocation(),
-                                                builtinOpParams.dstOffset.x, builtinOpParams.srcOffset.x,
-                                                builtinOpParams.size.x);
+                                                dstOffset, srcOffset, builtinOpParams.size.x);
     }
 
     GraphicsAllocation *gpuAllocation = nullptr;

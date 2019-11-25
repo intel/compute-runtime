@@ -775,6 +775,31 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         EXPECT_EQ(buffer1->getGraphicsAllocation()->getGpuAddress(), bltCmd->getDestinationBaseAddress());
         EXPECT_EQ(buffer2->getGraphicsAllocation()->getGpuAddress(), bltCmd->getSourceBaseAddress());
     }
+
+    {
+        // Buffer to Buffer - with object offset
+        const size_t subBuffer2Offset = 0x20;
+        cl_buffer_region subBufferRegion2 = {subBuffer2Offset, 1};
+        auto subBuffer2 = clUniquePtr<Buffer>(buffer2->createSubBuffer(CL_MEM_READ_WRITE, 0, &subBufferRegion2, retVal));
+
+        BuiltinOpParams builtinOpParams = {};
+        builtinOpParams.dstMemObj = subBuffer2.get();
+        builtinOpParams.srcMemObj = subBuffer1.get();
+        builtinOpParams.size.x = 1;
+
+        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer, csr, builtinOpParams);
+
+        auto offset = csr.commandStream.getUsed();
+        blitBuffer(&csr, blitProperties, true);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+        auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
+        EXPECT_NE(nullptr, bltCmd);
+        EXPECT_EQ(buffer2->getGraphicsAllocation()->getGpuAddress() + subBuffer2Offset, bltCmd->getDestinationBaseAddress());
+        EXPECT_EQ(buffer1->getGraphicsAllocation()->getGpuAddress() + subBuffer1Offset, bltCmd->getSourceBaseAddress());
+    }
 }
 
 HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidGpuAddress) {
