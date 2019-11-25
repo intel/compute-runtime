@@ -699,7 +699,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
         uint32_t waitCalled = 0;
     };
 
-    void SetUp() {
+    void SetUp() override {
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         EnqueueKernelTest::SetUp();
     }
