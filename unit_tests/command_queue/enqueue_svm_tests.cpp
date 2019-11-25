@@ -59,7 +59,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     void *ptrSVM = nullptr;
 };
 
-TEST_F(EnqueueSvmTest, enqueueSVMMap_InvalidValue) {
+TEST_F(EnqueueSvmTest, GivenInvalidSvmPtrWhenMappingSvmThenInvalidValueErrorIsReturned) {
     void *svmPtr = nullptr;
     retVal = this->pCmdQ->enqueueSVMMap(
         CL_FALSE,    // cl_bool blocking_map
@@ -73,7 +73,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_InvalidValue) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMap_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmThenSuccessIsReturned) {
     retVal = this->pCmdQ->enqueueSVMMap(
         CL_FALSE,    // cl_bool blocking_map
         CL_MAP_READ, // cl_map_flags map_flags
@@ -86,7 +86,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMapBlocking_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmWithBlockingThenSuccessIsReturned) {
     retVal = this->pCmdQ->enqueueSVMMap(
         CL_TRUE,     // cl_bool blocking_map
         CL_MAP_READ, // cl_map_flags map_flags
@@ -99,7 +99,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlocking_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmWithEventsThenSuccessIsReturned) {
     UserEvent uEvent;
     cl_event eventWaitList[] = {&uEvent};
     retVal = this->pCmdQ->enqueueSVMMap(
@@ -114,7 +114,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
+TEST_F(EnqueueSvmTest, GivenInvalidSvmPtrWhenUnmappingSvmThenInvalidValueErrorIsReturned) {
     void *svmPtr = nullptr;
     retVal = this->pCmdQ->enqueueSVMUnmap(
         svmPtr,  // void *svm_ptr
@@ -125,7 +125,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMUnmap_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmThenSuccessIsReturned) {
     retVal = this->pCmdQ->enqueueSVMUnmap(
         ptrSVM,  // void *svm_ptr
         0,       // cl_uint num_events_in_wait_list
@@ -135,7 +135,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmWithEventsThenSuccessIsReturned) {
     UserEvent uEvent;
     cl_event eventWaitList[] = {&uEvent};
     retVal = this->pCmdQ->enqueueSVMUnmap(
@@ -147,7 +147,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMFreeWithoutCallback_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     ASSERT_EQ(1U, this->context->getSVMAllocsManager()->getNumAllocs());
@@ -165,7 +165,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithoutCallback_Success) {
     ASSERT_EQ(0U, this->context->getSVMAllocsManager()->getNumAllocs());
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallback_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
@@ -195,7 +195,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallback_Success) {
     EXPECT_TRUE(callbackWasCalled);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallbackAndEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
@@ -229,7 +229,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallbackAndEvent_Success) {
     delete pEvent;
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMFreeBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithBlockingThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
@@ -247,7 +247,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeBlockedOnEvent_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
+TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *pDstSVM = nullptr;
@@ -265,7 +265,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueSrcPtrIsNull) {
+TEST_F(EnqueueSvmTest, GivenNullSrcPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = nullptr;
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -540,7 +540,7 @@ TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSucc
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenCopyingMemoryWithBlockingThenSuccessisReturned) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
     auto uEvent = make_releaseable<UserEvent>();
@@ -559,7 +559,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     uEvent->setStatus(-1);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
+TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryThenSuccessIsReturned) {
     void *pDstSVM = ptrSVM;
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
@@ -577,7 +577,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsReturned) {
     void *pDstSVM = ptrSVM;
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
@@ -623,7 +623,7 @@ HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoH
     EXPECT_EQ(ptrDiff(pDstSVM, alignDown(pDstSVM, 4)), dstOffset);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
+TEST_F(EnqueueSvmTest, GivenNullSvmPtrWhenFillingMemoryThenInvalidValueErrorIsReturned) {
     void *svmPtr = nullptr;
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
@@ -660,7 +660,7 @@ HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccesIsReturnedAndA
     EXPECT_EQ(ptrDiff(ptrSVM, alignDown(ptrSVM, 4)), dstOffset);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenFillingMemoryWithBlockingThenSuccessIsReturned) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
     auto uEvent = make_releaseable<UserEvent>();
@@ -678,7 +678,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
     uEvent->setStatus(-1);
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
+TEST_F(EnqueueSvmTest, GivenRepeatCallsWhenFillingMemoryThenSuccessIsReturnedForEachCall) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
     retVal = this->pCmdQ->enqueueSVMMemFill(
@@ -728,7 +728,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
     EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
 }
 
-TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
+TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
@@ -799,7 +799,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     uEvent->setStatus(-1);
 }
 
-TEST_F(EnqueueSvmTest, concurentMapAccess) {
+TEST_F(EnqueueSvmTest, GivenMultipleThreasWhenAllocatingSvmThenOnlyOneAllocationIsCreated) {
     std::atomic<int> flag(0);
     std::atomic<int> ready(0);
     void *svmPtrs[15] = {};
@@ -850,7 +850,7 @@ TEST_F(EnqueueSvmTest, concurentMapAccess) {
     t3->join();
 }
 
-TEST_F(EnqueueSvmTest, enqueueSVMMigrateMem_Success) {
+TEST_F(EnqueueSvmTest, GivenValidParamsWhenMigratingMemoryThenSuccessIsReturned) {
     const void *svmPtrs[] = {ptrSVM};
     retVal = this->pCmdQ->enqueueSVMMigrateMem(
         1,       // cl_uint num_svm_pointers
