@@ -32,7 +32,9 @@ PreemptionTestHwDetails GetPreemptionTestHwDetails<BDWFamily>() {
 }
 
 GEN8TEST_F(Gen8PreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
+    PreemptionFlags flags = {};
+    PreemptionHelper::setPreemptionLevelFlags(flags, *device, kernel.get());
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
 }
 
 GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgrammed) {

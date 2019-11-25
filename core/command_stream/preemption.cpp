@@ -15,58 +15,71 @@
 
 namespace NEO {
 
-bool PreemptionHelper::allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *workaroundTable) {
-    if (workaroundTable->waDisablePerCtxtPreemptionGranularityControl) {
+bool PreemptionHelper::allowThreadGroupPreemption(const PreemptionFlags &flags) {
+    if (flags.flags.disablePerCtxtPreemptionGranularityControl) {
         return false;
     }
 
-    if (kernel) {
-        if (kernel->getKernelInfo().patchInfo.executionEnvironment &&
-            kernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages &&
-            workaroundTable->waDisableLSQCROPERFforOCL) {
-            return false;
-        }
-        if (kernel->isSchedulerKernel || kernel->isVmeKernel()) {
-            return false;
-        }
+    if (flags.flags.usesFencesForReadWriteImages &&
+        flags.flags.disableLSQCROPERFforOCL) {
+        return false;
+    }
+    if (flags.flags.schedulerKernel || flags.flags.vmeKernel) {
+        return false;
     }
 
     return true;
 }
 
-bool PreemptionHelper::allowMidThreadPreemption(Kernel *kernel, Device &device) {
-    bool allowedByKernel = true;
-    if (kernel) {
-        allowedByKernel = (kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption == 0) &&
-                          !(kernel->isVmeKernel() && !device.getDeviceInfo().vmeAvcSupportsPreemption);
-    }
-    bool supportedByDevice = (device.getPreemptionMode() >= PreemptionMode::MidThread);
-    return supportedByDevice && allowedByKernel;
+bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
+    return (flags.flags.disabledMidThreadPreemptionKernel == 0) &&
+           !(flags.flags.vmeKernel && !flags.flags.deviceSupportsVmePreemption);
 }
 
-PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, Kernel *kernel) {
+PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const PreemptionFlags &flags) {
     if (device.getPreemptionMode() == PreemptionMode::Disabled) {
         return PreemptionMode::Disabled;
     }
 
     if (device.getPreemptionMode() >= PreemptionMode::MidThread &&
-        allowMidThreadPreemption(kernel, device)) {
+        allowMidThreadPreemption(flags)) {
         return PreemptionMode::MidThread;
     }
 
     if (device.getPreemptionMode() >= PreemptionMode::ThreadGroup &&
-        allowThreadGroupPreemption(kernel, &device.getHardwareInfo().workaroundTable)) {
+        allowThreadGroupPreemption(flags)) {
         return PreemptionMode::ThreadGroup;
     }
 
     return PreemptionMode::MidBatch;
 };
 
+void PreemptionHelper::setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel) {
+    if (kernel) {
+        flags.flags.disabledMidThreadPreemptionKernel =
+            kernel->getKernelInfo().patchInfo.executionEnvironment &&
+            kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption;
+        flags.flags.vmeKernel = kernel->isVmeKernel();
+        flags.flags.usesFencesForReadWriteImages =
+            kernel->getKernelInfo().patchInfo.executionEnvironment &&
+            kernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages;
+        flags.flags.schedulerKernel = kernel->isSchedulerKernel;
+    }
+    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
+    flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.waDisablePerCtxtPreemptionGranularityControl;
+    flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.waDisableLSQCROPERFforOCL;
+}
+
 PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo) {
     PreemptionMode devMode = device.getPreemptionMode();
 
     for (const auto &di : multiDispatchInfo) {
-        PreemptionMode taskMode = taskPreemptionMode(device, di.getKernel());
+        auto kernel = di.getKernel();
+
+        PreemptionFlags flags = {};
+        setPreemptionLevelFlags(flags, device, kernel);
+
+        PreemptionMode taskMode = taskPreemptionMode(device, flags);
         if (devMode > taskMode) {
             devMode = taskMode;
         }

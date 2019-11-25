@@ -18,16 +18,37 @@ class Device;
 class GraphicsAllocation;
 struct MultiDispatchInfo;
 
+struct PreemptionFlags {
+    PreemptionFlags() {
+        data = 0;
+    }
+    union {
+        struct {
+            uint32_t disabledMidThreadPreemptionKernel : 1;
+            uint32_t vmeKernel : 1;
+            uint32_t deviceSupportsVmePreemption : 1;
+            uint32_t disablePerCtxtPreemptionGranularityControl : 1;
+            uint32_t usesFencesForReadWriteImages : 1;
+            uint32_t disableLSQCROPERFforOCL : 1;
+            uint32_t schedulerKernel : 1;
+            uint32_t reserved : 25;
+        } flags;
+        uint32_t data;
+    };
+};
+
 class PreemptionHelper {
   public:
     template <typename CmdFamily>
     using INTERFACE_DESCRIPTOR_DATA = typename CmdFamily::INTERFACE_DESCRIPTOR_DATA;
 
-    static PreemptionMode taskPreemptionMode(Device &device, Kernel *kernel);
+    static PreemptionMode taskPreemptionMode(Device &device, const PreemptionFlags &flags);
     static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
-    static bool allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *workaroundTable);
-    static bool allowMidThreadPreemption(Kernel *kernel, Device &device);
+    static bool allowThreadGroupPreemption(const PreemptionFlags &flags);
+    static bool allowMidThreadPreemption(const PreemptionFlags &flags);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
+
+    static void setPreemptionLevelFlags(PreemptionFlags &flags, Device &device, Kernel *kernel);
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);
