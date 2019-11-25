@@ -595,14 +595,6 @@ TEST_P(CreateImageHostPtr, getAddress) {
     }
 }
 
-TEST_P(CreateImageHostPtr, givenImageWhenItIsCreateItHasProperSizeAndGraphicsAllocation) {
-    image = createImage(retVal);
-    ASSERT_NE(nullptr, image);
-
-    EXPECT_NE(0u, image->getSize());
-    EXPECT_NE(nullptr, image->getGraphicsAllocation());
-}
-
 TEST_P(CreateImageHostPtr, getImageDesc) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
@@ -633,6 +625,8 @@ TEST_P(CreateImageHostPtr, getImageDesc) {
 
     EXPECT_EQ(image->getHostPtrSlicePitch(), static_cast<size_t>(imageDesc.image_width * elementSize * imageDesc.image_height) * isArrayOr3DType);
     EXPECT_EQ(image->getImageCount(), 1u);
+    EXPECT_NE(0u, image->getSize());
+    EXPECT_NE(nullptr, image->getGraphicsAllocation());
 }
 
 TEST_P(CreateImageHostPtr, failedAllocationInjection) {
