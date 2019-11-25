@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/memory_manager/graphics_allocation.h"
+#include "runtime/device/sub_device.h"
 
 namespace NEO {
 struct ImageInfo;
 struct AllocationProperties {
-    constexpr static uint32_t noDeviceSpecified = std::numeric_limits<uint32_t>::max();
     union {
         struct {
             uint32_t allocateMemory : 1;
@@ -32,7 +32,7 @@ struct AllocationProperties {
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
-    uint32_t subDeviceIndex = AllocationProperties::noDeviceSpecified;
+    uint32_t subDeviceIndex = SubDevice::unspecifiedSubDeviceIndex;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType)
@@ -50,7 +50,7 @@ struct AllocationProperties {
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
                          bool isMultiStorageAllocation)
-        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, AllocationProperties::noDeviceSpecified) {}
+        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, SubDevice::unspecifiedSubDeviceIndex) {}
 
     AllocationProperties(uint32_t rootDeviceIndexParam,
                          bool allocateMemoryParam,

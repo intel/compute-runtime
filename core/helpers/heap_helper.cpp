@@ -21,7 +21,7 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(size_t heapSize, size_t alignm
                                          GraphicsAllocation::AllocationType::INTERNAL_HEAP,
                                          isMultiOsContextCapable /* multiOsContextCapable */,
                                          false,
-                                         NEO::AllocationProperties::noDeviceSpecified};
+                                         NEO::SubDevice::unspecifiedSubDeviceIndex};
 
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }

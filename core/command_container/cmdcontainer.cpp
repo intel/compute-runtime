@@ -51,7 +51,7 @@ bool CommandContainer::initialize(Device *device) {
                                          GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                          (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                          false,
-                                         NEO::AllocationProperties::noDeviceSpecified};
+                                         NEO::SubDevice::unspecifiedSubDeviceIndex};
 
     cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 

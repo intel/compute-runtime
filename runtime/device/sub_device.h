@@ -12,6 +12,8 @@ namespace NEO {
 class RootDevice;
 class SubDevice : public Device {
   public:
+    constexpr static uint32_t unspecifiedSubDeviceIndex = std::numeric_limits<uint32_t>::max();
+
     SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice);
     void retain() override;
     unique_ptr_if_unused<Device> release() override;
