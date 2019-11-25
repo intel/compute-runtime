@@ -688,19 +688,25 @@ HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenChec
     MockBuffer buffer;
     MemObjsForAuxTranslation memObjects;
     MultiDispatchInfo multiDispatchInfo;
+    HardwareInfo hwInfo = **platformDevices;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
 
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     multiDispatchInfo.setMemObjsForAuxTranslation(memObjects);
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     memObjects.insert(&buffer);
-    EXPECT_TRUE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+    EXPECT_TRUE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(multiDispatchInfo));
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 }
 
 HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {

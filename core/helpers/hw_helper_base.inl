@@ -167,8 +167,9 @@ AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo) {
+bool HwHelperHw<Family>::isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo) {
     return (HwHelperHw<Family>::getAuxTranslationMode() == AuxTranslationMode::Blit) &&
+           hwInfo.capabilityTable.blitterOperationsSupported &&
            multiDispatchInfo.getMemObjsForAuxTranslation() &&
            (multiDispatchInfo.getMemObjsForAuxTranslation()->size() > 0);
 }
