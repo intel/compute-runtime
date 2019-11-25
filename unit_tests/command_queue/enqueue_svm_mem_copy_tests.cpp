@@ -8,6 +8,7 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "test.h"
+#include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
@@ -292,4 +293,68 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     auto kernel = mdi->begin()->getKernel();
     EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().name);
     alignedFree(dstHostPtr);
+}
+
+struct EnqueueSvmMemCopyHw : public ::testing::Test {
+
+    void SetUp() override {
+
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        if (is32bit || !device->isFullRangeSvm()) {
+            GTEST_SKIP();
+        }
+
+        context = std::make_unique<MockContext>(device.get());
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+        ASSERT_NE(nullptr, srcSvmPtr);
+        dstHostPtr = alignedMalloc(256, 64);
+    }
+
+    void TearDown() override {
+        if (is32bit || !device->isFullRangeSvm()) {
+            return;
+        }
+        context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
+        alignedFree(dstHostPtr);
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    uint64_t bigSize = 5ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
+    void *srcSvmPtr = nullptr;
+    void *dstHostPtr = nullptr;
+};
+
+using EnqueueSvmMemCopyHwTest = EnqueueSvmMemCopyHw;
+
+HWTEST_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBufferStatelessBuilderThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
+    srcSvmData->size = static_cast<size_t>(bigSize);
+    auto retVal = cmdQ->enqueueSVMMemcpy(
+        false,                        // cl_bool  blocking_copy
+        dstHostPtr,                   // void *dst_ptr
+        srcSvmPtr,                    // const void *src_ptr
+        static_cast<size_t>(bigSize), // size_t size
+        0,                            // cl_uint num_events_in_wait_list
+        nullptr,                      // cl_event *event_wait_list
+        nullptr                       // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBufferStatefulBuilderThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+
+    auto retVal = cmdQ->enqueueSVMMemcpy(
+        false,                          // cl_bool  blocking_copy
+        dstHostPtr,                     // void *dst_ptr
+        srcSvmPtr,                      // const void *src_ptr
+        static_cast<size_t>(smallSize), // size_t size
+        0,                              // cl_uint num_events_in_wait_list
+        nullptr,                        // cl_event *event_wait_list
+        nullptr                         // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
