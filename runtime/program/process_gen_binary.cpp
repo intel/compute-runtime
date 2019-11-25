@@ -879,6 +879,7 @@ inline uint64_t readMisalignedUint64(const uint64_t *address) {
 }
 
 GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *device, size_t size, bool constant, bool globalsAreExported, const void *initData) {
+    UNRECOVERABLE_IF(device == nullptr);
     if (globalsAreExported && (ctx != nullptr) && (ctx->getSVMAllocsManager() != nullptr)) {
         NEO::SVMAllocsManager::SvmAllocationProperties svmProps = {};
         svmProps.coherent = false;
@@ -890,11 +891,9 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
         UNRECOVERABLE_IF(svmAlloc == nullptr);
         auto gpuAlloc = svmAlloc->gpuAllocation;
         UNRECOVERABLE_IF(gpuAlloc == nullptr);
-        UNRECOVERABLE_IF(device == nullptr);
         device->getMemoryManager()->copyMemoryToAllocation(gpuAlloc, initData, static_cast<uint32_t>(size));
         return ctx->getSVMAllocsManager()->getSVMAlloc(ptr)->gpuAllocation;
     } else {
-        UNRECOVERABLE_IF(device == nullptr);
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
         auto gpuAlloc = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), size, allocationType});
         UNRECOVERABLE_IF(gpuAlloc == nullptr);
