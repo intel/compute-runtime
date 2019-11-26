@@ -42,7 +42,9 @@ TEST(PageFaultManagerLinuxTest, givenProtectedMemoryWhenTryingToAccessThenPageFa
 
 class MockFailPageFaultManager : public PageFaultManagerLinux {
   public:
+    using PageFaultManagerLinux::callPreviousHandler;
     using PageFaultManagerLinux::PageFaultManagerLinux;
+    using PageFaultManagerLinux::previousHandlerRestored;
 
     bool verifyPageFault(void *ptr) override {
         verifyCalled = true;
@@ -53,15 +55,24 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
         mockCalled = true;
     }
 
+    static void mockPageFaultSimpleHandler(int signal) {
+        simpleMockCalled = true;
+    }
+
     ~MockFailPageFaultManager() override {
         mockCalled = false;
+        simpleMockCalled = false;
     }
+
     static bool mockCalled;
+    static bool simpleMockCalled;
     bool verifyCalled = false;
 };
-bool MockFailPageFaultManager::mockCalled = false;
 
-TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenDefaultHandlerIsCalled) {
+bool MockFailPageFaultManager::mockCalled = false;
+bool MockFailPageFaultManager::simpleMockCalled = false;
+
+TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFlagSetThenSaSigactionIsCalled) {
     struct sigaction previousHandler = {};
     struct sigaction mockHandler = {};
     mockHandler.sa_flags = SA_SIGINFO;
@@ -69,12 +80,67 @@ TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenDefaultH
     auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
     EXPECT_EQ(retVal, 0);
 
-    MockFailPageFaultManager mockPageFaultManager;
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
     EXPECT_FALSE(MockFailPageFaultManager::mockCalled);
+    EXPECT_FALSE(MockFailPageFaultManager::simpleMockCalled);
 
     std::raise(SIGSEGV);
-    EXPECT_TRUE(mockPageFaultManager.verifyCalled);
+    EXPECT_TRUE(mockPageFaultManager->verifyCalled);
     EXPECT_TRUE(MockFailPageFaultManager::mockCalled);
+    EXPECT_FALSE(MockFailPageFaultManager::simpleMockCalled);
 
+    mockPageFaultManager.reset();
     sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenSaHandlerIsCalled) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler;
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    EXPECT_FALSE(MockFailPageFaultManager::mockCalled);
+    EXPECT_FALSE(MockFailPageFaultManager::simpleMockCalled);
+
+    std::raise(SIGSEGV);
+    EXPECT_TRUE(mockPageFaultManager->verifyCalled);
+    EXPECT_FALSE(MockFailPageFaultManager::mockCalled);
+    EXPECT_TRUE(MockFailPageFaultManager::simpleMockCalled);
+
+    mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenInvokeCallPreviousSaHandlerThenPreviousHandlerIsRestored) {
+    struct sigaction originalHandler = {};
+    struct sigaction mockDefaultHandler = {};
+    mockDefaultHandler.sa_handler = SIG_DFL;
+    auto retVal = sigaction(SIGSEGV, &mockDefaultHandler, &originalHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager->callPreviousHandler(0, nullptr, nullptr);
+
+    EXPECT_TRUE(mockPageFaultManager->previousHandlerRestored);
+
+    mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &originalHandler, nullptr);
+}
+
+TEST(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWhenInvokeCallPreviousSaHandlerThenNothingHappend) {
+    struct sigaction originalHandler = {};
+    struct sigaction mockDefaultHandler = {};
+    mockDefaultHandler.sa_handler = SIG_IGN;
+    auto retVal = sigaction(SIGSEGV, &mockDefaultHandler, &originalHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+    mockPageFaultManager->callPreviousHandler(0, nullptr, nullptr);
+
+    EXPECT_FALSE(mockPageFaultManager->previousHandlerRestored);
+
+    mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &originalHandler, nullptr);
 }

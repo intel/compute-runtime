@@ -24,6 +24,9 @@ class PageFaultManagerLinux : public PageFaultManager {
     void allowCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
 
+    void callPreviousHandler(int signal, siginfo_t *info, void *context);
+    bool previousHandlerRestored = false;
+
     static std::function<void(int signal, siginfo_t *info, void *context)> pageFaultHandler;
     struct sigaction previousHandler = {};
 };
