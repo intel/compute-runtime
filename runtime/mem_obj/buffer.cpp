@@ -382,7 +382,7 @@ void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryPropertiesFlags &properties, Context &context,
                                                                      bool renderCompressedBuffers, bool isLocalMemoryEnabled,
                                                                      bool preferCompression) {
-    if (is32bit || context.isSharedContext || properties.flags.forceSharedPhysicalMemory) {
+    if (context.isSharedContext || properties.flags.forceSharedPhysicalMemory) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
