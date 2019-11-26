@@ -44,7 +44,7 @@ struct EnqueueUnmapMemObjTest : public DeviceFixture,
     void *mappedPtr;
 };
 
-TEST_F(EnqueueUnmapMemObjTest, validAddressShouldReturnSuccess) {
+TEST_F(EnqueueUnmapMemObjTest, GivenValidParamsWhenUnmappingMemoryObjectThenSuccessIsReturned) {
     auto retVal = pCmdQ->enqueueUnmapMemObject(
         buffer,
         mappedPtr,
@@ -54,7 +54,7 @@ TEST_F(EnqueueUnmapMemObjTest, validAddressShouldReturnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueUnmapMemObjTest, returnsEvent) {
+TEST_F(EnqueueUnmapMemObjTest, GivenPointerToEventThenUnmappingMemoryObjectThenEventIsReturned) {
     cl_event event = nullptr;
     auto retVal = pCmdQ->enqueueUnmapMemObject(
         buffer,
@@ -81,7 +81,7 @@ TEST_F(EnqueueUnmapMemObjTest, returnsEvent) {
     delete pEvent;
 }
 
-TEST_F(EnqueueUnmapMemObjTest, returnedEventHasGreaterThanOrEqualTaskLevelThanParentEvent) {
+TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenReturnedEventHasGreaterThanOrEqualTaskLevelThanParentEvent) {
     uint32_t taskLevelCmdQ = 17;
     uint32_t taskLevelEvent1 = 8;
     uint32_t taskLevelEvent2 = 19;
@@ -113,7 +113,7 @@ TEST_F(EnqueueUnmapMemObjTest, returnedEventHasGreaterThanOrEqualTaskLevelThanPa
     delete pEvent;
 }
 
-HWTEST_F(EnqueueUnmapMemObjTest, UnmapEventProperties) {
+HWTEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenEventIsUpdated) {
     cl_event eventReturned = NULL;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -136,7 +136,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, UnmapEventProperties) {
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(EnqueueUnmapMemObjTest, UnmapMemObjWaitEvent) {
+TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) {
     cl_event waitEvent = nullptr;
     cl_event retEvent = nullptr;
 
