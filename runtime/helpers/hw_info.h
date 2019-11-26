@@ -51,6 +51,7 @@ struct RuntimeCapabilityTable {
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
     bool supportsDeviceEnqueue;
+    bool hostPtrTrackingEnabled;
 };
 
 struct HardwareCapabilities {

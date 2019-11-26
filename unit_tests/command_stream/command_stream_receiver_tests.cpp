@@ -419,7 +419,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
 
-    if (device->isFullRangeSvm()) {
+    if (device->isFullRangeSvm() && gmockMemoryManager->isHostPointerTrackingEnabled()) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -446,7 +446,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
 
-    if (device->isFullRangeSvm()) {
+    if (device->isFullRangeSvm() && gmockMemoryManager->isHostPointerTrackingEnabled()) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));

@@ -144,6 +144,8 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
+    MOCKABLE_VIRTUAL bool isHostPointerTrackingEnabled();
+
     const ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
 
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, aub_stream::EngineType engineType,
