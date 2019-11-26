@@ -25,7 +25,7 @@
 #include <fstream>
 
 namespace NEO {
-std::mutex CompilerInterface::mtx;
+SpinLock CompilerInterface::spinlock;
 
 enum CachingMode {
     None,
@@ -338,33 +338,95 @@ bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> cache, bool re
 }
 
 IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {
+    auto ulock = this->lock();
     auto it = fclDeviceContexts.find(&device);
     if (it != fclDeviceContexts.end()) {
         return it->second.get();
     }
 
-    {
-        auto ulock = this->lock();
-        it = fclDeviceContexts.find(&device);
-        if (it != fclDeviceContexts.end()) {
-            return it->second.get();
-        }
-
-        if (fclMain == nullptr) {
-            DEBUG_BREAK_IF(true); // compiler not available
-            return nullptr;
-        }
-
-        auto newDeviceCtx = fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
-        if (newDeviceCtx == nullptr) {
-            DEBUG_BREAK_IF(true); // could not create device context
-            return nullptr;
-        }
-        newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
-        fclDeviceContexts[&device] = std::move(newDeviceCtx);
-
-        return fclDeviceContexts[&device].get();
+    if (fclMain == nullptr) {
+        DEBUG_BREAK_IF(true); // compiler not available
+        return nullptr;
     }
+
+    auto newDeviceCtx = fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
+    if (newDeviceCtx == nullptr) {
+        DEBUG_BREAK_IF(true); // could not create device context
+        return nullptr;
+    }
+    newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
+    fclDeviceContexts[&device] = std::move(newDeviceCtx);
+
+    return fclDeviceContexts[&device].get();
+}
+
+IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &device) {
+    auto ulock = this->lock();
+    auto it = igcDeviceContexts.find(&device);
+    if (it != igcDeviceContexts.end()) {
+        return it->second.get();
+    }
+
+    if (igcMain == nullptr) {
+        DEBUG_BREAK_IF(true); // compiler not available
+        return nullptr;
+    }
+
+    auto newDeviceCtx = igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
+    if (newDeviceCtx == nullptr) {
+        DEBUG_BREAK_IF(true); // could not create device context
+        return nullptr;
+    }
+
+    newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
+    auto igcPlatform = newDeviceCtx->GetPlatformHandle();
+    auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
+    auto igcFeWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
+    if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFeWa.get())) {
+        DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
+        return nullptr;
+    }
+    const HardwareInfo *hwInfo = &device.getHardwareInfo();
+    auto productFamily = DebugManager.flags.ForceCompilerUsePlatform.get();
+    if (productFamily != "unk") {
+        getHwInfoForPlatformString(productFamily, hwInfo);
+    }
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
+
+    igcFeWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.ftrDesktop);
+    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.ftrChannelSwizzlingXOREnabled);
+
+    igcFeWa.get()->SetFtrGtBigDie(device.getHardwareInfo().featureTable.ftrGtBigDie);
+    igcFeWa.get()->SetFtrGtMediumDie(device.getHardwareInfo().featureTable.ftrGtMediumDie);
+    igcFeWa.get()->SetFtrGtSmallDie(device.getHardwareInfo().featureTable.ftrGtSmallDie);
+
+    igcFeWa.get()->SetFtrGT1(device.getHardwareInfo().featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGT1_5(device.getHardwareInfo().featureTable.ftrGT1_5);
+    igcFeWa.get()->SetFtrGT2(device.getHardwareInfo().featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGT3(device.getHardwareInfo().featureTable.ftrGT3);
+    igcFeWa.get()->SetFtrGT4(device.getHardwareInfo().featureTable.ftrGT4);
+
+    igcFeWa.get()->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.ftrIVBM0M1Platform);
+    igcFeWa.get()->SetFtrGTL(device.getHardwareInfo().featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGTM(device.getHardwareInfo().featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGTH(device.getHardwareInfo().featureTable.ftrGT3);
+
+    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.ftrSGTPVSKUStrapPresent);
+    igcFeWa.get()->SetFtrGTA(device.getHardwareInfo().featureTable.ftrGTA);
+    igcFeWa.get()->SetFtrGTC(device.getHardwareInfo().featureTable.ftrGTC);
+    igcFeWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.ftrGTX);
+    igcFeWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.ftr5Slice);
+
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(device.getHardwareInfo().featureTable.ftrGpGpuMidThreadLevelPreempt);
+    igcFeWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.ftrIoMmuPageFaulting);
+    igcFeWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.ftrWddm2Svm);
+    igcFeWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.ftrPooledEuEnabled);
+
+    igcFeWa.get()->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.ftrResourceStreamer);
+
+    igcDeviceContexts[&device] = std::move(newDeviceCtx);
+    return igcDeviceContexts[&device].get();
 }
 
 IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentation(const Device &device) {
@@ -372,7 +434,6 @@ IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentat
 }
 
 CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
-
     auto deviceCtx = getFclDeviceCtx(device);
     if (deviceCtx == nullptr) {
         DEBUG_BREAK_IF(true); // could not create device context
@@ -380,86 +441,20 @@ CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclT
     }
 
     if (fclBaseTranslationCtx == nullptr) {
-        fclBaseTranslationCtx = fclDeviceContexts[&device]->CreateTranslationCtx(inType, outType);
+        fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx(inType, outType);
     }
 
     return deviceCtx->CreateTranslationCtx(inType, outType);
 }
 
 CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
-    auto it = igcDeviceContexts.find(&device);
-    if (it != igcDeviceContexts.end()) {
-        return it->second->CreateTranslationCtx(inType, outType);
+    auto deviceCtx = getIgcDeviceCtx(device);
+    if (deviceCtx == nullptr) {
+        DEBUG_BREAK_IF(true); // could not create device context
+        return nullptr;
     }
 
-    {
-        auto ulock = this->lock();
-        it = igcDeviceContexts.find(&device);
-        if (it != igcDeviceContexts.end()) {
-            return it->second->CreateTranslationCtx(inType, outType);
-        }
-
-        if (igcMain == nullptr) {
-            DEBUG_BREAK_IF(true); // compiler not available
-            return nullptr;
-        }
-
-        auto newDeviceCtx = igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
-        if (newDeviceCtx == nullptr) {
-            DEBUG_BREAK_IF(true); // could not create device context
-            return nullptr;
-        }
-
-        newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
-        auto igcPlatform = newDeviceCtx->GetPlatformHandle();
-        auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
-        auto igcFeWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-        if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFeWa.get())) {
-            DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
-            return nullptr;
-        }
-        const HardwareInfo *hwInfo = &device.getHardwareInfo();
-        auto productFamily = DebugManager.flags.ForceCompilerUsePlatform.get();
-        if (productFamily != "unk") {
-            getHwInfoForPlatformString(productFamily, hwInfo);
-        }
-        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
-        IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
-
-        igcFeWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.ftrDesktop);
-        igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.ftrChannelSwizzlingXOREnabled);
-
-        igcFeWa.get()->SetFtrGtBigDie(device.getHardwareInfo().featureTable.ftrGtBigDie);
-        igcFeWa.get()->SetFtrGtMediumDie(device.getHardwareInfo().featureTable.ftrGtMediumDie);
-        igcFeWa.get()->SetFtrGtSmallDie(device.getHardwareInfo().featureTable.ftrGtSmallDie);
-
-        igcFeWa.get()->SetFtrGT1(device.getHardwareInfo().featureTable.ftrGT1);
-        igcFeWa.get()->SetFtrGT1_5(device.getHardwareInfo().featureTable.ftrGT1_5);
-        igcFeWa.get()->SetFtrGT2(device.getHardwareInfo().featureTable.ftrGT2);
-        igcFeWa.get()->SetFtrGT3(device.getHardwareInfo().featureTable.ftrGT3);
-        igcFeWa.get()->SetFtrGT4(device.getHardwareInfo().featureTable.ftrGT4);
-
-        igcFeWa.get()->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.ftrIVBM0M1Platform);
-        igcFeWa.get()->SetFtrGTL(device.getHardwareInfo().featureTable.ftrGT1);
-        igcFeWa.get()->SetFtrGTM(device.getHardwareInfo().featureTable.ftrGT2);
-        igcFeWa.get()->SetFtrGTH(device.getHardwareInfo().featureTable.ftrGT3);
-
-        igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.ftrSGTPVSKUStrapPresent);
-        igcFeWa.get()->SetFtrGTA(device.getHardwareInfo().featureTable.ftrGTA);
-        igcFeWa.get()->SetFtrGTC(device.getHardwareInfo().featureTable.ftrGTC);
-        igcFeWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.ftrGTX);
-        igcFeWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.ftr5Slice);
-
-        igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(device.getHardwareInfo().featureTable.ftrGpGpuMidThreadLevelPreempt);
-        igcFeWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.ftrIoMmuPageFaulting);
-        igcFeWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.ftrWddm2Svm);
-        igcFeWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.ftrPooledEuEnabled);
-
-        igcFeWa.get()->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.ftrResourceStreamer);
-
-        igcDeviceContexts[&device] = std::move(newDeviceCtx);
-        return igcDeviceContexts[&device]->CreateTranslationCtx(inType, outType);
-    }
+    return deviceCtx->CreateTranslationCtx(inType, outType);
 }
 
 } // namespace NEO

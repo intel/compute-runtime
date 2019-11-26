@@ -705,6 +705,14 @@ struct LockListener {
     MockDeviceCtx *createdDeviceCtx = nullptr;
 };
 
+struct WasLockedListener {
+    static void listener(MockCompilerInterface &compInt) {
+        auto data = (WasLockedListener *)compInt.lockListenerData;
+        data->wasLocked = true;
+    }
+    bool wasLocked = false;
+};
+
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIsNotAvailableThenCreateNewDeviceCtxAndUseItToReturnValidTranslationCtx) {
     auto device = this->pDevice;
     auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
@@ -742,6 +750,14 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContex
               this->pCompilerInterface->getFclDeviceContexts().find(device));
     EXPECT_NE(nullptr, listenerData.createdDeviceCtx);
     EXPECT_EQ(listenerData.createdDeviceCtx, this->pCompilerInterface->getFclDeviceContexts()[device].get());
+
+    WasLockedListener wasLockedListenerData;
+    this->pCompilerInterface->lockListenerData = &wasLockedListenerData;
+    this->pCompilerInterface->lockListener = WasLockedListener::listener;
+    ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
+    EXPECT_NE(nullptr, ret.get());
+    ASSERT_EQ(1U, this->pCompilerInterface->getFclDeviceContexts().size());
+    EXPECT_TRUE(wasLockedListenerData.wasLocked);
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenFclMainIsNotAvailableThenReturnNullptr) {
@@ -799,6 +815,14 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewIgcTranslationContex
               this->pCompilerInterface->getIgcDeviceContexts().find(device));
     EXPECT_NE(nullptr, listenerData.createdDeviceCtx);
     EXPECT_EQ(listenerData.createdDeviceCtx, this->pCompilerInterface->getIgcDeviceContexts()[device].get());
+
+    WasLockedListener wasLockedListenerData;
+    this->pCompilerInterface->lockListenerData = &wasLockedListenerData;
+    this->pCompilerInterface->lockListener = WasLockedListener::listener;
+    ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
+    EXPECT_NE(nullptr, ret.get());
+    ASSERT_EQ(1U, this->pCompilerInterface->getIgcDeviceContexts().size());
+    EXPECT_TRUE(wasLockedListenerData.wasLocked);
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPopulatePlatformInfoThenReturnNullptr) {

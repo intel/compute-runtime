@@ -301,12 +301,12 @@ class MockCompilerInterface : public CompilerInterface {
     template <typename DeviceCtx>
     std::map<const Device *, CIF::RAII::UPtr_t<DeviceCtx>> &getDeviceContexts();
 
-    std::unique_lock<std::mutex> lock() override {
+    std::unique_lock<SpinLock> lock() override {
         if (lockListener != nullptr) {
             lockListener(*this);
         }
 
-        return std::unique_lock<std::mutex>(mtx);
+        return std::unique_lock<SpinLock>(spinlock);
     }
 
     void SetIgcMain(CIF::CIFMain *main) {

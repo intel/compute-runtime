@@ -10,6 +10,7 @@
 #include "core/helpers/string.h"
 #include "core/os_interface/os_library.h"
 #include "core/utilities/arrayref.h"
+#include "core/utilities/spinlock.h"
 #include "runtime/built_ins/sip.h"
 
 #include "cif/common/cif_main.h"
@@ -18,7 +19,6 @@
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <map>
-#include <mutex>
 
 namespace NEO {
 class Device;
@@ -141,9 +141,9 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 
-    static std::mutex mtx;
-    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() {
-        return std::unique_lock<std::mutex>{mtx};
+    static SpinLock spinlock;
+    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
+        return std::unique_lock<SpinLock>{spinlock};
     }
     std::unique_ptr<CompilerCache> cache = nullptr;
 
@@ -160,6 +160,7 @@ class CompilerInterface {
     CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx = nullptr;
 
     MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device);
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
