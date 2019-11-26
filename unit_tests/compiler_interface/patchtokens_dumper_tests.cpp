@@ -1752,3 +1752,80 @@ TEST(KernelArgDumper, GivenVmeKernelArgWithMetadataTokensThenProperlyCreatesDump
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
+
+TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
+    constexpr uint32_t maxTokenSize = 4096;
+
+    PatchTokensTestData::ValidEmptyProgram programToDecode;
+    {
+        programToDecode.storage.resize(programToDecode.storage.size() + maxTokenSize, 0U);
+        programToDecode.recalcTokPtr();
+        programToDecode.blobs.patchList = ArrayRef<const uint8_t>(programToDecode.storage.data() + sizeof(*programToDecode.headerMutable),
+                                                                  programToDecode.storage.size() - sizeof(*programToDecode.headerMutable));
+        programToDecode.headerMutable->PatchListSize = static_cast<uint32_t>(programToDecode.blobs.patchList.size());
+    }
+    iOpenCL::SPatchItemHeader *programToken = reinterpret_cast<iOpenCL::SPatchItemHeader *>(programToDecode.storage.data() + sizeof(*programToDecode.headerMutable));
+    programToken->Size = maxTokenSize;
+
+    std::vector<uint8_t> kernelToDecodeStorage;
+    iOpenCL::SPatchItemHeader *kernelToken = nullptr;
+    auto kernelToDecode = PatchTokensTestData::ValidEmptyKernel::create(kernelToDecodeStorage);
+    {
+        auto kernelPatchListOffset = kernelToDecodeStorage.size();
+        kernelToDecodeStorage.resize(kernelToDecodeStorage.size() + maxTokenSize, 0U);
+        kernelToDecode.blobs.kernelInfo = ArrayRef<const uint8_t>(kernelToDecodeStorage.data(), kernelToDecodeStorage.data() + kernelToDecodeStorage.size());
+        kernelToDecode.blobs.patchList = ArrayRef<const uint8_t>(kernelToDecodeStorage.data() + kernelPatchListOffset, kernelToDecodeStorage.data() + kernelToDecodeStorage.size());
+        auto kernelHeaderMutable = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(&*(kernelToDecodeStorage.begin()));
+        kernelHeaderMutable->PatchListSize = static_cast<uint32_t>(kernelToDecode.blobs.patchList.size());
+        kernelToken = reinterpret_cast<iOpenCL::SPatchItemHeader *>(kernelToDecodeStorage.data() + kernelPatchListOffset);
+    }
+    kernelToken->Size = maxTokenSize;
+
+    NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
+    NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
+    std::unordered_set<int> tokensWhitelist{50, 52};
+    for (int i = 0; i < iOpenCL::NUM_PATCH_TOKENS; ++i) {
+        if (tokensWhitelist.count(i) != 0) {
+            continue;
+        }
+        kernelToken->Token = i;
+        decodedKernel = {};
+        NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToDecode.blobs.kernelInfo, decodedKernel);
+        EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+        if (decodedKernel.unhandledTokens.empty()) {
+            auto dump = NEO::PatchTokenBinary::asString(decodedKernel);
+            EXPECT_EQ(std::string::npos, dump.find("struct SPatchItemHeader")) << "Update patchtokens_dumper.cpp with definition of new patchtoken : " << i;
+            continue;
+        }
+        EXPECT_EQ(kernelToken, decodedKernel.unhandledTokens[0]);
+
+        programToken->Token = i;
+        decodedProgram = {};
+        NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToDecode.blobs.programInfo, decodedProgram);
+        EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+        if (decodedProgram.unhandledTokens.empty()) {
+            auto dump = NEO::PatchTokenBinary::asString(decodedProgram);
+            EXPECT_EQ(std::string::npos, dump.find("struct SPatchItemHeader")) << "Update patchtokens_dumper.cpp with definition of new patchtoken : " << i;
+            continue;
+        }
+        EXPECT_EQ(programToken, decodedProgram.unhandledTokens[0]);
+    }
+
+    auto kernelDataParamToken = static_cast<iOpenCL::SPatchDataParameterBuffer *>(kernelToken);
+    *kernelDataParamToken = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
+    kernelDataParamToken->Size = maxTokenSize;
+    std::unordered_set<int> dataParamTokensWhitelist{6, 7, 17, 19, 36, 37, 39, 40, 41};
+    for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
+        if (dataParamTokensWhitelist.count(i) != 0) {
+            continue;
+        }
+        kernelDataParamToken->Type = i;
+        decodedKernel = {};
+        NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToDecode.blobs.kernelInfo, decodedKernel);
+        auto dump = NEO::PatchTokenBinary::asString(decodedKernel);
+        if (decodedKernel.unhandledTokens.empty()) {
+            auto dump = NEO::PatchTokenBinary::asString(decodedKernel);
+            EXPECT_NE(std::string::npos, dump.find("Type;// = " + std::to_string(i) + "(")) << "Update patchtokens_dumper.cpp with definition of SPatchDataParameterBuffer with type :" << i;
+        }
+    }
+}
