@@ -1,49 +1,57 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-# Usage:
-# ./scripts/build_spec.py scripts/fedora.spec.in <version> <revision>
-#
+"""Usage: ./scripts/build_spec.py scripts/fedora.spec.in <version> <revision>"""
 
 import datetime
-import git
 import re
 import sys
-import yaml
+import argparse
 
-if len(sys.argv) < 4:
-    print "ERROR! invalid number of parameters"
-    print
-    print "Usage:"
-    print "  ./scripts/build_spec.py <spec.in> <version> <revision>"
-    print
-    sys.exit(1)
+import git
 
-repo = git.Repo(".")
-neo_revision = repo.head.commit
 
-c = repo.commit(neo_revision)
-cd = datetime.datetime.fromtimestamp(c.committed_date)
+def _main():
+    parser = argparse.ArgumentParser(
+        description='Usage: ./scripts/build_spec.py <spec.in> <version> <revision>')
+    parser.add_argument('spec')
+    parser.add_argument('version')
+    parser.add_argument('revision')
+    args = parser.parse_args()
 
-pkg_version = "%s.%02d.%s" %(str(cd.isocalendar()[0])[-2:], cd.isocalendar()[1], sys.argv[2])
+    repo = git.Repo('.')
+    neo_revision = repo.head.commit
 
-with open(sys.argv[1], 'r') as f:
-    for line in f.readlines():
-        if not re.match(".*__NEO_COMMIT_ID__$", line.strip()) is None:
-            print "%s" % (line.rstrip().replace("__NEO_COMMIT_ID__", "%s" % neo_revision))
-            continue
+    neo_commit = repo.commit(neo_revision)
+    commited_date = datetime.datetime.fromtimestamp(neo_commit.committed_date)
 
-        if not re.match(".*__NEO_PACKAGE_VERSION__$", line.strip()) is None:
-            print "%s" % (line.rstrip().replace("__NEO_PACKAGE_VERSION__", "%s" % pkg_version))
-            continue
+    pkg_version = '{}.{:02d}.{}'.format(
+        str(commited_date.isocalendar()[0])[-2:],
+        commited_date.isocalendar()[1],
+        args.version)
 
-        if not re.match(".*__NEO_PACKAGE_RELEASE__.*", line.strip()) is None:
-            print "%s" % (line.rstrip().replace("__NEO_PACKAGE_RELEASE__", "%s" % sys.argv[3]))
-            continue
+    with open(args.spec, 'r') as fin:
+        for line in fin.readlines():
+            if re.match('.*__NEO_COMMIT_ID__$', line.strip()):
+                print(line.rstrip().replace('__NEO_COMMIT_ID__', neo_revision))
 
-        print line.rstrip()
+            elif re.match('.*__NEO_PACKAGE_VERSION__$', line.strip()):
+                print(line.rstrip().replace(
+                    '__NEO_PACKAGE_VERSION__', pkg_version))
 
+            elif re.match('.*__NEO_PACKAGE_RELEASE__.*', line.strip()):
+                print(line.rstrip().replace(
+                    '__NEO_PACKAGE_RELEASE__', args.revision))
+
+            else:
+                print(line.rstrip())
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(_main())

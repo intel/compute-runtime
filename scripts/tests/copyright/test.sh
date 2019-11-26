@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,7 @@
 # diff output is printed
 #
 
-python ../../lint/set_copyright.py in/*
+../../lint/set_copyright.py in/*
 
 for i in in/*
 do
