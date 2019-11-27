@@ -12,12 +12,11 @@
 namespace NEO {
 
 BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
-    free(ptr);
     return 1;
 }
 
 LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
-    return malloc(size);
+    return reinterpret_cast<LPVOID>(virtualAllocAddress);
 }
 
 Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {

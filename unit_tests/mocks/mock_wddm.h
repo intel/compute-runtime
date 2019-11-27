@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/memory_manager/host_ptr_defines.h"
+#include "core/memory_manager/memory_constants.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/os_interface/windows/windows_defs.h"
@@ -20,6 +21,8 @@
 
 namespace NEO {
 class GraphicsAllocation;
+
+constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 
 class WddmMock : public Wddm {
   public:
