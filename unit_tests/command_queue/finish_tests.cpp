@@ -42,7 +42,7 @@ struct FinishFixture : public DeviceFixture,
 
 typedef Test<FinishFixture> FinishTest;
 
-HWTEST_F(FinishTest, ShouldntAddPipeControl_If_CS_greater_than_CQ) {
+HWTEST_F(FinishTest, GivenCsGreaterThanCqWhenFinishIsCalledThenPipeControlIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -74,7 +74,7 @@ HWTEST_F(FinishTest, ShouldntAddPipeControl_If_CS_greater_than_CQ) {
     EXPECT_EQ(cmdList.end(), itorCmd);
 }
 
-HWTEST_F(FinishTest, doesntAddAPipecontrolToCQCommandStream) {
+HWTEST_F(FinishTest, WhenFinishIsCalledThenPipeControlIsNotAddedToCqCommandStream) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     auto retVal = pCmdQ->finish();
