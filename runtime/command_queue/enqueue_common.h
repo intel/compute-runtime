@@ -902,13 +902,13 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());
     }
 
-    for (auto surface : CreateRange(surfaces, surfaceCount)) {
-        surface->makeResident(getGpgpuCommandStreamReceiver());
-    }
-
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
         this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false);
+    } else {
+        for (auto surface : CreateRange(surfaces, surfaceCount)) {
+            surface->makeResident(getGpgpuCommandStreamReceiver());
+        }
     }
 
     DispatchFlags dispatchFlags(

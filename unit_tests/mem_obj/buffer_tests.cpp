@@ -874,6 +874,32 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     EXPECT_TRUE(bcsCsr->isMadeResident(eventDependency->getBaseGraphicsAllocation(), bcsCsr->taskCount));
 }
 
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWhenBlitEnqueueCalledThenMakeItResidentOnlyOnBcsCsr) {
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
+    auto gpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&commandQueue->getGpgpuCommandStreamReceiver());
+    bcsCsr->storeMakeResidentAllocations = true;
+    gpgpuCsr->storeMakeResidentAllocations = true;
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+
+    uint32_t hostPtrForEnqueue = 0;
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtrForEnqueue, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_TRUE(bcsCsr->isMadeResident(bufferForBlt->getGraphicsAllocation()));
+    EXPECT_FALSE(gpgpuCsr->isMadeResident(bufferForBlt->getGraphicsAllocation()));
+
+    auto &gpgpuResidency = gpgpuCsr->makeResidentAllocations;
+    auto &bcsResidency = bcsCsr->makeResidentAllocations;
+
+    auto findHostPtr = [&hostPtrForEnqueue](const std::pair<GraphicsAllocation *, uint32_t> &residentAllocation) {
+        return residentAllocation.first->getUnderlyingBuffer() == &hostPtrForEnqueue;
+    };
+
+    EXPECT_EQ(gpgpuResidency.end(), std::find_if(gpgpuResidency.begin(), gpgpuResidency.end(), findHostPtr));
+    EXPECT_NE(bcsResidency.end(), std::find_if(bcsResidency.begin(), bcsResidency.end(), findHostPtr));
+}
+
 HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {
     DebugManager.flags.DisableZeroCopyForBuffers.set(true);
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
