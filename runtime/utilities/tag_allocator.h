@@ -142,11 +142,10 @@ class TagAllocator {
         uintptr_t Size = graphicsAllocation->getUnderlyingBufferSize();
         uintptr_t Start = reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer());
         uintptr_t End = Start + Size;
-        size_t nodeCount = Size / tagSize;
 
-        NodeType *nodesMemory = new NodeType[nodeCount];
+        NodeType *nodesMemory = new NodeType[tagCount];
 
-        for (size_t i = 0; i < nodeCount; ++i) {
+        for (size_t i = 0; i < tagCount; ++i) {
             nodesMemory[i].allocator = this;
             nodesMemory[i].gfxAllocation = graphicsAllocation;
             nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(Start);

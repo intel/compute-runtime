@@ -18,7 +18,7 @@ using namespace NEO;
 
 typedef Test<MemoryAllocatorFixture> TagAllocatorTest;
 
-struct timeStamps {
+struct TimeStamps {
     void initialize() {
         start = 1;
         end = 2;
@@ -33,47 +33,45 @@ struct timeStamps {
     uint64_t end;
 };
 
-class MockTagAllocator : public TagAllocator<timeStamps> {
-  public:
-    using TagAllocator<timeStamps>::populateFreeTags;
-    using TagAllocator<timeStamps>::deferredTags;
-    using TagAllocator<timeStamps>::releaseDeferredTags;
+template <typename TagType>
+class MockTagAllocator : public TagAllocator<TagType> {
+    using BaseClass = TagAllocator<TagType>;
+    using TagNodeT = TagNode<TagType>;
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(0, memMngr, tagCount, tagAlignment) {
+  public:
+    using BaseClass::deferredTags;
+    using BaseClass::freeTags;
+    using BaseClass::populateFreeTags;
+    using BaseClass::releaseDeferredTags;
+    using BaseClass::usedTags;
+
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : BaseClass(0, memMngr, tagCount, tagAlignment) {
     }
 
     GraphicsAllocation *getGraphicsAllocation(size_t id = 0) {
-        return TagAllocator<timeStamps>::gfxAllocations[id];
+        return this->gfxAllocations[id];
     }
 
-    TagNode<timeStamps> *getFreeTagsHead() {
-        return TagAllocator<timeStamps>::freeTags.peekHead();
+    TagNodeT *getFreeTagsHead() {
+        return this->freeTags.peekHead();
     }
 
-    TagNode<timeStamps> *getUsedTagsHead() {
-        return TagAllocator<timeStamps>::usedTags.peekHead();
-    }
-
-    IDList<TagNode<timeStamps>> &getFreeTags() {
-        return TagAllocator<timeStamps>::freeTags;
-    }
-
-    IDList<TagNode<timeStamps>> &getUsedTags() {
-        return TagAllocator<timeStamps>::usedTags;
+    TagNodeT *getUsedTagsHead() {
+        return this->usedTags.peekHead();
     }
 
     size_t getGraphicsAllocationsCount() {
-        return gfxAllocations.size();
+        return this->gfxAllocations.size();
     }
 
     size_t getTagPoolCount() {
-        return tagPoolMemory.size();
+        return this->tagPoolMemory.size();
     }
 };
 
 TEST_F(TagAllocatorTest, Initialize) {
 
-    MockTagAllocator tagAllocator(memoryManager, 100, 64);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 100, 64);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
 
@@ -87,18 +85,18 @@ TEST_F(TagAllocatorTest, Initialize) {
 
 TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
 
-    MockTagAllocator tagAllocator(memoryManager, 10, 16);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, 16);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
     EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
 
-    TagNode<timeStamps> *tagNode = tagAllocator.getTag();
+    TagNode<TimeStamps> *tagNode = tagAllocator.getTag();
 
     EXPECT_NE(nullptr, tagNode);
 
-    IDList<TagNode<timeStamps>> &freeList = tagAllocator.getFreeTags();
-    IDList<TagNode<timeStamps>> &usedList = tagAllocator.getUsedTags();
+    IDList<TagNode<TimeStamps>> &freeList = tagAllocator.freeTags;
+    IDList<TagNode<TimeStamps>> &usedList = tagAllocator.usedTags;
 
     bool isFoundOnUsedList = usedList.peekContains(*tagNode);
     bool isFoundOnFreeList = freeList.peekContains(*tagNode);
@@ -118,11 +116,11 @@ TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
 TEST_F(TagAllocatorTest, TagAlignment) {
 
     size_t alignment = 64;
-    MockTagAllocator tagAllocator(memoryManager, 10, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
-    TagNode<timeStamps> *tagNode = tagAllocator.getTag();
+    TagNode<TimeStamps> *tagNode = tagAllocator.getTag();
 
     ASSERT_NE(nullptr, tagNode);
     EXPECT_EQ(0u, (uintptr_t)tagNode->tagForCpuAccess % alignment);
@@ -134,11 +132,11 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraph
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
-    TagNode<timeStamps> *tagNodes[4];
+    TagNode<TimeStamps> *tagNodes[4];
 
     for (size_t i = 0; i < 4; i++) {
         tagNodes[i] = tagAllocator.getTag();
@@ -147,22 +145,47 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraph
     EXPECT_EQ(1u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(1u, tagAllocator.getTagPoolCount());
 
-    TagNode<timeStamps> *tagNode = tagAllocator.getTag();
+    TagNode<TimeStamps> *tagNode = tagAllocator.getTag();
     EXPECT_NE(nullptr, tagNode);
 
     EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
 }
 
+TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThen) {
+    class MyMockMemoryManager : public MockMemoryManager {
+      public:
+        using MockMemoryManager::MockMemoryManager;
+        GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
+            return new MemoryAllocation(0, TimestampPacketStorage::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
+                                        1, MemoryPool::System4KBPages, false, false);
+        }
+    };
+
+    auto mockMemoryManager = std::make_unique<MyMockMemoryManager>(true, true, *executionEnvironment);
+
+    const size_t tagsCount = 3;
+    MockTagAllocator<TimestampPacketStorage> tagAllocator(mockMemoryManager.get(), tagsCount, 1);
+
+    size_t nodesFound = 0;
+    auto head = tagAllocator.freeTags.peekHead();
+
+    while (head) {
+        nodesFound++;
+        head = head->next;
+    }
+    EXPECT_EQ(tagsCount, nodesFound);
+}
+
 TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
-    TagNode<timeStamps> *tagNodes[4];
+    TagNode<TimeStamps> *tagNodes[4];
 
     for (int i = 0; i < 4; i++) {
         tagNodes[i] = tagAllocator.getTag();
@@ -171,12 +194,12 @@ TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
     EXPECT_EQ(1u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(1u, tagAllocator.getTagPoolCount());
 
-    TagNode<timeStamps> *tagNode2 = tagAllocator.getTag();
+    TagNode<TimeStamps> *tagNode2 = tagAllocator.getTag();
     EXPECT_NE(nullptr, tagNode2);
     EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
 
-    IDList<TagNode<timeStamps>> &freeList = tagAllocator.getFreeTags();
+    IDList<TagNode<TimeStamps>> &freeList = tagAllocator.freeTags;
     bool isFoundOnFreeList = freeList.peekContains(*tagNodes[0]);
     EXPECT_FALSE(isFoundOnFreeList);
 
@@ -203,11 +226,11 @@ TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
-    TagNode<timeStamps> *tagNode1, *tagNode2;
+    TagNode<TimeStamps> *tagNode1, *tagNode2;
 
     tagNode1 = tagAllocator.getTag();
     ASSERT_NE(nullptr, tagNode1);
@@ -227,9 +250,9 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment);
 
-    TagNode<timeStamps> *tagNode1, *tagNode2;
+    TagNode<TimeStamps> *tagNode1, *tagNode2;
 
     // Allocate first Pool
     tagNode1 = tagAllocator.getTag();
@@ -254,7 +277,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 }
 
 TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
-    MockTagAllocator tagAllocator(memoryManager, 1, 2);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 2);
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->start = 3;
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->end = 4;
 
@@ -264,7 +287,7 @@ TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
 }
 
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {
-    MockTagAllocator tagAllocator(memoryManager, 2, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1);
 
     auto tag = tagAllocator.getTag();
     EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead());
@@ -282,42 +305,42 @@ TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhen
 }
 
 TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
-    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = false;
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
 }
 
 TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
-    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = true;
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
 }
 
 TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDeferredListFirst) {
-    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = false;
     tagAllocator.returnTag(node);
     node->tagForCpuAccess->release = false;
-    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
     node = tagAllocator.getTag();
     EXPECT_NE(nullptr, node);
-    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty()); // empty again - new pool wasnt allocated
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty()); // empty again - new pool wasnt allocated
 }
 
 TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTagsToFreePool) {
-    MockTagAllocator tagAllocator(memoryManager, 2, 1); // pool with 2 tags
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1); // pool with 2 tags
     auto node1 = tagAllocator.getTag();
     auto node2 = tagAllocator.getTag();
 
@@ -328,17 +351,17 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 
     tagAllocator.releaseDeferredTags();
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
 
     node1->tagForCpuAccess->release = true;
     tagAllocator.releaseDeferredTags();
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
 
     node2->tagForCpuAccess->release = true;
     tagAllocator.releaseDeferredTags();
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
-    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
