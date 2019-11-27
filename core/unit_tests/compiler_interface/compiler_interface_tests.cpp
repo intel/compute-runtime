@@ -581,7 +581,7 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsNullptrThenNull
 TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
-    for (uint32_t i = 1; i <= (1 << 3) - 1; ++i) {
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
@@ -593,7 +593,7 @@ TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
 TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
-    for (uint32_t i = 1; i <= (1 << 3) - 1; ++i) {
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
@@ -605,7 +605,7 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputTh
 TEST(TranslateTest, givenSpecConstantsBuffersAndNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
-    for (uint32_t i = 1; i <= (1 << 3) - 1; ++i) {
+    for (uint32_t i = 1; i <= maxNBitValue(3); ++i) {
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
@@ -617,7 +617,7 @@ TEST(TranslateTest, givenSpecConstantsBuffersAndNullPtrAsGtPinInputWhenTranslato
 TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvoked) {
     TranslationCtxMock mockTranslationCtx;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
-    for (uint32_t i = 0; i < (1 << 3) - 1; ++i) {
+    for (uint32_t i = 0; i < maxNBitValue(3); ++i) {
         auto src = (i & 1) ? mockCifBuffer.get() : nullptr;
         auto opts = (i & (1 << 1)) ? mockCifBuffer.get() : nullptr;
         auto intOpts = (i & (1 << 2)) ? mockCifBuffer.get() : nullptr;

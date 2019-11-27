@@ -38,7 +38,7 @@ TEST(FixedU4D8, whenCreatingFromTooBigFloatThenValueIsClamped) {
     FixedU4D8 u4d8Max{maxU4D8};
     FixedU4D8 u4d8MaxPlus1{maxU4D8 + 1};
     EXPECT_EQ(u4d8Max.getRawAccess(), u4d8MaxPlus1.getRawAccess());
-    EXPECT_EQ((1U << (4 + 8)) - 1, u4d8Max.getRawAccess()); // all 12 bits should be set
+    EXPECT_EQ(maxNBitValue(4 + 8), u4d8Max.getRawAccess()); // all 12 bits should be set
     EXPECT_EQ(maxU4D8, u4d8Max.asFloat());
 }
 

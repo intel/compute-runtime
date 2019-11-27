@@ -353,7 +353,7 @@ TEST_F(DrmTests, whenDrmIsCreatedThenSetMemoryRegionsDoesntFailAndDrmObjectIsRet
 }
 
 TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
-    EXPECT_EQ((maxNBitValue<47> + 1) / 4, NEO::getSizeToReserve());
+    EXPECT_EQ((maxNBitValue(47) + 1) / 4, NEO::getSizeToReserve());
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

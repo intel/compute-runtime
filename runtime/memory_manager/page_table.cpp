@@ -14,7 +14,7 @@ namespace NEO {
 
 uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank) {
     const size_t shift = 12;
-    const uint32_t mask = (1 << bits) - 1;
+    const auto mask = static_cast<uint32_t>(maxNBitValue(bits));
     size_t indexStart = (vm >> shift) & mask;
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uintptr_t res = -1;
@@ -37,7 +37,7 @@ uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memor
 void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) {
     static const uint32_t bits = 9;
     const size_t shift = 12;
-    const uint32_t mask = (1 << bits) - 1;
+    const auto mask = static_cast<uint32_t>(maxNBitValue(bits));
     size_t indexStart = (vm >> shift) & mask;
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uint64_t res = -1;

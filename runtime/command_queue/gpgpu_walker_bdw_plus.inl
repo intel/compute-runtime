@@ -35,7 +35,7 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 
     // compute executionMask - to tell which SIMD lines are active within thread
     auto remainderSimdLanes = localWorkSize & (simd - 1);
-    uint64_t executionMask = (1ull << remainderSimdLanes) - 1;
+    uint64_t executionMask = maxNBitValue(remainderSimdLanes);
     if (!executionMask)
         executionMask = ~executionMask;
 

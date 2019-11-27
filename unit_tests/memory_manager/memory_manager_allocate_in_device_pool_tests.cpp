@@ -63,7 +63,7 @@ TEST(MemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSystemMemoryFails
 }
 
 TEST(MemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenReturnGpuAddressAsHostPtr) {
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace != maxNBitValue<48> && platformDevices[0]->capabilityTable.gpuAddressSpace != maxNBitValue<47>) {
+    if (platformDevices[0]->capabilityTable.gpuAddressSpace != maxNBitValue(48) && platformDevices[0]->capabilityTable.gpuAddressSpace != maxNBitValue(47)) {
         return;
     }
 

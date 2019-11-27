@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "core/memory_manager/memory_constants.h"
+
 #include <cstdint>
 
 namespace NEO {
@@ -64,7 +66,7 @@ struct UnsignedFixedPointValue {
     template <typename FloatingType>
     static constexpr FloatingType getMaxRepresentableFloatingPointValue() {
         return static_cast<FloatingType>(
-            static_cast<FloatingType>((1U << IntegerBits) - 1) + (static_cast<FloatingType>((1U << FractionalBits) - 1) / (1U << FractionalBits)));
+            static_cast<FloatingType>(maxNBitValue(IntegerBits)) + (static_cast<FloatingType>(maxNBitValue(FractionalBits)) / (1U << FractionalBits)));
     }
 
     template <typename FloatingType>

@@ -34,7 +34,7 @@ class HostPtrManager;
 class OsContext;
 
 inline DeviceBitfield getDeviceBitfieldForNDevices(uint32_t numDevices) {
-    return DeviceBitfield((1u << numDevices) - 1u);
+    return DeviceBitfield(maxNBitValue(numDevices));
 }
 
 enum AllocationUsage {

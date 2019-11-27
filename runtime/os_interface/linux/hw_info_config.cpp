@@ -26,7 +26,7 @@ namespace NEO {
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
 uint32_t bitExact(uint32_t value, uint32_t highBit, uint32_t lowBit) {
-    uint32_t bitVal = ((value >> lowBit) & ((1 << (highBit - lowBit + 1)) - 1));
+    uint32_t bitVal = static_cast<uint32_t>((value >> lowBit) & maxNBitValue(highBit - lowBit + 1));
     return bitVal;
 }
 

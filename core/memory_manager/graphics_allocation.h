@@ -230,8 +230,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         uint32_t inspectionId = 0u;
     };
     struct AubInfo {
-        uint32_t aubWritable = maxNBitValue<32>;
-        uint32_t tbxWritable = maxNBitValue<32>;
+        uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
+        uint32_t tbxWritable = std::numeric_limits<uint32_t>::max();
         bool allocDumpable = false;
         bool memObjectsAllocationWithWritableFlags = false;
     };

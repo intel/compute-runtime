@@ -232,7 +232,7 @@ void Event::updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushS
 
 cl_ulong Event::getDelta(cl_ulong startTime,
                          cl_ulong endTime) {
-    cl_ulong Max = (1ULL << OCLRT_NUM_TIMESTAMP_BITS) - 1;
+    cl_ulong Max = maxNBitValue(OCLRT_NUM_TIMESTAMP_BITS);
     cl_ulong Delta = 0;
 
     startTime &= Max;

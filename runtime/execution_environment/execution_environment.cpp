@@ -98,7 +98,7 @@ BuiltIns *ExecutionEnvironment::getBuiltIns() {
 }
 
 bool ExecutionEnvironment::isFullRangeSvm() const {
-    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
+    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue(47);
 }
 
 void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices) {

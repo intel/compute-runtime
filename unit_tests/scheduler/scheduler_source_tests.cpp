@@ -223,7 +223,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, PatchGpgpuWalker) {
         EXPECT_EQ(DimSize.y, walker->getThreadGroupIdYDimension());
         //EXPECT_EQ(DimSize.z, walker->getThreadGroupIdZDimension());
 
-        uint32_t mask = (1 << (TotalLocalWorkSize % SIMDSize)) - 1;
+        uint32_t mask = static_cast<uint32_t>(maxNBitValue(TotalLocalWorkSize % SIMDSize));
         if (mask == 0)
             mask = ~0;
         uint32_t yMask = 0xffffffff;

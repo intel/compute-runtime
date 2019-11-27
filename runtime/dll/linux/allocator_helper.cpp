@@ -13,7 +13,7 @@
 namespace NEO {
 
 size_t getSizeToReserve() {
-    return (maxNBitValue<47> + 1) / 4;
+    return (maxNBitValue(47) + 1) / 4;
 }
 
 } // namespace NEO

@@ -156,7 +156,7 @@ int Drm::getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu) {
 }
 
 uint64_t Drm::getSliceMask(uint64_t sliceCount) {
-    return static_cast<uint64_t>((1 << sliceCount) - 1);
+    return maxNBitValue(sliceCount);
 }
 bool Drm::setQueueSliceCount(uint64_t sliceCount) {
     if (sliceCountChangeSupported) {

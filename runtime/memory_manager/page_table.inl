@@ -24,7 +24,7 @@ inline void PageTable<void, 0, 9>::pageWalk(uintptr_t vm, size_t size, size_t of
 template <class T, uint32_t level, uint32_t bits>
 inline uintptr_t PageTable<T, level, bits>::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank) {
     const size_t shift = T::getBits() + 12;
-    const uintptr_t mask = (1 << bits) - 1;
+    const uintptr_t mask = static_cast<uintptr_t>(maxNBitValue(bits));
     size_t indexStart = (vm >> shift) & mask;
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uintptr_t res = -1;
@@ -48,7 +48,7 @@ inline uintptr_t PageTable<T, level, bits>::map(uintptr_t vm, size_t size, uint6
 template <class T, uint32_t level, uint32_t bits>
 inline void PageTable<T, level, bits>::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) {
     const size_t shift = T::getBits() + 12;
-    const uintptr_t mask = (1 << bits) - 1;
+    const uintptr_t mask = static_cast<uintptr_t>(maxNBitValue(bits));
     size_t indexStart = (vm >> shift) & mask;
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uintptr_t vmMask = (uintptr_t(-1) >> (sizeof(void *) * 8 - shift - bits));

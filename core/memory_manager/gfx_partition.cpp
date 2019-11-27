@@ -106,13 +106,13 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     const uint64_t gfxHeap32Size = 4 * MemoryConstants::gigaByte;
 
     if (is32bit) {
-        gfxBase = maxNBitValue<32> + 1;
+        gfxBase = maxNBitValue(32) + 1;
         heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
     } else {
-        if (gpuAddressSpace == maxNBitValue<48>) {
-            gfxBase = maxNBitValue<48 - 1> + 1;
+        if (gpuAddressSpace == maxNBitValue(48)) {
+            gfxBase = maxNBitValue(48 - 1) + 1;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
-        } else if (gpuAddressSpace == maxNBitValue<47>) {
+        } else if (gpuAddressSpace == maxNBitValue(47)) {
             reservedCpuAddressRangeSize = cpuAddressRangeSizeToReserve;
             UNRECOVERABLE_IF(reservedCpuAddressRangeSize == 0);
             reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize);
@@ -121,7 +121,7 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange);
             gfxTop = gfxBase + reservedCpuAddressRangeSize;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gpuAddressSpace + 1);
-        } else if (gpuAddressSpace < maxNBitValue<47>) {
+        } else if (gpuAddressSpace < maxNBitValue(47)) {
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
