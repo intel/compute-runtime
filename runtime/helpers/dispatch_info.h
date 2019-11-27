@@ -85,7 +85,7 @@ struct MultiDispatchInfo {
         }
     }
 
-    MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
+    explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
     MultiDispatchInfo() = default;
 
     MultiDispatchInfo &operator=(const MultiDispatchInfo &) = delete;

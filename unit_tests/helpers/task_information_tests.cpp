@@ -182,10 +182,12 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     MemObjOffsetArray offset = {{0, 0, 0}};
     std::unique_ptr<Command> command(new CommandMapUnmap(MapOperationType::MAP, buffer, size, offset, false, *mockCmdQ));
     command->submit(20, false);
+    PreemptionFlags flags = {};
+    PreemptionMode devicePreemption = mockCmdQ->getDevice().getPreemptionMode();
 
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
     EXPECT_EQ(mockCmdQ->getThrottle(), mockCsr->passedDispatchFlags.throttle);
-    EXPECT_EQ(PreemptionHelper::taskPreemptionMode(mockCmdQ->getDevice(), nullptr), mockCsr->passedDispatchFlags.preemptionMode);
+    EXPECT_EQ(PreemptionHelper::taskPreemptionMode(devicePreemption, flags), mockCsr->passedDispatchFlags.preemptionMode);
     EXPECT_EQ(GrfConfig::DefaultGrfNumber, mockCsr->passedDispatchFlags.numGrfRequired);
     EXPECT_EQ(L3CachingSettings::l3CacheOn, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);

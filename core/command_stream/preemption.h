@@ -42,7 +42,7 @@ class PreemptionHelper {
     template <typename CmdFamily>
     using INTERFACE_DESCRIPTOR_DATA = typename CmdFamily::INTERFACE_DESCRIPTOR_DATA;
 
-    static PreemptionMode taskPreemptionMode(Device &device, const PreemptionFlags &flags);
+    static PreemptionMode taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags);
     static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
     static bool allowThreadGroupPreemption(const PreemptionFlags &flags);
     static bool allowMidThreadPreemption(const PreemptionFlags &flags);

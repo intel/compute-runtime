@@ -36,17 +36,17 @@ bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
            !(flags.flags.vmeKernel && !flags.flags.deviceSupportsVmePreemption);
 }
 
-PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const PreemptionFlags &flags) {
-    if (device.getPreemptionMode() == PreemptionMode::Disabled) {
+PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags) {
+    if (devicePreemptionMode == PreemptionMode::Disabled) {
         return PreemptionMode::Disabled;
     }
 
-    if (device.getPreemptionMode() >= PreemptionMode::MidThread &&
+    if (devicePreemptionMode >= PreemptionMode::MidThread &&
         allowMidThreadPreemption(flags)) {
         return PreemptionMode::MidThread;
     }
 
-    if (device.getPreemptionMode() >= PreemptionMode::ThreadGroup &&
+    if (devicePreemptionMode >= PreemptionMode::ThreadGroup &&
         allowThreadGroupPreemption(flags)) {
         return PreemptionMode::ThreadGroup;
     }
@@ -79,7 +79,7 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const MultiD
         PreemptionFlags flags = {};
         setPreemptionLevelFlags(flags, device, kernel);
 
-        PreemptionMode taskMode = taskPreemptionMode(device, flags);
+        PreemptionMode taskMode = taskPreemptionMode(devMode, flags);
         if (devMode > taskMode) {
             devMode = taskMode;
         }

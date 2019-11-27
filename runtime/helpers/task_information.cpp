@@ -8,6 +8,7 @@
 #include "runtime/helpers/task_information.h"
 
 #include "core/command_stream/linear_stream.h"
+#include "core/command_stream/preemption.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
@@ -45,6 +46,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
     auto &queueCommandStream = commandQueue.getCS(0);
     size_t offset = queueCommandStream.getUsed();
+    MultiDispatchInfo multiDispatch;
+    Device &device = commandQueue.getDevice();
 
     DispatchFlags dispatchFlags(
         {},                                                                          //csrDependencies
@@ -52,7 +55,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         {},                                                                          //pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                //flushStampReference
         commandQueue.getThrottle(),                                                  //throttle
-        PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), nullptr),     //preemptionMode
+        PreemptionHelper::taskPreemptionMode(device, multiDispatch),                 //preemptionMode
         GrfConfig::DefaultGrfNumber,                                                 //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
         commandQueue.getSliceCount(),                                                //sliceCount

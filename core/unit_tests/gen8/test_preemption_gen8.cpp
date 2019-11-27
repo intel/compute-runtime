@@ -74,7 +74,9 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, mockKernel.mockKernel));
+    PreemptionFlags flags = {};
+    MultiDispatchInfo multiDispatch(mockKernel.mockKernel);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
 
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -90,7 +92,9 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, mockKernel.mockKernel));
+    PreemptionFlags flags = {};
+    PreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     UserEvent userEventObj;
     cl_event userEvent = &userEventObj;
@@ -111,7 +115,9 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(*pDevice, mockKernel.mockKernel));
+    PreemptionFlags flags = {};
+    PreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
+    EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
 
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
