@@ -273,7 +273,9 @@ class Program : public BaseObject<_cl_program> {
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
-    void extractInternalOptions(std::string &options);
+    void extractInternalOptions(const std::string &options);
+    MOCKABLE_VIRTUAL bool isFlagOption(const std::string &option);
+    MOCKABLE_VIRTUAL bool isOptionValueValid(const std::string &option, const std::string &value);
     MOCKABLE_VIRTUAL void applyAdditionalOptions();
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();

@@ -2555,14 +2555,14 @@ class Program32BitTests : public ProgramTests {
 };
 
 TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBuiltinIsCreatedThenNoFlagsArePassedAsInternalOptions) {
-    MockProgram pProgram(*pDevice->getExecutionEnvironment());
-    auto &internalOptions = pProgram.getInternalOptions();
+    MockProgram program(*pDevice->getExecutionEnvironment());
+    auto &internalOptions = program.getInternalOptions();
     EXPECT_THAT(internalOptions, testing::HasSubstr(std::string("")));
 }
 
 TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCreatedThen32bitFlagIsPassedAsInternalOption) {
-    MockProgram pProgram(*pDevice->getExecutionEnvironment(), pContext, false);
-    auto &internalOptions = pProgram.getInternalOptions();
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    auto &internalOptions = program.getInternalOptions();
     std::string s1 = internalOptions;
     size_t pos = s1.find("-m32");
     if (is64bit) {
@@ -2886,13 +2886,13 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelT
 
 TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet) {
     ExecutionEnvironment executionEnvironment;
-    MockProgram pProgram(executionEnvironment);
-    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    MockProgram program(executionEnvironment);
+    EXPECT_EQ(nullptr, program.getDevicePtr());
     auto dummyDevice = (Device *)0x1337;
-    pProgram.SetDevice(dummyDevice);
-    EXPECT_EQ(dummyDevice, pProgram.getDevicePtr());
-    pProgram.SetDevice(nullptr);
-    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    program.SetDevice(dummyDevice);
+    EXPECT_EQ(dummyDevice, program.getDevicePtr());
+    program.SetDevice(nullptr);
+    EXPECT_EQ(nullptr, program.getDevicePtr());
 }
 
 TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
@@ -2982,28 +2982,70 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     EXPECT_EQ(0, memcmp(binaryToReturn, program->genBinary.get(), program->genBinarySize));
 }
 
-TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreRemovedFromBuildOptions) {
+TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreAddedToProgramInternalOptions) {
     ExecutionEnvironment executionEnvironment;
-    MockProgram pProgram(executionEnvironment);
-    pProgram.getInternalOptions().erase();
-    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    MockProgram program(executionEnvironment);
+    program.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, program.getDevicePtr());
     const char *internalOption = "-cl-intel-gtpin-rera";
     std::string buildOptions(internalOption);
-    pProgram.extractInternalOptionsForward(buildOptions);
-    EXPECT_EQ(0u, buildOptions.length());
-    EXPECT_TRUE(pProgram.getInternalOptions() == std::string(internalOption) + " ");
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_TRUE(program.getInternalOptions() == std::string(internalOption) + " ");
 }
 
-TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreNotRemovedFromBuildOptions) {
+TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreNotAddedToProgramInternalOptions) {
     ExecutionEnvironment executionEnvironment;
-    MockProgram pProgram(executionEnvironment);
-    pProgram.getInternalOptions().erase();
-    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    MockProgram program(executionEnvironment);
+    program.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, program.getDevicePtr());
     const char *internalOption = "-unknown-internal-options-123";
     std::string buildOptions(internalOption);
-    pProgram.extractInternalOptionsForward(buildOptions);
-    EXPECT_EQ(0u, pProgram.getInternalOptions().length());
-    EXPECT_TRUE(buildOptions == internalOption);
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(0u, program.getInternalOptions().length());
+}
+
+TEST_F(ProgramTests, givenProgramWhenAllInternalOptionsArePassedMixedWithUnknownInputThenTheyAreParsedCorrectly) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
+    program.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, program.getDevicePtr());
+    std::string buildOptions = "### -cl-intel-gtpin-rera ### -cl-intel-greater-than-4GB-buffer-required ###";
+    std::string expectedOutput = "-cl-intel-gtpin-rera -cl-intel-greater-than-4GB-buffer-required ";
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(expectedOutput, program.getInternalOptions());
+}
+
+TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithValidValuesThenTheyAreAddedToProgramInternalOptions) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
+    program.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, program.getDevicePtr());
+
+    program.isFlagOptionOverride = false;
+    program.isOptionValueValidOverride = true;
+    std::string buildOptions = "-cl-intel-gtpin-rera someValue";
+    std::string expectedOutput = "-cl-intel-gtpin-rera someValue ";
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(expectedOutput, program.getInternalOptions());
+}
+
+TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesThenTheyAreNotAddedToProgramInternalOptions) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
+    EXPECT_EQ(nullptr, program.getDevicePtr());
+
+    program.isFlagOptionOverride = false;
+    std::string buildOptions = "-cl-intel-gtpin-rera someValue";
+    std::string expectedOutput = "";
+    program.getInternalOptions().erase();
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(expectedOutput, program.getInternalOptions());
+
+    program.isOptionValueValidOverride = true;
+    buildOptions = "-cl-intel-gtpin-rera ";
+    program.getInternalOptions().erase();
+    program.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(expectedOutput, program.getInternalOptions());
 }
 
 TEST_F(ProgramTests, givenProgramWhenGetSymbolsIsCalledThenMapWithExportedSymbolsIsReturned) {

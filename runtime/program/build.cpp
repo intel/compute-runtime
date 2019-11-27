@@ -18,6 +18,8 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include <cstring>
+#include <iterator>
+#include <sstream>
 
 namespace NEO {
 
@@ -198,14 +200,27 @@ cl_int Program::build(const cl_device_id device, const char *buildOptions, bool 
     return ret;
 }
 
-void Program::extractInternalOptions(std::string &options) {
+void Program::extractInternalOptions(const std::string &options) {
+    std::istringstream inputStringStream(options);
+    std::vector<std::string> optionsVector{std::istream_iterator<std::string>{inputStringStream},
+                                           std::istream_iterator<std::string>{}};
     for (auto &optionString : internalOptionsToExtract) {
-        size_t pos = options.find(optionString);
-        if (pos != std::string::npos) {
-            options.erase(pos, optionString.length());
+        auto element = std::find(optionsVector.begin(), optionsVector.end(), optionString);
+        if (element == optionsVector.end()) {
+            continue;
+        }
+
+        if (isFlagOption(optionString)) {
             internalOptions.append(optionString);
+            internalOptions.append(" ");
+        } else if ((element + 1 != optionsVector.end()) &&
+                   isOptionValueValid(optionString, *(element + 1))) {
+            internalOptions.append(optionString);
+            internalOptions.append(" ");
+            internalOptions.append(*(element + 1));
             internalOptions.append(" ");
         }
     }
 }
+
 } // namespace NEO

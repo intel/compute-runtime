@@ -49,6 +49,7 @@ class MockProgram : public Program {
     using Program::genBinarySize;
     using Program::getKernelInfo;
     using Program::globalSurface;
+    using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isProgramBinaryResolved;
@@ -129,6 +130,20 @@ class MockProgram : public Program {
         extractInternalOptions(buildOptions);
     }
 
+    bool isFlagOption(const std::string &option) override {
+        if (isFlagOptionOverride != -1) {
+            return (isFlagOptionOverride > 0);
+        }
+        return Program::isFlagOption(option);
+    }
+
+    bool isOptionValueValid(const std::string &option, const std::string &value) override {
+        if (isOptionValueValidOverride != -1) {
+            return (isOptionValueValidOverride > 0);
+        }
+        return Program::isOptionValueValid(option, value);
+    }
+
     cl_int isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const override {
         if (skipValidationOfBinary) {
             return CL_SUCCESS;
@@ -138,6 +153,8 @@ class MockProgram : public Program {
 
     bool contextSet = false;
     bool skipValidationOfBinary = false;
+    int isFlagOptionOverride = -1;
+    int isOptionValueValidOverride = -1;
 };
 
 class GlobalMockSipProgram : public Program {
