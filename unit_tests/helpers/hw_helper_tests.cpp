@@ -18,6 +18,7 @@
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
@@ -713,6 +714,13 @@ HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenR
     DebugManagerStateRestore restore;
 
     EXPECT_EQ(UnitTestHelper<FamilyType>::requiredAuxTranslationMode, HwHelperHw<FamilyType>::getAuxTranslationMode());
+
+    if (HwHelperHw<FamilyType>::getAuxTranslationMode() == AuxTranslationMode::Blit) {
+        auto hwInfoConfig = HwInfoConfig::get(productFamily);
+        HardwareInfo hwInfo = {};
+        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+        EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
+    }
 
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     EXPECT_EQ(AuxTranslationMode::Blit, HwHelperHw<FamilyType>::getAuxTranslationMode());
