@@ -214,6 +214,25 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
     EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
+TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedTheVerifyAllUsedNodes) {
+    TimestampPacketStorage timestampPacketStorage;
+    auto &packets = timestampPacketStorage.packets;
+
+    timestampPacketStorage.packetsUsed = TimestampPacketSizeControl::preferredPacketCount - 1;
+
+    for (uint32_t i = 0; i < timestampPacketStorage.packetsUsed - 1; i++) {
+        packets[i].contextEnd = 0;
+        packets[i].globalEnd = 0;
+        EXPECT_FALSE(timestampPacketStorage.isCompleted());
+    }
+
+    packets[timestampPacketStorage.packetsUsed - 1].contextEnd = 0;
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
+
+    packets[timestampPacketStorage.packetsUsed - 1].globalEnd = 0;
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
+}
+
 TEST_F(TimestampPacketSimpleTests, givenImplicitDependencyWhenEndTagIsWrittenThenCantBeReleased) {
     TimestampPacketStorage timestampPacketStorage;
 

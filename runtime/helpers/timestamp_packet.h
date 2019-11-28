@@ -48,7 +48,7 @@ struct TimestampPacketStorage {
 
     bool isCompleted() const {
         for (uint32_t i = 0; i < packetsUsed; i++) {
-            if ((packets[0].contextEnd & 1) || (packets[0].globalEnd & 1)) {
+            if ((packets[i].contextEnd & 1) || (packets[i].globalEnd & 1)) {
                 return false;
             }
         }
