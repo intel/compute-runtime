@@ -79,8 +79,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         GTEST_SKIP();
     }
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
-    uint32_t memory[2] = {};
-    char *misalignedPtr = reinterpret_cast<char *>(memory) + 1;
+    char *misalignedPtr = reinterpret_cast<char *>(device->getMemoryManager()->getAlignedMallocRestrictions()->minAddress + 1);
 
     buffer->forceDisallowCPUCopy = true;
     auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 4, misalignedPtr, nullptr, 0, nullptr, nullptr);
