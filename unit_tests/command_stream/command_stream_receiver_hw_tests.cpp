@@ -436,18 +436,14 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
         EXPECT_NE(nullptr, bltCmd);
 
-        EXPECT_EQ(0u, bltCmd->getDestinationX1CoordinateLeft());
-        EXPECT_EQ(0u, bltCmd->getDestinationY1CoordinateTop());
-        EXPECT_EQ(0u, bltCmd->getSourceX1CoordinateLeft());
-        EXPECT_EQ(0u, bltCmd->getSourceY1CoordinateTop());
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
         uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
         if (i == (numberOfBlts - 1)) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
         }
-        EXPECT_EQ(expectedWidth, bltCmd->getDestinationX2CoordinateRight());
-        EXPECT_EQ(expectedHeight, bltCmd->getDestinationY2CoordinateBottom());
+        EXPECT_EQ(expectedWidth, bltCmd->getTransferWidth());
+        EXPECT_EQ(expectedHeight, bltCmd->getTransferHeight());
         EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
     }
@@ -1037,8 +1033,8 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
         for (auto &cmd : hwParser.cmdList) {
             if (auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
                 xyCopyBltCmdFound++;
-                EXPECT_EQ(static_cast<uint32_t>(allocationSize), bltCmd->getDestinationX2CoordinateRight());
-                EXPECT_EQ(1u, bltCmd->getDestinationY2CoordinateBottom());
+                EXPECT_EQ(static_cast<uint32_t>(allocationSize), bltCmd->getTransferWidth());
+                EXPECT_EQ(1u, bltCmd->getTransferHeight());
 
                 EXPECT_EQ(allocationGpuAddress, bltCmd->getDestinationBaseAddress());
                 EXPECT_EQ(allocationGpuAddress, bltCmd->getSourceBaseAddress());

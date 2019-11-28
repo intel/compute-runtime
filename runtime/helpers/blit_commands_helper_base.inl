@@ -68,13 +68,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
         auto bltCmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
         *bltCmd = GfxFamily::cmdInitXyCopyBlt;
 
-        bltCmd->setDestinationX1CoordinateLeft(0);
-        bltCmd->setDestinationY1CoordinateTop(0);
-        bltCmd->setSourceX1CoordinateLeft(0);
-        bltCmd->setSourceY1CoordinateTop(0);
-
-        bltCmd->setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
-        bltCmd->setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
+        bltCmd->setTransferWidth(static_cast<uint32_t>(width));
+        bltCmd->setTransferHeight(static_cast<uint32_t>(height));
 
         bltCmd->setDestinationPitch(static_cast<uint32_t>(width));
         bltCmd->setSourcePitch(static_cast<uint32_t>(width));
