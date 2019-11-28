@@ -79,6 +79,15 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
         }
+
+        if (DebugManager.flags.UseBindlessBuffers.get()) {
+            internalOptions += "-cl-intel-use-bindless-buffers ";
+        }
+
+        if (DebugManager.flags.UseBindlessImages.get()) {
+            internalOptions += "-cl-intel-use-bindless-images ";
+        }
+
         kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
 
         auto enableStatelessToStatefullWithOffset = pDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;

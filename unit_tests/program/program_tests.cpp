@@ -1763,6 +1763,42 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStateful
     }
 }
 
+TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {
+    using namespace testing;
+    DebugManagerStateRestore restorer;
+
+    {
+        EXPECT_FALSE(DebugManager.flags.UseBindlessBuffers.get());
+        EXPECT_FALSE(DebugManager.flags.UseBindlessImages.get());
+        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
+        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-buffers"))));
+        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-images"))));
+    }
+
+    {
+        DebugManager.flags.UseBindlessBuffers.set(true);
+        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
+        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-buffers ")));
+        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-images"))));
+    }
+
+    {
+        DebugManager.flags.UseBindlessBuffers.set(false);
+        DebugManager.flags.UseBindlessImages.set(true);
+        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
+        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-buffers"))));
+        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-images ")));
+    }
+
+    {
+        DebugManager.flags.UseBindlessBuffers.set(true);
+        DebugManager.flags.UseBindlessImages.set(true);
+        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
+        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-buffers ")));
+        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-images ")));
+    }
+}
+
 TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProgramIsCompiledThenItForcesStatelessCompilation) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
