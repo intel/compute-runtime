@@ -327,8 +327,12 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
     }
 
     if (!unmapInfo.readOnly) {
+        memObj->getMapAllocation()->setAubWritable(true, GraphicsAllocation::defaultBank);
+        memObj->getMapAllocation()->setTbxWritable(true, GraphicsAllocation::defaultBank);
+
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             auto buffer = castToObject<Buffer>(memObj);
+
             retVal = enqueueWriteBuffer(buffer, CL_TRUE, unmapInfo.offset[0], unmapInfo.size[0], mappedPtr, memObj->getMapAllocation(),
                                         eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         } else {
