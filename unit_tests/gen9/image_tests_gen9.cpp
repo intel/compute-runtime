@@ -27,3 +27,16 @@ GEN9TEST_F(gen9ImageTests, appendSurfaceStateParamsDoesNothing) {
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }
+
+using Gen9RenderSurfaceStateDataTests = ::testing::Test;
+
+GEN9TEST_F(Gen9RenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    uint32_t value = 4;
+    surfaceState.setMemoryObjectControlStateIndexToMocsTables(value);
+
+    EXPECT_EQ(surfaceState.TheStructure.Common.MemoryObjectControlState_IndexToMocsTables, value >> 1);
+    EXPECT_EQ(surfaceState.getMemoryObjectControlStateIndexToMocsTables(), value);
+}
