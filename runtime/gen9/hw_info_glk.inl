@@ -63,8 +63,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    false,                                         // supportsDeviceEnqueue
-    true                                           // hostPtrTrackingEnabled
+    false                                          // supportsDeviceEnqueue
 };
 
 WorkaroundTable GLK::workaroundTable = {};

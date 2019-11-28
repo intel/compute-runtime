@@ -341,7 +341,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryForImage(allocationData);
     }
     if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
-        (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled())) {
+        (!peekExecutionEnvironment().isFullRangeSvm() || !DebugManager.flags.EnableHostPtrTracking.get())) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -484,13 +484,6 @@ void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
         reservedMemory = allocateSystemMemory(size, alignment);
     }
     return reservedMemory;
-}
-
-bool MemoryManager::isHostPointerTrackingEnabled() {
-    if (DebugManager.flags.EnableHostPtrTracking.get() != -1) {
-        return !!DebugManager.flags.EnableHostPtrTracking.get();
-    }
-    return (peekExecutionEnvironment().getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
 
 } // namespace NEO

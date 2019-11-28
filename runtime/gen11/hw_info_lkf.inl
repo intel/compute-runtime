@@ -66,8 +66,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    true,                                          // supportsDeviceEnqueue
-    true                                           // hostPtrTrackingEnabled
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable LKF::workaroundTable = {};

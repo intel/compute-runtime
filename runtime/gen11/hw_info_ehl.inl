@@ -66,8 +66,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    true,                                          // supportsDeviceEnqueue
-    true                                           // hostPtrTrackingEnabled
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable EHL::workaroundTable = {};
