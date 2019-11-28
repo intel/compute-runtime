@@ -907,10 +907,10 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenLimitedRangeAllocatorSetThenH
     EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange + sizeBig);
     EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange);
 
-    auto gpuInternal32BitAlloc = memoryManager->getGfxPartition(0)->heapAllocate(internalHeapIndex, sizeBig);
-    EXPECT_LT(memoryManager->getGfxPartition(0)->getHeapBase(internalHeapIndex), gpuInternal32BitAlloc);
-    EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(internalHeapIndex), gpuInternal32BitAlloc + sizeBig);
-    EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapMinimalAddress(internalHeapIndex), gpuInternal32BitAlloc);
+    auto gpuInternal32BitAlloc = memoryManager->getGfxPartition(0)->heapAllocate(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, sizeBig);
+    EXPECT_LT(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), gpuInternal32BitAlloc);
+    EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), gpuInternal32BitAlloc + sizeBig);
+    EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), gpuInternal32BitAlloc);
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignmentAndLimitedRangeAllocatorSetAndAcquireGpuRangeFailsThenNullIsReturned) {
@@ -1088,7 +1088,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t size = MemoryConstants::pageSize64k;
-    auto alloc = memoryManager->getGfxPartition(0)->heapAllocate(internalHeapIndex, size);
+    auto alloc = memoryManager->getGfxPartition(0)->heapAllocate(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, size);
     EXPECT_NE(0llu, alloc);
 
     size_t allocationSize = 4 * GB;
@@ -2379,7 +2379,7 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultDrmMemoryManagerWhenItIsQueriedForInte
                                                                                                     true,
                                                                                                     true,
                                                                                                     executionEnvironment));
-    auto heapBase = memoryManager->getGfxPartition(0)->getHeapBase(internalHeapIndex);
+    auto heapBase = memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
     EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress(0));
 }
 

@@ -307,8 +307,8 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
     size_t alignedSize = 0x2000;
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(alignedPtr, alignedSize));
     uint64_t gpuAddress = 0u;
-    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
-    auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Limit;
+    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
+    auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Limit;
 
     bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress);
     EXPECT_TRUE(ret);
@@ -1022,19 +1022,6 @@ TEST_F(WddmLockWithMakeResidentTests, whenAlllocationNeedsBlockingMakeResidentBe
     EXPECT_EQ(1u, wddm->lockResult.uint64ParamPassed);
     memoryManager.unlockResource(&allocation);
 }
-
-TEST(WddmInternalHeapTest, whenConfigurationIs64BitThenInternalHeapIndexIsHeapInternalDeviceMemory) {
-    if (is64bit) {
-        EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, internalHeapIndex);
-    }
-}
-
-TEST(WddmInternalHeapTest, whenConfigurationIs32BitThenInternalHeapIndexIsHeapInternal) {
-    if (is32bit) {
-        EXPECT_EQ(HeapIndex::HEAP_INTERNAL, internalHeapIndex);
-    }
-}
-
 using WddmGfxPartitionTest = Wddm20Tests;
 
 TEST_F(WddmGfxPartitionTest, initGfxPartition) {

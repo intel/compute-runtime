@@ -103,7 +103,7 @@ class MemoryManager {
     virtual uint64_t getLocalMemorySize() = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
-    uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->getHeapBase(internalHeapIndex); }
+    uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY); }
     uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTERNAL); }
 
     bool isLimitedRange(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->isLimitedRange(); }

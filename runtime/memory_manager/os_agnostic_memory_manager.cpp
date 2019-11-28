@@ -104,7 +104,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
-    auto heap = useInternal32BitAllocator(allocationData.type) ? internalHeapIndex : HeapIndex::HEAP_EXTERNAL;
+    auto heap = useInternal32BitAllocator(allocationData.type) ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     if (allocationData.hostPtr) {
         auto allocationSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);

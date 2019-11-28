@@ -1797,13 +1797,13 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(true);
-    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, false, false));
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, MemoryManager::selectHeap(&allocation, false, false));
 }
 
 TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(false);
-    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, false, false));
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, MemoryManager::selectHeap(&allocation, false, false));
 }
 
 TEST(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {

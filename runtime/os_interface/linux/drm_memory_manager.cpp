@@ -305,7 +305,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
 DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     auto internal = useInternal32BitAllocator(allocationData.type);
-    auto allocatorToUse = internal ? internalHeapIndex : HeapIndex::HEAP_EXTERNAL;
+    auto allocatorToUse = internal ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL;
 
     if (allocationData.hostPtr) {
         uintptr_t inputPtr = reinterpret_cast<uintptr_t>(allocationData.hostPtr);

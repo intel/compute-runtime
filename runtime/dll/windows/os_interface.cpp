@@ -10,6 +10,6 @@
 #include "core/memory_manager/memory_constants.h"
 namespace NEO {
 
-bool OSInterface::osEnableLocalMemory = true && is64bit;
+bool OSInterface::osEnableLocalMemory = true;
 
 } // namespace NEO

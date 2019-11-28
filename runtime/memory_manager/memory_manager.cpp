@@ -429,7 +429,7 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM) {
     if (allocation) {
         if (useInternal32BitAllocator(allocation->getAllocationType())) {
-            return internalHeapIndex;
+            return HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
         }
         if (allocation->is32BitAllocation()) {
             return HeapIndex::HEAP_EXTERNAL;

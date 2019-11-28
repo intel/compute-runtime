@@ -27,8 +27,6 @@ enum class HeapIndex : uint32_t {
     TOTAL_HEAPS
 };
 
-constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
-
 class GfxPartition {
   public:
     GfxPartition();

@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-bool OSInterface::osEnableLocalMemory = true && is64bit;
+bool OSInterface::osEnableLocalMemory = true;
 
 } // namespace NEO
