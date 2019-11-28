@@ -8,6 +8,7 @@
 #ifdef _WIN32
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -37,7 +38,9 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     }
     executionEnvironment.calculateMaxOsContextCount();
 
-    executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
+    }
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setWddm(wddm.release());
 

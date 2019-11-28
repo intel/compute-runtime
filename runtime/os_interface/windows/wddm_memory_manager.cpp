@@ -16,7 +16,6 @@
 #include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -331,7 +330,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         residencyController.removeFromTrimCandidateListIfUsed(input, true);
     }
 
-    executionEnvironment.memoryOperationsInterface->evict(*input);
+    executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface->evict(*input);
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     if (defaultGmm) {

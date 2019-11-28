@@ -55,9 +55,9 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
         auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hardwareInfo);
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
             executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
+            auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
+            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
         }
-        auto aubCenter = executionEnvironment.rootDeviceEnvironments[0]->aubCenter.get();
-        executionEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
     }
     return true;
 }

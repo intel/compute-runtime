@@ -17,7 +17,6 @@ class BuiltIns;
 class CompilerInterface;
 class GmmHelper;
 class MemoryManager;
-class MemoryOperationsHandler;
 class OSInterface;
 class SourceLevelDebugger;
 struct RootDeviceEnvironment;
@@ -51,7 +50,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     BuiltIns *getBuiltIns();
 
     std::unique_ptr<OSInterface> osInterface;
-    std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     std::unique_ptr<BuiltIns> builtins;

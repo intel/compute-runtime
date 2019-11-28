@@ -149,7 +149,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) +
                                                   sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
-                                                  (is64bit ? 80 : 44),
+                                                  (is64bit ? 72 : 40),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -164,11 +164,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 5> {
-        MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
-    };
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 4> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 5> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+    };
+    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 4> {
+        MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
@@ -188,7 +188,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
-    executionEnvironment->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);

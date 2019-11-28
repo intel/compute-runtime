@@ -26,7 +26,7 @@ class DrmMemoryManagerBasic : public ::testing::Test {
     void SetUp() override {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
-        executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
     }
 
     MockExecutionEnvironment executionEnvironment;

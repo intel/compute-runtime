@@ -11,7 +11,6 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
-#include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"

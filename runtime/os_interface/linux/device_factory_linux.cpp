@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/device_factory.h"
@@ -33,7 +34,9 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         return false;
     }
 
-    executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+    }
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setDrm(drm);
 

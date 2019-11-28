@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_memory_operations_handler.h"
@@ -30,7 +30,8 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
 
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setDrm(&mock);
-    executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
 
