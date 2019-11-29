@@ -40,7 +40,7 @@ struct FlushTest
     }
 };
 
-TEST_F(FlushTest, simple) {
+TEST_F(FlushTest, WhenFlushingThenSuccessIsReturned) {
     auto retVal = pCmdQ->flush();
 
     EXPECT_EQ(retVal, CL_SUCCESS);
