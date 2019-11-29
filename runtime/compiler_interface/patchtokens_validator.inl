@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/hw_info.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "igfxfmid.h"
 

@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/hw_cmds.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/utilities/tag_allocator.h"

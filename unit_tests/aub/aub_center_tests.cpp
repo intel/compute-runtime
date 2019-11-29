@@ -6,8 +6,8 @@
  */
 
 #include "core/helpers/basic_math.h"
+#include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/mocks/mock_aub_center.h"

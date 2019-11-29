@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo) {

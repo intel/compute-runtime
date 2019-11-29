@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "cl_api_tests.h"
 

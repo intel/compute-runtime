@@ -9,6 +9,7 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/hw_info.h"
 #include "core/helpers/kernel_helpers.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/utilities/stackvec.h"
@@ -25,7 +26,6 @@
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/options.h"

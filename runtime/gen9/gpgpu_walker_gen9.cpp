@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/gen9/hw_cmds_base.h"
 #include "runtime/command_queue/gpgpu_walker_bdw_plus.inl"
 #include "runtime/command_queue/hardware_interface_bdw_plus.inl"
-#include "runtime/gen9/hw_cmds_base.h"
 
 namespace NEO {
 

@@ -8,7 +8,7 @@
 #pragma once
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption_mode.h"
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 
 #include "sku_info.h"
 

@@ -7,9 +7,9 @@
 
 #include "runtime/helpers/options.h"
 
-#include "runtime/gen_common/hw_cmds.h"
+#include "core/helpers/hw_cmds.h"
+#include "core/helpers/hw_info.h"
 #include "runtime/helpers/array_count.h"
-#include "runtime/helpers/hw_info.h"
 
 namespace NEO {
 const char *folderAUB = "aub_out";

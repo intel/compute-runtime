@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/hw_info.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -13,7 +14,6 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/flush_stamp.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"

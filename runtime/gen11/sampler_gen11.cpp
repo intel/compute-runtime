@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen11/hw_cmds.h"
+#include "core/gen11/hw_cmds.h"
 #include "runtime/sampler/sampler.h"
 #include "runtime/sampler/sampler.inl"
 

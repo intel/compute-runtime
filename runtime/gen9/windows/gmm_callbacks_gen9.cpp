@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen9/hw_cmds.h"
+#include "core/gen9/hw_cmds.h"
 #include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/gmm_callbacks.inl"
 

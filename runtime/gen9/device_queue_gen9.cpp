@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/gen9/hw_cmds.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue_hw_bdw_plus.inl"
 #include "runtime/device_queue/device_queue_hw_profiling.inl"
-#include "runtime/gen9/hw_cmds.h"
 
 namespace NEO {
 typedef SKLFamily Family;

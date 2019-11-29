@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_device.h"
 

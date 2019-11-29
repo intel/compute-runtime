@@ -18,7 +18,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
@@ -46,10 +45,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mem_properties_parser_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_properties_parser_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_properties_flags_helpers.cpp

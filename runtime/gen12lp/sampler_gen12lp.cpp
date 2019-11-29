@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen12lp/hw_cmds_base.h"
+#include "core/gen12lp/hw_cmds_base.h"
 using Family = NEO::TGLLPFamily;
 constexpr static auto gfxCore = IGFX_GEN12LP_CORE;
 #include "runtime/sampler/sampler_tgllp_plus.inl"

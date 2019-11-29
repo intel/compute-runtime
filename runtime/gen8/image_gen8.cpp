@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen8/hw_cmds.h"
+#include "core/gen8/hw_cmds.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/image.inl"
 

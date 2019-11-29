@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/gen11/hw_cmds.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue_hw_bdw_plus.inl"
 #include "runtime/device_queue/device_queue_hw_profiling.inl"
 #include "runtime/gen11/device_enqueue.h"
-#include "runtime/gen11/hw_cmds.h"
 
 namespace NEO {
 typedef ICLFamily Family;

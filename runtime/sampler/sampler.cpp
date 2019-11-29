@@ -7,10 +7,10 @@
 
 #include "runtime/sampler/sampler.h"
 
+#include "core/helpers/hw_info.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "patch_list.h"
 

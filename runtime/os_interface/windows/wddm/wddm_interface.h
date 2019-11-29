@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/hw_info.h"
 #include "core/os_interface/windows/windows_wrapper.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_context.h"
 
 #include <d3dkmthk.h>

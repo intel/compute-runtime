@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 
 #include "CL/cl.h"
 #include "heap_info.h"

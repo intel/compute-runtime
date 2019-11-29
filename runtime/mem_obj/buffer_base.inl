@@ -7,8 +7,8 @@
 
 #include "common/helpers/bit_helpers.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/hw_cmds.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"

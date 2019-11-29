@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/kmd_notify_properties.h"
+#include "core/helpers/kmd_notify_properties.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/sys_calls.h"
 #include "test.h"

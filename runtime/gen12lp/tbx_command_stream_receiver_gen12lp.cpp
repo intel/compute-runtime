@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/gen12lp/hw_cmds.h"
 #include "core/memory_manager/memory_pool.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
-#include "runtime/gen12lp/hw_cmds.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/base_object.h"
 

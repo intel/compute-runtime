@@ -9,8 +9,6 @@
 #include "runtime/aub_mem_dump/aub_services.h"
 
 #include "engine_node.h"
-#include "hw_cmds_ehl.h"
-#include "hw_info_ehl.h"
 
 namespace NEO {
 

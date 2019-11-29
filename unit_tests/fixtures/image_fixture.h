@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/hw_info.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"

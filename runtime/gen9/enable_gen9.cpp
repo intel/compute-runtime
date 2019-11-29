@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen9/hw_cmds.h"
+#include "core/gen9/hw_cmds.h"
 #include "runtime/helpers/enable_product.inl"
 #include "runtime/os_interface/hw_info_config.h"
 

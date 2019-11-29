@@ -9,9 +9,9 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/helpers/hw_info.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 

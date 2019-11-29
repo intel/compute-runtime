@@ -5,12 +5,11 @@
  *
  */
 
+#include "core/gen12lp/hw_cmds.h"
 #include "core/memory_manager/memory_constants.h"
 #include "runtime/aub_mem_dump/aub_services.h"
-#include "runtime/gen12lp/hw_cmds.h"
 
 #include "engine_node.h"
-#include "hw_info_tgllp.h"
 
 namespace NEO {
 

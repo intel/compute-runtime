@@ -10,8 +10,8 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
+#include "core/helpers/hw_info.h"
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "config.h"
 #include "os_inc.h"

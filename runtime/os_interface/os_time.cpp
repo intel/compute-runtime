@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/os_time.h"
 
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 
 namespace NEO {
 

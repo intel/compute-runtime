@@ -8,10 +8,10 @@
 #pragma once
 
 #include "core/command_stream/preemption.h"
+#include "core/helpers/hw_info.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "gmock/gmock.h"
 

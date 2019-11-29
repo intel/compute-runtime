@@ -15,6 +15,9 @@ set(RUNTIME_SRCS_GENX_CPP_LINUX
 
 set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
+)
+
+set(CORE_SRCS_GENX_H_BASE
   hw_cmds.h
   hw_info.h
 )
@@ -45,7 +48,13 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
 
-  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.h" "reg_configs.h")
+  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.h")
+    if(EXISTS ${CORE_GENX_PREFIX}/${PLATFORM_FILE})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${CORE_GENX_PREFIX}/${PLATFORM_FILE})
+    endif()
+  endforeach()
+
+  foreach(PLATFORM_FILE "reg_configs.h")
     if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
     endif()
@@ -64,6 +73,9 @@ macro(macro_for_each_gen)
   # Add default GEN files
   foreach(SRC_IT ${RUNTIME_SRCS_GENX_H_BASE})
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})
+  endforeach()
+  foreach(SRC_IT ${CORE_SRCS_GENX_H_BASE})
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${CORE_GENX_PREFIX}/${SRC_IT})
   endforeach()
   foreach(SRC_IT "state_compute_mode_helper_${GEN_TYPE_LOWER}.cpp")
     if(EXISTS ${GENX_PREFIX}/${SRC_IT})

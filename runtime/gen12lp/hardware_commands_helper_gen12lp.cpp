@@ -7,9 +7,9 @@
 
 #include "hardware_commands_helper_gen12lp.inl"
 
+#include "core/gen12lp/hw_cmds.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/gen12lp/helpers_gen12lp.h"
-#include "runtime/gen12lp/hw_cmds.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hardware_commands_helper.inl"
 #include "runtime/helpers/hardware_commands_helper_base.inl"

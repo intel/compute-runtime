@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/helpers/hw_cmds.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
-#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/kernel/kernel.h"

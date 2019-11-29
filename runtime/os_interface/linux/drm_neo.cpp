@@ -7,9 +7,9 @@
 
 #include "drm_neo.h"
 
+#include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/utilities/directory.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_inc_base.h"
 
 #include <cstdio>

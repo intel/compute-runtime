@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/gen11/hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/gen11/hw_cmds.h"
 
 #ifdef HAVE_INSTRUMENTATION
 #include "runtime/event/perf_counter.h"

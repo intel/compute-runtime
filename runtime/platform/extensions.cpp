@@ -7,7 +7,7 @@
 
 #include "runtime/platform/extensions.h"
 
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 
 #include <string>
 

@@ -7,9 +7,9 @@
 
 #include "runtime/aub/aub_center.h"
 
+#include "core/helpers/hw_info.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/device_helpers.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 

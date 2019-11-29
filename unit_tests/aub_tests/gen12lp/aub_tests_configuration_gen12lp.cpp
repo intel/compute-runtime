@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen_common/hw_cmds.h"
+#include "core/helpers/hw_cmds.h"
 #include "unit_tests/aub_tests/aub_tests_configuration.h"
 
 using namespace NEO;

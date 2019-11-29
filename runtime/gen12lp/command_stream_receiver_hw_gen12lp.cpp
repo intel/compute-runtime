@@ -5,14 +5,12 @@
  *
  */
 
+#include "core/gen12lp/hw_cmds.h"
 #include "runtime/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "runtime/command_stream/command_stream_receiver_hw_tgllp_plus.inl"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/gen12lp/helpers_gen12lp.h"
-#include "runtime/gen12lp/hw_cmds.h"
 #include "runtime/helpers/blit_commands_helper_bdw_plus.inl"
-
-#include "hw_info.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

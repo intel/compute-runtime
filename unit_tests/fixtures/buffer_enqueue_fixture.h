@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"

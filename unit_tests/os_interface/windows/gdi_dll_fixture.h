@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/hw_info.h"
 #include "core/os_interface/os_library.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/gen_common/hw_cmds.h"
+#include "core/helpers/hw_cmds.h"
 #include "runtime/helpers/properties_helper.h"
 
 namespace NEO {

@@ -8,11 +8,11 @@
 #include "core/unit_tests/fixtures/preemption_fixture.h"
 
 #include "core/command_stream/preemption.h"
+#include "core/helpers/hw_info.h"
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/enqueue_marker.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"

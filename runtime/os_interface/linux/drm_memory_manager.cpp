@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 
+#include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -15,7 +16,6 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/os_interface/linux/allocator_helper.h"

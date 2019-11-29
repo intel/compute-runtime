@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_cmds.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/state_base_address.h"

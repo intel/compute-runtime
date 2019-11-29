@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen9/hw_cmds.h"
+#include "core/gen9/hw_cmds.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hardware_commands_helper.inl"
 #include "runtime/helpers/hardware_commands_helper_base.inl"

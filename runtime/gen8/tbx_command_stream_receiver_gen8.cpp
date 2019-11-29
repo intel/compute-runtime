@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/gen8/hw_cmds.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
-#include "runtime/gen8/hw_cmds.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/base_object.h"
 

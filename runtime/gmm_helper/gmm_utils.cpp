@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/surface_formats.h"
 
 #include "GL/gl.h"

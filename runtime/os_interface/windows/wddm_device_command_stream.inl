@@ -11,9 +11,9 @@
 #pragma warning(disable : 4005)
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/device/device.h"
-#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/gmm_callbacks.h"

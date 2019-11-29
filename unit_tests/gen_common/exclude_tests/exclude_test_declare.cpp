@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/hw_info.h"
+#include "core/helpers/hw_info.h"
 #include "test.h"
 
 #include <type_traits>

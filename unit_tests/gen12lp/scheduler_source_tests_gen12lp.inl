@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/gen12lp/hw_cmds.h"
 #include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/gen12lp/hw_cmds.h"
 
 // Keep the order of device_enqueue.h and scheduler_definitions.h as the latter uses defines from the first one
 #include "runtime/gen12lp/device_enqueue.h"

@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/hw_info.h"
 #include "public/cl_ext_private.h"
-#include "runtime/helpers/hw_info.h"
 
 #include "igfxfmid.h"
 

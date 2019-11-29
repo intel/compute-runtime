@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "core/helpers/completion_stamp.h"
 #include "core/utilities/reference_tracked_object.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/helpers/completion_stamp.h"
 
 namespace NEO {
 struct FlushStampTrackingObj : public ReferenceTrackedObject<FlushStampTrackingObj> {

@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

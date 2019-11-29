@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gen11/hw_info.h"
+#include "core/gen11/hw_info.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/unit_test_helper.inl"
 
