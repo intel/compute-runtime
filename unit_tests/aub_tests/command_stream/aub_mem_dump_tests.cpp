@@ -23,7 +23,7 @@ std::string getAubFileName(const NEO::Device *pDevice, const std::string baseNam
     const auto pGtSystemInfo = &pDevice->getHardwareInfo().gtSystemInfo;
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = pGtSystemInfo->SubSliceCount / pGtSystemInfo->SliceCount;
-    strfilename << pDevice->getProductAbbrev() << "_" << pGtSystemInfo->SliceCount << "x" << subSlicesPerSlice << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
+    strfilename << hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily] << "_" << pGtSystemInfo->SliceCount << "x" << subSlicesPerSlice << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
 
     return strfilename.str();
 }

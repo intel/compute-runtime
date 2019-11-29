@@ -177,10 +177,6 @@ const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;
 }
 
-const char *Device::getProductAbbrev() const {
-    return hardwarePrefix[getHardwareInfo().platform.eProductFamily];
-}
-
 double Device::getProfilingTimerResolution() {
     return osTime->getDynamicDeviceTimerResolution(getHardwareInfo());
 }

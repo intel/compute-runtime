@@ -67,6 +67,8 @@ class MockDevice : public RootDevice {
         }
     }
 
+    const char *getProductAbbrev() const;
+
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
         return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[defaultEngineIndex].commandStreamReceiver);

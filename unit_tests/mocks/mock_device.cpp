@@ -31,6 +31,10 @@ MockDevice::MockDevice()
     initializeCaps();
 }
 
+const char *MockDevice::getProductAbbrev() const {
+    return hardwarePrefix[getHardwareInfo().platform.eProductFamily];
+}
+
 MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex)
     : RootDevice(executionEnvironment, rootDeviceIndex) {
     auto &hwInfo = getHardwareInfo();

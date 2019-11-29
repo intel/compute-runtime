@@ -57,8 +57,6 @@ class Device : public BaseObject<_cl_device_id> {
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
 
-    const char *getProductAbbrev() const;
-
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info Param>
     void getCap(const void *&src,
