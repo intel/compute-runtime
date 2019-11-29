@@ -39,6 +39,8 @@ class MockDevice : public RootDevice {
     using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
+    using Device::name;
+    using Device::simultaneousInterops;
     using RootDevice::createEngines;
     using RootDevice::subdevices;
 

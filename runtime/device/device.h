@@ -30,15 +30,8 @@ class Device : public BaseObject<_cl_device_id> {
   public:
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
-    template <typename DeviceT, typename... ArgsT>
-    static DeviceT *create(ArgsT &&... args) {
-        DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);
-        return createDeviceInternals(device);
-    }
-
     Device &operator=(const Device &) = delete;
     Device(const Device &) = delete;
-
     ~Device() override;
 
     // API entry points
@@ -46,16 +39,6 @@ class Device : public BaseObject<_cl_device_id> {
                          size_t paramValueSize,
                          void *paramValue,
                          size_t *paramValueSizeRet);
-
-    bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
-    bool getHostTimer(uint64_t *hostTimestamp) const;
-
-    // Helper functions
-    const HardwareInfo &getHardwareInfo() const;
-    const DeviceInfo &getDeviceInfo() const;
-
-    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
-    EngineControl &getDefaultEngine();
 
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info Param>
@@ -67,40 +50,54 @@ class Device : public BaseObject<_cl_device_id> {
     void getStr(const void *&src,
                 size_t &size,
                 size_t &retSize);
-
-    MemoryManager *getMemoryManager() const;
-    GmmHelper *getGmmHelper() const;
-
-    OSTime *getOSTime() const { return osTime.get(); };
-    double getProfilingTimerResolution();
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
+
+    template <typename DeviceT, typename... ArgsT>
+    static DeviceT *create(ArgsT &&... args) {
+        DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);
+        return createDeviceInternals(device);
+    }
+
+    bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
+    bool getHostTimer(uint64_t *hostTimestamp) const;
+    const HardwareInfo &getHardwareInfo() const;
+    const DeviceInfo &getDeviceInfo() const;
+    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
+    EngineControl &getDefaultEngine();
+    MemoryManager *getMemoryManager() const;
+    GmmHelper *getGmmHelper() const;
+    OSTime *getOSTime() const { return osTime.get(); };
+    double getProfilingTimerResolution();
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
-    static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    std::vector<unsigned int> simultaneousInterops;
-    std::string deviceExtensions;
-    std::string name;
     MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
-    virtual uint32_t getRootDeviceIndex() const = 0;
     bool isFullRangeSvm() const {
         return executionEnvironment->isFullRangeSvm();
     }
     bool areSharedSystemAllocationsAllowed() const {
         return this->deviceInfo.sharedSystemMemCapabilities != 0u;
     }
+
+    virtual uint32_t getRootDeviceIndex() const = 0;
     virtual uint32_t getNumAvailableDevices() const = 0;
     virtual Device *getDeviceById(uint32_t deviceId) const = 0;
+
+    static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
 
   protected:
     Device() = delete;
     Device(ExecutionEnvironment *executionEnvironment);
+
+    MOCKABLE_VIRTUAL void initializeCaps();
+    void setupFp64Flags();
+    void appendOSExtensions(std::string &deviceExtensions);
 
     template <typename T>
     static T *createDeviceInternals(T *device) {
@@ -112,27 +109,26 @@ class Device : public BaseObject<_cl_device_id> {
     }
 
     virtual bool createDeviceImpl();
-    virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
     virtual bool createEngines();
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
-
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
-    MOCKABLE_VIRTUAL void initializeCaps();
-    void setupFp64Flags();
-    void appendOSExtensions(std::string &deviceExtensions);
-    unsigned int enabledClVersion = 0u;
 
-    HardwareCapabilities hardwareCapabilities = {};
+    virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
+
+    std::vector<unsigned int> simultaneousInterops;
+    unsigned int enabledClVersion = 0u;
+    std::string deviceExtensions;
+    std::string exposedBuiltinKernels = "";
+
     DeviceInfo deviceInfo;
+
+    std::string name;
+    HardwareCapabilities hardwareCapabilities = {};
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
-
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;
-
-    std::string exposedBuiltinKernels = "";
-
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;
