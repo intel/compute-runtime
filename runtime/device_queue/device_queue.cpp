@@ -24,7 +24,6 @@ DeviceQueue::DeviceQueue(Context *context,
                          cl_queue_properties &properties) : DeviceQueue() {
     this->context = context;
     this->device = device;
-    auto &caps = device->getDeviceInfo();
 
     if (context) {
         context->incRefInternal();
@@ -33,8 +32,9 @@ DeviceQueue::DeviceQueue(Context *context,
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(&properties, CL_QUEUE_PROPERTIES);
     queueSize = getCmdQueueProperties<cl_uint>(&properties, CL_QUEUE_SIZE);
 
-    if (queueSize == 0)
-        queueSize = caps.queueOnDevicePreferredSize;
+    if (queueSize == 0) {
+        queueSize = device->getDeviceInfo().queueOnDevicePreferredSize;
+    }
 
     allocateResources();
     initDeviceQueue();

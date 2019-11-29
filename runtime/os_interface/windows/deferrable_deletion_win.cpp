@@ -17,16 +17,14 @@ DeferrableDeletion *DeferrableDeletion::create(Args... args) {
 }
 template DeferrableDeletion *DeferrableDeletion::create(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
 
-DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
-    this->wddm = wddm;
+DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle)
+    : wddm(wddm), allocationCount(allocationCount), resourceHandle(resourceHandle) {
     if (handles) {
         this->handles = new D3DKMT_HANDLE[allocationCount];
         for (uint32_t i = 0; i < allocationCount; i++) {
             this->handles[i] = handles[i];
         }
     }
-    this->allocationCount = allocationCount;
-    this->resourceHandle = resourceHandle;
 }
 bool DeferrableDeletionImpl::apply() {
     bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, resourceHandle);
