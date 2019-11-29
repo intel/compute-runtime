@@ -78,6 +78,7 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
 }
 
 void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+    UNRECOVERABLE_IF(ptr == nullptr);
     auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocation;
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
 }

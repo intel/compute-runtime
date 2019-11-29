@@ -13,6 +13,8 @@ using namespace NEO;
 
 class MockMultiDispatchInfo : public MultiDispatchInfo {
   public:
+    using MultiDispatchInfo::dispatchInfos;
+
     MockMultiDispatchInfo(Kernel *kernel) : MultiDispatchInfo(kernel) {
         DispatchInfo di(kernel, 1, {100, 1, 1}, {10, 1, 1}, {0, 0, 0});
         dispatchInfos.push_back(di);

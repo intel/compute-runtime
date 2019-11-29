@@ -25,8 +25,12 @@ PrintfHandler::~PrintfHandler() {
 }
 
 PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, Device &device) {
-    if (multiDispatchInfo.usesStatelessPrintfSurface() ||
-        (multiDispatchInfo.peekMainKernel()->checkIfIsParentKernelAndBlocksUsesPrintf())) {
+    if (multiDispatchInfo.usesStatelessPrintfSurface()) {
+        return new PrintfHandler(device);
+    }
+    auto mainKernel = multiDispatchInfo.peekMainKernel();
+    if ((mainKernel != nullptr) &&
+        mainKernel->checkIfIsParentKernelAndBlocksUsesPrintf()) {
         return new PrintfHandler(device);
     }
     return nullptr;

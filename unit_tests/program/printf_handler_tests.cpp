@@ -144,3 +144,14 @@ TEST(PrintfHandlerTest, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAnd
     printfHandler->prepareDispatch(multiDispatchInfo);
     EXPECT_NE(nullptr, printfHandler->getSurface());
 }
+
+TEST(PrintfHandlerTest, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThenPrintfHandlerIsNotCreated) {
+    MockDevice device;
+    MockKernelWithInternals mockKernelWithInternals{device};
+    MockMultiDispatchInfo multiDispatchInfo{mockKernelWithInternals.mockKernel};
+    multiDispatchInfo.dispatchInfos.resize(0);
+    EXPECT_EQ(nullptr, multiDispatchInfo.peekMainKernel());
+
+    auto printfHandler = PrintfHandler::create(multiDispatchInfo, device);
+    EXPECT_EQ(nullptr, printfHandler);
+}
