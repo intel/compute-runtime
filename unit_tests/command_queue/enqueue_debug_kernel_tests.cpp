@@ -6,7 +6,6 @@
  */
 
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -19,6 +18,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
 
+#include "compiler_options.h"
 #include "gmock/gmock.h"
 
 using namespace NEO;

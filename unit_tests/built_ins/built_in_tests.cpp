@@ -32,6 +32,7 @@
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "compiler_options.h"
 #include "gtest/gtest.h"
 #include "os_inc.h"
 
@@ -1422,7 +1423,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenDeviceSupportSharedSystemAl
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinsLib::createProgramFromCode(bc, *pContext, *pDevice));
     EXPECT_NE(nullptr, program.get());
-    EXPECT_THAT(program->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
+    EXPECT_THAT(program->getInternalOptions(), testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
 }
 
 TEST_F(BuiltInTests, createProgramFromCodeForTypeIntermediate) {
@@ -1468,10 +1469,10 @@ TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
     ASSERT_NE(nullptr, program.get());
 
     auto builtinInternalOptions = program->getInternalOptions();
-    auto it = builtinInternalOptions.find("-m32");
+    auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit);
     EXPECT_EQ(std::string::npos, it);
 
-    it = builtinInternalOptions.find("-cl-intel-greater-than-4GB-buffer-required");
+    it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     if (is32bit || pDevice->areSharedSystemAllocationsAllowed()) {
         EXPECT_NE(std::string::npos, it);
     } else {

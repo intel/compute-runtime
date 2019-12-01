@@ -18,7 +18,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
@@ -36,6 +35,7 @@
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_with_source.h"
 
+#include "compiler_options.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -102,14 +102,6 @@ class SucceedingGenBinaryProgram : public MockProgram {
     cl_int processGenBinary() override { return CL_SUCCESS; }
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::createProgramWithBinary
-////////////////////////////////////////////////////////////////////////////////
-TEST_P(ProgramFromBinaryTest, CreateWithBinary_Simple) {}
-
-////////////////////////////////////////////////////////////////////////////////
-// Program::BuildProgram
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, BuildProgram) {
     cl_device_id device = pDevice;
     ASSERT_NE(nullptr, pProgram);
@@ -124,9 +116,6 @@ TEST_P(ProgramFromBinaryTest, BuildProgram) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getInfo( context )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetInfo_Context) {
     cl_context contextRet = reinterpret_cast<cl_context>(static_cast<uintptr_t>(0xdeaddead));
     cl_context context = pContext;
@@ -146,9 +135,6 @@ TEST_P(ProgramFromBinaryTest, GetInfo_Context) {
     EXPECT_EQ(param_value_size, param_value_size_ret);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getInfo( binary )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetInfo_Binary) {
     cl_program_info paramName = CL_PROGRAM_BINARIES;
     size_t param_value_size = sizeof(unsigned char **);
@@ -204,9 +190,6 @@ TEST_P(ProgramFromBinaryTest, GetInfo_Binary) {
     testBinary = nullptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getInfo( binary size )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetInfo_BinarySize) {
     cl_program_info paramName = CL_PROGRAM_BINARY_SIZES;
     size_t param_value_size = sizeof(size_t *);
@@ -225,9 +208,6 @@ TEST_P(ProgramFromBinaryTest, GetInfo_BinarySize) {
     EXPECT_EQ(param_value_size, param_value_size_ret);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getInfo( num kernels )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetInfo_NumKernels) {
     cl_program_info paramName = CL_PROGRAM_NUM_KERNELS;
     size_t param_value;
@@ -269,9 +249,6 @@ TEST_P(ProgramFromBinaryTest, GetInfo_NumKernels) {
     ASSERT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getInfo( kernel names )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetInfo_KernelNames) {
     cl_program_info paramName = CL_PROGRAM_KERNEL_NAMES;
     size_t paramValueSize = sizeof(size_t *);
@@ -330,9 +307,6 @@ TEST_P(ProgramFromBinaryTest, GetInfo_KernelNames) {
     param_value = nullptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( status )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_InvalidDevice) {
     cl_build_status buildStatus;
     cl_program_build_info paramName = CL_PROGRAM_BUILD_STATUS;
@@ -366,9 +340,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_InvalidDevice) {
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( status )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_Status) {
     cl_device_id device = pDevice;
     cl_build_status buildStatus;
@@ -390,9 +361,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_Status) {
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( options )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_Options) {
     cl_device_id device = pDevice;
     cl_program_build_info paramName = CL_PROGRAM_BUILD_OPTIONS;
@@ -430,9 +398,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_Options) {
     param_value = nullptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( log )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_Log) {
     cl_device_id device = pDevice;
     cl_program_build_info paramName = CL_PROGRAM_BUILD_LOG;
@@ -470,9 +435,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_Log) {
     param_value = nullptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( log )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_AppendedLog) {
     cl_device_id device = pDevice;
     cl_program_build_info paramName = CL_PROGRAM_BUILD_LOG;
@@ -544,9 +506,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_AppendedLog) {
     param_value = nullptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( binary type )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_BinaryType) {
     cl_device_id device = pDevice;
     cl_program_build_info paramName = CL_PROGRAM_BINARY_TYPE;
@@ -590,9 +549,6 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_BinaryType) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::getBuildInfo( global variable total size )
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromBinaryTest, GetBuildInfo_GlobalVariableTotalSize) {
     cl_device_id device = pDevice;
     size_t globalVarSize = 22;
@@ -698,9 +654,6 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Build (source)
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     KernelBinaryHelper kbHelper(BinaryFileName, true);
 
@@ -774,7 +727,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     //    EXPECT_EQ(0, retVal);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getInternalOptions(), ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
+    EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->peekCompilerExtensions())) << pProgram->getInternalOptions();
 
     // get build log
     size_t param_value_size_ret = 0u;
@@ -820,31 +773,25 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Build (duplicate)
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     KernelBinaryHelper kbHelper(BinaryFileName, false);
 
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, "-cl-finite-math-only", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Build (use cache)
-////////////////////////////////////////////////////////////////////////////////
 class Callback {
   public:
     Callback() {
@@ -889,7 +836,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
-    retVal = pProgram->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash2 = pProgram->getCachedFileName();
     auto kernel2 = pProgram->getKernelInfo("CopyBuffer");
@@ -898,7 +845,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
     Callback::unwatch(kernel1);
     Callback::watch(kernel2);
 
-    retVal = pProgram->build(0, nullptr, "-cl-finite-math-only", nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash3 = pProgram->getCachedFileName();
     auto kernel3 = pProgram->getKernelInfo("CopyBuffer");
@@ -917,9 +864,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
     Callback::unwatch(kernel3);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Compile (source)
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithNoStrings) {
     auto p = Program::create(pContext, 0, nullptr, nullptr, retVal);
     EXPECT_NE(CL_SUCCESS, retVal);
@@ -1037,30 +981,29 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     EXPECT_EQ('a', data[0]);
 }
 
-TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
-    class MyCompilerInterface : public CompilerInterface {
-      public:
-        MyCompilerInterface() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
-        ~MyCompilerInterface() override{};
-
-        TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &) override {
-            if ((input.apiOptions.size() > 0) && (input.apiOptions.begin() != nullptr)) {
-                buildOptions.assign(input.apiOptions.begin(), input.apiOptions.end());
-            }
-            if ((input.internalOptions.size() > 0) && (input.internalOptions.begin() != nullptr)) {
-                buildInternalOptions.assign(input.internalOptions.begin(), input.internalOptions.end());
-            }
-            return TranslationOutput::ErrorCode::Success;
+struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
+    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &) override {
+        buildOptions.clear();
+        if ((input.apiOptions.size() > 0) && (input.apiOptions.begin() != nullptr)) {
+            buildOptions.assign(input.apiOptions.begin(), input.apiOptions.end());
         }
-        void getBuildOptions(std::string &s) { s = buildOptions; }
-        void getBuildInternalOptions(std::string &s) { s = buildInternalOptions; }
+        buildInternalOptions.clear();
+        if ((input.internalOptions.size() > 0) && (input.internalOptions.begin() != nullptr)) {
+            buildInternalOptions.assign(input.internalOptions.begin(), input.internalOptions.end());
+        }
+        return TranslationOutput::ErrorCode::Success;
+    }
 
-      protected:
-        std::string buildOptions;
-        std::string buildInternalOptions;
-    };
+    TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
+        return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, out);
+    }
 
-    auto cip = std::make_unique<MyCompilerInterface>();
+    std::string buildOptions;
+    std::string buildInternalOptions;
+};
+
+TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
+    auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
     MockExecutionEnvironment executionEnvironment(cip.get());
     auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
@@ -1068,58 +1011,28 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     program->setDevice(pDevice);
     program->sourceCode = "__kernel mock() {}";
 
-    // Check default build options
-    std::string s1;
-    std::string s2;
-    std::string s3;
-    cip->getBuildOptions(s1);
-    size_t pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_EQ(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_EQ(pos, std::string::npos);
-    cip->getBuildInternalOptions(s3);
-    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
-    EXPECT_EQ(pos, std::string::npos);
-
-    // Ask to build created program without "-cl-intel-gtpin-rera" and "-cl-intel-greater-than-4GB-buffer-required" flags.
-    s1.assign("");
-    s2.assign("");
-    s3.assign("");
-    cl_int retVal = program->compile(0, nullptr, "-cl-fast-relaxed-math", 0, nullptr, nullptr, nullptr, nullptr);
+    // Ask to build created program without NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
+    cl_int retVal = program->compile(0, nullptr, CompilerOptions::fastRelaxedMath, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
-    cip->getBuildOptions(s1);
-    pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_NE(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_EQ(pos, std::string::npos);
-    cip->getBuildInternalOptions(s3);
-    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
-    EXPECT_EQ(pos, std::string::npos);
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
 
-    // Ask to build created program with "-cl-intel-gtpin-rera" and "-cl-intel-greater-than-4GB-buffer-required" flags.
-    s1.assign("");
-    s2.assign("");
-    s3.assign("");
-    retVal = program->compile(0, nullptr, "-cl-intel-greater-than-4GB-buffer-required -cl-intel-gtpin-rera -cl-finite-math-only",
+    // Ask to build created program with NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
+    cip->buildOptions.clear();
+    cip->buildInternalOptions.clear();
+    auto options = CompilerOptions::concatenate(CompilerOptions::greaterThan4gbBuffersRequired, CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly);
+    retVal = program->compile(0, nullptr, options.c_str(),
                               0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
-    cip->getBuildOptions(s1);
-    pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_EQ(pos, std::string::npos);
-    pos = s1.find("-cl-finite-math-only");
-    EXPECT_NE(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_NE(pos, std::string::npos);
-    cip->getBuildInternalOptions(s3);
-    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
-    EXPECT_NE(pos, std::string::npos);
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::finiteMathOnly)) << cip->buildOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
@@ -1177,9 +1090,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
         delete[] ptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Link (compiled source)
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
     cl_device_id usedDevice = pPlatform->getDevice(0);
     CreateProgramWithSource(
@@ -1275,9 +1185,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
     EXPECT_EQ('a', data[0]);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Link (create library)
-////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
     auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
     auto p = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
@@ -1291,21 +1198,18 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // create library successfully
-    retVal = pProgram->link(0, nullptr, "-create-library", 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail library creation - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(0, nullptr, "-create-library -invalid-option", 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
-    // fail library creation - CompilerInterface cannot be obtaine
-    retVal = p->link(0, nullptr, "-create-library", 1, &program, nullptr, nullptr);
+    // fail library creation - CompilerInterface cannot be obtained
+    retVal = p->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::  (PatchToken)
-////////////////////////////////////////////////////////////////////////////////
 class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
     void SetUp() override {
@@ -1315,8 +1219,7 @@ class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
         ProgramSimpleFixture::TearDown();
     }
 };
-typedef Test<PatchTokenFromBinaryTest> PatchTokenTests;
-////////////////////////////////////////////////////////////
+using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
 
 template <typename FamilyType>
 class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
@@ -1566,10 +1469,6 @@ TEST_F(ProgramPatchTokenTests, DISABLED_ConstantMemorySurface) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::  Simple tests against some custom sceanarios
-////////////////////////////////////////////////////////////////////////////////
-
 TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
 
@@ -1698,25 +1597,20 @@ INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
                             ::testing::ValuesIn(KernelNames)));
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    if (pDevice) {
-        MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
-        char paramValue[32];
-        pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-        if (strstr(paramValue, "2.1")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=210")));
-        } else if (strstr(paramValue, "2.0")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=200")));
-        } else if (strstr(paramValue, "1.2")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=120")));
-        } else {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=000")));
-        }
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    char paramValue[32];
+    pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
+    if (strstr(paramValue, "2.1")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
+    } else if (strstr(paramValue, "2.0")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
+    } else if (strstr(paramValue, "1.2")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
     } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
     }
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
@@ -1724,41 +1618,34 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
     auto defaultVersion = pDevice->deviceInfo.clVersion;
 
-    pDevice->deviceInfo.clVersion = "OpenCL 2.0 ";
-    if (pDevice) {
-        MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
-        char paramValue[32];
-        pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-        ASSERT_EQ(std::string(paramValue), "OpenCL 2.0 ");
-        EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=200")));
-    }
+    pDevice->deviceInfo.clVersion = "OpenCL 2.0";
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    char paramValue[32];
+    pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
+    EXPECT_STREQ("OpenCL 2.0", paramValue);
+    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200"));
     pDevice->deviceInfo.clVersion = defaultVersion;
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
     DebugManagerStateRestore restorer;
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-    if (pDevice) {
-        MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
-        char paramValue[32];
-        pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-        if (strstr(paramValue, "2.1")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=210")));
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        } else if (strstr(paramValue, "2.0")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=200")));
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        } else if (strstr(paramValue, "1.2")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=120")));
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        } else {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=000")));
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        }
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    char paramValue[32];
+    pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
+    if (strstr(paramValue, "2.1")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
+    } else if (strstr(paramValue, "2.0")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
+    } else if (strstr(paramValue, "1.2")) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
     } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
     }
 }
 
@@ -1770,38 +1657,38 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
         EXPECT_FALSE(DebugManager.flags.UseBindlessBuffers.get());
         EXPECT_FALSE(DebugManager.flags.UseBindlessImages.get());
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
-        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-buffers"))));
-        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-images"))));
+        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
+        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
     }
 
     {
         DebugManager.flags.UseBindlessBuffers.set(true);
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
-        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-buffers ")));
-        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-images"))));
+        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
+        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
     }
 
     {
         DebugManager.flags.UseBindlessBuffers.set(false);
         DebugManager.flags.UseBindlessImages.set(true);
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
-        EXPECT_THAT(programNoBindless.getInternalOptions(), Not(HasSubstr(std::string("-cl-intel-use-bindless-buffers"))));
-        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-images ")));
+        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
     }
 
     {
         DebugManager.flags.UseBindlessBuffers.set(true);
         DebugManager.flags.UseBindlessImages.set(true);
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false);
-        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-buffers ")));
-        EXPECT_THAT(programNoBindless.getInternalOptions(), HasSubstr(std::string("-cl-intel-use-bindless-images ")));
+        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
     }
 }
 
 TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProgramIsCompiledThenItForcesStatelessCompilation) {
     pDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
-    EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
+    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions().c_str(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddressess) {
@@ -1815,18 +1702,18 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=210")));
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
         } else if (strstr(paramValue, "2.0")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=200")));
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
         } else if (strstr(paramValue, "1.2")) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=120")));
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
         } else {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-ocl-version=000")));
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
         }
         if (pDevice->areSharedSystemAllocationsAllowed()) {
-            EXPECT_THAT(program.getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
         } else {
-            EXPECT_THAT(program.getInternalOptions(), testing::Not(testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required"))));
+            EXPECT_FALSE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
         }
     } else {
         EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
@@ -1835,59 +1722,46 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
 }
 
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptions) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
-        EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("")));
-        delete pProgram;
-
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pDevice, true, nullptr)};
+    if ((false == pDevice->areSharedSystemAllocationsAllowed()) && (false == is32bit)) {
+        EXPECT_FALSE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
+        EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     }
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-    if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
-        EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        delete pProgram;
-
-    } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
-    }
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pDevice, true, nullptr)};
+    EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwyasHavePreserveVec3TypeInternalOptionSet) {
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
-    EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-fpreserve-vec3-type ")));
+TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3TypeInternalOptionSet) {
+    std::unique_ptr<MockProgram> program(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::preserveVec3Type)) << program->getInternalOptions();
 }
 
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32BitAddressess) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    if (pDevice) {
-        const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
-        if (is32bit) {
-            EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
-        } else {
-            EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("")));
-        }
-        delete pProgram;
-
+    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pDevice, true, nullptr)};
+    if (is32bit) {
+        EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
+        if (false == pDevice->areSharedSystemAllocationsAllowed()) {
+            EXPECT_FALSE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
+        } else {
+            EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
+        }
     }
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
@@ -1900,9 +1774,9 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatel
     const char *programPointer = programSource;
     const char **programSources = reinterpret_cast<const char **>(&programPointer);
     size_t length = sizeof(programSource);
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
+    std::unique_ptr<MockProgram> program(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
 
-    EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg ")));
+    EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::hasBufferOffsetArg)) << program->getInternalOptions();
 }
 
 TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
@@ -1913,8 +1787,8 @@ TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreate
     const char *programPointer = programSource;
     const char **programSources = reinterpret_cast<const char **>(&programPointer);
     size_t length = sizeof(programSource);
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
-    EXPECT_THAT(pProgram->getInternalOptions(), Not(testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg "))));
+    std::unique_ptr<MockProgram> program(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
+    EXPECT_FALSE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::hasBufferOffsetArg)) << program->getInternalOptions();
 }
 
 TEST_F(ProgramTests, GivenContextWhenCreateProgramThenIncrementContextRefCount) {
@@ -2074,55 +1948,53 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
     retVal = CL_INVALID_BINARY;
     binSize = 0;
 
-    if (pDevice != nullptr) {
-        // Prepare simple program binary containing patch token PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT
-        SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-        pBHdr->Magic = iOpenCL::MAGIC_CL;
-        pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-        pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-        pBHdr->GPUPointerSizeInBytes = 8;
-        pBHdr->NumberOfKernels = 1;
-        pBHdr->SteppingId = 0;
-        pBHdr->PatchListSize = 0;
-        pBin += sizeof(SProgramBinaryHeader);
-        binSize += sizeof(SProgramBinaryHeader);
+    // Prepare simple program binary containing patch token PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT
+    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
+    pBHdr->Magic = iOpenCL::MAGIC_CL;
+    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    pBHdr->GPUPointerSizeInBytes = 8;
+    pBHdr->NumberOfKernels = 1;
+    pBHdr->SteppingId = 0;
+    pBHdr->PatchListSize = 0;
+    pBin += sizeof(SProgramBinaryHeader);
+    binSize += sizeof(SProgramBinaryHeader);
 
-        SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-        pKHdr->CheckSum = 0;
-        pKHdr->ShaderHashCode = 0;
-        pKHdr->KernelNameSize = 8;
-        pKHdr->PatchListSize = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-        pKHdr->KernelHeapSize = 0;
-        pKHdr->GeneralStateHeapSize = 0;
-        pKHdr->DynamicStateHeapSize = 0;
-        pKHdr->SurfaceStateHeapSize = 0;
-        pKHdr->KernelUnpaddedSize = 0;
-        pBin += sizeof(SKernelBinaryHeaderCommon);
-        binSize += sizeof(SKernelBinaryHeaderCommon);
+    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
+    pKHdr->CheckSum = 0;
+    pKHdr->ShaderHashCode = 0;
+    pKHdr->KernelNameSize = 8;
+    pKHdr->PatchListSize = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    pKHdr->KernelHeapSize = 0;
+    pKHdr->GeneralStateHeapSize = 0;
+    pKHdr->DynamicStateHeapSize = 0;
+    pKHdr->SurfaceStateHeapSize = 0;
+    pKHdr->KernelUnpaddedSize = 0;
+    pBin += sizeof(SKernelBinaryHeaderCommon);
+    binSize += sizeof(SKernelBinaryHeaderCommon);
 
-        strcpy(pBin, "TstCopy");
-        pBin += pKHdr->KernelNameSize;
-        binSize += pKHdr->KernelNameSize;
+    strcpy(pBin, "TstCopy");
+    pBin += pKHdr->KernelNameSize;
+    binSize += pKHdr->KernelNameSize;
 
-        SPatchGlobalMemoryObjectKernelArgument *pPatch = (SPatchGlobalMemoryObjectKernelArgument *)pBin;
-        pPatch->Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-        pPatch->Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-        pPatch->ArgumentNumber = 0;
-        pPatch->Offset = 0x40;
-        pPatch->LocationIndex = iOpenCL::INVALID_INDEX;
-        pPatch->LocationIndex2 = iOpenCL::INVALID_INDEX;
-        binSize += pPatch->Size;
-        pBin += pPatch->Size;
+    SPatchGlobalMemoryObjectKernelArgument *pPatch = (SPatchGlobalMemoryObjectKernelArgument *)pBin;
+    pPatch->Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    pPatch->Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    pPatch->ArgumentNumber = 0;
+    pPatch->Offset = 0x40;
+    pPatch->LocationIndex = iOpenCL::INVALID_INDEX;
+    pPatch->LocationIndex2 = iOpenCL::INVALID_INDEX;
+    binSize += pPatch->Size;
+    pBin += pPatch->Size;
 
-        ArrayRef<const uint8_t> kernelBlob(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin));
-        pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(kernelBlob);
+    ArrayRef<const uint8_t> kernelBlob(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin));
+    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(kernelBlob);
 
-        // Decode prepared program binary
-        pProgram->genBinary = makeCopy(&genBin[0], binSize);
-        pProgram->genBinarySize = binSize;
-        retVal = pProgram->processGenBinary();
-    }
-    ASSERT_EQ(CL_SUCCESS, retVal);
+    // Decode prepared program binary
+    pProgram->genBinary = makeCopy(&genBin[0], binSize);
+    pProgram->genBinarySize = binSize;
+    retVal = pProgram->processGenBinary();
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete pProgram;
 }
@@ -2208,52 +2080,50 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
     retVal = CL_INVALID_BINARY;
     binSize = 0;
 
-    if (pDevice != nullptr) {
-        // Prepare simple program binary containing patch token PATCH_TOKEN_GTPIN_FREE_GRF_INFO
-        SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-        pBHdr->Magic = iOpenCL::MAGIC_CL;
-        pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-        pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-        pBHdr->GPUPointerSizeInBytes = 8;
-        pBHdr->NumberOfKernels = 1;
-        pBHdr->SteppingId = 0;
-        pBHdr->PatchListSize = 0;
-        pBin += sizeof(SProgramBinaryHeader);
-        binSize += sizeof(SProgramBinaryHeader);
+    // Prepare simple program binary containing patch token PATCH_TOKEN_GTPIN_FREE_GRF_INFO
+    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
+    pBHdr->Magic = iOpenCL::MAGIC_CL;
+    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    pBHdr->GPUPointerSizeInBytes = 8;
+    pBHdr->NumberOfKernels = 1;
+    pBHdr->SteppingId = 0;
+    pBHdr->PatchListSize = 0;
+    pBin += sizeof(SProgramBinaryHeader);
+    binSize += sizeof(SProgramBinaryHeader);
 
-        uint32_t patchTokenSize = sizeof(iOpenCL::SPatchGtpinFreeGRFInfo) + GRF_INFO_SIZE;
-        SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-        pKHdr->CheckSum = 0;
-        pKHdr->ShaderHashCode = 0;
-        pKHdr->KernelNameSize = 8;
-        pKHdr->PatchListSize = patchTokenSize;
-        pKHdr->KernelHeapSize = 0;
-        pKHdr->GeneralStateHeapSize = 0;
-        pKHdr->DynamicStateHeapSize = 0;
-        pKHdr->SurfaceStateHeapSize = 0;
-        pKHdr->KernelUnpaddedSize = 0;
-        pBin += sizeof(SKernelBinaryHeaderCommon);
-        binSize += sizeof(SKernelBinaryHeaderCommon);
+    uint32_t patchTokenSize = sizeof(iOpenCL::SPatchGtpinFreeGRFInfo) + GRF_INFO_SIZE;
+    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
+    pKHdr->CheckSum = 0;
+    pKHdr->ShaderHashCode = 0;
+    pKHdr->KernelNameSize = 8;
+    pKHdr->PatchListSize = patchTokenSize;
+    pKHdr->KernelHeapSize = 0;
+    pKHdr->GeneralStateHeapSize = 0;
+    pKHdr->DynamicStateHeapSize = 0;
+    pKHdr->SurfaceStateHeapSize = 0;
+    pKHdr->KernelUnpaddedSize = 0;
+    pBin += sizeof(SKernelBinaryHeaderCommon);
+    binSize += sizeof(SKernelBinaryHeaderCommon);
 
-        strcpy(pBin, "TstCopy");
-        pBin += pKHdr->KernelNameSize;
-        binSize += pKHdr->KernelNameSize;
+    strcpy(pBin, "TstCopy");
+    pBin += pKHdr->KernelNameSize;
+    binSize += pKHdr->KernelNameSize;
 
-        SPatchGtpinFreeGRFInfo *pPatch = (SPatchGtpinFreeGRFInfo *)pBin;
-        pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_FREE_GRF_INFO;
-        pPatch->Size = patchTokenSize;
-        pPatch->BufferSize = GRF_INFO_SIZE;
+    SPatchGtpinFreeGRFInfo *pPatch = (SPatchGtpinFreeGRFInfo *)pBin;
+    pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_FREE_GRF_INFO;
+    pPatch->Size = patchTokenSize;
+    pPatch->BufferSize = GRF_INFO_SIZE;
 
-        binSize += pPatch->Size;
-        pBin += pPatch->Size;
-        pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
+    binSize += pPatch->Size;
+    pBin += pPatch->Size;
+    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
 
-        // Decode prepared program binary
-        pProgram->genBinary = makeCopy(&genBin[0], binSize);
-        pProgram->genBinarySize = binSize;
-        retVal = pProgram->processGenBinary();
-    }
-    ASSERT_EQ(CL_SUCCESS, retVal);
+    // Decode prepared program binary
+    pProgram->genBinary = makeCopy(&genBin[0], binSize);
+    pProgram->genBinarySize = binSize;
+    retVal = pProgram->processGenBinary();
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete pProgram;
 #undef GRF_INFO_SIZE
@@ -2369,25 +2239,7 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
 }
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
-    class MyCompilerInterface : public CompilerInterface {
-      public:
-        MyCompilerInterface() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
-        ~MyCompilerInterface() override{};
-
-        TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) override {
-            strcpy_s(&buildOptions[0], sizeof(buildOptions), input.apiOptions.begin());
-            strcpy_s(&buildInternalOptions[0], sizeof(buildInternalOptions), input.internalOptions.begin());
-            return TranslationOutput::ErrorCode::Success;
-        }
-        void getBuildOptions(std::string &s) { s = buildOptions; }
-        void getBuildInternalOptions(std::string &s) { s = buildInternalOptions; }
-
-      protected:
-        char buildOptions[256];
-        char buildInternalOptions[1024];
-    };
-
-    auto cip = std::make_unique<MyCompilerInterface>();
+    auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
     MockExecutionEnvironment executionEnvironment(cip.get());
     auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
@@ -2395,45 +2247,24 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     program->setDevice(pDevice);
     program->sourceCode = "__kernel mock() {}";
 
-    // Check default build options
-    std::string s1;
-    std::string s2;
-    cip->getBuildOptions(s1);
-    size_t pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_EQ(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_EQ(pos, std::string::npos);
-
-    // Ask to build created program without "-cl-intel-gtpin-rera" flag.
-    s1.assign("");
-    s2.assign("");
-    cl_int retVal = program->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, false);
+    // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
+    cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
-    cip->getBuildOptions(s1);
-    pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_NE(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_EQ(pos, std::string::npos);
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
 
-    // Ask to build created program with "-cl-intel-gtpin-rera" flag.
-    s1.assign("");
-    s2.assign("");
-    retVal = program->build(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", nullptr, nullptr, false);
+    // Ask to build created program with NEO::CompilerOptions::gtpinRera flag.
+    cip->buildOptions.clear();
+    cip->buildInternalOptions.clear();
+    retVal = program->build(0, nullptr, CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str(), nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
-    cip->getBuildOptions(s1);
-    pos = s1.find("-cl-fast-relaxed-math");
-    EXPECT_EQ(pos, std::string::npos);
-    pos = s1.find("-cl-finite-math-only");
-    EXPECT_NE(pos, std::string::npos);
-    cip->getBuildInternalOptions(s2);
-    pos = s2.find("-cl-intel-gtpin-rera");
-    EXPECT_NE(pos, std::string::npos);
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::finiteMathOnly)) << cip->buildOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
 }
 
 TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
@@ -2599,7 +2430,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
     auto &internalOptions = program.getInternalOptions();
     std::string s1 = internalOptions;
-    size_t pos = s1.find("-m32");
+    size_t pos = s1.find(NEO::CompilerOptions::arch32bit);
     if (is64bit) {
         EXPECT_NE(pos, std::string::npos);
     } else {
@@ -2610,14 +2441,13 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
 TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram prog(*pDevice->getExecutionEnvironment(), pContext, false);
     auto &internalOpts = prog.getInternalOptions();
-    auto it = internalOpts.find("-cl-intel-has-buffer-offset-arg ");
 
     HardwareCapabilities hwCaps = {0};
     HwHelper::get(prog.getDevice(0).getHardwareInfo().platform.eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, prog.getDevice(0).getHardwareInfo());
     if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
-        EXPECT_NE(std::string::npos, it);
+        EXPECT_TRUE(CompilerOptions::contains(internalOpts, CompilerOptions::hasBufferOffsetArg));
     } else {
-        EXPECT_EQ(std::string::npos, it);
+        EXPECT_FALSE(CompilerOptions::contains(internalOpts, CompilerOptions::hasBufferOffsetArg));
     }
 }
 
@@ -3022,10 +2852,9 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreAddedToP
     MockProgram program(executionEnvironment);
     program.getInternalOptions().erase();
     EXPECT_EQ(nullptr, program.getDevicePtr());
-    const char *internalOption = "-cl-intel-gtpin-rera";
-    std::string buildOptions(internalOption);
-    program.extractInternalOptionsForward(buildOptions);
-    EXPECT_TRUE(program.getInternalOptions() == std::string(internalOption) + " ");
+    std::string buildOptions(NEO::CompilerOptions::gtpinRera);
+    program.extractInternalOptions(buildOptions);
+    EXPECT_STREQ(program.getInternalOptions().c_str(), NEO::CompilerOptions::gtpinRera.data());
 }
 
 TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreNotAddedToProgramInternalOptions) {
@@ -3035,7 +2864,7 @@ TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreN
     EXPECT_EQ(nullptr, program.getDevicePtr());
     const char *internalOption = "-unknown-internal-options-123";
     std::string buildOptions(internalOption);
-    program.extractInternalOptionsForward(buildOptions);
+    program.extractInternalOptions(buildOptions);
     EXPECT_EQ(0u, program.getInternalOptions().length());
 }
 
@@ -3044,9 +2873,9 @@ TEST_F(ProgramTests, givenProgramWhenAllInternalOptionsArePassedMixedWithUnknown
     MockProgram program(executionEnvironment);
     program.getInternalOptions().erase();
     EXPECT_EQ(nullptr, program.getDevicePtr());
-    std::string buildOptions = "### -cl-intel-gtpin-rera ### -cl-intel-greater-than-4GB-buffer-required ###";
-    std::string expectedOutput = "-cl-intel-gtpin-rera -cl-intel-greater-than-4GB-buffer-required ";
-    program.extractInternalOptionsForward(buildOptions);
+    std::string buildOptions = CompilerOptions::concatenate("###", CompilerOptions::gtpinRera, "###", CompilerOptions::greaterThan4gbBuffersRequired, "###");
+    std::string expectedOutput = CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::greaterThan4gbBuffersRequired);
+    program.extractInternalOptions(buildOptions);
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
 }
 
@@ -3058,10 +2887,9 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithValidValuesThen
 
     program.isFlagOptionOverride = false;
     program.isOptionValueValidOverride = true;
-    std::string buildOptions = "-cl-intel-gtpin-rera someValue";
-    std::string expectedOutput = "-cl-intel-gtpin-rera someValue ";
-    program.extractInternalOptionsForward(buildOptions);
-    EXPECT_EQ(expectedOutput, program.getInternalOptions());
+    std::string buildOptions = CompilerOptions::concatenate(CompilerOptions::gtpinRera, "someValue");
+    program.extractInternalOptions(buildOptions);
+    EXPECT_EQ(buildOptions, program.getInternalOptions()) << program.getInternalOptions();
 }
 
 TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesThenTheyAreNotAddedToProgramInternalOptions) {
@@ -3070,16 +2898,16 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesTh
     EXPECT_EQ(nullptr, program.getDevicePtr());
 
     program.isFlagOptionOverride = false;
-    std::string buildOptions = "-cl-intel-gtpin-rera someValue";
+    std::string buildOptions = CompilerOptions::concatenate(CompilerOptions::gtpinRera, "someValue");
     std::string expectedOutput = "";
     program.getInternalOptions().erase();
-    program.extractInternalOptionsForward(buildOptions);
+    program.extractInternalOptions(buildOptions);
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
 
     program.isOptionValueValidOverride = true;
-    buildOptions = "-cl-intel-gtpin-rera ";
+    buildOptions = CompilerOptions::gtpinRera;
     program.getInternalOptions().erase();
-    program.extractInternalOptionsForward(buildOptions);
+    program.extractInternalOptions(buildOptions);
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
 }
 

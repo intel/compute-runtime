@@ -21,12 +21,13 @@
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/kernel_info.h"
 
+#include "compiler_options.h"
+
 #include <sstream>
 
 namespace NEO {
 
 const std::string Program::clOptNameClVer("-cl-std=CL");
-const std::string Program::clOptNameUniformWgs{"-cl-uniform-work-group-size"};
 
 Program::Program(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false) {
     numDevices = 0;
@@ -72,20 +73,20 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         force32BitAddressess = pDevice->getDeviceInfo().force32BitAddressess;
 
         if (force32BitAddressess) {
-            internalOptions += "-m32 ";
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
         }
 
         if (pDevice->areSharedSystemAllocationsAllowed() ||
             DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
-            internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
         }
 
         if (DebugManager.flags.UseBindlessBuffers.get()) {
-            internalOptions += "-cl-intel-use-bindless-buffers ";
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
         }
 
         if (DebugManager.flags.UseBindlessImages.get()) {
-            internalOptions += "-cl-intel-use-bindless-images ";
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         }
 
         kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
@@ -96,11 +97,11 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         }
 
         if (enableStatelessToStatefullWithOffset) {
-            internalOptions += "-cl-intel-has-buffer-offset-arg ";
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
         }
     }
 
-    internalOptions += "-fpreserve-vec3-type ";
+    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
 }
 
 Program::~Program() {
@@ -432,7 +433,7 @@ void Program::updateNonUniformFlag() {
         programOptionVersion = majorV * 10u + minorV;
     }
 
-    if (programOptionVersion >= 20u && options.find(clOptNameUniformWgs) == std::string::npos) {
+    if (programOptionVersion >= 20u && (false == CompilerOptions::contains(options, CompilerOptions::uniformWorkgroupSize))) {
         allowNonUniform = true;
     }
 }

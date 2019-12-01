@@ -8,12 +8,13 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/elf/writer.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+
+#include "compiler_options.h"
 
 #include <cstring>
 
@@ -67,7 +68,7 @@ cl_int Program::link(
             appendKernelDebugOptions();
         }
 
-        isCreateLibrary = (strstr(options.c_str(), "-create-library") != nullptr);
+        isCreateLibrary = CompilerOptions::contains(options, CompilerOptions::createLibrary);
 
         buildStatus = CL_BUILD_IN_PROGRESS;
 

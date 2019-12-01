@@ -19,6 +19,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "CL/cl.h"
+#include "compiler_options.h"
 #include "gtest/gtest.h"
 
 #include <type_traits>
@@ -267,7 +268,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         retVal = pProgram->build(
             1,
             &deviceId,
-            "-cl-intel-greater-than-4GB-buffer-required",
+            CompilerOptions::greaterThan4gbBuffersRequired,
             nullptr,
             nullptr,
             false);

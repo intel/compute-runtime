@@ -6,8 +6,6 @@
 
 set(RUNTIME_SRCS_COMPILER_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.h

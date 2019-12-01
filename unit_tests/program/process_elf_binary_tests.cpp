@@ -12,6 +12,7 @@
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_program.h"
 
+#include "compiler_options.h"
 #include "gtest/gtest.h"
 
 #include <cstring>
@@ -218,7 +219,7 @@ TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
     size_t optionsSize = strlen(options.c_str()) + 1;
-    std::string buildOptionsNotEmpty = "-cl-opt-disable -DDEF_WAS_SPECIFIED=1";
+    std::string buildOptionsNotEmpty = CompilerOptions::concatenate(CompilerOptions::optDisable, "-DDEF_WAS_SPECIFIED=1");
     EXPECT_EQ(0, memcmp(buildOptionsNotEmpty.c_str(), options.c_str(), optionsSize));
     EXPECT_NE(0u, binaryVersion);
 }

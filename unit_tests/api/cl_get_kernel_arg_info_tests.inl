@@ -14,6 +14,7 @@
 #include "unit_tests/helpers/test_files.h"
 
 #include "cl_api_tests.h"
+#include "compiler_options.h"
 
 using namespace NEO;
 
@@ -53,7 +54,7 @@ TEST_F(clGetKernelArgInfoTests, GivenValidParamsWhenGettingKernelArgInfoThenSucc
         pProgram,
         num_devices,
         devices,
-        "-cl-kernel-arg-info",
+        CompilerOptions::argInfo,
         nullptr,
         nullptr);
 

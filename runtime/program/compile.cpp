@@ -7,12 +7,12 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/elf/writer.h"
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
+#include "compiler_options.h"
 #include "program.h"
 
 #include <cstring>
@@ -79,14 +79,11 @@ cl_int Program::compile(
 
         options = (buildOptions != nullptr) ? buildOptions : "";
 
-        const std::vector<std::string> optionsToExtract{"-cl-intel-gtpin-rera", "-cl-intel-greater-than-4GB-buffer-required"};
-
-        for (const auto &optionString : optionsToExtract) {
+        for (const auto optionString : {CompilerOptions::gtpinRera, CompilerOptions::greaterThan4gbBuffersRequired}) {
             size_t pos = options.find(optionString);
             if (pos != std::string::npos) {
                 options.erase(pos, optionString.length());
-                internalOptions.append(optionString);
-                internalOptions.append(" ");
+                CompilerOptions::concatenateAppend(internalOptions, optionString);
             }
         }
 
@@ -138,7 +135,10 @@ cl_int Program::compile(
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
-        internalOptions.append(platform()->peekCompilerExtensions());
+        auto compilerExtensionsOptions = platform()->peekCompilerExtensions();
+        if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
+            CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
+        }
 
         if (isKernelDebugEnabled()) {
             std::string filename;

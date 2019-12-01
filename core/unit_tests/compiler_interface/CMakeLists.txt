@@ -7,6 +7,7 @@
 set(NEO_CORE_COMPILER_INTERFACE_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_cache_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linker_mock.h
   ${CMAKE_CURRENT_SOURCE_DIR}/linker_tests.cpp

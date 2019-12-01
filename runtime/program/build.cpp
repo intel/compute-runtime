@@ -7,7 +7,6 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/utilities/time_measure_wrapper.h"
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/validators.h"
@@ -16,6 +15,8 @@
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+
+#include "compiler_options.h"
 
 #include <cstring>
 #include <iterator>
@@ -96,7 +97,7 @@ cl_int Program::build(
 
             auto compilerExtensionsOptions = platform()->peekCompilerExtensions();
             if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
-                internalOptions.append(compilerExtensionsOptions);
+                CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
             }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
@@ -167,12 +168,11 @@ cl_int Program::build(
 }
 
 bool Program::appendKernelDebugOptions() {
-    internalOptions.append(CompilerOptions::debugKernelEnable);
-    options.append(" -g ");
-    if (pDevice->getSourceLevelDebugger()) {
-        if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
-            options.append("-cl-opt-disable ");
-        }
+    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::debugKernelEnable);
+    CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
+    auto sourceLevelDebugger = pDevice->getSourceLevelDebugger();
+    if (sourceLevelDebugger && sourceLevelDebugger->isOptimizationDisabled()) {
+        CompilerOptions::concatenateAppend(options, CompilerOptions::optDisable);
     }
     return true;
 }
@@ -201,24 +201,19 @@ cl_int Program::build(const cl_device_id device, const char *buildOptions, bool 
 }
 
 void Program::extractInternalOptions(const std::string &options) {
-    std::istringstream inputStringStream(options);
-    std::vector<std::string> optionsVector{std::istream_iterator<std::string>{inputStringStream},
-                                           std::istream_iterator<std::string>{}};
+    auto tokenized = CompilerOptions::tokenize(options);
     for (auto &optionString : internalOptionsToExtract) {
-        auto element = std::find(optionsVector.begin(), optionsVector.end(), optionString);
-        if (element == optionsVector.end()) {
+        auto element = std::find(tokenized.begin(), tokenized.end(), optionString);
+        if (element == tokenized.end()) {
             continue;
         }
 
         if (isFlagOption(optionString)) {
-            internalOptions.append(optionString);
-            internalOptions.append(" ");
-        } else if ((element + 1 != optionsVector.end()) &&
+            CompilerOptions::concatenateAppend(internalOptions, optionString);
+        } else if ((element + 1 != tokenized.end()) &&
                    isOptionValueValid(optionString, *(element + 1))) {
-            internalOptions.append(optionString);
-            internalOptions.append(" ");
-            internalOptions.append(*(element + 1));
-            internalOptions.append(" ");
+            CompilerOptions::concatenateAppend(internalOptions, optionString);
+            CompilerOptions::concatenateAppend(internalOptions, *(element + 1));
         }
     }
 }

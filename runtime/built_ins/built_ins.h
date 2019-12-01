@@ -13,6 +13,7 @@
 
 #include "CL/cl.h"
 #include "built_in_ops.h"
+#include "compiler_options.h"
 
 #include <array>
 #include <cstdint>
@@ -35,7 +36,14 @@ struct MultiDispatchInfo;
 class Program;
 class SchedulerKernel;
 
-extern const char *mediaKernelsBuildOptions;
+static constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
+    "-D cl_intel_device_side_advanced_vme_enable",
+    "-D cl_intel_device_side_avc_vme_enable",
+    "-D cl_intel_device_side_vme_enable",
+    "-D cl_intel_media_block_io",
+    CompilerOptions::fastRelaxedMath};
+
+static constexpr CompilerOptions::ConstConcatenation<> mediaKernelsBuildOptions{mediaKernelsBuildOptionsList};
 
 BuiltinResourceT createBuiltinResource(const char *ptr, size_t size);
 BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);

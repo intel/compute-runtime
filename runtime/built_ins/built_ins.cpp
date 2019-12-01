@@ -21,17 +21,12 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/program/program.h"
 
+#include "compiler_options.h"
+
 #include <cstdint>
 #include <sstream>
 
 namespace NEO {
-
-const char *mediaKernelsBuildOptions = {
-    "-D cl_intel_device_side_advanced_vme_enable "
-    "-D cl_intel_device_side_avc_vme_enable "
-    "-D cl_intel_device_side_vme_enable "
-    "-D cl_intel_media_block_io "
-    "-cl-fast-relaxed-math "};
 
 BuiltIns::BuiltIns() {
     builtinsLib.reset(new BuiltinsLib());
@@ -297,7 +292,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBu
         : BuiltInOp<EBuiltInOps::CopyBufferToBuffer>(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::CopyBufferToBufferStateless,
-                 "-cl-intel-greater-than-4GB-buffer-required",
+                 CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
                  "CopyBufferToBufferMiddle", kernMiddle,
                  "CopyBufferToBufferRightLeftover", kernRightLeftover);
@@ -419,7 +414,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltI
         : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::CopyBufferRectStateless,
-                 "-cl-intel-greater-than-4GB-buffer-required",
+                 CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferRectBytes2d", kernelBytes[0],
                  "CopyBufferRectBytes2d", kernelBytes[1],
                  "CopyBufferRectBytes3d", kernelBytes[2]);
@@ -518,7 +513,7 @@ class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::FillBufferStateless,
-                 "-cl-intel-greater-than-4GB-buffer-required",
+                 CompilerOptions::greaterThan4gbBuffersRequired,
                  "FillBufferLeftLeftover", kernLeftLeftover,
                  "FillBufferMiddle", kernMiddle,
                  "FillBufferRightLeftover", kernRightLeftover);
@@ -628,7 +623,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EB
         : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::CopyBufferToImage3dStateless,
-                 "-cl-intel-greater-than-4GB-buffer-required",
+                 CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToImage3dBytes", kernelBytes[0],
                  "CopyBufferToImage3d2Bytes", kernelBytes[1],
                  "CopyBufferToImage3d4Bytes", kernelBytes[2],
@@ -742,7 +737,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EB
         : BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>(kernelsLib) {
         populate(context, device,
                  EBuiltInOps::CopyImage3dToBufferStateless,
-                 "-cl-intel-greater-than-4GB-buffer-required",
+                 CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyImage3dToBufferBytes", kernelBytes[0],
                  "CopyImage3dToBuffer2Bytes", kernelBytes[1],
                  "CopyImage3dToBuffer4Bytes", kernelBytes[2],

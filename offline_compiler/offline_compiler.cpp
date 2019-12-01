@@ -21,6 +21,7 @@
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
 #include "cif/import/library_api.h"
+#include "compiler_options.h"
 #include "igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
@@ -46,24 +47,6 @@ namespace NEO {
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
-////////////////////////////////////////////////////////////////////////////////
-// StringsAreEqual
-////////////////////////////////////////////////////////////////////////////////
-bool stringsAreEqual(const char *string1, const char *string2) {
-    if (string2 == nullptr)
-        return false;
-    return (strcmp(string1, string2) == 0);
-}
-
-bool stringsAreEqual(std::string string1, std::string string2) {
-    if (string2.empty())
-        return false;
-    return (string1 == string2);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// convertToPascalCase
-////////////////////////////////////////////////////////////////////////////////
 std::string convertToPascalCase(const std::string &inString) {
     std::string outString;
     bool capitalize = true;
@@ -81,22 +64,12 @@ std::string convertToPascalCase(const std::string &inString) {
     return outString;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// ctor
-////////////////////////////////////////////////////////////////////////////////
 OfflineCompiler::OfflineCompiler() = default;
-
-////////////////////////////////////////////////////////////////////////////////
-// dtor
-////////////////////////////////////////////////////////////////////////////////
 OfflineCompiler::~OfflineCompiler() {
     delete[] irBinary;
     delete[] genBinary;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Create
-////////////////////////////////////////////////////////////////////////////////
 OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, int &retVal) {
     retVal = CL_SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
@@ -113,9 +86,6 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
     return pOffCompiler;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// buildSourceCode
-////////////////////////////////////////////////////////////////////////////////
 int OfflineCompiler::buildSourceCode() {
     int retVal = CL_SUCCESS;
 
@@ -196,9 +166,6 @@ int OfflineCompiler::buildSourceCode() {
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// build
-////////////////////////////////////////////////////////////////////////////////
 int OfflineCompiler::build() {
     int retVal = CL_SUCCESS;
 
@@ -212,9 +179,6 @@ int OfflineCompiler::build() {
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// updateBuildLog
-////////////////////////////////////////////////////////////////////////////////
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
     std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
     if (errorString[0] != '\0') {
@@ -226,21 +190,15 @@ void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t erro
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// getBuildLog
-////////////////////////////////////////////////////////////////////////////////
 std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// getHardwareInfo
-////////////////////////////////////////////////////////////////////////////////
 int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
     int retVal = CL_INVALID_DEVICE;
 
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
-        if (stringsAreEqual(pDeviceName, hardwarePrefix[productId])) {
+        if (hardwarePrefix[productId] && (0 == strcmp(pDeviceName, hardwarePrefix[productId]))) {
             if (hardwareInfoTable[productId]) {
                 hwInfo = hardwareInfoTable[productId];
                 familyNameWithType.clear();
@@ -255,9 +213,6 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// getStringWithinDelimiters
-////////////////////////////////////////////////////////////////////////////////
 std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
     size_t start = src.find("R\"===(");
     size_t stop = src.find(")===\"");
@@ -274,9 +229,6 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
     return dst;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Initialize
-////////////////////////////////////////////////////////////////////////////////
 int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs) {
     int retVal = CL_SUCCESS;
     const char *source = nullptr;
@@ -310,7 +262,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             if (internalOptionsRead && !isQuiet()) {
                 printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
             }
-            internalOptions.append(internalOptionsFromFile);
+            CompilerOptions::concatenateAppend(internalOptions, internalOptionsFromFile);
         }
     }
 
@@ -448,9 +400,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// ParseCommandLine
-////////////////////////////////////////////////////////////////////////////////
 int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
     int retVal = CL_SUCCESS;
     bool compile32 = false;
@@ -462,57 +411,53 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
 
     for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
-        if (stringsAreEqual(argv[argIndex], "compile")) {
+        const auto &currArg = argv[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < numArgs);
+        if ("compile" == currArg) {
             //skip it
-        } else if ((stringsAreEqual(argv[argIndex], "-file")) &&
-                   (argIndex + 1 < numArgs)) {
+        } else if (("-file" == currArg) && hasMoreArgs) {
             inputFile = argv[argIndex + 1];
             argIndex++;
-        } else if ((stringsAreEqual(argv[argIndex], "-output")) &&
-                   (argIndex + 1 < numArgs)) {
+        } else if (("-output" == currArg) && hasMoreArgs) {
             outputFile = argv[argIndex + 1];
             argIndex++;
-        } else if (stringsAreEqual(argv[argIndex], "-32")) {
+        } else if ((CompilerOptions::arch32bit == currArg) || ("-32" == currArg)) {
             compile32 = true;
-            internalOptions.append(" -m32 ");
-        } else if (stringsAreEqual(argv[argIndex], "-64")) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
+        } else if ((CompilerOptions::arch64bit == currArg) || ("-64" == currArg)) {
             compile64 = true;
-            internalOptions.append(" -m64 ");
-        } else if (stringsAreEqual(argv[argIndex], "-cl-intel-greater-than-4GB-buffer-required")) {
-            internalOptions.append(" -cl-intel-greater-than-4GB-buffer-required ");
-        } else if ((stringsAreEqual(argv[argIndex], "-device")) &&
-                   (argIndex + 1 < numArgs)) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch64bit);
+        } else if (CompilerOptions::greaterThan4gbBuffersRequired == currArg) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
+        } else if (("-device" == currArg) && hasMoreArgs) {
             deviceName = argv[argIndex + 1];
             argIndex++;
-        } else if (stringsAreEqual(argv[argIndex], "-llvm_text")) {
+        } else if ("-llvm_text" == currArg) {
             useLlvmText = true;
-        } else if (stringsAreEqual(argv[argIndex], "-llvm_bc")) {
+        } else if ("-llvm_bc" == currArg) {
             useLlvmBc = true;
-        } else if (stringsAreEqual(argv[argIndex], "-llvm_input")) {
+        } else if ("-llvm_input" == currArg) {
             inputFileLlvm = true;
-        } else if (stringsAreEqual(argv[argIndex], "-spirv_input")) {
+        } else if ("-spirv_input" == currArg) {
             inputFileSpirV = true;
-        } else if (stringsAreEqual(argv[argIndex], "-cpp_file")) {
+        } else if ("-cpp_file" == currArg) {
             useCppFile = true;
-        } else if ((stringsAreEqual(argv[argIndex], "-options")) &&
-                   (argIndex + 1 < numArgs)) {
+        } else if (("-options" == currArg) && hasMoreArgs) {
             options = argv[argIndex + 1];
             argIndex++;
-        } else if ((stringsAreEqual(argv[argIndex], "-internal_options")) &&
-                   (argIndex + 1 < numArgs)) {
-            internalOptions.append(argv[argIndex + 1]);
+        } else if (("-internal_options" == currArg) && hasMoreArgs) {
+            CompilerOptions::concatenateAppend(internalOptions, argv[argIndex + 1]);
             argIndex++;
-        } else if (stringsAreEqual(argv[argIndex], "-options_name")) {
+        } else if ("-options_name" == currArg) {
             useOptionsSuffix = true;
-        } else if ((stringsAreEqual(argv[argIndex], "-out_dir")) &&
-                   (argIndex + 1 < numArgs)) {
+        } else if (("-out_dir" == currArg) && hasMoreArgs) {
             outputDirectory = argv[argIndex + 1];
             argIndex++;
-        } else if (stringsAreEqual(argv[argIndex], "-q")) {
+        } else if ("-q" == currArg) {
             quiet = true;
-        } else if (stringsAreEqual(argv[argIndex], "-output_no_suffix")) {
+        } else if ("-output_no_suffix" == currArg) {
             outputNoSuffix = true;
-        } else if (stringsAreEqual(argv[argIndex], "--help")) {
+        } else if ("--help" == currArg) {
             printUsage();
             retVal = PRINT_USAGE;
         } else {
@@ -541,7 +486,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
                 std::string extensionsList = getExtensionsList(*hwInfo);
-                internalOptions.append(convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
+                CompilerOptions::concatenateAppend(internalOptions, convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
             }
         }
     }
@@ -558,7 +503,7 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
         isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
     if (isStatelessToStatefulBufferOffsetSupported) {
-        internalOptions += "-cl-intel-has-buffer-offset-arg ";
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 }
 
@@ -567,9 +512,6 @@ void OfflineCompiler::parseDebugSettings() {
     resolveExtraSettings();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// ParseBinAsCharArray
-////////////////////////////////////////////////////////////////////////////////
 std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName) {
     std::string builtinName = convertToPascalCase(fileName);
     std::ostringstream out;
@@ -622,9 +564,6 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     return out.str();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// GetFileNameTrunk
-////////////////////////////////////////////////////////////////////////////////
 std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
     size_t slashPos = filePath.find_last_of("\\/", filePath.size()) + 1;
     size_t extPos = filePath.find_last_of(".", filePath.size());
@@ -655,9 +594,7 @@ std::string getDevicesTypes() {
 
     return os.str();
 }
-////////////////////////////////////////////////////////////////////////////////
-// PrintUsage
-////////////////////////////////////////////////////////////////////////////////
+
 void OfflineCompiler::printUsage() {
     printf(R"===(Compiles input file to Intel OpenCL GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
@@ -745,9 +682,6 @@ Examples :
            NEO::getDevicesTypes().c_str());
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// StoreBinary
-////////////////////////////////////////////////////////////////////////////////
 void OfflineCompiler::storeBinary(
     char *&pDst,
     size_t &dstSize,
@@ -764,9 +698,6 @@ void OfflineCompiler::storeBinary(
     memcpy_s(pDst, dstSize, pSrc, srcSize);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// GenerateElfBinary
-////////////////////////////////////////////////////////////////////////////////
 bool OfflineCompiler::generateElfBinary() {
     bool retVal = true;
 
@@ -795,9 +726,6 @@ bool OfflineCompiler::generateElfBinary() {
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// WriteOutAllFiles
-////////////////////////////////////////////////////////////////////////////////
 void OfflineCompiler::writeOutAllFiles() {
     std::string fileBase;
     std::string fileTrunk = getFileNameTrunk(inputFile);

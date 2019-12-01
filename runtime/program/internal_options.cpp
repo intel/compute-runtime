@@ -7,17 +7,20 @@
 
 #include "runtime/program/program.h"
 
+#include "compiler_options.h"
+
 #include <vector>
 
 namespace NEO {
 
-const std::vector<std::string> Program::internalOptionsToExtract = {"-cl-intel-gtpin-rera", "-cl-intel-greater-than-4GB-buffer-required"};
+const std::vector<ConstStringRef> Program::internalOptionsToExtract = {CompilerOptions::gtpinRera,
+                                                                       CompilerOptions::greaterThan4gbBuffersRequired};
 
-bool Program::isFlagOption(const std::string &option) {
+bool Program::isFlagOption(ConstStringRef option) {
     return true;
 }
 
-bool Program::isOptionValueValid(const std::string &option, const std::string &value) {
+bool Program::isOptionValueValid(ConstStringRef option, ConstStringRef value) {
     return false;
 }
 

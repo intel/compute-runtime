@@ -498,11 +498,11 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(this->pProgram->getInternalOptions(),
-                testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
+                testing::HasSubstr(std::string(NEO::CompilerOptions::greaterThan4gbBuffersRequired)));
 
     if (this->device->getDeviceInfo().force32BitAddressess) {
         EXPECT_THAT(this->pProgram->getInternalOptions(),
-                    testing::HasSubstr(std::string("-m32")));
+                    testing::HasSubstr(std::string(NEO::CompilerOptions::arch32bit)));
     }
 
     EXPECT_FALSE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);

@@ -16,6 +16,7 @@
 #include "unit_tests/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
+#include "compiler_options.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -399,9 +400,9 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             options->GetSizeRaw()) {
             std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
             // handle special option "-create-library" - just erase it
-            size_t pos = opts.find("-create-library", 0);
+            size_t pos = opts.find(CompilerOptions::createLibrary, 0);
             if (pos != std::string::npos) {
-                opts.erase(pos, 15); // length of "-create-library" is 15 chars
+                opts.erase(pos, CompilerOptions::createLibrary.length());
             }
             std::replace(opts.begin(), opts.end(), ' ', '_');
             inputFile.append(opts);

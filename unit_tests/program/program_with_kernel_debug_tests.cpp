@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/compiler_interface/compiler_options.h"
 #include "test.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/global_environment.h"
@@ -16,6 +15,7 @@
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_tests.h"
 
+#include "compiler_options.h"
 #include "gmock/gmock.h"
 
 #include <algorithm>
@@ -80,7 +80,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
                                           nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
+        EXPECT_TRUE(CompilerOptions::contains(receivedInternalOptions, CompilerOptions::debugKernelEnable)) << receivedInternalOptions;
         gEnvironment->fclPopDebugVars();
     }
 }
@@ -109,7 +109,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
                                           nullptr,
                                           nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-cl-opt-disable"));
+        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
     }
 }
 
@@ -139,7 +139,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
+        EXPECT_TRUE(CompilerOptions::contains(receivedInternalOptions, CompilerOptions::debugKernelEnable)) << receivedInternalOptions;
         gEnvironment->fclPopDebugVars();
     }
 }
@@ -161,7 +161,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-cl-opt-disable"));
+        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
     }
 }
 

@@ -9,6 +9,7 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/linker.h"
 #include "core/elf/writer.h"
+#include "core/utilities/const_stringref.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 
@@ -274,8 +275,8 @@ class Program : public BaseObject<_cl_program> {
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
     void extractInternalOptions(const std::string &options);
-    MOCKABLE_VIRTUAL bool isFlagOption(const std::string &option);
-    MOCKABLE_VIRTUAL bool isOptionValueValid(const std::string &option, const std::string &value);
+    MOCKABLE_VIRTUAL bool isFlagOption(ConstStringRef option);
+    MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
     MOCKABLE_VIRTUAL void applyAdditionalOptions();
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
@@ -284,7 +285,6 @@ class Program : public BaseObject<_cl_program> {
     void prepareLinkerInputStorage();
 
     static const std::string clOptNameClVer;
-    static const std::string clOptNameUniformWgs;
 
     cl_program_binary_type programBinaryType;
     bool isSpirV = false;
@@ -319,7 +319,7 @@ class Program : public BaseObject<_cl_program> {
     std::string sourceCode;
     std::string options;
     std::string internalOptions;
-    static const std::vector<std::string> internalOptionsToExtract;
+    static const std::vector<ConstStringRef> internalOptionsToExtract;
 
     uint32_t programOptionVersion;
     bool allowNonUniform;
