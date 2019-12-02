@@ -42,11 +42,11 @@ struct IntelTracingMtTest : public api_tests {
         for (int i = 0; i < iterationCount; ++i) {
             HostSideTracing::AtomicBackoff backoff;
 
-            status = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, maxStrSize, buffer, nullptr);
+            status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_NAME, maxStrSize, buffer, nullptr);
             EXPECT_EQ(CL_SUCCESS, status);
             backoff.pause();
 
-            status = clGetDeviceInfo(devices[0], CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, nullptr);
+            status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, nullptr);
             EXPECT_EQ(CL_SUCCESS, status);
             backoff.pause();
 
@@ -82,7 +82,7 @@ struct IntelTracingMtTest : public api_tests {
 };
 
 TEST_F(IntelTracingMtTest, SafeTracingFromMultipleThreads) {
-    status = clCreateTracingHandleINTEL(devices[0], callback, this, &handle);
+    status = clCreateTracingHandleINTEL(devices[testedRootDeviceIndex], callback, this, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
 
     status = clSetTracingPointINTEL(handle, CL_FUNCTION_clGetDeviceInfo, CL_TRUE);

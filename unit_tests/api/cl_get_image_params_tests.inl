@@ -16,11 +16,11 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct clGetImageParams : public api_fixture,
+struct clGetImageParams : public ApiFixture,
                           public T {
 
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_RGBA;
@@ -40,7 +40,7 @@ struct clGetImageParams : public api_fixture,
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_image_format imageFormat;

@@ -112,7 +112,7 @@ TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPoin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class EnqueueMapBufferFlagsTest : public api_fixture,
+class EnqueueMapBufferFlagsTest : public ApiFixture,
                                   public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueMapBufferFlagsTest() {
@@ -120,7 +120,7 @@ class EnqueueMapBufferFlagsTest : public api_fixture,
 
   protected:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         buffer_flags = GetParam();
 
         unsigned int bufferSize = 16;
@@ -141,7 +141,7 @@ class EnqueueMapBufferFlagsTest : public api_fixture,
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

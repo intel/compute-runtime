@@ -23,7 +23,7 @@ typedef api_tests clCreateProgramWithBuiltInKernelsTests;
 struct clCreateProgramWithBuiltInVmeKernelsTests : clCreateProgramWithBuiltInKernelsTests {
     void SetUp() override {
         clCreateProgramWithBuiltInKernelsTests::SetUp();
-        if (!castToObject<Device>(devices[0])->getHardwareInfo().capabilityTable.supportsVme) {
+        if (!castToObject<Device>(devices[testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsVme) {
             GTEST_SKIP();
         }
     }
@@ -46,10 +46,10 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenInvalidContextWhenCreatingPr
 TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
-        pContext, // context
-        1,        // num_devices
-        devices,  // device_list
-        "",       // kernel_names
+        pContext,        // context
+        1,               // num_devices
+        &testedClDevice, // device_list
+        "",              // kernel_names
         &retVal);
     EXPECT_EQ(nullptr, program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -58,10 +58,10 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgram
 TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
-        pContext, // context
-        0,        // num_devices
-        devices,  // device_list
-        "",       // kernel_names
+        pContext,        // context
+        0,               // num_devices
+        &testedClDevice, // device_list
+        "",              // kernel_names
         &retVal);
     EXPECT_EQ(nullptr, program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -69,10 +69,10 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramW
 
 TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCreatingProgramWithBuiltInKernelsThenProgramIsNotCreated) {
     auto program = clCreateProgramWithBuiltInKernels(
-        pContext, // context
-        1,        // num_devices
-        devices,  // device_list
-        "",       // kernel_names
+        pContext,        // context
+        1,               // num_devices
+        &testedClDevice, // device_list
+        "",              // kernel_names
         nullptr);
     EXPECT_EQ(nullptr, program);
 }
@@ -80,7 +80,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCrea
 TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreated) {
     cl_int retVal = CL_SUCCESS;
 
-    auto pDev = castToObject<Device>(*devices);
+    auto pDev = pContext->getDevice(0);
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
 
     const char *kernelNamesString = {
@@ -97,7 +97,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCrea
     cl_program program = clCreateProgramWithBuiltInKernels(
         pContext,          // context
         1,                 // num_devices
-        devices,           // device_list
+        &testedClDevice,   // device_list
         kernelNamesString, // kernel_names
         &retVal);
 
@@ -124,7 +124,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWhenCrea
 TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOptionsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreatedWithThoseOptions) {
     cl_int retVal = CL_SUCCESS;
 
-    auto pDev = castToObject<Device>(*devices);
+    auto pDev = pContext->getDevice(0);
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
 
     const char *kernelNamesString = {
@@ -133,7 +133,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOpti
     cl_program program = clCreateProgramWithBuiltInKernels(
         pContext,          // context
         1,                 // num_devices
-        devices,           // device_list
+        &testedClDevice,   // device_list
         kernelNamesString, // kernel_names
         &retVal);
 
@@ -150,7 +150,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenValidMediaKernelsWithOpti
 TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
-    auto pDev = castToObject<Device>(*devices);
+    auto pDev = pContext->getDevice(0);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
     pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pContext, *pDev);
@@ -164,7 +164,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     cl_program program = clCreateProgramWithBuiltInKernels(
         pContext,          // context
         1,                 // num_devices
-        devices,           // device_list
+        &testedClDevice,   // device_list
         kernelNamesString, // kernel_names
         &retVal);
     restoreBuiltInBinaryName(pDev);
@@ -189,7 +189,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
 TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
-    auto pDev = castToObject<Device>(*devices);
+    auto pDev = pContext->getDevice(0);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
     pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pContext, *pDev);
@@ -203,7 +203,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_program program = clCreateProgramWithBuiltInKernels(
         pContext,          // context
         1,                 // num_devices
-        devices,           // device_list
+        &testedClDevice,   // device_list
         kernelNamesString, // kernel_names
         &retVal);
     restoreBuiltInBinaryName(pDev);
@@ -228,7 +228,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
 TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEstimateBidirectionalCheckKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
-    auto pDev = castToObject<Device>(*devices);
+    auto pDev = pContext->getDevice(0);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
     pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pContext, *pDev);
@@ -242,7 +242,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_program program = clCreateProgramWithBuiltInKernels(
         pContext,          // context
         1,                 // num_devices
-        devices,           // device_list
+        &testedClDevice,   // device_list
         kernelNamesString, // kernel_names
         &retVal);
     restoreBuiltInBinaryName(pDev);

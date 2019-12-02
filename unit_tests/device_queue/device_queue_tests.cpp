@@ -47,7 +47,7 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     using BaseClass = DeviceHostQueueFixture<DeviceQueue>;
     void SetUp() override {
         BaseClass::SetUp();
-        device = castToObject<Device>(devices[0]);
+        device = pContext->getDevice(0);
 
         if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
             GTEST_SKIP();

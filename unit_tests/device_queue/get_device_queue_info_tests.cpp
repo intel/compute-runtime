@@ -46,7 +46,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, context) {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, device) {
-    cl_device_id deviceExpected = devices[0];
+    cl_device_id deviceExpected = testedClDevice;
     cl_device_id deviceIdReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(

@@ -68,7 +68,7 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     cl_device_id programDevices;
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, sizeof(programDevices), &programDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(devices[0], programDevices);
+    EXPECT_EQ(devices[testedRootDeviceIndex], programDevices);
 
     size_t length = 0;
     char buffer[10240];

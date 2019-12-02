@@ -234,7 +234,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
     clReleaseMemObject(buffer);
 }
 
-class EnqueueReadBufferRectFlagsTest : public api_fixture,
+class EnqueueReadBufferRectFlagsTest : public ApiFixture,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueReadBufferRectFlagsTest() {
@@ -242,7 +242,7 @@ class EnqueueReadBufferRectFlagsTest : public api_fixture,
 
   protected:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         buffer_flags = GetParam();
 
         unsigned int bufferSize = 16;
@@ -263,7 +263,7 @@ class EnqueueReadBufferRectFlagsTest : public api_fixture,
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

@@ -15,44 +15,44 @@ typedef api_tests clRetainReleaseDeviceTests;
 
 namespace ULT {
 TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCountIsOne) {
-    cl_uint numEntries = 1;
-    cl_device_id devices[1];
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
 
     retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, numEntries, devices,
                             nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clRetainDevice(devices[0]);
+    retVal = clRetainDevice(devices[testedRootDeviceIndex]);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clRetainDevice(devices[0]);
+    retVal = clRetainDevice(devices[testedRootDeviceIndex]);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_uint theRef;
-    retVal = clGetDeviceInfo(devices[0], CL_DEVICE_REFERENCE_COUNT,
+    retVal = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_REFERENCE_COUNT,
                              sizeof(cl_uint), &theRef, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, theRef);
 }
 
 TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCountIsOne) {
-    cl_uint numEntries = 1;
-    cl_device_id devices[1];
+    constexpr cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, numEntries, devices,
-                            nullptr);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, numEntries, devices,
+                                 nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clReleaseDevice(devices[0]);
+    retVal = clReleaseDevice(devices[testedRootDeviceIndex]);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clReleaseDevice(devices[0]);
+    retVal = clReleaseDevice(devices[testedRootDeviceIndex]);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_uint theRef;
-    retVal = clGetDeviceInfo(devices[0], CL_DEVICE_REFERENCE_COUNT,
+    retVal = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_REFERENCE_COUNT,
                              sizeof(cl_uint), &theRef, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, theRef);

@@ -23,7 +23,7 @@ TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueT
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
 
-    cmdQ = clCreateCommandQueue(pContext, devices[0], properties, &retVal);
+    cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -33,7 +33,7 @@ TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueT
 }
 
 TEST_F(clCreateCommandQueueTest, GivenNullContextWhenCreatingCommandQueueThenInvalidContextErrorIsReturned) {
-    clCreateCommandQueue(nullptr, devices[0], 0, &retVal);
+    clCreateCommandQueue(nullptr, devices[testedRootDeviceIndex], 0, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
@@ -46,7 +46,7 @@ TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueT
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0xf0000;
 
-    cmdQ = clCreateCommandQueue(pContext, devices[0], properties, &retVal);
+    cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
 
     ASSERT_EQ(nullptr, cmdQ);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
@@ -55,7 +55,7 @@ TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueT
 TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
+    auto cmdq = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], ooq, &retVal);
     EXPECT_NE(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_SUCCESS);
     retVal = clReleaseCommandQueue(cmdq);
@@ -64,11 +64,11 @@ TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIs
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto mockDevice = castToObject<MockDevice>(devices[0]);
+    auto mockDevice = castToObject<MockDevice>(devices[testedRootDeviceIndex]);
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 
-    auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
+    auto cmdq = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], ooq, &retVal);
     EXPECT_EQ(DispatchMode::BatchedDispatch, csr.dispatchMode);
     retVal = clReleaseCommandQueue(cmdq);
 }
@@ -76,11 +76,11 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto mockDevice = castToObject<MockDevice>(devices[0]);
+    auto mockDevice = castToObject<MockDevice>(devices[testedRootDeviceIndex]);
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_FALSE(csr.isNTo1SubmissionModelEnabled());
 
-    auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
+    auto cmdq = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], ooq, &retVal);
     EXPECT_TRUE(csr.isNTo1SubmissionModelEnabled());
     retVal = clReleaseCommandQueue(cmdq);
 }

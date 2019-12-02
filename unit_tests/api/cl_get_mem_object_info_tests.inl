@@ -47,7 +47,7 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
     cl_mem buffer = nullptr;
 
     cl_queue_properties properties = 0;
-    cl_command_queue cmdQ = clCreateCommandQueue(pContext, devices[0], properties, &retVal);
+    cl_command_queue cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
 
     buffer = clCreateBuffer(
         pContext,

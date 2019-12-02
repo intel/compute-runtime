@@ -20,19 +20,19 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-class clSetEventCallbackTests : public api_fixture,
+class clSetEventCallbackTests : public ApiFixture,
                                 public ::testing::Test {
 
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         cbInvoked = 0;
         cbData = nullptr;
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;

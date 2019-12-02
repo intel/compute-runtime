@@ -18,14 +18,14 @@
 using namespace NEO;
 
 template <typename T>
-class EventFixture : public api_fixture, public T {
+class EventFixture : public ApiFixture, public T {
   public:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 };
 

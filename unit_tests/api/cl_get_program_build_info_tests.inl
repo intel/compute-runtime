@@ -52,7 +52,7 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_build_status buildStatus;
-    retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 
@@ -69,7 +69,7 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
 
@@ -83,12 +83,12 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
 
     // try to get program build info for invalid program object - should fail
-    retVal = clGetProgramBuildInfo(nullptr, devices[0], CL_PROGRAM_BUILD_STATUS, 0, nullptr, nullptr);
+    retVal = clGetProgramBuildInfo(nullptr, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     retVal = clReleaseProgram(pProgram);
@@ -118,7 +118,7 @@ TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCall
     EXPECT_EQ(CL_SUCCESS, binaryStatus);
 
     cl_build_status buildStatus;
-    retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 

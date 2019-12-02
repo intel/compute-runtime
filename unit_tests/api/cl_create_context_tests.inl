@@ -59,7 +59,7 @@ TEST_F(clCreateContextTests, returnsFail) {
 
 TEST_F(clCreateContextTests, invalidDevices) {
     cl_device_id devList[2];
-    devList[0] = devices[0];
+    devList[0] = devices[testedRootDeviceIndex];
     devList[1] = (cl_device_id)ptrGarbage;
 
     auto context = clCreateContext(nullptr, 2, devList, nullptr, nullptr, &retVal);

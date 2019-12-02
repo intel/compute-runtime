@@ -16,11 +16,11 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clEnqueueMapImageTests : public api_fixture,
+struct clEnqueueMapImageTests : public ApiFixture,
                                 public ::testing::Test {
 
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_RGBA;
@@ -40,7 +40,7 @@ struct clEnqueueMapImageTests : public api_fixture,
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_image_format imageFormat;
@@ -80,11 +80,11 @@ TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-struct clEnqueueMapImageYUVTests : public api_fixture,
+struct clEnqueueMapImageYUVTests : public ApiFixture,
                                    public ::testing::Test {
 
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_YUYV_INTEL;
@@ -104,7 +104,7 @@ struct clEnqueueMapImageYUVTests : public api_fixture,
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_image_format imageFormat;

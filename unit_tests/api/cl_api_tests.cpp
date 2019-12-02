@@ -15,23 +15,19 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace NEO {
-
-api_fixture::api_fixture()
-    : retVal(CL_SUCCESS), retSize(0), pCommandQueue(nullptr),
-      pContext(nullptr), pKernel(nullptr), pProgram(nullptr) {
-}
-
-void api_fixture::SetUp() {
+constexpr size_t ApiFixture::numRootDevices;
+void ApiFixture::SetUp() {
+    numDevicesBackup = numRootDevices;
     PlatformFixture::SetUp();
 
-    ASSERT_EQ(retVal, CL_SUCCESS);
-    auto pDevice = pPlatform->getDevice(0);
+    auto pDevice = pPlatform->getDevice(testedRootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
 
-    cl_device_id clDevice = pDevice;
-    pContext = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    testedClDevice = pDevice;
+    pContext = Context::create<MockContext>(nullptr, DeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 
-    pCommandQueue = new CommandQueue(pContext, pDevice, 0);
+    pCommandQueue = new CommandQueue(pContext, pDevice, nullptr);
 
     pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
@@ -39,15 +35,11 @@ void api_fixture::SetUp() {
     ASSERT_NE(nullptr, pKernel);
 }
 
-void api_fixture::TearDown() {
-    delete pKernel;
-    delete pCommandQueue;
-    if (pContext) {
-        pContext->release();
-    }
-    if (pProgram) {
-        pProgram->release();
-    }
+void ApiFixture::TearDown() {
+    pKernel->release();
+    pCommandQueue->release();
+    pContext->release();
+    pProgram->release();
 
     PlatformFixture::TearDown();
 }

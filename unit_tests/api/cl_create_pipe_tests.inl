@@ -17,21 +17,21 @@ typedef api_tests clCreatePipeTests;
 
 namespace ClCreatePipeTests {
 
-class clCreatePipeWithParamTests : public api_fixture, public testing::TestWithParam<uint64_t> {
+class clCreatePipeWithParamTests : public ApiFixture, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 };
 
-class clCreatePipeWithParamNegativeTests : public api_fixture, public testing::TestWithParam<uint64_t> {
+class clCreatePipeWithParamNegativeTests : public ApiFixture, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 };
 

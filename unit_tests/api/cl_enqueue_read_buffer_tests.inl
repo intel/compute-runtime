@@ -34,11 +34,11 @@ TEST_F(clEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInval
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-class EnqueueReadBufferFlagsTest : public api_fixture,
+class EnqueueReadBufferFlagsTest : public ApiFixture,
                                    public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   protected:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         buffer_flags = GetParam();
 
         unsigned int bufferSize = 16;
@@ -59,7 +59,7 @@ class EnqueueReadBufferFlagsTest : public api_fixture,
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -133,7 +133,7 @@ class EnqueueReadBufferTest : public api_tests {
     }
 };
 TEST_F(EnqueueReadBufferTest, GivenSvmPtrWhenReadingBufferThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const DeviceInfo &devInfo = pPlatform->getDevice(testedRootDeviceIndex)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto data = clSVMAlloc(pContext, CL_MEM_READ_WRITE, bufferSize, 64);
         auto retVal = clEnqueueReadBuffer(pCommandQueue, buffer, CL_TRUE, bufferSize, 0, data, 0, nullptr, nullptr);

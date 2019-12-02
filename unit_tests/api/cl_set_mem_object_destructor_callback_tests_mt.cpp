@@ -20,16 +20,16 @@ void CL_CALLBACK destructorCallBackMt(cl_mem memObj, void *userData) {
     cbInvoked++;
 }
 
-struct clSetMemObjectDestructorCallbackMtTests : public api_fixture,
+struct clSetMemObjectDestructorCallbackMtTests : public ApiFixture,
                                                  public ::testing::Test {
 
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         cbInvoked = 0;
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     static void setMemCallbackThreadFunc(cl_mem buf) {

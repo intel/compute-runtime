@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
+class KernelArgSvmFixture : public ApiFixture, public DeviceFixture {
   public:
     KernelArgSvmFixture()
         : pCrossThreadData{0} {
@@ -22,7 +22,7 @@ class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
 
   protected:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         DeviceFixture::SetUp();
 
         // define kernel info
@@ -54,7 +54,7 @@ class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
         delete pMockKernel;
 
         DeviceFixture::TearDown();
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

@@ -12,10 +12,10 @@
 
 using namespace NEO;
 
-class KernelExecInfoFixture : public api_fixture {
+class KernelExecInfoFixture : public ApiFixture {
   protected:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
@@ -35,7 +35,7 @@ class KernelExecInfoFixture : public api_fixture {
 
         delete pMockKernel;
 
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

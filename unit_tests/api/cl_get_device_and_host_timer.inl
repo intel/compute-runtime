@@ -43,7 +43,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenNullHostTimerWhenGettingDeviceAndHostTi
     cl_ulong device_timestamp = 0;
 
     retVal = clGetDeviceAndHostTimer(
-        devices[0],
+        devices[testedRootDeviceIndex],
         &device_timestamp,
         nullptr);
 
@@ -54,7 +54,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenNullDevicesTimerWhenGettingDeviceAndHos
     cl_ulong host_timestamp = 0;
 
     retVal = clGetDeviceAndHostTimer(
-        devices[0],
+        devices[testedRootDeviceIndex],
         nullptr,
         &host_timestamp);
 
@@ -113,7 +113,7 @@ TEST_F(clGetHostTimerTest, GivenNullDeviceWhenGettingHostTimerThenInvalidDeviceE
 
 TEST_F(clGetHostTimerTest, GivenNullHostTimerWhenGettingHostTimerThenInvalidValueErrorIsReturned) {
     retVal = clGetHostTimer(
-        devices[0],
+        devices[testedRootDeviceIndex],
         nullptr);
 
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -124,7 +124,7 @@ TEST_F(clGetHostTimerTest, GivenCorrectParametersWhenGettingHostTimerThenSuccess
     cl_ulong zero_timestamp = 0;
 
     retVal = clGetHostTimer(
-        devices[0],
+        devices[testedRootDeviceIndex],
         &host_timestamp);
 
     EXPECT_GE(host_timestamp, zero_timestamp);

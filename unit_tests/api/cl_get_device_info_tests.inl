@@ -28,7 +28,7 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForSliceCountThenNumberOfSli
     paramName = CL_DEVICE_SLICE_COUNT_INTEL;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         paramName,
         0,
         nullptr,
@@ -39,7 +39,7 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForSliceCountThenNumberOfSli
     paramValue = &numSlices;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         paramName,
         paramSize,
         paramValue,
@@ -60,7 +60,7 @@ TEST_F(clGetDeviceInfoTests, GivenGpuDeviceWhenGettingDeviceInfoThenDeviceTypeGp
     paramValue = &deviceType;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         paramName,
         paramSize,
         paramValue,
@@ -88,7 +88,7 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrec
     cl_device_svm_capabilities svmCaps;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         CL_DEVICE_SVM_CAPABILITIES,
         sizeof(cl_device_svm_capabilities),
         &svmCaps,
@@ -118,7 +118,7 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForDriverVersionThenNeoIsRet
     paramName = CL_DEVICE_DRIVER_VERSION_INTEL;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         paramName,
         0,
         nullptr,
@@ -129,7 +129,7 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForDriverVersionThenNeoIsRet
     paramValue = &driverVersion;
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         paramName,
         paramSize,
         paramValue,
@@ -142,7 +142,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     size_t paramRetSize = 0;
 
     cl_int retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         CL_DEVICE_EXTENSIONS,
         0,
         nullptr,
@@ -153,7 +153,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     auto paramValue = std::make_unique<char[]>(paramRetSize);
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         CL_DEVICE_EXTENSIONS,
         paramRetSize,
         paramValue.get(),
@@ -189,13 +189,13 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
 TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv12IsReturned) {
     size_t paramRetSize = 0;
 
-    Device *pDevice = castToObject<Device>(devices[0]);
+    Device *pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
 
     if (pDevice->getSupportedClVersion() < 21)
         return;
 
     cl_int retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         CL_DEVICE_IL_VERSION,
         0,
         nullptr,
@@ -206,7 +206,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDevic
     auto paramValue = std::make_unique<char[]>(paramRetSize);
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         CL_DEVICE_IL_VERSION,
         paramRetSize,
         paramValue.get(),
@@ -217,15 +217,15 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDevic
 }
 
 //------------------------------------------------------------------------------
-struct GetDeviceInfoP : public api_fixture,
+struct GetDeviceInfoP : public ApiFixture,
                         public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_device_info param;
@@ -237,7 +237,7 @@ TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsR
     size_t paramRetSize = 0;
 
     cl_int retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         param,
         0,
         nullptr,
@@ -248,7 +248,7 @@ TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsR
     auto paramValue = std::make_unique<char[]>(paramRetSize);
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         param,
         paramRetSize,
         paramValue.get(),
@@ -279,7 +279,7 @@ TEST_P(GetDeviceInfoVectorWidth, GivenParamTypeVectorWhenGettingDeviceInfoThenSi
     size_t paramRetSize = 0;
 
     auto retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         param,
         0,
         nullptr,
@@ -288,7 +288,7 @@ TEST_P(GetDeviceInfoVectorWidth, GivenParamTypeVectorWhenGettingDeviceInfoThenSi
     EXPECT_EQ(sizeof(cl_uint), paramRetSize);
 
     retVal = clGetDeviceInfo(
-        devices[0],
+        devices[testedRootDeviceIndex],
         param,
         paramRetSize,
         &paramValue,

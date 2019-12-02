@@ -14,10 +14,10 @@ using namespace NEO;
 namespace ClCreateSubbufferTests {
 
 template <bool hasHostPtr, cl_mem_flags parentFlags>
-class clCreateSubBufferTemplateTests : public api_fixture,
+class clCreateSubBufferTemplateTests : public ApiFixture,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         cl_mem_flags flg = parentFlags;
         void *ptr = nullptr;
 
@@ -33,7 +33,7 @@ class clCreateSubBufferTemplateTests : public api_fixture,
 
     void TearDown() override {
         clReleaseMemObject(buffer);
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
   protected:
@@ -113,7 +113,7 @@ class clCreateSubBufferTests : public api_tests {
 
     void TearDown() override {
         clReleaseMemObject(buffer);
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
   protected:

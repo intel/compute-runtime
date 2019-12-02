@@ -26,7 +26,7 @@ struct clSetDefaultDeviceCommandQueueApiTest : public api_tests {
                                             CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                             0,
                                             0};
-        deviceQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
+        deviceQueue = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], properties, &retVal);
 
         if (!pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
             ASSERT_EQ(nullptr, deviceQueue);
@@ -50,7 +50,7 @@ struct clSetDefaultDeviceCommandQueueApiTest : public api_tests {
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenSettingDefaultDeviceQueueThenSuccessIsReturned) {
-    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], deviceQueue);
+    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[testedRootDeviceIndex], deviceQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(static_cast<_device_queue *>(deviceQueue), static_cast<_device_queue *>(pContext->getDefaultDeviceQueue()));
@@ -61,14 +61,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                         0,
                                         0};
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
 
     if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
-        auto newDeviceQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
+        auto newDeviceQueue = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], properties, &retVal);
         ASSERT_NE(nullptr, newDeviceQueue);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], newDeviceQueue);
+        retVal = clSetDefaultDeviceCommandQueue(pContext, devices[testedRootDeviceIndex], newDeviceQueue);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(static_cast<_device_queue *>(newDeviceQueue), static_cast<_device_queue *>(pContext->getDefaultDeviceQueue()));
@@ -78,7 +78,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullContextWhenSettingDefaultDeviceQueueThenClInvalidContextErrorIsReturned) {
-    retVal = clSetDefaultDeviceCommandQueue(nullptr, devices[0], deviceQueue);
+    retVal = clSetDefaultDeviceCommandQueue(nullptr, devices[testedRootDeviceIndex], deviceQueue);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
@@ -88,17 +88,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDevi
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
-    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], nullptr);
+    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[testedRootDeviceIndex], nullptr);
     ASSERT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenHostQueueAsDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0, 0, 0};
-    cl_command_queue hostQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
+    cl_command_queue hostQueue = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], properties, &retVal);
     ASSERT_NE(nullptr, hostQueue);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], hostQueue);
+    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[testedRootDeviceIndex], hostQueue);
     ASSERT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 
     retVal = clReleaseCommandQueue(hostQueue);
@@ -112,11 +112,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenIncorrec
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                         0,
                                         0};
-    cl_command_queue deviceQueueCtx2 = clCreateCommandQueueWithProperties(context2, devices[0], properties, &retVal);
+    cl_command_queue deviceQueueCtx2 = clCreateCommandQueueWithProperties(context2, devices[testedRootDeviceIndex], properties, &retVal);
     ASSERT_NE(nullptr, deviceQueueCtx2);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], deviceQueueCtx2);
+    retVal = clSetDefaultDeviceCommandQueue(pContext, devices[testedRootDeviceIndex], deviceQueueCtx2);
     ASSERT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 
     retVal = clReleaseCommandQueue(deviceQueueCtx2);

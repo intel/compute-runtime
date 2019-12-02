@@ -175,7 +175,7 @@ TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidP
     cl_kernel kernel = nullptr;
 
     kernel = clCreateKernel(
-        (cl_program)pContext,
+        reinterpret_cast<cl_program>(pContext),
         "CopyBuffer",
         &retVal);
 

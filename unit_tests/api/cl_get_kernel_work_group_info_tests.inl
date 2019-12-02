@@ -17,9 +17,9 @@
 
 using namespace NEO;
 
-struct clGetKernelWorkGroupInfoTests : public api_fixture,
+struct clGetKernelWorkGroupInfoTests : public ApiFixture,
                                        public ::testing::TestWithParam<uint32_t /*cl_kernel_work_group_info*/> {
-    typedef api_fixture BaseClass;
+    typedef ApiFixture BaseClass;
 
     void SetUp() override {
         BaseClass::SetUp();
@@ -87,7 +87,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
     size_t paramValueSizeRet;
     retVal = clGetKernelWorkGroupInfo(
         kernel,
-        devices[0],
+        devices[testedRootDeviceIndex],
         GetParam(),
         0,
         nullptr,
@@ -100,7 +100,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
 TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchMediaVFEState mediaVFEstate;
@@ -126,7 +126,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchAllocateStatelessPrivateSurface privateAllocation;
@@ -149,7 +149,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWh
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
 

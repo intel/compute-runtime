@@ -17,10 +17,10 @@ typedef api_tests clEnqueueWriteImageTests;
 
 namespace ULT {
 
-struct clEnqueueWriteImageTests : public api_fixture,
+struct clEnqueueWriteImageTests : public ApiFixture,
                                   public ::testing::Test {
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_YUYV_INTEL;
@@ -40,7 +40,7 @@ struct clEnqueueWriteImageTests : public api_fixture,
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_image_format imageFormat;

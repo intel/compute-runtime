@@ -17,11 +17,11 @@ using namespace NEO;
 namespace ClCreateImageTests {
 
 template <typename T>
-struct clCreateImageTests : public api_fixture,
+struct clCreateImageTests : public ApiFixture,
                             public T {
 
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_RGBA;
@@ -41,7 +41,7 @@ struct clCreateImageTests : public api_fixture,
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_image_format imageFormat;
@@ -69,7 +69,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
     auto device = static_cast<MockDevice *>(pContext->getDevice(0));
     device->deviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
-    auto status = clGetDeviceInfo(devices[0], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     cl_bool expectedValue = CL_FALSE;
     EXPECT_EQ(expectedValue, imageSupportInfo);
@@ -96,7 +96,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTil
     auto device = static_cast<MockDevice *>(pContext->getDevice(0));
     device->deviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
-    auto status = clGetDeviceInfo(devices[0], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     cl_bool expectedValue = CL_FALSE;
     EXPECT_EQ(expectedValue, imageSupportInfo);

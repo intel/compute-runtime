@@ -21,14 +21,14 @@ typedef api_tests clCreateBufferTests;
 
 namespace ClCreateBufferTests {
 
-class clCreateBufferTemplateTests : public api_fixture,
+class clCreateBufferTemplateTests : public ApiFixture,
                                     public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 };
 

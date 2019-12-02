@@ -15,7 +15,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct SamplerWithPropertiesTest : public api_fixture,
+struct SamplerWithPropertiesTest : public ApiFixture,
                                    public ::testing::WithParamInterface<std::tuple<uint64_t /*cl_sampler_properties*/, uint64_t /*cl_sampler_properties*/, uint64_t /*cl_sampler_properties*/>>,
                                    public ::testing::Test {
     SamplerWithPropertiesTest() {
@@ -23,11 +23,11 @@ struct SamplerWithPropertiesTest : public api_fixture,
 
     void SetUp() override {
         std::tie(NormalizdProperties, AddressingProperties, FilterProperties) = GetParam();
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 
     cl_sampler_properties NormalizdProperties = 0;

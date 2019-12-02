@@ -24,7 +24,7 @@ class clReleaseCommandQueueTypeTests : public DeviceHostQueueFixture<T> {};
 TYPED_TEST_CASE(clReleaseCommandQueueTypeTests, QueueTypes);
 
 TYPED_TEST(clReleaseCommandQueueTypeTests, GivenValidCmdQueueWhenReleasingCmdQueueThenSucessIsReturned) {
-    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[0])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[this->testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
         return;
     }
 
@@ -52,11 +52,11 @@ typedef api_tests clReleaseCommandQueueTests;
 TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
-    Device *device = (Device *)devices[0];
+    Device *device = (Device *)devices[testedRootDeviceIndex];
     MockKernelWithInternals kernelInternals(*device, pContext);
     Kernel *kernel = kernelInternals.mockKernel;
 
-    cmdQ = clCreateCommandQueue(pContext, devices[0], properties, &retVal);
+    cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);

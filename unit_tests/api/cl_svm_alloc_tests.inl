@@ -17,18 +17,18 @@ typedef api_tests clSVMAllocTests;
 
 namespace ULT {
 
-class clSVMAllocTemplateTests : public api_fixture,
+class clSVMAllocTemplateTests : public ApiFixture,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {
-        api_fixture::SetUp();
+        ApiFixture::SetUp();
         if (!pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
+        ApiFixture::TearDown();
     }
 };
 
