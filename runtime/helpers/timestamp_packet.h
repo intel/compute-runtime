@@ -42,17 +42,13 @@ struct TimestampPacketStorage {
         return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
 
-    bool canBeReleased() const {
-        return isCompleted() && implicitDependenciesCount.load() == 0;
-    }
-
     bool isCompleted() const {
         for (uint32_t i = 0; i < packetsUsed; i++) {
             if ((packets[i].contextEnd & 1) || (packets[i].globalEnd & 1)) {
                 return false;
             }
         }
-        return true;
+        return implicitDependenciesCount.load() == 0;
     }
 
     void initialize() {

@@ -21,7 +21,7 @@ struct HwTimeStamps {
         GlobalCompleteTS = 0;
         ContextCompleteTS = 0;
     }
-    bool canBeReleased() const { return true; }
+    bool isCompleted() const { return true; }
     static GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }

@@ -1118,7 +1118,7 @@ TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
     ASSERT_EQ(0ULL, timeStamps->GlobalCompleteTS);
     ASSERT_EQ(0ULL, timeStamps->ContextCompleteTS);
 
-    EXPECT_TRUE(timeStamps->canBeReleased());
+    EXPECT_TRUE(timeStamps->isCompleted());
 
     HwTimeStamps *timeStamps2 = event->getHwTimeStampNode()->tagForCpuAccess;
     ASSERT_EQ(timeStamps, timeStamps2);

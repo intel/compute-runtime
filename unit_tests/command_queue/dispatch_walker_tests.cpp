@@ -1367,7 +1367,8 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     bool checkForStart = GetParam();
 
     auto &cmdStream = pCmdQ->getCS(0);
-    TagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10, MemoryConstants::cacheLineSize);
+    TagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
+                                                  MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false);
 
     auto hwTimeStamp1 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp1);

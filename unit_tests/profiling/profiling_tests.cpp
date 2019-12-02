@@ -834,7 +834,8 @@ struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
     };
 
     FixedGpuAddressTagAllocator(CommandStreamReceiver &csr, uint64_t gpuAddress)
-        : TagAllocator<TagType>(0, csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize) {
+        : TagAllocator<TagType>(0, csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
+                                sizeof(TagType), false) {
         auto tag = reinterpret_cast<MockTagNode *>(this->freeTags.peekHead());
         tag->setGpuAddress(gpuAddress);
     }

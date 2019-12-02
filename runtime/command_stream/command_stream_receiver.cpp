@@ -416,21 +416,28 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
 
 TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false);
     }
     return profilingTimeStampAllocator.get();
 }
 
 TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
     if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize);
+        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false);
     }
     return perfCounterAllocator.get();
 }
 
 TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+        // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
+        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW);
+
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
+            sizeof(TimestampPacketStorage), doNotReleaseNodes);
     }
     return timestampPacketAllocator.get();
 }

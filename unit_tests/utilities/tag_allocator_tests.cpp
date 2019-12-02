@@ -27,7 +27,7 @@ struct TimeStamps {
     static GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
-    bool canBeReleased() const { return release; }
+    bool isCompleted() const { return release; }
     bool release;
     uint64_t start;
     uint64_t end;
@@ -40,12 +40,18 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
   public:
     using BaseClass::deferredTags;
+    using BaseClass::doNotReleaseNodes;
     using BaseClass::freeTags;
     using BaseClass::populateFreeTags;
     using BaseClass::releaseDeferredTags;
     using BaseClass::usedTags;
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : BaseClass(0, memMngr, tagCount, tagAlignment) {
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck)
+        : BaseClass(0, memMngr, tagCount, tagAlignment, sizeof(TagType), disableCompletionCheck) {
+    }
+
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment)
+        : MockTagAllocator(memMngr, tagCount, tagAlignment, false) {
     }
 
     GraphicsAllocation *getGraphicsAllocation(size_t id = 0) {
@@ -315,6 +321,37 @@ TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
     EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
 }
 
+TEST_F(TagAllocatorTest, givenTagNodeWhenCompletionCheckIsDisabledThenStatusIsMarkedAsNotReady) {
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
+    EXPECT_FALSE(tagAllocator.doNotReleaseNodes);
+    auto node = tagAllocator.getTag();
+
+    EXPECT_TRUE(node->canBeReleased());
+
+    node->setDoNotReleaseNodes(true);
+    EXPECT_FALSE(node->canBeReleased());
+
+    tagAllocator.returnTag(node);
+    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.freeTags.peekIsEmpty());
+}
+
+TEST_F(TagAllocatorTest, givenTagAllocatorWhenDisabledCompletionCheckThenNodeInheritsItsState) {
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, true);
+    EXPECT_TRUE(tagAllocator.doNotReleaseNodes);
+
+    auto node = tagAllocator.getTag();
+
+    EXPECT_FALSE(node->canBeReleased());
+
+    node->setDoNotReleaseNodes(false);
+    EXPECT_TRUE(node->canBeReleased());
+
+    tagAllocator.returnTag(node);
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.freeTags.peekIsEmpty());
+}
+
 TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
@@ -365,9 +402,9 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1);
-    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1);
-    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1);
+    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1, sizeof(TimestampPacketStorage), false);
+    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1, sizeof(HwTimeStamps), false);
+    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1, sizeof(HwPerfCounter), false);
 
     auto timestampPacketTag = timestampPacketAllocator.getTag();
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();

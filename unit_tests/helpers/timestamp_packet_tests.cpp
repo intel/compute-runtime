@@ -147,25 +147,25 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
     verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
 }
 
-TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenCanBeReleased) {
+TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
 
     packet.contextEnd = 1;
     packet.globalEnd = 1;
-    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
     packet.contextEnd = 1;
     packet.globalEnd = 0;
-    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
     packet.contextEnd = 0;
     packet.globalEnd = 1;
-    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
 
     packet.contextEnd = 0;
     packet.globalEnd = 0;
-    EXPECT_TRUE(timestampPacketStorage.canBeReleased());
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
 TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedTheMoveAllNodes) {
@@ -239,9 +239,9 @@ TEST_F(TimestampPacketSimpleTests, givenImplicitDependencyWhenEndTagIsWrittenThe
     timestampPacketStorage.packets[0].contextEnd = 0;
     timestampPacketStorage.packets[0].globalEnd = 0;
     timestampPacketStorage.implicitDependenciesCount.store(1);
-    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
     timestampPacketStorage.implicitDependenciesCount.store(0);
-    EXPECT_TRUE(timestampPacketStorage.canBeReleased());
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
@@ -1319,7 +1319,8 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
-    TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1);
+    TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
+                                                      sizeof(TimestampPacketStorage), false);
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -1354,7 +1355,8 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
-    TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1);
+    TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
+                                                      sizeof(TimestampPacketStorage), false);
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.timestampPacketWriteEnabled = true;

@@ -7,14 +7,17 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -127,6 +130,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         MockAubCenterFixture::TearDown();
         delete csrWithAubDump;
     }
+
     ExecutionEnvironment *executionEnvironment;
     MyMockCsrWithAubDump<MyMockCsr> *csrWithAubDump;
     MemoryManager *memoryManager;
@@ -159,6 +163,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
 
     CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0);
     ASSERT_EQ(nullptr, csrWithAubDump.aubCSR);
+    EXPECT_EQ(CommandStreamReceiverType::CSR_TBX_WITH_AUB, csrWithAubDump.getType());
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhenHwCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
@@ -173,6 +178,46 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
 
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment, 0);
     ASSERT_NE(nullptr, csrWithAubDump.aubCSR);
+    EXPECT_EQ(CommandStreamReceiverType::CSR_HW_WITH_AUB, csrWithAubDump.getType());
+}
+
+struct CommandStreamReceiverTagTests : public ::testing::Test {
+    template <typename CsrT, typename... Args>
+    bool isTimestampPacketNodeReleasable(Args &&... args) {
+        CsrT csr(std::forward<Args>(args)...);
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = allocator->getTag();
+        memset(tag->tagForCpuAccess->packets, 0, sizeof(TimestampPacketStorage::Packet) * TimestampPacketSizeControl::preferredPacketCount);
+        EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
+
+        bool canBeReleased = tag->canBeReleased();
+        allocator->returnTag(tag);
+
+        return canBeReleased;
+    };
+
+    void SetUp() {
+        MockAubManager *mockManager = new MockAubManager();
+        MockAubCenter *mockAubCenter = new MockAubCenter(*platformDevices, false, fileName, CommandStreamReceiverType::CSR_HW_WITH_AUB);
+        mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment->initializeMemoryManager();
+        executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    }
+
+    const std::string fileName = "file_name.aub";
+    ExecutionEnvironment *executionEnvironment = nullptr;
+};
+
+HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenCreatingTimestampPacketAllocatorThenSetDefaultCompletionCheckType) {
+    using AubWithHw = CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>>;
+    using AubWithTbx = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
+
+    EXPECT_TRUE(isTimestampPacketNodeReleasable<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0));
+    EXPECT_FALSE(isTimestampPacketNodeReleasable<AUBCommandStreamReceiverHw<FamilyType>>(fileName, false, *executionEnvironment, 0));
+    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithHw>(fileName, *executionEnvironment, 0));
+    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithTbx>(fileName, *executionEnvironment, 0));
 }
 
 using SimulatedCsrTest = ::testing::Test;
