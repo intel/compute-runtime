@@ -26,6 +26,60 @@ class CommandContainerTest : public DeviceFixture,
     }
 };
 
+struct CommandContainerHeapStateTests : public ::testing::Test {
+    class MyMockCommandContainer : public CommandContainer {
+      public:
+        using CommandContainer::dirtyHeaps;
+    };
+
+    MyMockCommandContainer myCommandContainer;
+};
+
+TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForAllThenValuesAreCorrect) {
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), myCommandContainer.dirtyHeaps);
+    EXPECT_TRUE(myCommandContainer.isAnyHeapDirty());
+
+    myCommandContainer.setDirtyStateForAllHeaps(false);
+    EXPECT_EQ(0u, myCommandContainer.dirtyHeaps);
+    EXPECT_FALSE(myCommandContainer.isAnyHeapDirty());
+
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        HeapType heapType = static_cast<HeapType>(i);
+        EXPECT_FALSE(myCommandContainer.isHeapDirty(heapType));
+    }
+
+    myCommandContainer.setDirtyStateForAllHeaps(true);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), myCommandContainer.dirtyHeaps);
+
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        HeapType heapType = static_cast<HeapType>(i);
+        EXPECT_TRUE(myCommandContainer.isHeapDirty(heapType));
+    }
+}
+
+TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleHeapThenValuesAreCorrect) {
+    myCommandContainer.dirtyHeaps = 0;
+    EXPECT_FALSE(myCommandContainer.isAnyHeapDirty());
+
+    uint32_t controlVariable = 0;
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        HeapType heapType = static_cast<HeapType>(i);
+
+        EXPECT_FALSE(myCommandContainer.isHeapDirty(heapType));
+        myCommandContainer.setHeapDirty(heapType);
+        EXPECT_TRUE(myCommandContainer.isHeapDirty(heapType));
+        EXPECT_TRUE(myCommandContainer.isAnyHeapDirty());
+
+        controlVariable |= (1 << i);
+        EXPECT_EQ(controlVariable, myCommandContainer.dirtyHeaps);
+    }
+
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        HeapType heapType = static_cast<HeapType>(i);
+        EXPECT_TRUE(myCommandContainer.isHeapDirty(heapType));
+    }
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIsInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice);

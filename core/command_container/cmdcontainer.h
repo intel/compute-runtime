@@ -59,12 +59,16 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     virtual ~CommandContainer();
 
-    uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
 
     Device *getDevice() const { return device; }
 
     void reset();
+
+    bool isHeapDirty(HeapType heapType) const { return (dirtyHeaps & (1u << heapType)); }
+    bool isAnyHeapDirty() const { return dirtyHeaps != 0; }
+    void setHeapDirty(HeapType heapType) { dirtyHeaps |= (1u << heapType); }
+    void setDirtyStateForAllHeaps(bool dirty) { dirtyHeaps = dirty ? std::numeric_limits<uint32_t>::max() : 0; }
 
   protected:
     Device *device = nullptr;
@@ -74,6 +78,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
 
     uint64_t instructionHeapBaseAddress = 0u;
+    uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
 
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES] = {};

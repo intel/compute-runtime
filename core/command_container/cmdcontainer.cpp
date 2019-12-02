@@ -95,7 +95,7 @@ void CommandContainer::addToResidencyContainer(NEO::GraphicsAllocation *alloc) {
 }
 
 void CommandContainer::reset() {
-    dirtyHeaps = std::numeric_limits<uint32_t>::max();
+    setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
     getResidencyContainer().clear();
     getDeallocationContainer().clear();
