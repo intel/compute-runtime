@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 

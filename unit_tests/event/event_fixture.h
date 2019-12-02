@@ -16,7 +16,6 @@
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 
@@ -28,21 +27,17 @@ struct EventTest
     : public DeviceFixture,
       public CommandQueueFixture,
       public CommandStreamFixture,
-      public IndirectHeapFixture,
       public ::testing::Test {
 
     using CommandQueueFixture::SetUp;
-    using IndirectHeapFixture::SetUp;
 
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(&mockContext, pDevice, 0);
         CommandStreamFixture::SetUp(pCmdQ);
-        IndirectHeapFixture::SetUp(pCmdQ);
     }
 
     void TearDown() override {
-        IndirectHeapFixture::TearDown();
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();

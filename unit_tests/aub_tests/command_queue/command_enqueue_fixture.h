@@ -13,7 +13,6 @@
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
 namespace NEO {
 

@@ -7,7 +7,7 @@
 
 #include "runtime/helpers/dirty_state_helpers.h"
 
-#include "runtime/indirect_heap/indirect_heap.h"
+#include "core/indirect_heap/indirect_heap.h"
 
 using namespace NEO;
 

@@ -21,7 +21,6 @@
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/surface.h"

@@ -12,12 +12,10 @@
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
 namespace NEO {
 
 struct SimpleArgFixtureFactory {
-    typedef NEO::IndirectHeapFixture IndirectHeapFixture;
     typedef NEO::CommandStreamFixture CommandStreamFixture;
     typedef NEO::CommandQueueHwFixture CommandQueueFixture;
     typedef NEO::SimpleArgKernelFixture KernelFixture;

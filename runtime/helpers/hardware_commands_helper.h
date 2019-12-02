@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "core/indirect_heap/indirect_heap.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/per_thread_data.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 

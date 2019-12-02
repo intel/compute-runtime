@@ -30,9 +30,10 @@ class IndirectHeap : public LinearStream {
         NUM_TYPES
     };
 
-    IndirectHeap(void *buffer, size_t bufferSize);
-    IndirectHeap(GraphicsAllocation *buffer);
-    IndirectHeap(GraphicsAllocation *buffer, bool canBeUtilizedAs4GbHeap);
+    IndirectHeap(void *graphicsAllocation, size_t bufferSize) : BaseClass(graphicsAllocation, bufferSize){};
+    IndirectHeap(GraphicsAllocation *graphicsAllocation) : BaseClass(graphicsAllocation) {}
+    IndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
+        : BaseClass(graphicsAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {}
 
     // Disallow copy'ing
     IndirectHeap(const IndirectHeap &) = delete;

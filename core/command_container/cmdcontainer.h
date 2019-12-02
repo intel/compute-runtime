@@ -8,8 +8,8 @@
 #pragma once
 #include "core/helpers/heap_helper.h"
 #include "core/helpers/non_copyable_or_moveable.h"
+#include "core/indirect_heap/indirect_heap.h"
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 
 #include <cstdint>
 #include <limits>

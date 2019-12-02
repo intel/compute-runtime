@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/indirect_heap/indirect_heap.h"
 #include "runtime/event/event.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

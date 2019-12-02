@@ -5,15 +5,21 @@
  *
  */
 
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "core/indirect_heap/indirect_heap.h"
+#include "core/memory_manager/graphics_allocation.h"
+#include "test.h"
 
 using namespace NEO;
 
 struct IndirectHeapTest : public ::testing::Test {
+    class MyMockGraphicsAllocation : public GraphicsAllocation {
+      public:
+        MyMockGraphicsAllocation(void *ptr, size_t size)
+            : GraphicsAllocation(0, AllocationType::UNKNOWN, ptr, castToUint64(ptr), 0, size, MemoryPool::System4KBPages) {}
+    };
+
     uint8_t buffer[256];
-    MockGraphicsAllocation gfxAllocation = {(void *)buffer, sizeof(buffer)};
+    MyMockGraphicsAllocation gfxAllocation = {(void *)buffer, sizeof(buffer)};
     IndirectHeap indirectHeap = {&gfxAllocation};
 };
 
@@ -86,54 +92,56 @@ TEST_F(IndirectHeapTest, givenIndirectHeapWhenGetCpuBaseIsCalledThenCpuAddressIs
     EXPECT_EQ(base, buffer);
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
+using IndirectHeapWith4GbAllocatorTest = IndirectHeapTest;
+
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, false);
 
     EXPECT_EQ(0u, indirectHeap.getHeapGpuStartOffset());
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, true);
 
     EXPECT_EQ(8192u, indirectHeap.getHeapGpuStartOffset());
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapBaseThenGpuBaseIsReturned) {
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapBaseThenGpuBaseIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, true);
 
     EXPECT_EQ(4096u, indirectHeap.getHeapGpuBase());
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapBaseThenGpuAddressIsReturned) {
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapBaseThenGpuAddressIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, false);
 
     EXPECT_EQ(8192u, indirectHeap.getHeapGpuBase());
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapSizeThenGraphicsAllocationSizeInPagesIsReturned) {
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapSizeThenGraphicsAllocationSizeInPagesIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, false);
 
     EXPECT_EQ(1u, indirectHeap.getHeapSizeInPages());
 }
 
-TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapSizeThen4GbSizeInPagesIsReturned) {
+TEST_F(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapSizeThen4GbSizeInPagesIsReturned) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
-    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    MyMockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
     IndirectHeap indirectHeap(&graphicsAllocation, true);
 

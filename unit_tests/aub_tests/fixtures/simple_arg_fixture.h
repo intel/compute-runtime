@@ -20,7 +20,8 @@ namespace NEO {
 ////////////////////////////////////////////////////////////////////////////////
 // Factory where all command stream traffic funnels to an AUB file
 ////////////////////////////////////////////////////////////////////////////////
-struct AUBSimpleArgFixtureFactory : public SimpleArgFixtureFactory {
+struct AUBSimpleArgFixtureFactory : public SimpleArgFixtureFactory,
+                                    public IndirectHeapFixture {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 };
 
