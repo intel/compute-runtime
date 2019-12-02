@@ -36,7 +36,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
-    auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : reinterpret_cast<uint64_t>(getHostPtr());
+    auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : castToUint64(getHostPtr());
     bufferAddress += this->offset;
 
     auto bufferAddressAligned = alignDown(bufferAddress, 4);

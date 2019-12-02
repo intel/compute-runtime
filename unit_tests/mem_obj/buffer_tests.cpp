@@ -2232,7 +2232,8 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
 
     RENDER_SURFACE_STATE surfaceState = {};
     MockContext context;
-    void *svmPtr = reinterpret_cast<void *>(0x1005);
+    uintptr_t ptr = 0xfffff000;
+    void *svmPtr = reinterpret_cast<void *>(ptr);
 
     Buffer::setSurfaceState(device.get(),
                             &surfaceState,
@@ -2241,7 +2242,7 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
                             nullptr,
                             0);
 
-    EXPECT_EQ(0x1004u, surfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(castToUint64(svmPtr), surfaceState.getSurfaceBaseAddress());
     SURFACE_STATE_BUFFER_LENGTH length = {};
     length.SurfaceState.Width = surfaceState.getWidth() - 1;
     length.SurfaceState.Height = surfaceState.getHeight() - 1;
