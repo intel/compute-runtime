@@ -79,3 +79,7 @@ inline void patchIncrement(void *memoryToBePatched, uint32_t patchSize, uint64_t
 inline uint64_t castToUint64(void *address) {
     return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
 }
+
+inline uint64_t castToUint64(const void *address) {
+    return castToUint64(const_cast<void *>(address));
+}

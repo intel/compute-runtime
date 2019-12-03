@@ -615,6 +615,24 @@ TEST_F(WddmCommandStreamTest, givenHostPtrAllocationWhenMapFailsThenFragmentsAre
     EXPECT_EQ(nullptr, gfxAllocation);
 }
 
+TEST_F(WddmCommandStreamTest, givenAddressWithHighestBitSetWhenItIsMappedThenProperAddressIsPassed) {
+    uintptr_t address = 0xffff0000;
+    void *faultyAddress = reinterpret_cast<void *>(address);
+
+    wddm->mapGpuVirtualAddressResult.called = 0u;
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, faultyAddress);
+
+    EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
+    ASSERT_NE(nullptr, gfxAllocation);
+    auto expectedAddress = castToUint64(faultyAddress);
+    EXPECT_EQ(gfxAllocation->getGpuAddress(), expectedAddress);
+    ASSERT_EQ(gfxAllocation->fragmentsStorage.fragmentCount, 1u);
+    EXPECT_EQ(expectedAddress, gfxAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage->gpuPtr);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
     void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;

@@ -45,6 +45,13 @@ TEST(PtrMath, givenCastToUint64FunctionWhenItIsCalledThenProperValueIsReturned) 
     auto uintAddress = castToUint64(addressWithTrailingBitSet);
     EXPECT_EQ(uintAddress, expectedUint64Address);
 }
+TEST(PtrMath, givenCastToUint64FunctionWhenConstPointerIsPassedItIsCalledThenProperValueIsReturned) {
+    uintptr_t address = 0xf0000000;
+    const void *addressWithTrailingBitSet = reinterpret_cast<const void *>(address);
+    uint64_t expectedUint64Address = 0xf0000000;
+    auto uintAddress = castToUint64(addressWithTrailingBitSet);
+    EXPECT_EQ(uintAddress, expectedUint64Address);
+}
 
 TEST(ptrOffset, preserve64Bit) {
     uint64_t ptrBefore = 0x800000000;

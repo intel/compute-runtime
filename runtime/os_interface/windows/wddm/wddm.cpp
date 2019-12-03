@@ -362,7 +362,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
     return mapGpuVirtualAddress(allocationStorageData->osHandleStorage->gmm,
                                 allocationStorageData->osHandleStorage->handle,
-                                0u, MemoryConstants::maxSvmAddress, reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(allocationStorageData->cpuPtr),
+                                0u, MemoryConstants::maxSvmAddress, castToUint64(allocationStorageData->cpuPtr),
                                 allocationStorageData->osHandleStorage->gpuPtr);
 }
 
