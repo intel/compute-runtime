@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/sharings/gl/gl_texture.h"
 
 #include "config.h"

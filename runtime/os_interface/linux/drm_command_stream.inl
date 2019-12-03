@@ -9,7 +9,6 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/preamble.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_allocation.h"

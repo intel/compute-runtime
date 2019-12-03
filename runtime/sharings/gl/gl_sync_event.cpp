@@ -13,7 +13,6 @@
 #include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_builder.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"

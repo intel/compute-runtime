@@ -6,7 +6,6 @@
  */
 
 #include "public/cl_gl_private_intel.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/gl/gl_texture.h"
 

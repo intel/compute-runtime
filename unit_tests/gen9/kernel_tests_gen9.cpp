@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "test.h"

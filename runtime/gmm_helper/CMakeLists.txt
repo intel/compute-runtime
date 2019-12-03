@@ -15,6 +15,8 @@ set(RUNTIME_SRCS_GMM_HELPER_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/resource_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/gmm_utils.cpp

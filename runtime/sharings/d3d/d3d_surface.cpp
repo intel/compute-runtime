@@ -10,7 +10,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/image.h"
@@ -71,7 +71,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         return nullptr;
     }
 
-    imgInfo.plane = GmmHelper::convertPlane(oclPlane);
+    imgInfo.plane = GmmTypesConverter::convertPlane(oclPlane);
     imgInfo.surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
     bool isSharedResource = false;

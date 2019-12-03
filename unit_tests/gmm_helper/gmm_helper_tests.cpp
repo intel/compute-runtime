@@ -10,6 +10,7 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
@@ -46,11 +47,11 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
 
     uint32_t maxVal = 0;
     for (auto p : v) {
-        EXPECT_TRUE(p.first == NEO::GmmHelper::getCubeFaceIndex(p.second));
+        EXPECT_TRUE(p.first == GmmTypesConverter::getCubeFaceIndex(p.second));
         maxVal = std::max(maxVal, p.second);
     }
     maxVal++;
-    EXPECT_TRUE(__GMM_NO_CUBE_MAP == NEO::GmmHelper::getCubeFaceIndex(maxVal));
+    EXPECT_TRUE(__GMM_NO_CUBE_MAP == GmmTypesConverter::getCubeFaceIndex(maxVal));
 }
 
 TEST_F(GmmTests, resourceCreation) {
@@ -304,7 +305,7 @@ TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     size_t expectedRowPitch = imgDesc.image_width * imgInfo.surfaceFormat->ImageElementSizeInBytes;
-    GmmHelper::queryImgFromBufferParams(imgInfo, &bufferAllocation);
+    GmmTypesConverter::queryImgFromBufferParams(imgInfo, &bufferAllocation);
 
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
 }
@@ -320,7 +321,7 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
     size_t expectedRowPitch = imgDesc.image_row_pitch;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    GmmHelper::queryImgFromBufferParams(imgInfo, &bufferAllocation);
+    GmmTypesConverter::queryImgFromBufferParams(imgInfo, &bufferAllocation);
 
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
 }
@@ -379,7 +380,7 @@ TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturn
 TEST_F(GmmTests, givenNumSamplesWhenAskedForMultisamplesCountThenReturnValue) {
     uint32_t numSamples[5][2] = {{0, 0}, {2, 1}, {4, 2}, {8, 3}, {16, 4}}; //{given, expected}
     for (int i = 0; i < 5; i++) {
-        auto result = GmmHelper::getRenderMultisamplesCount(numSamples[i][0]);
+        auto result = GmmTypesConverter::getRenderMultisamplesCount(numSamples[i][0]);
         EXPECT_EQ(numSamples[i][1], result);
     }
 }
@@ -443,7 +444,7 @@ TEST_F(GmmTests, converOclPlaneToGmmPlane) {
                                                          {OCLPlane::PLANE_V, GMM_YUV_PLANE::GMM_PLANE_V}};
 
     for (auto p : v) {
-        EXPECT_TRUE(p.second == GmmHelper::convertPlane(p.first));
+        EXPECT_TRUE(p.second == GmmTypesConverter::convertPlane(p.first));
     }
 }
 

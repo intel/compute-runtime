@@ -18,7 +18,6 @@
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"

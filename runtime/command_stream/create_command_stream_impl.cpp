@@ -9,7 +9,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 

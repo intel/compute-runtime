@@ -14,6 +14,7 @@
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
@@ -93,7 +94,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         imgDesc.image_slice_pitch = alloc->getUnderlyingBufferSize();
     }
 
-    uint32_t cubeFaceIndex = GmmHelper::getCubeFaceIndex(target);
+    uint32_t cubeFaceIndex = GmmTypesConverter::getCubeFaceIndex(target);
 
     auto qPitch = gmm->queryQPitch(gmm->gmmResourceInfo->getResourceType());
 
@@ -124,7 +125,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
         mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();
     }
-    mcsSurfaceInfo.multisampleCount = GmmHelper::getRenderMultisamplesCount(static_cast<uint32_t>(imgDesc.num_samples));
+    mcsSurfaceInfo.multisampleCount = GmmTypesConverter::getRenderMultisamplesCount(static_cast<uint32_t>(imgDesc.num_samples));
 
     ImageInfo imgInfo = {0};
     imgInfo.imgDesc = &imgDesc;

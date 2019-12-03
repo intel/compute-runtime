@@ -17,7 +17,6 @@
 #include "runtime/device/root_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/get_info.h"

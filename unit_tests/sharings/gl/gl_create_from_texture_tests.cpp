@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sharings/gl/gl_texture.h"
@@ -141,7 +142,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
         EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
     }
 
-    EXPECT_EQ(GmmHelper::getCubeFaceIndex(target), glImage->getCubeFaceIndex());
+    EXPECT_EQ(GmmTypesConverter::getCubeFaceIndex(target), glImage->getCubeFaceIndex());
 
     auto glTexture = reinterpret_cast<GlTexture *>(glImage->peekSharingHandler());
     EXPECT_EQ(glTexture->getTarget(), target);
@@ -214,7 +215,7 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
                   glImage->getMcsSurfaceInfo().pitch);
         EXPECT_EQ(static_cast<uint32_t>(mcsGmm->gmmResourceInfo->getQPitch()),
                   glImage->getMcsSurfaceInfo().qPitch);
-        EXPECT_EQ(GmmHelper::getRenderMultisamplesCount(static_cast<uint32_t>(gmm->gmmResourceInfo->getNumSamples())),
+        EXPECT_EQ(GmmTypesConverter::getRenderMultisamplesCount(static_cast<uint32_t>(gmm->gmmResourceInfo->getNumSamples())),
                   glImage->getMcsSurfaceInfo().multisampleCount);
     }
 

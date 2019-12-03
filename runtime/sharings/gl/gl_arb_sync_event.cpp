@@ -12,7 +12,6 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 

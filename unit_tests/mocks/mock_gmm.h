@@ -7,7 +7,6 @@
 
 #pragma once
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 #include "unit_tests/mocks/mock_device.h"

@@ -15,6 +15,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"

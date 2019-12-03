@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
 #include <dxgi.h>
