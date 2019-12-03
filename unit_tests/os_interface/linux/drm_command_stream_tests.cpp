@@ -1096,18 +1096,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingS
     csr->getResidencyAllocations().clear();
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentSizeZero) {
-    std::unique_ptr<BufferObject> buffer(this->createBO(0));
-    DrmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer.get(), nullptr, buffer->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
-    EXPECT_EQ(nullptr, allocation.getUnderlyingBuffer());
-    EXPECT_EQ(buffer->peekSize(), allocation.getUnderlyingBufferSize());
-
-    csr->makeResident(allocation);
-    csr->processResidency(csr->getResidencyAllocations());
-
-    EXPECT_FALSE(isResident<FamilyType>(buffer.get()));
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, Flush) {
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());

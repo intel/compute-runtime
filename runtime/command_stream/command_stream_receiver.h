@@ -73,7 +73,7 @@ class CommandStreamReceiver {
 
     virtual bool flushBatchedSubmissions() = 0;
 
-    virtual void makeResident(GraphicsAllocation &gfxAllocation);
+    MOCKABLE_VIRTUAL void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
     virtual void processResidency(const ResidencyContainer &allocationsForResidency) {}

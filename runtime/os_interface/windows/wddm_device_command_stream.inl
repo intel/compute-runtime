@@ -104,21 +104,6 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", &gfxAllocation);
-
-    if (gfxAllocation.fragmentsStorage.fragmentCount == 0) {
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation default handle =", static_cast<WddmAllocation &>(gfxAllocation).getDefaultHandle());
-    } else {
-        for (uint32_t allocationId = 0; allocationId < gfxAllocation.fragmentsStorage.fragmentCount; allocationId++) {
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =", gfxAllocation.fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle);
-        }
-    }
-
-    CommandStreamReceiver::makeResident(gfxAllocation);
-}
-
-template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency) {
     bool success = static_cast<OsContextWin *>(osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
     DEBUG_BREAK_IF(!success);

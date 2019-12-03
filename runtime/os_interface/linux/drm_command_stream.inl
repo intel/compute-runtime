@@ -94,15 +94,6 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-
-    if (gfxAllocation.getUnderlyingBufferSize() == 0)
-        return;
-
-    CommandStreamReceiver::makeResident(gfxAllocation);
-}
-
-template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
     if (bo) {
         if (bo->peekIsReusableAllocation()) {

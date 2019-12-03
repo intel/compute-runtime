@@ -14,6 +14,7 @@ template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
     using CommandStreamReceiver::commandStream;
+    using CommandStreamReceiver::makeResident;
     using DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
