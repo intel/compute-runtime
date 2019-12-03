@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 
 #include "core/command_stream/preemption.h"
+#include "core/helpers/cache_policy.h"
 #include "core/helpers/string.h"
 #include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/built_ins/built_ins.h"
@@ -18,7 +19,6 @@
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
-#include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"

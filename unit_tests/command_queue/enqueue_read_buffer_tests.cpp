@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/cache_policy.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "test.h"

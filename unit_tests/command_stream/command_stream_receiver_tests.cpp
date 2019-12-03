@@ -7,11 +7,11 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/helpers/cache_policy.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"

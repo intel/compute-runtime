@@ -7,6 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/helpers/cache_policy.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
@@ -18,7 +19,6 @@
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/blit_commands_helper.h"
-#include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/options.h"
