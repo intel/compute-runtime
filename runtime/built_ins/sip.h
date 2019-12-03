@@ -35,7 +35,7 @@ class SipKernel {
     SipKernel &operator=(const SipKernel &) = delete;
     SipKernel(SipKernel &&) = default;
     SipKernel &operator=(SipKernel &&) = default;
-    ~SipKernel();
+    virtual ~SipKernel();
 
     const char *getBinary() const;
 
@@ -47,7 +47,7 @@ class SipKernel {
 
     static const size_t maxDbgSurfaceSize;
 
-    GraphicsAllocation *getSipAllocation() const;
+    MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     static SipKernelType getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive);
 
   protected:
