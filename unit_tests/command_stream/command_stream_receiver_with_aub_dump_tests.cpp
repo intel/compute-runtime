@@ -182,6 +182,12 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhe
 }
 
 struct CommandStreamReceiverTagTests : public ::testing::Test {
+    template <typename FamilyType>
+    using AubWithHw = CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>>;
+
+    template <typename FamilyType>
+    using AubWithTbx = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
+
     template <typename CsrT, typename... Args>
     bool isTimestampPacketNodeReleasable(Args &&... args) {
         CsrT csr(std::forward<Args>(args)...);
@@ -194,6 +200,12 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
         allocator->returnTag(tag);
 
         return canBeReleased;
+    };
+
+    template <typename CsrT, typename... Args>
+    size_t getPreferredTagPoolSize(Args &&... args) {
+        CsrT csr(std::forward<Args>(args)...);
+        return csr.getPreferredTagPoolSize();
     };
 
     void SetUp() override {
@@ -211,13 +223,17 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
 };
 
 HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenCreatingTimestampPacketAllocatorThenSetDefaultCompletionCheckType) {
-    using AubWithHw = CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>>;
-    using AubWithTbx = CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>>;
-
     EXPECT_TRUE(isTimestampPacketNodeReleasable<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0));
     EXPECT_FALSE(isTimestampPacketNodeReleasable<AUBCommandStreamReceiverHw<FamilyType>>(fileName, false, *executionEnvironment, 0));
-    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithHw>(fileName, *executionEnvironment, 0));
-    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithTbx>(fileName, *executionEnvironment, 0));
+    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithHw<FamilyType>>(fileName, *executionEnvironment, 0));
+    EXPECT_FALSE(isTimestampPacketNodeReleasable<AubWithTbx<FamilyType>>(fileName, *executionEnvironment, 0));
+}
+
+HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenAskingForTagPoolSizeThenReturnOneForAubTbxMode) {
+    EXPECT_EQ(512u, getPreferredTagPoolSize<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0));
+    EXPECT_EQ(1u, getPreferredTagPoolSize<AUBCommandStreamReceiverHw<FamilyType>>(fileName, false, *executionEnvironment, 0));
+    EXPECT_EQ(1u, getPreferredTagPoolSize<AubWithHw<FamilyType>>(fileName, *executionEnvironment, 0));
+    EXPECT_EQ(1u, getPreferredTagPoolSize<AubWithTbx<FamilyType>>(fileName, *executionEnvironment, 0));
 }
 
 using SimulatedCsrTest = ::testing::Test;
