@@ -196,7 +196,7 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
         return canBeReleased;
     };
 
-    void SetUp() {
+    void SetUp() override {
         MockAubManager *mockManager = new MockAubManager();
         MockAubCenter *mockAubCenter = new MockAubCenter(*platformDevices, false, fileName, CommandStreamReceiverType::CSR_HW_WITH_AUB);
         mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
