@@ -37,7 +37,7 @@ def _main():
     with open(args.spec, 'r') as fin:
         for line in fin.readlines():
             if re.match('.*__NEO_COMMIT_ID__$', line.strip()):
-                print(line.rstrip().replace('__NEO_COMMIT_ID__', neo_revision))
+                print(line.rstrip().replace('__NEO_COMMIT_ID__', str(neo_revision)))
 
             elif re.match('.*__NEO_PACKAGE_VERSION__$', line.strip()):
                 print(line.rstrip().replace(
