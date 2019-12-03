@@ -27,7 +27,7 @@ void SubDevice::releaseInternal() {
     rootDevice.decRefInternal();
 }
 
-DeviceBitfield SubDevice::getDeviceBitfieldForOsContext() const {
+DeviceBitfield SubDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(subDeviceIndex);
     return deviceBitfield;

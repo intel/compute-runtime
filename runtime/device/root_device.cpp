@@ -73,9 +73,8 @@ unique_ptr_if_unused<Device> RootDevice::release() {
     DEBUG_BREAK_IF(!isValid());
     return unique_ptr_if_unused<Device>(this, false);
 }
-DeviceBitfield RootDevice::getDeviceBitfieldForOsContext() const {
-    DeviceBitfield deviceBitfield;
-    deviceBitfield.set(0);
+DeviceBitfield RootDevice::getDeviceBitfield() const {
+    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(getNumAvailableDevices()))};
     return deviceBitfield;
 }
 

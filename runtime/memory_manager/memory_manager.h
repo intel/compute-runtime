@@ -33,10 +33,6 @@ class Gmm;
 class HostPtrManager;
 class OsContext;
 
-inline DeviceBitfield getDeviceBitfieldForNDevices(uint32_t numDevices) {
-    return DeviceBitfield(maxNBitValue(numDevices));
-}
-
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION

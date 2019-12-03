@@ -27,7 +27,7 @@ class RootDevice : public Device {
     uint32_t getNumSubDevices() const;
 
   protected:
-    DeviceBitfield getDeviceBitfieldForOsContext() const override;
+    DeviceBitfield getDeviceBitfield() const override;
     bool createEngines() override;
 
     MOCKABLE_VIRTUAL bool initializeRootCommandStreamReceiver();

@@ -26,7 +26,7 @@ class SubDevice : public Device {
     uint32_t getSubDeviceIndex() const;
 
   protected:
-    DeviceBitfield getDeviceBitfieldForOsContext() const override;
+    DeviceBitfield getDeviceBitfield() const override;
     const uint32_t subDeviceIndex;
     RootDevice &rootDevice;
 };

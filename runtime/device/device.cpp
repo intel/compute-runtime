@@ -151,7 +151,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
 
     bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineType,
-                                                                                     getDeviceBitfieldForOsContext(), preemptionMode, lowPriority);
+                                                                                     getDeviceBitfield(), preemptionMode, lowPriority);
     commandStreamReceiver->setupContext(*osContext);
 
     if (!commandStreamReceiver->initializeTagAllocation()) {

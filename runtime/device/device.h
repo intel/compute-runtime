@@ -113,7 +113,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
 
-    virtual DeviceBitfield getDeviceBitfieldForOsContext() const = 0;
+    virtual DeviceBitfield getDeviceBitfield() const = 0;
 
     std::vector<unsigned int> simultaneousInterops;
     unsigned int enabledClVersion = 0u;
