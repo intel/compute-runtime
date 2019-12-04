@@ -5,8 +5,8 @@
  *
  */
 
-#include "runtime/helpers/state_base_address.h"
-#include "runtime/helpers/state_base_address_bdw_plus.inl"
+#include "core/helpers/state_base_address.h"
+#include "core/helpers/state_base_address_bdw_plus.inl"
 
 namespace NEO {
 template struct StateBaseAddressHelper<SKLFamily>;

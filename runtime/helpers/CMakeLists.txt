@@ -61,9 +61,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/state_compute_mode_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.cpp

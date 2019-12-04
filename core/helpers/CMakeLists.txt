@@ -41,6 +41,9 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
