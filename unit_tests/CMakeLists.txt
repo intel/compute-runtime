@@ -557,8 +557,11 @@ elseif(USE_ULT_PCH)
     COMMAND cp "${UltPchBinary}" "${UltPchBinaryGch}"
     DEPENDS ${UltPchBinary})
 endif()
-
-get_property(NEO_COMMAND_CONTAINER_TESTS GLOBAL PROPERTY NEO_COMMAND_CONTAINER_TESTS)
-target_sources(igdrcl_tests PRIVATE ${NEO_COMMAND_CONTAINER_TESTS})
-
-# Dont add any sources below PCH logic. This is to keep PCH dependencies correctly without creating new target
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!                                                                             !!
+# !!              DONT ADD ANY SOURCES HERE!                                     !!
+# !!                                                                             !!
+# !!      You are below PCH logic!                                               !!
+# !!      This is to keep PCH dependencies correctly without creating new target !!
+# !!                                                                             !!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
