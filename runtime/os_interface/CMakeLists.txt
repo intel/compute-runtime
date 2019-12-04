@@ -27,7 +27,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/print.h
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_OS_INTERFACE_BASE})

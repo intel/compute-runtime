@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/print.h"
+#include "core/os_interface/print.h"
 
 #include <cstdio>
 #include <iostream>

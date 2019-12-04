@@ -8,8 +8,8 @@
 #pragma once
 
 #include "core/helpers/aligned_memory.h"
+#include "core/os_interface/print.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/os_interface/print.h"
 
 #include <algorithm>
 #include <cctype>
