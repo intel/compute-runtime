@@ -317,10 +317,6 @@ struct IntelAllTracingTest : public IntelTracingTest {
         clCreateSubBuffer(0, 0, 0, 0, 0);
 
         ++count;
-        functionId = CL_FUNCTION_clCreateSubDevices;
-        clCreateSubDevices(0, 0, 0, 0, 0);
-
-        ++count;
         functionId = CL_FUNCTION_clCreateUserEvent;
         clCreateUserEvent(0, 0);
 
