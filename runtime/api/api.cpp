@@ -3971,15 +3971,13 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
                    "size", size,
                    "alignment", alignment);
     void *pAlloc = nullptr;
-    auto pPlatform = platform();
-    auto pDevice = pPlatform->getDevice(0);
-
     Context *pContext = nullptr;
 
-    if (validateObjects(WithCastToInternal(context, &pContext), pDevice) != CL_SUCCESS) {
+    if (validateObjects(WithCastToInternal(context, &pContext)) != CL_SUCCESS) {
         TRACING_EXIT(clSVMAlloc, &pAlloc);
         return pAlloc;
     }
+    auto pDevice = pContext->getDevice(0);
 
     if (flags == 0) {
         flags = CL_MEM_READ_WRITE;

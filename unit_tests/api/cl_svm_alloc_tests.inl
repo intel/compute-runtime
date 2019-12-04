@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 
@@ -34,6 +35,27 @@ class clSVMAllocTemplateTests : public api_fixture,
 struct clSVMAllocValidFlagsTests : public clSVMAllocTemplateTests {
     cl_uchar pHostPtr[64];
 };
+
+TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDeviceIsTakenFromContext) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, 0u));
+    const DeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+    cl_device_id clDevice = device.get();
+    cl_int retVal;
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, platform()->getNumDevices());
+    auto SVMPtr = clSVMAlloc(context.get(), 0u, 4096, 128);
+    EXPECT_NE(nullptr, SVMPtr);
+
+    clSVMFree(context.get(), SVMPtr);
+}
 
 TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
     cl_mem_flags flags = GetParam();
