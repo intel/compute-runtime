@@ -23,8 +23,6 @@ set(RUNTIME_SRCS_PROGRAM
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_from_patchtokens.h
   ${CMAKE_CURRENT_SOURCE_DIR}/link.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patch_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/process_elf_binary.cpp

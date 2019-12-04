@@ -7,7 +7,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
-#include "runtime/program/print_formatter.h"
+#include "core/program/print_formatter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"

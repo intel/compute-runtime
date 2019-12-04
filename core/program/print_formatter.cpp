@@ -8,7 +8,6 @@
 #include "print_formatter.h"
 
 #include "core/helpers/string.h"
-#include "core/memory_manager/graphics_allocation.h"
 
 #include <iostream>
 
