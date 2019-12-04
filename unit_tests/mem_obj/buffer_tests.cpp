@@ -293,7 +293,7 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     auto mapAllocation = buffer->getMapAllocation();
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, mapAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
 
     alignedFree(ptr);
 }

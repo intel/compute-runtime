@@ -143,7 +143,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
 
     wddmAllocation->setDefaultGmm(gmm);
 
-    if (!createWddmAllocation(wddmAllocation.get(), wddmAllocation->getAlignedCpuPtr())) {
+    if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
         delete gmm;
         return nullptr;
     }

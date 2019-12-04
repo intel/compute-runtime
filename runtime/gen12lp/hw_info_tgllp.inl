@@ -66,7 +66,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsVme
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    true                                             // supportsDeviceEnqueue
+    true,                                            // supportsDeviceEnqueue
+    false                                            // hostPtrTrackingEnabled
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

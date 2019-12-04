@@ -260,6 +260,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::IMAGE:
+    case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
     case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::SHARED_BUFFER:
     case GraphicsAllocation::AllocationType::SHARED_IMAGE:
@@ -278,6 +279,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
+    case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
     case GraphicsAllocation::AllocationType::MCS:
     case GraphicsAllocation::AllocationType::PREEMPTION:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
@@ -340,7 +342,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryForImage(allocationData);
     }
     if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
-        (!peekExecutionEnvironment().isFullRangeSvm() || !DebugManager.flags.EnableHostPtrTracking.get())) {
+        (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled())) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -483,6 +485,13 @@ void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
         reservedMemory = allocateSystemMemory(size, alignment);
     }
     return reservedMemory;
+}
+
+bool MemoryManager::isHostPointerTrackingEnabled() {
+    if (DebugManager.flags.EnableHostPtrTracking.get() != -1) {
+        return !!DebugManager.flags.EnableHostPtrTracking.get();
+    }
+    return (peekExecutionEnvironment().getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
 
 } // namespace NEO

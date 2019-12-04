@@ -62,7 +62,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    true                                           // supportsDeviceEnqueue
+    true,                                          // supportsDeviceEnqueue
+    true                                           // hostPtrTrackingEnabled
 };
 
 WorkaroundTable CFL::workaroundTable = {};

@@ -283,7 +283,7 @@ Buffer *Buffer::create(Context *context,
 
     if (memoryProperties.flags.useHostPtr) {
         if (!zeroCopyAllowed && !isHostPtrSVM) {
-            AllocationProperties properties{rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+            AllocationProperties properties{rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
             properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
             mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
         }

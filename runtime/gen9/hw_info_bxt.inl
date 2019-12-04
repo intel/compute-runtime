@@ -67,7 +67,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
-    false                                          // supportsDeviceEnqueue
+    false,                                         // supportsDeviceEnqueue
+    true                                           // hostPtrTrackingEnabled
 };
 
 WorkaroundTable BXT::workaroundTable = {};

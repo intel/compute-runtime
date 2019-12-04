@@ -332,7 +332,8 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
         } else {
             auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
             setAllocatedMapPtr(memory);
-            AllocationProperties properties{rootDeviceIndex, false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+            AllocationProperties properties{rootDeviceIndex, false, getSize(), GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
+
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
             setMapAllocation(allocation);
             return getAllocatedMapPtr();

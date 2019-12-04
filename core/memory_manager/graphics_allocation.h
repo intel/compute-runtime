@@ -56,6 +56,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         INTERNAL_HOST_MEMORY,
         KERNEL_ISA,
         LINEAR_STREAM,
+        MAP_ALLOCATION,
         MCS,
         PIPE,
         PREEMPTION,
