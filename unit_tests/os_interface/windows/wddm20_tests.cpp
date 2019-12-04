@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/os_interface/os_library.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_time.h"

@@ -22,6 +22,8 @@ class RootDevice;
 class Device;
 class AsyncEventsHandler;
 class ExecutionEnvironment;
+class GmmHelper;
+class GmmClientContext;
 struct HardwareInfo;
 
 template <>
@@ -56,7 +58,9 @@ class Platform : public BaseObject<_cl_platform_id> {
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();
     std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
-    ExecutionEnvironment *peekExecutionEnvironment() { return executionEnvironment; }
+    ExecutionEnvironment *peekExecutionEnvironment() const { return executionEnvironment; }
+    GmmHelper *peekGmmHelper() const;
+    GmmClientContext *peekGmmClientContext() const;
 
   protected:
     enum {

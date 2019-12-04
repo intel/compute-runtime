@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/memory_manager/address_mapper.h"

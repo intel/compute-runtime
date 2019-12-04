@@ -7,6 +7,7 @@
 
 #include "runtime/kernel/kernel.h"
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/debug_helpers.h"
@@ -23,7 +24,6 @@
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/per_thread_data.h"

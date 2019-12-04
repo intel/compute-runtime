@@ -8,10 +8,10 @@
 #pragma once
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"

@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"

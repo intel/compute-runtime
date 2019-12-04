@@ -8,6 +8,7 @@
 #include "unit_tests/program/program_tests.h"
 
 #include "core/elf/reader.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/hw_helper.h"
@@ -19,7 +20,6 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/allocations_list.h"

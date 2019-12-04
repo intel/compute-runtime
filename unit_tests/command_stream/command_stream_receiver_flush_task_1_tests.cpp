@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"

@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
@@ -148,7 +149,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenCompressionEnabledWhenAppendingSurfaceStat
     rss.setMemoryCompressionEnable(true);
     MockContext context{};
     std::unique_ptr<ImageHwTgllp> image{static_cast<ImageHwTgllp *>(ImageHelper<Image2dDefaults>::create(&context))};
-    MockGmmClientContext *gmmClientContext = static_cast<MockGmmClientContext *>(GmmHelper::getClientContext());
+    MockGmmClientContext *gmmClientContext = static_cast<MockGmmClientContext *>(platform()->peekGmmClientContext());
 
     uint8_t expectedCompressionFormat = rss.getCompressionFormat();
     if (SpecialUltHelperGen12lp::isAdditionalSurfaceStateParamForCompressionRequired(context.getDevice(0)->getHardwareInfo())) {

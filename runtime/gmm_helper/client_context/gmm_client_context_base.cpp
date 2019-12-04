@@ -7,6 +7,7 @@
 
 #include "runtime/gmm_helper/client_context/gmm_client_context_base.h"
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
 #include "core/sku_info/operations/sku_info_transfer.h"

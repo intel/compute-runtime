@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/cache_policy.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/state_base_address.h"
 
 namespace NEO {

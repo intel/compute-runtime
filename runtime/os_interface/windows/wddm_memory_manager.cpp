@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/deferred_deleter_helper.h"
 #include "core/helpers/ptr_math.h"
@@ -16,7 +17,6 @@
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/deferrable_deletion.h"

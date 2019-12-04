@@ -9,6 +9,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/string.h"
@@ -29,6 +30,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "CL/cl_ext.h"
+#include "gmm_client_context.h"
 
 namespace NEO {
 
@@ -251,6 +253,14 @@ std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_
 
 RootDevice *Platform::createRootDevice(uint32_t rootDeviceIndex) const {
     return Device::create<RootDevice>(executionEnvironment, rootDeviceIndex);
+}
+
+GmmHelper *Platform::peekGmmHelper() const {
+    return executionEnvironment->getGmmHelper();
+}
+
+GmmClientContext *Platform::peekGmmClientContext() const {
+    return peekGmmHelper()->getClientContext();
 }
 
 } // namespace NEO

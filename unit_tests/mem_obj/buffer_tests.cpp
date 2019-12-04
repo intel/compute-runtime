@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
@@ -14,7 +15,6 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"

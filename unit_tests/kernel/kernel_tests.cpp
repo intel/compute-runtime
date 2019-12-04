@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
@@ -12,7 +13,6 @@
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/options.h"

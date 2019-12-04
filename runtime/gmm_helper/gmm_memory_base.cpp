@@ -7,14 +7,15 @@
 
 #include "runtime/gmm_helper/gmm_memory_base.h"
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+#include "runtime/platform/platform.h"
 
 #include "gmm_client_context.h"
 
 namespace NEO {
 GmmMemoryBase::GmmMemoryBase() {
-    clientContext = GmmHelper::getClientContext()->getHandle();
+    clientContext = platform()->peekGmmHelper()->getClientContext()->getHandle();
 }
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,

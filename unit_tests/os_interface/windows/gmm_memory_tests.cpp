@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
+#include "runtime/platform/platform.h"
 
 #include "gmm_client_context.h"
 #include "gmm_memory.h"
@@ -19,7 +20,7 @@ class PublicGmmMemory : public GmmMemory {
 };
 
 TEST(GmmMemoryTest, givenGmmHelperWhenCreateGmmMemoryThenItHasClientContextFromGmmHelper) {
-    ASSERT_NE(nullptr, GmmHelper::getClientContext());
+    ASSERT_NE(nullptr, platform()->peekGmmClientContext());
     PublicGmmMemory gmmMemory;
-    EXPECT_EQ(gmmMemory.clientContext, GmmHelper::getClientContext()->getHandle());
+    EXPECT_EQ(gmmMemory.clientContext, platform()->peekGmmClientContext()->getHandle());
 }

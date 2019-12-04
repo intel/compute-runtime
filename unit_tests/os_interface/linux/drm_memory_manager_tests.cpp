@@ -9,6 +9,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/host_ptr_manager.h"
@@ -16,7 +17,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/event/event.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"

@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper_base.inl"
-#include "runtime/gmm_helper/gmm_helper.h"
 
 namespace NEO {
 

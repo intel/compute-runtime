@@ -37,8 +37,7 @@ class GmmHelper {
         return (address & maxNBitValue(addressWidth));
     }
 
-    static GmmClientContext *getClientContext();
-    static GmmHelper *getInstance();
+    GmmClientContext *getClientContext() const;
 
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmDestroy));
 

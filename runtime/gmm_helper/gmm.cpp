@@ -7,14 +7,15 @@
 
 #include "runtime/gmm_helper/gmm.h"
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
+#include "runtime/platform/platform.h"
 
 namespace NEO {
 Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, {}) {}
@@ -99,7 +100,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
 
     resourceParams.Flags.Info.Linear = imgInfo.linearStorage;
 
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(platform()->peekGmmHelper()->getHardwareInfo()->platform.eRenderCoreFamily);
 
     resourceParams.NoGfxMemory = 1; // dont allocate, only query for params
 
@@ -176,7 +177,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
 }
 
 uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
-    if (GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
+    if (platform()->peekGmmHelper()->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 0;
     }
     return gmmResourceInfo->getQPitch();

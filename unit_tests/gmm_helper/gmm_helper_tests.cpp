@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
@@ -163,7 +163,7 @@ TEST_F(GmmTests, validImageTypeQuery) {
         EXPECT_GT(imgInfo.qPitch, 0u);
     }
 
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwinfo->platform.eRenderCoreFamily);
 
     EXPECT_EQ(queryGmm->resourceParams.Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
     EXPECT_EQ(queryGmm->resourceParams.NoGfxMemory, 1u);
@@ -676,8 +676,8 @@ TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleCont
 }
 
 TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
-    ASSERT_NE(nullptr, GmmHelper::getClientContext());
-    EXPECT_NE(nullptr, GmmHelper::getClientContext()->getHandle());
+    ASSERT_NE(nullptr, platform()->peekGmmClientContext());
+    EXPECT_NE(nullptr, platform()->peekGmmClientContext()->getHandle());
 }
 
 TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThenObserveNoExceptions) {

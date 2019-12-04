@@ -9,12 +9,12 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"

@@ -7,6 +7,7 @@
 
 #include "runtime/mem_obj/buffer.h"
 
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
@@ -19,7 +20,6 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/helpers/validators.h"
