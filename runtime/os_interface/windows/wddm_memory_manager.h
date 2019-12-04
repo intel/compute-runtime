@@ -82,7 +82,6 @@ class WddmMemoryManager : public MemoryManager {
     bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
-    void obtainGpuAddressIfNeeded(WddmAllocation *graphicsAllocation);
     AlignedMallocRestrictions mallocRestrictions;
 
   private:

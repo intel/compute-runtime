@@ -543,17 +543,6 @@ bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation
     return true;
 }
 
-void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
-    if (allocation->getNumHandles() > 1u) {
-        auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
-        allocation->reservedSizeForGpuVirtualAddress = allocation->getAlignedSize();
-        auto gfxPartition = getGfxPartition(allocation->getRootDeviceIndex());
-        allocation->reservedGpuVirtualAddress = wddm->reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex),
-                                                                               gfxPartition->getHeapLimit(heapIndex),
-                                                                               allocation->reservedSizeForGpuVirtualAddress);
-    }
-}
-
 void *WddmMemoryManager::reserveCpuAddressRange(size_t size) {
     void *reservePtr = nullptr;
     wddm->reserveValidAddressRange(size, reservePtr);
