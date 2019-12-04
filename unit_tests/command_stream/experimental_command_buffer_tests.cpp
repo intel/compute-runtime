@@ -11,6 +11,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -354,15 +355,9 @@ HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCom
     EXPECT_STREQ(output.c_str(), "");
 }
 
-TEST(ExperimentalCommandBufferRootDeviceIndexTest, experimentalCommandBufferGraphicsAllocationsHaveCorrectRootDeviceIndex) {
-    const uint32_t expectedRootDeviceIndex = 101;
+using ExperimentalCommandBufferRootDeviceIndexTest = MultiRootDeviceFixture;
 
-    // Setup
-    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(2 * expectedRootDeviceIndex);
-    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
-    executionEnvironment->memoryManager.reset(memoryManager);
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, expectedRootDeviceIndex));
+TEST_F(ExperimentalCommandBufferRootDeviceIndexTest, experimentalCommandBufferGraphicsAllocationsHaveCorrectRootDeviceIndex) {
     auto experimentalCommandBuffer = std::make_unique<MockExperimentalCommandBuffer>(&device->getGpgpuCommandStreamReceiver());
 
     ASSERT_NE(nullptr, experimentalCommandBuffer);

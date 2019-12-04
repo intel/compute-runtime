@@ -14,6 +14,7 @@
 #include "runtime/sharings/d3d/cl_d3d_api.h"
 #include "runtime/sharings/d3d/d3d_surface.h"
 #include "test.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -28,6 +29,42 @@ DXGI_ADAPTER_DESC MockD3DSharingFunctions<D3DTypesHelper::D3D9>::mockDxgiDesc = 
 template <>
 IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D9>::getDxgiDescAdapterRequested = nullptr;
 
+class MockMM : public OsAgnosticMemoryManager {
+  public:
+    MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
+        alloc->setDefaultGmm(forceGmm);
+        gmmOwnershipPassed = true;
+        return alloc;
+    }
+    GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
+        auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo, StorageInfo{});
+        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false);
+        alloc->setDefaultGmm(forceGmm);
+        gmmOwnershipPassed = true;
+        return alloc;
+    }
+
+    void *lockResourceImpl(GraphicsAllocation &allocation) override {
+        lockResourceCalled++;
+        EXPECT_EQ(expectedLockingAllocation, &allocation);
+        return lockResourceReturnValue;
+    }
+    void unlockResourceImpl(GraphicsAllocation &allocation) override {
+        unlockResourceCalled++;
+        EXPECT_EQ(expectedLockingAllocation, &allocation);
+    }
+
+    int32_t lockResourceCalled = 0;
+    int32_t unlockResourceCalled = 0;
+    GraphicsAllocation *expectedLockingAllocation = nullptr;
+    void *lockResourceReturnValue = nullptr;
+    Gmm *forceGmm = nullptr;
+    bool gmmOwnershipPassed = false;
+};
+
 class D3D9Tests : public PlatformFixture, public ::testing::Test {
   public:
     typedef typename D3DTypesHelper::D3D9 D3D9;
@@ -37,42 +74,6 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     typedef typename D3D9::D3DResource D3DResource;
     typedef typename D3D9::D3DTexture2dDesc D3DTexture2dDesc;
     typedef typename D3D9::D3DTexture2d D3DTexture2d;
-
-    class MockMM : public OsAgnosticMemoryManager {
-      public:
-        MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
-            alloc->setDefaultGmm(forceGmm);
-            gmmOwnershipPassed = true;
-            return alloc;
-        }
-        GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
-            auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo, StorageInfo{});
-            AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false);
-            alloc->setDefaultGmm(forceGmm);
-            gmmOwnershipPassed = true;
-            return alloc;
-        }
-
-        void *lockResourceImpl(GraphicsAllocation &allocation) override {
-            lockResourceCalled++;
-            EXPECT_EQ(expectedLockingAllocation, &allocation);
-            return lockResourceReturnValue;
-        }
-        void unlockResourceImpl(GraphicsAllocation &allocation) override {
-            unlockResourceCalled++;
-            EXPECT_EQ(expectedLockingAllocation, &allocation);
-        }
-
-        int32_t lockResourceCalled = 0;
-        int32_t unlockResourceCalled = 0;
-        GraphicsAllocation *expectedLockingAllocation = nullptr;
-        void *lockResourceReturnValue = nullptr;
-        Gmm *forceGmm = nullptr;
-        bool gmmOwnershipPassed = false;
-    };
 
     void setupMockGmm() {
         cl_image_desc imgDesc = {};
@@ -1068,5 +1069,71 @@ TEST_P(D3D9ImageFormatTests, validFormat) {
     EXPECT_EQ(imgFormat.image_channel_data_type, expectedClChannelType);
     EXPECT_EQ(imgFormat.image_channel_order, expectedClChannelOrder);
     EXPECT_TRUE(oclPlane == expectedOclPlane);
+}
+
+using D3D9MultiRootDeviceTest = MultiRootDeviceFixture;
+
+TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNullWhenCreatingSharedSurfaceAndRootDeviceIndexIsSpecifiedThenAllocationHasCorrectRootDeviceIndex) {
+    cl_image_desc imgDesc = {};
+    imgDesc.image_height = 10;
+    imgDesc.image_width = 10;
+    imgDesc.image_depth = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto gmm = MockGmm::queryImgParams(imgInfo).release();
+
+    auto memoryManager = std::make_unique<MockMM>(*device->executionEnvironment);
+    memoryManager->forceGmm = gmm;
+
+    auto mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3DTypesHelper::D3D9>>();
+    mockSharingFcns->mockTexture2dDesc.Format = D3DFMT_R32F;
+    mockSharingFcns->mockTexture2dDesc.Height = 10;
+    mockSharingFcns->mockTexture2dDesc.Width = 10;
+
+    cl_dx9_surface_info_khr surfaceInfo = {};
+    surfaceInfo.shared_handle = reinterpret_cast<HANDLE>(0);
+
+    ON_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).WillByDefault(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
+
+    MockContext ctx(device.get());
+    ctx.setSharingFunctions(mockSharingFcns);
+    ctx.memoryManager = memoryManager.get();
+
+    auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(&ctx, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
+    ASSERT_NE(nullptr, sharedImg.get());
+    ASSERT_NE(nullptr, sharedImg->getGraphicsAllocation());
+    EXPECT_EQ(expectedRootDeviceIndex, sharedImg->getGraphicsAllocation()->getRootDeviceIndex());
+}
+
+TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNotNullWhenCreatingSharedSurfaceAndRootDeviceIndexIsSpecifiedThenAllocationHasCorrectRootDeviceIndex) {
+    cl_image_desc imgDesc = {};
+    imgDesc.image_height = 10;
+    imgDesc.image_width = 10;
+    imgDesc.image_depth = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto gmm = MockGmm::queryImgParams(imgInfo).release();
+
+    auto memoryManager = std::make_unique<MockMM>(*device->executionEnvironment);
+    memoryManager->forceGmm = gmm;
+
+    auto mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3DTypesHelper::D3D9>>();
+    mockSharingFcns->mockTexture2dDesc.Format = D3DFMT_R32F;
+    mockSharingFcns->mockTexture2dDesc.Height = 10;
+    mockSharingFcns->mockTexture2dDesc.Width = 10;
+
+    cl_dx9_surface_info_khr surfaceInfo = {};
+    surfaceInfo.shared_handle = reinterpret_cast<HANDLE>(1);
+
+    ON_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).WillByDefault(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
+
+    MockContext ctx(device.get());
+    ctx.setSharingFunctions(mockSharingFcns);
+    ctx.memoryManager = memoryManager.get();
+
+    auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(&ctx, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
+    ASSERT_NE(nullptr, sharedImg.get());
+    ASSERT_NE(nullptr, sharedImg->getGraphicsAllocation());
+    EXPECT_EQ(expectedRootDeviceIndex, sharedImg->getGraphicsAllocation()->getRootDeviceIndex());
 }
 } // namespace NEO

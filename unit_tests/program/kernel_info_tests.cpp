@@ -8,6 +8,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/program/kernel_info.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
@@ -246,4 +247,23 @@ TEST(KernelInfo, givenKernelInfoWhenStoreNonTransformableArgThenArgInfoIsNotTran
     kernelInfo->storeKernelArgument(&arg);
     const auto &argInfo = kernelInfo->kernelArgInfo[argumentNumber];
     EXPECT_FALSE(argInfo.isTransformable);
+}
+
+using KernelInfoMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex) {
+    KernelInfo kernelInfo;
+    SKernelBinaryHeaderCommon kernelHeader;
+    const size_t heapSize = 0x40;
+    char heap[heapSize];
+    kernelHeader.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.pKernelHeap = &heap;
+
+    auto retVal = kernelInfo.createKernelAllocation(expectedRootDeviceIndex, mockMemoryManager);
+    EXPECT_TRUE(retVal);
+    auto allocation = kernelInfo.kernelAllocation;
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());
+    mockMemoryManager->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }

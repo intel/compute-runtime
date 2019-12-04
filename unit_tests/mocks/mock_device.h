@@ -98,13 +98,13 @@ class MockDevice : public RootDevice {
     }
 
     template <typename T>
-    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
+    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
         auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
         executionEnvironment->setHwInfo(pHwInfo);
-        return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, 0u);
+        return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
     bool initializeRootCommandStreamReceiver() override {
         if (callBaseInitializeRootCommandStreamReceiver) {
@@ -129,7 +129,7 @@ class MockDevice : public RootDevice {
 };
 
 template <>
-inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo) {
+inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
     auto executionEnvironment = new ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);

@@ -10,6 +10,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
 using namespace NEO;
@@ -112,4 +113,17 @@ TEST_F(PipeTest, givenPipeWithDifferentCpuAndGpuAddressesWhenSetArgPipeThenUseGp
     EXPECT_EQ(valueToPatch, pipeAllocation->getGpuAddressToPatch());
 
     delete pipe;
+}
+
+using MultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(MultiRootDeviceTests, pipeGraphicsAllocationHasCorrectRootDeviceIndex) {
+    int errCode = CL_SUCCESS;
+
+    std::unique_ptr<Pipe> pipe(Pipe::create(context.get(), CL_MEM_READ_ONLY, 1, 20, nullptr, errCode));
+    EXPECT_EQ(CL_SUCCESS, errCode);
+    ASSERT_NE(nullptr, pipe.get());
+    auto graphicsAllocation = pipe->getGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }

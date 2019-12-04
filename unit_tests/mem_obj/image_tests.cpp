@@ -18,6 +18,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mem_obj/image_compression_fixture.h"
@@ -1564,4 +1565,14 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
     mockImage->setAuxParamsForMultisamples(&surfaceState);
 
     EXPECT_TRUE(mockImage->setAuxParamsForMCSCCSCalled);
+}
+
+using ImageMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(ImageMultiRootDeviceTests, imageAllocationHasCorrectRootDeviceIndex) {
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
+
+    auto graphicsAllocation = image->getGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }

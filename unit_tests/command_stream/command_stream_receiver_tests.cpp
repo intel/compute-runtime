@@ -12,6 +12,7 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -21,6 +22,7 @@
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -640,22 +642,16 @@ TEST(CommandStreamReceiverDeviceIndexTest, givenOsContextWithNoDeviceBitfieldWhe
     EXPECT_EQ(0u, csr.getDeviceIndex());
 }
 
-TEST(CommandStreamReceiverRootDeviceIndexTest, commandStreamGraphicsAllocationsHaveCorrectRootDeviceIndex) {
-    const uint32_t expectedRootDeviceIndex = 101;
+using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
 
-    // Setup
-    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(2 * expectedRootDeviceIndex);
-    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
-    executionEnvironment->memoryManager.reset(memoryManager);
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, expectedRootDeviceIndex));
+TEST_F(CommandStreamReceiverMultiRootDeviceTest, commandStreamGraphicsAllocationsHaveCorrectRootDeviceIndex) {
     auto commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
 
     ASSERT_NE(nullptr, commandStreamReceiver);
     EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getRootDeviceIndex());
 
     // Linear stream / Command buffer
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    GraphicsAllocation *allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
@@ -667,7 +663,7 @@ TEST(CommandStreamReceiverRootDeviceIndexTest, commandStreamGraphicsAllocationsH
     EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(0u, commandStream.getMaxAvailableSpace() % MemoryConstants::pageSize64k);
     EXPECT_EQ(expectedRootDeviceIndex, commandStream.getGraphicsAllocation()->getRootDeviceIndex());
-    memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
+    mockMemoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 
     // Debug surface
     auto debugSurface = commandStreamReceiver->allocateDebugSurface(MemoryConstants::pageSize);
@@ -682,7 +678,7 @@ TEST(CommandStreamReceiverRootDeviceIndexTest, commandStreamGraphicsAllocationsH
         ASSERT_NE(nullptr, heap);
         ASSERT_NE(nullptr, heap->getGraphicsAllocation());
         EXPECT_EQ(expectedRootDeviceIndex, heap->getGraphicsAllocation()->getRootDeviceIndex());
-        memoryManager->freeGraphicsMemory(heap->getGraphicsAllocation());
+        mockMemoryManager->freeGraphicsMemory(heap->getGraphicsAllocation());
         delete heap;
     }
 
@@ -702,4 +698,14 @@ TEST(CommandStreamReceiverRootDeviceIndexTest, commandStreamGraphicsAllocationsH
     EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
     ASSERT_NE(nullptr, surface.getAllocation());
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
+
+    // Scratch allocation
+    auto scratchController = commandStreamReceiver->getScratchSpaceController();
+    bool cfeStateDirty = false;
+    bool stateBaseAddressDirty = false;
+    std::vector<unsigned char> surfaceHeap(0x1000);
+    scratchController->setRequiredScratchSpace(surfaceHeap.data(), 0x1000u, 0u, 0u, *device->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
+    auto scratchAllocation = scratchController->getScratchSpaceAllocation();
+    ASSERT_NE(nullptr, scratchAllocation);
+    EXPECT_EQ(expectedRootDeviceIndex, scratchAllocation->getRootDeviceIndex());
 }

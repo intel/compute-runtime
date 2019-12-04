@@ -7,6 +7,7 @@
 
 #include "runtime/program/printf_handler.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -72,6 +73,7 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
     delete pProgram;
     delete device;
 }
+
 TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -154,4 +156,29 @@ TEST(PrintfHandlerTest, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerThen
 
     auto printfHandler = PrintfHandler::create(multiDispatchInfo, device);
     EXPECT_EQ(nullptr, printfHandler);
+}
+
+using PrintfHandlerMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(PrintfHandlerMultiRootDeviceTests, printfSurfaceHasCorrectRootDeviceIndex) {
+    auto printfSurface = std::make_unique<SPatchAllocateStatelessPrintfSurface>();
+    printfSurface->DataParamOffset = 0;
+    printfSurface->DataParamSize = 8;
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = printfSurface.get();
+
+    auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), context.get(), false);
+
+    uint64_t crossThread[10];
+    auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+    kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+    MockMultiDispatchInfo multiDispatchInfo(kernel.get());
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    printfHandler->prepareDispatch(multiDispatchInfo);
+    auto surface = printfHandler->getSurface();
+
+    ASSERT_NE(nullptr, surface);
+    EXPECT_EQ(expectedRootDeviceIndex, surface->getRootDeviceIndex());
 }

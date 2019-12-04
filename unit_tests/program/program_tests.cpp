@@ -27,6 +27,7 @@
 #include "runtime/program/create.inl"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -78,9 +79,9 @@ std::vector<const char *> KernelNames{
     "CopyBuffer",
 };
 
-class MockExecutionEnvironment : public ExecutionEnvironment {
+class MockCompIfaceExecutionEnvironment : public ExecutionEnvironment {
   public:
-    MockExecutionEnvironment(CompilerInterface *compilerInterface) : compilerInterface(compilerInterface) {}
+    MockCompIfaceExecutionEnvironment(CompilerInterface *compilerInterface) : compilerInterface(compilerInterface) {}
 
     CompilerInterface *getCompilerInterface() override {
         return compilerInterface;
@@ -694,7 +695,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
 
     // fail build - CompilerInterface cannot be obtained
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
     auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     retVal = p2->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
@@ -959,7 +960,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     delete p3;
 
     // fail compilation - CompilerInterface cannot be obtained
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
     auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
@@ -1004,7 +1005,7 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
 
 TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
-    MockExecutionEnvironment executionEnvironment(cip.get());
+    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
     auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
@@ -1186,7 +1187,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
     auto p = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     cl_program program = pProgram;
 
@@ -2181,7 +2182,7 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
     auto program = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
@@ -2216,7 +2217,7 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
     };
 
     auto cip = std::make_unique<MyCompilerInterface>();
-    MockExecutionEnvironment executionEnvironment(cip.get());
+    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
     auto program = std::make_unique<MockProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
@@ -2240,7 +2241,7 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
-    MockExecutionEnvironment executionEnvironment(cip.get());
+    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
     auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
@@ -3228,4 +3229,28 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(nullptr, pProgram->getDebugData());
+}
+
+using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(ProgramMultiRootDeviceTests, privateSurfaceHasCorrectRootDeviceIndex) {
+    auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), context.get(), false);
+
+    auto privateSurfaceBlock = std::make_unique<SPatchAllocateStatelessPrivateSurface>();
+    privateSurfaceBlock->DataParamOffset = 0;
+    privateSurfaceBlock->DataParamSize = 8;
+    privateSurfaceBlock->Size = 8;
+    privateSurfaceBlock->SurfaceStateHeapOffset = 0;
+    privateSurfaceBlock->Token = 0;
+    privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
+
+    auto infoBlock = std::make_unique<KernelInfo>();
+    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock.get();
+
+    program->blockKernelManager->addBlockKernelInfo(infoBlock.release());
+    program->allocateBlockPrivateSurfaces(device->getRootDeviceIndex());
+
+    auto privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
+    EXPECT_NE(nullptr, privateSurface);
+    EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
 }

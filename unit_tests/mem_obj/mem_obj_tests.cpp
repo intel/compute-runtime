@@ -14,6 +14,7 @@
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -489,4 +490,19 @@ TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) 
     ASSERT_NE(nullptr, mapAllocation);
     EXPECT_EQ(mapPtr, mapAllocation->getUnderlyingBuffer());
     EXPECT_EQ(mapPtr, memObj.getAllocatedMapPtr());
+}
+
+using MemObjMultiRootDeviceTests = MultiRootDeviceFixture;
+
+TEST_F(MemObjMultiRootDeviceTests, memObjMapAllocationHasCorrectRootDeviceIndex) {
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE, 0, 0);
+    MemObj memObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                  1, nullptr, nullptr, nullptr, true, false, false);
+
+    void *mapPtr = memObj.getBasePtrForMap(device->getRootDeviceIndex());
+    EXPECT_NE(nullptr, mapPtr);
+
+    auto mapAllocation = memObj.getMapAllocation();
+    ASSERT_NE(nullptr, mapAllocation);
+    EXPECT_EQ(expectedRootDeviceIndex, mapAllocation->getRootDeviceIndex());
 }

@@ -34,6 +34,7 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/multi_root_device_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h
