@@ -13,7 +13,13 @@
 
 using namespace NEO;
 
-typedef api_tests clGetDeviceIDsTests;
+namespace NEO {
+extern bool overrideDeviceWithDefaultHardwareInfo;
+extern bool overrideCommandStreamReceiverCreation;
+
+} // namespace NEO
+
+using clGetDeviceIDsTests = api_tests;
 
 namespace ULT {
 
@@ -96,9 +102,72 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeCpuWhenGettingDeviceIdsThenDeviceNotF
     EXPECT_EQ(numDevices, (cl_uint)0);
 }
 
-} // namespace ULT
-namespace NEO {
-extern bool overrideDeviceWithDefaultHardwareInfo;
-extern bool overrideCommandStreamReceiverCreation;
+TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevicesAreReturned) {
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numEntries, numDevices);
+    for (auto i = 0u; i < numRootDevices; i++) {
+        EXPECT_EQ(devices[i], platform()->getDevice(i));
+    }
+}
+TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIsLowerThanNumDevicesThenSubsetOfRootDevicesIsReturned) {
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    cl_uint maxNumDevices;
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numRootDevices, maxNumDevices);
 
-} // namespace NEO
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices - 1;
+    cl_device_id devices[numRootDevices];
+
+    const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+    for (auto i = 0u; i < numRootDevices; i++) {
+        devices[i] = dummyDevice;
+    }
+
+    retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_LT(numDevices, maxNumDevices);
+    EXPECT_EQ(numEntries, numDevices);
+    for (auto i = 0u; i < numEntries; i++) {
+        EXPECT_EQ(devices[i], platform()->getDevice(i));
+    }
+    EXPECT_EQ(devices[numEntries], dummyDevice);
+}
+
+TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevicesWhenGetDeviceIdsThenLimitedNumberOfRootDevicesIsReturned) {
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.LimitAmountOfReturnedDevices.set(numRootDevices - 1);
+
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
+
+    const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+    for (auto i = 0u; i < numRootDevices; i++) {
+        devices[i] = dummyDevice;
+    }
+
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numEntries - 1, numDevices);
+    for (auto i = 0u; i < numDevices; i++) {
+        EXPECT_EQ(devices[i], platform()->getDevice(i));
+    }
+    EXPECT_EQ(devices[numDevices], dummyDevice);
+}
+} // namespace ULT

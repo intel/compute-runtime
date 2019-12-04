@@ -190,8 +190,9 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             break;
         }
 
-        Device *device = pPlatform->getDevice(0);
-        DEBUG_BREAK_IF(device == nullptr);
+        if (DebugManager.flags.LimitAmountOfReturnedDevices.get()) {
+            numDev = std::min(static_cast<cl_uint>(DebugManager.flags.LimitAmountOfReturnedDevices.get()), numDev);
+        }
 
         if (deviceType == CL_DEVICE_TYPE_ALL) {
             /* According to Spec, set it to all except TYPE_CUSTOM. */
@@ -203,16 +204,20 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         }
 
         cl_uint retNum = 0;
+        for (auto rootDeviceIndex = 0u; rootDeviceIndex < numDev; rootDeviceIndex++) {
 
-        if (deviceType & device->getDeviceInfo().deviceType) {
-            if (devices) {
-                devices[retNum] = device;
+            Device *device = pPlatform->getDevice(rootDeviceIndex);
+            DEBUG_BREAK_IF(device == nullptr);
+
+            if (deviceType & device->getDeviceInfo().deviceType) {
+                if (devices) {
+                    if (retNum >= numEntries) {
+                        break;
+                    }
+                    devices[retNum] = device;
+                }
+                retNum++;
             }
-            retNum++;
-        }
-
-        if (DebugManager.flags.LimitAmountOfReturnedDevices.get()) {
-            retNum = std::min(static_cast<uint32_t>(DebugManager.flags.LimitAmountOfReturnedDevices.get()), retNum);
         }
 
         if (numDevices) {
