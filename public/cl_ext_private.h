@@ -99,6 +99,7 @@ typedef cl_uint cl_execution_info_intel;
 #define CL_MEM_ALLOC_TYPE_INTEL 0x419A
 #define CL_MEM_ALLOC_BASE_PTR_INTEL 0x419B
 #define CL_MEM_ALLOC_SIZE_INTEL 0x419C
+#define CL_MEM_ALLOC_DEVICE_INTEL 0x419D
 
 /* cl_unified_shared_memory_type_intel */
 #define CL_MEM_TYPE_UNKNOWN_INTEL 0x4196

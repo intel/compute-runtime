@@ -3456,6 +3456,7 @@ void *clDeviceMemAllocINTEL(
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
+    unifiedMemoryProperties.device = device;
 
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties);
 }
@@ -3489,6 +3490,7 @@ void *clSharedMemAllocINTEL(
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
+    unifiedMemoryProperties.device = device;
 
     return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
 }
@@ -3570,6 +3572,11 @@ cl_int clGetMemAllocInfoINTEL(
         retVal = info.set<uint64_t>(unifiedMemoryAllocation->allocationFlagsProperty);
         return retVal;
     }
+    case CL_MEM_ALLOC_DEVICE_INTEL: {
+        retVal = info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device));
+        return retVal;
+    }
+
     default: {
     }
     }

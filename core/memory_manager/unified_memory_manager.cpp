@@ -111,6 +111,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, 
     allocData.size = size;
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
+    allocData.device = memoryProperties.device;
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);

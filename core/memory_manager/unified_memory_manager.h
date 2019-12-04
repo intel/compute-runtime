@@ -24,6 +24,7 @@ struct SvmAllocationData {
     size_t size = 0;
     InternalMemoryType memoryType = InternalMemoryType::SVM;
     uint64_t allocationFlagsProperty;
+    void *device = nullptr;
 };
 
 struct SvmMapOperation {
@@ -72,6 +73,7 @@ class SVMAllocsManager {
         UnifiedMemoryProperties(InternalMemoryType memoryType) : memoryType(memoryType){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         uint64_t allocationFlags = 0;
+        void *device = nullptr;
     };
 
     SVMAllocsManager(MemoryManager *memoryManager);
