@@ -474,10 +474,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    MultiDispatchInfo dispatchInfo;
+    auto builtInType = EBuiltInOps::FillBuffer;
+    if (forceStateless(svmData->size)) {
+        builtInType = EBuiltInOps::FillBufferStateless;
+    }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                                                                        this->getContext(), this->getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(builtInType,
+                                                                                                        this->getContext(),
+                                                                                                        this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
@@ -493,6 +497,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     operationParams.dstSvmAlloc = svmData->gpuAllocation;
     operationParams.dstOffset = {dstPtrOffset, 0, 0};
     operationParams.size = {size, 0, 0};
+
+    MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, operationParams);
 
     GeneralSurface s1(svmData->gpuAllocation);

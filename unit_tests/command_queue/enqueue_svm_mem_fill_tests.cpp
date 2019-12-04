@@ -8,6 +8,7 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "test.h"
+#include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
@@ -147,3 +148,69 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
 INSTANTIATE_TEST_CASE_P(size_t,
                         EnqueueSvmMemFillTest,
                         ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
+
+struct EnqueueSvmMemFillHw : public ::testing::Test {
+
+    void SetUp() override {
+
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        if (is32bit || !device->isFullRangeSvm()) {
+            GTEST_SKIP();
+        }
+
+        context = std::make_unique<MockContext>(device.get());
+        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+        ASSERT_NE(nullptr, svmPtr);
+    }
+
+    void TearDown() override {
+        if (is32bit || !device->isFullRangeSvm()) {
+            return;
+        }
+        context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    uint64_t bigSize = 5ull * MemoryConstants::gigaByte;
+    uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;
+    void *svmPtr = nullptr;
+    const uint64_t pattern[4] = {0x0011223344556677,
+                                 0x8899AABBCCDDEEFF,
+                                 0xFFEEDDCCBBAA9988,
+                                 0x7766554433221100};
+    size_t patternSize = 0;
+};
+
+using EnqueueSvmMemFillHwTest = EnqueueSvmMemFillHw;
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatelessBuilderThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    svmData->size = static_cast<size_t>(bigSize);
+
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        svmPtr,                       // void *svm_ptr
+        pattern,                      // const void *pattern
+        patternSize,                  // size_t pattern_size
+        static_cast<size_t>(bigSize), // size_t size
+        0,                            // cl_uint num_events_in_wait_list
+        nullptr,                      // cl_event *event_wait_list
+        nullptr                       // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatefulBuilderThenSuccessIsReturned) {
+    auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    auto retVal = cmdQ->enqueueSVMMemFill(
+        svmPtr,                         // void *svm_ptr
+        pattern,                        // const void *pattern
+        patternSize,                    // size_t pattern_size
+        static_cast<size_t>(smallSize), // size_t size
+        0,                              // cl_uint num_events_in_wait_list
+        nullptr,                        // cl_event *event_wait_list
+        nullptr                         // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
