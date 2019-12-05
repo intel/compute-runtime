@@ -63,7 +63,7 @@ typedef CreateImageFormatTest<CL_MEM_READ_WRITE> ReadWriteFormatTest;
 TEST_P(ReadWriteFormatTest, returnsSuccess) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -88,7 +88,7 @@ typedef CreateImageFormatTest<CL_MEM_READ_ONLY> ReadOnlyFormatTest;
 TEST_P(ReadOnlyFormatTest, returnsSuccess) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -111,7 +111,7 @@ typedef CreateImageFormatTest<CL_MEM_WRITE_ONLY> WriteOnlyFormatTest;
 TEST_P(WriteOnlyFormatTest, returnsSuccess) {
     auto image = Image::create(
         &context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

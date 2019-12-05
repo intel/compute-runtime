@@ -52,7 +52,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         image.reset(Image::create(
             &context,
-            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+            MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
             flags,
             0,
             surfaceFormat,
@@ -192,7 +192,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto bigImage = std::unique_ptr<Image>(Image::create(&context,
-                                                         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+                                                         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                                                          flags,
                                                          0,
                                                          surfaceFormat,

@@ -54,7 +54,7 @@ class PackedYuvImageTest : public testing::Test,
         if (retVal != CL_SUCCESS)
             return;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        retVal = Image::validate(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0), surfaceFormat, &imageDesc, nullptr);
+        retVal = Image::validate(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), surfaceFormat, &imageDesc, nullptr);
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -72,7 +72,7 @@ TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(
         &context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0),
+        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

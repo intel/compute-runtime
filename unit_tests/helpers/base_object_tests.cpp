@@ -275,7 +275,7 @@ TEST(CastToImage, fromMemObj) {
 extern std::thread::id tempThreadID;
 class MockBuffer : public MockBufferStorage, public Buffer {
   public:
-    MockBuffer() : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
+    MockBuffer() : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
     }
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {

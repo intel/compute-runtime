@@ -57,19 +57,19 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
     cl_mem_flags_intel flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel, 0);
     auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel);
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel, 0);
     auto allocationFlags2 = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags2.flags.uncacheable);
 }
 
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
 
     auto allocationFlags =
         MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);

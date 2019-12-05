@@ -12,7 +12,8 @@
 
 namespace NEO {
 
-bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties, cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, ObjType objectType) {
+bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
+                                                        cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags, ObjType objectType) {
     if (properties == nullptr) {
         return true;
     }
@@ -25,12 +26,15 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
         case CL_MEM_FLAGS_INTEL:
             flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
             break;
+        case CL_MEM_ALLOC_FLAGS_INTEL:
+            allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
+            break;
         default:
             return false;
         }
     }
 
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel);
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, allocflags);
 
     switch (objectType) {
     case MemoryPropertiesParser::ObjType::BUFFER:

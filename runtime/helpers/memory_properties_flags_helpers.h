@@ -16,6 +16,6 @@ class MemoryPropertiesFlagsParser {
   public:
     static void addExtraMemoryPropertiesFlags(MemoryPropertiesFlags &propertiesFlags, cl_mem_flags flags, cl_mem_flags_intel flagsIntel);
 
-    static MemoryPropertiesFlags createMemoryPropertiesFlags(cl_mem_flags flags, cl_mem_flags_intel flagsIntel);
+    static MemoryPropertiesFlags createMemoryPropertiesFlags(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags);
 };
 } // namespace NEO

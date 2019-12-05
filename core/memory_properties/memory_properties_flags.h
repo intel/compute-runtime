@@ -15,6 +15,10 @@ struct MemoryPropertiesFlags {
         MemoryFlags flags;
         uint32_t allFlags = 0;
     };
-    static_assert(sizeof(MemoryPropertiesFlags::flags) == sizeof(MemoryPropertiesFlags::allFlags), "");
+    union {
+        MemoryAllocFlags allocFlags;
+        uint32_t allAllocFlags = 0;
+    };
+    static_assert(sizeof(MemoryPropertiesFlags::flags) == sizeof(MemoryPropertiesFlags::allFlags) && sizeof(MemoryPropertiesFlags::allocFlags) == sizeof(MemoryPropertiesFlags::allAllocFlags), "");
 };
 } // namespace NEO

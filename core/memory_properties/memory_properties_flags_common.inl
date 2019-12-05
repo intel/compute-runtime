@@ -25,4 +25,10 @@ struct MemoryFlags {
     uint32_t allowUnrestrictedSize : 1;
     uint32_t forceSharedPhysicalMemory : 1;
 };
+
+struct MemoryAllocFlags {
+    uint32_t allocWriteCombined : 1;
+    uint32_t allocDefault : 1;
+};
+
 } // namespace NEO

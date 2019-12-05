@@ -114,7 +114,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
 
         cl_int retVal = CL_SUCCESS;
-        auto img = Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(Traits::flags, 0), Traits::flags, 0, surfaceFormat, &Traits::imageDesc, Traits::hostPtr, retVal);
+        auto img = Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(Traits::flags, 0, 0), Traits::flags, 0, surfaceFormat, &Traits::imageDesc, Traits::hostPtr, retVal);
         auto mockImage = static_cast<MockImage<FamilyType> *>(img);
 
         return std::unique_ptr<MockImage<FamilyType>>(mockImage);

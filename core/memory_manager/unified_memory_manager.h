@@ -9,6 +9,8 @@
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/spinlock.h"
 
+#include "memory_properties_flags.h"
+
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -23,7 +25,7 @@ struct SvmAllocationData {
     GraphicsAllocation *gpuAllocation = nullptr;
     size_t size = 0;
     InternalMemoryType memoryType = InternalMemoryType::SVM;
-    uint64_t allocationFlagsProperty;
+    MemoryPropertiesFlags allocationFlagsProperty;
     void *device = nullptr;
 };
 
@@ -72,7 +74,7 @@ class SVMAllocsManager {
         UnifiedMemoryProperties() = default;
         UnifiedMemoryProperties(InternalMemoryType memoryType) : memoryType(memoryType){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
-        uint64_t allocationFlags = 0;
+        MemoryPropertiesFlags allocationFlags;
         void *device = nullptr;
     };
 

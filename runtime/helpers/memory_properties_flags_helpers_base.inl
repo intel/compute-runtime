@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
+MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags) {
     MemoryPropertiesFlags memoryPropertiesFlags;
 
     if (isValueSet(flags, CL_MEM_READ_WRITE)) {
@@ -70,6 +70,14 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(c
 
     if (isValueSet(flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
         memoryPropertiesFlags.flags.forceSharedPhysicalMemory = true;
+    }
+
+    if (isValueSet(allocflags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
+        memoryPropertiesFlags.allocFlags.allocWriteCombined = true;
+    }
+
+    if (allocflags == CL_MEM_ALLOC_DEFAULT_INTEL) {
+        memoryPropertiesFlags.allocFlags.allocDefault = true;
     }
 
     addExtraMemoryPropertiesFlags(memoryPropertiesFlags, flags, flagsIntel);

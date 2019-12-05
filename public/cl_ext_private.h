@@ -41,6 +41,7 @@
  * Internal only cl types *
  **************************/
 
+using cl_mem_alloc_flags_intel = cl_bitfield;
 using cl_mem_properties_intel = cl_bitfield;
 using cl_mem_flags_intel = cl_mem_flags;
 using cl_mem_info_intel = cl_uint;
