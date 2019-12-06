@@ -7,6 +7,7 @@
 
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
@@ -188,6 +189,20 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         pCmdQ->getDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    GraphicsAllocation *srcSvmAlloc = nullptr;
+
+    auto head = ultCsr.getTemporaryAllocations().peekHead();
+    while (head) {
+        if (srcHostPtr == head->getUnderlyingBuffer()) {
+            srcSvmAlloc = head;
+            break;
+        }
+        head = head->next;
+    }
+    EXPECT_NE(nullptr, srcSvmAlloc);
+
     // use mock builder to validate builder's input / output
     auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
 
@@ -197,7 +212,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(dstSvmPtr, params->dstPtr);
     EXPECT_EQ(nullptr, params->srcMemObj);
     EXPECT_EQ(nullptr, params->dstMemObj);
-    EXPECT_EQ(nullptr, params->srcSvmAlloc);
+    EXPECT_EQ(head, params->srcSvmAlloc);
     EXPECT_EQ(dstSvmAlloc, params->dstSvmAlloc);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
@@ -267,6 +282,20 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         pCmdQ->getDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    GraphicsAllocation *dstSvmAlloc = nullptr;
+
+    auto head = ultCsr.getTemporaryAllocations().peekHead();
+    while (head) {
+        if (dstHostPtr == head->getUnderlyingBuffer()) {
+            dstSvmAlloc = head;
+            break;
+        }
+        head = head->next;
+    }
+    EXPECT_NE(nullptr, dstSvmAlloc);
+
     // use mock builder to validate builder's input / output
     auto mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder *>(newBuilder.get());
 
@@ -277,7 +306,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(nullptr, params->srcMemObj);
     EXPECT_EQ(nullptr, params->dstMemObj);
     EXPECT_EQ(srcSvmAlloc, params->srcSvmAlloc);
-    EXPECT_EQ(nullptr, params->dstSvmAlloc);
+    EXPECT_EQ(dstSvmAlloc, params->dstSvmAlloc);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
     EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);

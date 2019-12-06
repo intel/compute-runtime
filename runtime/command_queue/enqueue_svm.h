@@ -354,7 +354,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr, nullptr, dstPtrOffset);
+        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr,
+                           dstHostPtrSurf.getAllocation(), dstPtrOffset);
         surfaces[0] = &srcSvmSurf;
         surfaces[1] = &dstHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -375,7 +376,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, alignedDstPtr, dstSvmData->gpuAllocation, dstPtrOffset);
+        setOperationParams(operationParams, size, alignedSrcPtr, srcHostPtrSurf.getAllocation(), srcPtrOffset, alignedDstPtr,
+                           dstSvmData->gpuAllocation, dstPtrOffset);
         surfaces[0] = &dstSvmSurf;
         surfaces[1] = &srcHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -412,7 +414,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, alignedDstPtr, nullptr, dstPtrOffset);
+        setOperationParams(operationParams, size, alignedSrcPtr, srcHostPtrSurf.getAllocation(), srcPtrOffset, alignedDstPtr,
+                           dstHostPtrSurf.getAllocation(), dstPtrOffset);
         surfaces[0] = &srcHostPtrSurf;
         surfaces[1] = &dstHostPtrSurf;
 
