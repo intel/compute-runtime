@@ -12,13 +12,10 @@ namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     STATE_BASE_ADDRESS *stateBaseAddress,
-    const IndirectHeap *dsh,
-    const IndirectHeap *ioh,
     const IndirectHeap *ssh,
-    uint64_t generalStateBase,
     uint64_t internalHeapBase,
     GmmHelper *gmmHelper,
-    DispatchFlags &dispatchFlags) {
+    bool isMultiOsContextCapable) {
 }
 
 template <typename GfxFamily>

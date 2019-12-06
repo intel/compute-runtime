@@ -1125,7 +1125,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
                                                                 0,
                                                                 generalStateBaseAddress,
                                                                 pDevice->getGmmHelper(),
-                                                                dispatchFlags);
+                                                                false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -1149,7 +1149,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
                                                                 0,
                                                                 internalHeapBase,
                                                                 pDevice->getGmmHelper(),
-                                                                dispatchFlags);
+                                                                false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);

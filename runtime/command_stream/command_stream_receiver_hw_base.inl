@@ -321,7 +321,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             mocsIndex,
             getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex),
             device.getGmmHelper(),
-            dispatchFlags);
+            isMultiOsContextCapable());
 
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;

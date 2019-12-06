@@ -23,7 +23,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase,
     GmmHelper *gmmHelper,
-    DispatchFlags &dispatchFlags) {
+    bool isMultiOsContextCapable) {
 
     auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = GfxFamily::cmdInitStateBaseAddress;
@@ -67,7 +67,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
     pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 
-    appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase, gmmHelper, dispatchFlags);
+    appendStateBaseAddressParameters(pCmd, ssh, internalHeapBase, gmmHelper, isMultiOsContextCapable);
 }
 
 } // namespace NEO
