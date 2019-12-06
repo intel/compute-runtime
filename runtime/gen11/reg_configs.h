@@ -25,9 +25,9 @@ struct L3CNTLRegisterOffset<ICLFamily> {
 
 namespace DebugModeRegisterOffset {
 template <>
-constexpr uint32_t registerOffset<ICLFamily> = 0x20d8;
+static constexpr uint32_t registerOffset<ICLFamily> = 0x20d8;
 template <>
-constexpr uint32_t debugEnabledValue<ICLFamily> = (1 << 5) | (1 << 21);
+static constexpr uint32_t debugEnabledValue<ICLFamily> = (1 << 5) | (1 << 21);
 }; // namespace DebugModeRegisterOffset
 
 namespace gen11HdcModeRegister {
