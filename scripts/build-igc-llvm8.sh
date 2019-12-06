@@ -5,12 +5,17 @@
 # SPDX-License-Identifier: MIT
 #
 
+set -x
+
+IGC=($(grep -B 1  intelgraphicscompiler manifest.yml))
+
 mkdir /root/build-igc
 cd /root/build-igc
 
+
 export cclang_commit_id=41cad395859684b18e762ca4a2c713c2fa349622
 export spirv_id=83298e3c9b124486c16d0fde54c764a6c5a2b554
-export igc_commit_id=8234eab514161d6a45ff04ed6418840f4e959942
+export igc_commit_id=${IGC[1]}
 
 wget --no-check-certificate https://github.com/intel/opencl-clang/archive/${cclang_commit_id}/opencl-clang.tar.gz
 wget --no-check-certificate https://github.com/intel/intel-graphics-compiler/archive/${igc_commit_id}/igc.tar.gz
