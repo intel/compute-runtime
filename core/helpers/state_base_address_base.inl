@@ -16,9 +16,9 @@ namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     LinearStream &commandStream,
-    const IndirectHeap &dsh,
-    const IndirectHeap &ioh,
-    const IndirectHeap &ssh,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
     uint64_t generalStateBase,
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase,
@@ -28,31 +28,35 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = GfxFamily::cmdInitStateBaseAddress;
 
-    pCmd->setDynamicStateBaseAddressModifyEnable(true);
-    pCmd->setGeneralStateBaseAddressModifyEnable(true);
-    pCmd->setSurfaceStateBaseAddressModifyEnable(true);
-    pCmd->setIndirectObjectBaseAddressModifyEnable(true);
-    pCmd->setInstructionBaseAddressModifyEnable(true);
+    if (dsh) {
+        pCmd->setDynamicStateBaseAddressModifyEnable(true);
+        pCmd->setDynamicStateBufferSizeModifyEnable(true);
+        pCmd->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
+        pCmd->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+    }
 
-    pCmd->setDynamicStateBaseAddress(dsh.getHeapGpuBase());
+    if (ioh) {
+        pCmd->setIndirectObjectBaseAddressModifyEnable(true);
+        pCmd->setIndirectObjectBufferSizeModifyEnable(true);
+        pCmd->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
+        pCmd->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
+    }
+
+    if (ssh) {
+        pCmd->setSurfaceStateBaseAddressModifyEnable(true);
+        pCmd->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+    }
+
+    pCmd->setInstructionBaseAddressModifyEnable(true);
+    pCmd->setInstructionBaseAddress(internalHeapBase);
+    pCmd->setInstructionBufferSizeModifyEnable(true);
+    pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+
+    pCmd->setGeneralStateBaseAddressModifyEnable(true);
+    pCmd->setGeneralStateBufferSizeModifyEnable(true);
     // GSH must be set to 0 for stateless
     pCmd->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
-
-    pCmd->setSurfaceStateBaseAddress(ssh.getHeapGpuBase());
-    pCmd->setInstructionBaseAddress(internalHeapBase);
-
-    pCmd->setDynamicStateBufferSizeModifyEnable(true);
-    pCmd->setGeneralStateBufferSizeModifyEnable(true);
-    pCmd->setIndirectObjectBufferSizeModifyEnable(true);
-    pCmd->setInstructionBufferSizeModifyEnable(true);
-
-    pCmd->setDynamicStateBufferSize(dsh.getHeapSizeInPages());
     pCmd->setGeneralStateBufferSize(0xfffff);
-
-    pCmd->setIndirectObjectBaseAddress(ioh.getHeapGpuBase());
-    pCmd->setIndirectObjectBufferSize(ioh.getHeapSizeInPages());
-
-    pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
         statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();

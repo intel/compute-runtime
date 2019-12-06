@@ -1114,18 +1114,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
     uint64_t generalStateBaseAddress = 0xffff800400010000ull;
-    StateBaseAddressHelper<FamilyType> helper;
+
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    helper.programStateBaseAddress(commandStream,
-                                   dsh,
-                                   ioh,
-                                   ssh,
-                                   generalStateBaseAddress,
-                                   0,
-                                   generalStateBaseAddress,
-                                   pDevice->getGmmHelper(),
-                                   dispatchFlags);
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+                                                                &dsh,
+                                                                &ioh,
+                                                                &ssh,
+                                                                generalStateBaseAddress,
+                                                                0,
+                                                                generalStateBaseAddress,
+                                                                pDevice->getGmmHelper(),
+                                                                dispatchFlags);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -1133,4 +1133,48 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
 
     EXPECT_NE(generalStateBaseAddress, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), cmd->getGeneralStateBaseAddress());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    uint64_t internalHeapBase = 0x10000;
+    uint64_t generalStateBase = 0x30000;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+                                                                nullptr,
+                                                                nullptr,
+                                                                nullptr,
+                                                                generalStateBase,
+                                                                0,
+                                                                internalHeapBase,
+                                                                pDevice->getGmmHelper(),
+                                                                dispatchFlags);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+
+    EXPECT_FALSE(cmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(cmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, cmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, cmd->getDynamicStateBufferSize());
+
+    EXPECT_FALSE(cmd->getIndirectObjectBaseAddressModifyEnable());
+    EXPECT_FALSE(cmd->getIndirectObjectBufferSizeModifyEnable());
+    EXPECT_EQ(0u, cmd->getIndirectObjectBaseAddress());
+    EXPECT_EQ(0u, cmd->getIndirectObjectBufferSize());
+
+    EXPECT_FALSE(cmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(0u, cmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(cmd->getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
+    EXPECT_TRUE(cmd->getInstructionBufferSizeModifyEnable());
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
+
+    EXPECT_TRUE(cmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(cmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(GmmHelper::decanonize(generalStateBase), cmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(0xfffffu, cmd->getGeneralStateBufferSize());
 }
