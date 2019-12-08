@@ -10,6 +10,7 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
@@ -27,8 +28,13 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     // Generate the full filename
     const auto &gtSystemInfo = hwInfo.gtSystemInfo;
     std::stringstream strfilename;
+    auto subDevicesCount = DeviceHelper::getSubDevicesCount(&hwInfo);
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
-    strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << filename << ".aub";
+    strfilename << hwPrefix << "_";
+    if (subDevicesCount > 1) {
+        strfilename << subDevicesCount << "tx";
+    }
+    strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << filename << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
     auto fileName = strfilename.str();

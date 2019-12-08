@@ -975,3 +975,15 @@ HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenTargetAllocation
         lineNo++;
     }
 }
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices) {
+    DebugManagerStateRestore stateRestore;
+
+    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*platformDevices[0], "aubfile");
+    EXPECT_EQ(std::string::npos, fullName.find("tx"));
+
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    fullName = AUBCommandStreamReceiver::createFullFilePath(*platformDevices[0], "aubfile");
+    EXPECT_NE(std::string::npos, fullName.find("2tx"));
+}
