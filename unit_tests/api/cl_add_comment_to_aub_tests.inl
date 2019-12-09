@@ -6,6 +6,8 @@
  */
 
 #include "core/execution_environment/root_device_environment.h"
+#include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
@@ -16,22 +18,37 @@ using namespace NEO;
 
 namespace ULT {
 
-using clAddCommentToAubTest = api_tests;
+struct clAddCommentToAubTest : api_tests {
+    void SetUp() override {
+        api_tests::SetUp();
+        pDevice = pContext->getDevice(0);
+    }
+    void TearDown() override {
+        api_tests::TearDown();
+    }
+
+    Device *pDevice = nullptr;
+};
 
 TEST_F(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
-    auto retVal = clAddCommentINTEL(pPlatform, "comment");
+    auto retVal = clAddCommentINTEL(pDevice, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clAddCommentToAubTest, givenInvalidDeviceWhenAddCommentToAubThenErrorIsReturned) {
+    auto retVal = clAddCommentINTEL(nullptr, "comment");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
 TEST_F(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
-    auto retVal = clAddCommentINTEL(pPlatform, nullptr);
+    auto retVal = clAddCommentINTEL(pDevice, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 TEST_F(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
     pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->aubCenter.reset(new MockAubCenter());
 
-    auto retVal = clAddCommentINTEL(pPlatform, "comment");
+    auto retVal = clAddCommentINTEL(pDevice, "comment");
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -51,7 +68,7 @@ TEST_F(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCom
 
     EXPECT_FALSE(mockAubManager->addCommentCalled);
 
-    auto retVal = clAddCommentINTEL(pPlatform, "comment");
+    auto retVal = clAddCommentINTEL(pDevice, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockAubManager->addCommentCalled);
 }

@@ -79,6 +79,7 @@ class Device : public BaseObject<_cl_device_id> {
     MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     bool isFullRangeSvm() const {
         return executionEnvironment->isFullRangeSvm();

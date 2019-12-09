@@ -5071,13 +5071,17 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
     return retVal;
 }
 
-cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *comment) {
+cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("platform", platform, "comment", comment);
+    DBG_LOG_INPUTS("device", device, "comment", comment);
 
-    auto executionEnvironment = ::platform()->peekExecutionEnvironment();
-    auto aubCenter = executionEnvironment->rootDeviceEnvironments[0]->aubCenter.get();
+    Device *pDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(device, &pDevice));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    auto aubCenter = pDevice->getRootDeviceEnvironment().aubCenter.get();
 
     if (!comment || (aubCenter && !aubCenter->getAubManager())) {
         retVal = CL_INVALID_VALUE;
