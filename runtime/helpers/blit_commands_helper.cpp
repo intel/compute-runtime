@@ -26,7 +26,9 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
 
     if (mapAllocation) {
         hostAllocation = mapAllocation;
-        hostPtrOffset += ptrDiff(hostPtr, mapAllocation->getGpuAddress());
+        if (hostPtr) {
+            hostPtrOffset += ptrDiff(hostPtr, mapAllocation->getGpuAddress());
+        }
     } else {
         HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
         bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
@@ -72,9 +74,9 @@ BlitProperties BlitProperties::constructProperties(BlitterConstants::BlitDirecti
         } else {
             gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
             memObjOffset = builtinOpParams.dstMemObj->getOffset();
+            hostPtr = builtinOpParams.srcPtr;
         }
 
-        hostPtr = builtinOpParams.srcPtr;
         hostPtrOffset = builtinOpParams.srcOffset.x;
         copyOffset = builtinOpParams.dstOffset.x;
     }
@@ -87,9 +89,9 @@ BlitProperties BlitProperties::constructProperties(BlitterConstants::BlitDirecti
         } else {
             gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation();
             memObjOffset = builtinOpParams.srcMemObj->getOffset();
+            hostPtr = builtinOpParams.dstPtr;
         }
 
-        hostPtr = builtinOpParams.dstPtr;
         hostPtrOffset = builtinOpParams.dstOffset.x;
         copyOffset = builtinOpParams.srcOffset.x;
     }
