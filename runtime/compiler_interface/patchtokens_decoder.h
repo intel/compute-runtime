@@ -65,6 +65,10 @@ struct KernelArgFromPatchtokens {
             const SPatchDataParameterBuffer *arraySize;
             const SPatchDataParameterBuffer *numSamples;
             const SPatchDataParameterBuffer *numMipLevels;
+            const SPatchDataParameterBuffer *flatBaseOffset;
+            const SPatchDataParameterBuffer *flatWidth;
+            const SPatchDataParameterBuffer *flatHeight;
+            const SPatchDataParameterBuffer *flatPitch;
         } image;
         struct {
             const SPatchDataParameterBuffer *bufferOffset;

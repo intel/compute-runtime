@@ -691,6 +691,10 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     auto arg1ImageArraySizeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_ARRAY_SIZE, storage, 0U, 1U);
     auto arg1ImageNumSamplesOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_NUM_SAMPLES, storage, 0U, 1U);
     auto arg1ImageNumMipLevelOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS, storage, 0U, 1U);
+    auto arg1FlatImageBaseOffsetOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_BASEOFFSET, storage, 0U, 1U);
+    auto arg1FlatImageWidthOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_WIDTH, storage, 0U, 1U);
+    auto arg1FlatImageHeightOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_HEIGHT, storage, 0U, 1U);
+    auto arg1FlatImagePitchOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_PITCH, storage, 0U, 1U);
 
     auto arg2SamplerCoordinateSnapWaRequiredOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED, storage, 0U, 2U);
     auto arg2SamplerAddressModeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE, storage, 0U, 2U);
@@ -733,6 +737,10 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageArraySizeOff, decodedKernel.tokens.kernelArgs[1].metadata.image.arraySize));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageNumSamplesOff, decodedKernel.tokens.kernelArgs[1].metadata.image.numSamples));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageNumMipLevelOff, decodedKernel.tokens.kernelArgs[1].metadata.image.numMipLevels));
+    EXPECT_TRUE(tokenOffsetMatched(base, arg1FlatImageBaseOffsetOff, decodedKernel.tokens.kernelArgs[1].metadata.image.flatBaseOffset));
+    EXPECT_TRUE(tokenOffsetMatched(base, arg1FlatImageWidthOff, decodedKernel.tokens.kernelArgs[1].metadata.image.flatWidth));
+    EXPECT_TRUE(tokenOffsetMatched(base, arg1FlatImageHeightOff, decodedKernel.tokens.kernelArgs[1].metadata.image.flatHeight));
+    EXPECT_TRUE(tokenOffsetMatched(base, arg1FlatImagePitchOff, decodedKernel.tokens.kernelArgs[1].metadata.image.flatPitch));
 
     EXPECT_TRUE(tokenOffsetMatched(base, arg2SamplerCoordinateSnapWaRequiredOff, decodedKernel.tokens.kernelArgs[2].metadata.sampler.coordinateSnapWaRequired));
     EXPECT_TRUE(tokenOffsetMatched(base, arg2SamplerAddressModeOff, decodedKernel.tokens.kernelArgs[2].metadata.sampler.addressMode));

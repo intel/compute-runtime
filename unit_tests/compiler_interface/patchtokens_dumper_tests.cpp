@@ -1476,6 +1476,10 @@ TEST(KernelArgDumper, GivenImageKernelArgWithMetadataTokensThenProperlyCreatesDu
     auto arraySize = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_ARRAY_SIZE);
     auto numSamples = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_NUM_SAMPLES);
     auto numMipLevels = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS);
+    auto flatBaseOffset = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_BASEOFFSET);
+    auto flatWidth = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_WIDTH);
+    auto flatHeight = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_HEIGHT);
+    auto flatPitch = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_FLAT_IMAGE_PITCH);
 
     kernelArg.metadata.image.width = &width;
     kernelArg.metadata.image.height = &height;
@@ -1485,6 +1489,10 @@ TEST(KernelArgDumper, GivenImageKernelArgWithMetadataTokensThenProperlyCreatesDu
     kernelArg.metadata.image.arraySize = &arraySize;
     kernelArg.metadata.image.numSamples = &numSamples;
     kernelArg.metadata.image.numMipLevels = &numMipLevels;
+    kernelArg.metadata.image.flatBaseOffset = &flatBaseOffset;
+    kernelArg.metadata.image.flatWidth = &flatWidth;
+    kernelArg.metadata.image.flatHeight = &flatHeight;
+    kernelArg.metadata.image.flatPitch = &flatPitch;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type IMAGE
@@ -1585,6 +1593,58 @@ TEST(KernelArgDumper, GivenImageKernelArgWithMetadataTokensThenProperlyCreatesDu
              << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
   |     {
   |         uint32_t   Type;// = 27(DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS)
+  |         uint32_t   ArgumentNumber;// = 0
+  |         uint32_t   Offset;// = 0
+  |         uint32_t   DataSize;// = 0
+  |         uint32_t   SourceOffset;// = 0
+  |         uint32_t   LocationIndex;// = 0
+  |         uint32_t   LocationIndex2;// = 0
+  |         uint32_t   IsEmulationArgument;// = 0
+  |     }
+  |     struct SPatchDataParameterBuffer :
+  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
+             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
+  |     {
+  |         uint32_t   Type;// = 44(DATA_PARAMETER_FLAT_IMAGE_BASEOFFSET)
+  |         uint32_t   ArgumentNumber;// = 0
+  |         uint32_t   Offset;// = 0
+  |         uint32_t   DataSize;// = 0
+  |         uint32_t   SourceOffset;// = 0
+  |         uint32_t   LocationIndex;// = 0
+  |         uint32_t   LocationIndex2;// = 0
+  |         uint32_t   IsEmulationArgument;// = 0
+  |     }
+  |     struct SPatchDataParameterBuffer :
+  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
+             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
+  |     {
+  |         uint32_t   Type;// = 45(DATA_PARAMETER_FLAT_IMAGE_WIDTH)
+  |         uint32_t   ArgumentNumber;// = 0
+  |         uint32_t   Offset;// = 0
+  |         uint32_t   DataSize;// = 0
+  |         uint32_t   SourceOffset;// = 0
+  |         uint32_t   LocationIndex;// = 0
+  |         uint32_t   LocationIndex2;// = 0
+  |         uint32_t   IsEmulationArgument;// = 0
+  |     }
+  |     struct SPatchDataParameterBuffer :
+  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
+             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
+  |     {
+  |         uint32_t   Type;// = 46(DATA_PARAMETER_FLAT_IMAGE_HEIGHT)
+  |         uint32_t   ArgumentNumber;// = 0
+  |         uint32_t   Offset;// = 0
+  |         uint32_t   DataSize;// = 0
+  |         uint32_t   SourceOffset;// = 0
+  |         uint32_t   LocationIndex;// = 0
+  |         uint32_t   LocationIndex2;// = 0
+  |         uint32_t   IsEmulationArgument;// = 0
+  |     }
+  |     struct SPatchDataParameterBuffer :
+  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
+             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
+  |     {
+  |         uint32_t   Type;// = 47(DATA_PARAMETER_FLAT_IMAGE_PITCH)
   |         uint32_t   ArgumentNumber;// = 0
   |         uint32_t   Offset;// = 0
   |         uint32_t   DataSize;// = 0

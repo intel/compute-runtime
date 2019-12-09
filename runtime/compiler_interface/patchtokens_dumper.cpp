@@ -101,6 +101,10 @@ std::string asString(DATA_PARAMETER_TOKEN dataParameter) {
         CASE_TOK_STR(DATA_PARAMETER_IMAGE_DEPTH);
         CASE_TOK_STR(DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE);
         CASE_TOK_STR(DATA_PARAMETER_IMAGE_CHANNEL_ORDER);
+        CASE_TOK_STR(DATA_PARAMETER_FLAT_IMAGE_BASEOFFSET);
+        CASE_TOK_STR(DATA_PARAMETER_FLAT_IMAGE_WIDTH);
+        CASE_TOK_STR(DATA_PARAMETER_FLAT_IMAGE_HEIGHT);
+        CASE_TOK_STR(DATA_PARAMETER_FLAT_IMAGE_PITCH);
         CASE_TOK_STR(DATA_PARAMETER_SAMPLER_ADDRESS_MODE);
         CASE_TOK_STR(DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS);
         CASE_TOK_STR(DATA_PARAMETER_GLOBAL_WORK_OFFSET);
@@ -856,6 +860,10 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
         dumpOrNull(arg.metadata.image.arraySize, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.image.numSamples, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.image.numMipLevels, "", stream, indentLevel2);
+        dumpOrNull(arg.metadata.image.flatBaseOffset, "", stream, indentLevel2);
+        dumpOrNull(arg.metadata.image.flatWidth, "", stream, indentLevel2);
+        dumpOrNull(arg.metadata.image.flatHeight, "", stream, indentLevel2);
+        dumpOrNull(arg.metadata.image.flatPitch, "", stream, indentLevel2);
         break;
     case ArgObjectType::Sampler:
         stream << indentLevel1 << "Sampler Metadata:\n";
