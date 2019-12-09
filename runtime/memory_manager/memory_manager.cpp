@@ -118,9 +118,6 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 }
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    if (!paddingAllocation) {
-        paddingAllocation = allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), paddingBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
-    }
     return createPaddedAllocation(inputGraphicsAllocation, sizeWithPadding);
 }
 
@@ -130,12 +127,6 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
 
 void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
-}
-
-void MemoryManager::applyCommonCleanup() {
-    if (this->paddingAllocation) {
-        this->freeGraphicsMemory(this->paddingAllocation);
-    }
 }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {

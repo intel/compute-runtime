@@ -34,9 +34,7 @@
 
 namespace NEO {
 
-WddmMemoryManager::~WddmMemoryManager() {
-    applyCommonCleanup();
-}
+WddmMemoryManager::~WddmMemoryManager() = default;
 
 WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                    wddm(executionEnvironment.osInterface->get()->getWddm()) {

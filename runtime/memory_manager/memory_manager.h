@@ -110,7 +110,6 @@ class MemoryManager {
 
     bool peekVirtualPaddingSupport() const { return virtualPaddingAvailable; }
     void setVirtualPaddingSupport(bool virtualPaddingSupport) { virtualPaddingAvailable = virtualPaddingSupport; }
-    GraphicsAllocation *peekPaddingAllocation() { return paddingAllocation; }
 
     DeferredDeleter *getDeferredDeleter() const {
         return deferredDeleter.get();
@@ -213,8 +212,6 @@ class MemoryManager {
 
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
-    GraphicsAllocation *paddingAllocation = nullptr;
-    void applyCommonCleanup();
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;

@@ -962,29 +962,6 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationIsP
     ASSERT_NE(nullptr, paddedGraphicsAllocation);
     EXPECT_NE(paddedGraphicsAllocation, graphicsAllocation);
 
-    //padding buffer was created
-    ASSERT_NE(nullptr, memoryManager.peekPaddingAllocation());
-    auto paddingAllocation = memoryManager.peekPaddingAllocation();
-    EXPECT_EQ(paddingBufferSize, paddingAllocation->getUnderlyingBufferSize());
-
-    memoryManager.freeGraphicsMemory(paddedGraphicsAllocation);
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenTwoGraphicsAllocationArePaddedThenOnlyOnePaddingBufferIsUsed) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    auto sizeWithPadding = 8192;
-    auto paddedGraphicsAllocation = memoryManager.createGraphicsAllocationWithPadding(graphicsAllocation, sizeWithPadding);
-    auto paddingAllocation = memoryManager.peekPaddingAllocation();
-    auto paddedGraphicsAllocation2 = memoryManager.createGraphicsAllocationWithPadding(graphicsAllocation, sizeWithPadding);
-    auto paddingAllocation2 = memoryManager.peekPaddingAllocation();
-
-    EXPECT_EQ(paddingAllocation2, paddingAllocation);
-
-    memoryManager.freeGraphicsMemory(paddedGraphicsAllocation2);
     memoryManager.freeGraphicsMemory(paddedGraphicsAllocation);
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

@@ -61,7 +61,6 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 }
 
 DrmMemoryManager::~DrmMemoryManager() {
-    applyCommonCleanup();
     if (gemCloseWorker) {
         gemCloseWorker->close(false);
     }

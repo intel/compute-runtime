@@ -2122,17 +2122,15 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsRequiredThenNewGraphicsAllocationIsCreated) {
-    mock->ioctl_expected.gemUserptr = 3;
-    mock->ioctl_expected.gemWait = 3;
-    mock->ioctl_expected.gemClose = 3;
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
     auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{bufferSize});
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
-
-    EXPECT_EQ(nullptr, memoryManager->peekPaddingAllocation());
 
     auto bufferWithPaddingSize = 8192u;
     auto paddedAllocation = memoryManager->createGraphicsAllocationWithPadding(buffer, 8192u);
@@ -2277,10 +2275,10 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAllocUserptrFailsThenReturnsNullptr) {
-    mock->ioctl_expected.gemUserptr = 3;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
-    this->ioctlResExt = {mock->ioctl_cnt.total + 2, -1};
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    this->ioctlResExt = {mock->ioctl_cnt.total + 1, -1};
     mock->ioctl_res_ext = &ioctlResExt;
 
     //first let's create normal buffer
@@ -2289,8 +2287,6 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
-
-    EXPECT_EQ(nullptr, memoryManager->peekPaddingAllocation());
 
     auto bufferWithPaddingSize = 8192u;
     auto paddedAllocation = memoryManager->createGraphicsAllocationWithPadding(buffer, bufferWithPaddingSize);

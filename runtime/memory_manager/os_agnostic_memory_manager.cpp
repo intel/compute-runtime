@@ -37,9 +37,7 @@ OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnviron
     }
 }
 
-OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
-    applyCommonCleanup();
-}
+OsAgnosticMemoryManager::~OsAgnosticMemoryManager() = default;
 
 struct OsHandle {
 };
