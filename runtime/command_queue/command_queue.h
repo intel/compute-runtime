@@ -404,8 +404,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
-    bool isMultiEngineQueue() const { return this->multiEngineQueue; }
-
     void updateBcsTaskCount(uint32_t newBcsTaskCount) { this->bcsTaskCount = newBcsTaskCount; }
 
     // taskCount of last task
@@ -464,7 +462,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool isSpecialCommandQueue = false;
     bool requiresCacheFlushAfterWalker = false;
-    bool multiEngineQueue = false;
 
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 };

@@ -199,7 +199,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
-    EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
 }
 
@@ -248,7 +247,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
-    EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
 }
 
@@ -289,7 +287,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::LOW, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
-    EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
 }
 

@@ -746,7 +746,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         (QueuePriority::LOW == priority),                                                           //lowPriority
         implicitFlush,                                                                              //implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        this->multiEngineQueue,                                                                     //multiEngineQueue
         false                                                                                       //epilogueRequired
     );
 
@@ -940,7 +939,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         false,                                                               //lowPriority
         (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
         getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
-        multiEngineQueue,                                                    //multiEngineQueue
         false                                                                //epilogueRequired
     );
 

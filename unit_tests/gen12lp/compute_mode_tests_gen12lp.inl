@@ -48,7 +48,7 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCo
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     stream.replaceBuffer(buff, 1024);
-    overrideComputeModeRequest<FamilyType>(false, false, true, true, 127u, false);
+    overrideComputeModeRequest<FamilyType>(false, false, true, true, 127u);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(cmdsSize, retSize);
@@ -88,7 +88,7 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhe
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     stream.replaceBuffer(buff, 1024);
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u, false);
+    overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(cmdsSize, retSize);

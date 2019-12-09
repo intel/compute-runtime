@@ -433,7 +433,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWi
     DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), pDevice, nullptr);
-    cmdQ.multiEngineQueue = true;
+    pDevice->getUltCommandStreamReceiver<FamilyType>().multiOsContextCapable = true;
     MockKernelWithInternals mockKernelWithInternals(*pDevice, context.get());
 
     mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
@@ -1056,14 +1056,6 @@ TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestam
     EXPECT_EQ(2, context->getRefInternalCount());
     context->release();
     EXPECT_EQ(1, context->getRefInternalCount());
-}
-
-TEST(CommandQueuePropertiesTests, whenDefaultCommandQueueIsCreatedThenItIsNotMultiEngineQueue) {
-    MockCommandQueue queue;
-    EXPECT_FALSE(queue.multiEngineQueue);
-    EXPECT_FALSE(queue.isMultiEngineQueue());
-    queue.multiEngineQueue = true;
-    EXPECT_TRUE(queue.isMultiEngineQueue());
 }
 
 TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned) {

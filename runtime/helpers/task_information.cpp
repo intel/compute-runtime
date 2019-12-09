@@ -68,7 +68,6 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
         false,                                                                       //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        commandQueue.isMultiEngineQueue(),                                           //multiEngineQueue
         false                                                                        //epilogueRequired
     );
 
@@ -223,7 +222,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
         false,                                                                       //implicitFlush
         commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        commandQueue.isMultiEngineQueue(),                                           //multiEngineQueue
         false                                                                        //epilogueRequired
     );
 
@@ -328,7 +326,6 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.getPriority() == QueuePriority::LOW,     //lowPriority
         false,                                                //implicitFlush
         commandStreamReceiver.isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        commandQueue.isMultiEngineQueue(),                    //multiEngineQueue
         false                                                 //epilogueRequired
     );
 

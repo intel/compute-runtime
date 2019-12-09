@@ -31,7 +31,6 @@ struct DispatchFlagsHelper {
             false,                              //lowPriority
             false,                              //implicitFlush
             false,                              //outOfOrderExecutionAllowed
-            false,                              //multiEngineQueue
             false                               //epilogueRequired
         );
     }

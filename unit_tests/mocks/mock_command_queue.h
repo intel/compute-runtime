@@ -19,7 +19,6 @@ class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
-    using CommandQueue::multiEngineQueue;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;
@@ -78,7 +77,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::bcsTaskCount;
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
-    using BaseClass::multiEngineQueue;
     using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;
     using BaseClass::requiresCacheFlushAfterWalker;

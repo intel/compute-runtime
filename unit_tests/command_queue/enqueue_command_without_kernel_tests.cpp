@@ -126,7 +126,6 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_EQ(blocking, mockCsr->passedDispatchFlags.blocking);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
-    EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
 }
