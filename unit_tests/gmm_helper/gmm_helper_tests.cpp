@@ -7,11 +7,11 @@
 
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_types_converter.h"
-#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "unit_tests/os_interface/windows/mock_performance_counters_win.h"
 
 #include "gtest/gtest.h"

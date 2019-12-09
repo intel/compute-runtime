@@ -6,7 +6,7 @@
  */
 
 #include "core/helpers/kmd_notify_properties.h"
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "test.h"
 
 namespace NEO {

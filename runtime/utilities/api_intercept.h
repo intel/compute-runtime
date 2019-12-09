@@ -16,7 +16,7 @@
 #define WAIT_ENTER()
 #define WAIT_LEAVE()
 
-#if OCL_RUNTIME_PROFILING == 1
+#if KMD_PROFILING == 1
 #undef API_ENTER
 #undef SYSTEM_ENTER
 #undef SYSTEM_LEAVE

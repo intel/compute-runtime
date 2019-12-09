@@ -9,16 +9,15 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/completion_stamp.h"
+#include "core/helpers/options.h"
 #include "core/indirect_heap/indirect_heap.h"
+#include "core/kernel/grf_config.h"
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/submissions_aggregator.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
-#include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
-#include "runtime/helpers/options.h"
-#include "runtime/kernel/grf_config.h"
 
 #include <cstddef>
 #include <cstdint>

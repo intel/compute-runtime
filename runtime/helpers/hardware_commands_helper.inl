@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/helpers/address_patch.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
@@ -13,7 +14,6 @@
 #include "core/indirect_heap/indirect_heap.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"

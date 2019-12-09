@@ -7,6 +7,7 @@
 set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
@@ -34,12 +35,14 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl

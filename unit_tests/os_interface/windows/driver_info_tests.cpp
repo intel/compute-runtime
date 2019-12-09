@@ -6,9 +6,9 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/helpers/options.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "runtime/os_interface/windows/os_interface.h"

@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "core/helpers/preamble.h"
 #include "core/unit_tests/preamble/preamble_fixture.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/gen8/reg_configs.h"
-#include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 
 using namespace NEO;

@@ -8,7 +8,7 @@
 #pragma once
 
 #include "core/helpers/hw_info.h"
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"

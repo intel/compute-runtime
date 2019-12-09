@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"

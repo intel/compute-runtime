@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/options.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/options.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

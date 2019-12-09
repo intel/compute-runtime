@@ -6,7 +6,7 @@
  */
 
 #include "core/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "runtime/platform/platform.h"
 
 #include "gmm_client_context.h"

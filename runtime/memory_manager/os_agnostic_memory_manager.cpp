@@ -12,6 +12,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/os_interface/os_memory.h"
@@ -19,7 +20,6 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 
 #include <cassert>

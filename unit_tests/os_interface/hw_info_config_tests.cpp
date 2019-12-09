@@ -8,7 +8,7 @@
 #include "unit_tests/os_interface/hw_info_config_tests.h"
 
 #include "core/helpers/hw_helper.h"
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 
 using namespace NEO;
 using namespace std;

@@ -43,7 +43,7 @@ TEST(GdiInterface, givenGdiOverridePathWhenGdiInterfaceIsCalledThenOverridePathI
 }
 
 TEST(ThkWrapperTest, givenThkWrapperWhenConstructedThenmFuncIsInitialized) {
-    NEO::ThkWrapper<false, void *> wrapper;
+    NEO::ThkWrapper<void *> wrapper;
     EXPECT_EQ(nullptr, wrapper.mFunc);
 }
 #endif

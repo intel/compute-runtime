@@ -9,9 +9,9 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/device_helpers.h"
-#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 

@@ -70,7 +70,7 @@ enum SystemCallsIds {
     SYSTIMER_ID_OGL = 400,
 };
 
-template <bool UseTimer, typename Param>
+template <typename Param>
 class ThkWrapper {
     typedef NTSTATUS(APIENTRY *Func)(Param);
 
@@ -78,7 +78,7 @@ class ThkWrapper {
     Func mFunc = nullptr;
 
     inline NTSTATUS operator()(Param param) const {
-        if (UseTimer) {
+        if (KMD_PROFILING) {
             SYSTEM_ENTER()
             NTSTATUS Status;
             Status = mFunc(param);

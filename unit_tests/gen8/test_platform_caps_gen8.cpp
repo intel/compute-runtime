@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 

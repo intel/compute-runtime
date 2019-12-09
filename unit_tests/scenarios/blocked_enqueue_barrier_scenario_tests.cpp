@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/options.h"
 #include "test.h"
 #include "unit_tests/fixtures/scenario_test_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"

@@ -6,7 +6,6 @@
 
 set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
@@ -51,7 +50,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
@@ -59,7 +57,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/properties_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/queue_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/state_compute_mode_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h

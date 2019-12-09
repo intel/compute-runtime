@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/address_patch.h"
 #include "runtime/command_stream/submissions_aggregator.h"
-#include "runtime/helpers/address_patch.h"
 
 #include <map>
 #include <vector>

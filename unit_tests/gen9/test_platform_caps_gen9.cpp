@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 

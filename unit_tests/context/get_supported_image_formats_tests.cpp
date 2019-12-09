@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/fixtures/context_fixture.h"

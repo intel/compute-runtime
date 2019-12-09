@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/helpers/options.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"
 

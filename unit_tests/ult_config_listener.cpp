@@ -7,8 +7,8 @@
 
 #include "unit_tests/ult_config_listener.h"
 
+#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/options.h"
 #include "runtime/platform/platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {

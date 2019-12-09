@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/options.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/scenario_test_fixture.h"

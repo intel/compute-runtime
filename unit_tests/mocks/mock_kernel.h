@@ -8,8 +8,8 @@
 #pragma once
 
 #include "core/helpers/string.h"
+#include "core/kernel/grf_config.h"
 #include "runtime/device/device.h"
-#include "runtime/kernel/grf_config.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/scheduler/scheduler_kernel.h"

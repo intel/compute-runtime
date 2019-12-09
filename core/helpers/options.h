@@ -11,8 +11,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#ifndef OCL_RUNTIME_PROFILING
-#define OCL_RUNTIME_PROFILING 0
+#ifndef KMD_PROFILING
+#define KMD_PROFILING 0
 #endif
 
 enum CommandStreamReceiverType {

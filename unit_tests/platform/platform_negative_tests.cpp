@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/options.h"
+#include "core/helpers/options.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"

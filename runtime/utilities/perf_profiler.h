@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/options.h"
 #include "core/utilities/timer_util.h"
-#include "runtime/helpers/options.h"
 
 #include <atomic>
 #include <fstream>
@@ -98,7 +98,7 @@ class PerfProfiler {
     std::vector<SystemLog> systemLogs;
 };
 
-#if OCL_RUNTIME_PROFILING == 1
+#if KMD_PROFILING == 1
 
 extern thread_local PerfProfiler *gPerfProfiler;
 

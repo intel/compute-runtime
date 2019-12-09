@@ -6,13 +6,13 @@
  */
 
 #pragma once
+#include "core/helpers/address_patch.h"
 #include "core/helpers/preamble.h"
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/os_interface/debug_settings_manager.h"

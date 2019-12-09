@@ -8,6 +8,7 @@
 #include "runtime/command_queue/command_queue.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
@@ -23,7 +24,6 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/mipmap.h"
-#include "runtime/helpers/options.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/timestamp_packet.h"

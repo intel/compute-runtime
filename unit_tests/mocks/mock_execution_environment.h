@@ -8,8 +8,8 @@
 #pragma once
 
 #include "core/helpers/hw_helper.h"
+#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {

@@ -8,8 +8,8 @@
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 
 #include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/options.h"
 
 #include <string>
 

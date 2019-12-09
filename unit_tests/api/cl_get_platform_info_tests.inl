@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/options.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/options.h"
 #include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
-#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 

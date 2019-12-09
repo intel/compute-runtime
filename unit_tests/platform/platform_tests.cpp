@@ -6,9 +6,9 @@
  */
 
 #include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
