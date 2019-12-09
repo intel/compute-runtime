@@ -19,11 +19,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh,
-                                                                       size_t stateBaseAddressCmdOffset, GmmHelper *gmmHelper) {
-
-    auto sbaCommand = static_cast<STATE_BASE_ADDRESS *>(ptrOffset(commandStream.getCpuBase(), stateBaseAddressCmdOffset));
-    UNRECOVERABLE_IF(sbaCommand->getSurfaceStateBaseAddress() != ssh.getGraphicsAllocation()->getGpuAddress());
+void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper) {
 }
 
 } // namespace NEO
