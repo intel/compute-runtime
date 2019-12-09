@@ -14,12 +14,6 @@ Our default (most frequent) validation config is currently (as of Q4'18) Ubuntu 
 
 Note: Neo will not work correctly on legacy kernels with Intel patches (e.g. 4.7.0.intel.r4.0).
 
-### What toolchain do you recommend for building NEO on CentOS?
-
-We recommend the following packages:
-* devtoolset-4-gcc-c++
-* llvm-toolset-7-clang
-
 ### Does NEO support Microsoft Windows?
 
 Our closed-source driver for Windows is using the same codebase. At this time,
