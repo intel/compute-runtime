@@ -656,6 +656,16 @@ TEST_F(DeviceGetCapsTest, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReporte
     EXPECT_EQ(0u, caps.doubleFpConfig);
 }
 
+TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(*platformDevices[0]);
+
+    EXPECT_EQ((localMemoryEnabled == false), caps.hostUnifiedMemory);
+}
+
 TEST(DeviceGetCaps, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnablesFp64ThenReportFp64Flags) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.OverrideDefaultFP64Settings.set(1);

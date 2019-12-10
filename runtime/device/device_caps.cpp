@@ -192,7 +192,7 @@ void Device::initializeCaps() {
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
     deviceInfo.vendorId = 0x8086;
     deviceInfo.endianLittle = 1;
-    deviceInfo.hostUnifiedMemory = CL_TRUE;
+    deviceInfo.hostUnifiedMemory = (false == hwHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.preferredVectorWidthChar = 16;
