@@ -95,9 +95,17 @@ void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, co
 void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
 
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        if (memoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
+            allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
+        } else {
+            allocationType = GraphicsAllocation::AllocationType::BUFFER;
+        }
+    }
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex, true,
                                                  alignedSize,
-                                                 memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY ? GraphicsAllocation::AllocationType::BUFFER : GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                 allocationType,
                                                  false};
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);

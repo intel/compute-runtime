@@ -165,9 +165,33 @@ TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent)
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithWriteCombinedTypeInAllocationMap) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = true;
+    auto allocationSize = 4000u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4000u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::WRITE_COMBINED, allocation->gpuAllocation->getAllocationType());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = false;
     auto allocationSize = 4096u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
@@ -176,7 +200,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     EXPECT_NE(nullptr, allocation->gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
-    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());

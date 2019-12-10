@@ -3457,6 +3457,11 @@ void *clHostMemAllocINTEL(
         return nullptr;
     }
 
+    if (isValueSet(unifiedMemoryProperties.allocationFlags.allAllocFlags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
+        err.set(CL_INVALID_VALUE);
+        return nullptr;
+    }
+
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties);
 }
 
@@ -3530,6 +3535,11 @@ void *clSharedMemAllocINTEL(
         return nullptr;
     }
     unifiedMemoryProperties.device = device;
+
+    if (isValueSet(unifiedMemoryProperties.allocationFlags.allAllocFlags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
+        err.set(CL_INVALID_VALUE);
+        return nullptr;
+    }
 
     return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
 }
