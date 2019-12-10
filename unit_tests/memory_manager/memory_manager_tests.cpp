@@ -878,7 +878,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     osHandle handle = 1;
     auto size = 4096u;
     AllocationProperties properties(0u, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0u);
-    EXPECT_EQ(properties.subDeviceIndex, 0u);
+    EXPECT_TRUE(properties.subDevicesBitfield.none());
     EXPECT_EQ(properties.rootDeviceIndex, 0u);
 
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);

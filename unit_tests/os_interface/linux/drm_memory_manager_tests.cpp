@@ -1557,7 +1557,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledA
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
     AllocationProperties properties(0u, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0u);
-    ASSERT_EQ(properties.subDeviceIndex, 0u);
+    ASSERT_TRUE(properties.subDevicesBitfield.none());
     ASSERT_EQ(properties.rootDeviceIndex, 0u);
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);

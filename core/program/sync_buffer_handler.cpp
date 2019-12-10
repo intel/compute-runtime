@@ -43,7 +43,7 @@ void SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, Kernel &kernel
 void SyncBufferHandler::allocateNewBuffer() {
     AllocationProperties allocationProperties{device.getRootDeviceIndex(), true, bufferSize,
                                               GraphicsAllocation::AllocationType::LINEAR_STREAM,
-                                              false, false, static_cast<uint32_t>(device.getDeviceBitfield().to_ulong())};
+                                              false, false, device.getDeviceBitfield()};
     graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
     UNRECOVERABLE_IF(graphicsAllocation == nullptr);
 

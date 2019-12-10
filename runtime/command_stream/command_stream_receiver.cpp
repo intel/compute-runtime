@@ -126,7 +126,7 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
     if (allocation == nullptr) {
         const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, allocationSize, allocationType,
-                                                                     isMultiOsContextCapable(), false, getDeviceIndex()};
+                                                                     isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
         allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     }
     DEBUG_BREAK_IF(allocation == nullptr);
@@ -327,7 +327,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     if (!heapMemory) {
         heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, true, finalHeapSize, allocationType,
-                                                                               isMultiOsContextCapable(), false, getDeviceIndex()});
+                                                                               isMultiOsContextCapable(), false, osContext->getDeviceBitfield()});
     } else {
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }

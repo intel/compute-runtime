@@ -32,7 +32,7 @@ struct AllocationProperties {
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
-    uint32_t subDeviceIndex = SubDevice::unspecifiedSubDeviceIndex;
+    DeviceBitfield subDevicesBitfield{};
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType)
@@ -50,7 +50,7 @@ struct AllocationProperties {
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
                          bool isMultiStorageAllocation)
-        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, SubDevice::unspecifiedSubDeviceIndex) {}
+        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, {}) {}
 
     AllocationProperties(uint32_t rootDeviceIndexParam,
                          bool allocateMemoryParam,
@@ -58,8 +58,12 @@ struct AllocationProperties {
                          GraphicsAllocation::AllocationType allocationTypeParam,
                          bool multiOsContextCapableParam,
                          bool isMultiStorageAllocationParam,
-                         uint32_t subDeviceIndexParam)
-        : rootDeviceIndex(rootDeviceIndexParam), size(sizeParam), allocationType(allocationTypeParam), multiStorageResource(isMultiStorageAllocationParam), subDeviceIndex(subDeviceIndexParam) {
+                         DeviceBitfield subDevicesBitfieldParam)
+        : rootDeviceIndex(rootDeviceIndexParam),
+          size(sizeParam),
+          allocationType(allocationTypeParam),
+          multiStorageResource(isMultiStorageAllocationParam),
+          subDevicesBitfield(subDevicesBitfieldParam) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
