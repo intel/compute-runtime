@@ -154,9 +154,11 @@ int OfflineCompiler::buildSourceCode() {
         }
         UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
         UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
-        storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
         updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
+        if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
+            storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
+        }
         if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
             storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
         }
