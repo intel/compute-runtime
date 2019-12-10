@@ -55,6 +55,10 @@ struct KernelArgInfo {
     uint32_t offsetObjectId = undefinedOffset;
     uint32_t offsetBufferOffset = undefinedOffset;
     uint32_t offsetNumMipLevels = undefinedOffset;
+    uint32_t offsetFlatBaseOffset = undefinedOffset;
+    uint32_t offsetFlatWidth = undefinedOffset;
+    uint32_t offsetFlatHeight = undefinedOffset;
+    uint32_t offsetFlatPitch = undefinedOffset;
 
     bool needPatch = false;
     bool isTransformable = false;

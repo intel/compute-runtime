@@ -74,6 +74,10 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
         dstKernelInfoArg.offsetArraySize = getOffset(src.metadata.image.arraySize);
         dstKernelInfoArg.offsetNumSamples = getOffset(src.metadata.image.numSamples);
         dstKernelInfoArg.offsetNumMipLevels = getOffset(src.metadata.image.numMipLevels);
+        dstKernelInfoArg.offsetFlatBaseOffset = getOffset(src.metadata.image.flatBaseOffset);
+        dstKernelInfoArg.offsetFlatWidth = getOffset(src.metadata.image.flatWidth);
+        dstKernelInfoArg.offsetFlatHeight = getOffset(src.metadata.image.flatHeight);
+        dstKernelInfoArg.offsetFlatPitch = getOffset(src.metadata.image.flatPitch);
         break;
     case PatchTokenBinary::ArgObjectType::Sampler:
         dstKernelInfoArg.offsetSamplerSnapWa = getOffset(src.metadata.sampler.coordinateSnapWaRequired);

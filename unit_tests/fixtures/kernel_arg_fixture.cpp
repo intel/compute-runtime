@@ -34,6 +34,10 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
     pKernelInfo->kernelArgInfo[0].offsetImgWidth = 0x4;
+    pKernelInfo->kernelArgInfo[0].offsetFlatBaseOffset = 0x8;
+    pKernelInfo->kernelArgInfo[0].offsetFlatWidth = 0x10;
+    pKernelInfo->kernelArgInfo[0].offsetFlatHeight = 0x18;
+    pKernelInfo->kernelArgInfo[0].offsetFlatPitch = 0x24;
     pKernelInfo->kernelArgInfo[0].offsetNumSamples = 0x3c;
     offsetNumMipLevelsImage0 = 0x40;
     pKernelInfo->kernelArgInfo[0].offsetNumMipLevels = offsetNumMipLevelsImage0;
