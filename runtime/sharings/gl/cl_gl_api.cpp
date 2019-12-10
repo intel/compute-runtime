@@ -204,8 +204,8 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     cl_int retValue = CL_SUCCESS;
     API_ENTER(&retValue);
     DBG_LOG_INPUTS("memobj", memobj, "paramName", paramName, "paramValueSize", paramValueSize, "paramValueSize",
-                   DebugManager.infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   DebugManager.getInput(paramValueSizeRet, 0));
+                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
@@ -224,8 +224,8 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
     retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
@@ -261,8 +261,8 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "numObjects", numObjects, "memObjects", memObjects, "numEventsInWaitList",
                    numEventsInWaitList, "eventWaitList",
-                   DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
-                   DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
+                   FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
     retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
@@ -307,8 +307,8 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue",
-                   DebugManager.infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   DebugManager.getInput(paramValueSizeRet, 0));
+                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     uint32_t GLHGLRCHandle = 0;

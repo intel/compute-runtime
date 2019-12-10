@@ -90,10 +90,10 @@ class Kernel : public BaseObject<_cl_kernel> {
             *errcodeRet = retVal;
         }
 
-        if (DebugManager.debugKernelDumpingAvailable()) {
+        if (FileLoggerInstance().enabled()) {
             std::string source;
             program->getSource(source);
-            DebugManager.dumpKernel(kernelInfo.name, source);
+            FileLoggerInstance().dumpKernel(kernelInfo.name, source);
         }
 
         return pKernel;

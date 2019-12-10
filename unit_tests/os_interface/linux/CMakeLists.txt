@@ -8,7 +8,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.h
@@ -30,6 +29,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/linux_create_command_queue_with_properties_tests.cpp

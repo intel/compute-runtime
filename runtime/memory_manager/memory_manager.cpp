@@ -323,7 +323,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
     }
-    DebugManager.logAllocation(allocation);
+    FileLoggerInstance().logAllocation(allocation);
     return allocation;
 }
 

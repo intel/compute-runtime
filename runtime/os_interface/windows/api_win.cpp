@@ -142,8 +142,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -161,8 +161,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -234,8 +234,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9MediaSurfacesKHR(cl_command_queue commandQ
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -254,8 +254,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -426,8 +426,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -459,8 +459,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -631,8 +631,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -664,8 +664,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
                    "numObjects", numObjects,
                    "memObjects", memObjects,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     if (retVal != CL_SUCCESS) {
         return retVal;
     }

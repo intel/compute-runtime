@@ -8,13 +8,13 @@
 #include "graphics_allocation.h"
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/utilities/logger.h"
 
 namespace NEO {
 
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     this->allocationType = allocationType;
-    DebugManager.logAllocation(this);
+    FileLoggerInstance().logAllocation(this);
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,

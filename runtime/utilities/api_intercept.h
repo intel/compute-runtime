@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/utilities/logger.h"
 #include "runtime/utilities/perf_profiler.h"
 
 #define API_ENTER(retValPointer) \
-    DebugSettingsApiEnterWrapper<DebugManager.debugLoggingAvailable()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)
+    LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)
 #define SYSTEM_ENTER()
 #define SYSTEM_LEAVE(id)
 #define WAIT_ENTER()

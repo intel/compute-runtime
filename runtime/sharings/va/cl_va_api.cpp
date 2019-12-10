@@ -88,10 +88,10 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", DebugManager.getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -115,10 +115,10 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     API_ENTER(&status);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
-                   "memObjects", DebugManager.getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
+                   "memObjects", FileLoggerInstance().getMemObjects(reinterpret_cast<const uintptr_t *>(memObjects), numObjects),
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+                   "eventWaitList", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
