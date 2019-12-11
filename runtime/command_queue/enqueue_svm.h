@@ -271,15 +271,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
 }
 
 inline void setOperationParams(BuiltinOpParams &operationParams, size_t size,
-                               const void *srcPtr, GraphicsAllocation *srcSvmAlloc, size_t srcPtrOffset,
-                               void *dstPtr, GraphicsAllocation *dstSvmAlloc, size_t dstPtrOffset) {
+                               const void *srcPtr, GraphicsAllocation *srcSvmAlloc,
+                               void *dstPtr, GraphicsAllocation *dstSvmAlloc) {
     operationParams.size = {size, 0, 0};
-    operationParams.srcPtr = const_cast<void *>(srcPtr);
+    operationParams.srcPtr = const_cast<void *>(alignDown(srcPtr, 4));
     operationParams.srcSvmAlloc = srcSvmAlloc;
-    operationParams.srcOffset = {srcPtrOffset, 0, 0};
-    operationParams.dstPtr = dstPtr;
+    operationParams.srcOffset = {ptrDiff(srcPtr, operationParams.srcPtr), 0, 0};
+    operationParams.dstPtr = alignDown(dstPtr, 4);
     operationParams.dstSvmAlloc = dstSvmAlloc;
-    operationParams.dstOffset = {dstPtrOffset, 0, 0};
+    operationParams.dstOffset = {ptrDiff(dstPtr, operationParams.dstPtr), 0, 0};
 }
 
 template <typename GfxFamily>
@@ -339,11 +339,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     BuiltinOpParams operationParams;
     Surface *surfaces[2];
 
-    void *alignedSrcPtr = alignDown(const_cast<void *>(srcPtr), 4);
-    size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
-    void *alignedDstPtr = alignDown(dstPtr, 4);
-    size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
-
     if (copyType == SvmToHost) {
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
@@ -354,8 +349,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr,
-                           dstHostPtrSurf.getAllocation(), dstPtrOffset);
+        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, dstPtr, dstHostPtrSurf.getAllocation());
         surfaces[0] = &srcSvmSurf;
         surfaces[1] = &dstHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -376,8 +370,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             }
             srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, srcHostPtrSurf.getAllocation(), srcPtrOffset, alignedDstPtr,
-                           dstSvmData->gpuAllocation, dstPtrOffset);
+        setOperationParams(operationParams, size, srcPtr, srcHostPtrSurf.getAllocation(), dstPtr, dstSvmData->gpuAllocation);
         surfaces[0] = &dstSvmSurf;
         surfaces[1] = &srcHostPtrSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -391,7 +384,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     } else if (copyType == SvmToSvm) {
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
-        setOperationParams(operationParams, size, alignedSrcPtr, srcSvmData->gpuAllocation, srcPtrOffset, alignedDstPtr, dstSvmData->gpuAllocation, dstPtrOffset);
+        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, dstPtr, dstSvmData->gpuAllocation);
         surfaces[0] = &srcSvmSurf;
         surfaces[1] = &dstSvmSurf;
         builder.buildDispatchInfos(dispatchInfo, operationParams);
@@ -414,8 +407,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
             srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
         }
-        setOperationParams(operationParams, size, alignedSrcPtr, srcHostPtrSurf.getAllocation(), srcPtrOffset, alignedDstPtr,
-                           dstHostPtrSurf.getAllocation(), dstPtrOffset);
+        setOperationParams(operationParams, size, srcPtr, srcHostPtrSurf.getAllocation(), dstPtr, dstHostPtrSurf.getAllocation());
         surfaces[0] = &srcHostPtrSurf;
         surfaces[1] = &dstHostPtrSurf;
 

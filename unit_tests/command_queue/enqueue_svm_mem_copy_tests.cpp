@@ -145,7 +145,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto builtIns = new MockBuiltins();
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
-    void *srcHostPtr = alignedMalloc(256, 64);
+    void *srcHostPtr = alignedMalloc(512, 64);
+    size_t hostPtrOffset = 2;
 
     // retrieve original builder
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
@@ -164,13 +165,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     // call enqueue on mock builder
     auto retVal = pCmdQ->enqueueSVMMemcpy(
-        false,      // cl_bool  blocking_copy
-        dstSvmPtr,  // void *dst_ptr
-        srcHostPtr, // const void *src_ptr
-        256,        // size_t size
-        0,          // cl_uint num_events_in_wait_list
-        nullptr,    // cl_event *event_wait_list
-        nullptr     // cL_event *event
+        false,                                // cl_bool  blocking_copy
+        dstSvmPtr,                            // void *dst_ptr
+        ptrOffset(srcHostPtr, hostPtrOffset), // const void *src_ptr
+        256,                                  // size_t size
+        0,                                    // cl_uint num_events_in_wait_list
+        nullptr,                              // cl_event *event_wait_list
+        nullptr                               // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -195,7 +196,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto head = ultCsr.getTemporaryAllocations().peekHead();
     while (head) {
-        if (srcHostPtr == head->getUnderlyingBuffer()) {
+        if (ptrOffset(srcHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
             srcSvmAlloc = head;
             break;
         }
@@ -208,26 +209,16 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
-    EXPECT_EQ(srcHostPtr, params->srcPtr);
+    EXPECT_EQ(alignDown(srcSvmAlloc->getGpuAddress(), 4), castToUint64(params->srcPtr));
     EXPECT_EQ(dstSvmPtr, params->dstPtr);
     EXPECT_EQ(nullptr, params->srcMemObj);
     EXPECT_EQ(nullptr, params->dstMemObj);
-    EXPECT_EQ(head, params->srcSvmAlloc);
+    EXPECT_EQ(srcSvmAlloc, params->srcSvmAlloc);
     EXPECT_EQ(dstSvmAlloc, params->dstSvmAlloc);
-    EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
+    EXPECT_EQ(Vec3<size_t>(2, 0, 0), params->srcOffset);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
     EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);
 
-    // validate builder's output - multi dispatch info
-    auto mdi = mockBuilder->getMultiDispatchInfo();
-    EXPECT_EQ(1u, mdi->size());
-
-    auto di = mdi->begin();
-    size_t middleElSize = 4 * sizeof(uint32_t);
-    EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
-
-    auto kernel = mdi->begin()->getKernel();
-    EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().name);
     alignedFree(srcHostPtr);
 }
 
@@ -238,7 +229,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto builtIns = new MockBuiltins();
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
-    auto dstHostPtr = alignedMalloc(256, 64);
+    auto dstHostPtr = alignedMalloc(512, 64);
+    size_t hostPtrOffset = 2;
 
     // retrieve original builder
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
@@ -257,13 +249,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     // call enqueue on mock builder
     auto retVal = pCmdQ->enqueueSVMMemcpy(
-        false,      // cl_bool  blocking_copy
-        dstHostPtr, // void *dst_ptr
-        srcSvmPtr,  // const void *src_ptr
-        256,        // size_t size
-        0,          // cl_uint num_events_in_wait_list
-        nullptr,    // cl_event *event_wait_list
-        nullptr     // cL_event *event
+        false,                                // cl_bool  blocking_copy
+        ptrOffset(dstHostPtr, hostPtrOffset), // void *dst_ptr
+        srcSvmPtr,                            // const void *src_ptr
+        256,                                  // size_t size
+        0,                                    // cl_uint num_events_in_wait_list
+        nullptr,                              // cl_event *event_wait_list
+        nullptr                               // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -288,7 +280,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     auto head = ultCsr.getTemporaryAllocations().peekHead();
     while (head) {
-        if (dstHostPtr == head->getUnderlyingBuffer()) {
+        if (ptrOffset(dstHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
             dstSvmAlloc = head;
             break;
         }
@@ -302,25 +294,15 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // validate builder's input - builtin ops
     auto params = mockBuilder->getBuiltinOpParams();
     EXPECT_EQ(srcSvmPtr, params->srcPtr);
-    EXPECT_EQ(dstHostPtr, params->dstPtr);
+    EXPECT_EQ(alignDown(dstSvmAlloc->getGpuAddress(), 4), castToUint64(params->dstPtr));
     EXPECT_EQ(nullptr, params->srcMemObj);
     EXPECT_EQ(nullptr, params->dstMemObj);
     EXPECT_EQ(srcSvmAlloc, params->srcSvmAlloc);
     EXPECT_EQ(dstSvmAlloc, params->dstSvmAlloc);
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
-    EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->dstOffset);
+    EXPECT_EQ(Vec3<size_t>(2, 0, 0), params->dstOffset);
     EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);
 
-    // validate builder's output - multi dispatch info
-    auto mdi = mockBuilder->getMultiDispatchInfo();
-    EXPECT_EQ(1u, mdi->size());
-
-    auto di = mdi->begin();
-    size_t middleElSize = 4 * sizeof(uint32_t);
-    EXPECT_EQ(Vec3<size_t>(256 / middleElSize, 1, 1), di->getGWS());
-
-    auto kernel = mdi->begin()->getKernel();
-    EXPECT_EQ("CopyBufferToBufferMiddle", kernel->getKernelInfo().name);
     alignedFree(dstHostPtr);
 }
 
