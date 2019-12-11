@@ -121,8 +121,8 @@ HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComman
     auto it = cmdList.begin();
 
     MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(DebugModeRegisterOffset::registerOffset<FamilyType>, pCmd->getRegisterOffset());
-    EXPECT_EQ(DebugModeRegisterOffset::debugEnabledValue<FamilyType>, pCmd->getDataDword());
+    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
+    EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
     it++;
 
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
