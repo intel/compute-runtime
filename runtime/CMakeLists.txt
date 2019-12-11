@@ -81,13 +81,15 @@ if(WIN32)
   set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     ${WDK_INCLUDE_PATHS}
-    os_interface/windows
+    ${NEO_SOURCE_DIR}/core/os_interface/windows
+    ${NEO_SOURCE_DIR}/runtime/os_interface/windows
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
   set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
-    os_interface/linux
+    ${NEO_SOURCE_DIR}/core/os_interface/linux
+    ${NEO_SOURCE_DIR}/runtime/os_interface/linux
     ${I915_INCLUDES_DIR}
   )
 endif()

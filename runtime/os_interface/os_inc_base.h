@@ -16,8 +16,6 @@ extern const char *testDllName;
 
 // OS specific directory separator
 extern const char *fileSeparator;
-// Pci Path
-extern const char *sysFsPciPath;
 
 // Os specific Metrics Library name
 extern const char *metricsLibraryDllName;

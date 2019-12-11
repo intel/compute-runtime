@@ -7,8 +7,8 @@
 
 #pragma once
 #include "core/helpers/basic_math.h"
-#include "runtime/os_interface/linux/engine_info.h"
-#include "runtime/os_interface/linux/memory_info.h"
+#include "core/os_interface/linux/engine_info.h"
+#include "core/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
 
 #include "drm/i915_drm.h"

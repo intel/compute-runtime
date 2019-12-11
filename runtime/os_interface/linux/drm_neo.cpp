@@ -9,8 +9,8 @@
 
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/linux/os_inc.h"
 #include "core/utilities/directory.h"
-#include "runtime/os_interface/os_inc_base.h"
 
 #include <cstdio>
 #include <cstring>
