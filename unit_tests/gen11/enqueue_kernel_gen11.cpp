@@ -22,7 +22,7 @@ GEN11TEST_F(Gen11EnqueueTest, givenKernelRequiringIndependentForwardProgressWhen
     CommandQueueHw<FamilyType> cmdQ{&mc, pDevice, 0};
     SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.SubgroupIndependentForwardProgressRequired = true;
-    MockKernelWithInternals mockKernel(*pDevice, nullptr, false, executionEnvironment);
+    MockKernelWithInternals mockKernel(*pDevice, executionEnvironment);
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, StatickSize3<1, 1, 1>(), nullptr, 0, nullptr, nullptr);
 
