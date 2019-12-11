@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstdint>
 
 namespace NEO {
 
@@ -24,7 +25,7 @@ class OSInterface {
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
-    unsigned int getDeviceHandle() const;
+    uint32_t getDeviceHandle() const;
     void setGmmInputArgs(void *args);
 
   protected:

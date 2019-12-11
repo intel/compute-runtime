@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/os_interface/linux/drm_memory_operations_handler.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"

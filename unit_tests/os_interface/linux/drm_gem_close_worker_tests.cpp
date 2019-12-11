@@ -13,6 +13,7 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/drm_memory_operations_handler.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"

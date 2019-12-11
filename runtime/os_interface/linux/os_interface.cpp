@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface.h"
+#include "runtime/os_interface/linux/os_interface.h"
 
 namespace NEO {
 
