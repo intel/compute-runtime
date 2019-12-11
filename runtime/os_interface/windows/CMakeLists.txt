@@ -4,12 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(KMDAF_HEADERS_DIR)
-  set(KMDAF_FILE_SUFFIX "")
-else()
-  set(KMDAF_FILE_SUFFIX "_stub")
-endif()
-
 set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/api_win.cpp
@@ -25,8 +19,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
@@ -48,8 +40,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_engine_mapper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool.cpp
@@ -59,7 +49,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp

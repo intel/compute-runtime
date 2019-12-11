@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/os_interface/windows/windows_defs.h"
+#include "core/os_interface/windows/windows_defs.h"
 
 #include "gmm_memory.h"
 #include "gmock/gmock.h"

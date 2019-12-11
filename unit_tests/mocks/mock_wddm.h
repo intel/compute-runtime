@@ -9,9 +9,9 @@
 
 #include "core/memory_manager/host_ptr_defines.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/windows/windows_defs.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
-#include "runtime/os_interface/windows/windows_defs.h"
 #include "unit_tests/mocks/wddm_mock_helpers.h"
 
 #include "gmock/gmock.h"

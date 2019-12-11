@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm_engine_mapper.h"
+#include "core/os_interface/windows/wddm_engine_mapper.h"
 
-#include "core/helpers/hw_cmds.h"
+#include "core/helpers/debug_helpers.h"
 
 namespace NEO {
 

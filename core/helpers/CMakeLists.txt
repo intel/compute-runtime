@@ -16,6 +16,8 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/engine_node_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h

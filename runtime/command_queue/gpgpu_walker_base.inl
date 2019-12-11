@@ -8,6 +8,7 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/helpers/engine_node_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
@@ -18,7 +19,6 @@
 #include "runtime/device/device_info.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"

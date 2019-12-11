@@ -8,7 +8,7 @@
 #pragma once
 
 #include "core/memory_manager/eviction_status.h"
-#include "runtime/os_interface/windows/windows_defs.h"
+#include "core/os_interface/windows/windows_defs.h"
 
 #include <vector>
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/kmdaf_listener.h"
+#include "core/os_interface/windows/kmdaf_listener.h"
 #pragma warning(push)           // save the current state
 #pragma warning(disable : 4189) // disable warning 4189 (unused local variable)
 #include "kmdaf.h"

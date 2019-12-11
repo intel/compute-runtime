@@ -7,8 +7,8 @@
 
 #pragma once
 #include "core/memory_manager/memory_operations_status.h"
+#include "core/os_interface/windows/windows_defs.h"
 #include "core/utilities/spinlock.h"
-#include "runtime/os_interface/windows/windows_defs.h"
 
 #include <mutex>
 #include <vector>

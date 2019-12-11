@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm_engine_mapper.h"
+#include "core/os_interface/windows/wddm_engine_mapper.h"
 #include "test.h"
 
 using namespace NEO;

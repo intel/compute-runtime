@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/engine_node_helper.h"
 #include "core/helpers/options.h"
 #include "core/program/sync_buffer_handler.h"
 #include "core/utilities/range.h"
@@ -21,7 +22,6 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info_builder.h"
-#include "runtime/helpers/engine_node_helper.h"
 #include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"

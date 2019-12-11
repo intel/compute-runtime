@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "core/gmm_helper/gmm_lib.h"
 
 #include "engine_node.h"
 
