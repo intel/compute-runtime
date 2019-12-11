@@ -1,0 +1,12 @@
+FROM docker.io/archlinux/base
+MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
+
+COPY neo /root/neo
+COPY scripts/prepare-arch-clang.sh /root
+
+RUN /root/prepare-arch-clang.sh
+RUN cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+    -DDO_NOT_RUN_AUB_TESTS=1 ../neo ; \
+    ninja -j `nproc`
+CMD ["/bin/bash"]

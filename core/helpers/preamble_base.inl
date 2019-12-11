@@ -89,8 +89,8 @@ template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStream) {
     auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
     *pCmd = GfxFamily::cmdInitLoadRegisterImm;
-    pCmd->setRegisterOffset(DebugModeRegisterOffset::registerOffset<GfxFamily>);
-    pCmd->setDataDword(DebugModeRegisterOffset::debugEnabledValue<GfxFamily>);
+    pCmd->setRegisterOffset(DebugModeRegisterOffset<GfxFamily>::registerOffset);
+    pCmd->setDataDword(DebugModeRegisterOffset<GfxFamily>::debugEnabledValue);
 
     auto pCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
     *pCmd2 = GfxFamily::cmdInitLoadRegisterImm;
