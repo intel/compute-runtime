@@ -17,13 +17,8 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(size_t heapSize, size_t alignm
     if (allocation) {
         return allocation.release();
     }
-    NEO::AllocationProperties properties{rootDeviceIndex,
-                                         true /* allocateMemory*/,
-                                         alignment,
-                                         GraphicsAllocation::AllocationType::INTERNAL_HEAP,
-                                         isMultiOsContextCapable,
-                                         false /* isMultiStorageAllocation */,
-                                         {}};
+    NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP, isMultiOsContextCapable, false, {}};
+    properties.alignment = alignment;
 
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }

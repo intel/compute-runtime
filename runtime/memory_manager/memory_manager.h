@@ -69,7 +69,7 @@ class MemoryManager {
         return allocateGraphicsMemoryInPreferredPool(properties, ptr);
     }
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr);
 
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) = 0;
 
@@ -90,7 +90,7 @@ class MemoryManager {
     void freeSystemMemory(void *ptr);
 
     virtual void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) = 0;
-    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
+    MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
     virtual void handleFenceCompletion(GraphicsAllocation *allocation){};
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
