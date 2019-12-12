@@ -5,11 +5,10 @@
  *
  */
 
-#include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
-
-#include "core/gen8/hw_cmds.h"
+#include "core/gen9/hw_cmds.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
+#include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.inl"
 #include "runtime/execution_model/device_enqueue.h"
 
@@ -18,26 +17,28 @@
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
-namespace Gen8SchedulerSimulation {
+namespace NEO {
+struct SKLFamily;
+}
+
+namespace Gen9SchedulerSimulation {
 
 #define SCHEDULER_EMULATION
 
-uint GetNextPowerof2(uint number);
-
 float __intel__getProfilingTimerResolution() {
-    return static_cast<float>(DEFAULT_GEN8_PLATFORM::hwInfo.capabilityTable.defaultProfilingTimerResolution);
+    return static_cast<float>(DEFAULT_GEN9_PLATFORM::hwInfo.capabilityTable.defaultProfilingTimerResolution);
 }
 
-#include "runtime/gen8/device_enqueue.h"
-#include "runtime/gen8/scheduler_definitions.h"
-#include "runtime/gen8/scheduler_igdrcl_built_in.inl"
+#include "runtime/gen9/device_enqueue.h"
+#include "runtime/gen9/scheduler_definitions.h"
+#include "runtime/gen9/scheduler_igdrcl_built_in.inl"
 #include "runtime/scheduler/scheduler.cl"
-} // namespace Gen8SchedulerSimulation
+} // namespace Gen9SchedulerSimulation
 
 namespace BuiltinKernelsSimulation {
 
 template <>
-void SchedulerSimulation<BDWFamily>::startScheduler(uint32_t index,
+void SchedulerSimulation<SKLFamily>::startScheduler(uint32_t index,
                                                     GraphicsAllocation *queue,
                                                     GraphicsAllocation *commandsStack,
                                                     GraphicsAllocation *eventsPool,
@@ -53,7 +54,7 @@ void SchedulerSimulation<BDWFamily>::startScheduler(uint32_t index,
     while (!conditionReady) {
     }
 
-    Gen8SchedulerSimulation::SchedulerParallel20((IGIL_CommandQueue *)queue->getUnderlyingBuffer(),
+    Gen9SchedulerSimulation::SchedulerParallel20((IGIL_CommandQueue *)queue->getUnderlyingBuffer(),
                                                  (uint *)commandsStack->getUnderlyingBuffer(),
                                                  (IGIL_EventPool *)eventsPool->getUnderlyingBuffer(),
                                                  (uint *)secondaryBatchBuffer->getUnderlyingBuffer(),
@@ -63,9 +64,8 @@ void SchedulerSimulation<BDWFamily>::startScheduler(uint32_t index,
                                                  (char *)ssh->getUnderlyingBuffer(),
                                                  debugQueue != nullptr ? (DebugDataBuffer *)debugQueue->getUnderlyingBuffer() : nullptr);
 }
-
 template <>
-void SchedulerSimulation<BDWFamily>::patchGpGpuWalker(uint secondLevelBatchOffset,
+void SchedulerSimulation<SKLFamily>::patchGpGpuWalker(uint secondLevelBatchOffset,
                                                       __global uint *secondaryBatchBuffer,
                                                       uint interfaceDescriptorOffset,
                                                       uint simdSize,
@@ -75,7 +75,7 @@ void SchedulerSimulation<BDWFamily>::patchGpGpuWalker(uint secondLevelBatchOffse
                                                       uint numberOfHwThreadsPerWg,
                                                       uint indirectPayloadSize,
                                                       uint ioHoffset) {
-    Gen8SchedulerSimulation::patchGpGpuWalker(secondLevelBatchOffset,
+    Gen9SchedulerSimulation::patchGpGpuWalker(secondLevelBatchOffset,
                                               secondaryBatchBuffer,
                                               interfaceDescriptorOffset,
                                               simdSize,
@@ -86,7 +86,5 @@ void SchedulerSimulation<BDWFamily>::patchGpGpuWalker(uint secondLevelBatchOffse
                                               indirectPayloadSize,
                                               ioHoffset);
 }
-
-template class SchedulerSimulation<BDWFamily>;
-
+template class SchedulerSimulation<SKLFamily>;
 } // namespace BuiltinKernelsSimulation

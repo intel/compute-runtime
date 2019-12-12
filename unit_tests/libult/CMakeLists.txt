@@ -73,7 +73,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${NEO_SOURCE_DIR}/unit_tests/global_environment.cpp
   ${NEO_SOURCE_DIR}/unit_tests/global_environment.h
   ${NEO_SOURCE_DIR}/unit_tests/main.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/options.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/options_unit_tests.cpp
   ${NEO_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.cpp
   ${NEO_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.h
   ${NEO_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp

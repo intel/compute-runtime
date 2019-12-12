@@ -15,7 +15,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/options_dll.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices.cpp
 
@@ -40,14 +40,14 @@ set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices/devices_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/create_wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/environment_variables.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/options_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
   ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
   ${NEO_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp

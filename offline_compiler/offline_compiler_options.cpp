@@ -5,9 +5,8 @@
  *
  */
 
-#include "core/helpers/options.h"
-
 #include "core/helpers/hw_cmds.h"
+#include "core/helpers/options.h"
 #include "runtime/helpers/array_count.h"
 
 #include <cstddef>

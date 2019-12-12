@@ -19,12 +19,12 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/helper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/translate_platform_base.h
-  ${NEO_SOURCE_DIR}/offline_compiler/helper.cpp
+  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_helper.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.h
   ${NEO_SOURCE_DIR}/offline_compiler/multi_command.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/multi_command.h
-  ${NEO_SOURCE_DIR}/offline_compiler/options.cpp
+  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_options.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
   ${NEO_SOURCE_DIR}/core/compiler_interface/create_main.cpp
   ${NEO_SOURCE_DIR}/core/helpers/hw_info.cpp
@@ -47,13 +47,13 @@ if(WIN32)
   list(APPEND CLOC_SRCS_LIB
     ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.cpp
     ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.h
-    ${NEO_SOURCE_DIR}/runtime/dll/windows/options.cpp
+    ${NEO_SOURCE_DIR}/runtime/dll/windows/options_windows.cpp
   )
 else()
   list(APPEND CLOC_SRCS_LIB
     ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.cpp
     ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.h
-    ${NEO_SOURCE_DIR}/runtime/dll/linux/options.cpp
+    ${NEO_SOURCE_DIR}/runtime/dll/linux/options_linux.cpp
   )
 endif()
 

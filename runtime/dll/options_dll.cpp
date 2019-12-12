@@ -5,19 +5,20 @@
  *
  */
 
-#include "core/helpers/options.h"
-
 #include "core/helpers/hw_cmds.h"
-#include "core/helpers/hw_info.h"
+#include "core/helpers/options.h"
 #include "runtime/helpers/array_count.h"
 
 namespace NEO {
-const char *folderAUB = "aub_out";
+// AUB file folder location
+const char *folderAUB = ".";
 
-uint32_t initialHardwareTag = static_cast<uint32_t>(0xFFFFFF00);
+// Initial value for HW tag
+uint32_t initialHardwareTag = 0;
 
+// Number of devices in the platform
 static const HardwareInfo *DefaultPlatformDevices[] = {
-    &DEFAULT_TEST_PLATFORM::hwInfo,
+    &DEFAULT_PLATFORM::hwInfo,
 };
 
 size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);

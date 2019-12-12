@@ -40,6 +40,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mem_properties_parser_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_properties_parser_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_properties_flags_helpers.cpp
@@ -47,7 +48,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_flags_helpers_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
