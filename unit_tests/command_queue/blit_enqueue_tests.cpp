@@ -32,8 +32,10 @@ struct BlitAuxTranslationTests : public ::testing::Test {
         }
         BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                        *bcsCsr, memory, 0, nullptr,
-                                                                                        hostPtr, 0, 0, size);
+                                                                                        *bcsCsr, memory, nullptr,
+                                                                                        hostPtr,
+                                                                                        memory->getGpuAddress(), 0,
+                                                                                        0, 0, size);
 
             BlitPropertiesContainer container;
             container.push_back(blitProperties);

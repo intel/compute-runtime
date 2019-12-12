@@ -74,8 +74,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
         bltCmd->setDestinationPitch(static_cast<uint32_t>(width));
         bltCmd->setSourcePitch(static_cast<uint32_t>(width));
 
-        bltCmd->setDestinationBaseAddress(blitProperties.dstAllocation->getGpuAddress() + blitProperties.dstOffset + offset);
-        bltCmd->setSourceBaseAddress(blitProperties.srcAllocation->getGpuAddress() + blitProperties.srcOffset + offset);
+        bltCmd->setDestinationBaseAddress(blitProperties.dstGpuAddress + blitProperties.dstOffset + offset);
+        bltCmd->setSourceBaseAddress(blitProperties.srcGpuAddress + blitProperties.srcOffset + offset);
 
         appendBlitCommandsForBuffer(blitProperties, *bltCmd);
 

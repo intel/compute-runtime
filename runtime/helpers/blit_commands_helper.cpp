@@ -17,30 +17,51 @@
 namespace NEO {
 BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                      CommandStreamReceiver &commandStreamReceiver,
-                                                                     GraphicsAllocation *memObjAllocation, size_t memObjOffset,
-                                                                     GraphicsAllocation *mapAllocation,
-                                                                     void *hostPtr, size_t hostPtrOffset,
+                                                                     GraphicsAllocation *memObjAllocation,
+                                                                     GraphicsAllocation *preallocatedHostAllocation,
+                                                                     void *hostPtr, uint64_t memObjGpuVa,
+                                                                     uint64_t hostAllocGpuVa, size_t hostPtrOffset,
                                                                      size_t copyOffset, uint64_t copySize) {
 
     GraphicsAllocation *hostAllocation = nullptr;
 
-    if (mapAllocation) {
-        hostAllocation = mapAllocation;
-        if (hostPtr) {
-            hostPtrOffset += ptrDiff(hostPtr, mapAllocation->getGpuAddress());
-        }
+    if (preallocatedHostAllocation) {
+        hostAllocation = preallocatedHostAllocation;
+        UNRECOVERABLE_IF(hostAllocGpuVa == 0);
     } else {
         HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
         bool success = commandStreamReceiver.createAllocationForHostSurface(hostPtrSurface, false);
         UNRECOVERABLE_IF(!success);
         hostAllocation = hostPtrSurface.getAllocation();
+        hostAllocGpuVa = hostAllocation->getGpuAddress();
     }
 
-    auto offset = copyOffset + memObjOffset;
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostAllocation, offset, hostPtrOffset, copySize};
+        return {
+            nullptr,                       // outputTimestampPacket
+            blitDirection,                 // blitDirection
+            {},                            // csrDependencies
+            AuxTranslationDirection::None, // auxTranslationDirection
+            memObjAllocation,              // dstAllocation
+            hostAllocation,                // srcAllocation
+            memObjGpuVa,                   // dstGpuAddress
+            hostAllocGpuVa,                // srcGpuAddress
+            copySize,                      // copySize
+            copyOffset,                    // dstOffset
+            hostPtrOffset};                // srcOffset
     } else {
-        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostAllocation, memObjAllocation, hostPtrOffset, offset, copySize};
+        return {
+            nullptr,                       // outputTimestampPacket
+            blitDirection,                 // blitDirection
+            {},                            // csrDependencies
+            AuxTranslationDirection::None, // auxTranslationDirection
+            hostAllocation,                // dstAllocation
+            memObjAllocation,              // srcAllocation
+            hostAllocGpuVa,                // dstGpuAddress
+            memObjGpuVa,                   // srcGpuAddress
+            copySize,                      // copySize
+            hostPtrOffset,                 // dstOffset
+            copyOffset};                   // srcOffset
     }
 }
 
@@ -59,61 +80,94 @@ BlitProperties BlitProperties::constructProperties(BlitterConstants::BlitDirecti
 
     GraphicsAllocation *gpuAllocation = nullptr;
     size_t copyOffset = 0;
-    size_t memObjOffset = 0;
 
     void *hostPtr = nullptr;
     size_t hostPtrOffset = 0;
+
+    uint64_t memObjGpuVa = 0;
+    uint64_t hostAllocGpuVa = 0;
 
     GraphicsAllocation *hostAllocation = builtinOpParams.transferAllocation;
 
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         // write buffer
+        hostPtr = builtinOpParams.srcPtr;
+        hostPtrOffset = builtinOpParams.srcOffset.x;
+        copyOffset = builtinOpParams.dstOffset.x;
+
+        memObjGpuVa = castToUint64(builtinOpParams.dstPtr);
+        hostAllocGpuVa = castToUint64(builtinOpParams.srcPtr);
+
         if (builtinOpParams.dstSvmAlloc) {
             gpuAllocation = builtinOpParams.dstSvmAlloc;
             hostAllocation = builtinOpParams.srcSvmAlloc;
         } else {
             gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
-            memObjOffset = builtinOpParams.dstMemObj->getOffset();
-            hostPtr = builtinOpParams.srcPtr;
+            memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.dstMemObj->getOffset());
         }
-
-        hostPtrOffset = builtinOpParams.srcOffset.x;
-        copyOffset = builtinOpParams.dstOffset.x;
     }
 
     if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection) {
         // read buffer
+        hostPtr = builtinOpParams.dstPtr;
+
+        hostPtrOffset = builtinOpParams.dstOffset.x;
+        copyOffset = builtinOpParams.srcOffset.x;
+
+        memObjGpuVa = castToUint64(builtinOpParams.srcPtr);
+        hostAllocGpuVa = castToUint64(builtinOpParams.dstPtr);
+
         if (builtinOpParams.srcSvmAlloc) {
             gpuAllocation = builtinOpParams.srcSvmAlloc;
             hostAllocation = builtinOpParams.dstSvmAlloc;
         } else {
             gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation();
-            memObjOffset = builtinOpParams.srcMemObj->getOffset();
-            hostPtr = builtinOpParams.dstPtr;
+            memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.srcMemObj->getOffset());
         }
-
-        hostPtrOffset = builtinOpParams.dstOffset.x;
-        copyOffset = builtinOpParams.srcOffset.x;
     }
 
     UNRECOVERABLE_IF(BlitterConstants::BlitDirection::HostPtrToBuffer != blitDirection &&
                      BlitterConstants::BlitDirection::BufferToHostPtr != blitDirection);
 
-    return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation, memObjOffset,
-                                                 hostAllocation, hostPtr, hostPtrOffset, copyOffset,
-                                                 builtinOpParams.size.x);
+    return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation,
+                                                 hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
+                                                 hostPtrOffset, copyOffset, builtinOpParams.size.x);
 }
 
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                                 size_t dstOffset, size_t srcOffset, uint64_t copySize) {
 
-    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, AuxTranslationDirection::None, dstAllocation, srcAllocation, dstOffset, srcOffset, copySize};
+    return {
+        nullptr,                                         // outputTimestampPacket
+        BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
+        {},                                              // csrDependencies
+        AuxTranslationDirection::None,                   // auxTranslationDirection
+        dstAllocation,                                   // dstAllocation
+        srcAllocation,                                   // srcAllocation
+        dstAllocation->getGpuAddress(),                  // dstGpuAddress
+        srcAllocation->getGpuAddress(),                  // srcGpuAddress
+        copySize,                                        // copySize
+        dstOffset,                                       // dstOffset
+        srcOffset};                                      // srcOffset
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                     GraphicsAllocation *allocation) {
+
     auto allocationSize = allocation->getUnderlyingBufferSize();
-    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, auxTranslationDirection, allocation, allocation, 0, 0, allocationSize};
+    return {
+        nullptr,                                         // outputTimestampPacket
+        BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
+        {},                                              // csrDependencies
+        auxTranslationDirection,                         // auxTranslationDirection
+        allocation,                                      // dstAllocation
+        allocation,                                      // srcAllocation
+        allocation->getGpuAddress(),                     // dstGpuAddress
+        allocation->getGpuAddress(),                     // srcGpuAddress
+        allocationSize,                                  // copySize
+        0,                                               // dstOffset
+        0                                                // srcOffset
+    };
 }
 
 BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t commandType) {

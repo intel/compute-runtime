@@ -31,9 +31,10 @@ using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
-                                                                GraphicsAllocation *memObjAllocation, size_t memObjOFfset,
-                                                                GraphicsAllocation *mapAllocation,
-                                                                void *hostPtr, size_t hostPtrOffset,
+                                                                GraphicsAllocation *memObjAllocation,
+                                                                GraphicsAllocation *preallocatedHostAllocation,
+                                                                void *hostPtr, uint64_t memObjGpuVa,
+                                                                uint64_t hostAllocGpuVa, size_t hostPtrOffset,
                                                                 size_t copyOffset, uint64_t copySize);
 
     static BlitProperties constructProperties(BlitterConstants::BlitDirection blitDirection,
@@ -59,9 +60,11 @@ struct BlitProperties {
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
+    uint64_t dstGpuAddress = 0;
+    uint64_t srcGpuAddress = 0;
+    uint64_t copySize = 0;
     size_t dstOffset = 0;
     size_t srcOffset = 0;
-    uint64_t copySize = 0;
 };
 
 template <typename GfxFamily>
