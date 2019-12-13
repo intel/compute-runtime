@@ -18,8 +18,8 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN11 {
-#include "core/gen11/hw_cmds_generated.inl"
-#include "core/gen11/hw_cmds_generated_patched.inl"
+#include "core/generated/gen11/hw_cmds_generated.inl"
+#include "core/generated/gen11/hw_cmds_generated_patched.inl"
 };
 struct ICLFamily : public GEN11 {
     using PARSE = CmdParse<ICLFamily>;
