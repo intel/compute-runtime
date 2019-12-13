@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/utilities/file_logger_tests.h"

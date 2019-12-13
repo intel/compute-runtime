@@ -7,10 +7,9 @@
 
 #pragma once
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/file_io.h"
 #include "core/utilities/directory.h"
-#include "runtime/helpers/string_helpers.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 #include <map>
 
@@ -44,6 +43,7 @@ class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
     using DebugSettingsManager<DebugLevel>::dumpFlags;
     using DebugSettingsManager<DebugLevel>::settingsDumpFileName;
 
+    TestDebugSettingsManager() : DebugSettingsManager<DebugLevel>("") {}
     SettingsReader *getSettingsReader() {
         return DebugSettingsManager<DebugLevel>::readerImpl.get();
     }

@@ -601,7 +601,7 @@ TEST_F(DeviceGetCapsTest, givenEnableAdvancedVmeSetToFalseAndDeviceSupportsVmeWh
 }
 
 TEST_F(DeviceGetCapsTest, byDefaultVmeIsTurnedOn) {
-    DebugSettingsManager<DebugFunctionalityLevel::RegKeys> freshDebugSettingsManager;
+    DebugSettingsManager<DebugFunctionalityLevel::RegKeys> freshDebugSettingsManager("");
     EXPECT_TRUE(freshDebugSettingsManager.flags.EnableIntelVme.get());
 }
 

@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sharings/gl/cl_gl_api_intel.h"
 #include "runtime/sharings/gl/enable_gl.h"
 #include "runtime/sharings/gl/gl_sharing.h"

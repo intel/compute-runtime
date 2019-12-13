@@ -7,7 +7,7 @@
 
 #include "core/helpers/debug_helpers.h"
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 
 #include <assert.h>
 #include <cstdio>

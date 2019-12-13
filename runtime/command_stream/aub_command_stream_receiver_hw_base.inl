@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
@@ -27,7 +28,6 @@
 #include "runtime/helpers/neo_driver_version.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 
 #include "driver_version.h"

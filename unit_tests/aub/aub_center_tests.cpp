@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
 

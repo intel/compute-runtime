@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 using namespace NEO;
 

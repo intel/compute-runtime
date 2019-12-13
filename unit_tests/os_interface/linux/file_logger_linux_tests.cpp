@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/mocks/linux/mock_drm_allocation.h"
 #include "unit_tests/utilities/file_logger_tests.h"

@@ -5,19 +5,19 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_info.h"
 #include "core/utilities/debug_settings_reader_creator.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
 
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
+DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
 }
 
 template <DebugFunctionalityLevel DebugLevel>
 DebugSettingsManager<DebugLevel>::~DebugSettingsManager() = default;
 
 // Global Debug Settings Manager
-DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
+DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager("");
 } // namespace NEO

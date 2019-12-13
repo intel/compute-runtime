@@ -7,7 +7,7 @@
 
 #include "va_sharing_functions.h"
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/sharings/va/va_surface.h"
 
 #include <dlfcn.h>

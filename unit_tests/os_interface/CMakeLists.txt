@@ -6,8 +6,6 @@
 
 set(IGDRCL_SRCS_tests_os_interface_base
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_fixture.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.h

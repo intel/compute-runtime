@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/options.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 using namespace NEO;
 

@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/hw_info_config.inl"
 #include "runtime/os_interface/hw_info_config_bdw_plus.inl"

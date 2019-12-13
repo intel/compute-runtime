@@ -8,6 +8,7 @@ target_sources(igdrcl_tests PRIVATE ${NEO_SOURCE_DIR}/unit_tests/core_unit_tests
 
 append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
   NEO_CORE_COMMAND_CONTAINER_TESTS
+  NEO_CORE_DEBUG_SETTINGS_TESTS
   NEO_CORE_INDIRECT_HEAP_TESTS
 )
 

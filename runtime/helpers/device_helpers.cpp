@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/device_helpers.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
 void DeviceHelper::getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize) {}

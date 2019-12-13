@@ -7,8 +7,8 @@
 
 #include "core/helpers/hw_info.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_cmds.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 #include <algorithm>
 

@@ -7,11 +7,11 @@
 
 #include "offline_compiler_tests.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/mocks/mock_compilers.h"
 
 #include "compiler_options.h"

@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/gen11/reg_configs.h"
 #include "runtime/helpers/blit_commands_helper_bdw_plus.inl"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
 typedef ICLFamily Family;

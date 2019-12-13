@@ -7,9 +7,9 @@
 
 #include "runtime/device/root_device.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/device/sub_device.h"
 #include "runtime/helpers/device_helpers.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}

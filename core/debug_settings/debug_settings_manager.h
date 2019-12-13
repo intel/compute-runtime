@@ -73,7 +73,7 @@ struct DebugVariables {
 template <DebugFunctionalityLevel DebugLevel>
 class DebugSettingsManager {
   public:
-    DebugSettingsManager();
+    DebugSettingsManager(const char *registryPath);
     ~DebugSettingsManager();
 
     DebugSettingsManager(const DebugSettingsManager &) = delete;

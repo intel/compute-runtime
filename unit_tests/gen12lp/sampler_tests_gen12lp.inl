@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sampler/sampler.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

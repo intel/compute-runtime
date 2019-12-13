@@ -5,18 +5,13 @@
  *
  */
 
+#include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/debug_file_reader.h"
-#include "runtime/os_interface/ocl_reg_path.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/os_interface/debug_settings_manager_fixture.h"
+#include "test.h"
+
+#include "debug_settings_manager_fixture.h"
 
 #include <cstdio>
 #include <memory>
@@ -102,16 +97,16 @@ TEST(DebugSettingsManager, givenStringDebugVariableWhenLongValueExeedingSmallStr
 
 TEST(DebugSettingsManager, givenNullAsReaderImplInDebugManagerWhenSettingReaderImplThenItsSetProperly) {
     FullyDisabledTestDebugManager debugManager;
-    auto readerImpl = SettingsReader::create(oclRegPath);
+    auto readerImpl = SettingsReader::create("");
     debugManager.setReaderImpl(readerImpl);
     EXPECT_EQ(readerImpl, debugManager.getReaderImpl());
 }
 TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentReaderImplThenItsSetProperly) {
     FullyDisabledTestDebugManager debugManager;
-    auto readerImpl = SettingsReader::create(oclRegPath);
+    auto readerImpl = SettingsReader::create("");
     debugManager.setReaderImpl(readerImpl);
 
-    auto readerImpl2 = SettingsReader::create(oclRegPath);
+    auto readerImpl2 = SettingsReader::create("");
     debugManager.setReaderImpl(readerImpl2);
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
 }

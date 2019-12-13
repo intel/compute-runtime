@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "core/debug_settings/debug_settings_manager.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/map_operations_handler.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sharings/sharing.h"
 
 #include "memory_properties_flags.h"

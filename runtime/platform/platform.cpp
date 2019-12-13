@@ -8,6 +8,7 @@
 #include "platform.h"
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/debug_helpers.h"
@@ -22,7 +23,6 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/extensions.h"

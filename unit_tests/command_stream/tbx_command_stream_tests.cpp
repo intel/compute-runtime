@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
@@ -15,7 +16,6 @@
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_banks.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

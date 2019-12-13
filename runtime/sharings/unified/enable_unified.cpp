@@ -7,9 +7,9 @@
 
 #include "runtime/sharings/unified/enable_unified.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
 #include "runtime/sharings/unified/unified_sharing.h"

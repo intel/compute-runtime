@@ -7,6 +7,7 @@
 
 #include "runtime/mem_obj/buffer.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_helper.h"
@@ -25,7 +26,6 @@
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
 

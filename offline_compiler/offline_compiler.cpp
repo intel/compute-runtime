@@ -7,6 +7,7 @@
 
 #include "offline_compiler.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/elf/writer.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/file_io.h"
@@ -14,7 +15,6 @@
 #include "core/helpers/string.h"
 #include "core/os_interface/os_library.h"
 #include "runtime/helpers/validators.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "runtime/platform/extensions.h"
 

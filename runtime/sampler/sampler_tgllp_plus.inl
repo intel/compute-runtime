@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/sampler/sampler.h"
 #include "runtime/sampler/sampler.inl"
 

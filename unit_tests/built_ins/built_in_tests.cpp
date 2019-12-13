@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
@@ -18,7 +19,6 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"

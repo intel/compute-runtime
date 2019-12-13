@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/windows/environment_variables.h"
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 
 #include <Windows.h>
 

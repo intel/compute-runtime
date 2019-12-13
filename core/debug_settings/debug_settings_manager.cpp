@@ -7,14 +7,11 @@
 
 #include "debug_settings_manager.h"
 
+#include "core/debug_settings/definitions/translate_debug_settings.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/utilities/debug_settings_reader_creator.h"
-#include "runtime/os_interface/definitions/translate_debug_settings.h"
-#include "runtime/os_interface/ocl_reg_path.h"
-
-#include "CL/cl.h"
 
 #include <cstdio>
 #include <sstream>
@@ -27,12 +24,10 @@ static std::string to_string(const std::string &arg) {
 
 namespace NEO {
 
-DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
-
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
+DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
     if (registryReadAvailable()) {
-        readerImpl = SettingsReaderCreator::create(oclRegPath);
+        readerImpl = SettingsReaderCreator::create(std::string(registryPath));
         injectSettingsFromReader();
         dumpFlags();
     }

@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/drm_null_device.h"
 

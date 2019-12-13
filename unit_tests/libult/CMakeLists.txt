@@ -32,6 +32,7 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
   ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.h
   ${NEO_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/libult/debug_manager.cpp
   ${NEO_SOURCE_DIR}/unit_tests/libult/source_level_debugger.cpp
   ${NEO_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.cpp
   ${NEO_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h

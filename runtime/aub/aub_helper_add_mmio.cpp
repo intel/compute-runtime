@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/aub/aub_helper.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 #include "third_party/aub_stream/headers/aubstream.h"
 

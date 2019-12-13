@@ -7,7 +7,7 @@
 
 #include "sharing_factory.h"
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/platform/extensions.h"
 
 namespace NEO {

@@ -7,8 +7,8 @@
 
 #ifdef _WIN32
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"

@@ -7,6 +7,7 @@
 
 #include "api.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_info.h"
@@ -36,7 +37,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/mem_obj/pipe.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "runtime/sampler/sampler.h"

@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/debug_helpers.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/tbx/tbx_sockets.h"
 
 namespace NEO {

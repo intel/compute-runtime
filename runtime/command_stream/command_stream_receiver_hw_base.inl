@@ -7,6 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/cache_policy.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
@@ -28,7 +29,6 @@
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 

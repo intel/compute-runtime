@@ -7,7 +7,7 @@
 
 #include "core/helpers/hw_helper.h"
 
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "core/debug_settings/debug_settings_manager.h"
 
 namespace NEO {
 HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};

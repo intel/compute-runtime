@@ -7,6 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/cache_policy.h"
 #include "core/helpers/preamble.h"
@@ -22,7 +23,6 @@
 #include "runtime/event/user_event.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"

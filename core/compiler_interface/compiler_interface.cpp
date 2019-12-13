@@ -9,9 +9,9 @@
 
 #include "core/compiler_interface/compiler_cache.h"
 #include "core/compiler_interface/compiler_interface.inl"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 
 #include "cif/common/cif_main.h"

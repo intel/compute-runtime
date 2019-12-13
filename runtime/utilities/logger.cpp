@@ -7,12 +7,12 @@
 
 #include "runtime/utilities/logger.h"
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 #include <memory>
 #include <string>
