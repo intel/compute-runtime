@@ -22,7 +22,7 @@ components:
   internal:
     branch: master
     dest_dir: internal
-    revision: 7ab7fb1f701019d15560f4fb57c371e4fea63169
+    revision: 918c263bd2ed44b18434ba6f8dba01c4fcec04e9
     type: git
   kmdaf:
     branch: kmdaf
