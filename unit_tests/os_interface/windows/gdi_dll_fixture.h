@@ -41,13 +41,17 @@ struct GdiDllFixture {
         getDestroyHwQueueDataFcn = reinterpret_cast<decltype(&getDestroyHwQueueData)>(mockGdiDll->getProcAddress("getDestroyHwQueueData"));
         getSubmitCommandToHwQueueDataFcn =
             reinterpret_cast<decltype(&getSubmitCommandToHwQueueData)>(mockGdiDll->getProcAddress("getSubmitCommandToHwQueueData"));
+        getDestroySynchronizationObjectDataFcn =
+            reinterpret_cast<decltype(&getDestroySynchronizationObjectData)>(mockGdiDll->getProcAddress("getDestroySynchronizationObjectData"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
+        *getDestroySynchronizationObjectDataFcn() = {};
     }
 
     virtual void TearDown() {
         *getCreateHwQueueDataFcn() = {};
         *getDestroyHwQueueDataFcn() = {};
         *getSubmitCommandToHwQueueDataFcn() = {};
+        *getDestroySynchronizationObjectDataFcn() = {};
         setMapGpuVaFailConfigFcn(0, 0);
     }
 
@@ -68,4 +72,5 @@ struct GdiDllFixture {
     decltype(&getCreateHwQueueData) getCreateHwQueueDataFcn = nullptr;
     decltype(&getDestroyHwQueueData) getDestroyHwQueueDataFcn = nullptr;
     decltype(&getSubmitCommandToHwQueueData) getSubmitCommandToHwQueueDataFcn = nullptr;
+    decltype(&getDestroySynchronizationObjectData) getDestroySynchronizationObjectDataFcn = nullptr;
 };

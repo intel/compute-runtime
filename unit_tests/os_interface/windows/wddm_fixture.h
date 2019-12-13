@@ -17,6 +17,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm_interface20.h"
 #include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
@@ -55,6 +56,8 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         GdiDllFixture::SetUp();
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddmMockInterface = new WddmMockInterface20(*wddm);
+        wddm->wddmInterface.reset(wddmMockInterface);
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
         executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
@@ -64,7 +67,9 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     void init() {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         auto hwInfo = *platformDevices[0];
+        wddmMockInterface = reinterpret_cast<WddmMockInterface20 *>(wddm->wddmInterface.release());
         wddm->init(hwInfo);
+        wddm->wddmInterface.reset(wddmMockInterface);
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
     }
 
@@ -76,6 +81,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     OSInterface *osInterface;
     std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
+    WddmMockInterface20 *wddmMockInterface = nullptr;
 };
 
 struct WddmInstrumentationGmmFixture {

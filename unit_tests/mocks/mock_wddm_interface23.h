@@ -20,8 +20,15 @@ class WddmMockInterface23 : public WddmInterface23 {
         return createHwQueueResult;
     }
 
+    void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override {
+        destroyMonitorFenceCalled++;
+        WddmInterface23::destroyMonitorFence(fenceHandle);
+    }
+
     uint32_t createHwQueueCalled = 0;
     bool forceCreateHwQueueFail = false;
     bool createHwQueueResult = false;
+
+    uint32_t destroyMonitorFenceCalled = 0;
 };
 } // namespace NEO

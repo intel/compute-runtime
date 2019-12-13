@@ -153,6 +153,12 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
+TEST_F(Wddm23Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoNotCallGdiDestroy) {
+    osContext.reset(nullptr);
+    EXPECT_EQ(1u, wddmMockInterface->destroyMonitorFenceCalled);
+    EXPECT_EQ(0u, getDestroySynchronizationObjectDataFcn()->hSyncObject);
+}
+
 TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
     EXPECT_EQ(nullptr, wddm->gdi->createHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->gdi->destroyHwQueue.mFunc);

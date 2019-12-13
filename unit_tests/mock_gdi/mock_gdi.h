@@ -26,7 +26,6 @@
     FUNCTION(Unlock, IN CONST D3DKMT_UNLOCK *)                                                           \
     FUNCTION(Render, IN OUT D3DKMT_RENDER *)                                                             \
     FUNCTION(CreateSynchronizationObject, IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT *)                   \
-    FUNCTION(DestroySynchronizationObject, IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *)               \
     FUNCTION(SignalSynchronizationObject, IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECT *)                 \
     FUNCTION(WaitForSynchronizationObject, IN OUT CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *)           \
     FUNCTION(WaitForSynchronizationObjectFromCpu, IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *) \
@@ -78,4 +77,5 @@ D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData();
 D3DKMT_CREATEHWQUEUE *getCreateHwQueueData();
 D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();
+D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData();
 void InitGfxPartition();

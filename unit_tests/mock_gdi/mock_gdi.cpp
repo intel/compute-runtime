@@ -394,6 +394,13 @@ NTSTATUS __stdcall D3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMANDTOH
     return STATUS_SUCCESS;
 }
 
+static D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData = {};
+
+NTSTATUS __stdcall D3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *destroySynchronizationObject) {
+    destroySynchronizationObjectData = *destroySynchronizationObject;
+    return STATUS_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -463,4 +470,8 @@ D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData() {
 
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData() {
     return &submitCommandToHwQueueData;
+}
+
+D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData() {
+    return &destroySynchronizationObjectData;
 }
