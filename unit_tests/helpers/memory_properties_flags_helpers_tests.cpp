@@ -62,9 +62,6 @@ TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsT
 
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL);
     EXPECT_TRUE(properties.allocFlags.allocWriteCombined);
-
-    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, 0, CL_MEM_ALLOC_DEFAULT_INTEL);
-    EXPECT_TRUE(properties.allocFlags.allocDefault);
 }
 
 TEST(MemoryPropertiesFlags, givenClMemForceLinearStorageFlagWhenCreateMemoryPropertiesFlagsThenReturnProperValue) {

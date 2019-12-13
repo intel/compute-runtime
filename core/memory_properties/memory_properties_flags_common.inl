@@ -28,7 +28,6 @@ struct MemoryFlags {
 
 struct MemoryAllocFlags {
     uint32_t allocWriteCombined : 1;
-    uint32_t allocDefault : 1;
 };
 
 } // namespace NEO

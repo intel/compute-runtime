@@ -76,10 +76,6 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(c
         memoryPropertiesFlags.allocFlags.allocWriteCombined = true;
     }
 
-    if (allocflags == CL_MEM_ALLOC_DEFAULT_INTEL) {
-        memoryPropertiesFlags.allocFlags.allocDefault = true;
-    }
-
     addExtraMemoryPropertiesFlags(memoryPropertiesFlags, flags, flagsIntel);
 
     return memoryPropertiesFlags;
