@@ -101,6 +101,20 @@ TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {
     delete buffer;
 }
 
+TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotChangeAnything) {
+    auto *memoryManager = commandStreamReceiver->getMemoryManager();
+
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    ASSERT_NE(nullptr, graphicsAllocation);
+    auto numEvictionAllocsBefore = commandStreamReceiver->getEvictionAllocations().size();
+    commandStreamReceiver->CommandStreamReceiver::downloadAllocation(*graphicsAllocation);
+    auto numEvictionAllocsAfter = commandStreamReceiver->getEvictionAllocations().size();
+    EXPECT_EQ(numEvictionAllocsBefore, numEvictionAllocsAfter);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST_F(CommandStreamReceiverTest, commandStreamReceiverFromDeviceHasATagValue) {
     EXPECT_NE(nullptr, const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
 }
@@ -290,6 +304,29 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.addAubComment("message");
     EXPECT_TRUE(csr.addAubCommentCalled);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCSRWhenDownloadAllocationCalledVerifyCallOccurs) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation graphicsAllocation;
+
+    csr.downloadAllocation(graphicsAllocation);
+    EXPECT_TRUE(csr.downloadAllocationCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenDownloadAllocationIsCalledThenVerifyCallOccurs) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto *memoryManager = commandStreamReceiver->getMemoryManager();
+
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    ASSERT_NE(nullptr, graphicsAllocation);
+    csr.downloadAllocation(*graphicsAllocation);
+    EXPECT_TRUE(csr.downloadAllocationCalled);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
@@ -709,14 +746,4 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, commandStreamGraphicsAllocation
     EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
     ASSERT_NE(nullptr, surface.getAllocation());
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
-
-    // Scratch allocation
-    auto scratchController = commandStreamReceiver->getScratchSpaceController();
-    bool cfeStateDirty = false;
-    bool stateBaseAddressDirty = false;
-    std::vector<unsigned char> surfaceHeap(0x1000);
-    scratchController->setRequiredScratchSpace(surfaceHeap.data(), 0x1000u, 0u, 0u, *device->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    auto scratchAllocation = scratchController->getScratchSpaceAllocation();
-    ASSERT_NE(nullptr, scratchAllocation);
-    EXPECT_EQ(expectedRootDeviceIndex, scratchAllocation->getRootDeviceIndex());
 }

@@ -114,6 +114,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
+    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+        downloadAllocationCalled = true;
+    }
+
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
@@ -199,6 +203,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool recordFlusheBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
+    bool downloadAllocationCalled = false;
     std::vector<std::string> aubCommentMessages;
     bool flushBatchedSubmissionsCalled = false;
     uint32_t makeSurfacePackNonResidentCalled = false;

@@ -253,6 +253,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     bool multiOsContextCapable = false;
+    bool downloadAllocationCalled = false;
 
     ~MockCommandStreamReceiver() {
     }
@@ -283,6 +284,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    }
+
+    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+        downloadAllocationCalled = true;
     }
 
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) override { return taskCount; };
