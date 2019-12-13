@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,15 @@ class EHL_1x2x4 : public EHL {
 };
 
 class EHL_1x4x4 : public EHL {
+  public:
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static const HardwareInfo hwInfo;
+
+  private:
+    static GT_SYSTEM_INFO gtSystemInfo;
+};
+
+class EHL_1x4x6 : public EHL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

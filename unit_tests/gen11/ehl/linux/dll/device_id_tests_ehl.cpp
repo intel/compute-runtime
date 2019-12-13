@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,14 @@
 using namespace NEO;
 
 TEST(EhlDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 4> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 7> expectedDescriptors = {{
         {IEHL_1x4x8_SUPERSKU_DEVICE_A0_ID, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
         {IEHL_1x2x4_DEVICE_A0_ID, &EHL_1x2x4::hwInfo, &EHL_1x2x4::setupHardwareInfo, GTTYPE_GT1},
         {IEHL_1x4x4_DEVICE_A0_ID, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
         {IEHL_1x4x8_DEVICE_A0_ID, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
+        {IJSL_1x4x4_DEVICE_B0_ID, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
+        {IJSL_1x4x6_DEVICE_B0_ID, &EHL_1x4x6::hwInfo, &EHL_1x4x6::setupHardwareInfo, GTTYPE_GT1},
+        {IJSL_1x4x8_DEVICE_B0_ID, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
