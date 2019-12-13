@@ -241,7 +241,7 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
 bool Gmm::unifiedAuxTranslationCapable() const {
     auto gmmFlags = this->gmmResourceInfo->getResourceFlags();
     UNRECOVERABLE_IF(gmmFlags->Info.RenderCompressed && gmmFlags->Info.MediaCompressed);
-    return gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface && (gmmFlags->Info.RenderCompressed | gmmFlags->Info.MediaCompressed);
+    return gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface;
 }
 
 bool Gmm::hasMultisampleControlSurface() const {

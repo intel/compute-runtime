@@ -120,7 +120,6 @@ uint32_t MockGmmResourceInfo::getBitsPerPixel() {
 void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {
     mockResourceCreateParams.Flags.Gpu.CCS = 1;
     mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
-    mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 }
 
 void MockGmmResourceInfo::setMultisampleControlSurface() {
