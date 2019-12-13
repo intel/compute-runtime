@@ -892,20 +892,14 @@ Image *Image::redescribe() {
         7   // {CL_RGBA, CL_UNSIGNED_INT32}    16 byte
     };
 
+    const uint32_t bytesPerPixel = this->surfaceFormatInfo.NumChannels * surfaceFormatInfo.PerChannelSizeInBytes;
+    const uint32_t exponent = Math::log2(bytesPerPixel);
+    DEBUG_BREAK_IF(exponent >= 5u);
+    const uint32_t surfaceFormatIdx = redescribeTableBytes[exponent % 5];
+    const ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+    const SurfaceFormatInfo *surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
+
     auto imageFormatNew = this->imageFormat;
-    auto imageDescNew = this->imageDesc;
-    const SurfaceFormatInfo *surfaceFormat = nullptr;
-    auto bytesPerPixel = this->surfaceFormatInfo.NumChannels * surfaceFormatInfo.PerChannelSizeInBytes;
-    uint32_t exponent = 0;
-
-    exponent = Math::log2(bytesPerPixel);
-    DEBUG_BREAK_IF(exponent >= 32);
-
-    uint32_t surfaceFormatIdx = redescribeTableBytes[exponent % 5];
-    ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
-
-    surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
-
     imageFormatNew.image_channel_order = surfaceFormat->OCLImageFormat.image_channel_order;
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
@@ -918,7 +912,7 @@ Image *Image::redescribe() {
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
-                                imageDescNew,
+                                this->imageDesc,
                                 this->isMemObjZeroCopy(),
                                 this->getGraphicsAllocation(),
                                 true,
