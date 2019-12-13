@@ -784,9 +784,23 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingCalculate
     EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenWaForceDefaultRcsEngineIsSetWhenAdjustDefaultEngineTypeIsCalledThenRcsIsUsedAsDefaultEngine) {
+HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsOffsetToSkipSetFFIDGPWARequiredCalledThenFalseIsReturned) {
+    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isOffsetToSkipSetFFIDGPWARequired(hardwareInfo));
+}
+
+HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceDefaultRCSEngineWARequiredCalledThenFalseIsReturned) {
+    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(HwHelperHw<FamilyType>::isForceDefaultRCSEngineWARequired(hardwareInfo));
+}
+
+TGLLPTEST_F(HwHelperTest, givenWaForceDefaultRcsEngineIsSetWhenAdjustDefaultEngineTypeIsCalledThenRcsIsUsedAsDefaultEngine) {
     hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.workaroundTable.waForceDefaultRCSEngine = true;
+    hardwareInfo.platform.usRevId = REVISION_A0;
 
     auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);

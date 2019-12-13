@@ -64,14 +64,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, adjustDefaultEngineTypeNoCcs) {
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, adjustDefaultEngineTypeCcs) {
-    hardwareInfo.featureTable.ftrCCSNode = true;
-
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
-
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
     if (SpecialUltHelperGen12lp::shouldTestDefaultImplementationOfSetupHardwareCapabilities(hardwareInfo.platform.eProductFamily)) {
         auto &helper = HwHelper::get(renderCoreFamily);

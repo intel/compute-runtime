@@ -243,7 +243,7 @@ uint64_t DeviceQueueHw<GfxFamily>::getBlockKernelStartPointer(const Device &devi
 
     auto blockKernelStartPointer = blockAllocation ? blockAllocation->getGpuAddressToPatch() : 0llu;
 
-    if (blockAllocation && isCcsUsed && device.getHardwareInfo().workaroundTable.waUseOffsetToSkipSetFFIDGP) {
+    if (blockAllocation && isCcsUsed && HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(device.getHardwareInfo())) {
         blockKernelStartPointer += blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
     }
     return blockKernelStartPointer;

@@ -792,30 +792,3 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getProfilingEndCmdsSi
 
     EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getProfilingEndCmdsSize());
 }
-
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOffsetIsAddedToBlockKernelStartPointer) {
-    auto device = pContext->getDevice(0);
-    std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*pContext));
-    KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0));
-    blockInfo->createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
-    ASSERT_NE(nullptr, blockInfo->getGraphicsAllocation());
-    const_cast<SPatchThreadPayload *>(blockInfo->patchInfo.threadPayload)->OffsetToSkipSetFFIDGP = 0x1234;
-    const_cast<HardwareInfo &>(device->getHardwareInfo()).workaroundTable.waUseOffsetToSkipSetFFIDGP = true;
-
-    uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
-    uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
-    EXPECT_EQ(expectedOffset, offset);
-
-    expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
-    EXPECT_EQ(expectedOffset, offset);
-
-    const_cast<HardwareInfo &>(device->getHardwareInfo()).workaroundTable.waUseOffsetToSkipSetFFIDGP = false;
-
-    expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
-    EXPECT_EQ(expectedOffset, offset);
-
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
-    EXPECT_EQ(expectedOffset, offset);
-}

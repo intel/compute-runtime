@@ -182,6 +182,10 @@ class HwHelperHw : public HwHelper {
 
     static bool isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo);
 
+    static bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
+
+    static bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
+
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
     HwHelperHw() = default;

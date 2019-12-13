@@ -100,10 +100,6 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
     workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->waUntypedBufferCompression = true;
-    if (hwInfo->platform.usRevId < REVISION_B) {
-        workaroundTable->waUseOffsetToSkipSetFFIDGP = true;
-        workaroundTable->waForceDefaultRCSEngine = true;
-    }
 };
 
 const HardwareInfo TGLLP_1x6x16::hwInfo = {

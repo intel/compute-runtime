@@ -21,8 +21,10 @@ TGLLPTEST_F(HardwareCommandsGen12LpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroun
     threadPayload.OffsetToSkipSetFFIDGP = additionalOffsetDueToFfid;
     auto hwInfo = *platformDevices[0];
 
-    for (auto workaround : ::testing::Bool()) {
-        hwInfo.workaroundTable.waUseOffsetToSkipSetFFIDGP = workaround;
+    unsigned short steppings[] = {REVISION_A0, REVISION_A1, REVISION_A3, REVISION_B};
+    for (auto stepping : steppings) {
+
+        hwInfo.platform.usRevId = stepping;
         auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         MockKernelWithInternals mockKernelWithInternals{*device};
         mockKernelWithInternals.kernelInfo.patchInfo.threadPayload = &threadPayload;
@@ -32,7 +34,7 @@ TGLLPTEST_F(HardwareCommandsGen12LpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroun
             HardwareCommandsHelper<FamilyType>::setKernelStartOffset(kernelStartOffset, false, mockKernelWithInternals.kernelInfo, false,
                                                                      false, *mockKernelWithInternals.mockKernel, isCcsUsed);
 
-            if (workaround && isCcsUsed) {
+            if (stepping < REVISION_B && isCcsUsed) {
                 EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);
             } else {
                 EXPECT_EQ(defaultKernelStartOffset, kernelStartOffset);

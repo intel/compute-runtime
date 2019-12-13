@@ -118,7 +118,5 @@ struct WorkaroundTableBase {
     bool waUntypedBufferCompression = false;
     bool waAuxTable16KGranular = false;
     bool waDisableFusedThreadScheduling = false;
-    bool waUseOffsetToSkipSetFFIDGP = false;
-    bool waForceDefaultRCSEngine = false;
 };
 } // namespace NEO

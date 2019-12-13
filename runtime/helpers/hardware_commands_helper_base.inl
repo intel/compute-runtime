@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/hw_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 
@@ -103,7 +104,7 @@ void HardwareCommandsHelper<GfxFamily>::setKernelStartOffset(
     }
     kernelStartOffset += kernel.getStartOffset();
 
-    if (isCssUsed && kernel.getDevice().getHardwareInfo().workaroundTable.waUseOffsetToSkipSetFFIDGP) {
+    if (isCssUsed && HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(kernel.getDevice().getHardwareInfo())) {
         kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
     }
 }
