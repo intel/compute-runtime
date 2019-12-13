@@ -69,7 +69,5 @@ GEN12LPTEST_F(UltCommandStreamReceiverTest, givenStateBaseAddressWhenItIsRequire
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
-
-    const bool expectedHdcFlushEnable = SpecialUltHelperGen12lp::shouldEnableHdcFlush(::productFamily);
-    EXPECT_EQ(expectedHdcFlushEnable, pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
 }

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>
@@ -31,5 +32,14 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         }
         adjustComputeMode(stream, dispatchFlags, stateComputeMode);
     }
+}
+
+template <>
+inline typename Family::PIPE_CONTROL *CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
+    auto pCmd = addPipeControlCmd(commandStream);
+    pCmd->setTextureCacheInvalidationEnable(true);
+    pCmd->setDcFlushEnable(true);
+    pCmd->setHdcPipelineFlush(true);
+    return pCmd;
 }
 } // namespace NEO

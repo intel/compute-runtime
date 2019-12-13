@@ -21,7 +21,6 @@ struct PipelineSelectArgs;
 class Image;
 
 namespace Gen12LPHelpers {
-bool hdcFlushForPipeControlBeforeStateBaseAddressRequired(PRODUCT_FAMILY productFamily);
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily);
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily);
 void adjustCoherencyFlag(PRODUCT_FAMILY productFamily, bool &coherencyFlag);

@@ -128,14 +128,6 @@ inline typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::add
 }
 
 template <typename GfxFamily>
-inline typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
-    auto pCmd = addPipeControlCmd(commandStream);
-    pCmd->setTextureCacheInvalidationEnable(true);
-    pCmd->setDcFlushEnable(true);
-    return pCmd;
-}
-
-template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,

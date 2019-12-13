@@ -15,10 +15,6 @@ bool SpecialUltHelperGen12lp::shouldCompressionBeEnabledAfterConfigureHardwareCu
     return hwInfo.featureTable.ftrE2ECompression;
 }
 
-bool SpecialUltHelperGen12lp::shouldEnableHdcFlush(PRODUCT_FAMILY productFamily) {
-    return true;
-}
-
 bool SpecialUltHelperGen12lp::additionalCoherencyCheck(PRODUCT_FAMILY productFamily, bool coherency) {
     return false;
 }

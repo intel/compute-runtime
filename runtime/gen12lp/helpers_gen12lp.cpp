@@ -12,9 +12,6 @@
 
 namespace NEO {
 namespace Gen12LPHelpers {
-bool hdcFlushForPipeControlBeforeStateBaseAddressRequired(PRODUCT_FAMILY productFamily) {
-    return (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP);
-}
 
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP);
