@@ -60,15 +60,16 @@ TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAl
 
     pKernel->setArg(0, sizeof(memObj), &memObj);
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+    auto pixelSize = image->getSurfaceFormatInfo().ImageElementSizeInBytes;
 
     auto offsetFlatBaseOffset = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatBaseOffset);
     EXPECT_EQ(imageBaseAddress, *reinterpret_cast<uint64_t *>(offsetFlatBaseOffset));
 
     auto offsetFlatWidth = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatWidth);
-    EXPECT_EQ(imageWidth - 1, *offsetFlatWidth);
+    EXPECT_EQ(static_cast<uint32_t>((imageWidth * pixelSize) - 1), *offsetFlatWidth);
 
     auto offsetFlatHeight = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatHeight);
-    EXPECT_EQ(imageHeight - 1, *offsetFlatHeight);
+    EXPECT_EQ(static_cast<uint32_t>((imageHeight * pixelSize) - 1), *offsetFlatHeight);
 
     auto offsetFlatPitch = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatPitch);
     EXPECT_EQ(imageRowPitch - 1, *offsetFlatPitch);

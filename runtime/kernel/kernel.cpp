@@ -1392,9 +1392,10 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, uint32_t>(kernelArgInfo.offsetHeap, crossThreadData, kernelArgInfo.offsetObjectId);
         patch<uint32_t, cl_uint>(imageDesc.num_mip_levels, crossThreadData, kernelArgInfo.offsetNumMipLevels);
 
+        auto pixelSize = pImage->getSurfaceFormatInfo().ImageElementSizeInBytes;
         patch<uint64_t, uint64_t>(pImage->getGraphicsAllocation()->getGpuAddress(), crossThreadData, kernelArgInfo.offsetFlatBaseOffset);
-        patch<uint32_t, size_t>(imageDesc.image_width - 1, crossThreadData, kernelArgInfo.offsetFlatWidth);
-        patch<uint32_t, size_t>(imageDesc.image_height - 1, crossThreadData, kernelArgInfo.offsetFlatHeight);
+        patch<uint32_t, size_t>((imageDesc.image_width * pixelSize) - 1, crossThreadData, kernelArgInfo.offsetFlatWidth);
+        patch<uint32_t, size_t>((imageDesc.image_height * pixelSize) - 1, crossThreadData, kernelArgInfo.offsetFlatHeight);
         patch<uint32_t, size_t>(imageDesc.image_row_pitch - 1, crossThreadData, kernelArgInfo.offsetFlatPitch);
 
         addAllocationToCacheFlushVector(argIndex, pImage->getGraphicsAllocation());
