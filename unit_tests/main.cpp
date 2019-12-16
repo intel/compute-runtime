@@ -461,8 +461,8 @@ int main(int argc, char **argv) {
 #endif
     if (!useMockGmm) {
         Os::gmmDllName = GMM_UMD_DLL;
-        Os::gmmInitFuncName = GMM_INIT_NAME;
-        Os::gmmDestroyFuncName = GMM_DESTROY_NAME;
+        Os::gmmInitFuncName = GMM_ADAPTER_INIT_NAME;
+        Os::gmmDestroyFuncName = GMM_ADAPTER_DESTROY_NAME;
     } else {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }
