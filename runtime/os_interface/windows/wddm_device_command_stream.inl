@@ -97,9 +97,13 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     }
 
     auto osContextWin = static_cast<OsContextWin *>(osContext);
-    auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, *osContextWin);
+    WddmSubmitArguments submitArgs = {};
+    submitArgs.contextHandle = osContextWin->getWddmContextHandle();
+    submitArgs.hwQueueHandle = osContextWin->getHwQueue().handle;
+    submitArgs.monitorFence = &osContextWin->getResidencyController().getMonitoredFence();
+    auto status = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, submitArgs);
 
-    flushStamp->setStamp(osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
     return status;
 }
 

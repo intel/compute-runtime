@@ -752,17 +752,17 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
+bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) {
     bool status = false;
-    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext.getWddmContextHandle())) {
+    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(submitArguments.contextHandle)) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getResidencyController().getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
 
-    status = wddmInterface->submit(commandBuffer, size, commandHeader, osContext);
+    status = wddmInterface->submit(commandBuffer, size, commandHeader, submitArguments);
     if (status) {
-        osContext.getResidencyController().getMonitoredFence().lastSubmittedFence = osContext.getResidencyController().getMonitoredFence().currentFenceValue;
-        osContext.getResidencyController().getMonitoredFence().currentFenceValue++;
+        submitArguments.monitorFence->lastSubmittedFence = submitArguments.monitorFence->currentFenceValue;
+        submitArguments.monitorFence->currentFenceValue++;
     }
     getDeviceState();
 

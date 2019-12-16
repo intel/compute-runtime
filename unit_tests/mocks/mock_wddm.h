@@ -61,7 +61,7 @@ class WddmMock : public Wddm {
     void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;
-    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
     void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) override;
     void unlockResource(const D3DKMT_HANDLE &handle) override;

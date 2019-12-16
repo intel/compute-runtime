@@ -19,6 +19,7 @@ class Gdi;
 class Wddm;
 class OsContextWin;
 class WddmResidencyController;
+struct WddmSubmitArguments;
 
 class WddmInterface {
   public:
@@ -30,7 +31,7 @@ class WddmInterface {
     virtual bool createMonitoredFence(OsContextWin &osContext) = 0;
     virtual void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) = 0;
     virtual const bool hwQueuesSupported() = 0;
-    virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) = 0;
+    virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) = 0;
     Wddm &wddm;
 };
 
@@ -42,7 +43,7 @@ class WddmInterface20 : public WddmInterface {
     bool createMonitoredFence(OsContextWin &osContext) override;
     void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override;
     const bool hwQueuesSupported() override;
-    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
 };
 
 class WddmInterface23 : public WddmInterface {
@@ -53,6 +54,6 @@ class WddmInterface23 : public WddmInterface {
     bool createMonitoredFence(OsContextWin &osContext) override;
     void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override;
     const bool hwQueuesSupported() override;
-    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
 };
 } // namespace NEO

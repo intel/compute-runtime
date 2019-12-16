@@ -112,7 +112,11 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
     EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
+    WddmSubmitArguments submitArgs = {};
+    submitArgs.contextHandle = osContext->getWddmContextHandle();
+    submitArgs.hwQueueHandle = hwQueue.handle;
+    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, submitArgs);
 
     EXPECT_EQ(cmdBufferAddress, getSubmitCommandToHwQueueDataFcn()->CommandBuffer);
     EXPECT_EQ(static_cast<UINT>(cmdSize), getSubmitCommandToHwQueueDataFcn()->CommandLength);
@@ -143,13 +147,19 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     size_t cmdSize = 456;
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
 
+    WddmSubmitArguments submitArgs = {};
+    submitArgs.contextHandle = osContext->getWddmContextHandle();
+    submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
+    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+
     *wddm->pagingFenceAddress = 1;
     wddm->currentPagingFenceValue = 1;
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
+
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, submitArgs);
     EXPECT_EQ(0u, wddm->waitOnGPUResult.called);
 
     wddm->currentPagingFenceValue = 2;
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, submitArgs);
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 

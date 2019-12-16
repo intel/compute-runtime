@@ -151,11 +151,11 @@ bool WddmMock::queryAdapterInfo() {
     return queryAdapterInfoResult.success = Wddm::queryAdapterInfo();
 }
 
-bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
+bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) {
     submitResult.called++;
     submitResult.commandBufferSubmitted = commandBuffer;
     submitResult.commandHeaderSubmitted = commandHeader;
-    return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader, osContext);
+    return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader, submitArguments);
 }
 
 bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {

@@ -38,6 +38,12 @@ struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
 
+struct WddmSubmitArguments {
+    MonitoredFence *monitorFence;
+    D3DKMT_HANDLE contextHandle;
+    D3DKMT_HANDLE hwQueueHandle;
+};
+
 class Wddm {
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
@@ -72,7 +78,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
-    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext);
+    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence);
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
