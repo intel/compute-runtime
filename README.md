@@ -15,10 +15,28 @@ The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MI
 
 You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
-## Installation
-.deb packages for Ubuntu are provided on the [release page](https://github.com/intel/compute-runtime/releases)
+## Installation Options
 
-Other installation procedures are described [here](https://github.com/intel/compute-runtime/blob/master/documentation/Neo_in_distributions.md)
+To allow Neo accessing GPU device make sure user has permissions to files in /dev/dri directory. In first step /dev/dri/renderD* files are opened, if it fails, /dev/dri/card* files are used.
+
+Under Ubuntu* or Centos* user must be in video group. In Fedora* all users by default have access to /dev/dri/renderD* files, but have to be in video group to access /dev/dri/card* files.
+
+### Via system package manager
+
+NEO is available for installation on a variety of Linux distributions and can be installed via the distro's package manager. 
+
+For example on Ubuntu* 19.04, 19.10:
+
+```
+apt-get install intel-opencl-icd
+```
+
+Procedures for other [distrubtions](https://github.com/intel/compute-runtime/blob/master/documentation/Neo_in_distributions.md).
+
+### Manual download
+
+.deb packages for Ubuntu are provided along with installation instructions and Release Notes on the [release page](https://github.com/intel/compute-runtime/releases)
+
 
 ## Dependencies
 
@@ -40,11 +58,15 @@ Below packages are needed to enable [cl_intel_va_api_media_sharing](https://www.
 * Intel Core Processors with Gen11 graphics devices (formerly Ice Lake) - OpenCL 2.1
 * Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake) - OpenCL 2.1
 
-
 ## Linking applications
 
 When building applications, they should link with ICD loader library (ocl-icd).
 Directly linking to the runtime library (igdrcl) is not supported.
+
+## Tutorial applications
+
+The [Intel(R) GPU Compute Samples repository](https://github.com/intel/compute-samples/blob/master/compute_samples/applications/usm_hello_world/README.md) 
+has sample source code to demonstrate features of Intel(R) Graphics Compute Runtime for OpenCL(TM) Driver.
 
 ## How to provide feedback
 
