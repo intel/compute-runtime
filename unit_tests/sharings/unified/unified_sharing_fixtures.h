@@ -9,6 +9,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace NEO {
@@ -63,6 +64,7 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
                                                          rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(static_cast<osHandle>(reinterpret_cast<uint64_t>(handle)));
         graphicsAllocation->set32BitAllocation(false);
+        graphicsAllocation->setDefaultGmm(new MockGmm());
         return graphicsAllocation;
     }
 };

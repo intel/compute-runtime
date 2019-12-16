@@ -75,7 +75,7 @@ class Image : public MemObj {
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
                                 bool isObjectRedescribed, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
 
-    static Image *createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
+    static Image *createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
                                     GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
                                     cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount);
 
@@ -173,7 +173,7 @@ class Image : public MemObj {
     static cl_int validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
-    void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
+    void setMcsSurfaceInfo(const McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
     size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
