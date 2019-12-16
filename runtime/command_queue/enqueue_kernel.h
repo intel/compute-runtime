@@ -35,7 +35,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     size_t workGroupSize[3] = {1, 1, 1};
     size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
-    auto &kernel = *castToObject<Kernel>(clKernel);
+    auto &kernel = *castToObjectOrAbort<Kernel>(clKernel);
     const auto &kernelInfo = kernel.getKernelInfo();
 
     if (kernel.isParentKernel && !this->context->getDefaultDeviceQueue()) {

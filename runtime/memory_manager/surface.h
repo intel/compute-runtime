@@ -35,7 +35,7 @@ class NullSurface : public Surface {
 class HostPtrSurface : public Surface {
   public:
     HostPtrSurface(void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
-        DEBUG_BREAK_IF(!ptr);
+        UNRECOVERABLE_IF(!ptr);
         gfxAllocation = nullptr;
     }
 

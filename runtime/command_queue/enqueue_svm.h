@@ -44,18 +44,18 @@ inline void CL_CALLBACK freeSvmEventClb(cl_event event,
                                         cl_int commandExecCallbackType,
                                         void *usrData) {
     auto freeDt = reinterpret_cast<SvmFreeUserData *>(usrData);
-    auto eventObject = castToObject<Event>(event);
+    auto eventObject = castToObjectOrAbort<Event>(event);
     if (freeDt->clb == nullptr) {
         auto ctx = eventObject->getContext();
         for (cl_uint i = 0; i < freeDt->numSvmPointers; i++) {
-            castToObject<Context>(ctx)->getSVMAllocsManager()->freeSVMAlloc(freeDt->svmPointers[i]);
+            castToObjectOrAbort<Context>(ctx)->getSVMAllocsManager()->freeSVMAlloc(freeDt->svmPointers[i]);
         }
     } else {
         freeDt->clb(eventObject->getCommandQueue(), freeDt->numSvmPointers,
                     freeDt->svmPointers, freeDt->userData);
     }
     if (freeDt->ownsEventDeletion) {
-        castToObject<Event>(event)->release();
+        castToObjectOrAbort<Event>(event)->release();
     }
     delete freeDt;
 }
