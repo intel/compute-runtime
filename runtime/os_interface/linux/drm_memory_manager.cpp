@@ -249,6 +249,14 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         return nullptr;
     }
 
+    if (validateHostPtrMemory) {
+        int result = pinBB->pin(&bo, 1, getDefaultDrmContextId());
+        if (result != SUCCESS) {
+            unreference(bo, true);
+            return nullptr;
+        }
+    }
+
     bo->gpuAddress = gpuVirtualAddress;
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, const_cast<void *>(allocationData.hostPtr),
