@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4469,7 +4469,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     }
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL: {
         auto propertyValue = *static_cast<const uint32_t *>(paramValue);
-        pKernel->setThreadArbitrationPolicy(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(propertyValue));
+        retVal = pKernel->setKernelThreadArbitrationPolicy(propertyValue);
         return retVal;
     }
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -395,10 +395,10 @@ class Kernel : public BaseObject<_cl_kernel> {
     void clearUnifiedMemoryExecInfo();
 
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
-    void setThreadArbitrationPolicy(uint32_t propertyValue) {
-        this->threadArbitrationPolicy = propertyValue;
+    int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
+    void setThreadArbitrationPolicy(uint32_t policy) {
+        this->threadArbitrationPolicy = policy;
     }
-
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const;
 
   protected:

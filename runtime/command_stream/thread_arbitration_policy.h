@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,5 @@ enum {
     RoundRobinAfterDependency = 0x2u,
     NotPresent = 0xffffffffu
 };
-uint32_t getNewKernelArbitrationPolicy(uint32_t policy);
 } // namespace ThreadArbitrationPolicy
-
 } // namespace NEO

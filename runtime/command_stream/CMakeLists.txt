@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -45,7 +45,6 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/thread_arbitration_policy.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/command_stream_receiver_hw_ext.inl
 )

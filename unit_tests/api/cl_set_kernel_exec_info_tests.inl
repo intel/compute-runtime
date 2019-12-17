@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "test.h"
+#include "unit_tests/command_stream/thread_arbitration_policy_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
@@ -237,7 +238,7 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
-    size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
+    size_t ptrSizeInBytes = sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
         pMockKernel,                                         // cl_kernel kernel
@@ -246,7 +247,20 @@ HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhe
         &newThreadArbitrationPolicy                          // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->threadArbitrationPolicy);
-    EXPECT_EQ(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getThreadArbitrationPolicy());
+    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->threadArbitrationPolicy);
+    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getThreadArbitrationPolicy());
+}
+
+HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenClInvalidValueIsReturned) {
+    uint32_t invalidThreadArbitrationPolicy = 0;
+    size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
+
+    retVal = clSetKernelExecInfo(
+        pMockKernel,                                         // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
+        ptrSizeInBytes,                                      // size_t param_value_size
+        &invalidThreadArbitrationPolicy                      // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 } // namespace ULT

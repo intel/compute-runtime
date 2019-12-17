@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/memory_manager/surface.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
+#include "unit_tests/command_stream/thread_arbitration_policy_helper.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
@@ -491,7 +492,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
     mockCmdQ->release();
 }
 
-HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySetThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadysetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
@@ -516,7 +517,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
                                                                  0,
                                                                  nullptr,
                                                                  nullptr);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(ThreadArbitrationPolicy::getNewKernelArbitrationPolicy(euThreadSetting)), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(getNewKernelArbitrationPolicy(euThreadSetting)), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
 
     mockCmdQ->release();
 }
