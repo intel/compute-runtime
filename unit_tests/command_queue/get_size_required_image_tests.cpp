@@ -53,7 +53,7 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     Image *dstImage = nullptr;
 };
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
+HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -103,7 +103,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
+HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -153,7 +153,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
+HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -207,7 +207,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
+HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -261,7 +261,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
+HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -315,7 +315,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
+HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
