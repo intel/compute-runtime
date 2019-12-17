@@ -1105,3 +1105,34 @@ TEST_F(WddmTest, WhenFeatureFlagHwQueueIsEnabledThenReturnWddm23Version) {
     wddm->featureTable->ftrWddmHwQueues = 1;
     EXPECT_EQ(WddmVersion::WDDM_2_3, wddm->getWddmVersion());
 }
+
+TEST_F(Wddm20WithMockGdiDllTests, GivenCreationSucceedWhenCreatingSeparateMonitorFenceThenReturnFilledStructure) {
+    MonitoredFence monitorFence = {0};
+
+    bool ret = wddmMockInterface->createMonitoredFence(monitorFence);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(4u, monitorFence.fenceHandle);
+    EXPECT_EQ(getMonitorFenceCpuFenceAddressFcn(), monitorFence.cpuAddress);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, GivenCreationFailWhenCreatingSeparateMonitorFenceThenReturnNotFilledStructure) {
+    MonitoredFence monitorFence = {0};
+
+    *getCreateSynchronizationObject2FailCallFcn() = true;
+    bool ret = wddmMockInterface->createMonitoredFence(monitorFence);
+    EXPECT_FALSE(ret);
+
+    EXPECT_EQ(0u, monitorFence.fenceHandle);
+    void *retAddress = reinterpret_cast<void *>(0);
+    EXPECT_EQ(retAddress, monitorFence.cpuAddress);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, WhenDestroyingSeparateMonitorFenceThenExpectGdiCalled) {
+    MonitoredFence monitorFence = {0};
+    monitorFence.fenceHandle = 10u;
+
+    wddmMockInterface->destroyMonitorFence(monitorFence);
+
+    EXPECT_EQ(monitorFence.fenceHandle, getDestroySynchronizationObjectDataFcn()->hSyncObject);
+}

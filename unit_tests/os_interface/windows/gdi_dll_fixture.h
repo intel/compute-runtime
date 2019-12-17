@@ -43,8 +43,13 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&getSubmitCommandToHwQueueData)>(mockGdiDll->getProcAddress("getSubmitCommandToHwQueueData"));
         getDestroySynchronizationObjectDataFcn =
             reinterpret_cast<decltype(&getDestroySynchronizationObjectData)>(mockGdiDll->getProcAddress("getDestroySynchronizationObjectData"));
+        getMonitorFenceCpuFenceAddressFcn =
+            reinterpret_cast<decltype(&getMonitorFenceCpuFenceAddress)>(mockGdiDll->getProcAddress("getMonitorFenceCpuFenceAddress"));
+        getCreateSynchronizationObject2FailCallFcn =
+            reinterpret_cast<decltype(&getCreateSynchronizationObject2FailCall)>(mockGdiDll->getProcAddress("getCreateSynchronizationObject2FailCall"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
+        *getCreateSynchronizationObject2FailCallFcn() = false;
     }
 
     virtual void TearDown() {
@@ -53,6 +58,7 @@ struct GdiDllFixture {
         *getSubmitCommandToHwQueueDataFcn() = {};
         *getDestroySynchronizationObjectDataFcn() = {};
         setMapGpuVaFailConfigFcn(0, 0);
+        *getCreateSynchronizationObject2FailCallFcn() = false;
     }
 
     std::unique_ptr<OsLibrary> mockGdiDll;
@@ -73,4 +79,6 @@ struct GdiDllFixture {
     decltype(&getDestroyHwQueueData) getDestroyHwQueueDataFcn = nullptr;
     decltype(&getSubmitCommandToHwQueueData) getSubmitCommandToHwQueueDataFcn = nullptr;
     decltype(&getDestroySynchronizationObjectData) getDestroySynchronizationObjectDataFcn = nullptr;
+    decltype(&getMonitorFenceCpuFenceAddress) getMonitorFenceCpuFenceAddressFcn = nullptr;
+    decltype(&getCreateSynchronizationObject2FailCall) getCreateSynchronizationObject2FailCallFcn = nullptr;
 };

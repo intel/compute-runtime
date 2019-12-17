@@ -69,3 +69,5 @@ getCreateHwQueueData
 getDestroyHwQueueData
 getSubmitCommandToHwQueueData
 getDestroySynchronizationObjectData
+getMonitorFenceCpuFenceAddress
+getCreateSynchronizationObject2FailCall

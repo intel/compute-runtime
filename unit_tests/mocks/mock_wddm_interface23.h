@@ -20,9 +20,9 @@ class WddmMockInterface23 : public WddmInterface23 {
         return createHwQueueResult;
     }
 
-    void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override {
+    void destroyMonitorFence(MonitoredFence &monitorFence) override {
         destroyMonitorFenceCalled++;
-        WddmInterface23::destroyMonitorFence(fenceHandle);
+        WddmInterface23::destroyMonitorFence(monitorFence);
     }
 
     uint32_t createHwQueueCalled = 0;

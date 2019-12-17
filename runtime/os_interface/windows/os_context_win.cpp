@@ -40,7 +40,7 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
 
 OsContextWin::~OsContextWin() {
     wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
-    wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence().fenceHandle);
+    wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());
     wddm.destroyContext(wddmContextHandle);
 }
 

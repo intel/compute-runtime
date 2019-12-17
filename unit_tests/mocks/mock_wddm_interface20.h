@@ -12,11 +12,12 @@
 namespace NEO {
 class WddmMockInterface20 : public WddmInterface20 {
   public:
+    using WddmInterface::createMonitoredFence;
     using WddmInterface20::WddmInterface20;
 
-    void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override {
+    void destroyMonitorFence(MonitoredFence &monitorFence) override {
         destroyMonitorFenceCalled++;
-        WddmInterface20::destroyMonitorFence(fenceHandle);
+        WddmInterface20::destroyMonitorFence(monitorFence);
     }
 
     uint32_t destroyMonitorFenceCalled = 0;

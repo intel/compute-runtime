@@ -14,6 +14,30 @@
 
 using namespace NEO;
 
+bool WddmInterface::createMonitoredFence(MonitoredFence &monitorFence) {
+    NTSTATUS status = STATUS_SUCCESS;
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
+    CreateSynchronizationObject.hDevice = wddm.getDevice();
+    CreateSynchronizationObject.Info.Type = D3DDDI_MONITORED_FENCE;
+    CreateSynchronizationObject.Info.MonitoredFence.InitialFenceValue = 0;
+
+    status = wddm.getGdi()->createSynchronizationObject2(&CreateSynchronizationObject);
+    DEBUG_BREAK_IF(STATUS_SUCCESS != status);
+
+    monitorFence.fenceHandle = CreateSynchronizationObject.hSyncObject;
+    monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress);
+    monitorFence.gpuAddress = CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress;
+
+    return status == STATUS_SUCCESS;
+}
+void WddmInterface::destroyMonitorFence(D3DKMT_HANDLE fenceHandle) {
+    NTSTATUS status = STATUS_SUCCESS;
+    D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySyncObject = {0};
+    destroySyncObject.hSyncObject = fenceHandle;
+    status = wddm.getGdi()->destroySynchronizationObject(&destroySyncObject);
+    DEBUG_BREAK_IF(STATUS_SUCCESS != status);
+}
+
 bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
     return false;
 }
@@ -21,28 +45,16 @@ void WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
 
 bool WddmInterface20::createMonitoredFence(OsContextWin &osContext) {
     auto &residencyController = osContext.getResidencyController();
-    NTSTATUS Status;
-    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
-    CreateSynchronizationObject.hDevice = wddm.getDevice();
-    CreateSynchronizationObject.Info.Type = D3DDDI_MONITORED_FENCE;
-    CreateSynchronizationObject.Info.MonitoredFence.InitialFenceValue = 0;
+    MonitoredFence &monitorFence = residencyController.getMonitoredFence();
+    bool ret = WddmInterface::createMonitoredFence(monitorFence);
 
-    Status = wddm.getGdi()->createSynchronizationObject2(&CreateSynchronizationObject);
-    DEBUG_BREAK_IF(STATUS_SUCCESS != Status);
+    monitorFence.currentFenceValue = 1;
 
-    residencyController.resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
-                                                  reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
-                                                  CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
-
-    return Status == STATUS_SUCCESS;
+    return ret;
 }
 
-void WddmInterface20::destroyMonitorFence(D3DKMT_HANDLE fenceHandle) {
-    NTSTATUS status = STATUS_SUCCESS;
-    D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySyncObject = {0};
-    destroySyncObject.hSyncObject = fenceHandle;
-    status = wddm.getGdi()->destroySynchronizationObject(&destroySyncObject);
-    DEBUG_BREAK_IF(STATUS_SUCCESS != status);
+void WddmInterface20::destroyMonitorFence(MonitoredFence &monitorFence) {
+    WddmInterface::destroyMonitorFence(monitorFence.fenceHandle);
 }
 
 const bool WddmInterface20::hwQueuesSupported() {
@@ -102,7 +114,7 @@ bool WddmInterface23::createMonitoredFence(OsContextWin &osContext) {
     return true;
 }
 
-void WddmInterface23::destroyMonitorFence(D3DKMT_HANDLE fenceHandle) {
+void WddmInterface23::destroyMonitorFence(MonitoredFence &monitorFence) {
 }
 
 void WddmInterface23::destroyHwQueue(D3DKMT_HANDLE hwQueue) {

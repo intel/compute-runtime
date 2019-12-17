@@ -79,3 +79,5 @@ D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();
 D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData();
 void InitGfxPartition();
+VOID *getMonitorFenceCpuFenceAddress();
+bool *getCreateSynchronizationObject2FailCall();
