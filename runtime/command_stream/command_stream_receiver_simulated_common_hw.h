@@ -24,16 +24,17 @@ class HardwareContextController;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
-    using CommandStreamReceiverHw<GfxFamily>::getDeviceIndex;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     bool getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
     void freeEngineInfo(AddressMapper &gttRemap);
+    MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
   public:
+    CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    ~CommandStreamReceiverSimulatedCommonHw() override;
     uint64_t getGTTBits() const {
         return 0u;
     }

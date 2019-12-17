@@ -303,10 +303,6 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
     return *heap;
 }
 
-uint32_t CommandStreamReceiver::getDeviceIndex() const {
-    return osContext->getDeviceBitfield().any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(osContext->getDeviceBitfield().to_ulong()))) : 0u;
-}
-
 void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;

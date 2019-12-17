@@ -34,6 +34,7 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
+#include "command_stream_receiver_simulated_hw.h"
 #include "gmock/gmock.h"
 
 using namespace NEO;
@@ -620,22 +621,32 @@ INSTANTIATE_TEST_CASE_P(
     CommandStreamReceiverWithAubSubCaptureTest,
     testing::ValuesIn(aubSubCaptureStatus));
 
-TEST(CommandStreamReceiverDeviceIndexTest, givenCsrWithOsContextWhenGetDeviceIndexThenGetHighestEnabledBitInDeviceBitfield) {
+using SimulatedCommandStreamReceiverTest = ::testing::Test;
+
+template <typename FamilyType>
+struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> {
+    using CommandStreamReceiverSimulatedHw<FamilyType>::CommandStreamReceiverSimulatedHw;
+    using CommandStreamReceiverSimulatedHw<FamilyType>::getDeviceIndex;
+    void pollForCompletion() override {}
+    bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
+    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}
+};
+HWTEST_F(SimulatedCommandStreamReceiverTest, givenCsrWithOsContextWhenGetDeviceIndexThenGetHighestEnabledBitInDeviceBitfield) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment, 0);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b10, PreemptionMode::Disabled, false);
+    MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b11, PreemptionMode::Disabled, false);
 
     csr.setupContext(*osContext);
     EXPECT_EQ(1u, csr.getDeviceIndex());
 }
 
-TEST(CommandStreamReceiverDeviceIndexTest, givenOsContextWithNoDeviceBitfieldWhenGettingDeviceIndexThenZeroIsReturned) {
+HWTEST_F(SimulatedCommandStreamReceiverTest, givenOsContextWithNoDeviceBitfieldWhenGettingDeviceIndexThenZeroIsReturned) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);
     auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b00, PreemptionMode::Disabled, false);
 
     csr.setupContext(*osContext);

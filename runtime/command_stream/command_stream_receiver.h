@@ -193,7 +193,6 @@ class CommandStreamReceiver {
 
   protected:
     void cleanupResources();
-    MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;

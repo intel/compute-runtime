@@ -6,7 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/hardware_context_controller.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_aub_stream.h"

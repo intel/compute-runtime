@@ -89,4 +89,12 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::freeEngineInfo(AddressMa
     engineInfo.pRingBuffer = nullptr;
 }
 
+template <typename GfxFamily>
+uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex() const {
+    return osContext->getDeviceBitfield().any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(osContext->getDeviceBitfield().to_ulong()))) : 0u;
+}
+template <typename GfxFamily>
+CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex) {}
+template <typename GfxFamily>
+CommandStreamReceiverSimulatedCommonHw<GfxFamily>::~CommandStreamReceiverSimulatedCommonHw() = default;
 } // namespace NEO
