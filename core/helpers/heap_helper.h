@@ -20,7 +20,7 @@ class HeapHelper {
     HeapHelper(MemoryManager *memManager, InternalAllocationStorage *storageForReuse, bool isMultiOsContextCapable) : storageForReuse(storageForReuse),
                                                                                                                       memManager(memManager),
                                                                                                                       isMultiOsContextCapable(isMultiOsContextCapable) {}
-    GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, uint32_t rootDeviceIndex);
+    GraphicsAllocation *getHeapAllocation(uint32_t heapType, size_t heapSize, size_t alignment, uint32_t rootDeviceIndex);
     void storeHeapAllocation(GraphicsAllocation *heapAllocation);
 
   protected:

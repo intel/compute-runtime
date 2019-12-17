@@ -80,6 +80,24 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
     }
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectAllocationTypes) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        HeapType heapType = static_cast<HeapType>(i);
+        auto heap = cmdContainer.getIndirectHeap(heapType);
+
+        if (HeapType::INDIRECT_OBJECT == heapType) {
+            EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
+            EXPECT_NE(0u, heap->getHeapGpuStartOffset());
+        } else {
+            EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
+            EXPECT_EQ(0u, heap->getHeapGpuStartOffset());
+        }
+    }
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIsInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice);

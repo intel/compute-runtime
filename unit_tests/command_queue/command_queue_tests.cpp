@@ -753,7 +753,6 @@ INSTANTIATE_TEST_CASE_P(
     CommandQueueIndirectHeapTest,
     testing::Values(
         IndirectHeap::DYNAMIC_STATE,
-        IndirectHeap::GENERAL_STATE,
         IndirectHeap::INDIRECT_OBJECT,
         IndirectHeap::SURFACE_STATE));
 

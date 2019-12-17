@@ -64,18 +64,15 @@ bool CommandContainer::initialize(Device *device) {
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
     addToResidencyContainer(cmdBufferAllocation);
-    size_t heapSize = 65536u;
+    constexpr size_t heapSize = 65536u;
 
-    for (auto &allocationIndirectHeap : allocationIndirectHeaps) {
-        allocationIndirectHeap = heapHelper->getHeapAllocation(heapSize, alignedSize, 0u);
-        UNRECOVERABLE_IF(!allocationIndirectHeap);
-        residencyContainer.push_back(allocationIndirectHeap);
-    }
+    for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
+        allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i, heapSize, alignedSize, 0u);
+        UNRECOVERABLE_IF(!allocationIndirectHeaps[i]);
+        residencyContainer.push_back(allocationIndirectHeaps[i]);
 
-    uint32_t index = 0;
-    for (auto &indirectHeap : indirectHeaps) {
-        auto alloc = allocationIndirectHeaps[index++];
-        indirectHeap = std::make_unique<IndirectHeap>(alloc);
+        bool requireInternalHeap = (IndirectHeap::INDIRECT_OBJECT == i);
+        indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
     }
 
     instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(0);

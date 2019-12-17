@@ -24,7 +24,6 @@ class IndirectHeap : public LinearStream {
   public:
     enum Type {
         DYNAMIC_STATE = 0,
-        GENERAL_STATE,
         INDIRECT_OBJECT,
         SURFACE_STATE,
         NUM_TYPES
