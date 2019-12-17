@@ -44,6 +44,11 @@ struct WddmSubmitArguments {
     D3DKMT_HANDLE hwQueueHandle;
 };
 
+enum class WddmVersion : uint32_t {
+    WDDM_2_0 = 0,
+    WDDM_2_3
+};
+
 class Wddm {
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
@@ -151,6 +156,8 @@ class Wddm {
     void waitOnPagingFenceFromCpu();
 
     void setGmmInputArg(void *args);
+
+    WddmVersion getWddmVersion();
 
   protected:
     std::unique_ptr<Gdi> gdi;

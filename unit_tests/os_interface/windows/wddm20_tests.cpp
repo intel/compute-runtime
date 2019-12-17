@@ -1071,3 +1071,13 @@ TEST_F(Wddm20Tests, givenWddmWhenOpenAdapterAndForceDeviceIdIsDifferentFromTheEx
     bool result = wddm.openAdapter();
     EXPECT_FALSE(result);
 }
+
+TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {
+    wddm->featureTable->ftrWddmHwQueues = 0;
+    EXPECT_EQ(WddmVersion::WDDM_2_0, wddm->getWddmVersion());
+}
+
+TEST_F(WddmTest, WhenFeatureFlagHwQueueIsEnabledThenReturnWddm23Version) {
+    wddm->featureTable->ftrWddmHwQueues = 1;
+    EXPECT_EQ(WddmVersion::WDDM_2_3, wddm->getWddmVersion());
+}

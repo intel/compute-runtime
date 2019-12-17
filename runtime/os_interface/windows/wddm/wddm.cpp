@@ -122,7 +122,7 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(outHardwareInfo);
 
-    if (featureTable->ftrWddmHwQueues) {
+    if (WddmVersion::WDDM_2_3 == getWddmVersion()) {
         wddmInterface = std::make_unique<WddmInterface23>(*this);
     } else {
         wddmInterface = std::make_unique<WddmInterface20>(*this);
@@ -979,6 +979,14 @@ void Wddm::setGmmInputArg(void *args) {
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
     interlockedMax(currentPagingFenceValue, newPagingFenceValue);
+}
+
+WddmVersion Wddm::getWddmVersion() {
+    if (featureTable->ftrWddmHwQueues) {
+        return WddmVersion::WDDM_2_3;
+    } else {
+        return WddmVersion::WDDM_2_0;
+    }
 }
 
 } // namespace NEO
