@@ -341,7 +341,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             DEBUG_BREAK_IF(!status);
         }
     }
-    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         delete gfxAllocation->getGmm(handleId);
     }
 
@@ -450,7 +450,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             handles[allocationCount++] = handleStorage.fragmentStorageData[i].osHandleStorage->handle;
-            std::fill_n(handleStorage.fragmentStorageData[i].residency->resident, maxOsContextCount, false);
+            std::fill(handleStorage.fragmentStorageData[i].residency->resident.begin(), handleStorage.fragmentStorageData[i].residency->resident.end(), false);
         }
     }
 

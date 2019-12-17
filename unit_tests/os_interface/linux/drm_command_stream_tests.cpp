@@ -8,6 +8,7 @@
 #include "core/command_stream/preemption.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/residency.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -818,15 +819,15 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBuffer
     auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, size, (osHandle)0u, MemoryPool::MemoryNull);
 
     auto &bos = allocation->getBOs();
-    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         EXPECT_EQ(nullptr, bos[handleId]);
     }
 
-    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         allocation->getBufferObjectToModify(handleId) = this->createBO(size);
     }
 
-    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         EXPECT_NE(nullptr, bos[handleId]);
     }
 

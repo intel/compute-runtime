@@ -9,6 +9,7 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/preamble.h"
+#include "core/memory_manager/residency.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/flush_stamp.h"

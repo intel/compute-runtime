@@ -14,7 +14,6 @@
 #include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_compilers.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "cif/macros/enable.h"
@@ -24,9 +23,6 @@
 #include <map>
 
 namespace NEO {
-
-static MockExecutionEnvironment mockExecEnv;
-
 MockSipKernel::MockSipKernel(SipKernelType type, Program *sipProgram) : SipKernel(type, sipProgram) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
@@ -47,7 +43,7 @@ MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
                                            0u,
                                            MemoryConstants::pageSize,
                                            MemoryPool::System4KBPages);
-    this->program = new MockProgram(mockExecEnv, nullptr, false);
+    this->program = new MockProgram(this->executionEnvironment, nullptr, false);
 }
 
 MockSipKernel::~MockSipKernel() = default;

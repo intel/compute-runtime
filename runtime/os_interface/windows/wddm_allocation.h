@@ -9,6 +9,7 @@
 #define UMDF_USING_NTSTATUS
 #include "core/helpers/aligned_memory.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/residency.h"
 #include "core/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
@@ -26,23 +27,19 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 class WddmAllocation : public GraphicsAllocation {
   public:
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool) {
-        trimCandidateListPositions.fill(trimListUnusedPosition);
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
     }
 
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable) {
-        trimCandidateListPositions.fill(trimListUnusedPosition);
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
     }
 
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool) {
-        trimCandidateListPositions.fill(trimListUnusedPosition);
-    }
+        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {}
 
     void *getAlignedCpuPtr() const {
         return alignDown(this->cpuPtr, MemoryConstants::pageSize);
@@ -55,7 +52,7 @@ class WddmAllocation : public GraphicsAllocation {
     ResidencyData &getResidencyData() {
         return residency;
     }
-    const std::array<D3DKMT_HANDLE, maxHandleCount> &getHandles() const { return handles; }
+    const std::array<D3DKMT_HANDLE, EngineLimits::maxHandleCount> &getHandles() const { return handles; }
     D3DKMT_HANDLE &getHandleToModify(uint32_t handleIndex) { return handles[handleIndex]; }
     D3DKMT_HANDLE getDefaultHandle() const { return handles[0]; }
     void setDefaultHandle(D3DKMT_HANDLE handle) {
@@ -94,8 +91,8 @@ class WddmAllocation : public GraphicsAllocation {
         }
         return ss.str();
     }
-    std::array<D3DKMT_HANDLE, maxHandleCount> handles{};
+    std::array<D3DKMT_HANDLE, EngineLimits::maxHandleCount> handles{};
     ResidencyData residency;
-    std::array<size_t, maxOsContextCount> trimCandidateListPositions;
+    std::vector<size_t> trimCandidateListPositions;
 };
 } // namespace NEO

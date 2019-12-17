@@ -9,9 +9,9 @@
 #include <cstdint>
 
 namespace NEO {
+namespace EngineLimits {
 
-constexpr uint32_t numGpgpuEngineInstances = 3u;
-constexpr uint32_t maxOsContextCount = numGpgpuEngineInstances;
 constexpr uint32_t maxHandleCount = 1u;
 
+}; // namespace EngineLimits
 } // namespace NEO

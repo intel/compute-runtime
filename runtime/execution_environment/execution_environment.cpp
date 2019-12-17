@@ -15,6 +15,7 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -36,9 +37,11 @@ void ExecutionEnvironment::initGmm() {
         gmmHelper.reset(new GmmHelper(osInterface.get(), hwInfo.get()));
     }
 }
+
 void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     *this->hwInfo = *hwInfo;
 }
+
 void ExecutionEnvironment::initializeMemoryManager() {
     if (this->memoryManager) {
         return;
@@ -65,6 +68,7 @@ void ExecutionEnvironment::initializeMemoryManager() {
     }
     DEBUG_BREAK_IF(!this->memoryManager);
 }
+
 void ExecutionEnvironment::initSourceLevelDebugger() {
     if (hwInfo->capabilityTable.sourceLevelDebuggerSupported) {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
@@ -74,9 +78,20 @@ void ExecutionEnvironment::initSourceLevelDebugger() {
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
 }
+
+void ExecutionEnvironment::calculateMaxOsContextCount() {
+    auto &hwHelper = HwHelper::get(this->hwInfo->platform.eRenderCoreFamily);
+    auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
+    auto subDevicesCount = DeviceHelper::getSubDevicesCount(this->getHardwareInfo());
+    bool hasRootCsr = subDevicesCount > 1;
+
+    MemoryManager::maxOsContextCount = static_cast<uint32_t>(osContextCount * subDevicesCount * this->rootDeviceEnvironments.size() + hasRootCsr);
+}
+
 GmmHelper *ExecutionEnvironment::getGmmHelper() const {
     return gmmHelper.get();
 }
+
 CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     if (this->compilerInterface.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
@@ -87,6 +102,7 @@ CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     }
     return this->compilerInterface.get();
 }
+
 BuiltIns *ExecutionEnvironment::getBuiltIns() {
     if (this->builtins.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
@@ -110,5 +126,6 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
             rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this);
         }
     }
+    calculateMaxOsContextCount();
 }
 } // namespace NEO

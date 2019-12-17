@@ -17,16 +17,16 @@
 namespace NEO {
 
 namespace MockSipData {
-static MockSipKernel mockSipKernel;
+std::unique_ptr<MockSipKernel> mockSipKernel;
 SipKernelType calledType = SipKernelType::COUNT;
 bool called = false;
 } // namespace MockSipData
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     MockSipData::calledType = type;
-    MockSipData::mockSipKernel.type = type;
+    MockSipData::mockSipKernel->type = type;
     MockSipData::called = true;
-    return MockSipData::mockSipKernel;
+    return *MockSipData::mockSipKernel;
 }
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,

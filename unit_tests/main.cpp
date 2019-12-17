@@ -49,6 +49,10 @@ extern TestMode testMode;
 extern const char *executionDirectorySuffix;
 
 std::thread::id tempThreadID;
+
+namespace MockSipData {
+extern std::unique_ptr<MockSipKernel> mockSipKernel;
+}
 } // namespace NEO
 namespace Os {
 extern const char *gmmDllName;
@@ -140,6 +144,7 @@ LONG WINAPI UltExceptionFilter(
 
 void initializeTestHelpers() {
     GlobalMockSipProgram::initSipProgram();
+    MockSipData::mockSipKernel.reset(new MockSipKernel());
 }
 
 void cleanTestHelpers() {

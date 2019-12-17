@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/built_ins/sip.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include <memory>
 #include <vector>
@@ -33,5 +34,6 @@ class MockSipKernel : public SipKernel {
     GraphicsAllocation *getSipAllocation() const override;
 
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
+    MockExecutionEnvironment executionEnvironment;
 };
 } // namespace NEO

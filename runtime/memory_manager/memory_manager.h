@@ -158,6 +158,8 @@ class MemoryManager {
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
 
+    static uint32_t maxOsContextCount;
+
   protected:
     struct AllocationData {
         union {

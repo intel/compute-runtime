@@ -26,11 +26,9 @@ HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
 HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
     platformImpl.reset(new Platform());
     size_t numDevicesReturned = 0;
-    HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
-    hwInfo.platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
-    hwInfo.platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
-    platform()->peekExecutionEnvironment()->setHwInfo(&hwInfo);
+    auto hwInfo = platform()->peekExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
+    hwInfo->platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
 
     auto returnValue = DeviceFactory::getDevices(numDevicesReturned, *platform()->peekExecutionEnvironment());
     EXPECT_TRUE(returnValue);

@@ -15,7 +15,7 @@ struct OsHandle {
     BufferObject *bo = nullptr;
 };
 
-using BufferObjects = std::array<BufferObject *, maxHandleCount>;
+using BufferObjects = std::array<BufferObject *, EngineLimits::maxHandleCount>;
 
 class DrmAllocation : public GraphicsAllocation {
   public:

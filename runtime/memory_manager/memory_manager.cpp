@@ -30,6 +30,8 @@
 #include <algorithm>
 
 namespace NEO {
+uint32_t MemoryManager::maxOsContextCount = 0u;
+
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
     auto hwInfo = executionEnvironment.getHardwareInfo();

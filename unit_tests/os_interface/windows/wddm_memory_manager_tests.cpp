@@ -56,7 +56,7 @@ void WddmMemoryManagerFixture::SetUp() {
 
 TEST(ResidencyData, givenNewlyConstructedResidencyDataThenItIsNotResidentOnAnyOsContext) {
     ResidencyData residencyData;
-    for (auto contextId = 0u; contextId < maxOsContextCount; contextId++) {
+    for (auto contextId = 0u; contextId < MemoryManager::maxOsContextCount; contextId++) {
         EXPECT_EQ(false, residencyData.resident[contextId]);
     }
 }

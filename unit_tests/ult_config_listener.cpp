@@ -9,6 +9,7 @@
 
 #include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
@@ -20,4 +21,5 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
     // Clear global platform that it shouldn't be reused between tests
     platformImpl.reset();
+    MemoryManager::maxOsContextCount = 0u;
 }

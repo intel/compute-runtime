@@ -7,11 +7,8 @@
 
 #include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
-
-#include "engine_limits.h"
 
 namespace NEO {
 

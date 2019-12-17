@@ -6,20 +6,19 @@
  */
 
 #pragma once
-#include "engine_limits.h"
+#include "runtime/memory_manager/memory_manager.h"
 
-#include <array>
-#include <cstdint>
+#include <vector>
 
 namespace NEO {
 
 struct ResidencyData {
-    bool resident[maxOsContextCount] = {};
+    std::vector<bool> resident = std::vector<bool>(MemoryManager::maxOsContextCount, 0);
 
     void updateCompletionData(uint64_t newFenceValue, uint32_t contextId);
     uint64_t getFenceValueForContextId(uint32_t contextId);
 
   protected:
-    std::array<uint64_t, maxOsContextCount> lastFenceValues = {};
+    std::vector<uint64_t> lastFenceValues = std::vector<uint64_t>(MemoryManager::maxOsContextCount, 0);
 };
 } // namespace NEO

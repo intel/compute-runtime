@@ -39,6 +39,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initGmm();
     void initializeMemoryManager();
     void initSourceLevelDebugger();
+    void calculateMaxOsContextCount();
     void setHwInfo(const HardwareInfo *hwInfo);
     const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
     HardwareInfo *getMutableHardwareInfo() const { return hwInfo.get(); }

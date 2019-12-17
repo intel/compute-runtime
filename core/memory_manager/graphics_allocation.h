@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <limits>
 #include <mutex>
+#include <vector>
 
 namespace NEO {
 
@@ -285,8 +286,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;
 
-    std::array<UsageInfo, maxOsContextCount> usageInfos;
+    std::vector<UsageInfo> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
-    std::array<Gmm *, maxHandleCount> gmms{};
+    std::array<Gmm *, EngineLimits::maxHandleCount> gmms{};
 };
 } // namespace NEO

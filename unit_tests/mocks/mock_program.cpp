@@ -36,14 +36,17 @@ cl_int GlobalMockSipProgram::processGenBinaryOnce() {
     return ret;
 }
 void GlobalMockSipProgram::resetAllocationState() {
-    for (uint32_t index = 0u; index < maxOsContextCount; index++) {
+    auto allocation = static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation);
+    for (uint32_t index = 0u; index < allocation->usageInfos.size(); index++) {
         this->kernelInfoArray[0]->kernelAllocation->releaseResidencyInOsContext(index);
     }
-    static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation)->resetInspectionIds();
+    allocation->resetInspectionIds();
 }
 void GlobalMockSipProgram::initSipProgram() {
     cl_int retVal = 0;
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
+    executionEnvironment.setHwInfo(*platformDevices);
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
     sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
                                                                     nullptr,
                                                                     binary.data(),

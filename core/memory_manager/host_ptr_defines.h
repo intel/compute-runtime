@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "core/memory_manager/residency.h"
 
 #include <cinttypes>
 #include <cstdlib>
@@ -14,6 +13,7 @@
 namespace NEO {
 
 struct OsHandle;
+struct ResidencyData;
 
 using OsGraphicsHandle = OsHandle;
 
