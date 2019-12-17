@@ -44,6 +44,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Kbl, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(KBL::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64

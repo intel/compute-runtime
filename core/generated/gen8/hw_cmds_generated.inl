@@ -4068,4 +4068,14 @@ typedef struct tagXY_SRC_COPY_BLT {
     }
 } XY_SRC_COPY_BLT;
 STATIC_ASSERT(40 == sizeof(XY_SRC_COPY_BLT));
+
+typedef struct tagGRF {
+    union tagTheStructure {
+        float fRegs[8];
+        uint32_t dwRegs[8];
+        uint16_t wRegs[16];
+        uint32_t RawData[8];
+    } TheStructure;
+} GRF;
+STATIC_ASSERT(32 == sizeof(GRF));
 #pragma pack()

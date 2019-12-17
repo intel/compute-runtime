@@ -224,6 +224,7 @@ void Device::initializeCaps() {
 
     deviceInfo.globalMemCachelineSize = 64;
     deviceInfo.globalMemCacheSize = systemInfo.L3BankCount * 128 * KB;
+    deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
     deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported()
                                    ? getMemoryManager()->getLocalMemorySize()

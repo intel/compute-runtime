@@ -148,7 +148,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
         EXPECT_EQ(62u, walker->getInterfaceDescriptorOffset());
 
         auto numChannels = 3;
-        auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(scheduler.getKernelInfo().getMaxSimdSize(), numChannels, scheduler.getLws());
+        auto grfSize = pDevice->getHardwareInfo().capabilityTable.grfSize;
+        auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(scheduler.getKernelInfo().getMaxSimdSize(), grfSize, numChannels, scheduler.getLws());
 
         auto sizeCrossThreadData = scheduler.getCrossThreadDataSize();
         auto IndirectDataLength = alignUp((uint32_t)(sizeCrossThreadData + sizePerThreadDataTotal), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);

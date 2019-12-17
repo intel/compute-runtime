@@ -52,6 +52,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Bdw, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(BDW::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64

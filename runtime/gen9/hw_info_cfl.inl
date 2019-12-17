@@ -44,6 +44,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Cfl, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(CFL::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64

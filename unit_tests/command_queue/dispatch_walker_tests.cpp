@@ -712,7 +712,6 @@ HWTEST_F(DispatchWalkerTest, GivenBlockedQueueWhenDispatchingWalkerThenRequiredH
     cl_uint dimensions = 1;
 
     auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
-
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo(&kernel);
     multiDispatchInfo.push(dispatchInfo);

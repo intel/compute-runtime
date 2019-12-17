@@ -46,6 +46,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Ehl, // aubDeviceId
     1,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(EHL::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64

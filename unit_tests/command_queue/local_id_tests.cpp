@@ -40,37 +40,42 @@ TEST(LocalID, ThreadsPerWorkgroup) {
 
 TEST(LocalID, PerThreadSizeLocalIDs_SIMD8) {
     uint32_t simd = 8;
+    uint32_t grfSize = 32;
 
     // 3 channels (x,y,z) * 1 GRFs per thread (@SIMD8)
-    EXPECT_EQ(3 * sizeof(GRF), getPerThreadSizeLocalIDs(simd));
+    EXPECT_EQ(3 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
 TEST(LocalID, PerThreadSizeLocalIDs_SIMD16) {
     uint32_t simd = 16;
+    uint32_t grfSize = 32;
 
     // 3 channels (x,y,z) * 1 GRFs per thread (@SIMD16)
-    EXPECT_EQ(3 * sizeof(GRF), getPerThreadSizeLocalIDs(simd));
+    EXPECT_EQ(3 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
 TEST(LocalID, PerThreadSizeLocalIDs_SIMD32) {
     uint32_t simd = 32;
+    uint32_t grfSize = 32;
 
     // 3 channels (x,y,z) * 2 GRFs per thread (@SIMD32)
-    EXPECT_EQ(6 * sizeof(GRF), getPerThreadSizeLocalIDs(simd));
+    EXPECT_EQ(6 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
 TEST(LocalID, PerThreadSizeLocalIDs_SIMD1) {
     uint32_t simd = 1;
+    uint32_t grfSize = 32;
 
-    EXPECT_EQ(sizeof(GRF), getPerThreadSizeLocalIDs(simd));
+    EXPECT_EQ(grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
-struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int, int>> {
+struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int, int, int>> {
     void SetUp() override {
         simd = std::get<0>(GetParam());
-        localWorkSizeX = std::get<1>(GetParam());
-        localWorkSizeY = std::get<2>(GetParam());
-        localWorkSizeZ = std::get<3>(GetParam());
+        grfSize = std::get<1>(GetParam());
+        localWorkSizeX = std::get<2>(GetParam());
+        localWorkSizeY = std::get<3>(GetParam());
+        localWorkSizeZ = std::get<4>(GetParam());
 
         localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
         if (localWorkSize > 256) {
@@ -232,6 +237,7 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
     uint32_t localWorkSizeZ;
     uint32_t localWorkSize;
     uint32_t simd;
+    uint32_t grfSize;
 
     // Provide support for a max LWS of 256
     // 32 threads @ SIMD8
@@ -242,20 +248,20 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
 
 TEST_P(LocalIDFixture, checkIDWithinLimits) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false);
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 }
 
 TEST_P(LocalIDFixture, checkAllWorkItemsCovered) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false);
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 }
 
 TEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false);
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
@@ -263,7 +269,7 @@ TEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
 TEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false);
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
@@ -271,30 +277,30 @@ TEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
 TEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false);
+                     dimensionsOrder, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 TEST_P(LocalIDFixture, sizeCalculationLocalIDs) {
     auto workItems = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
-    auto sizeTotalPerThreadData = getThreadsPerWG(simd, workItems) * getPerThreadSizeLocalIDs(simd);
+    auto sizeTotalPerThreadData = getThreadsPerWG(simd, workItems) * getPerThreadSizeLocalIDs(simd, grfSize);
 
     // Should be multiple of GRFs
-    auto sizeGRF = sizeof(GRF);
-    EXPECT_EQ(0u, sizeTotalPerThreadData % sizeGRF);
+    EXPECT_EQ(0u, sizeTotalPerThreadData % grfSize);
 
     auto numGRFsPerThread = (simd == 32) ? 2 : 1;
     auto numThreadsExpected = Math::divideAndRoundUp(workItems, simd);
     auto numGRFsExpected = 3 * numGRFsPerThread * numThreadsExpected;
-    EXPECT_EQ(numGRFsExpected * sizeGRF, sizeTotalPerThreadData);
+    EXPECT_EQ(numGRFsExpected * grfSize, sizeTotalPerThreadData);
 }
 
-struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_t, uint16_t, uint16_t>> {
+struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_t, uint16_t, uint16_t, uint16_t>> {
     void SetUp() override {
         simd = std::get<0>(GetParam());
-        localWorkSize = {{std::get<1>(GetParam()),
-                          std::get<2>(GetParam()),
+        grfSize = std::get<1>(GetParam());
+        localWorkSize = {{std::get<2>(GetParam()),
+                          std::get<3>(GetParam()),
                           1u}};
         rowWidth = simd == 32u ? 32u : 16u;
         xDelta = simd == 8u ? 2u : 4u;
@@ -311,7 +317,7 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         memset(memory.get(), 0xff, size);
         buffer = reinterpret_cast<uint16_t *>(memory.get());
         EXPECT_TRUE(isCompatibleWithLayoutForImages(localWorkSize, dimensionsOrder, simd));
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true, grfSize);
     }
     void validateGRF() {
         uint32_t totalLocalIds = localWorkSize.at(0) * localWorkSize.at(1);
@@ -356,6 +362,7 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         }
     }
     uint16_t simd;
+    uint16_t grfSize;
     uint8_t rowWidth;
     uint16_t xDelta;
     std::array<uint16_t, 3> localWorkSize;
@@ -397,6 +404,7 @@ TEST_P(LocalIdsLayoutTest, givenLocalWorkgroupSize4x4x1WhenGenerateLocalIdsThenH
     std::array<uint16_t, 3> localWorkSize{{xDelta, 4u, 1u}};
     uint16_t totalLocalWorkSize = 4u * xDelta;
     auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
+    uint32_t grfSize = 32;
 
     auto elemsInBuffer = rowWidth * 3u;
     auto size = elemsInBuffer * sizeof(uint16_t);
@@ -409,8 +417,8 @@ TEST_P(LocalIdsLayoutTest, givenLocalWorkgroupSize4x4x1WhenGenerateLocalIdsThenH
     auto buffer2 = reinterpret_cast<uint16_t *>(alignedMemory2.get());
     memset(buffer2, 0xff, size);
 
-    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false);
-    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true);
+    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false, grfSize);
+    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true, grfSize);
 
     for (auto i = 0u; i < elemsInBuffer / rowWidth; i++) {
         for (auto j = 0u; j < rowWidth; j++) {
@@ -439,15 +447,18 @@ TEST_P(LocalIdsLayoutForImagesTest, givenLocalWorkgroupSizeCompatibleWithLayoutF
 #define LWSZParams ::testing::Values(1)
 #endif
 
-INSTANTIATE_TEST_CASE_P(AllCombinations, LocalIDFixture, ::testing::Combine(SIMDParams, LWSXParams, LWSYParams, LWSZParams));
+#define GRFSizeParams ::testing::Values(32)
+
+INSTANTIATE_TEST_CASE_P(AllCombinations, LocalIDFixture, ::testing::Combine(SIMDParams, GRFSizeParams, LWSXParams, LWSYParams, LWSZParams));
 INSTANTIATE_TEST_CASE_P(LayoutTests, LocalIdsLayoutTest, SIMDParams);
-INSTANTIATE_TEST_CASE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::testing::Combine(SIMDParams, ::testing::Values(4, 8, 12, 20), ::testing::Values(4, 8, 12, 20)));
+INSTANTIATE_TEST_CASE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::testing::Combine(SIMDParams, GRFSizeParams, ::testing::Values(4, 8, 12, 20), ::testing::Values(4, 8, 12, 20)));
 
 // To debug a specific configuration replace the list of Values with specific values.
 // NOTE: You'll need a unique test prefix
 INSTANTIATE_TEST_CASE_P(SingleTest, LocalIDFixture,
                         ::testing::Combine(
                             ::testing::Values(32),  //SIMD
+                            ::testing::Values(32),  //GRF
                             ::testing::Values(5),   //LWSX
                             ::testing::Values(6),   //LWSY
                             ::testing::Values(7))); //LWSZ

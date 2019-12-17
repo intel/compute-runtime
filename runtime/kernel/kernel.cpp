@@ -1959,7 +1959,7 @@ uint32_t Kernel::ReflectionSurfaceHelper::setKernelData(void *reflectionSurface,
             kernelInfo.patchInfo.threadPayload->LocalIDZPresent) {
             localIdRequired = true;
         }
-        kernelData->m_PayloadSize = PerThreadDataHelper::getThreadPayloadSize(*kernelInfo.patchInfo.threadPayload, kernelData->m_SIMDSize);
+        kernelData->m_PayloadSize = PerThreadDataHelper::getThreadPayloadSize(*kernelInfo.patchInfo.threadPayload, kernelData->m_SIMDSize, hwInfo.capabilityTable.grfSize);
     }
 
     kernelData->m_NeedLocalIDS = localIdRequired ? 1 : 0;

@@ -43,7 +43,7 @@ LocalIDHelper::LocalIDHelper() {
 LocalIDHelper LocalIDHelper::initializer;
 
 //traditional function to generate local IDs
-void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel) {
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize) {
     auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]));
     bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
     if (useLayoutForImages) {
@@ -55,7 +55,7 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
     } else if (simd == 8) {
         LocalIDHelper::generateSimd8(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     } else {
-        generateLocalIDsForSimdOne(buffer, localWorkgroupSize, dimensionsOrder);
+        generateLocalIDsForSimdOne(buffer, localWorkgroupSize, dimensionsOrder, grfSize);
     }
 }
 
@@ -118,7 +118,7 @@ inline void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16
 }
 
 void generateLocalIDsForSimdOne(void *b, const std::array<uint16_t, 3> &localWorkgroupSize,
-                                const std::array<uint8_t, 3> &dimensionsOrder) {
+                                const std::array<uint8_t, 3> &dimensionsOrder, uint32_t grfSize) {
     uint32_t xDimNum = dimensionsOrder[0];
     uint32_t yDimNum = dimensionsOrder[1];
     uint32_t zDimNum = dimensionsOrder[2];
@@ -129,7 +129,7 @@ void generateLocalIDsForSimdOne(void *b, const std::array<uint16_t, 3> &localWor
                 static_cast<uint16_t *>(b)[0] = k;
                 static_cast<uint16_t *>(b)[1] = j;
                 static_cast<uint16_t *>(b)[2] = i;
-                b = ptrOffset(b, sizeof(GRF));
+                b = ptrOffset(b, grfSize);
             }
         }
     }

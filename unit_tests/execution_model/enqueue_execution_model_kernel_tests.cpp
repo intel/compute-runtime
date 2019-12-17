@@ -85,11 +85,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.executionEnvironment);
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.threadPayload);
 
-            const uint32_t sizeCrossThreadData = pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize / sizeof(GRF);
+            auto grfSize = pPlatform->getDevice(0)->getDeviceInfo().grfSize;
+
+            const uint32_t sizeCrossThreadData = pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize / grfSize;
 
             auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*pBlockInfo->patchInfo.threadPayload);
             auto sizePerThreadData = getPerThreadSizeLocalIDs(pBlockInfo->patchInfo.executionEnvironment->LargestCompiledSIMDSize, numChannels);
-            uint32_t numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / sizeof(GRF));
+            uint32_t numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / grfSize);
             numGrfPerThreadData = std::max(numGrfPerThreadData, 1u);
 
             EXPECT_EQ(numGrfPerThreadData, idData[blockFirstIndex + i].getConstantIndirectUrbEntryReadLength());

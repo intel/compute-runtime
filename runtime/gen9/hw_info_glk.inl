@@ -44,6 +44,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Glk, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(GLK::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64

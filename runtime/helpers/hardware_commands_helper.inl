@@ -88,8 +88,9 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
     DEBUG_BREAK_IF(nullptr == threadPayload);
 
     auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
     return alignUp((kernel.getCrossThreadDataSize() +
-                    getPerThreadDataSizeTotal(kernel.getKernelInfo().getMaxSimdSize(), numChannels, localWorkSize)),
+                    getPerThreadDataSizeTotal(kernel.getKernelInfo().getMaxSimdSize(), grfSize, numChannels, localWorkSize)),
                    WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
 
@@ -415,11 +416,11 @@ void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
     uint32_t &numChannels,
     size_t &sizePerThreadDataTotal,
     size_t &localWorkItems) {
+    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
+    sizePerThreadData = getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
 
-    sizePerThreadData = getPerThreadSizeLocalIDs(simd, numChannels);
-
-    auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
-    localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
+    uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, grfSize, numChannels);
+    localIdSizePerThread = std::max(localIdSizePerThread, grfSize);
 
     sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkItems) * localIdSizePerThread;
     DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group

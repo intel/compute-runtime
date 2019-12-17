@@ -18,22 +18,25 @@ namespace NEO {
 class LinearStream;
 
 struct PerThreadDataHelper {
-    static inline size_t getLocalIdSizePerThread(
+    static inline uint32_t getLocalIdSizePerThread(
         uint32_t simd,
+        uint32_t grfSize,
         uint32_t numChannels) {
-        return getPerThreadSizeLocalIDs(simd, numChannels);
+        return getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
     }
 
     static inline size_t getPerThreadDataSizeTotal(
         uint32_t simd,
+        uint32_t grfSize,
         uint32_t numChannels,
         size_t localWorkSize) {
-        return getThreadsPerWG(simd, localWorkSize) * getLocalIdSizePerThread(simd, numChannels);
+        return getThreadsPerWG(simd, localWorkSize) * getLocalIdSizePerThread(simd, grfSize, numChannels);
     }
 
     static size_t sendPerThreadData(
         LinearStream &indirectHeap,
         uint32_t simd,
+        uint32_t grfSize,
         uint32_t numChannels,
         const size_t localWorkSizes[3],
         const std::array<uint8_t, 3> &workgroupWalkOrder,
@@ -45,6 +48,6 @@ struct PerThreadDataHelper {
                threadPayload.LocalIDZPresent;
     }
 
-    static uint32_t getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd);
+    static uint32_t getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd, uint32_t grfSize);
 };
 } // namespace NEO

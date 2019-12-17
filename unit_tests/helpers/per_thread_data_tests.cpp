@@ -49,6 +49,7 @@ struct PerThreadDataTests : public DeviceFixture,
         numChannels = threadPayload.LocalIDXPresent +
                       threadPayload.LocalIDYPresent +
                       threadPayload.LocalIDZPresent;
+        grfSize = 32;
 
         indirectHeapMemorySize = 4096;
         indirectHeapMemory = reinterpret_cast<uint8_t *>(alignedMalloc(indirectHeapMemorySize, 32));
@@ -62,6 +63,7 @@ struct PerThreadDataTests : public DeviceFixture,
 
     const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
     uint32_t simd;
+    uint32_t grfSize;
     uint32_t numChannels;
     uint32_t kernelIsa[32];
     uint8_t *indirectHeapMemory;
@@ -76,12 +78,12 @@ struct PerThreadDataTests : public DeviceFixture,
 typedef PerThreadDataTests<> PerThreadDataXYZTests;
 
 HWTEST_F(PerThreadDataXYZTests, getLocalIdSizePerThread) {
-    EXPECT_EQ(3 * 2 * sizeof(GRF), PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels));
+    EXPECT_EQ(3 * 2 * grfSize, PerThreadDataHelper::getLocalIdSizePerThread(simd, grfSize, numChannels));
 }
 
 HWTEST_F(PerThreadDataXYZTests, getPerThreadDataSizeTotal) {
     size_t localWorkSize = 256;
-    EXPECT_EQ(256 * 3 * 2 * sizeof(GRF) / 32, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize));
+    EXPECT_EQ(256 * 3 * 2 * grfSize / 32, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize));
 }
 
 HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_256x1x1) {
@@ -94,11 +96,12 @@ HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_256x1x1) {
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
         simd,
+        grfSize,
         numChannels,
         localWorkSizes,
         workgroupWalkOrder,
         false);
-    auto expectedPerThreadDataSizeTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
+    auto expectedPerThreadDataSizeTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize);
 
     size_t sizeConsumed = indirectHeap.getUsed() - offsetPerThreadData;
     EXPECT_EQ(expectedPerThreadDataSizeTotal, sizeConsumed);
@@ -112,6 +115,7 @@ HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_2x4x8) {
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
         simd,
+        grfSize,
         numChannels,
         localWorkSizes,
         workgroupWalkOrder,
@@ -123,35 +127,35 @@ HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_2x4x8) {
 
 HWTEST_F(PerThreadDataXYZTests, getThreadPayloadSize) {
     simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 2u * 3u, size);
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 2u * 3u, size);
 
     simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 3u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 3u, size);
 
     simd = 16;
     threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 4u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 4u, size);
 
     simd = 16;
     threadPayload.UnusedPerThreadConstantPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 5u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 5u, size);
 }
 
 typedef PerThreadDataTests<false, false, false, false> PerThreadDataNoIdsTests;
 
 HWTEST_F(PerThreadDataNoIdsTests, givenZeroChannelsWhenPassedTogetLocalIdSizePerThreadThenSizeOfOneGrfIsReturned) {
-    EXPECT_EQ(32u, PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels));
+    EXPECT_EQ(32u, PerThreadDataHelper::getLocalIdSizePerThread(simd, grfSize, numChannels));
 }
 
 HWTEST_F(PerThreadDataNoIdsTests, givenZeroChannelsAndHighWkgSizeWhengetPerThreadDataSizeTotalIsCalledThenReturnedSizeContainsUnusedGrfPerEachThread) {
     size_t localWorkSize = 256u;
     auto threadCount = localWorkSize / simd;
-    auto expectedSize = threadCount * sizeof(GRF);
-    EXPECT_EQ(expectedSize, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize));
+    auto expectedSize = threadCount * grfSize;
+    EXPECT_EQ(expectedSize, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize));
 }
 
 HWTEST_F(PerThreadDataNoIdsTests, sendPerThreadDataDoesntSendAnyData) {
@@ -165,6 +169,7 @@ HWTEST_F(PerThreadDataNoIdsTests, sendPerThreadDataDoesntSendAnyData) {
     auto offsetPerThreadData = PerThreadDataHelper::sendPerThreadData(
         indirectHeap,
         simd,
+        grfSize,
         numChannels,
         localWorkSizes,
         workgroupWalkOrder,
@@ -182,49 +187,50 @@ HWTEST_F(PerThreadDataNoIdsTests, sendPerThreadDataDoesntSendAnyData) {
 
 HWTEST_F(PerThreadDataNoIdsTests, getThreadPayloadSize) {
     simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF), size);
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize, size);
 
     simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF), size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize, size);
 
     simd = 16;
     threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 2u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 2u, size);
 }
 
 typedef PerThreadDataTests<false, false, false, true> PerThreadDataFlattenedIdsTests;
 
 HWTEST_F(PerThreadDataFlattenedIdsTests, getThreadPayloadSize) {
     simd = 32;
-    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 2u, size);
+    uint32_t size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 2u, size);
 
     simd = 16;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF), size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize, size);
 
     simd = 16;
     threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 2u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 2u, size);
 
     simd = 32;
     threadPayload.HeaderPresent = 1;
-    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd);
-    EXPECT_EQ(sizeof(GRF) * 3u, size);
+    size = PerThreadDataHelper::getThreadPayloadSize(threadPayload, simd, grfSize);
+    EXPECT_EQ(grfSize * 3u, size);
 }
 
 TEST(PerThreadDataTest, generateLocalIDs) {
     uint32_t simd = 8;
+    uint32_t grfSize = 32;
     uint32_t numChannels = 3;
     uint32_t localWorkSize = 24;
 
     size_t localWorkSizes[3] = {24, 1, 1};
 
-    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize, grfSize);
 
     auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
     auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
@@ -238,6 +244,7 @@ TEST(PerThreadDataTest, generateLocalIDs) {
     PerThreadDataHelper::sendPerThreadData(
         stream,
         simd,
+        grfSize,
         numChannels,
         localWorkSizes,
         {{0, 1, 2}},
@@ -255,12 +262,13 @@ TEST(PerThreadDataTest, generateLocalIDs) {
 
 TEST(PerThreadDataTest, givenSimdEqualOneWhenSetingLocalIdsInPerThreadDataThenIdsAreSetInCorrectOrder) {
     uint32_t simd = 1;
+    uint32_t grfSize = 32;
     uint32_t numChannels = 3;
     uint32_t localWorkSize = 24;
 
     size_t localWorkSizes[3] = {3, 4, 2};
 
-    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
+    auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numChannels, localWorkSize);
 
     auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
     auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
@@ -274,6 +282,7 @@ TEST(PerThreadDataTest, givenSimdEqualOneWhenSetingLocalIdsInPerThreadDataThenId
     PerThreadDataHelper::sendPerThreadData(
         stream,
         simd,
+        grfSize,
         numChannels,
         localWorkSizes,
         {{0, 1, 2}},
@@ -286,7 +295,7 @@ TEST(PerThreadDataTest, givenSimdEqualOneWhenSetingLocalIdsInPerThreadDataThenId
                 uint16_t ids[] = {k, j, i};
                 int result = memcmp(bufferPtr, ids, sizeof(uint16_t) * 3);
                 EXPECT_EQ(0, result);
-                bufferPtr += sizeof(GRF);
+                bufferPtr += grfSize;
             }
         }
     }

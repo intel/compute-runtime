@@ -47,6 +47,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Lkf, // aubDeviceId
     1,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    sizeof(LKF::GRF),                              // grfSize
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64

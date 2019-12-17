@@ -325,6 +325,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
         sizeof(INTERFACE_DESCRIPTOR_DATA));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
@@ -556,9 +557,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
+    uint32_t grfSize = sizeof(typename FamilyType::GRF);
     generateLocalIDs(expectedLocalIds, modifiedKernelInfo.getMaxSimdSize(),
                      std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
-                     std::array<uint8_t, 3>{{modifiedKernelInfo.workgroupDimensionsOrder[0], modifiedKernelInfo.workgroupDimensionsOrder[1], modifiedKernelInfo.workgroupDimensionsOrder[2]}}, false);
+                     std::array<uint8_t, 3>{{modifiedKernelInfo.workgroupDimensionsOrder[0], modifiedKernelInfo.workgroupDimensionsOrder[1], modifiedKernelInfo.workgroupDimensionsOrder[2]}}, false, grfSize);
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
     alignedFree(expectedLocalIds);
 }

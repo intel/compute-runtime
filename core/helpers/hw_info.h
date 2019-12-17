@@ -32,6 +32,7 @@ struct RuntimeCapabilityTable {
     uint32_t aubDeviceId;
     uint32_t extraQuantityThreadsPerEU;
     uint32_t slmSize;
+    uint32_t grfSize;
     bool blitterOperationsSupported;
     bool ftrSupportsInteger64BitAtomics;
     bool ftrSupportsFP64;

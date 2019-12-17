@@ -208,9 +208,9 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         DEBUG_BREAK_IF(nullptr == threadPayload);
 
         auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
-        auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, numChannels);
-
-        auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / sizeof(GRF));
+        auto grfSize = this->getDevice().getDeviceInfo().grfSize;
+        auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
+        auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / grfSize);
 
         // HW requires a minimum of 1 GRF of perThreadData for each thread in a thread group
         // when sizeCrossThreadData != 0

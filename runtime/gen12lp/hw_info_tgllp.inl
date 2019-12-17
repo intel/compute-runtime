@@ -48,6 +48,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Tgllp, // aubDeviceId
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
+    sizeof(TGLLP::GRF),                              // grfSize
     false,                                           // blitterOperationsSupported
     true,                                            // ftrSupportsInteger64BitAtomics
     false,                                           // ftrSupportsFP64

@@ -14,13 +14,7 @@
 #include <cstdint>
 
 namespace NEO {
-union GRF {
-    float fRegs[8];
-    uint32_t dwRegs[8];
-    uint16_t wRegs[16];
-};
-
-inline size_t getGRFsPerThread(uint32_t simd) {
+inline uint32_t getGRFsPerThread(uint32_t simd) {
     return simd == 32 ? 2 : 1;
 }
 
@@ -41,10 +35,10 @@ inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
     return result;
 }
 
-inline size_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t numChannels = 3) {
+inline uint32_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t grfSize, uint32_t numChannels = 3) {
     auto numGRFSPerThread = getGRFsPerThread(simd);
-    auto returnSize = numGRFSPerThread * sizeof(GRF) * (simd == 1 ? 1 : numChannels);
-    returnSize = std::max(returnSize, sizeof(GRF));
+    uint32_t returnSize = numGRFSPerThread * grfSize * (simd == 1 ? 1u : numChannels);
+    returnSize = std::max(returnSize, grfSize);
     return returnSize;
 }
 
@@ -66,11 +60,11 @@ void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroup
                           const std::array<uint8_t, 3> &dimensionsOrder);
 
 void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize,
-                      const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel);
+                      const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize);
 void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd);
 
 bool isCompatibleWithLayoutForImages(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd);
 
 void generateLocalIDsForSimdOne(void *b, const std::array<uint16_t, 3> &localWorkgroupSize,
-                                const std::array<uint8_t, 3> &dimensionsOrder);
+                                const std::array<uint8_t, 3> &dimensionsOrder, uint32_t grfSize);
 } // namespace NEO

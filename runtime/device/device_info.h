@@ -127,6 +127,7 @@ struct DeviceInfo {
     cl_uint                      vmeAvcVersion;
     cl_uint                      vmeVersion;
     cl_uint                      internalDriverVersion;
+    cl_uint                      grfSize;
     bool                         force32BitAddressess;
     bool                         preemptionSupported;
     /* Extensions supported */
