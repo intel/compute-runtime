@@ -84,6 +84,16 @@ TEST_F(PlatformTest, getDevices) {
     EXPECT_NE(nullptr, allDevices);
 }
 
+TEST_F(PlatformTest, givenDebugFlagSetWhenInitializingPlatformThenOverrideGpuAddressSpace) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideGpuAddressSpace.set(12);
+
+    bool status = pPlatform->initialize();
+    EXPECT_TRUE(status);
+
+    EXPECT_EQ(maxNBitValue(12), pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
 TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     std::string compilerExtensions = pPlatform->peekCompilerExtensions();
     EXPECT_EQ(std::string(""), compilerExtensions);

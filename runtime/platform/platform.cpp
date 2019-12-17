@@ -142,6 +142,11 @@ bool Platform::initialize() {
         return false;
     }
 
+    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        executionEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
+            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+
     executionEnvironment->initializeMemoryManager();
 
     DEBUG_BREAK_IF(this->platformInfo);
