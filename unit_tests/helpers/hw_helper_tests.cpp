@@ -797,12 +797,3 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceDefaultRCSEngineWARequir
     }
     EXPECT_FALSE(HwHelperHw<FamilyType>::isForceDefaultRCSEngineWARequired(hardwareInfo));
 }
-
-TGLLPTEST_F(HwHelperTest, givenWaForceDefaultRcsEngineIsSetWhenAdjustDefaultEngineTypeIsCalledThenRcsIsUsedAsDefaultEngine) {
-    hardwareInfo.featureTable.ftrCCSNode = true;
-    hardwareInfo.platform.usRevId = REVISION_A0;
-
-    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
-}
