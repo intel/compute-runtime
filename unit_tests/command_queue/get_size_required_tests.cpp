@@ -43,7 +43,7 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
     size_t usedBeforeSSH;
 };
 
-HWTEST_F(GetSizeRequiredTest, finish) {
+HWTEST_F(GetSizeRequiredTest, WhenFinishingThenHeapsAndCommandBufferAreNotConsumed) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
@@ -56,7 +56,7 @@ HWTEST_F(GetSizeRequiredTest, finish) {
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNotConsumed) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
@@ -82,7 +82,7 @@ HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
     clReleaseEvent(eventReturned);
 }
 
-HWTEST_F(GetSizeRequiredTest, enqueueBarrierDoesntConsumeAnySpace) {
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNotConsumed) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
