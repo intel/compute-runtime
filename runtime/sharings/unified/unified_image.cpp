@@ -34,8 +34,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
         return nullptr;
     }
 
-    cl_image_desc throwAwayImgDesc{}; // TODO shouldn't require this, we need only bottom portion of this method
-    graphicsAllocation->getDefaultGmm()->updateImgInfo(imgInfo, throwAwayImgDesc, 0u);
+    graphicsAllocation->getDefaultGmm()->updateOffsetsInImgInfo(imgInfo, 0u);
 
     auto &memoryManager = *context->getMemoryManager();
     if (graphicsAllocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {

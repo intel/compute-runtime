@@ -67,9 +67,9 @@ void D3DSharing<D3D>::releaseResource(MemObj *memObject) {
 }
 
 template <typename D3D>
-void D3DSharing<D3D>::updateImgInfo(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex) {
+void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex) {
 
-    gmm->updateImgInfo(imgInfo, imgDesc, arrayIndex);
+    gmm->updateImgInfoAndDesc(imgInfo, imgDesc, arrayIndex);
 
     if (oclPlane == OCLPlane::PLANE_U || oclPlane == OCLPlane::PLANE_V || oclPlane == OCLPlane::PLANE_UV) {
         imgDesc.image_width /= 2;

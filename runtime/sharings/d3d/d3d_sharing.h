@@ -40,7 +40,7 @@ class D3DSharing : public SharingHandler {
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:
-    static void updateImgInfo(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex);
+    static void updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex);
 
     Context *context;
     D3DSharingFunctions<D3D> *sharingFunctions = nullptr;

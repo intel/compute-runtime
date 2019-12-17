@@ -183,7 +183,7 @@ uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
     return gmmResourceInfo->getQPitch();
 }
 
-void Gmm::updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex) {
+void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex) {
     imgDesc.image_width = gmmResourceInfo->getBaseWidth();
     imgDesc.image_row_pitch = gmmResourceInfo->getRenderPitch();
     if (imgDesc.image_row_pitch == 0) {
@@ -204,6 +204,10 @@ void Gmm::updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arra
         imgDesc.image_slice_pitch = gmmResourceInfo->getSizeAllocation();
     }
 
+    updateOffsetsInImgInfo(imgInfo, arrayIndex);
+}
+
+void Gmm::updateOffsetsInImgInfo(ImageInfo &imgInfo, cl_uint arrayIndex) {
     GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
     reqOffsetInfo.ReqRender = 1;
     reqOffsetInfo.Slice = 0;
