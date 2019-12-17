@@ -116,6 +116,10 @@ void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requ
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
 
+void CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) {
+    waitForTaskCountAndCleanAllocationList(requiredTaskCount, TEMPORARY_ALLOCATION);
+};
+
 void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) {
     if (commandStream.getAvailableSpace() >= minimumRequiredSize) {
         return;
