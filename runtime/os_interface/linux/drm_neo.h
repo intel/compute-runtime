@@ -60,7 +60,7 @@ class Drm {
     int getEnabledPooledEu(int &enabled);
     int getMinEuInPool(int &minEUinPool);
 
-    bool is48BitAddressRangeSupported();
+    int queryGttSize(uint64_t &gttSizeOutput);
     bool isPreemptionSupported() const { return preemptionSupported; }
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     int getFileDescriptor() const { return fd; }

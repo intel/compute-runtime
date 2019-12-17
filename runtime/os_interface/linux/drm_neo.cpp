@@ -113,15 +113,16 @@ std::string Drm::getSysFsPciPath(int deviceID) {
     return nullPath;
 }
 
-bool Drm::is48BitAddressRangeSupported() {
+int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     drm_i915_gem_context_param contextParam = {0};
     contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
 
-    auto ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    int ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
     if (ret == 0) {
-        return contextParam.value > MemoryConstants::max64BitAppAddress;
+        gttSizeOutput = contextParam.value;
     }
-    return true;
+
+    return ret;
 }
 
 void Drm::checkPreemptionSupport() {

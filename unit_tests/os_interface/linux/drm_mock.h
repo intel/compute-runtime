@@ -87,6 +87,7 @@ class DrmMock : public Drm {
     int StoredHasPooledEU = 1;
     int StoredMinEUinPool = 1;
     int StoredRetVal = 0;
+    int StoredRetValForGetGttSize = 0;
     int StoredRetValForGetSSEU = 0;
     int StoredRetValForSetSSEU = 0;
     int StoredRetValForDeviceID = 0;

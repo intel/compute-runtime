@@ -92,7 +92,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_GTT_SIZE) {
             static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedGTTSize;
-            return this->StoredRetVal;
+            return this->StoredRetValForGetGttSize;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
             if (StoredRetValForGetSSEU == 0) {

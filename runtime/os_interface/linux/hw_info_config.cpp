@@ -109,7 +109,15 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     }
     gtSystemInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
 
-    featureTable->ftrSVM = drm->is48BitAddressRangeSupported();
+    uint64_t gttSizeQuery = 0;
+    featureTable->ftrSVM = true;
+
+    ret = drm->queryGttSize(gttSizeQuery);
+
+    if (ret == 0) {
+        featureTable->ftrSVM = (gttSizeQuery > MemoryConstants::max64BitAppAddress);
+        outHwInfo->capabilityTable.gpuAddressSpace = gttSizeQuery - 1; // gttSizeQuery = (1 << bits)
+    }
 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(maxGpuFreq);
