@@ -164,7 +164,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
-    static size_t getSizeRequiredForExecutionModel(IndirectHeap::Type heapType, const Kernel &kernel);
+    static size_t getSshSizeForExecutionModel(const Kernel &kernel);
     static void setInterfaceDescriptorOffset(
         WALKER_TYPE<GfxFamily> *walkerCmd,
         uint32_t &interfaceDescriptorIndex);

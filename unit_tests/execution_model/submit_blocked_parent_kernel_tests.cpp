@@ -94,7 +94,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
         auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
@@ -159,7 +159,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -200,7 +200,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -238,7 +238,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -279,7 +279,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
                                                                     *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -305,7 +305,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
 
         MockCommandQueue cmdQ(context, device, properties);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         size_t heapSize = 20;
 
@@ -357,7 +357,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
         size_t heapSize = 20;
 

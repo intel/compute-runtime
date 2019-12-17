@@ -133,7 +133,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
 }
 
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::Type heapType, const Kernel &kernel) {
+size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kernel &kernel) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
     size_t totalSize = 0;
@@ -141,31 +141,24 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(Indir
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
     uint32_t maxBindingTableCount = 0;
 
-    if (heapType == IndirectHeap::SURFACE_STATE) {
-        totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1;
+    totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1;
 
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
-            totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    for (uint32_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+        totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+        totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-            maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
-        }
+        maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
     }
 
-    if (heapType == IndirectHeap::INDIRECT_OBJECT || heapType == IndirectHeap::SURFACE_STATE) {
-        BuiltIns &builtIns = *kernel.getDevice().getExecutionEnvironment()->getBuiltIns();
-        SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
+    BuiltIns &builtIns = *kernel.getDevice().getExecutionEnvironment()->getBuiltIns();
+    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
 
-        if (heapType == IndirectHeap::INDIRECT_OBJECT) {
-            totalSize += getSizeRequiredIOH(scheduler);
-        } else {
-            totalSize += getSizeRequiredSSH(scheduler);
+    totalSize += getSizeRequiredSSH(scheduler);
 
-            totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
-            totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-        }
-    }
+    totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
+    totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+
     return totalSize;
 }
 
