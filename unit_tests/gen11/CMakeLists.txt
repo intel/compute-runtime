@@ -14,7 +14,6 @@ if(TESTS_GEN11)
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen11.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/program_media_sampler_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen11.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_tests_gen11.cpp

@@ -21,7 +21,7 @@ struct Gen11PlatformCaps : public PlatformFixture, public ::testing::Test {
     }
 };
 
-ICLLPTEST_F(Gen11PlatformCaps, lpSkusDontSupportFP64) {
+GEN11TEST_F(Gen11PlatformCaps, lpSkusDontSupportFP64) {
     const auto &caps = pPlatform->getPlatformInfo();
 
     EXPECT_EQ(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));

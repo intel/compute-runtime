@@ -596,7 +596,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN9_CORE,             \
                       IGFX_COFFEELAKE)
 #endif
-#ifdef TESTS_GEN11
+#ifdef TESTS_ICLLP
 #define ICLLPTEST_F(test_fixture, test_name)                         \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
@@ -605,6 +605,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN11_CORE,            \
                       IGFX_ICELAKE_LP)
+#endif
+#ifdef TESTS_LKF
 #define LKFTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
@@ -613,6 +615,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN11_CORE,            \
                       IGFX_LAKEFIELD)
+#endif
+#ifdef TESTS_EHL
 #define EHLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
@@ -622,7 +626,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN11_CORE,            \
                       IGFX_ELKHARTLAKE)
 #endif
-#ifdef TESTS_GEN12LP
+#ifdef TESTS_TGLLP
 #define TGLLPTEST_F(test_fixture, test_name)                         \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \

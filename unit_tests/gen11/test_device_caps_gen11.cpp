@@ -13,51 +13,6 @@ using namespace NEO;
 
 typedef Test<DeviceFixture> Gen11DeviceCaps;
 
-LKFTEST_F(Gen11DeviceCaps, givenLKFWhenCheckedOCLVersionThen21IsReported) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
-LKFTEST_F(Gen11DeviceCaps, givenLKFWhenCheckedSvmSupportThenNoSvmIsReported) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(caps.svmCapabilities, 0u);
-}
-
-LKFTEST_F(Gen11DeviceCaps, givenLkfWhenDoublePrecissionIsCheckedThenFalseIsReturned) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupports64BitMath);
-}
-
-LKFTEST_F(Gen11DeviceCaps, givenLkfWhenExtensionStringIsCheckedThenFP64IsNotReported) {
-    const auto &caps = pDevice->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-
-    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_EQ(0u, caps.doubleFpConfig);
-}
-
-LKFTEST_F(Gen11DeviceCaps, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
-    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
-}
-
-ICLLPTEST_F(Gen11DeviceCaps, lpSkusDontSupportFP64) {
-    const auto &caps = pDevice->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-
-    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_EQ(0u, caps.doubleFpConfig);
-}
-
-ICLLPTEST_F(Gen11DeviceCaps, lpSkusDontSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-}
-
-ICLLPTEST_F(Gen11DeviceCaps, givenIclLpWhenSlmSizeIsRequiredThenReturnCorrectValue) {
-    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
-}
-
 GEN11TEST_F(Gen11DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
@@ -107,50 +62,4 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckBlitterOperationsSupportThenRetu
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingImageSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsImages);
-}
-
-typedef Test<DeviceFixture> IclLpUsDeviceIdTest;
-
-ICLLPTEST_F(IclLpUsDeviceIdTest, isSimulationCap) {
-    unsigned short iclLpSimulationIds[2] = {
-        IICL_LP_GT1_MOB_DEVICE_F0_ID,
-        0, // default, non-simulation
-    };
-    NEO::MockDevice *mockDevice = nullptr;
-
-    for (auto id : iclLpSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
-}
-
-ICLLPTEST_F(IclLpUsDeviceIdTest, GivenICLLPWhenCheckftr64KBpagesThenFalse) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
-}
-
-typedef Test<DeviceFixture> LkfUsDeviceIdTest;
-
-LKFTEST_F(LkfUsDeviceIdTest, isSimulationCap) {
-    unsigned short lkfSimulationIds[2] = {
-        ILKF_1x8x8_DESK_DEVICE_F0_ID,
-        0, // default, non-simulation
-    };
-    NEO::MockDevice *mockDevice = nullptr;
-
-    for (auto id : lkfSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
 }
