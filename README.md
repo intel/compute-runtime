@@ -31,7 +31,7 @@ For example on Ubuntu* 19.04, 19.10:
 apt-get install intel-opencl-icd
 ```
 
-Procedures for other [distrubtions](https://github.com/intel/compute-runtime/blob/master/documentation/Neo_in_distributions.md).
+Procedures for other [distributions](https://github.com/intel/compute-runtime/blob/master/documentation/Neo_in_distributions.md).
 
 ### Manual download
 
