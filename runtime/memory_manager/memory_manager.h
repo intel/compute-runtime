@@ -193,6 +193,10 @@ class MemoryManager {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
+    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType) {
+        return ((allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR || allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
+                (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()));
+    }
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;

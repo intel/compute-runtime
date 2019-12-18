@@ -45,6 +45,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::registeredEngines;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::useInternal32BitAllocator;
+    using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
     using MemoryManager::reservedMemory;

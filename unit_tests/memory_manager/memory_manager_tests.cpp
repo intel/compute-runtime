@@ -1995,3 +1995,25 @@ TEST_F(MemoryManagerMultiRootDeviceTests, globalsSurfaceHasCorrectRootDeviceInde
         context->getSVMAllocsManager()->freeSVMAlloc(allocation->getUnderlyingBuffer());
     }
 }
+
+HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledThenNonSvmHostPtrUsageIsSet) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableHostPtrTracking.set(0);
+
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    EXPECT_TRUE(result);
+
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    EXPECT_TRUE(result);
+}
+
+HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrUsageDependsOnFullRangeSvm) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableHostPtrTracking.set(1);
+
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    EXPECT_EQ(!executionEnvironment->isFullRangeSvm(), result);
+
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    EXPECT_EQ(!executionEnvironment->isFullRangeSvm(), result);
+}

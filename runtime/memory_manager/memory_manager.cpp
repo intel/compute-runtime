@@ -336,8 +336,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.flags.shareable) {
         return allocateShareableMemory(allocationData);
     }
-    if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
-        (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled())) {
+    if (useNonSvmHostPtrAlloc(allocationData.type)) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -483,6 +482,7 @@ void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
 }
 
 bool MemoryManager::isHostPointerTrackingEnabled() {
+
     if (DebugManager.flags.EnableHostPtrTracking.get() != -1) {
         return !!DebugManager.flags.EnableHostPtrTracking.get();
     }
