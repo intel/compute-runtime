@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 
 namespace NEO {
 
-typedef BDWFamily Family;
+typedef ICLFamily Family;
 
-static const auto gfxCore = IGFX_GEN8_CORE;
+static auto gfxCore = IGFX_GEN11_CORE;
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -21,13 +21,13 @@ void populateFactoryTable<UltCommandStreamReceiver<Family>>() {
     commandStreamReceiverFactory[IGFX_MAX_CORE + gfxCore] = UltCommandStreamReceiver<Family>::create;
 }
 
-struct enableGen8 {
-    enableGen8() {
+struct enableGen11 {
+    enableGen11() {
         populateFactoryTable<UltCommandStreamReceiver<Family>>();
     }
 };
 
-static enableGen8 enable;
+static enableGen11 enable;
 
-template class UltCommandStreamReceiver<BDWFamily>;
+template class UltCommandStreamReceiver<ICLFamily>;
 } // namespace NEO

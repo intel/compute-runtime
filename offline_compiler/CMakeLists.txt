@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -78,7 +78,7 @@ macro(macro_for_each_gen)
   endforeach()
   apply_macro_for_each_platform()
   
-  list(APPEND CLOC_SRCS_LIB ${NEO_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND CLOC_SRCS_LIB ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")

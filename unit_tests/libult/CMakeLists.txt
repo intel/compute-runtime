@@ -1,21 +1,21 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 macro(macro_for_each_gen)
   list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-    ${NEO_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
+    ${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SOURCE_DIR}/core/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
+    ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
     ${NEO_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
   )
 
-  if(EXISTS "${NEO_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    include_directories(${NEO_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
+  if(EXISTS "${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    include_directories(${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
   endif()
 endmacro()
 

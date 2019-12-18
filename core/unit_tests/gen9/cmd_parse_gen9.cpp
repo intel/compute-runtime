@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
 #include "gtest/gtest.h"
-using GenStruct = NEO::GEN11;
-using GenGfxFamily = NEO::ICLFamily;
+using GenStruct = NEO::GEN9;
+using GenGfxFamily = NEO::SKLFamily;
 #include "unit_tests/gen_common/cmd_parse_base.inl"
 #include "unit_tests/gen_common/cmd_parse_base_mi_arb.inl"
 #include "unit_tests/gen_common/cmd_parse_gpgpu_walker.inl"
@@ -83,7 +83,7 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 template struct CmdParse<GenGfxFamily>;
 
 namespace NEO {
-template void HardwareParse::findHardwareCommands<ICLFamily>();
-template void HardwareParse::findHardwareCommands<ICLFamily>(IndirectHeap *);
-template const void *HardwareParse::getStatelessArgumentPointer<ICLFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
+template void HardwareParse::findHardwareCommands<SKLFamily>();
+template void HardwareParse::findHardwareCommands<SKLFamily>(IndirectHeap *);
+template const void *HardwareParse::getStatelessArgumentPointer<SKLFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
 } // namespace NEO
