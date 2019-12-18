@@ -173,7 +173,6 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
 
 TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext) {
     DrmMock drmMock;
-
     uint32_t drmContextId1 = 123;
     uint32_t drmContextId2 = 456;
 
@@ -197,6 +196,30 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
     EXPECT_EQ(drmContextId1, drmMock.receivedDestroyContextId);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+}
+
+TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
+
+    DrmMock drmMock;
+    uint32_t drmContextId1 = 123;
+    drmMock.StoredCtxId = drmContextId1;
+    auto expectedCount = 0u;
+
+    {
+        drmMock.StoredRetValForPersistant = -1;
+        drmMock.checkNonPersistentSupport();
+        ++expectedCount;
+        OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
+    }
+    {
+        drmMock.StoredRetValForPersistant = 0;
+        drmMock.checkNonPersistentSupport();
+        ++expectedCount;
+        OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        ++expectedCount;
+        EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
+    }
 }
 
 TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
@@ -330,6 +353,16 @@ TEST(DrmTest, givenPlatformWhereGetSseuRetFailureWhenCallSetQueueSliceCountThenS
     EXPECT_FALSE(drm->sliceCountChangeSupported);
     EXPECT_FALSE(drm->setQueueSliceCount(newSliceCount));
     EXPECT_NE(drm->getSliceMask(newSliceCount), drm->storedParamSseu);
+}
+
+TEST(DrmTest, whenCheckNonPeristentSupportIsCalledThenIsNonPersistentSupportedReturnsCorrectValues) {
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    drm->StoredRetValForPersistant = -1;
+    drm->checkNonPersistentSupport();
+    EXPECT_FALSE(drm->isNonPersistentSupported());
+    drm->StoredRetValForPersistant = 0;
+    drm->checkNonPersistentSupport();
+    EXPECT_TRUE(drm->isNonPersistentSupported());
 }
 
 TEST(DrmTest, givenPlatformWhereSetSseuRetFailureWhenCallSetQueueSliceCountThenReturnFalse) {

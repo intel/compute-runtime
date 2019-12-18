@@ -263,6 +263,12 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownDeviceId) {
     EXPECT_EQ(-1, ret);
 }
 
+TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledThenIsNonPersistentSupportedReturnsTrue) {
+    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(drm->isNonPersistentSupported());
+}
+
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport =

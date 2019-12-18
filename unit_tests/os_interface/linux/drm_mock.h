@@ -25,6 +25,7 @@ class DrmMock : public Drm {
     using Drm::engineInfo;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
+    using Drm::nonPersistentSupported;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::sliceCountChangeSupported;
@@ -96,6 +97,7 @@ class DrmMock : public Drm {
     int StoredRetValForDeviceRevID = 0;
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
+    int StoredRetValForPersistant = 0;
     int StoredPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |

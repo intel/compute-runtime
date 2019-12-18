@@ -176,6 +176,27 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
     return false;
 }
 
+void Drm::checkNonPersistentSupport() {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
+
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    if (retVal == 0) {
+        nonPersistentSupported = true;
+    } else {
+        nonPersistentSupported = false;
+    }
+}
+
+void Drm::setNonPersistent(uint32_t drmContextId) {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.ctx_id = drmContextId;
+    contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
+
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    UNRECOVERABLE_IF(retVal != 0);
+}
+
 uint32_t Drm::createDrmContext() {
     drm_i915_gem_context_create gcc = {};
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);

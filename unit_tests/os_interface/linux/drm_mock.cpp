@@ -85,6 +85,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             }
             return this->StoredRetValForSetSSEU;
         }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
+            return this->StoredRetValForPersistant;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
@@ -99,6 +102,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
                 (*static_cast<drm_i915_gem_context_param_sseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).slice_mask = storedParamSseu;
             }
             return this->StoredRetValForGetSSEU;
+        }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
+            return this->StoredRetValForPersistant;
         }
     }
 

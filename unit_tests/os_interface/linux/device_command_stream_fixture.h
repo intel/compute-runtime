@@ -274,6 +274,9 @@ class DrmMockCustom : public Drm {
             *getParam->value = getParamRetValue;
         } break;
 
+        case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM: {
+        } break;
+
         case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM: {
             ioctl_cnt.contextGetParam++;
             auto getContextParam = (drm_i915_gem_context_param *)arg;

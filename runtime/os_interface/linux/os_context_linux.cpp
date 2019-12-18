@@ -27,6 +27,9 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmContextId = drm.createDrmContext();
+            if (drm.isNonPersistentSupported()) {
+                drm.setNonPersistent(drmContextId);
+            }
             if (drm.isPreemptionSupported() && lowPriority) {
                 drm.setLowPriorityContextParam(drmContextId);
             }
