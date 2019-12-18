@@ -29,6 +29,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
+    outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.ftrL3IACoherency;
 
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt),

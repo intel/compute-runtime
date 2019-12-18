@@ -7,9 +7,12 @@
 
 #include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
 
+#include "core/helpers/hw_helper.h"
+#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "test.h"
 
 #include "instrumentation.h"
 
@@ -88,6 +91,23 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled == haveInstrumentation);
+}
+
+HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
+    HardwareInfo initialHwInfo = **platformDevices;
+    auto &hwHelper = HwHelper::get(initialHwInfo.platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(initialHwInfo.platform.eProductFamily);
+
+    bool initialCoherencyStatus = false;
+    hwHelper.setCapabilityCoherencyFlag(&outHwInfo, initialCoherencyStatus);
+
+    initialHwInfo.featureTable.ftrL3IACoherency = false;
+    hwInfoConfig->configureHwInfo(&initialHwInfo, &outHwInfo, osInterface.get());
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
+
+    initialHwInfo.featureTable.ftrL3IACoherency = true;
+    hwInfoConfig->configureHwInfo(&initialHwInfo, &outHwInfo, osInterface.get());
+    EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
 } // namespace NEO
