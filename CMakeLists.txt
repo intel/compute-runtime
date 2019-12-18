@@ -873,7 +873,9 @@ if(EXISTS ${NEO_SOURCE_DIR}/../internal)
 endif(EXISTS ${NEO_SOURCE_DIR}/../internal)
 
 add_subdirectory_unique(scripts/lint)
-add_subdirectory_unique(scripts/format)
+if(EXISTS scripts/format)
+  add_subdirectory_unique(scripts/format)
+endif()
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 if(WIN32 AND NOT IGDRCL__IGC_FOUND)
