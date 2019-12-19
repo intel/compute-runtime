@@ -3450,17 +3450,17 @@ void *clHostMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoContext->getDevice(0u)->getDeviceInfo().maxMemAllocSize) {
-        err.set(CL_INVALID_BUFFER_SIZE);
-        return nullptr;
-    }
-
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!MemoryPropertiesParser::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel, allocflags, MemoryPropertiesParser::MemoryPropertiesParser::ObjType::UNKNOWN)) {
         err.set(CL_INVALID_VALUE);
+        return nullptr;
+    }
+
+    if (size > neoContext->getDevice(0u)->getDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+        err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
 
@@ -3491,11 +3491,6 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoDevice->getDeviceInfo().maxMemAllocSize) {
-        err.set(CL_INVALID_BUFFER_SIZE);
-        return nullptr;
-    }
-
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
@@ -3504,6 +3499,12 @@ void *clDeviceMemAllocINTEL(
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
+
+    if (size > neoContext->getDevice(0u)->getDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+        err.set(CL_INVALID_BUFFER_SIZE);
+        return nullptr;
+    }
+
     unifiedMemoryProperties.device = device;
     unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
 
@@ -3529,11 +3530,6 @@ void *clSharedMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoDevice->getDeviceInfo().maxMemAllocSize) {
-        err.set(CL_INVALID_BUFFER_SIZE);
-        return nullptr;
-    }
-
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
@@ -3542,13 +3538,19 @@ void *clSharedMemAllocINTEL(
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
-    unifiedMemoryProperties.device = device;
-    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
+
+    if (size > neoContext->getDevice(0u)->getDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+        err.set(CL_INVALID_BUFFER_SIZE);
+        return nullptr;
+    }
 
     if (isValueSet(unifiedMemoryProperties.allocationFlags.allAllocFlags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
+
+    unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
 
     return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
 }

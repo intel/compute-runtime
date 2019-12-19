@@ -835,3 +835,80 @@ TEST(clUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAllocIn
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, unfiedMemorySharedAllocation);
 }
+
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccesIsReturned) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL, 0};
+    auto bigSize = MemoryConstants::gigaByte * 10;
+    auto allocationSize = static_cast<size_t>(bigSize);
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    {
+        auto unfiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        ASSERT_NE(nullptr, unfiedMemoryAllocation);
+
+        retVal = clMemFreeINTEL(&mockContext, unfiedMemoryAllocation);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeWhenCreateAllocationThenErrorIsReturned) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    cl_mem_properties_intel properties[] = {0};
+    auto bigSize = MemoryConstants::gigaByte * 10;
+    auto allocationSize = static_cast<size_t>(bigSize);
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockContext.getDevice(0u)->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    {
+        auto unfiedMemoryAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+
+        EXPECT_NE(CL_SUCCESS, retVal);
+        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, allocationSize, 0, &retVal);
+
+        EXPECT_NE(CL_SUCCESS, retVal);
+        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+    }
+
+    {
+        auto unfiedMemoryAllocation = clHostMemAllocINTEL(&mockContext, properties, allocationSize, 0, &retVal);
+
+        EXPECT_NE(CL_SUCCESS, retVal);
+        EXPECT_EQ(nullptr, unfiedMemoryAllocation);
+    }
+}
