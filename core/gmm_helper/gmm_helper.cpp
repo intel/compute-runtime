@@ -31,9 +31,9 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
-GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
+GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     loadLib();
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(const_cast<HardwareInfo *>(pHwInfo), this->initGmmFunc, this->destroyGmmFunc);
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo), this->initGmmFunc, this->destroyGmmFunc);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 

@@ -33,7 +33,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
 
 void ExecutionEnvironment::initGmm() {
     if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(hwInfo.get()));
+        gmmHelper.reset(new GmmHelper(osInterface.get(), hwInfo.get()));
     }
 }
 void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {

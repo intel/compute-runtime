@@ -13,10 +13,9 @@
 #include "core/sku_info/operations/sku_info_transfer.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_interface.h"
-#include "runtime/platform/platform.h"
 
 namespace NEO {
-GmmClientContextBase::GmmClientContextBase(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) : destroyFunc(destroyFunc) {
+GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) : destroyFunc(destroyFunc) {
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hwInfo->featureTable);
@@ -31,7 +30,6 @@ GmmClientContextBase::GmmClientContextBase(HardwareInfo *hwInfo, decltype(&Initi
     inArgs.pWaTable = &gmmWaTable;
     inArgs.Platform = hwInfo->platform;
 
-    auto osInterface = platform()->peekExecutionEnvironment()->osInterface.get();
     if (osInterface) {
         osInterface->setGmmInputArgs(&inArgs);
     }

@@ -14,12 +14,13 @@
 namespace NEO {
 class GmmClientContext;
 class OsLibrary;
+class OSInterface;
 struct HardwareInfo;
 
 class GmmHelper {
   public:
     GmmHelper() = delete;
-    GmmHelper(const HardwareInfo *hwInfo);
+    GmmHelper(OSInterface *osInterface, const HardwareInfo *hwInfo);
     MOCKABLE_VIRTUAL ~GmmHelper();
 
     const HardwareInfo *getHardwareInfo();
@@ -39,7 +40,7 @@ class GmmHelper {
 
     GmmClientContext *getClientContext() const;
 
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmDestroy));
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmDestroy));
 
   protected:
     void loadLib();

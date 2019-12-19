@@ -158,7 +158,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         using ExecutionEnvironment::gmmHelper;
     };
     struct GmmHelperMock : public DestructorCounted<GmmHelper, 7> {
-        GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, hwInfo) {}
+        GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
     };
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}

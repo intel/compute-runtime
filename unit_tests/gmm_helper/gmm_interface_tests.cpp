@@ -71,31 +71,31 @@ struct GmmInterfaceTest : public ::testing::Test {
 
 TEST_F(GmmInterfaceTest, givenValidGmmLibWhenCreateGmmHelperThenEverythingWorksFine) {
     std::unique_ptr<GmmHelper> gmmHelper;
-    EXPECT_NO_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)));
+    EXPECT_NO_THROW(gmmHelper.reset(new GmmHelper(nullptr, *platformDevices)));
 }
 
 TEST_F(GmmInterfaceTest, givenInvalidGmmLibNameWhenCreateGmmHelperThenThrowException) {
     std::unique_ptr<GmmHelper> gmmHelper;
     gmmDllNameBackup = "invalidName";
-    EXPECT_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)), std::exception);
+    EXPECT_THROW(gmmHelper.reset(new GmmHelper(nullptr, *platformDevices)), std::exception);
 }
 
 TEST_F(GmmInterfaceTest, givenGmmLibWhenOpenGmmFunctionFailsThenThrowException) {
     std::unique_ptr<GmmHelper> gmmHelper;
     VariableBackup<GMM_STATUS> openGmmReturnValueBackup(&openGmmReturnValue, GMM_ERROR);
-    EXPECT_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)), std::exception);
+    EXPECT_THROW(gmmHelper.reset(new GmmHelper(nullptr, *platformDevices)), std::exception);
 }
 
 TEST_F(GmmInterfaceTest, givenInvalidGmmInitFunctionNameWhenCreateGmmHelperThenThrowException) {
     std::unique_ptr<GmmHelper> gmmHelper;
     gmmInitNameBackup = "invalidName";
-    EXPECT_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)), std::exception);
+    EXPECT_THROW(gmmHelper.reset(new GmmHelper(nullptr, *platformDevices)), std::exception);
 }
 
 TEST_F(GmmInterfaceTest, givenInvalidGmmDestroyFunctionNameWhenCreateGmmHelperThenThrowException) {
     std::unique_ptr<GmmHelper> gmmHelper;
     gmmDestroyNameBackup = "invalidName";
-    EXPECT_THROW(gmmHelper.reset(new GmmHelper(*platformDevices)), std::exception);
+    EXPECT_THROW(gmmHelper.reset(new GmmHelper(nullptr, *platformDevices)), std::exception);
 }
 
 TEST_F(GmmInterfaceTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
@@ -114,7 +114,7 @@ TEST_F(GmmInterfaceTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitialize
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    gmmHelper.reset(new GmmHelper(hwInfo));
+    gmmHelper.reset(new GmmHelper(executionEnvironment->osInterface.get(), hwInfo));
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
     EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
@@ -124,8 +124,6 @@ TEST_F(GmmInterfaceTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitialize
 
 TEST_F(GmmInterfaceTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceThenInitializationDoesntCrashAndProperParametersArePassed) {
     std::unique_ptr<GmmHelper> gmmHelper;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->osInterface.reset();
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
@@ -137,7 +135,7 @@ TEST_F(GmmInterfaceTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInter
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
 
-    gmmHelper.reset(new GmmHelper(hwInfo));
+    gmmHelper.reset(new GmmHelper(nullptr, hwInfo));
     EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
     EXPECT_EQ(&hwInfo->gtSystemInfo, passedInputArgs.pGtSysInfo);
     EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));

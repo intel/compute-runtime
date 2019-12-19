@@ -24,6 +24,6 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
 
   protected:
-    MockGmmClientContextBase(HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFuncs);
+    using GmmClientContext::GmmClientContext;
 };
 } // namespace NEO
