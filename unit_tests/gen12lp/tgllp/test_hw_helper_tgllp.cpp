@@ -18,11 +18,23 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpA0WhenAdjustDefaultEngineTypeCalledTh
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpA0WhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
+TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpBWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
     hardwareInfo.featureTable.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = REVISION_B;
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_CCS, hardwareInfo.capabilityTable.defaultEngineType);
+}
+
+TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenSteppingBellowBThenIntegerDivisionEmulationIsEnabled) {
+    hardwareInfo.platform.usRevId = REVISION_A0;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
+}
+
+TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenSteppingBThenIntegerDivisionEmulationIsEnabled) {
+    hardwareInfo.platform.usRevId = REVISION_B;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }

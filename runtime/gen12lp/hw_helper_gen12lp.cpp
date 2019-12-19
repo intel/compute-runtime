@@ -26,6 +26,11 @@ bool HwHelperHw<Family>::isForceDefaultRCSEngineWARequired(const HardwareInfo &h
 }
 
 template <>
+bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
+    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId < REVISION_B));
+}
+
+template <>
 void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
     if (!pHwInfo->featureTable.ftrCCSNode || isForceDefaultRCSEngineWARequired(*pHwInfo)) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;

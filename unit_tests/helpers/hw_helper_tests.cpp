@@ -797,3 +797,11 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceDefaultRCSEngineWARequir
     }
     EXPECT_FALSE(HwHelperHw<FamilyType>::isForceDefaultRCSEngineWARequired(hardwareInfo));
 }
+
+HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequiredCalledThenFalseIsReturned) {
+    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
+        GTEST_SKIP();
+    }
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
+}

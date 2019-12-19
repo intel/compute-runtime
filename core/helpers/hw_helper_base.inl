@@ -272,4 +272,9 @@ bool HwHelperHw<GfxFamily>::isForceDefaultRCSEngineWARequired(const HardwareInfo
     return false;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
 } // namespace NEO

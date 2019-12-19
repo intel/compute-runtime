@@ -99,6 +99,11 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         if (enableStatelessToStatefullWithOffset) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
         }
+
+        auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        if (hwHelper.isForceEmuInt32DivRemSPWARequired(pDevice->getHardwareInfo())) {
+            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
+        }
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
