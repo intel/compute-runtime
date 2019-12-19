@@ -29,6 +29,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     aub_stream::EngineType &getEngineType() { return engineType; }
     bool isLowPriority() const { return lowPriority; }
+    virtual bool isInitialized() const { return true; }
 
   protected:
     OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)

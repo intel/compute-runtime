@@ -59,6 +59,8 @@ class WddmResidencyController {
     bool makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency);
     void makeNonResidentEvictionAllocations(const ResidencyContainer &evictionAllocations);
 
+    bool isInitialized() const;
+
   protected:
     Wddm &wddm;
     uint32_t osContextId;

@@ -190,6 +190,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
                                                      DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool lowPriority) {
     auto contextId = ++latestContextId;
     auto osContext = OsContext::create(peekExecutionEnvironment().osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+    UNRECOVERABLE_IF(!osContext->isInitialized());
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);

@@ -71,3 +71,4 @@ getSubmitCommandToHwQueueData
 getDestroySynchronizationObjectData
 getMonitorFenceCpuFenceAddress
 getCreateSynchronizationObject2FailCall
+getRegisterTrimNotificationFailCall

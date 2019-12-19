@@ -38,6 +38,10 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield device
     residencyController.registerCallback();
 };
 
+bool OsContextWin::isInitialized() const {
+    return (initialized && residencyController.isInitialized());
+}
+
 OsContextWin::~OsContextWin() {
     wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
     wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());

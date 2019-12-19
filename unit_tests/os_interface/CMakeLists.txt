@@ -11,6 +11,7 @@ set(IGDRCL_SRCS_tests_os_interface_base
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_context_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_tests.cpp

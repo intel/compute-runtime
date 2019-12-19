@@ -32,7 +32,7 @@ class OsContextWin : public OsContext {
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }
     HardwareQueue getHwQueue() const { return hardwareQueue; }
     void setHwQueue(HardwareQueue hardwareQueue) { this->hardwareQueue = hardwareQueue; }
-    bool isInitialized() const { return initialized; }
+    bool isInitialized() const override;
     Wddm *getWddm() const { return &wddm; }
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
 

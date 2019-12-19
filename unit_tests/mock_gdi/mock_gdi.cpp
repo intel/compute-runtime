@@ -407,6 +407,16 @@ NTSTATUS __stdcall D3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYN
     return STATUS_SUCCESS;
 }
 
+static bool registerTrimNotificationFailCall = false;
+
+NTSTATUS __stdcall D3DKMTRegisterTrimNotification(IN D3DKMT_REGISTERTRIMNOTIFICATION *registerTrimNotification) {
+    if (registerTrimNotificationFailCall) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    registerTrimNotification->Handle = TRIM_CALLBACK_HANDLE;
+    return STATUS_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -488,4 +498,8 @@ VOID *getMonitorFenceCpuFenceAddress() {
 
 bool *getCreateSynchronizationObject2FailCall() {
     return &createSynchronizationObject2FailCall;
+}
+
+bool *getRegisterTrimNotificationFailCall() {
+    return &registerTrimNotificationFailCall;
 }

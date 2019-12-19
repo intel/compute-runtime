@@ -383,4 +383,11 @@ void WddmResidencyController::makeNonResidentEvictionAllocations(const Residency
     }
 }
 
+bool WddmResidencyController::isInitialized() const {
+    if (!DebugManager.flags.DoNotRegisterTrimCallback.get()) {
+        return trimCallbackHandle != nullptr;
+    }
+    return true;
+}
+
 } // namespace NEO
