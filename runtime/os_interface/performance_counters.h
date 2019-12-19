@@ -34,9 +34,8 @@ class PerformanceCounters {
     // Performance counters creation.
     //////////////////////////////////////////////////////
     static std::unique_ptr<PerformanceCounters> create(class Device *device);
-    void enable();
+    bool enable(bool ccsEngine);
     void shutdown();
-    bool isAvailable();
     uint32_t getReferenceNumber();
 
     /////////////////////////////////////////////////////
@@ -79,6 +78,7 @@ class PerformanceCounters {
     std::mutex mutex;
     uint32_t referenceCounter = 0;
     bool available = false;
+    bool usingCcsEngine = false;
 
     /////////////////////////////////////////////////////
     // Metrics Library interface.

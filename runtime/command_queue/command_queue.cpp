@@ -8,6 +8,7 @@
 #include "runtime/command_queue/command_queue.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/engine_node_helper.h"
 #include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
@@ -30,6 +31,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/api_intercept.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -298,10 +300,10 @@ bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint conf
         return false;
     }
     auto perfCounters = device->getPerformanceCounters();
+    bool isCcsEngine = isCcs(getGpgpuEngine().osContext->getEngineType());
 
     if (perfCountersEnabled) {
-        perfCounters->enable();
-        if (!perfCounters->isAvailable()) {
+        if (!perfCounters->enable(isCcsEngine)) {
             perfCounters->shutdown();
             return false;
         }

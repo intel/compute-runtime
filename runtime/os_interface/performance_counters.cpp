@@ -30,23 +30,19 @@ uint32_t PerformanceCounters::getReferenceNumber() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCounters::isAvailable
-//////////////////////////////////////////////////////
-bool PerformanceCounters::isAvailable() {
-    return available;
-}
-
-//////////////////////////////////////////////////////
 // PerformanceCounters::enable
 //////////////////////////////////////////////////////
-void PerformanceCounters::enable() {
+bool PerformanceCounters::enable(bool ccsEngine) {
     std::lock_guard<std::mutex> lockMutex(mutex);
 
     if (referenceCounter == 0) {
         available = openMetricsLibrary();
+        this->usingCcsEngine = ccsEngine;
     }
 
     referenceCounter++;
+
+    return available && (this->usingCcsEngine == ccsEngine);
 }
 
 //////////////////////////////////////////////////////

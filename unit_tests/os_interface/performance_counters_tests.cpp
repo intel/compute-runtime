@@ -55,8 +55,6 @@ TEST_F(PerformanceCountersTest, createPerformanceCounters) {
     auto performanceCounters = PerformanceCounters::create(device.get());
     EXPECT_NE(nullptr, performanceCounters);
     EXPECT_NE(nullptr, performanceCounters.get());
-
-    EXPECT_FALSE(performanceCounters->isAvailable());
 }
 
 TEST_F(PerformanceCountersTest, givenPerformanceCountersWhenCreatedThenAllValuesProperlyInitialized) {
@@ -163,9 +161,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(true, true);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Check metric library context.
     auto context = static_cast<MockMetricsLibrary *>(performanceCountersBase->getMetricsLibraryContext().data);
@@ -181,9 +178,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Obtain required command buffer size.
     uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
@@ -201,11 +197,47 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
+TEST_F(PerformanceCountersMetricsLibraryTest, givenInitialNonCcsEngineWhenEnablingThenDontAllowCcsOnNextCalls) {
+    createPerformanceCounters(true, false);
+    EXPECT_NE(nullptr, performanceCountersBase);
+
+    EXPECT_TRUE(performanceCountersBase->enable(false));
+    EXPECT_TRUE(performanceCountersBase->enable(false));
+    EXPECT_FALSE(performanceCountersBase->enable(true));
+
+    performanceCountersBase->shutdown();
+    performanceCountersBase->shutdown();
+    performanceCountersBase->shutdown();
+
+    EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
+
+    EXPECT_TRUE(performanceCountersBase->enable(true));
+    performanceCountersBase->shutdown();
+}
+
+TEST_F(PerformanceCountersMetricsLibraryTest, givenInitialCcsEngineWhenEnablingThenDontAllowNonCcsOnNextCalls) {
+    createPerformanceCounters(true, false);
+    EXPECT_NE(nullptr, performanceCountersBase);
+
+    EXPECT_TRUE(performanceCountersBase->enable(true));
+    EXPECT_TRUE(performanceCountersBase->enable(true));
+    EXPECT_FALSE(performanceCountersBase->enable(false));
+
+    performanceCountersBase->shutdown();
+    performanceCountersBase->shutdown();
+    performanceCountersBase->shutdown();
+
+    EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
+
+    EXPECT_TRUE(performanceCountersBase->enable(false));
+    performanceCountersBase->shutdown();
+}
+
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetricLibraryIsInvalidThenQueryReturnsInvalidGpuCommands) {
     // Create performance counters.
     createPerformanceCounters(false, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(true));
 
     // Obtain required command buffer size.
     uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
@@ -220,9 +252,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(true, true);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Obtain api report size.
     uint32_t apiReportSize = performanceCountersBase->getApiReportSize();
@@ -237,7 +268,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(false, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     // Obtain api report size.
@@ -253,7 +284,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(false, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     // Obtain gpu report size.
@@ -269,9 +300,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(true, true);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Close library.
     performanceCountersBase->shutdown();
@@ -282,9 +312,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(false, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_FALSE(performanceCountersBase->isAvailable());
 
     // Close library.
     performanceCountersBase->shutdown();
@@ -299,9 +328,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     metricsLibraryDll->validContextDelete = false;
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_FALSE(performanceCountersBase->isAvailable());
 
     // Close library.
     performanceCountersBase->shutdown();
@@ -316,9 +344,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     metricsLibraryDll->validContextDelete = false;
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
-    performanceCountersBase->enable();
+    EXPECT_FALSE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_FALSE(performanceCountersBase->isAvailable());
 
     // Close library.
     performanceCountersBase->shutdown();
@@ -329,9 +356,8 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     // Create performance counters.
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    EXPECT_TRUE(performanceCountersBase->isAvailable());
 
     // Obtain required command buffer size.
     uint32_t commandsSize = performanceCountersBase->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Render, true);
@@ -371,9 +397,9 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     createPerformanceCounters(true, true);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(2u, performanceCountersBase->getReferenceNumber());
     performanceCountersBase->shutdown();
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
@@ -388,7 +414,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_NE(nullptr, performanceCountersBase);
 
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
     EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
 
@@ -399,7 +425,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConfigurationIsInvalidThenGpuReportSizeIsInvalid) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
@@ -415,7 +441,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetricsLibraryIsInvalidGpuReportSizeIsInvalid) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
@@ -431,7 +457,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenAllConfigurationsAreValidThenGpuReportSizeIsValid) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
@@ -448,7 +474,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenAllCon
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConfigurationsActivationIsInvalidThenGpuReportSizeIsInvalid) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     auto metricLibraryApi = static_cast<MockMetricsLibraryValidInterface *>(performanceCountersBase->getMetricsLibraryContext().data);
@@ -464,7 +490,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenOaConf
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenCreatingUserConfigurationThenReturnSuccess) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     ConfigurationHandle_1_0 configurationHandle = {};
@@ -480,7 +506,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenCreati
 TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointer) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
 
     ASSERT_NE(nullptr, queue->getPerfCounters());
@@ -504,7 +530,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointe
 TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsValidPointer) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
     ASSERT_NE(nullptr, queue->getPerfCounters());
 
@@ -527,7 +553,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsV
 TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
-    performanceCountersBase->enable();
+    EXPECT_TRUE(performanceCountersBase->enable(false));
     EXPECT_EQ(1u, performanceCountersBase->getReferenceNumber());
     ASSERT_NE(nullptr, queue->getPerfCounters());
 
