@@ -37,7 +37,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
 
     if (alignedPtr) {
         resourceParams.Flags.Info.ExistingSysMem = 1;
-        resourceParams.pExistingSysMem = reinterpret_cast<GMM_VOIDPTR64>(alignedPtr);
+        resourceParams.pExistingSysMem = castToUint64(alignedPtr);
         resourceParams.ExistingSysMemSize = alignedSize;
     } else {
         resourceParams.NoGfxMemory = 1u;

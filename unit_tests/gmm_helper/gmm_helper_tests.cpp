@@ -95,6 +95,15 @@ TEST_F(GmmTests, resourceCleanupOnDelete) {
     mm->freeSystemMemory(pSysMem);
 }
 
+TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedItHasTheSameAddress) {
+    uintptr_t addressWithHighestBitSet = 0xffff0000;
+    auto address = reinterpret_cast<void *>(addressWithHighestBitSet);
+    auto expectedAddress = castToUint64(address);
+
+    std::unique_ptr<Gmm> gmm(new Gmm(address, 4096, false));
+    EXPECT_EQ(gmm->resourceParams.pExistingSysMem, expectedAddress);
+}
+
 TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
     auto maxSize = static_cast<size_t>(GmmHelper::maxPossiblePitch);
 
