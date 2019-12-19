@@ -15,7 +15,6 @@
 #include "core/memory_manager/host_ptr_defines.h"
 #include "core/memory_manager/local_memory_usage.h"
 #include "core/page_fault_manager/cpu_page_fault_manager.h"
-#include "public/cl_ext_private.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/memory_manager/allocation_properties.h"
 

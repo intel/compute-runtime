@@ -17,21 +17,15 @@
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/event/event.h"
-#include "runtime/event/hw_timestamps.h"
-#include "runtime/event/perf_counter.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
-#include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
-#include "runtime/platform/platform.h"
 
 #include <algorithm>
 
