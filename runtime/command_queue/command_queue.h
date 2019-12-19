@@ -375,7 +375,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     PerformanceCounters *getPerfCounters();
 
-    bool setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration);
+    bool setPerfCountersEnabled();
 
     void setIsSpecialCommandQueue(bool newValue) {
         this->isSpecialCommandQueue = newValue;

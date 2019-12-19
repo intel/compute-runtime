@@ -3403,11 +3403,17 @@ clCreatePerfCountersCommandQueueINTEL(
         err.set(CL_INVALID_QUEUE_PROPERTIES);
         return commandQueue;
     }
+
+    if (configuration != 0) {
+        err.set(CL_INVALID_OPERATION);
+        return commandQueue;
+    }
+
     commandQueue = clCreateCommandQueue(context, device, properties, errcodeRet);
     if (commandQueue != nullptr) {
         auto commandQueueObject = castToObjectOrAbort<CommandQueue>(commandQueue);
-        bool ret = commandQueueObject->setPerfCountersEnabled(true, configuration);
-        if (!ret) {
+
+        if (!commandQueueObject->setPerfCountersEnabled()) {
             clReleaseCommandQueue(commandQueue);
             commandQueue = nullptr;
             err.set(CL_OUT_OF_RESOURCES);

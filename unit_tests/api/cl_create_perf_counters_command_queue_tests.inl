@@ -51,9 +51,6 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCre
     auto commandQueueObject = castToObject<CommandQueue>(cmdQ);
     EXPECT_TRUE(commandQueueObject->isPerfCountersEnabled());
 
-    commandQueueObject->setPerfCountersEnabled(false, 0);
-    EXPECT_FALSE(commandQueueObject->isPerfCountersEnabled());
-
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -104,7 +101,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfiguration
     cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
 
     ASSERT_EQ(nullptr, cmdQ);
-    ASSERT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    ASSERT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCreatedThenPerfCountersAreEnabled) {
@@ -162,12 +159,24 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidMetricsLibraryWhe
     metricsLibary->validOpen = false;
     ASSERT_NE(nullptr, metricsLibary);
     EXPECT_TRUE(commandQueueObject->isPerfCountersEnabled());
-    EXPECT_TRUE(commandQueueObject->setPerfCountersEnabled(false, 0));
-    EXPECT_FALSE(commandQueueObject->setPerfCountersEnabled(true, 0));
-    EXPECT_FALSE(commandQueueObject->isPerfCountersEnabled());
 
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, givenInvalidMetricsLibraryWhenCreatingCommandQueueThenReturnError) {
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
+    cl_uint configuration = 0;
+
+    auto performanceCounters = device->getPerformanceCounters();
+
+    auto metricsLibary = static_cast<MockMetricsLibrary *>(performanceCounters->getMetricsLibraryInterface());
+    metricsLibary->validOpen = false;
+
+    cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
+    EXPECT_EQ(nullptr, cmdQ);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
 } // namespace ULT

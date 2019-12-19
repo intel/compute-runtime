@@ -831,10 +831,9 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
     bool ret = false;
-    ret = pCmdQ->setPerfCountersEnabled(true, 0);
+    ret = pCmdQ->setPerfCountersEnabled();
     EXPECT_TRUE(ret);
-    ret = pCmdQ->setPerfCountersEnabled(true, 0);
-    EXPECT_TRUE(ret);
+
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
 
@@ -857,7 +856,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
 HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWhenEnqueuedMarkerThenUseTimeStampNodePerfCounterNode) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-    pCmdQ->setPerfCountersEnabled(true, 0);
+    pCmdQ->setPerfCountersEnabled();
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
     HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
@@ -884,7 +883,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
 TEST_F(InternalsEventWithPerfCountersTest, IsPerfCounter_Enabled) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-    pCmdQ->setPerfCountersEnabled(true, 0);
+    pCmdQ->setPerfCountersEnabled();
     Event *ev = new Event(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     EXPECT_TRUE(ev->isProfilingEnabled());
     EXPECT_TRUE(ev->isPerfCountersEnabled());
@@ -1176,19 +1175,6 @@ TEST_F(InternalsEventTest, IsPerfCounter_DisabledByNoPerfCounter) {
     EXPECT_FALSE(ev->isPerfCountersEnabled());
 
     delete ev;
-    delete pCmdQ;
-}
-
-TEST_F(InternalsEventWithPerfCountersTest, SetPerfCounter_AvailFalse) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-
-    bool ret = false;
-    ret = pCmdQ->setPerfCountersEnabled(true, 0);
-    EXPECT_TRUE(ret);
-    ret = pCmdQ->setPerfCountersEnabled(false, 0);
-    EXPECT_TRUE(ret);
-    performanceCountersBase->shutdown();
     delete pCmdQ;
 }
 

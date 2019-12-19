@@ -289,32 +289,20 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
     this->taskLevel = completionStamp.taskLevel;
 }
 
-bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration) {
+bool CommandQueue::setPerfCountersEnabled() {
     DEBUG_BREAK_IF(device == nullptr);
-    if (perfCountersEnabled == this->perfCountersEnabled) {
-        return true;
-    }
-    // Only dynamic configuration (set 0) is supported.
-    const uint32_t dynamicSet = 0;
-    if (configuration != dynamicSet) {
-        return false;
-    }
+
     auto perfCounters = device->getPerformanceCounters();
     bool isCcsEngine = isCcs(getGpgpuEngine().osContext->getEngineType());
 
-    if (perfCountersEnabled) {
-        if (!perfCounters->enable(isCcsEngine)) {
-            perfCounters->shutdown();
-            return false;
-        }
-    } else {
+    perfCountersEnabled = perfCounters->enable(isCcsEngine);
+
+    if (!perfCountersEnabled) {
         perfCounters->shutdown();
     }
 
-    this->perfCountersEnabled = perfCountersEnabled;
-
-    return true;
-} // namespace NEO
+    return perfCountersEnabled;
+}
 
 PerformanceCounters *CommandQueue::getPerfCounters() {
     return device->getPerformanceCounters();
