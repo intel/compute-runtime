@@ -20,8 +20,7 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN8 {
-#include "core/generated/gen8/hw_cmds_generated.inl"
-#include "core/generated/gen8/hw_cmds_generated_patched.inl"
+#include "core/generated/gen8/hw_cmds_generated_gen8.inl"
 };
 struct BDWFamily : public GEN8 {
     using PARSE = CmdParse<BDWFamily>;

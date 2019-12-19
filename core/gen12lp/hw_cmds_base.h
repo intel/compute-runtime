@@ -20,8 +20,7 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN12LP {
-#include "core/generated/gen12lp/hw_cmds_generated.inl"
-#include "core/generated/gen12lp/hw_cmds_generated_patched.inl"
+#include "core/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (((1 << 0) | (1 << 1)) << 3);
 };
 struct TGLLPFamily : public GEN12LP {
