@@ -53,4 +53,4 @@ make -j`nproc`
 sudo make install
 ```
 
-___(*) Other names and brands my be claimed as property of others.___
+___(*) Other names and brands may be claimed as property of others.___

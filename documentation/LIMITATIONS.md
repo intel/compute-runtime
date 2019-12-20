@@ -33,5 +33,5 @@ _Currently no plan to implement. If interested in these features, please use SRB
 * Driver contains header used in Source Level Debugger from Intel SDK for OpenCL version - 7.0.0.2568x64,
 from: https://software.intel.com/en-us/intel-opencl , path to header in SDK: "include/"
 
-___(*) Other names and brands my be claimed as property of others.___
+___(*) Other names and brands may be claimed as property of others.___
 
