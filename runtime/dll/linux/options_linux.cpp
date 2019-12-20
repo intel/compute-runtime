@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,8 @@ const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *libvaDllName = "libva.so.2";
 const char *gmmDllName = GMM_UMD_DLL;
-const char *gmmInitFuncName = GMM_INIT_NAME;
-const char *gmmDestroyFuncName = GMM_DESTROY_NAME;
+const char *gmmInitFuncName = GMM_ADAPTER_INIT_NAME;
+const char *gmmDestroyFuncName = GMM_ADAPTER_DESTROY_NAME;
 
 const char *sysFsPciPath = "/sys/bus/pci/devices/";
 const char *tbxLibName = "libtbxAccess.so";

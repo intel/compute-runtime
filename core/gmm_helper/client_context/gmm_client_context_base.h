@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static std::unique_ptr<GmmClientContext> create(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc) {
+    static std::unique_ptr<GmmClientContext> create(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc) {
         return std::make_unique<T>(osInterface, hwInfo, initFunc, destroyFunc);
     }
 
@@ -34,7 +34,7 @@ class GmmClientContextBase {
 
   protected:
     GMM_CLIENT_CONTEXT *clientContext;
-    GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmDestroy) destroyFunc);
-    decltype(&GmmDestroy) destroyFunc;
+    GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc);
+    decltype(&GmmAdapterDestroy) destroyFunc;
 };
 } // namespace NEO

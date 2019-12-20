@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class GmmHelper {
 
     GmmClientContext *getClientContext() const;
 
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmDestroy));
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmAdapterDestroy));
 
   protected:
     void loadLib();
@@ -49,6 +49,6 @@ class GmmHelper {
     std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;
     decltype(&InitializeGmm) initGmmFunc;
-    decltype(&GmmDestroy) destroyGmmFunc;
+    decltype(&GmmAdapterDestroy) destroyGmmFunc;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void GmmHelper::loadLib() {
     gmmLib.reset(OsLibrary::load(Os::gmmDllName));
     UNRECOVERABLE_IF(!gmmLib);
     initGmmFunc = reinterpret_cast<decltype(&InitializeGmm)>(gmmLib->getProcAddress(Os::gmmInitFuncName));
-    destroyGmmFunc = reinterpret_cast<decltype(&GmmDestroy)>(gmmLib->getProcAddress(Os::gmmDestroyFuncName));
+    destroyGmmFunc = reinterpret_cast<decltype(&GmmAdapterDestroy)>(gmmLib->getProcAddress(Os::gmmDestroyFuncName));
     UNRECOVERABLE_IF(!initGmmFunc || !destroyGmmFunc);
 }
 } // namespace NEO
