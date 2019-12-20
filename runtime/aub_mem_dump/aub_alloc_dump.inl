@@ -55,9 +55,7 @@ SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat du
         surfaceInfo->surftype = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
         surfaceInfo->compressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAllocation.getAllocationType();
         surfaceInfo->dumpType = (AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? dumpType::tre : dumpType::bin;
-    }
-
-    if (isImageDumpFormat(dumpFormat)) {
+    } else if (isImageDumpFormat(dumpFormat)) {
         auto gmm = gfxAllocation.getDefaultGmm();
         if (gmm->gmmResourceInfo->getNumSamples() > 1) {
             return nullptr;
