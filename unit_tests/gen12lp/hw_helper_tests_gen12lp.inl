@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,11 +69,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabili
         auto &helper = HwHelper::get(renderCoreFamily);
         testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
     }
-}
-
-GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetConfigureAddressSpaceModeThenReturnOne) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(1u, helper.getConfigureAddressSpaceMode());
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {

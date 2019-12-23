@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,11 +47,6 @@ GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenD
 
     auto sipType = helper.getSipKernelType(true);
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
-}
-
-GEN9TEST_F(HwHelperTestGen9, whenGetConfigureAddressSpaceModeThenReturnZero) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getConfigureAddressSpaceMode());
 }
 
 GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,6 @@ GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCal
     EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
     EXPECT_EQ(2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte, hwCaps.maxMemAllocSize);
     EXPECT_FALSE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-}
-
-GEN8TEST_F(HwHelperTestGen8, whenGetConfigureAddressSpaceModeThenReturnZero) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getConfigureAddressSpaceMode());
 }
 
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {

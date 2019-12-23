@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,6 @@ uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const HardwareInfo
 template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
-}
-
-template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getConfigureAddressSpaceMode() {
-    return 0u;
 }
 
 template <typename GfxFamily>

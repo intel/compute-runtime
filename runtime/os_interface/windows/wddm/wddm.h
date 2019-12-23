@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,7 +195,6 @@ class Wddm {
     bool closeAdapter();
     void getDeviceState();
     void handleCompletion(OsContextWin &osContext);
-    bool configureDeviceAddressSpaceImpl();
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;

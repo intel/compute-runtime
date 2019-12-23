@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,11 +40,6 @@ GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIs
 
     // Test default method implementation
     testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
-}
-
-GEN11TEST_F(HwHelperTestGen11, whenGetConfigureAddressSpaceModeThenReturnZero) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getConfigureAddressSpaceMode());
 }
 
 GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,13 +21,17 @@ class GmmMemoryBase {
                                                       GMM_GFX_SIZE_T SvmSize,
                                                       BOOLEAN BDWL3Coherency);
 
-    virtual bool configureDevice(GMM_ESCAPE_HANDLE hAdapter,
-                                 GMM_ESCAPE_HANDLE hDevice,
-                                 GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                 GMM_GFX_SIZE_T SvmSize,
-                                 BOOLEAN BDWL3Coherency,
-                                 GMM_GFX_PARTITIONING &gfxPartition,
-                                 uintptr_t &minAddress);
+    bool configureDevice(GMM_ESCAPE_HANDLE hAdapter,
+                         GMM_ESCAPE_HANDLE hDevice,
+                         GMM_ESCAPE_FUNC_TYPE pfnEscape,
+                         GMM_GFX_SIZE_T SvmSize,
+                         BOOLEAN BDWL3Coherency,
+                         uintptr_t &minAddress,
+                         bool obtainMinAddress);
+
+    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
+
+    MOCKABLE_VIRTUAL bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
 
   protected:
     GmmMemoryBase();

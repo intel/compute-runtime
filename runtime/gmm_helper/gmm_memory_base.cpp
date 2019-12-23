@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,9 +39,22 @@ bool GmmMemoryBase::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
                                     GMM_ESCAPE_FUNC_TYPE pfnEscape,
                                     GMM_GFX_SIZE_T SvmSize,
                                     BOOLEAN BDWL3Coherency,
-                                    GMM_GFX_PARTITIONING &gfxPartition,
-                                    uintptr_t &minAddress) {
+                                    uintptr_t &minAddress,
+                                    bool obtainMinAddress) {
     minAddress = windowsMinAddress;
-    return configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, SvmSize, BDWL3Coherency);
+    auto retVal = configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, SvmSize, BDWL3Coherency);
+    if (obtainMinAddress) {
+        minAddress = getInternalGpuVaRangeLimit();
+    }
+    return retVal;
+}
+uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
+    return static_cast<uintptr_t>(clientContext->GetInternalGpuVaRangeLimit());
+}
+
+bool GmmMemoryBase::setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
+    auto status = clientContext->GmmSetDeviceInfo(deviceInfo);
+    DEBUG_BREAK_IF(status != GMM_SUCCESS);
+    return GMM_SUCCESS == status;
 }
 }; // namespace NEO

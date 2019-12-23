@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,6 @@ class HwHelper {
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
-    virtual uint32_t getConfigureAddressSpaceMode() = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
@@ -133,8 +132,6 @@ class HwHelperHw : public HwHelper {
     bool isL3Configurable(const HardwareInfo &hwInfo) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) override;
-
-    uint32_t getConfigureAddressSpaceMode() override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 

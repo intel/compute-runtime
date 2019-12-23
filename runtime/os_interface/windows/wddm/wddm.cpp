@@ -21,6 +21,7 @@
 #include "core/utilities/stackvec.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/windows/gmm_callbacks.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
@@ -938,7 +939,37 @@ int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
     return virtualFreeFnc(ptr, size, flags);
 }
 
-bool Wddm::configureDeviceAddressSpaceImpl() {
+long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
+    return notifyAubCaptureImpl(csrHandle, gfxAddress, gfxSize, allocate);
+}
+bool Wddm::configureDeviceAddressSpace() {
+    GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
+    deviceCallbacks.Adapter.KmtHandle = adapter;
+    deviceCallbacks.hCsr = nullptr;
+    deviceCallbacks.hDevice.KmtHandle = device;
+    deviceCallbacks.PagingQueue = pagingQueue;
+    deviceCallbacks.PagingFence = pagingQueueSyncObject;
+
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate = gdi->createAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate = gdi->destroyAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = gdi->mapGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident = gdi->makeResident;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEvict = gdi->evict;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = gdi->reserveGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA = gdi->updateGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu = gdi->waitForSynchronizationObjectFromCpu;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnLock = gdi->lock2;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock = gdi->unlock2;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape = gdi->escape;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = gdi->freeGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCapture;
+
+    GMM_DEVICE_INFO deviceInfo{};
+    deviceInfo.pGfxPartition = &gfxPartition;
+    deviceInfo.pDeviceCb = &deviceCallbacks;
+    if (!gmmMemory->setDeviceInfo(&deviceInfo)) {
+        return false;
+    }
     SYSTEM_INFO sysInfo;
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
@@ -950,7 +981,8 @@ bool Wddm::configureDeviceAddressSpaceImpl() {
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, gfxPartition, minAddress);
+    bool obtainMinAddress = gfxPlatform->eRenderCoreFamily == IGFX_GEN12LP_CORE;
+    return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, minAddress, obtainMinAddress);
 }
 
 void Wddm::waitOnPagingFenceFromCpu() {

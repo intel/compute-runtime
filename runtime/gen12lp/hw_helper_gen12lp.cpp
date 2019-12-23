@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,11 +43,6 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.
      This is required to allocate enough scratch space. */
     return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
-}
-
-template <>
-uint32_t HwHelperHw<Family>::getConfigureAddressSpaceMode() {
-    return 1u;
 }
 
 template <>

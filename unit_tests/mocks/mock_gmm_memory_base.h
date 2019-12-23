@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,13 +26,37 @@ class MockGmmMemoryBase : public GmmMemory {
                                      BOOLEAN BDWL3Coherency) override {
         return true;
     }
+
+    uintptr_t getInternalGpuVaRangeLimit() override {
+        return NEO::windowsMinAddress;
+    }
+
+    bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override {
+        partition = deviceInfo->pGfxPartition;
+        deviceCallbacks = *deviceInfo->pDeviceCb;
+        return setDeviceInfoValue;
+    }
+
+    GMM_GFX_PARTITIONING *partition = nullptr;
+    bool setDeviceInfoValue = true;
+    GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
 };
 
 class GmockGmmMemoryBase : public GmmMemory {
   public:
     ~GmockGmmMemoryBase() = default;
 
-    GmockGmmMemoryBase() = default;
+    GmockGmmMemoryBase() {
+        ON_CALL(*this, getInternalGpuVaRangeLimit())
+            .WillByDefault(::testing::Return(NEO::windowsMinAddress));
+
+        ON_CALL(*this, setDeviceInfo(::testing::_))
+            .WillByDefault(::testing::Return(true));
+    }
+
+    MOCK_METHOD0(getInternalGpuVaRangeLimit, uintptr_t());
+
+    MOCK_METHOD1(setDeviceInfo, bool(GMM_DEVICE_INFO *));
 
     MOCK_METHOD5(configureDeviceAddressSpace,
                  bool(GMM_ESCAPE_HANDLE hAdapter,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1135,4 +1135,81 @@ TEST_F(Wddm20WithMockGdiDllTests, WhenDestroyingSeparateMonitorFenceThenExpectGd
     wddmMockInterface->destroyMonitorFence(monitorFence);
 
     EXPECT_EQ(monitorFence.fenceHandle, getDestroySynchronizationObjectDataFcn()->hSyncObject);
+}
+namespace NEO {
+long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksArePassedToGmmMemory) {
+    GMM_DEVICE_CALLBACKS_INT expectedDeviceCb{};
+    auto hwInfoMock = *platformDevices[0];
+    wddm->init(hwInfoMock);
+    auto gdi = wddm->getGdi();
+    auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
+
+    expectedDeviceCb.Adapter.KmtHandle = wddm->getAdapter();
+    expectedDeviceCb.hDevice.KmtHandle = wddm->getDevice();
+    expectedDeviceCb.hCsr = nullptr;
+    expectedDeviceCb.PagingQueue = wddm->getPagingQueue();
+    expectedDeviceCb.PagingFence = wddm->getPagingQueueSyncObject();
+
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate = gdi->createAllocation;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate = gdi->destroyAllocation;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = gdi->mapGpuVirtualAddress;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident = gdi->makeResident;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEvict = gdi->evict;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = gdi->reserveGpuVirtualAddress;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA = gdi->updateGpuVirtualAddress;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu = gdi->waitForSynchronizationObjectFromCpu;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock = gdi->lock2;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock = gdi->unlock2;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape = gdi->escape;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = gdi->freeGpuVirtualAddress;
+    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCapture;
+
+    EXPECT_TRUE(memcmp(&expectedDeviceCb, &gmmMemory->deviceCallbacks, sizeof(GMM_DEVICE_CALLBACKS_INT)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDeviceCb.Adapter, &gmmMemory->deviceCallbacks.Adapter, sizeof(GMM_HANDLE_EXT)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDeviceCb.hDevice, &gmmMemory->deviceCallbacks.hDevice, sizeof(GMM_HANDLE_EXT)) == 0);
+    EXPECT_TRUE(memcmp(&expectedDeviceCb.DevCbPtrs.KmtCbPtrs, &gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs, sizeof(GMM_DEVICE_CB_PTRS::KmtCbPtrs)) == 0);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
+
+    auto gmockGmmMemory = new ::testing::NiceMock<GmockGmmMemory>();
+    ON_CALL(*gmockGmmMemory, setDeviceInfo(::testing::_))
+        .WillByDefault(::testing::Return(false));
+    EXPECT_CALL(*gmockGmmMemory, configureDeviceAddressSpace(::testing::_,
+                                                             ::testing::_,
+                                                             ::testing::_,
+                                                             ::testing::_,
+                                                             ::testing::_))
+        .Times(0);
+
+    wddm->gmmMemory.reset(gmockGmmMemory);
+
+    auto hwInfoMock = *platformDevices[0];
+    wddm->init(hwInfoMock);
+}
+
+HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAddressSpaceThenDontObtainMinAddress) {
+    if (platformDevices[0]->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
+        GTEST_SKIP();
+    }
+    auto gmmMemory = new ::testing::NiceMock<GmockGmmMemory>();
+    wddm->gmmMemory.reset(gmmMemory);
+    ON_CALL(*gmmMemory, configureDeviceAddressSpace(::testing::_,
+                                                    ::testing::_,
+                                                    ::testing::_,
+                                                    ::testing::_,
+                                                    ::testing::_))
+        .WillByDefault(::testing::Return(true));
+
+    EXPECT_CALL(*gmmMemory,
+                getInternalGpuVaRangeLimit())
+        .Times(0);
+
+    auto hwInfoMock = *platformDevices[0];
+    wddm->init(hwInfoMock);
+
+    EXPECT_EQ(NEO::windowsMinAddress, wddm->getWddmMinAddress());
 }
