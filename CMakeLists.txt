@@ -858,7 +858,7 @@ else()
     endif()
 endif()
 
-if(DEFAULT_TESTED_PLATFORM)
+if(DEFAULT_TESTED_PLATFORM AND NOT SKIP_NEO_UNIT_TESTS)
   add_subdirectory_unique(unit_tests ${NEO_BUILD_DIR}/unit_tests)
 else()
   hide_subdir(unit_tests)
