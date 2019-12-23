@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> IOQ;
 
-TEST_F(IOQ, enqueueKernel_increasesTaskLevel) {
+TEST_F(IOQ, WhenEnqueueingKernelThenTaskLevelIsIncremented) {
     auto previousTaskLevel = pCmdQ->taskLevel;
 
     EnqueueKernelHelper<>::enqueueKernel(
@@ -21,24 +21,24 @@ TEST_F(IOQ, enqueueKernel_increasesTaskLevel) {
     EXPECT_LT(previousTaskLevel, pCmdQ->taskLevel);
 }
 
-TEST_F(IOQ, enqueueFillBuffer_increasesTaskLevel) {
+TEST_F(IOQ, WhenFillingBufferThenTaskLevelIsIncremented) {
     auto previousTaskLevel = pCmdQ->taskLevel;
 
     EnqueueFillBufferHelper<>::enqueue(pCmdQ);
     EXPECT_LT(previousTaskLevel, pCmdQ->taskLevel);
 }
 
-TEST_F(IOQ, enqueueReadBuffer_increasesTaskLevel) {
+TEST_F(IOQ, WhenReadingBufferThenTaskLevelIsIncremented) {
     auto previousTaskLevel = pCmdQ->taskLevel;
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // task level is not increased if doing cpu copy
     EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, buffer.get());
 
     EXPECT_LT(previousTaskLevel, pCmdQ->taskLevel);
 }
 
-TEST_F(IOQ, enqueueKernel_changesTaskCount) {
+TEST_F(IOQ, WhenEnqueueingKernelThenTaskCountIsIncremented) {
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
@@ -48,7 +48,7 @@ TEST_F(IOQ, enqueueKernel_changesTaskCount) {
     EXPECT_EQ(pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
 }
 
-TEST_F(IOQ, enqueueFillBuffer_changesTaskCount) {
+TEST_F(IOQ, WhenFillingBufferThenTaskCountIsIncremented) {
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
@@ -57,18 +57,18 @@ TEST_F(IOQ, enqueueFillBuffer_changesTaskCount) {
     EXPECT_LE(pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
 }
 
-TEST_F(IOQ, enqueueReadBuffer_changesTaskCount) {
+TEST_F(IOQ, WhenReadingBufferThenTaskCountIsIncremented) {
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    buffer->forceDisallowCPUCopy = true; // no task count incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // task level is not increased if doing cpu copy
     EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, buffer.get());
     EXPECT_LT(previousTaskCount, commandStreamReceiver.peekTaskCount());
     EXPECT_LE(pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
 }
 
-TEST_F(IOQ, enqueueReadBuffer_blockingAndNonBlockedOnUserEvent) {
+TEST_F(IOQ, GivenUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncremented) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
@@ -83,7 +83,7 @@ TEST_F(IOQ, enqueueReadBuffer_blockingAndNonBlockedOnUserEvent) {
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    buffer->forceDisallowCPUCopy = true; // no task level incrasing when cpu copy
+    buffer->forceDisallowCPUCopy = true; // task level is not increased if doing cpu copy
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
                                                           CL_TRUE,
