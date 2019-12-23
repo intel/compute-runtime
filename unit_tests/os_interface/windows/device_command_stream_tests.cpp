@@ -872,7 +872,7 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
     EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
-    EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
+    EXPECT_EQ(&mockWddmCsr, mockMngr->csrHandle);
 
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
     unsigned int expectedFlags = TT_TYPE::AUXTT;

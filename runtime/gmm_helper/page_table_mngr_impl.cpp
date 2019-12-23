@@ -31,10 +31,15 @@ bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
 
 void GmmPageTableMngr::initPageTableManagerRegisters() {
     if (!initialized) {
-        initContextAuxTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+        initContextAuxTableRegister(csrHandle, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
 
         initialized = true;
     }
+}
+
+void GmmPageTableMngr::setCsrHandle(void *csrHandleIn) {
+    csrHandle = csrHandleIn;
+    gmmSetCsrHandleFunc(pageTableManager, csrHandle);
 }
 
 } // namespace NEO

@@ -12,10 +12,12 @@
 #include "gmm_client_context.h"
 
 namespace NEO {
+
+void gmmSetCsrHandle(GMM_PAGETABLE_MGR *pageTableManager, HANDLE csrHandle) {
+}
+
 GmmPageTableMngr::GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
     clientContext = platform()->peekGmmClientContext()->getHandle();
     pageTableManager = clientContext->CreatePageTblMgrObject(translationTableFlags);
 }
-
-void GmmPageTableMngr::setCsrHandle(void *csrHandle) {}
 } // namespace NEO

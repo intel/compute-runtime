@@ -1397,7 +1397,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenInitia
     auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[1];
 
     MockGmmPageTableMngr *mockMngr = static_cast<MockGmmPageTableMngr *>(rootDeviceEnvironment->pageTableManager.get());
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(::testing::_, ::testing::_)).Times(1);
+    auto csrHandle = reinterpret_cast<void *>(0x1234);
+    mockMngr->setCsrHandle(csrHandle);
+    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(csrHandle, ::testing::_)).Times(1);
 
     EXPECT_FALSE(rootDeviceEnvironment->pageTableManager->initialized);
     LinearStream linearStream = {};

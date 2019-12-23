@@ -16,16 +16,20 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
+void dummySetCsrHandle(GMM_PAGETABLE_MGR *, HANDLE);
+
 namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
-    MockGmmPageTableMngr() = default;
+    using GmmPageTableMngr::csrHandle;
+    MockGmmPageTableMngr() : MockGmmPageTableMngr(0u, nullptr){};
 
     MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
         : translationTableFlags(translationTableFlags) {
         if (translationTableCb) {
             this->translationTableCb = *translationTableCb;
         }
+        gmmSetCsrHandleFunc = dummySetCsrHandle;
     };
 
     MOCK_METHOD2(initContextAuxTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
@@ -35,7 +39,6 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     void setCsrHandle(void *csrHandle) override;
 
     uint32_t setCsrHanleCalled = 0;
-    void *passedCsrHandle = nullptr;
 
     unsigned int translationTableFlags = 0;
     GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};

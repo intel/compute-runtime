@@ -16,6 +16,8 @@
 namespace NEO {
 class Gmm;
 class LinearStream;
+
+void gmmSetCsrHandle(GMM_PAGETABLE_MGR *pageTableManager, HANDLE csrHandle);
 class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
@@ -43,5 +45,7 @@ class GmmPageTableMngr {
     GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
+    decltype(&gmmSetCsrHandle) gmmSetCsrHandleFunc = gmmSetCsrHandle;
+    void *csrHandle = nullptr;
 };
 } // namespace NEO

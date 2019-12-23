@@ -7,6 +7,8 @@
 
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 
+void dummySetCsrHandle(GMM_PAGETABLE_MGR *, HANDLE){};
+
 namespace NEO {
 using namespace ::testing;
 
@@ -17,7 +19,7 @@ GmmPageTableMngr *GmmPageTableMngr::create(unsigned int translationTableFlags, G
     return pageTableMngr;
 }
 void MockGmmPageTableMngr::setCsrHandle(void *csrHandle) {
-    passedCsrHandle = csrHandle;
+    GmmPageTableMngr::setCsrHandle(csrHandle);
     setCsrHanleCalled++;
 }
 } // namespace NEO
