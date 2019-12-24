@@ -15,11 +15,16 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace NEO {
-constexpr size_t ApiFixture::numRootDevices;
+constexpr uint32_t ApiFixture::numRootDevices;
+constexpr uint32_t ApiFixture::testedRootDeviceIndex;
+ApiFixture::ApiFixture() = default;
+ApiFixture::~ApiFixture() = default;
 void ApiFixture::SetUp() {
     numDevicesBackup = numRootDevices;
     PlatformFixture::SetUp();
 
+    EXPECT_LT(0u, testedRootDeviceIndex);
+    rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
     auto pDevice = pPlatform->getDevice(testedRootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
 
@@ -40,7 +45,7 @@ void ApiFixture::TearDown() {
     pCommandQueue->release();
     pContext->release();
     pProgram->release();
-
+    rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
     PlatformFixture::TearDown();
 }
 

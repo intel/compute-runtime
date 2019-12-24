@@ -48,6 +48,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/transfer_properties_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_limits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp

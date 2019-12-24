@@ -12,6 +12,7 @@
 #include "runtime/context/context.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/kernel_info.h"
+#include "unit_tests/helpers/ult_limits.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
@@ -46,7 +47,7 @@ void GlobalMockSipProgram::initSipProgram() {
     cl_int retVal = 0;
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
     executionEnvironment.setHwInfo(*platformDevices);
-    executionEnvironment.prepareRootDeviceEnvironments(1u);
+    executionEnvironment.prepareRootDeviceEnvironments(maxRootDeviceCount);
     executionEnvironment.calculateMaxOsContextCount();
     sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
                                                                     nullptr,

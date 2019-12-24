@@ -10,6 +10,7 @@
 #include "runtime/tracing/tracing_api.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/helpers/ult_limits.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"
@@ -26,7 +27,10 @@ class MockAlignedMallocManagerDevice;
 struct RootDeviceEnvironment;
 extern size_t numPlatformDevices;
 
-struct ApiFixture : public PlatformFixture {
+struct ApiFixture : PlatformFixture {
+    ApiFixture();
+    ~ApiFixture();
+
     virtual void SetUp();
     virtual void TearDown();
 
@@ -37,10 +41,11 @@ struct ApiFixture : public PlatformFixture {
     Context *pContext = nullptr;
     MockKernel *pKernel = nullptr;
     MockProgram *pProgram = nullptr;
-    constexpr static size_t numRootDevices = 1u;
+    constexpr static uint32_t numRootDevices = maxRootDeviceCount;
+    constexpr static uint32_t testedRootDeviceIndex = 1u;
     VariableBackup<size_t> numDevicesBackup{&numPlatformDevices};
-    const uint32_t testedRootDeviceIndex = 0u;
     cl_device_id testedClDevice = nullptr;
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };
 
 struct api_tests : public ApiFixture,
