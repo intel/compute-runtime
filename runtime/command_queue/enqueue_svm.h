@@ -264,7 +264,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
                                         eventWaitList,
                                         retEvent);
 
-    auto eventObject = castToObject<Event>(*retEvent);
+    auto eventObject = castToObjectOrAbort<Event>(*retEvent);
     eventObject->addCallback(freeSvmEventClb, CL_COMPLETE, pFreeData);
 
     return CL_SUCCESS;
