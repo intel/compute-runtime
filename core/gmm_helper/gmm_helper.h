@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/gmm_helper/gmm_lib.h"
+#include "core/helpers/basic_math.h"
 #include "core/memory_manager/memory_constants.h"
 
 #include <memory>
@@ -28,14 +29,12 @@ class GmmHelper {
 
     static constexpr uint64_t maxPossiblePitch = 2147483648;
 
-    template <uint8_t addressWidth = 48>
     static uint64_t canonize(uint64_t address) {
-        return ((int64_t)(address << (64 - addressWidth))) >> (64 - addressWidth);
+        return static_cast<int64_t>(address << (64 - GmmHelper::addressWidth)) >> (64 - GmmHelper::addressWidth);
     }
 
-    template <uint8_t addressWidth = 48>
     static uint64_t decanonize(uint64_t address) {
-        return (address & maxNBitValue(addressWidth));
+        return (address & maxNBitValue(GmmHelper::addressWidth));
     }
 
     GmmClientContext *getClientContext() const;
@@ -45,6 +44,7 @@ class GmmHelper {
   protected:
     void loadLib();
 
+    static uint32_t addressWidth;
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;

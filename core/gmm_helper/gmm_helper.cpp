@@ -15,7 +15,11 @@
 
 #include "gmm_client_context.h"
 
+#include <algorithm>
+
 namespace NEO {
+
+uint32_t GmmHelper::addressWidth = 48;
 
 GmmClientContext *GmmHelper::getClientContext() const {
     return gmmClientContext.get();
@@ -33,6 +37,8 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
 
 GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     loadLib();
+    auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
+    GmmHelper::addressWidth = std::max(hwInfoAddressWidth, GmmHelper::addressWidth);
     gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo), this->initGmmFunc, this->destroyGmmFunc);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
