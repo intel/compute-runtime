@@ -52,6 +52,7 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
         if (hwInfo) {
             setHwInfo(hwInfo);
         }
+        calculateMaxOsContextCount();
     }
 };
 

@@ -40,6 +40,7 @@ bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvir
     if (overrideDeviceWithDefaultHardwareInfo) {
         numDevicesReturned = numPlatformDevices;
         executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numDevicesReturned));
+        executionEnvironment.calculateMaxOsContextCount();
         return getDevicesResult;
     }
 

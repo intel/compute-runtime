@@ -47,6 +47,7 @@ void GlobalMockSipProgram::initSipProgram() {
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
     executionEnvironment.setHwInfo(*platformDevices);
     executionEnvironment.prepareRootDeviceEnvironments(1u);
+    executionEnvironment.calculateMaxOsContextCount();
     sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
                                                                     nullptr,
                                                                     binary.data(),

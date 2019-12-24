@@ -230,6 +230,7 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     bool hasRootCsr = subDevicesCount > 1;
 
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
+    executionEnvironment.calculateMaxOsContextCount();
 
     auto expectedOsContextCount = numRootDevices * osContextCount * subDevicesCount + hasRootCsr;
     EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);

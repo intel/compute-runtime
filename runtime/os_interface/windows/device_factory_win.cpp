@@ -35,6 +35,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     if (!wddm->init(*hardwareInfo)) {
         return false;
     }
+    executionEnvironment.calculateMaxOsContextCount();
 
     executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
     executionEnvironment.osInterface = std::make_unique<OSInterface>();

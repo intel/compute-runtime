@@ -126,6 +126,5 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
             rootDeviceEnvironments[rootDeviceIndex] = std::make_unique<RootDeviceEnvironment>(*this);
         }
     }
-    calculateMaxOsContextCount();
 }
 } // namespace NEO

@@ -46,6 +46,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
+    executionEnvironment.calculateMaxOsContextCount();
     numDevices = numRootDevices;
     DeviceFactory::numDevices = numDevices;
     auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();

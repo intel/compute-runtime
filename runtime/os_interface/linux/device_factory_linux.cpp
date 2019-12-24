@@ -43,6 +43,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.osInterface.get())) {
         return false;
     }
+    executionEnvironment.calculateMaxOsContextCount();
 
     numDevices = numRootDevices;
     DeviceFactory::numDevices = numDevices;
