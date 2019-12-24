@@ -25,7 +25,7 @@ class DrmMock : public Drm {
     using Drm::engineInfo;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
-    using Drm::nonPersistentSupported;
+    using Drm::nonPersistentContextsSupported;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::sliceCountChangeSupported;
@@ -87,6 +87,7 @@ class DrmMock : public Drm {
     int StoredDeviceRevID = 1;
     int StoredHasPooledEU = 1;
     int StoredMinEUinPool = 1;
+    int StoredPersistentContextsSupport = 1;
     int StoredRetVal = 0;
     int StoredRetValForGetGttSize = 0;
     int StoredRetValForGetSSEU = 0;

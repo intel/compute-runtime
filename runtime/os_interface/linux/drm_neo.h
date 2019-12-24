@@ -62,13 +62,13 @@ class Drm {
 
     int queryGttSize(uint64_t &gttSizeOutput);
     bool isPreemptionSupported() const { return preemptionSupported; }
-    bool isNonPersistentSupported() const { return nonPersistentSupported; }
+
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     int getFileDescriptor() const { return fd; }
     uint32_t createDrmContext();
     void destroyDrmContext(uint32_t drmContextId);
     void setLowPriorityContextParam(uint32_t drmContextId);
-    void setNonPersistent(uint32_t drmContextId);
+
     unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType);
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
@@ -80,7 +80,10 @@ class Drm {
     bool queryEngineInfo();
     bool queryMemoryInfo();
     int setupHardwareInfo(DeviceDescriptor *, bool);
-    void checkNonPersistentSupport();
+
+    bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
+    void checkNonPersistentContextsSupport();
+    void setNonPersistentContext(uint32_t drmContextId);
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
@@ -94,7 +97,7 @@ class Drm {
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
-    bool nonPersistentSupported = false;
+    bool nonPersistentContextsSupported = false;
     int fd;
     int deviceId = 0;
     int revisionId = 0;

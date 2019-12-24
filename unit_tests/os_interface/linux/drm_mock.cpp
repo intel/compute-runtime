@@ -104,6 +104,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             return this->StoredRetValForGetSSEU;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
+            static_cast<drm_i915_gem_context_param *>(arg)->value = this->StoredPersistentContextsSupport;
             return this->StoredRetValForPersistant;
         }
     }
