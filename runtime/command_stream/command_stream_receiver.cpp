@@ -8,9 +8,10 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/cache_policy.h"
+#include "core/helpers/hw_helper.h"
 #include "core/helpers/string.h"
-#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/scratch_space_controller.h"
@@ -445,9 +446,22 @@ TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketA
 cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
                                            size_t length, uint32_t compareOperation) {
     auto isMemoryEqual = (memcmp(gfxAddress, srcAddress, length) == 0);
-    auto isEqualMemoryExpected = (compareOperation == CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+    auto isEqualMemoryExpected = (compareOperation == AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
 
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
+}
+
+bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineType) const {
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+    if (engineType != defaultEngineType) {
+        return false;
+    }
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+    if (rootDeviceEnvironment->pageTableManager.get() != nullptr) {
+        return false;
+    }
+    return HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
 }
 
 } // namespace NEO

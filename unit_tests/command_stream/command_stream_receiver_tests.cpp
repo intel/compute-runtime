@@ -8,11 +8,12 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/helpers/cache_policy.h"
+#include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/scratch_space_controller.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -388,8 +389,8 @@ TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThe
     uint8_t setB1[setSize] = {40, 15, 3, 11, 17, 4};
     uint8_t setB2[setSize] = {40, 15, 3, 11, 17, 4};
 
-    constexpr auto compareEqual = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
-    constexpr auto compareNotEqual = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
+    constexpr auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    constexpr auto compareNotEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
 
     EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setA1, setA2, setSize, compareEqual));
     EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setB1, setB2, setSize, compareEqual));
@@ -746,4 +747,42 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, commandStreamGraphicsAllocation
     EXPECT_TRUE(commandStreamReceiver->createAllocationForHostSurface(surface, false));
     ASSERT_NE(nullptr, surface.getAllocation());
     EXPECT_EQ(expectedRootDeviceIndex, surface.getAllocation()->getRootDeviceIndex());
+}
+
+using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+    auto engineType = aub_stream::EngineType::ENGINE_BCS;
+    EXPECT_NE(defaultEngineType, engineType);
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineType));
+}
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+
+    GmmPageTableMngr *dummyPageTableManager = reinterpret_cast<GmmPageTableMngr *>(0x1234);
+
+    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.reset(dummyPageTableManager);
+    EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(defaultEngineType));
+    executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.release();
+}
+
+TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndNonExisitingPageTableManagerWhenNeedsPageTableManagerIsCalledThenSupportOfPageTableManagerIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(*hwInfo);
+    bool supportsPageTableManager = HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
+
+    EXPECT_EQ(supportsPageTableManager, commandStreamReceiver.needsPageTableManager(defaultEngineType));
 }

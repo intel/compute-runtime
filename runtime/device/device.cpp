@@ -147,7 +147,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     if (!commandStreamReceiver) {
         return false;
     }
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isPageTableManagerSupported(hwInfo)) {
+    if (commandStreamReceiver->needsPageTableManager(engineType)) {
         commandStreamReceiver->createPageTableManager();
     }
 
