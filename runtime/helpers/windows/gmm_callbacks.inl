@@ -7,7 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/windows/gmm_callbacks.h"
 
 #include <cstdint>
 

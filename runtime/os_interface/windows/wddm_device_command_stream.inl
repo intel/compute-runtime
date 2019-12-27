@@ -16,7 +16,7 @@
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/flush_stamp.h"
-#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/windows/gmm_callbacks.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"

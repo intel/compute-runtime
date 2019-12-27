@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/windows/gmm_callbacks.h"
 #include "test.h"
 
 using namespace NEO;

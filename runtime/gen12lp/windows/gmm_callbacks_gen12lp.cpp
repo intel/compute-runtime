@@ -6,7 +6,7 @@
  */
 
 #include "core/gen12lp/hw_cmds.h"
-#include "runtime/helpers/gmm_callbacks_tgllp_plus.inl"
+#include "runtime/helpers/windows/gmm_callbacks_tgllp_plus.inl"
 
 using namespace NEO;
 

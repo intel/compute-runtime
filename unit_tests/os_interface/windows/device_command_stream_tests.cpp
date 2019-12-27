@@ -16,7 +16,7 @@
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/flush_stamp.h"
-#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/windows/gmm_callbacks.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
