@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -74,7 +74,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
-  ${NEO_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr_impl.cpp
+  ${NEO_SOURCE_DIR}/core/gmm_helper/page_table_mngr_impl.cpp
 )
 
 if(WIN32)
@@ -98,7 +98,7 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
-    ${NEO_SOURCE_DIR}/runtime/os_interface/linux/page_table_manager_functions.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/page_table_manager_functions.cpp
   )
 endif()
 

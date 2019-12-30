@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/command_stream/preemption.h"
+#include "core/helpers/engine_control.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue.h"
@@ -14,7 +15,6 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/program/printf_handler.h"

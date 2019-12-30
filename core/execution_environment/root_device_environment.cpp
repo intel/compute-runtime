@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "core/execution_environment/root_device_environment.h"
 
+#include "core/gmm_helper/page_table_mngr.h"
 #include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace NEO {
 

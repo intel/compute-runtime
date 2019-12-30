@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,11 +11,7 @@ set(RUNTIME_SRCS_GMM_HELPER_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/resource_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/gmm_utils.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr_impl.cpp
 )
 
 set(RUNTIME_SRCS_GMM_HELPER_WINDOWS

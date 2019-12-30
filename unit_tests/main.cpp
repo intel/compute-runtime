@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/resource_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/memory_leak_listener.h"
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/custom_event_listener.h"

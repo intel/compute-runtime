@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/gmm_helper/resource_info.h"
+#include "core/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
 
 #include "gmock/gmock.h"

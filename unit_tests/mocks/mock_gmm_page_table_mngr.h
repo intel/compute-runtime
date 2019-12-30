@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/gmm_helper/page_table_mngr.h"
+#include "core/gmm_helper/page_table_mngr.h"
 
 #include "gmock/gmock.h"
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -48,7 +48,7 @@ target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(igdrcl_aub_tests PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/page_fault_manager/default_asan_options.cpp
-  ${NEO_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
+  ${NEO_SOURCE_DIR}/core/gmm_helper/resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 

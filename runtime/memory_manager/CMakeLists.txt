@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,6 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/allocation_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_memory_sync.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion.h

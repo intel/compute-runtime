@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 #pragma warning(disable : 4005)
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/windows/gmm_callbacks.h"
 #include "runtime/mem_obj/mem_obj.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #pragma once
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/gmm_helper/resource_info.h"
 #include "core/helpers/options.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/gmm_helper/resource_info.h"
 
 using namespace NEO;
 

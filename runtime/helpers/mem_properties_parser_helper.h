@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 #include "common/helpers/bit_helpers.h"
+#include "core/memory_manager/allocation_properties.h"
 #include "public/cl_ext_private.h"
-#include "runtime/memory_manager/allocation_properties.h"
 
 #include "memory_properties_flags.h"
 

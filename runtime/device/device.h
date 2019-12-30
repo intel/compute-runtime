@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #pragma once
 #include "core/helpers/common_types.h"
+#include "core/helpers/engine_control.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/engine_control.h"
 #include "runtime/os_interface/performance_counters.h"
 
 #include "engine_node.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/preamble.h"
 #include "core/memory_manager/residency.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_allocation.h"

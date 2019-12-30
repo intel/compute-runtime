@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,7 +25,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
