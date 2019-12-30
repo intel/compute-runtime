@@ -15,6 +15,7 @@
 namespace NEO {
 class BuiltIns;
 class CompilerInterface;
+class GmmClientContext;
 class GmmHelper;
 class MemoryManager;
 class OSInterface;
@@ -46,6 +47,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
 
     GmmHelper *getGmmHelper() const;
+    GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
 

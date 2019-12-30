@@ -90,7 +90,9 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 GmmHelper *ExecutionEnvironment::getGmmHelper() const {
     return gmmHelper.get();
 }
-
+GmmClientContext *ExecutionEnvironment::getGmmClientContext() const {
+    return gmmHelper->getClientContext();
+}
 CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     if (this->compilerInterface.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);

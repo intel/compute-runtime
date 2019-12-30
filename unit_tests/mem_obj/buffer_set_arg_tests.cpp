@@ -187,7 +187,7 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    buffer->getGraphicsAllocation()->setDefaultGmm(new Gmm(buffer->getGraphicsAllocation()->getUnderlyingBuffer(), buffer->getSize(), false));
+    buffer->getGraphicsAllocation()->setDefaultGmm(new Gmm(pDevice->getExecutionEnvironment()->getGmmClientContext(), buffer->getGraphicsAllocation()->getUnderlyingBuffer(), buffer->getSize(), false));
     buffer->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed = true;
     pKernelInfo->requiresSshForBuffers = true;
     cl_mem clMem = buffer;

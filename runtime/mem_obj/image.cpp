@@ -127,6 +127,7 @@ Image *Image::create(Context *context,
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
     auto &hwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+    auto clientContext = context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext();
 
     do {
         size_t imageWidth = imageDesc->image_width;
@@ -248,7 +249,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                auto gmm = std::make_unique<Gmm>(queryGmmImgInfo, StorageInfo{});
+                auto gmm = std::make_unique<Gmm>(clientContext, queryGmmImgInfo, StorageInfo{});
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -275,7 +276,7 @@ Image *Image::create(Context *context,
                         }
                     }
                 } else {
-                    gmm = new Gmm(imgInfo, StorageInfo{});
+                    gmm = new Gmm(clientContext, imgInfo, StorageInfo{});
                     memory = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, false, imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE, false}, hostPtr);
                     memory->setDefaultGmm(gmm);
                     zeroCopy = true;
@@ -670,13 +671,14 @@ cl_int Image::getImageParams(Context *context,
                              size_t *imageRowPitch,
                              size_t *imageSlicePitch) {
     cl_int retVal = CL_SUCCESS;
+    auto clientContext = context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext();
 
     ImageInfo imgInfo = {0};
     cl_image_desc imageDescriptor = *imageDesc;
     imgInfo.imgDesc = &imageDescriptor;
     imgInfo.surfaceFormat = surfaceFormat;
 
-    auto gmm = std::make_unique<Gmm>(imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(clientContext, imgInfo, StorageInfo{});
 
     *imageRowPitch = imgInfo.rowPitch;
     *imageSlicePitch = imgInfo.slicePitch;

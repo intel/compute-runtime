@@ -74,14 +74,13 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         imgDesc.image_depth = 1;
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(imgInfo).release();
+        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->getGmmClientContext(), imgInfo).release();
         mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
         mockMM->forceGmm = gmm;
     }
 
     void SetUp() override {
-        dbgRestore = new DebugManagerStateRestore();
         PlatformFixture::SetUp();
         context = new MockContext(pPlatform->getDevice(0));
         context->preferD3dSharedResources = true;
@@ -116,7 +115,6 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             delete gmm;
         }
         PlatformFixture::TearDown();
-        delete dbgRestore;
     }
 
     cl_int pickParam(cl_int d3d10, cl_int d3d11) {
@@ -187,7 +185,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     Gmm *gmm = nullptr;
     NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
 
-    DebugManagerStateRestore *dbgRestore;
+    DebugManagerStateRestore dbgRestore;
     std::unique_ptr<MockMM> mockMM;
 
     uint8_t d3dMode = 0;

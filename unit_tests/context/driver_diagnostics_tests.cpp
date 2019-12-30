@@ -537,7 +537,7 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(static_cast<const void *>(nullptr), t, false, true, true, info));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getExecutionEnvironment()->getGmmClientContext(), static_cast<const void *>(nullptr), t, false, true, true, info));
     gmm->isRenderCompressed = true;
 
     mockBuffer->getGraphicsAllocation()->setDefaultGmm(gmm.get());
@@ -657,7 +657,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm((const void *)nullptr, t, false, true, true, info));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getExecutionEnvironment()->getGmmClientContext(), (const void *)nullptr, t, false, true, true, info));
     gmm->isRenderCompressed = false;
 
     mockBuffer->getGraphicsAllocation()->setDefaultGmm(gmm.get());

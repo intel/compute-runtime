@@ -22,10 +22,10 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm() : Gmm(nullptr, 1, false){};
+    MockGmm() : Gmm(nullptr, nullptr, 1, false){};
 
-    static std::unique_ptr<Gmm> queryImgParams(ImageInfo &imgInfo) {
-        return std::unique_ptr<Gmm>(new Gmm(imgInfo, {}));
+    static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo) {
+        return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}));
     }
 
     static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {

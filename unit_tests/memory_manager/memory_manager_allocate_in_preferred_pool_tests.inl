@@ -114,6 +114,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
     AllocationProperties properties(0, true, 0, allocType, false);
 
     MockMemoryManager mockMemoryManager;
+    mockMemoryManager.mockExecutionEnvironment->initGmm();
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
     EXPECT_TRUE(allocData.flags.allow32Bit);
@@ -127,6 +128,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     AllocationProperties properties(0, true, 10, allocType, false);
 
     MockMemoryManager mockMemoryManager(true, false);
+    mockMemoryManager.mockExecutionEnvironment->initGmm();
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
@@ -204,6 +206,7 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
 
 TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedThenAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.initGmm();
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     AllocationData allocData;
@@ -221,6 +224,7 @@ TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedTh
 
 TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsCalledAndSystemMemoryFailsThenNullAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.initGmm();
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     AllocationData allocData;
@@ -274,6 +278,7 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen64kbAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
+    executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);

@@ -12,11 +12,12 @@
 #include <memory>
 
 namespace NEO {
+class GmmClientContext;
 class GmmResourceInfo {
   public:
-    static GmmResourceInfo *create(GMM_RESCREATE_PARAMS *resourceCreateParams);
+    static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
 
-    static GmmResourceInfo *create(GMM_RESOURCE_INFO *inputGmmResourceInfo);
+    static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
     MOCKABLE_VIRTUAL ~GmmResourceInfo() = default;
 
@@ -79,12 +80,14 @@ class GmmResourceInfo {
 
     GmmResourceInfo() = default;
 
-    GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams);
+    GmmResourceInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
 
-    GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo);
+    GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
     void createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr);
 
     UniquePtrType resourceInfo;
+
+    GmmClientContext *clientContext = nullptr;
 };
 } // namespace NEO

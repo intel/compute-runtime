@@ -89,7 +89,7 @@ HWTEST_F(CreateImage3DTest, calculate3dImageQpitchTiledAndLinear) {
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
-    MockGmm::queryImgParams(imgInfo);
+    MockGmm::queryImgParams(context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
 
     auto image = Image::create(
         context,
@@ -113,7 +113,7 @@ HWTEST_F(CreateImage3DTest, calculate3dImageQpitchTiledAndLinear) {
 
     // query again
     surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
-    MockGmm::queryImgParams(imgInfo);
+    MockGmm::queryImgParams(context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
 
     image = Image::create(
         context,

@@ -17,7 +17,7 @@ typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
 HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOperationThenDisallow) {
     cl_int retVal;
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(nullptr, 1, false);
+    auto gmm = new Gmm(pDevice->getExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = false;
     buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
 

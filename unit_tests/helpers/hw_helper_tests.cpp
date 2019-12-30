@@ -255,8 +255,8 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
-    auto gmmHelper = ee.getGmmHelper();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
+    auto gmmHelper = executionEnvironment.getGmmHelper();
 
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
@@ -271,7 +271,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     size_t offset = 0x1000;
     uint32_t pitch = 0x40;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, offset, pitch, nullptr, false, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, true);
 
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
@@ -287,7 +287,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     size = 0x1003;
     length.Length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     bool isReadOnly = false;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
@@ -297,7 +297,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     size = 0x1000;
     addr = 0x2001;
     length.Length = static_cast<uint32_t>(size - 1);
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
@@ -308,7 +308,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     size = 0x1005;
     length.Length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     isReadOnly = true;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true);
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), state->getMemoryObjectControlState());
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
@@ -323,7 +323,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
@@ -341,9 +341,9 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
     EXPECT_EQ(length.SurfaceState.Height + 1u, state->getHeight());
@@ -362,7 +362,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
@@ -378,10 +378,10 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, state->getAuxiliarySurfaceMode());
 
@@ -394,7 +394,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionEnabledAn
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
@@ -410,10 +410,10 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionEnabledAn
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -426,7 +426,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
@@ -442,9 +442,9 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -457,7 +457,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
@@ -473,10 +473,10 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
-    helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true);
+    helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -519,7 +519,7 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
         copyBuffers.push_back(copyBuffer);
     }
 
-    ExecutionEnvironment &ee = *pDevice->getExecutionEnvironment();
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
     auto &helper = HwHelper::get(renderCoreFamily);
 
     size_t size = 0x1000;
@@ -529,7 +529,7 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
 
     for (uint32_t i = 0; i < maxLoop; ++i) {
         auto t1 = std::chrono::high_resolution_clock::now();
-        helper.setRenderSurfaceStateForBuffer(ee, surfaceStates[i], size, addr, 0, pitch, nullptr, false, type, true);
+        helper.setRenderSurfaceStateForBuffer(executionEnvironment, surfaceStates[i], size, addr, 0, pitch, nullptr, false, type, true);
         auto t2 = std::chrono::high_resolution_clock::now();
         timesCreate.push_back(t1);
         timesCreate.push_back(t2);

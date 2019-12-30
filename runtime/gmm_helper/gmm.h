@@ -20,15 +20,16 @@ enum class OCLPlane;
 struct HardwareInfo;
 struct ImageInfo;
 class GmmResourceInfo;
+class GmmClientContext;
 
 class Gmm {
   public:
     virtual ~Gmm() = default;
     Gmm() = delete;
-    Gmm(ImageInfo &inputOutputImgInfo, StorageInfo storageInfo);
-    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
-    Gmm(GMM_RESOURCE_INFO *inputGmm);
+    Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
+    Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
@@ -55,5 +56,6 @@ class Gmm {
   protected:
     void applyAuxFlagsForImage(ImageInfo &imgInfo);
     void setupImageResourceParams(ImageInfo &imgInfo);
+    GmmClientContext *clientContext = nullptr;
 };
 } // namespace NEO

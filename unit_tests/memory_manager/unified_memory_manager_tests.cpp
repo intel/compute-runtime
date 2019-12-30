@@ -28,6 +28,7 @@ struct SVMMemoryAllocatorFixture {
         if (!svmSupported) {
             GTEST_SKIP();
         }
+        executionEnvironment.initGmm();
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
         svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
         if (enableLocalMemory) {

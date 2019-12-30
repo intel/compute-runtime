@@ -8,11 +8,11 @@
 #include "runtime/gmm_helper/resource_info.h"
 
 namespace NEO {
-GmmResourceInfo *GmmResourceInfo::create(GMM_RESCREATE_PARAMS *resourceCreateParams) {
-    return new GmmResourceInfo(resourceCreateParams);
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams) {
+    return new GmmResourceInfo(clientContext, resourceCreateParams);
 }
 
-GmmResourceInfo *GmmResourceInfo::create(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
-    return new GmmResourceInfo(inputGmmResourceInfo);
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
+    return new GmmResourceInfo(clientContext, inputGmmResourceInfo);
 }
 } // namespace NEO

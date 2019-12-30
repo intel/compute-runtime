@@ -670,7 +670,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     aubCsr->setAubWritable(true, *gfxAllocation);
 
-    auto gmm = new Gmm(nullptr, 1, false);
+    auto gmm = new Gmm(pDevice->getExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false);
     gfxAllocation->setDefaultGmm(gmm);
 
     for (bool compressed : {false, true}) {

@@ -18,9 +18,9 @@
 #include "runtime/platform/platform.h"
 
 namespace NEO {
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, {}) {}
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) : clientContext(clientContext) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -50,18 +50,18 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
     applyAuxFlagsForBuffer(preferRenderCompressed);
     applyMemoryFlags(systemMemoryPool, storageInfo);
 
-    gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
+    gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
 }
 
-Gmm::Gmm(GMM_RESOURCE_INFO *inputGmm) {
-    gmmResourceInfo.reset(GmmResourceInfo::create(inputGmm));
+Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientContext(clientContext) {
+    gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, inputGmm));
 }
 
-Gmm::Gmm(ImageInfo &inputOutputImgInfo, StorageInfo storageInfo) {
+Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo) : clientContext(clientContext) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo);
     applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
-    this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
+    this->gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &this->resourceParams));
     UNRECOVERABLE_IF(this->gmmResourceInfo == nullptr);
 
     queryImageParams(inputOutputImgInfo);

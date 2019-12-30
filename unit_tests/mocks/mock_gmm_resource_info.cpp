@@ -13,14 +13,14 @@
 using namespace ::testing;
 
 namespace NEO {
-GmmResourceInfo *GmmResourceInfo::create(GMM_RESCREATE_PARAMS *resourceCreateParams) {
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams) {
     if (resourceCreateParams->Type == GMM_RESOURCE_TYPE::RESOURCE_INVALID) {
         return nullptr;
     }
     return new ::testing::NiceMock<MockGmmResourceInfo>(resourceCreateParams);
 }
 
-GmmResourceInfo *GmmResourceInfo::create(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
     return new ::testing::NiceMock<MockGmmResourceInfo>(inputGmmResourceInfo);
 }
 
