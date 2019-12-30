@@ -870,7 +870,7 @@ if(EXISTS ${NEO_SOURCE_DIR}/../internal)
 endif(EXISTS ${NEO_SOURCE_DIR}/../internal)
 
 add_subdirectory_unique(scripts/lint)
-if(EXISTS scripts/format)
+if(EXISTS ${NEO_SOURCE_DIR}/scripts/format)
   add_subdirectory_unique(scripts/format)
 endif()
 
