@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/pipeline_select_helper.h"
 #include "core/helpers/preamble_bdw_plus.inl"
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/helpers/pipeline_select_helper.h"
 
 #include "reg_configs_common.h"
 

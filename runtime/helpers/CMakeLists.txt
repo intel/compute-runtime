@@ -50,7 +50,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/properties_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/properties_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/queue_helpers.cpp
