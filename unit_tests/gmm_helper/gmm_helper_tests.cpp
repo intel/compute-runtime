@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,7 +336,7 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
 }
 
 TEST_F(GmmTests, canonize) {
-    HardwareInfo hwInfo;
+    auto hwInfo = *platformDevices[0];
 
     // 48 bit - canonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); // 0x0000FFFFFFFFFFFF;
@@ -359,7 +359,7 @@ TEST_F(GmmTests, canonize) {
 }
 
 TEST_F(GmmTests, decanonize) {
-    HardwareInfo hwInfo;
+    auto hwInfo = *platformDevices[0];
 
     // 48 bit - decanonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); //0x0000FFFFFFFFFFFF;
