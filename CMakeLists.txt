@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -103,8 +103,8 @@ if(NOT DEFINED NEO_CORE_DIRECTORY)
   set(NEO_CORE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core)
 endif()
 
-if(SKIP_ALL_ULT)
-    set(SKIP_UNIT_TESTS TRUE)
+if(SKIP_UNIT_TESTS)
+  set(SKIP_NEO_UNIT_TESTS TRUE)
 endif()
 
 # Set our build directory
@@ -852,7 +852,7 @@ if(DONT_CARE_OF_VIRTUALS)
 else()
     set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
     generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
-    if(NOT SKIP_ALL_ULT)
+    if(NOT SKIP_UNIT_TESTS)
         set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
         generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
     endif()
