@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -1642,4 +1643,66 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
     EXPECT_FALSE(mockCsr.waitForCompletionWithTimeout(false, 0, 1));
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlushTaskIsCalledThenInitializePageTableManagerRegister) {
+    auto csr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    auto csr2 = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    pDevice->resetCommandStreamReceiver(csr);
+
+    MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->pageTableManager.reset(pageTableManager);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(1);
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr2, ::testing::_)).Times(0);
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    IndirectHeap cs(graphicsAllocation);
+
+    EXPECT_FALSE(csr->pageTableManagerInitialized);
+    EXPECT_FALSE(csr2->pageTableManagerInitialized);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+
+    EXPECT_TRUE(csr->pageTableManagerInitialized);
+    EXPECT_FALSE(csr2->pageTableManagerInitialized);
+
+    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr2, ::testing::_)).Times(1);
+    pDevice->resetCommandStreamReceiver(csr2);
+    csr2->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    EXPECT_TRUE(csr2->pageTableManagerInitialized);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInitializingPageTableManagerRegisterFailsThenPageTableManagerIsNotInitialized) {
+    auto csr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    pDevice->resetCommandStreamReceiver(csr);
+
+    MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->pageTableManager.reset(pageTableManager);
+
+    EXPECT_CALL(*pageTableManager, initContextAuxTableRegister(csr, ::testing::_)).Times(2).WillRepeatedly(::testing::Return(GMM_ERROR));
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    IndirectHeap cs(graphicsAllocation);
+
+    EXPECT_FALSE(csr->pageTableManagerInitialized);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+
+    EXPECT_FALSE(csr->pageTableManagerInitialized);
+
+    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+
+    EXPECT_FALSE(csr->pageTableManagerInitialized);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
-
-void dummySetCsrHandle(GMM_PAGETABLE_MGR *, HANDLE){};
 
 namespace NEO {
 using namespace ::testing;
@@ -19,7 +17,7 @@ GmmPageTableMngr *GmmPageTableMngr::create(unsigned int translationTableFlags, G
     return pageTableMngr;
 }
 void MockGmmPageTableMngr::setCsrHandle(void *csrHandle) {
-    GmmPageTableMngr::setCsrHandle(csrHandle);
+    passedCsrHandle = csrHandle;
     setCsrHanleCalled++;
 }
 } // namespace NEO

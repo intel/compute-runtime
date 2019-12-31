@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,6 @@
 namespace NEO {
 class Gmm;
 class LinearStream;
-
-void gmmSetCsrHandle(GMM_PAGETABLE_MGR *pageTableManager, HANDLE csrHandle);
 class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
@@ -27,9 +25,7 @@ class GmmPageTableMngr {
     MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle);
 
     bool updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map);
-    void initPageTableManagerRegisters();
-
-    bool initialized = false;
+    bool initPageTableManagerRegisters(void *csrHandle);
 
   protected:
     GmmPageTableMngr() = default;
@@ -45,7 +41,5 @@ class GmmPageTableMngr {
     GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
-    decltype(&gmmSetCsrHandle) gmmSetCsrHandleFunc = gmmSetCsrHandle;
-    void *csrHandle = nullptr;
 };
 } // namespace NEO

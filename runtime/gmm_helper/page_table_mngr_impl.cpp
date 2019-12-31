@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,17 +29,9 @@ bool GmmPageTableMngr::updateAuxTable(uint64_t gpuVa, Gmm *gmm, bool map) {
     return updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
 }
 
-void GmmPageTableMngr::initPageTableManagerRegisters() {
-    if (!initialized) {
-        initContextAuxTableRegister(csrHandle, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-
-        initialized = true;
-    }
-}
-
-void GmmPageTableMngr::setCsrHandle(void *csrHandleIn) {
-    csrHandle = csrHandleIn;
-    gmmSetCsrHandleFunc(pageTableManager, csrHandle);
+bool GmmPageTableMngr::initPageTableManagerRegisters(void *csrHandle) {
+    auto status = initContextAuxTableRegister(csrHandle, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+    return status == GMM_SUCCESS;
 }
 
 } // namespace NEO

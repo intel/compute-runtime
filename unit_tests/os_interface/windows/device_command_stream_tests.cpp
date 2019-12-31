@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -872,7 +872,7 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(executionEnvironment->rootDeviceEnvironments[index]->pageTableManager.get());
     EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
-    EXPECT_EQ(&mockWddmCsr, mockMngr->csrHandle);
+    EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
 
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
     unsigned int expectedFlags = TT_TYPE::AUXTT;
@@ -890,40 +890,6 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, 1);
     EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[1]->pageTableManager.get());
-}
-
-HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenFlushingThenInitTranslationTableOnce) {
-    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
-    setCompressionEnabled(compressionEnabled, !compressionEnabled);
-    myMockWddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
-    auto mockWddmCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 1);
-    mockWddmCsr->createPageTableManager();
-    mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    executionEnvironment->memoryManager.reset(new WddmMemoryManager(*executionEnvironment));
-
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 1u));
-    device->resetCommandStreamReceiver(mockWddmCsr);
-
-    auto memoryManager = executionEnvironment->memoryManager.get();
-
-    mockWddmCsr->getCS();
-
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    IndirectHeap cs(graphicsAllocation);
-
-    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[1]->pageTableManager->initialized);
-
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-
-    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
-
-    EXPECT_TRUE(executionEnvironment->rootDeviceEnvironments[1]->pageTableManager->initialized);
-
-    // flush again to check if PT manager was initialized once
-    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
-
-    mockWddmCsr->flushBatchedSubmissions();
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 INSTANTIATE_TEST_CASE_P(

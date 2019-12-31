@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,6 +158,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::lastSentCoherencyRequest;
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
+    using CommandStreamReceiver::pageTableManagerInitialized;
     using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::taskCount;

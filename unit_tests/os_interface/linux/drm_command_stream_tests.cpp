@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1388,29 +1388,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenInitializePageTableMngrRegistersIsCalledThenInitializePageTableManager) {
-    executionEnvironment.prepareRootDeviceEnvironments(2);
-    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
-    csr->createPageTableManager();
-    auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[1];
-
-    MockGmmPageTableMngr *mockMngr = static_cast<MockGmmPageTableMngr *>(rootDeviceEnvironment->pageTableManager.get());
-    auto csrHandle = reinterpret_cast<void *>(0x1234);
-    mockMngr->setCsrHandle(csrHandle);
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(csrHandle, ::testing::_)).Times(1);
-
-    EXPECT_FALSE(rootDeviceEnvironment->pageTableManager->initialized);
-    LinearStream linearStream = {};
-    rootDeviceEnvironment->pageTableManager->initPageTableManagerRegisters();
-    EXPECT_TRUE(rootDeviceEnvironment->pageTableManager->initialized);
-
-    rootDeviceEnvironment->pageTableManager->initPageTableManagerRegisters();
-    EXPECT_TRUE(rootDeviceEnvironment->pageTableManager->initialized);
-
-    rootDeviceEnvironment->pageTableManager.reset(nullptr);
-    EXPECT_EQ(rootDeviceEnvironment->pageTableManager, nullptr);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {
