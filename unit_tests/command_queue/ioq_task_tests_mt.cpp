@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> IOQTaskTestsMt;
 
-TEST_F(IOQTaskTestsMt, enqueueReadBuffer_blockingAndBlockedOnUserEvent) {
+TEST_F(IOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncremented) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
@@ -59,7 +59,7 @@ TEST_F(IOQTaskTestsMt, enqueueReadBuffer_blockingAndBlockedOnUserEvent) {
     alignedFree(alignedReadPtr);
 }
 
-TEST_F(IOQTaskTestsMt, enqueueMarker_blockedOnUserEvent) {
+TEST_F(IOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsReturned) {
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -85,7 +85,7 @@ TEST_F(IOQTaskTestsMt, enqueueMarker_blockedOnUserEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(IOQTaskTestsMt, enqueueMapBuffer) {
+TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreCompleted) {
     AlignedBuffer alignedBuffer;
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
@@ -153,7 +153,7 @@ TEST_F(IOQTaskTestsMt, enqueueMapBuffer) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(IOQTaskTestsMt, enqueueMapImage) {
+TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreCompleted) {
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context));
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
