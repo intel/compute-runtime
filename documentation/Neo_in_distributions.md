@@ -76,7 +76,7 @@ apt-get update
 apt-get install intel-opencl-icd
 ```
 
-## Ubuntu* 19.04, 19.10
+## Ubuntu* 19.04, 19.10, 20.04
 
 ```
 apt-get install intel-opencl-icd
@@ -103,5 +103,13 @@ docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-openc
 * [Ubuntu*](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
 * [Centos* 8](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
 * Scripts to build or download rpm (copr) and deb (github and ppa) packages are available in [neo-specs](https://github.com/JacekDanecki/neo-specs) repository.
+
+# NEO in other distributions
+
+## FreeBSD*
+
+```
+pkg install intel-compute-runtime
+```
 
 (*) Other names and brands may be claimed as property of others.
