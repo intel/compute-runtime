@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "public/cl_ext_private.h"
+#include "runtime/api/api_enter.h"
 #include "runtime/api/dispatch.h"
 
 #include "CL/cl.h"

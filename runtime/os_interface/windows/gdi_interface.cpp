@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "gdi_interface.h"
+
+#include "core/debug_settings/debug_settings_manager.h"
 
 namespace NEO {
 

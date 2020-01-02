@@ -1,30 +1,21 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/utilities/logger.h"
-#include "runtime/utilities/perf_profiler.h"
-
-#define API_ENTER(retValPointer) \
-    LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)
 #define SYSTEM_ENTER()
 #define SYSTEM_LEAVE(id)
 #define WAIT_ENTER()
 #define WAIT_LEAVE()
 
 #if KMD_PROFILING == 1
-#undef API_ENTER
 #undef SYSTEM_ENTER
 #undef SYSTEM_LEAVE
 #undef WAIT_ENTER
 #undef WAIT_LEAVE
-
-#define API_ENTER(x) \
-    PerfProfilerApiWrapper globalPerfProfilersWrapperInstanceForSingleApiFunction(__FUNCTION__)
 
 #define SYSTEM_ENTER()      \
     PerfProfiler::create(); \

@@ -28,7 +28,6 @@
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
-#include "runtime/platform/platform.h"
 
 #include "gmm_memory.h"
 
@@ -117,7 +116,7 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
         return false;
     }
 
-    platform()->peekExecutionEnvironment()->initGmm();
+    rootDeviceEnvironment.executionEnvironment.initGmm();
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(outHardwareInfo);
 
