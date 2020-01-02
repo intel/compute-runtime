@@ -34,7 +34,7 @@ dnf copr enable jdanecki/intel-opencl
 dnf install intel-opencl
 ```
 
-## Gentoo*
+## Gentoo*, Funtoo*
 
 ```
 emerge intel-neo
