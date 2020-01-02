@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,28 +17,28 @@
 
 using namespace NEO;
 
-TEST(LocalID, GRFsPerThread_SIMD8) {
+TEST(LocalID, GivenSimd8WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 8;
     EXPECT_EQ(1u, getGRFsPerThread(simd));
 }
 
-TEST(LocalID, GRFsPerThread_SIMD16) {
+TEST(LocalID, GivenSimd16WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 16;
     EXPECT_EQ(1u, getGRFsPerThread(simd));
 }
 
-TEST(LocalID, GRFsPerThread_SIMD32) {
+TEST(LocalID, GivenSimd32WhenGettingGrfsPerThreadThenTwoIsReturned) {
     uint32_t simd = 32;
     EXPECT_EQ(2u, getGRFsPerThread(simd));
 }
 
-TEST(LocalID, ThreadsPerWorkgroup) {
+TEST(LocalID, GivenSimd32AndLws33WhenGettingThreadsPerWorkgroupThenTwoIsReturned) {
     size_t lws = 33;
     uint32_t simd = 32;
     EXPECT_EQ(2u, getThreadsPerWG(simd, lws));
 }
 
-TEST(LocalID, PerThreadSizeLocalIDs_SIMD8) {
+TEST(LocalID, GivenSimd8WhenGettingPerThreadSizeLocalIdsThenValueIsThreeTimesGrfSize) {
     uint32_t simd = 8;
     uint32_t grfSize = 32;
 
@@ -46,7 +46,7 @@ TEST(LocalID, PerThreadSizeLocalIDs_SIMD8) {
     EXPECT_EQ(3 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
-TEST(LocalID, PerThreadSizeLocalIDs_SIMD16) {
+TEST(LocalID, GivenSimd16WhenGettingPerThreadSizeLocalIdsThenValueIsThreeTimesGrfSize) {
     uint32_t simd = 16;
     uint32_t grfSize = 32;
 
@@ -54,7 +54,7 @@ TEST(LocalID, PerThreadSizeLocalIDs_SIMD16) {
     EXPECT_EQ(3 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
-TEST(LocalID, PerThreadSizeLocalIDs_SIMD32) {
+TEST(LocalID, GivenSimd8WhenGettingPerThreadSizeLocalIdsThenValueIsSixTimesGrfSize) {
     uint32_t simd = 32;
     uint32_t grfSize = 32;
 
@@ -62,7 +62,7 @@ TEST(LocalID, PerThreadSizeLocalIDs_SIMD32) {
     EXPECT_EQ(6 * grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
 
-TEST(LocalID, PerThreadSizeLocalIDs_SIMD1) {
+TEST(LocalID, GivenSimd1WhenGettingPerThreadSizeLocalIdsThenValueIsEqualGrfSize) {
     uint32_t simd = 1;
     uint32_t grfSize = 32;
 
@@ -246,13 +246,13 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
     uint16_t *buffer;
 };
 
-TEST_P(LocalIDFixture, checkIDWithinLimits) {
+TEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 }
 
-TEST_P(LocalIDFixture, checkAllWorkItemsCovered) {
+TEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
@@ -282,7 +282,7 @@ TEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
-TEST_P(LocalIDFixture, sizeCalculationLocalIDs) {
+TEST_P(LocalIDFixture, WhenThreadsPerWgAreGeneratedThenSizeCalculationAreCorrect) {
     auto workItems = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     auto sizeTotalPerThreadData = getThreadsPerWG(simd, workItems) * getPerThreadSizeLocalIDs(simd, grfSize);
 
@@ -386,6 +386,7 @@ TEST(LocalIdsLayoutForImagesTest, givenLocalWorkSizeNotCompatibleWithLayoutForIm
     EXPECT_FALSE(isCompatibleWithLayoutForImages({{2u, 5u, 1u}}, dimensionsOrder, 8u));
     EXPECT_FALSE(isCompatibleWithLayoutForImages({{1u, 4u, 1u}}, dimensionsOrder, 8u));
 }
+
 TEST(LocalIdsLayoutForImagesTest, given4x4x1LocalWorkSizeWithNonDefaultDimensionsOrderWhenCheckLayoutForImagesCompatibilityThenReturnFalse) {
     std::array<uint16_t, 3> localWorkSize{{2u, 4u, 1u}};
     EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{0, 2, 1}}, 8u));
