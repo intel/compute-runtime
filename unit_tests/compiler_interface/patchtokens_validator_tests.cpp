@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerBufferTypeThenV
     PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer prog;
     std::string error, warning;
 
-    prog.constantPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER;
+    prog.constantPointerMutable->BufferType = iOpenCL::NUM_PROGRAM_SCOPE_BUFFER_TYPE;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
     EXPECT_EQ(0U, warning.size());
@@ -155,6 +155,31 @@ TEST(PatchtokensValidator, GivenValidProgramWithValidGlobalPointerThenValidation
     EXPECT_EQ(0U, warning.size());
 }
 
+TEST(PatchtokensValidator, GivenValidProgramWithMixedGlobalVarAndConstSurfacesAndPointersThenValidationSucceeds) {
+    PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers prog;
+    std::string error, warning;
+
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+    EXPECT_EQ(0U, error.size());
+    EXPECT_EQ(0U, warning.size());
+}
+
+TEST(PatchtokensValidator, GivenInvalidProgramWithMixedGlobalVarAndConstSurfacesAndPointersThenValidationSucceeds) {
+    std::string error, warning;
+
+    PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer progGlobalVar;
+    progGlobalVar.globalPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(progGlobalVar, 0U, UknownTokenValidator(), error, warning));
+    EXPECT_NE(0U, error.size());
+    EXPECT_EQ(0U, warning.size());
+
+    PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer progConstVar;
+    progConstVar.constantPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(progGlobalVar, 0U, UknownTokenValidator(), error, warning));
+    EXPECT_NE(0U, error.size());
+    EXPECT_EQ(0U, warning.size());
+}
+
 TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferIndexThenValidationFails) {
     PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer prog;
     std::string error, warning;
@@ -179,7 +204,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferTypeThenVal
     PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer prog;
     std::string error, warning;
 
-    prog.globalPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER;
+    prog.globalPointerMutable->BufferType = iOpenCL::NUM_PROGRAM_SCOPE_BUFFER_TYPE;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
     EXPECT_EQ(0U, warning.size());

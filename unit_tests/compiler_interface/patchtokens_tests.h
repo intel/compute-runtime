@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,6 +123,36 @@ struct ValidProgramWithGlobalSurfaceAndPointer : ValidProgramWithGlobalSurface {
         this->programScopeTokens.globalPointer[0] = this->globalPointerMutable;
     }
 
+    iOpenCL::SPatchGlobalPointerProgramBinaryInfo *globalPointerMutable = nullptr;
+};
+
+struct ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers : ValidProgramWithConstantSurfaceAndPointer {
+    ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers() {
+        globalVariableTokensOffset = this->storage.size();
+        this->constantPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER;
+
+        ValidProgramWithGlobalSurfaceAndPointer globalVarSurfProg;
+        this->programScopeTokens.globalPointer.push_back(nullptr);
+        this->programScopeTokens.allocateGlobalMemorySurface.push_back(nullptr);
+        this->storage.insert(this->storage.end(), globalVarSurfProg.storage.data() + sizeof(*globalVarSurfProg.headerMutable),
+                             globalVarSurfProg.storage.data() + globalVarSurfProg.storage.size());
+        recalcTokPtr();
+        this->globalPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER;
+    }
+
+    void recalcTokPtr() {
+        this->ValidProgramWithConstantSurfaceAndPointer::recalcTokPtr();
+        this->globalSurfMutable = reinterpret_cast<iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo *>(storage.data() + globalVariableTokensOffset);
+        this->programScopeTokens.allocateGlobalMemorySurface[0] = this->globalSurfMutable;
+        this->blobs.patchList = ArrayRef<const uint8_t>(storage.data() + sizeof(*this->headerMutable), storage.size() - sizeof(*this->headerMutable));
+        this->headerMutable->PatchListSize = static_cast<uint32_t>(this->blobs.patchList.size());
+
+        this->globalPointerMutable = reinterpret_cast<iOpenCL::SPatchGlobalPointerProgramBinaryInfo *>(storage.data() + globalVariableTokensOffset + sizeof(*this->globalSurfMutable) + this->globalSurfMutable->InlineDataSize);
+        this->programScopeTokens.globalPointer[0] = this->globalPointerMutable;
+    }
+
+    size_t globalVariableTokensOffset = 0U;
+    iOpenCL::SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo *globalSurfMutable = nullptr;
     iOpenCL::SPatchGlobalPointerProgramBinaryInfo *globalPointerMutable = nullptr;
 };
 

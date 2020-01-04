@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ class MockProgram : public Program {
     using Program::isSpirV;
     using Program::linkerInput;
     using Program::pDevice;
+    using Program::processProgramScopeMetadata;
     using Program::programBinaryType;
     using Program::sourceCode;
     using Program::specConstantsIds;

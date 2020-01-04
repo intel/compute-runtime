@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,8 +52,9 @@ inline ValidatorError validate(const ProgramFromPatchtokens &decodedProgram,
     for (const auto &globalConstantPointerToken : decodedProgram.programScopeTokens.constantPointer) {
         bool isUnhandled = (globalConstantPointerToken->ConstantBufferIndex != 0);
         isUnhandled |= (globalConstantPointerToken->BufferIndex != 0);
-        isUnhandled |= (globalConstantPointerToken->BufferType != PROGRAM_SCOPE_CONSTANT_BUFFER);
-        isUnhandled |= (0 == decodedProgram.programScopeTokens.allocateConstantMemorySurface.size()) || decodedProgram.programScopeTokens.allocateConstantMemorySurface[0]->InlineDataSize < globalConstantPointerToken->ConstantPointerOffset + sizeof(uint32_t);
+        isUnhandled |= (globalConstantPointerToken->BufferType != PROGRAM_SCOPE_CONSTANT_BUFFER) && (globalConstantPointerToken->BufferType != PROGRAM_SCOPE_GLOBAL_BUFFER);
+        isUnhandled |= (globalConstantPointerToken->BufferType == PROGRAM_SCOPE_GLOBAL_BUFFER) && (decodedProgram.programScopeTokens.allocateGlobalMemorySurface.empty());
+        isUnhandled |= (decodedProgram.programScopeTokens.allocateConstantMemorySurface.empty()) || decodedProgram.programScopeTokens.allocateConstantMemorySurface[0]->InlineDataSize < globalConstantPointerToken->ConstantPointerOffset + sizeof(uint32_t);
 
         if (isUnhandled) {
             outErrReason = "Unhandled SPatchConstantPointerProgramBinaryInfo";
@@ -64,8 +65,9 @@ inline ValidatorError validate(const ProgramFromPatchtokens &decodedProgram,
     for (const auto &globalVariablePointerToken : decodedProgram.programScopeTokens.globalPointer) {
         bool isUnhandled = (globalVariablePointerToken->GlobalBufferIndex != 0);
         isUnhandled |= (globalVariablePointerToken->BufferIndex != 0);
-        isUnhandled |= (globalVariablePointerToken->BufferType != PROGRAM_SCOPE_GLOBAL_BUFFER);
-        isUnhandled |= (0 == decodedProgram.programScopeTokens.allocateGlobalMemorySurface.size()) || decodedProgram.programScopeTokens.allocateGlobalMemorySurface[0]->InlineDataSize < globalVariablePointerToken->GlobalPointerOffset + sizeof(uint32_t);
+        isUnhandled |= (globalVariablePointerToken->BufferType != PROGRAM_SCOPE_GLOBAL_BUFFER) && (globalVariablePointerToken->BufferType != PROGRAM_SCOPE_CONSTANT_BUFFER);
+        isUnhandled |= (globalVariablePointerToken->BufferType == PROGRAM_SCOPE_CONSTANT_BUFFER) && (decodedProgram.programScopeTokens.allocateConstantMemorySurface.empty());
+        isUnhandled |= (decodedProgram.programScopeTokens.allocateGlobalMemorySurface.empty()) || decodedProgram.programScopeTokens.allocateGlobalMemorySurface[0]->InlineDataSize < globalVariablePointerToken->GlobalPointerOffset + sizeof(uint32_t);
 
         if (isUnhandled) {
             outErrReason = "Unhandled SPatchGlobalPointerProgramBinaryInfo";

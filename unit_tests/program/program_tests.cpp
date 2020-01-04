@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1452,23 +1452,6 @@ class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
     }
 };
 typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;
-
-TEST_F(ProgramPatchTokenTests, DISABLED_ConstantMemorySurface) {
-    cl_device_id device = pDevice;
-
-    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd8.cl");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        1,
-        &device,
-        nullptr,
-        nullptr,
-        nullptr,
-        false);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
 
 TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;

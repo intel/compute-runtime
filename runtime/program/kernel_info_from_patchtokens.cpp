@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ inline uint32_t getOffset(T *token) {
     return WorkloadInfo::undefinedOffset;
 }
 
-void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelInfoArg, const PatchTokenBinary::KernelArgFromPatchtokens src) {
+void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelInfoArg, const PatchTokenBinary::KernelArgFromPatchtokens &src) {
     dstKernelInfoArg.needPatch = true;
     dstKernelInfo.storeArgInfo(src.argInfo);
     if (src.objectArg != nullptr) {
