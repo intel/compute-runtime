@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,6 +120,7 @@ uint32_t MockGmmResourceInfo::getBitsPerPixel() {
 void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {
     mockResourceCreateParams.Flags.Gpu.CCS = 1;
     mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
+    mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 }
 
 void MockGmmResourceInfo::setMultisampleControlSurface() {

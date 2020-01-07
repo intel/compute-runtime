@@ -438,11 +438,11 @@ TEST_F(GmmMediaCompressedTests, givenMediaAndRenderCompressedGmmUnifiedAuxTransl
     EXPECT_THROW(gmm->unifiedAuxTranslationCapable(), std::exception);
 }
 
-TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedGmmUnifiedAuxTranslationCapableReturnsTrue) {
+TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedGmmUnifiedAuxTranslationCapableReturnsFalse) {
     flags->Info.MediaCompressed = false;
     flags->Info.RenderCompressed = false;
 
-    EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable());
 }
 
 namespace GmmTestConst {
@@ -680,8 +680,7 @@ TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenR
     mockResource->setUnifiedAuxTranslationCapable();
     EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.CCS);
     EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(0u, mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed);
-    EXPECT_EQ(0u, mockResource->mockResourceCreateParams.Flags.Info.MediaCompressed);
+    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed);
 
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
@@ -698,6 +697,10 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 1;
     mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 0;
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // UnifiedAuxSurface == 0
+
+    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
+    mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 0;
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
