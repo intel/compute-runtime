@@ -50,15 +50,4 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
                                     flags, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
 }
 
-GraphicsAllocation *UnifiedImage::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description) {
-    switch (description.type) {
-    case UnifiedSharingHandleType::Win32Nt: {
-        auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(description.handle, 0u);
-        return graphicsAllocation;
-    }
-    default:
-        return nullptr;
-    }
-}
-
 } // namespace NEO

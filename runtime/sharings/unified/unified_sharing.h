@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,8 @@ class UnifiedSharing : public SharingHandler {
   protected:
     void synchronizeObject(UpdateData &updateData) override;
     void releaseResource(MemObj *memObject) override;
+
+    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description);
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

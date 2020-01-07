@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,5 @@ class UnifiedBuffer : public UnifiedSharing {
 
   public:
     static Buffer *createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription description, cl_int *errcodeRet);
-
-  protected:
-    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description);
 };
 } // namespace NEO

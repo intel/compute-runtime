@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,17 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
 }
 
 void UnifiedSharing::releaseResource(MemObj *memObject) {
+}
+
+GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description) {
+    switch (description.type) {
+    case UnifiedSharingHandleType::Win32Nt: {
+        auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(description.handle, 0u);
+        return graphicsAllocation;
+    }
+    default:
+        return nullptr;
+    }
 }
 
 template <>
