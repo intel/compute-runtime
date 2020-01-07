@@ -1,20 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl.h"
-
-#ifndef SUPPORT_YUV
-#define SUPPORT_YUV 1
-#include "CL/cl_ext.h"
-#endif
-
 #include "core/gmm_helper/gmm_lib.h"
 #include "core/utilities/arrayref.h"
+
+#include "CL/cl.h"
 
 namespace NEO {
 enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
@@ -237,10 +232,9 @@ class SurfaceFormats {
     static const SurfaceFormatInfo readWriteSurfaceFormats[];
     static const SurfaceFormatInfo readOnlyDepthSurfaceFormats[];
     static const SurfaceFormatInfo readWriteDepthSurfaceFormats[];
-#ifdef SUPPORT_YUV
+
     static const SurfaceFormatInfo packedYuvSurfaceFormats[];
     static const SurfaceFormatInfo planarYuvSurfaceFormats[];
-#endif
 
   public:
     static ArrayRef<const SurfaceFormatInfo> readOnly() noexcept;

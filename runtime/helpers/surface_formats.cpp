@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,7 +170,6 @@ const SurfaceFormatInfo SurfaceFormats::readWriteSurfaceFormats[] = {
     {{CL_RGBA,            CL_SNORM_INT16},    GMM_FORMAT_R16G16B16A16_SNORM_TYPE,  GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_SNORM      , 0, 4, 2, 8},
 };
 
-#if SUPPORT_YUV
 const SurfaceFormatInfo SurfaceFormats::packedYuvSurfaceFormats[] = {
     {{CL_YUYV_INTEL,      CL_UNORM_INT8},     GMM_FORMAT_YUY2,                     GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL            , 0, 2, 1, 2},
     {{CL_UYVY_INTEL,      CL_UNORM_INT8},     GMM_FORMAT_UYVY,                     GFX3DSTATE_SURFACEFORMAT_YCRCB_SWAPY             , 0, 2, 1, 2},
@@ -181,8 +180,6 @@ const SurfaceFormatInfo SurfaceFormats::packedYuvSurfaceFormats[] = {
 const SurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
     {{CL_NV12_INTEL,      CL_UNORM_INT8},     GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_NV12                    , 0, 1, 1, 1}
 };
-
-#endif
 
 const SurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = {
     {{ CL_DEPTH,          CL_FLOAT},         GMM_FORMAT_R32_FLOAT_TYPE,           GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4},
@@ -209,19 +206,11 @@ ArrayRef<const SurfaceFormatInfo> SurfaceFormats::readWrite() noexcept {
 }
 
 ArrayRef<const SurfaceFormatInfo> SurfaceFormats::packedYuv() noexcept {
-#if SUPPORT_YUV
     return ArrayRef<const SurfaceFormatInfo>(packedYuvSurfaceFormats);
-#else
-    return ArrayRef<const SurfaceFormatInfo>();
-#endif
 }
 
 ArrayRef<const SurfaceFormatInfo> SurfaceFormats::planarYuv() noexcept {
-#if SUPPORT_YUV
     return ArrayRef<const SurfaceFormatInfo>(planarYuvSurfaceFormats);
-#else
-    return ArrayRef<const SurfaceFormatInfo>();
-#endif
 }
 
 ArrayRef<const SurfaceFormatInfo> SurfaceFormats::readOnlyDepth() noexcept {

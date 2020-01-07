@@ -523,10 +523,9 @@ cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {
                          isValidRGBAFormat(imageFormat) ||
                          isValidSRGBFormat(imageFormat) ||
                          isValidARGBFormat(imageFormat) ||
-                         isValidDepthStencilFormat(imageFormat);
-#if SUPPORT_YUV
-    isValidFormat = isValidFormat || isValidYUVFormat(imageFormat);
-#endif
+                         isValidDepthStencilFormat(imageFormat) ||
+                         isValidYUVFormat(imageFormat);
+
     if (isValidFormat) {
         return CL_SUCCESS;
     }
