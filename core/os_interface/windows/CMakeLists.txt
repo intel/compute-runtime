@@ -20,6 +20,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h

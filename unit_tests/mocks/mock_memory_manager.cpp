@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "core/memory_manager/deferred_deleter.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
-#include "runtime/memory_manager/deferred_deleter.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 
 #include <cstring>

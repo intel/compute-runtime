@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/linux/os_thread_linux.h"
+#include "core/os_interface/linux/os_thread_linux.h"
 
 namespace NEO {
 ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};

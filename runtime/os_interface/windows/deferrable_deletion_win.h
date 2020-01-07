@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/memory_manager/deferrable_deletion.h"
 #include "core/os_interface/windows/windows_wrapper.h"
-#include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/os_interface/os_context.h"
 
 #include <d3dkmthk.h>

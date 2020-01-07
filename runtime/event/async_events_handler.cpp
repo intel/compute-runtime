@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "runtime/event/async_events_handler.h"
 
+#include "core/os_interface/os_thread.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/os_interface/os_thread.h"
 
 #include <iterator>
 

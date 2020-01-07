@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/os_thread_win.h"
+#include "core/os_interface/windows/os_thread_win.h"
 namespace NEO {
 ThreadWin::ThreadWin(std::thread *thread) {
     this->thread.reset(thread);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
+#include "core/memory_manager/deferred_deleter.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
@@ -21,7 +22,6 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/deferrable_allocation_deletion.h"
+#include "core/memory_manager/deferrable_allocation_deletion.h"
 
 #include "core/helpers/engine_control.h"
 #include "runtime/command_stream/command_stream_receiver.h"

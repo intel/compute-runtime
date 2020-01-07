@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -52,8 +52,8 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
   ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
-  ${NEO_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.cpp
-  ${NEO_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.h
+  ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.cpp
+  ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.h
   ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
   ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_cif.cpp
   ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_cif.h
@@ -67,11 +67,11 @@ set(IGDRCL_SRCS_offline_compiler_tests
 
 if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
-    ${NEO_SOURCE_DIR}/runtime/os_interface/windows/os_thread_win.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/os_thread_win.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
-    ${NEO_SOURCE_DIR}/runtime/os_interface/linux/os_thread_linux.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/os_thread_linux.cpp
   )
 endif()
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,7 +17,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_thread.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.cpp
