@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
 }
 
-uint64_t DrmMemoryManager::getLocalMemorySize() {
+uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
     return 0 * GB;
 }
 } // namespace NEO

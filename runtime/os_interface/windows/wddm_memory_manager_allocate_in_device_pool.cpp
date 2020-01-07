@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloc
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
     return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
 }
-uint64_t WddmMemoryManager::getLocalMemorySize() {
+uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
     return 0 * GB;
 }
 } // namespace NEO

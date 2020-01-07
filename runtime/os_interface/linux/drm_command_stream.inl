@@ -33,13 +33,13 @@ template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, gemCloseWorkerMode mode)
     : BaseClass(executionEnvironment, rootDeviceIndex), gemCloseWorkerOperationMode(mode) {
 
-    this->drm = executionEnvironment.osInterface->get()->getDrm();
+    this->drm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm();
 
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 
-    executionEnvironment.osInterface->get()->setDrm(this->drm);
-    CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(this->drm);
+    CommandStreamReceiver::osInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
 }
 
 template <typename GfxFamily>

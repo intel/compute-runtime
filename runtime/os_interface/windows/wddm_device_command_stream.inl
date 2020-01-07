@@ -37,8 +37,8 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
     : BaseClass(executionEnvironment, rootDeviceIndex) {
 
     notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
-    this->wddm = executionEnvironment.osInterface->get()->getWddm();
-    this->osInterface = executionEnvironment.osInterface.get();
+    this->osInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
+    this->wddm = this->osInterface->get()->getWddm();
 
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(peekHwInfo());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "unit_tests/os_interface/linux/device_factory_tests.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/os_interface.h"
 
@@ -79,6 +80,6 @@ TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAl
     size_t numDevices = 0;
     bool success = mockDeviceFactory.getDevices(numDevices, executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_NE(nullptr, executionEnvironment.osInterface);
-    EXPECT_EQ(pDrm, executionEnvironment.osInterface->get()->getDrm());
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface);
+    EXPECT_EQ(pDrm, executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
 }

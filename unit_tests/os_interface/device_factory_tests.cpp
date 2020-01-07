@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,6 +227,7 @@ TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMemb
     EXPECT_EQ(requiredDeviceCount, numDevices);
 
     std::set<MemoryOperationsHandler *> memoryOperationHandlers;
+    std::set<OSInterface *> osInterfaces;
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < requiredDeviceCount; rootDeviceIndex++) {
         auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get());
 
@@ -234,6 +235,11 @@ TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMemb
         EXPECT_NE(nullptr, memoryOperationInterface);
         EXPECT_EQ(memoryOperationHandlers.end(), memoryOperationHandlers.find(memoryOperationInterface));
         memoryOperationHandlers.insert(memoryOperationInterface);
+
+        auto osInterface = rootDeviceEnvironment->osInterface.get();
+        EXPECT_NE(nullptr, osInterface);
+        EXPECT_EQ(osInterfaces.end(), osInterfaces.find(osInterface));
+        osInterfaces.insert(osInterface);
     }
 }
 
@@ -255,5 +261,5 @@ TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAlloca
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_NE(nullptr, executionEnvironment->osInterface);
+    EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
 }

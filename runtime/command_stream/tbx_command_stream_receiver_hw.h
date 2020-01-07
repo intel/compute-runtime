@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class TbxStream;
 class TbxMemoryManager : public OsAgnosticMemoryManager {
   public:
     TbxMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
-    uint64_t getSystemSharedMemory() override {
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
         return 1 * GB;
     }
 };

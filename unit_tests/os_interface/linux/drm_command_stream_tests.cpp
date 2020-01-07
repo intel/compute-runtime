@@ -627,8 +627,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWithDuplicate
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
-    this->executionEnvironment->osInterface = std::make_unique<OSInterface>();
-    this->executionEnvironment->osInterface->get()->setDrm(mock.get());
+    this->executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    this->executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
     TestedDrmCommandStreamReceiver<FamilyType> testedCsr(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                          *this->executionEnvironment);
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
@@ -1385,6 +1385,8 @@ struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableMngrIsCalledThenCreatePageTableManager) {
     executionEnvironment.prepareRootDeviceEnvironments(2);
+    executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.rootDeviceEnvironments[1]->osInterface->get()->setDrm(mock.get());
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);

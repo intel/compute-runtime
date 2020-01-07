@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,10 +37,10 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override { return nullptr; }
 
-    uint64_t getSystemSharedMemory() override;
-    uint64_t getLocalMemorySize() override;
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
+    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex) override;
 
-    AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
+    AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
 
     // drm/i915 ioctl wrappers
@@ -53,7 +53,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
 
-    int obtainFdFromHandle(int boHandle);
+    int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -83,7 +83,8 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
-    Drm *drm;
+    Drm &getDrm(uint32_t rootDeviceIndex) const;
+
     BufferObject *pinBB = nullptr;
     void *memoryForPinBB = nullptr;
     size_t pinThreshold = 8 * 1024 * 1024;

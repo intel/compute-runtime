@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class AubCenter;
 class ExecutionEnvironment;
 class GmmPageTableMngr;
 class MemoryOperationsHandler;
+class OSInterface;
 
 struct RootDeviceEnvironment {
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
@@ -26,6 +27,7 @@ struct RootDeviceEnvironment {
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
+    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;

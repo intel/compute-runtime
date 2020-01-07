@@ -461,7 +461,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
 
     if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
+        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
     } else {
@@ -488,7 +488,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
 
     if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
+        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
     } else {

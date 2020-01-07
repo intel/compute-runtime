@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         sharing->pfnGlArbSyncObjectWaitServer = glArbSyncObjectWaitServerMock<false>;
         osInterface = new OSInterface;
         mockCsr->setOSInterface(osInterface);
-        executionEnvironment->osInterface.reset(osInterface);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     }
 
     void TearDown() override {

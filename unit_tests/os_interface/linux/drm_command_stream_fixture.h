@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,8 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         executionEnvironment.setHwInfo(*platformDevices);
         executionEnvironment.prepareRootDeviceEnvironments(1);
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.osInterface->get()->setDrm(mock.get());
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
 
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
@@ -99,8 +99,8 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = std::make_unique<DrmMockCustom>();
-        executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setDrm(mock.get());
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment);
         ASSERT_NE(nullptr, csr);

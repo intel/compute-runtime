@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
@@ -34,7 +35,6 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    bool forcePinAllowed,
                                    bool validateHostPtrMemory,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
-                                                                                 drm(executionEnvironment.osInterface->get()->getDrm()),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
     auto gpuAddressSpace = executionEnvironment.getHardwareInfo()->capabilityTable.gpuAddressSpace;
@@ -140,11 +140,11 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
     userptr.user_size = size;
     userptr.flags = static_cast<uint32_t>(flags);
 
-    if (this->drm->ioctl(DRM_IOCTL_I915_GEM_USERPTR, &userptr) != 0) {
+    if (this->getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_USERPTR, &userptr) != 0) {
         return nullptr;
     }
 
-    auto res = new (std::nothrow) BufferObject(this->drm, userptr.handle, rootDeviceIndex);
+    auto res = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), userptr.handle, rootDeviceIndex);
     if (!res) {
         DEBUG_BREAK_IF(true);
         return nullptr;
@@ -283,11 +283,11 @@ GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationDa
     drm_i915_gem_create create = {0, 0, 0};
     create.size = bufferSize;
 
-    auto ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
     ((void)(ret));
 
-    auto bo = new BufferObject(this->drm, create.handle, allocationData.rootDeviceIndex);
+    auto bo = new BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.rootDeviceIndex);
     bo->size = bufferSize;
     bo->gpuAddress = gpuRange;
 
@@ -313,11 +313,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     drm_i915_gem_create create = {0, 0, 0};
     create.size = allocationData.imgInfo->size;
 
-    auto ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
     UNUSED_VARIABLE(ret);
 
-    auto bo = new (std::nothrow) BufferObject(this->drm, create.handle, allocationData.rootDeviceIndex);
+    auto bo = new (std::nothrow) BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.rootDeviceIndex);
     if (!bo) {
         return nullptr;
     }
@@ -422,7 +422,7 @@ BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t si
 
     gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex);
 
-    auto bo = new (std::nothrow) BufferObject(this->drm, boHandle, rootDeviceIndex);
+    auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, rootDeviceIndex);
     if (!bo) {
         return nullptr;
     }
@@ -439,7 +439,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     drm_prime_handle openFd = {0, 0, 0};
     openFd.fd = handle;
 
-    auto ret = this->drm->ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+    auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
 
     if (ret != 0) {
         int err = errno;
@@ -476,7 +476,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (properties.imgInfo) {
         drm_i915_gem_get_tiling getTiling = {0};
         getTiling.handle = boHandle;
-        ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
+        ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
 
         DEBUG_BREAK_IF(ret != 0);
         UNUSED_VARIABLE(ret);
@@ -569,12 +569,12 @@ void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
     static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
 }
 
-uint64_t DrmMemoryManager::getSystemSharedMemory() {
+uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
 
     drm_i915_gem_context_param getContextParam = {};
     getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
-    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
+    auto ret = getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);
     UNUSED_VARIABLE(ret);
     uint64_t gpuMemorySize = getContextParam.value;
@@ -582,7 +582,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory() {
     return std::min(hostMemorySize, gpuMemorySize);
 }
 
-MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;
     uint32_t indexesOfAllocatedBos[maxFragmentsCount];
@@ -661,7 +661,7 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     set_domain.read_domains = I915_GEM_DOMAIN_CPU;
     set_domain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
 
-    return drm->ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain) == 0;
+    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain) == 0;
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
@@ -684,7 +684,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     drm_i915_gem_mmap mmap_arg = {};
     mmap_arg.handle = bo->peekHandle();
     mmap_arg.size = bo->peekSize();
-    if (drm->ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
+    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
         return nullptr;
     }
 
@@ -707,18 +707,18 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
     if (bo == nullptr)
         return;
 
-    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize());
+    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), graphicsAllocation.getRootDeviceIndex());
 
     bo->setLockedAddress(nullptr);
 }
 
-int DrmMemoryManager::obtainFdFromHandle(int boHandle) {
+int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex) {
     drm_prime_handle openFd = {0, 0, 0};
 
     openFd.flags = DRM_CLOEXEC | DRM_RDWR;
     openFd.handle = boHandle;
 
-    drm->ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
+    getDrm(rootDeviceindex).ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
 
     return openFd.fd;
 }
@@ -726,6 +726,10 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle) {
 uint32_t DrmMemoryManager::getDefaultDrmContextId() const {
     auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex].osContext);
     return osContextLinux->getDrmContextIds()[0];
+}
+
+Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
+    return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm();
 }
 
 } // namespace NEO

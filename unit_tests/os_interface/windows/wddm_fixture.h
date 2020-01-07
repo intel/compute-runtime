@@ -30,10 +30,10 @@ struct WddmFixture : ::testing::Test {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
-        executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        osInterface = executionEnvironment->osInterface.get();
+        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
@@ -59,10 +59,10 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
         wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
-        executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        osInterface = executionEnvironment->osInterface.get();
+        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
     }
 
     void init() {

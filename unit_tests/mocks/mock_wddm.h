@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class WddmMock : public Wddm {
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
     using Wddm::mapGpuVirtualAddress;
+    using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::temporaryResources;

@@ -96,11 +96,11 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::handleFenceCompletion(graphicsAllocation);
     }
 
-    void *reserveCpuAddressRange(size_t size) override {
+    void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override {
         if (failReserveAddress) {
             return nullptr;
         }
-        return OsAgnosticMemoryManager::reserveCpuAddressRange(size);
+        return OsAgnosticMemoryManager::reserveCpuAddressRange(size, rootDeviceIndex);
     }
 
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
@@ -132,10 +132,10 @@ using AllocationData = MockMemoryManager::AllocationData;
 class GMockMemoryManager : public MockMemoryManager {
   public:
     GMockMemoryManager(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    MOCK_METHOD1(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage));
+    MOCK_METHOD2(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex));
     MOCK_METHOD1(allocateGraphicsMemoryForNonSvmHostPtr, GraphicsAllocation *(const AllocationData &));
 
-    MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage); }
+    MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage, rootDeviceIndex); }
 };
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
@@ -195,12 +195,12 @@ class FailMemoryManager : public MockMemoryManager {
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override { return nullptr; };
     void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override{};
 
-    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override {
+    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {
         return AllocationStatus::Error;
     };
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
 
-    uint64_t getSystemSharedMemory() override {
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
         return 0;
     };
 

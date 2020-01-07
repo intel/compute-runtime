@@ -303,7 +303,7 @@ TEST_F(DeviceGetCapsTest, checkGlobalMemSize) {
     unsigned int enabledCLVer = device->getEnabledClVersion();
     bool addressing32Bit = is32bit || (is64bit && (enabledCLVer < 20)) || DebugManager.flags.Force32bitAddressing.get();
 
-    cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory();
+    cl_ulong sharedMem = (cl_ulong)pMemManager->getSystemSharedMemory(0u);
     cl_ulong maxAppAddrSpace = (cl_ulong)pMemManager->getMaxApplicationAddress() + 1ULL;
     cl_ulong memSize = std::min(sharedMem, maxAppAddrSpace);
     memSize = (cl_ulong)((double)memSize * 0.8);
@@ -325,7 +325,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto enabledCLVer = device->getEnabledClVersion();
     bool addressing32Bit = is32bit || (is64bit && (enabledCLVer < 20)) || DebugManager.flags.Force32bitAddressing.get();
 
-    auto localMem = pMemManager->getLocalMemorySize();
+    auto localMem = pMemManager->getLocalMemorySize(0u);
     auto maxAppAddrSpace = pMemManager->getMaxApplicationAddress() + 1;
     auto memSize = std::min(localMem, maxAppAddrSpace);
     memSize = static_cast<cl_ulong>(memSize * 0.8);

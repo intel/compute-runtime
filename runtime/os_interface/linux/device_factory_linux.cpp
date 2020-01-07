@@ -30,21 +30,21 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
     executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
-    Drm *drm = Drm::create(devNum);
-    if (!drm) {
-        return false;
-    }
-
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        Drm *drm = Drm::create(rootDeviceIndex);
+        if (!drm) {
+            return false;
+        }
+
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(new OSInterface());
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(drm);
     }
-    executionEnvironment.osInterface.reset(new OSInterface());
-    executionEnvironment.osInterface->get()->setDrm(drm);
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     const HardwareInfo *pCurrDevice = platformDevices[devNum];
     HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->platform.eProductFamily);
-    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.osInterface.get())) {
+    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get())) {
         return false;
     }
     executionEnvironment.calculateMaxOsContextCount();

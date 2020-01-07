@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "runtime/helpers/device_helpers.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
@@ -33,7 +32,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
 
 void ExecutionEnvironment::initGmm() {
     if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(osInterface.get(), hwInfo.get()));
+        gmmHelper.reset(new GmmHelper(rootDeviceEnvironments[0]->osInterface.get(), hwInfo.get()));
     }
 }
 

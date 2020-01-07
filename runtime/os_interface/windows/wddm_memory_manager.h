@@ -42,23 +42,23 @@ class WddmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *memory) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;
 
-    AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
+    AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
 
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
-    uint64_t getSystemSharedMemory() override;
-    uint64_t getLocalMemorySize() override;
+    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
+    uint64_t getLocalMemorySize(uint32_t rootDeviceIndex) override;
 
-    bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
+    bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex);
 
     bool isMemoryBudgetExhausted() const override;
 
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
-    void *reserveCpuAddressRange(size_t size) override;
-    void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
+    void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
+    void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) override;
 
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
@@ -83,7 +83,6 @@ class WddmMemoryManager : public MemoryManager {
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
     AlignedMallocRestrictions mallocRestrictions;
 
-  private:
-    Wddm *wddm;
+    Wddm &getWddm(uint32_t rootDeviceIndex) const;
 };
 } // namespace NEO

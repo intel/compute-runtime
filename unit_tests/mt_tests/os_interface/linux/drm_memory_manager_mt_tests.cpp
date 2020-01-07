@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,9 +35,9 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
         }
     };
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = make_unique<MockDrm>(0);
-    executionEnvironment.osInterface->get()->setDrm(mock.get());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
     auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
     osHandle handle = 3;
@@ -100,9 +100,9 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
     };
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = make_unique<MockDrm>(0);
-    executionEnvironment.osInterface->get()->setDrm(mock.get());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
     auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
     osHandle handle = 3;

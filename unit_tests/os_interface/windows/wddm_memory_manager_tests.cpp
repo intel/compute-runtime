@@ -33,6 +33,10 @@
 using namespace NEO;
 using namespace ::testing;
 
+namespace NEO {
+extern bool overrideDeviceWithDefaultHardwareInfo;
+}
+
 void WddmMemoryManagerFixture::SetUp() {
     GdiDllFixture::SetUp();
 
@@ -47,8 +51,8 @@ void WddmMemoryManagerFixture::SetUp() {
     constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
     wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
 
-    executionEnvironment->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment->osInterface->get()->setWddm(wddm);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
@@ -112,7 +116,7 @@ TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
     uint64_t base = 0x56000;
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);
-    executionEnvironment->osInterface->get()->setWddm(wddm.release());
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm.release());
 
     std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(*executionEnvironment));
 
@@ -123,7 +127,7 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabled
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0].get());
-    executionEnvironment->osInterface->get()->setWddm(wddm.release());
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm.release());
     bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(true);
     MockWddmMemoryManager memoryManager(*executionEnvironment);
@@ -834,8 +838,19 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
 }
 
 TEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
-    int64_t mem = memoryManager->getSystemSharedMemory();
-    EXPECT_EQ(mem, 4249540608);
+    executionEnvironment->prepareRootDeviceEnvironments(4u);
+    for (auto i = 0u; i < 4u; i++) {
+        auto mockWddm = Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[i].get());
+        auto hwInfo = *platformDevices[0];
+        mockWddm->init(hwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->setWddm(mockWddm);
+
+        int64_t mem = memoryManager->getSystemSharedMemory(i);
+        EXPECT_EQ(mem, 4249540608);
+
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset();
+    }
 }
 
 TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
@@ -1080,7 +1095,7 @@ TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledP
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
-    memoryManager->populateOsHandles(storage);
+    memoryManager->populateOsHandles(storage, 0);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage->gmm);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
@@ -1236,14 +1251,14 @@ struct WddmMemoryManagerWithAsyncDeleterTest : public MockWddmMemoryManagerTest 
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
     EXPECT_EQ(0, deleter->deferDeletionCalled);
-    memoryManager->tryDeferDeletions(nullptr, 0, 0);
+    memoryManager->tryDeferDeletions(nullptr, 0, 0, 0);
     EXPECT_EQ(1, deleter->deferDeletionCalled);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledThenCannotDeferDeletions) {
     memoryManager->setDeferredDeleter(nullptr);
-    memoryManager->tryDeferDeletions(nullptr, 0, 0);
+    memoryManager->tryDeferDeletions(nullptr, 0, 0, 0);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }
 
@@ -1304,7 +1319,7 @@ TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForI
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     auto wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[0].get());
-    executionEnvironment->osInterface->get()->setWddm(wddm);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     auto hwInfoMock = *platformDevices[0];
     wddm->init(hwInfoMock);
@@ -1615,7 +1630,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
 
     EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
 
-    auto result = memoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage, 0);
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
@@ -1635,7 +1650,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
     EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
 
-    auto result = memoryManager->populateOsHandles(handleStorage);
+    auto result = memoryManager->populateOsHandles(handleStorage, 0);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
@@ -1655,8 +1670,8 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);
 
-    executionEnvironment.osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.osInterface->get()->setWddm(wddm);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(executionEnvironment);
     auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1, preemptionMode, false);
@@ -1786,4 +1801,33 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
     EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(0)->getHeapLimit(heap)), allocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(WddmMemoryManager, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddmIsFromCorrectRootDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(4);
+    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    platform()->initialize();
+
+    MockWddmMemoryManager wddmMemoryManager(*platformImpl->peekExecutionEnvironment());
+    for (auto i = 0u; i < platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {
+        auto wddmFromRootDevice = platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getWddm();
+        EXPECT_EQ(wddmFromRootDevice, &wddmMemoryManager.getWddm(i));
+    }
+}
+
+TEST(WddmMemoryManager, givenMultipleRootDeviceWhenCreateMemoryManagerThenTakeMaxMallocRestrictionAvailable) {
+    uint32_t numRootDevices = 4u;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    platform()->initialize();
+    for (auto i = 0u; i < numRootDevices; i++) {
+        auto wddm = static_cast<WddmMock *>(platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getWddm());
+        wddm->minAddress = i * (numRootDevices - i);
+    }
+
+    MockWddmMemoryManager wddmMemoryManager(*platformImpl->peekExecutionEnvironment());
+
+    EXPECT_EQ(4u, wddmMemoryManager.getAlignedMallocRestrictions()->minAddress);
 }

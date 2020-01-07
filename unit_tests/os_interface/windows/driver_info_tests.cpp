@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,16 +49,16 @@ class DriverInfoDeviceTest : public ::testing::Test {
 
 CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
     auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex);
-    if (!executionEnvironment.osInterface) {
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         auto hwInfo = *executionEnvironment.getHardwareInfo();
         wddm->init(hwInfo);
-        executionEnvironment.osInterface->get()->setWddm(wddm);
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
     }
 
-    EXPECT_NE(nullptr, executionEnvironment.osInterface.get());
-    csr->setOSInterface(executionEnvironment.osInterface.get());
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get());
+    csr->setOSInterface(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get());
     return csr;
 }
 

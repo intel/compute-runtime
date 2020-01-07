@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ class CompilerInterface;
 class GmmClientContext;
 class GmmHelper;
 class MemoryManager;
-class OSInterface;
 class SourceLevelDebugger;
 struct RootDeviceEnvironment;
 struct HardwareInfo;
@@ -51,7 +50,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
 
-    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     std::unique_ptr<BuiltIns> builtins;

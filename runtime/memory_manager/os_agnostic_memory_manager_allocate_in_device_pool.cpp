@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     return nullptr;
 }
 
-uint64_t OsAgnosticMemoryManager::getLocalMemorySize() {
+uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
     return 0 * GB;
 }
 

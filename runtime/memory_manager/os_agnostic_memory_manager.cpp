@@ -62,7 +62,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
             //add 2MB padding in case mapPtr is not 2MB aligned
             size_t reserveSize = sizeAligned + allocationData.alignment;
-            void *gpuPtr = reserveCpuAddressRange(reserveSize);
+            void *gpuPtr = reserveCpuAddressRange(reserveSize, allocationData.rootDeviceIndex);
             if (!gpuPtr) {
                 delete memoryAllocation;
                 alignedFreeWrapper(ptr);
@@ -215,7 +215,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
 
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
     if (gfxAllocation->getReservedAddressPtr()) {
-        releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize());
+        releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     }
 
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
@@ -229,7 +229,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     delete gfxAllocation;
 }
 
-uint64_t OsAgnosticMemoryManager::getSystemSharedMemory() {
+uint64_t OsAgnosticMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     return 16 * GB;
 }
 
@@ -246,7 +246,7 @@ void OsAgnosticMemoryManager::turnOnFakingBigAllocations() {
     this->fakeBigAllocations = true;
 }
 
-MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
@@ -318,12 +318,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     return alloc;
 }
 
-void *OsAgnosticMemoryManager::reserveCpuAddressRange(size_t size) {
+void *OsAgnosticMemoryManager::reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) {
     void *reservePtr = allocateSystemMemory(size, MemoryConstants::preferredAlignment);
     return reservePtr;
 }
 
-void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
+void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) {
     alignedFreeWrapper(reserved);
 }
 

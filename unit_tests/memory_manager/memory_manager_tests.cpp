@@ -287,7 +287,7 @@ TEST_F(MemoryAllocatorTest, GivenHostPtrAlignedToCacheLineWhenAskedForL3Allowanc
 TEST_F(MemoryAllocatorTest, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
-    memoryManager->populateOsHandles(storage);
+    memoryManager->populateOsHandles(storage, 0);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
@@ -304,7 +304,7 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubMan
 
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
-    mockMemoryManager.populateOsHandles(storage);
+    mockMemoryManager.populateOsHandles(storage, 0);
     mockMemoryManager.getHostPtrManager()->releaseHandleStorage(storage);
     mockMemoryManager.cleanOsHandles(storage, 0);
 
@@ -329,7 +329,7 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
 
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
-    mockMemoryManager.populateOsHandles(storage);
+    mockMemoryManager.populateOsHandles(storage, 0);
     mockMemoryManager.getHostPtrManager()->releaseHandleStorage(storage);
     mockMemoryManager.cleanOsHandles(storage, rootDeviceIndex);
 
@@ -2082,7 +2082,7 @@ TEST_F(MemoryAllocatorTest, whenReservingAddressRangeThenExpectProperAddressAndR
     size_t size = 0x1000;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
     ASSERT_NE(nullptr, allocation);
-    void *reserve = memoryManager->reserveCpuAddressRange(size);
+    void *reserve = memoryManager->reserveCpuAddressRange(size, 0);
     EXPECT_NE(nullptr, reserve);
     allocation->setReservedAddressRange(reserve, size);
     EXPECT_EQ(reserve, allocation->getReservedAddressPtr());

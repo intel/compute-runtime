@@ -91,7 +91,7 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_testTbxMemoryManager) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     TbxMemoryManager *getMM = tbxCsr->getMemoryManager();
     EXPECT_NE(nullptr, getMM);
-    EXPECT_EQ(1 * GB, getMM->getSystemSharedMemory());
+    EXPECT_EQ(1 * GB, getMM->getSystemSharedMemory(0u));
 }
 
 TEST_F(TbxCommandStreamTests, DISABLED_makeResident) {
@@ -369,7 +369,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 TEST(TbxMemoryManagerTest, givenTbxMemoryManagerWhenItIsQueriedForSystemSharedMemoryThen1GBIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     TbxMemoryManager memoryManager(executionEnvironment);
-    EXPECT_EQ(1 * GB, memoryManager.getSystemSharedMemory());
+    EXPECT_EQ(1 * GB, memoryManager.getSystemSharedMemory(0u));
 }
 
 HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUseDefaultDeviceId) {

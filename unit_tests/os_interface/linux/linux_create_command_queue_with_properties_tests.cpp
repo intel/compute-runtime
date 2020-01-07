@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         executionEnvironment->prepareRootDeviceEnvironments(1);
         auto osInterface = new OSInterface();
         osInterface->get()->setDrm(drm.get());
-        executionEnvironment->osInterface.reset(osInterface);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
         executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
         mdevice.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
@@ -53,7 +53,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenUnPossiblePropertiesWithClQ
     cl_queue_properties properties[] = {CL_QUEUE_SLICE_COUNT_INTEL, newSliceCount, 0};
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
 
-    mdevice.get()->getExecutionEnvironment()->osInterface->get()->setDrm(drm.get());
+    mdevice.get()->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm.get());
 
     cl_command_queue cmdQ = clCreateCommandQueueWithProperties(context.get(), clDevice, properties, &retVal);
 
@@ -68,7 +68,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenZeroWithClQueueSliceCountWh
     cl_queue_properties properties[] = {CL_QUEUE_SLICE_COUNT_INTEL, newSliceCount, 0};
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
 
-    mdevice.get()->getExecutionEnvironment()->osInterface->get()->setDrm(drm.get());
+    mdevice.get()->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm.get());
 
     cl_command_queue cmdQ = clCreateCommandQueueWithProperties(context.get(), clDevice, properties, &retVal);
 
@@ -94,7 +94,7 @@ TEST_F(clCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQue
     cl_queue_properties properties[] = {CL_QUEUE_SLICE_COUNT_INTEL, newSliceCount, 0};
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
 
-    mdevice.get()->getExecutionEnvironment()->osInterface->get()->setDrm(drm.get());
+    mdevice.get()->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm.get());
 
     cl_command_queue cmdQ = clCreateCommandQueueWithProperties(context.get(), clDevice, properties, &retVal);
 
