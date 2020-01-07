@@ -460,7 +460,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
 
-    if (device->isFullRangeSvm() && gmockMemoryManager->isHostPointerTrackingEnabled()) {
+    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -487,7 +487,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
 
-    if (device->isFullRangeSvm() && gmockMemoryManager->isHostPointerTrackingEnabled()) {
+    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -513,6 +513,9 @@ struct ReducedAddrSpaceCommandStreamReceiverTest : public CreateAllocationForHos
 
 TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
        givenReducedGpuAddressSpaceWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
 
     char memory[8] = {};
     HostPtrSurface surface(memory, sizeof(memory), false);

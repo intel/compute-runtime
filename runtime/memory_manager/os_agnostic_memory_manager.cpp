@@ -236,7 +236,7 @@ uint64_t OsAgnosticMemoryManager::getSystemSharedMemory() {
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto allocation = createMemoryAllocation(allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
                                              reinterpret_cast<uint64_t>(allocationData.hostPtr), allocationData.size, counter++,
-                                             MemoryPool::System4KBPages, allocationData.rootDeviceIndex, false, false, false);
+                                             MemoryPool::System4KBPages, allocationData.rootDeviceIndex, false, allocationData.flags.flushL3, false);
 
     allocation->fragmentsStorage = handleStorage;
     return allocation;

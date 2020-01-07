@@ -196,7 +196,7 @@ class MemoryManager {
     }
     bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType) {
         return ((allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR || allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
-                (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()));
+                (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()) & !is32bit);
     }
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
