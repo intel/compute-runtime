@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/hw_info.h"
 #include "core/utilities/api_intercept.h"
 #include "runtime/api/api.h"
 #include "runtime/api/dispatch.h"
@@ -310,7 +311,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D10>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    cl_device_id device = platformInternal->getDevice(0);
+    Device *device = platformInternal->getDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D10_DEVICE_KHR:
@@ -326,7 +327,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
     }
 
     sharingFcns.getDxgiDescFcn(&dxgiDesc, dxgiAdapter, d3dDevice);
-    if (dxgiDesc.VendorId != INTEL_VENDOR_ID) {
+    if (dxgiDesc.VendorId != INTEL_VENDOR_ID || dxgiDesc.DeviceId != device->getHardwareInfo().platform.usDeviceID) {
         GetInfoHelper::set(numDevices, localNumDevices);
         retVal = CL_DEVICE_NOT_FOUND;
         return retVal;
@@ -335,7 +336,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
     switch (d3dDeviceSet) {
     case CL_PREFERRED_DEVICES_FOR_D3D10_KHR:
     case CL_ALL_DEVICES_FOR_D3D10_KHR:
-        GetInfoHelper::set(devices, device);
+        GetInfoHelper::set(devices, static_cast<cl_device_id>(device));
         localNumDevices = 1;
         break;
     default:
@@ -517,7 +518,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D11>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    cl_device_id device = platformInternal->getDevice(0);
+    Device *device = platformInternal->getDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D11_DEVICE_KHR:
@@ -534,7 +535,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
     }
 
     sharingFcns.getDxgiDescFcn(&dxgiDesc, dxgiAdapter, d3dDevice);
-    if (dxgiDesc.VendorId != INTEL_VENDOR_ID) {
+    if (dxgiDesc.VendorId != INTEL_VENDOR_ID || dxgiDesc.DeviceId != device->getHardwareInfo().platform.usDeviceID) {
         GetInfoHelper::set(numDevices, localNumDevices);
         retVal = CL_DEVICE_NOT_FOUND;
         return retVal;
@@ -543,7 +544,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
     switch (d3dDeviceSet) {
     case CL_PREFERRED_DEVICES_FOR_D3D11_KHR:
     case CL_ALL_DEVICES_FOR_D3D11_KHR:
-        GetInfoHelper::set(devices, device);
+        GetInfoHelper::set(devices, static_cast<cl_device_id>(device));
         localNumDevices = 1;
         break;
     default:
