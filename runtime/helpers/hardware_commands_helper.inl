@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -427,12 +427,15 @@ void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData) {
+void HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream,
+                                                               uint64_t compareAddress,
+                                                               uint32_t compareData,
+                                                               COMPARE_OPERATION compareMode) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     *miSemaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
-    miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+    miSemaphoreCmd->setCompareOperation(compareMode);
     miSemaphoreCmd->setSemaphoreDataDword(compareData);
     miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
     miSemaphoreCmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);

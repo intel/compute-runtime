@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1119,6 +1119,8 @@ using HardwareCommandsHelperTests = ::testing::Test;
 
 HWTEST_F(HardwareCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSemaphoreWaitThenSetupAllFields) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
     uint64_t compareAddress = 0x10000;
     uint32_t compareData = 1234;
 
@@ -1131,7 +1133,8 @@ HWTEST_F(HardwareCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingS
     referenceCommand.setSemaphoreGraphicsAddress(compareAddress);
     referenceCommand.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
-    HardwareCommandsHelper<FamilyType>::programMiSemaphoreWait(cmdStream, compareAddress, compareData);
+    COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD;
+    HardwareCommandsHelper<FamilyType>::programMiSemaphoreWait(cmdStream, compareAddress, compareData, compareMode);
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), cmdStream.getUsed());
     EXPECT_EQ(0, memcmp(&referenceCommand, buffer, sizeof(MI_SEMAPHORE_WAIT)));
 }

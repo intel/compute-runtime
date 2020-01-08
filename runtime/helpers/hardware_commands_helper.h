@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     static uint32_t alignSlmSize(uint32_t slmSize);
     static uint32_t computeSlmValues(uint32_t slmSize);
@@ -169,7 +170,10 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         WALKER_TYPE<GfxFamily> *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
-    static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
+    static void programMiSemaphoreWait(LinearStream &commandStream,
+                                       uint64_t compareAddress,
+                                       uint32_t compareData,
+                                       COMPARE_OPERATION compareMode);
     static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData);
     static void appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);

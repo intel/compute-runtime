@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,12 +104,13 @@ struct TimestampPacketHelper {
     template <typename GfxFamily>
     static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+        using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         auto compareAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
             uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
-            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress + compareOffset, 1);
+            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
         timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
