@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -478,7 +478,7 @@ TEST(localWorkSizeTest, givenKernelUtilizingImagesAndSlmWhenLwsIsBeingComputedTh
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, useStrictRatio) {
+TEST(localWorkSizeTest, GivenUseStrictRatioWhenLwsIsBeingComputedThenWgsIsCalculatedCorrectly) {
     WorkSizeInfo wsInfo(256u, 0u, 32u, 0u, platformDevices[0]->platform.eRenderCoreFamily, 0u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
@@ -506,7 +506,7 @@ TEST(localWorkSizeTest, useStrictRatio) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, useBarriers) {
+TEST(localWorkSizeTest, GivenUseBarriersWhenLwsIsBeingComputedThenWgsIsCalculatedCorrectly) {
     WorkSizeInfo wsInfo(256u, 1u, 32u, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
