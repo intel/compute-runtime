@@ -200,8 +200,31 @@ struct SurfaceFormatInfo {
     size_t ImageElementSizeInBytes;
 };
 
+enum class ImageType {
+    Invalid,
+    Image1D,
+    Image2D,
+    Image3D,
+    Image1DArray,
+    Image2DArray,
+    Image1DBuffer
+};
+
+struct ImageDescriptor {
+    ImageType image_type;
+    size_t image_width;
+    size_t image_height;
+    size_t image_depth;
+    size_t image_array_size;
+    size_t image_row_pitch;
+    size_t image_slice_pitch;
+    uint32_t num_mip_levels;
+    uint32_t num_samples;
+    bool from_parent;
+};
+
 struct ImageInfo {
-    const cl_image_desc *imgDesc;
+    ImageDescriptor imgDesc;
     const SurfaceFormatInfo *surfaceFormat;
     size_t size;
     size_t rowPitch;

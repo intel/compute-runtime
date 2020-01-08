@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ class Gmm {
     bool hasMultisampleControlSurface() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
-    void updateImgInfoAndDesc(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex);
+    void updateImgInfoAndDesc(ImageInfo &imgInfo, cl_uint arrayIndex);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, cl_uint arrayIndex);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, OCLPlane plane);
 

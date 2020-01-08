@@ -241,7 +241,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
     SurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    EXPECT_EQ(imgInfo.imgDesc->image_row_pitch, imgDesc.image_row_pitch);
+    EXPECT_EQ(imgInfo.imgDesc.image_row_pitch, imgDesc.image_row_pitch);
     auto queryGmm = MockGmm::queryImgParams(executionEnvironment->getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
@@ -489,8 +489,6 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     };
 
     ImageInfo updateImgInfo = {};
-    cl_image_desc updateImgDesc = {};
-    updateImgInfo.imgDesc = &updateImgDesc;
     updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
 
     uint32_t expectCalls = 1u;
@@ -531,15 +529,15 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     auto mockResInfo = new NiceMock<MyMockGmmResourceInfo>(&queryGmm->resourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
 
-    queryGmm->updateImgInfoAndDesc(updateImgInfo, updateImgDesc, arrayIndex);
+    queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex);
     EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
-    EXPECT_EQ(imgDesc.image_width, updateImgDesc.image_width);
-    EXPECT_EQ(imgDesc.image_height, updateImgDesc.image_height);
-    EXPECT_EQ(imgDesc.image_depth, updateImgDesc.image_depth);
-    EXPECT_EQ(imgDesc.image_array_size, updateImgDesc.image_array_size);
-    EXPECT_GT(updateImgDesc.image_row_pitch, 0u);
-    EXPECT_GT(updateImgDesc.image_slice_pitch, 0u);
+    EXPECT_EQ(imgDesc.image_width, updateImgInfo.imgDesc.image_width);
+    EXPECT_EQ(imgDesc.image_height, updateImgInfo.imgDesc.image_height);
+    EXPECT_EQ(imgDesc.image_depth, updateImgInfo.imgDesc.image_depth);
+    EXPECT_EQ(imgDesc.image_array_size, updateImgInfo.imgDesc.image_array_size);
+    EXPECT_GT(updateImgInfo.imgDesc.image_row_pitch, 0u);
+    EXPECT_GT(updateImgInfo.imgDesc.image_slice_pitch, 0u);
 
     if (expectCalls == 1) {
         EXPECT_TRUE(memcmp(&expectedReqInfo[1], &mockResInfo->givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);

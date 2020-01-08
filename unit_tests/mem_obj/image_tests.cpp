@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1194,7 +1194,7 @@ TEST(ImageTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIsReturned) 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
@@ -1220,7 +1220,7 @@ TEST(ImageTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTrueIsReturn
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
@@ -1247,7 +1247,7 @@ TEST(ImageTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyRequiredIsC
     imageDesc.image_height = 2;
     imageDesc.image_slice_pitch = imageDesc.image_width * (imageDesc.image_height + 3) * surfaceFormat->ImageElementSizeInBytes;
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
@@ -1272,7 +1272,7 @@ TEST(ImageTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCalledThenTrue
     imageDesc.image_width = 4096;
     imageDesc.image_height = 1;
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
@@ -1297,7 +1297,7 @@ TEST(ImageTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhenIsCopyR
     imageDesc.image_width = 2;
     imageDesc.image_height = 1;
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
@@ -1330,12 +1330,12 @@ TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCop
     imageDesc.image_height = 2;
     imageDesc.image_depth = 2;
 
-    imgInfo.imgDesc = &imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = surfaceFormat;
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(*imgInfo.imgDesc), false);
+    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 
@@ -1380,6 +1380,76 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
 
     auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
     EXPECT_LT(taskCount, taskCountSent);
+}
+
+struct ImageConvertTypeTest
+    : public ::testing::Test {
+
+    void SetUp() override {
+    }
+
+    void TearDown() override {
+    }
+
+    std::array<std::pair<uint32_t, ImageType>, 7> types = {std::make_pair<>(CL_MEM_OBJECT_IMAGE1D, ImageType::Image1D),
+                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE2D, ImageType::Image2D),
+                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE3D, ImageType::Image3D),
+                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_ARRAY, ImageType::Image1DArray),
+                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE2D_ARRAY, ImageType::Image2DArray),
+                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_BUFFER, ImageType::Image1DBuffer),
+                                                           std::make_pair<>(0, ImageType::Invalid)};
+};
+
+TEST_F(ImageConvertTypeTest, givenClMemObjectTypeWhenConvertedThenCorrectImageTypeIsReturned) {
+
+    for (size_t i = 0; i < types.size(); i++) {
+        EXPECT_EQ(types[i].second, Image::convertType(static_cast<cl_mem_object_type>(types[i].first)));
+    }
+}
+
+TEST_F(ImageConvertTypeTest, givenImageTypeWhenConvertedThenCorrectClMemObjectTypeIsReturned) {
+
+    for (size_t i = 0; i < types.size(); i++) {
+        EXPECT_EQ(static_cast<cl_mem_object_type>(types[i].first), Image::convertType(types[i].second));
+    }
+}
+
+TEST(ImageConvertDescriptorTest, givenClImageDescWhenConvertedThenCorrectImageDescriptorIsReturned) {
+    cl_image_desc clDesc = {CL_MEM_OBJECT_IMAGE1D, 16, 24, 1, 1, 1024, 2048, 1, 3, {nullptr}};
+    auto desc = Image::convertDescriptor(clDesc);
+
+    EXPECT_EQ(ImageType::Image1D, desc.image_type);
+    EXPECT_EQ(clDesc.image_array_size, desc.image_array_size);
+    EXPECT_EQ(clDesc.image_depth, desc.image_depth);
+    EXPECT_EQ(clDesc.image_height, desc.image_height);
+    EXPECT_EQ(clDesc.image_row_pitch, desc.image_row_pitch);
+    EXPECT_EQ(clDesc.image_slice_pitch, desc.image_slice_pitch);
+    EXPECT_EQ(clDesc.image_width, desc.image_width);
+    EXPECT_EQ(clDesc.num_mip_levels, desc.num_mip_levels);
+    EXPECT_EQ(clDesc.num_samples, desc.num_samples);
+    EXPECT_FALSE(desc.from_parent);
+
+    cl_mem temporary = reinterpret_cast<cl_mem>(0x1234);
+    clDesc.mem_object = temporary;
+
+    desc = Image::convertDescriptor(clDesc);
+    EXPECT_TRUE(desc.from_parent);
+}
+
+TEST(ImageConvertDescriptorTest, givenImageDescriptorWhenConvertedThenCorrectClImageDescIsReturned) {
+    ImageDescriptor desc = {ImageType::Image2D, 16, 24, 1, 1, 1024, 2048, 1, 3, false};
+    auto clDesc = Image::convertDescriptor(desc);
+
+    EXPECT_EQ(clDesc.image_type, static_cast<cl_mem_object_type>(CL_MEM_OBJECT_IMAGE2D));
+    EXPECT_EQ(clDesc.image_array_size, desc.image_array_size);
+    EXPECT_EQ(clDesc.image_depth, desc.image_depth);
+    EXPECT_EQ(clDesc.image_height, desc.image_height);
+    EXPECT_EQ(clDesc.image_row_pitch, desc.image_row_pitch);
+    EXPECT_EQ(clDesc.image_slice_pitch, desc.image_slice_pitch);
+    EXPECT_EQ(clDesc.image_width, desc.image_width);
+    EXPECT_EQ(clDesc.num_mip_levels, desc.num_mip_levels);
+    EXPECT_EQ(clDesc.num_samples, desc.num_samples);
+    EXPECT_EQ(nullptr, clDesc.mem_object);
 }
 
 typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;

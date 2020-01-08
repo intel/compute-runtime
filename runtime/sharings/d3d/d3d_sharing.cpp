@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,15 +67,15 @@ void D3DSharing<D3D>::releaseResource(MemObj *memObject) {
 }
 
 template <typename D3D>
-void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex) {
+void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, OCLPlane oclPlane, cl_uint arrayIndex) {
 
-    gmm->updateImgInfoAndDesc(imgInfo, imgDesc, arrayIndex);
+    gmm->updateImgInfoAndDesc(imgInfo, arrayIndex);
 
     if (oclPlane == OCLPlane::PLANE_U || oclPlane == OCLPlane::PLANE_V || oclPlane == OCLPlane::PLANE_UV) {
-        imgDesc.image_width /= 2;
-        imgDesc.image_height /= 2;
+        imgInfo.imgDesc.image_width /= 2;
+        imgInfo.imgDesc.image_height /= 2;
         if (oclPlane != OCLPlane::PLANE_UV) {
-            imgDesc.image_row_pitch /= 2;
+            imgInfo.imgDesc.image_row_pitch /= 2;
         }
     }
 }

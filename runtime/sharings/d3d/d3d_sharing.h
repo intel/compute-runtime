@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ class D3DSharing : public SharingHandler {
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:
-    static void updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc &imgDesc, OCLPlane oclPlane, cl_uint arrayIndex);
+    static void updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, OCLPlane oclPlane, cl_uint arrayIndex);
 
     Context *context;
     D3DSharingFunctions<D3D> *sharingFunctions = nullptr;

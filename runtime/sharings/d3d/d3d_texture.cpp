@@ -29,12 +29,10 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     OCLPlane oclPlane = OCLPlane::NO_PLANE;
     void *sharedHandle = nullptr;
     cl_uint arrayIndex = 0u;
-    cl_image_desc imgDesc = {};
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc = &imgDesc;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgInfo.imgDesc.image_type = ImageType::Image2D;
 
     D3DTexture2dDesc textureDesc = {};
     sharingFcns->getTexture2dDesc(&textureDesc, d3dTexture);
@@ -77,7 +75,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imgDesc, oclPlane, arrayIndex);
+    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, oclPlane, arrayIndex);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
@@ -102,12 +100,10 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     ErrorCodeHelper err(retCode, CL_SUCCESS);
     auto sharingFcns = context->getSharing<D3DSharingFunctions<D3D>>();
     void *sharedHandle = nullptr;
-    cl_image_desc imgDesc = {};
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc = &imgDesc;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imgInfo.imgDesc.image_type = ImageType::Image3D;
 
     D3DTexture3dDesc textureDesc = {};
     sharingFcns->getTexture3dDesc(&textureDesc, d3dTexture);
@@ -141,7 +137,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imgDesc, OCLPlane::NO_PLANE, 0u);
+    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, OCLPlane::NO_PLANE, 0u);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 

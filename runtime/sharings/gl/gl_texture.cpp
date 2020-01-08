@@ -128,14 +128,14 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     mcsSurfaceInfo.multisampleCount = GmmTypesConverter::getRenderMultisamplesCount(static_cast<uint32_t>(imgDesc.num_samples));
 
-    ImageInfo imgInfo = {0};
-    imgInfo.imgDesc = &imgDesc;
-    imgInfo.surfaceFormat = &surfaceFormatInfo;
-    imgInfo.qPitch = qPitch;
-
     if (miplevel < 0) {
         imgDesc.num_mip_levels = gmm->gmmResourceInfo->getMaxLod() + 1;
     }
+
+    ImageInfo imgInfo = {};
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
+    imgInfo.surfaceFormat = &surfaceFormatInfo;
+    imgInfo.qPitch = qPitch;
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
 
@@ -147,7 +147,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
-                                    std::max(miplevel, 0), imgDesc.num_mip_levels);
+                                    std::max(miplevel, 0), imgInfo.imgDesc.num_mip_levels);
 } // namespace NEO
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {

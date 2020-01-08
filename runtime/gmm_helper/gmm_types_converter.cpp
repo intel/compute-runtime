@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,12 +18,12 @@ using namespace NEO;
 
 void GmmTypesConverter::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc) {
     // 1D or 2D from buffer
-    if (imgInfo.imgDesc->image_row_pitch > 0) {
-        imgInfo.rowPitch = imgInfo.imgDesc->image_row_pitch;
+    if (imgInfo.imgDesc.image_row_pitch > 0) {
+        imgInfo.rowPitch = imgInfo.imgDesc.image_row_pitch;
     } else {
-        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc->image_width) * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc.image_width) * imgInfo.surfaceFormat->ImageElementSizeInBytes;
     }
-    imgInfo.slicePitch = imgInfo.rowPitch * getValidParam(imgInfo.imgDesc->image_height);
+    imgInfo.slicePitch = imgInfo.rowPitch * getValidParam(imgInfo.imgDesc.image_height);
     imgInfo.size = gfxAlloc->getUnderlyingBufferSize();
     imgInfo.qPitch = 0;
 }

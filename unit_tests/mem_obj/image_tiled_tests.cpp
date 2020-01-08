@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,13 +89,13 @@ HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
 TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
-    ImageInfo info = {0};
+    ImageInfo info = {};
     McsSurfaceInfo msi = {};
     SurfaceFormatInfo surfaceFormat;
     surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
     info.surfaceFormat = &surfaceFormat;
 
-    info.imgDesc = &imageDesc;
+    info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), info);
@@ -124,7 +124,7 @@ typedef CreateTiledImageTest CreateNonTiledImageTest;
 TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
-    ImageInfo info = {0};
+    ImageInfo info = {};
     McsSurfaceInfo msi = {};
     SurfaceFormatInfo surfaceFormat;
 
@@ -133,7 +133,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
     surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
     info.surfaceFormat = &surfaceFormat;
 
-    info.imgDesc = &imageDesc;
+    info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), info);

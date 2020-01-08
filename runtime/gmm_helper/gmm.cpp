@@ -68,34 +68,34 @@ Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, Storage
 }
 
 void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
-    uint64_t imageWidth = static_cast<uint64_t>(imgInfo.imgDesc->image_width);
+    uint64_t imageWidth = static_cast<uint64_t>(imgInfo.imgDesc.image_width);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
     uint32_t imageCount = 1;
 
-    switch (imgInfo.imgDesc->image_type) {
-    case CL_MEM_OBJECT_IMAGE1D:
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+    switch (imgInfo.imgDesc.image_type) {
+    case ImageType::Image1D:
+    case ImageType::Image1DArray:
+    case ImageType::Image1DBuffer:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
         break;
-    case CL_MEM_OBJECT_IMAGE2D:
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    case ImageType::Image2D:
+    case ImageType::Image2DArray:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_2D;
-        imageHeight = static_cast<uint32_t>(imgInfo.imgDesc->image_height);
+        imageHeight = static_cast<uint32_t>(imgInfo.imgDesc.image_height);
         break;
-    case CL_MEM_OBJECT_IMAGE3D:
+    case ImageType::Image3D:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_3D;
-        imageHeight = static_cast<uint32_t>(imgInfo.imgDesc->image_height);
-        imageDepth = static_cast<uint32_t>(imgInfo.imgDesc->image_depth);
+        imageHeight = static_cast<uint32_t>(imgInfo.imgDesc.image_height);
+        imageDepth = static_cast<uint32_t>(imgInfo.imgDesc.image_depth);
         break;
     default:
         return;
     }
 
-    if (imgInfo.imgDesc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-        imgInfo.imgDesc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        imageCount = static_cast<uint32_t>(imgInfo.imgDesc->image_array_size);
+    if (imgInfo.imgDesc.image_type == ImageType::Image1DArray ||
+        imgInfo.imgDesc.image_type == ImageType::Image2DArray) {
+        imageCount = static_cast<uint32_t>(imgInfo.imgDesc.image_array_size);
     }
 
     resourceParams.Flags.Info.Linear = imgInfo.linearStorage;
@@ -113,8 +113,8 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     resourceParams.ArraySize = imageCount;
     resourceParams.Flags.Wa.__ForceOtherHVALIGN4 = hwHelper.hvAlign4Required();
     resourceParams.MaxLod = imgInfo.baseMipLevel + imgInfo.mipCount;
-    if (imgInfo.imgDesc->image_row_pitch && imgInfo.imgDesc->mem_object) {
-        resourceParams.OverridePitch = (uint32_t)imgInfo.imgDesc->image_row_pitch;
+    if (imgInfo.imgDesc.image_row_pitch && imgInfo.imgDesc.from_parent) {
+        resourceParams.OverridePitch = (uint32_t)imgInfo.imgDesc.image_row_pitch;
         resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
@@ -183,25 +183,25 @@ uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
     return gmmResourceInfo->getQPitch();
 }
 
-void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex) {
-    imgDesc.image_width = gmmResourceInfo->getBaseWidth();
-    imgDesc.image_row_pitch = gmmResourceInfo->getRenderPitch();
-    if (imgDesc.image_row_pitch == 0) {
-        size_t width = alignUp(imgDesc.image_width, gmmResourceInfo->getHAlign());
-        imgDesc.image_row_pitch = width * (gmmResourceInfo->getBitsPerPixel() >> 3);
+void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, cl_uint arrayIndex) {
+    imgInfo.imgDesc.image_width = gmmResourceInfo->getBaseWidth();
+    imgInfo.imgDesc.image_row_pitch = gmmResourceInfo->getRenderPitch();
+    if (imgInfo.imgDesc.image_row_pitch == 0) {
+        size_t width = alignUp(imgInfo.imgDesc.image_width, gmmResourceInfo->getHAlign());
+        imgInfo.imgDesc.image_row_pitch = width * (gmmResourceInfo->getBitsPerPixel() >> 3);
     }
-    imgDesc.image_height = gmmResourceInfo->getBaseHeight();
-    imgDesc.image_depth = gmmResourceInfo->getBaseDepth();
-    imgDesc.image_array_size = gmmResourceInfo->getArraySize();
-    if (imgDesc.image_depth > 1 || imgDesc.image_array_size > 1) {
+    imgInfo.imgDesc.image_height = gmmResourceInfo->getBaseHeight();
+    imgInfo.imgDesc.image_depth = gmmResourceInfo->getBaseDepth();
+    imgInfo.imgDesc.image_array_size = gmmResourceInfo->getArraySize();
+    if (imgInfo.imgDesc.image_depth > 1 || imgInfo.imgDesc.image_array_size > 1) {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
-        reqOffsetInfo.Slice = imgDesc.image_depth > 1 ? 1 : 0;
-        reqOffsetInfo.ArrayIndex = imgDesc.image_array_size > 1 ? 1 : 0;
+        reqOffsetInfo.Slice = imgInfo.imgDesc.image_depth > 1 ? 1 : 0;
+        reqOffsetInfo.ArrayIndex = imgInfo.imgDesc.image_array_size > 1 ? 1 : 0;
         reqOffsetInfo.ReqLock = 1;
         gmmResourceInfo->getOffset(reqOffsetInfo);
-        imgDesc.image_slice_pitch = static_cast<size_t>(reqOffsetInfo.Lock.Offset);
+        imgInfo.imgDesc.image_slice_pitch = static_cast<size_t>(reqOffsetInfo.Lock.Offset);
     } else {
-        imgDesc.image_slice_pitch = gmmResourceInfo->getSizeAllocation();
+        imgInfo.imgDesc.image_slice_pitch = gmmResourceInfo->getSizeAllocation();
     }
 
     updateOffsetsInImgInfo(imgInfo, arrayIndex);

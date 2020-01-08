@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,7 +210,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
               imageNew->getImageDesc().image_height);
 }
 
-static uint32_t ImageType[] = {
+static uint32_t ImageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
@@ -222,4 +222,4 @@ INSTANTIATE_TEST_CASE_P(
     ImageRedescribeTest,
     testing::Combine(
         ::testing::Range(readWriteSurfaceFormatsStart, SurfaceFormats::readWrite().size()),
-        ::testing::ValuesIn(ImageType)));
+        ::testing::ValuesIn(ImageTypes)));

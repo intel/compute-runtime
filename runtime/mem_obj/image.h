@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,11 @@ class Image : public MemObj {
     }
 
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
+
+    static ImageType convertType(const cl_mem_object_type type);
+    static cl_mem_object_type convertType(const ImageType type);
+    static ImageDescriptor convertDescriptor(const cl_image_desc &imageDesc);
+    static cl_image_desc convertDescriptor(const ImageDescriptor &imageDesc);
 
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,

@@ -25,7 +25,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
 
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc = imageDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
 
     GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,17 +27,18 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
     cl_channel_order channelOrder = CL_RG;
     cl_channel_type channelType = CL_UNORM_INT8;
-    ImageInfo imgInfo = {0};
+    ImageInfo imgInfo = {};
     VAImageID imageId = 0;
     McsSurfaceInfo mcsSurfaceInfo = {};
 
     sharingFunctions->deriveImage(*surface, &vaImage);
 
     imageId = vaImage.image_id;
-    imgInfo.imgDesc = &imgDesc;
+
     imgDesc.image_width = vaImage.width;
     imgDesc.image_height = vaImage.height;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
 
     if (plane == 0) {
         imgInfo.plane = GMM_PLANE_Y;
@@ -77,6 +78,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         imgInfo.xOffset = 0;
         imgInfo.yOffsetForUVPlane = static_cast<uint32_t>(imgInfo.offset / vaImage.pitches[0]);
     }
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     sharingFunctions->destroyImage(vaImage.image_id);
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());

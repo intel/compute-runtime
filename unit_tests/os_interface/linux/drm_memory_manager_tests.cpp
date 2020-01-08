@@ -1186,7 +1186,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     imgDesc.image_width = 512;
     imgDesc.image_height = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.imgDesc = &imgDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
@@ -1672,12 +1672,13 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
     cl_image_desc imgDesc = {};
     cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
     const SurfaceFormatInfo *gmmSurfaceFormat = nullptr;
-    ImageInfo imgInfo = {0};
+    ImageInfo imgInfo = {};
 
-    imgInfo.imgDesc = &imgDesc;
     imgDesc.image_width = 4;
     imgDesc.image_height = 4;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
     imgInfo.surfaceFormat = gmmSurfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
@@ -1712,12 +1713,13 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHan
     cl_image_desc imgDesc = {};
     cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
     const SurfaceFormatInfo *gmmSurfaceFormat = nullptr;
-    ImageInfo imgInfo = {0};
+    ImageInfo imgInfo = {};
 
-    imgInfo.imgDesc = &imgDesc;
     imgDesc.image_width = 4;
     imgDesc.image_height = 4;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
     imgInfo.surfaceFormat = gmmSurfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
@@ -2006,7 +2008,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     imgDesc.image_width = 512;
     imgDesc.image_height = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.imgDesc = &imgDesc;
+    imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "core/helpers/options.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
+#include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 
@@ -29,9 +30,9 @@ class MockGmm : public Gmm {
     }
 
     static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {
-        ImageInfo imgInfo = {0};
+        ImageInfo imgInfo = {};
         imgInfo.baseMipLevel = baseMipLevel;
-        imgInfo.imgDesc = &imgDesc;
+        imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
         if (!surfaceFormat) {
             ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
             MockGmmParams::mockSurfaceFormat = readWriteSurfaceFormats[0]; // any valid format

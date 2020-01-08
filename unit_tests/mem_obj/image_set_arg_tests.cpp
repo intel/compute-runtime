@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,7 +272,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     cl_image_desc imageDesc = Image2dDefaults::imageDesc;
     imageDesc.image_array_size = 3u;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    imageInfo.imgDesc = &imageDesc;
+    imageInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imageInfo.plane = GMM_NO_PLANE;
 
     auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), imageInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                           cl_dx9_media_adapter_type_khr adapterType, cl_uint plane, cl_int *retCode) {
     ErrorCodeHelper err(retCode, CL_SUCCESS);
     D3D9Surface *surfaceStaging = nullptr;
-    cl_image_desc imgDesc = {};
     ImageInfo imgInfo = {};
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
@@ -53,13 +52,12 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
     sharingFcns->updateDevice(surfaceInfo->resource);
 
-    imgInfo.imgDesc = &imgDesc;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgInfo.imgDesc.image_type = ImageType::Image2D;
 
     D3D9SurfaceDesc surfaceDesc = {};
     sharingFcns->getTexture2dDesc(&surfaceDesc, surfaceInfo->resource);
-    imgDesc.image_width = surfaceDesc.Width;
-    imgDesc.image_height = surfaceDesc.Height;
+    imgInfo.imgDesc.image_width = surfaceDesc.Width;
+    imgInfo.imgDesc.image_height = surfaceDesc.Height;
 
     if (surfaceDesc.Pool != D3DPOOL_DEFAULT) {
         err.set(CL_INVALID_DX9_RESOURCE_INTEL);
@@ -84,15 +82,15 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         AllocationProperties allocProperties(rootDeviceIndex, false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)surfaceInfo->shared_handle), allocProperties,
                                                                                       false);
-        updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imgDesc, oclPlane, 0u);
+        updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, oclPlane, 0u);
     } else {
         lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || oclPlane != OCLPlane::NO_PLANE;
         if (!lockable) {
             sharingFcns->createTexture2d(&surfaceStaging, &surfaceDesc, 0u);
         }
         if (oclPlane == OCLPlane::PLANE_U || oclPlane == OCLPlane::PLANE_V || oclPlane == OCLPlane::PLANE_UV) {
-            imgDesc.image_width /= 2;
-            imgDesc.image_height /= 2;
+            imgInfo.imgDesc.image_width /= 2;
+            imgInfo.imgDesc.image_height /= 2;
         }
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, true, memoryProperties);
@@ -100,8 +98,8 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 
-        imgDesc.image_row_pitch = imgInfo.rowPitch;
-        imgDesc.image_slice_pitch = imgInfo.slicePitch;
+        imgInfo.imgDesc.image_row_pitch = imgInfo.rowPitch;
+        imgInfo.imgDesc.image_slice_pitch = imgInfo.slicePitch;
     }
     DEBUG_BREAK_IF(!alloc);
 
