@@ -17,12 +17,9 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
@@ -31,7 +28,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp

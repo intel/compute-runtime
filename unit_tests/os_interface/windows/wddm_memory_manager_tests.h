@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "test.h"
@@ -15,7 +16,6 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 

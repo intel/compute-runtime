@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/helpers/options.h"
+#include "core/os_interface/windows/os_inc.h"
 #include "core/os_interface/windows/os_library_win.h"
-#include "runtime/os_interface/windows/os_inc.h"
-#include "runtime/os_interface/windows/thk_wrapper.h"
+#include "core/os_interface/windows/thk_wrapper.h"
 
 #include <d3d9types.h>
 

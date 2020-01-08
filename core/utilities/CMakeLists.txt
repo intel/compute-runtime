@@ -1,11 +1,12 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2019-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
   ${CMAKE_CURRENT_SOURCE_DIR}/arrayref.h
   ${CMAKE_CURRENT_SOURCE_DIR}/clflush.h
   ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref.h
@@ -21,6 +22,8 @@ set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/range.h
   ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h

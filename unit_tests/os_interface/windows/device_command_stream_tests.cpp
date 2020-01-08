@@ -10,6 +10,7 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
@@ -41,7 +42,6 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_wddm_interface23.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 

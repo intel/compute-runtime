@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #if defined(_WIN32)
 #include "core/os_interface/os_library.h"
+#include "core/os_interface/windows/gdi_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/gdi_interface.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

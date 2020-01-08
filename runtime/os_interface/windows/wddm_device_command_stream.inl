@@ -22,7 +22,7 @@
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
-#include "runtime/os_interface/windows/gdi_interface.h"
+#include "core/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"

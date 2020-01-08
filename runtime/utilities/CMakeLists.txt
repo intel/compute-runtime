@@ -1,16 +1,13 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.h
 )
 

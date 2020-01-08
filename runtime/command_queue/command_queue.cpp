@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
+#include "core/utilities/api_intercept.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
@@ -32,7 +33,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/utilities/api_intercept.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include "CL/cl_ext.h"

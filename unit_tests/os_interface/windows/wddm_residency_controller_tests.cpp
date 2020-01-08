@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_operations_handler.h"
+#include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
@@ -22,7 +23,6 @@
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 

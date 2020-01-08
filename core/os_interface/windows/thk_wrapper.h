@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/utilities/api_intercept.h"
+#include "core/utilities/api_intercept.h"
 
 #include <d3dkmthk.h>
 

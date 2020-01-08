@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "core/helpers/basic_math.h"
 #include "core/os_interface/linux/engine_info.h"
 #include "core/os_interface/linux/memory_info.h"
-#include "runtime/utilities/api_intercept.h"
+#include "core/utilities/api_intercept.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"

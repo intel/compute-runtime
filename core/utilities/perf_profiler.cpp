@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/utilities/perf_profiler.h"
+#include "core/utilities/perf_profiler.h"
 
 #include "core/utilities/stackvec.h"
 

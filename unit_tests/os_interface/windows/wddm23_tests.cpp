@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/windows/gdi_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/platform/platform.h"

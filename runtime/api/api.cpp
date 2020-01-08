@@ -14,6 +14,7 @@
 #include "core/helpers/kernel_helpers.h"
 #include "core/helpers/options.h"
 #include "core/memory_manager/unified_memory_manager.h"
+#include "core/utilities/api_intercept.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/api/additional_extensions.h"
@@ -44,7 +45,6 @@
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/tracing/tracing_api.h"
 #include "runtime/tracing/tracing_notify.h"
-#include "runtime/utilities/api_intercept.h"
 
 #include "CL/cl.h"
 #include "config.h"

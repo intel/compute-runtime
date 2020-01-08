@@ -5,7 +5,7 @@
  *
  */
 
-#include "gdi_interface.h"
+#include "core/os_interface/windows/gdi_interface.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 

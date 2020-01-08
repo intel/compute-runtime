@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/utilities/api_intercept.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
@@ -22,7 +23,6 @@
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "runtime/tracing/tracing_notify.h"
-#include "runtime/utilities/api_intercept.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"

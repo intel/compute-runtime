@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,6 @@ set(IGDRCL_SRCS_tests_utilities
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_tests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator_tests.cpp
 )
 

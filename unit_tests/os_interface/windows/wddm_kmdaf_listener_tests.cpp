@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
@@ -15,7 +16,6 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 
