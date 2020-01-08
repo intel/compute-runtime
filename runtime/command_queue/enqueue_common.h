@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -925,7 +925,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
         {},                                                                  //pipelineSelectArgs
         flushStamp->getStampReference(),                                     //flushStampReference
-        QueueThrottle::MEDIUM,                                               //throttle
+        getThrottle(),                                                       //throttle
         device->getPreemptionMode(),                                         //preemptionMode
         GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
         L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
