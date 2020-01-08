@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -559,7 +559,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(dstImageRedescribed)); // life range same as mdi's
 
         // Calculate srcRowPitch and srcSlicePitch
-        auto bytesPerPixel = dstImage->getSurfaceFormatInfo().ImageElementSizeInBytes;
+        auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 
@@ -673,7 +673,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(srcImageRedescribed)); // life range same as mdi's
 
         // Calculate dstRowPitch and dstSlicePitch
-        auto bytesPerPixel = srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes;
+        auto bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
 
         size_t region[] = {operationParams.size.x, operationParams.size.y, operationParams.size.z};
 

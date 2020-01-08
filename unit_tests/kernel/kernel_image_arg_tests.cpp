@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAl
 
     pKernel->setArg(0, sizeof(memObj), &memObj);
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
-    auto pixelSize = image->getSurfaceFormatInfo().ImageElementSizeInBytes;
+    auto pixelSize = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
 
     auto offsetFlatBaseOffset = ptrOffset(crossThreadData, pKernel->getKernelInfo().kernelArgInfo[0].offsetFlatBaseOffset);
     EXPECT_EQ(imageBaseAddress, *reinterpret_cast<uint64_t *>(offsetFlatBaseOffset));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
     void SetUp() override {
         indexImageFormat = GetParam();
 
-        ArrayRef<const SurfaceFormatInfo> surfaceFormatTable = SurfaceFormats::surfaceFormats(flags);
+        ArrayRef<const ClSurfaceFormatInfo> surfaceFormatTable = SurfaceFormats::surfaceFormats(flags);
         ASSERT_GT(surfaceFormatTable.size(), indexImageFormat);
 
         surfaceFormat = &surfaceFormatTable[indexImageFormat];
@@ -49,7 +49,7 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
     void TearDown() override {
     }
 
-    const SurfaceFormatInfo *surfaceFormat;
+    const ClSurfaceFormatInfo *surfaceFormat;
     size_t indexImageFormat;
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

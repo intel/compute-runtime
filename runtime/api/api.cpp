@@ -1081,7 +1081,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
                    "imageDesc", imageDesc,
                    "imageRowPitch", imageRowPitch,
                    "imageSlicePitch", imageSlicePitch);
-    SurfaceFormatInfo *surfaceFormat = nullptr;
+    ClSurfaceFormatInfo *surfaceFormat = nullptr;
     cl_mem_flags memFlags = CL_MEM_READ_ONLY;
     retVal = validateObjects(context);
     auto pContext = castToObject<Context>(context);
@@ -1095,7 +1095,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
         retVal = Image::validateImageFormat(imageFormat);
     }
     if (CL_SUCCESS == retVal) {
-        surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat);
+        surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat);
         retVal = Image::validate(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memFlags, 0, 0), surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {

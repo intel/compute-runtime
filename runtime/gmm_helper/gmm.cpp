@@ -15,7 +15,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/helpers/surface_formats.h"
+#include "core/helpers/surface_format_info.h"
 
 namespace NEO {
 Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, uncacheable, false, true, {}) {}

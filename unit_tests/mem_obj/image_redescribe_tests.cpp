@@ -29,7 +29,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
 
         std::tie(indexImageFormat, ImageType) = this->GetParam();
 
-        ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+        ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
         auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
         imageFormat = surfaceFormatInfo.OCLImageFormat;
 
@@ -79,17 +79,17 @@ TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenItContainsProperFor
     EXPECT_EQ(image->getCpuAddress(), imageNew->getCpuAddress());
     EXPECT_NE(static_cast<cl_channel_type>(CL_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type);
     EXPECT_NE(static_cast<cl_channel_type>(CL_HALF_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type);
-    EXPECT_EQ(imageNew->getSurfaceFormatInfo().NumChannels * imageNew->getSurfaceFormatInfo().PerChannelSizeInBytes,
-              imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes);
-    EXPECT_EQ(image->getSurfaceFormatInfo().ImageElementSizeInBytes,
-              imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes);
+    EXPECT_EQ(imageNew->getSurfaceFormatInfo().surfaceFormat.NumChannels * imageNew->getSurfaceFormatInfo().surfaceFormat.PerChannelSizeInBytes,
+              imageNew->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
+    EXPECT_EQ(image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes,
+              imageNew->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
 }
 
 TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageFormatHasNumberOfChannelsDependingOnBytesPerPixel) {
     std::unique_ptr<Image> imageNew(image->redescribe());
     ASSERT_NE(nullptr, imageNew);
 
-    size_t bytesPerPixel = image->getSurfaceFormatInfo().NumChannels * image->getSurfaceFormatInfo().PerChannelSizeInBytes;
+    size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.NumChannels * image->getSurfaceFormatInfo().surfaceFormat.PerChannelSizeInBytes;
     size_t channelsExpected = 0;
     switch (bytesPerPixel) {
     case 1:
@@ -104,15 +104,15 @@ TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageFormatHasNu
         channelsExpected = 4;
         break;
     }
-    EXPECT_EQ(channelsExpected, imageNew->getSurfaceFormatInfo().NumChannels);
+    EXPECT_EQ(channelsExpected, imageNew->getSurfaceFormatInfo().surfaceFormat.NumChannels);
 }
 
 TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageDimensionsAreMatchingTheRedescribedImage) {
     std::unique_ptr<Image> imageNew(image->redescribe());
     ASSERT_NE(nullptr, imageNew);
 
-    auto bytesWide = image->getSurfaceFormatInfo().ImageElementSizeInBytes * image->getImageDesc().image_width;
-    auto bytesWideNew = imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes * imageNew->getImageDesc().image_width;
+    auto bytesWide = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * image->getImageDesc().image_width;
+    auto bytesWideNew = imageNew->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * imageNew->getImageDesc().image_width;
 
     EXPECT_EQ(bytesWide, bytesWideNew);
     EXPECT_EQ(imageNew->getImageDesc().image_height, image->getImageDesc().image_height);
@@ -149,7 +149,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     auto memoryManager = (OsAgnosticMemoryManager *)context.getMemoryManager();
     memoryManager->turnOnFakingBigAllocations();
 
-    ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+    ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
     auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
     imageFormat = surfaceFormatInfo.OCLImageFormat;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/mipmap.h"
-#include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
 
@@ -47,7 +46,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto isMemTransferNeeded = true;
     if (srcImage->isMemObjZeroCopy()) {
         size_t hostOffset;
-        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, srcImage->getImageDesc().image_type, srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, srcImage->getImageDesc().image_type, srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
         isMemTransferNeeded = srcImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_READ_IMAGE);
     }
     if (!isMemTransferNeeded) {

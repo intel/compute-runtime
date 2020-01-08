@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
                                       bool isObjectRedescribed,
                                       uint32_t baseMipLevel,
                                       uint32_t mipCount,
-                                      const SurfaceFormatInfo *surfaceFormatInfo,
+                                      const ClSurfaceFormatInfo *surfaceFormatInfo,
                                       const SurfaceOffsets *surfaceOffsets) {
             return new MockImage<T>(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc, zeroCopy, graphicsAllocation,
                                     isObjectRedescribed, baseMipLevel, mipCount, *surfaceFormatInfo, surfaceOffsets);

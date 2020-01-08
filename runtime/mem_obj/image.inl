@@ -79,11 +79,11 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setWidth(static_cast<uint32_t>(Length.SurfaceState.Width + 1));
         surfaceState->setHeight(static_cast<uint32_t>(Length.SurfaceState.Height + 1));
         surfaceState->setDepth(static_cast<uint32_t>(Length.SurfaceState.Depth + 1));
-        surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().ImageElementSizeInBytes));
+        surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
         if (setAsMediaBlockImage) {
-            uint32_t elSize = static_cast<uint32_t>(getSurfaceFormatInfo().ImageElementSizeInBytes);
+            uint32_t elSize = static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
             surfaceState->setWidth(static_cast<uint32_t>((getImageDesc().image_width * elSize) / sizeof(uint32_t)));
         } else {
             surfaceState->setWidth(static_cast<uint32_t>(getImageDesc().image_width));
@@ -104,7 +104,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     // SurfaceQpitch is in rows but must be a multiple of VALIGN
     surfaceState->setSurfaceQpitch(qPitch);
 
-    surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(getSurfaceFormatInfo().GenxSurfaceFormat));
+    surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat));
     surfaceState->setSurfaceArray(isImageArray);
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().OCLImageFormat.image_channel_order;

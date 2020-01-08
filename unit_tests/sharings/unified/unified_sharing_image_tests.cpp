@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,8 +99,8 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenPassedFormatWhenCreatingU
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(GMM_FORMAT_R16G16_FLOAT_TYPE, image->getSurfaceFormatInfo().GMMSurfaceFormat);
-    EXPECT_EQ(GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT, image->getSurfaceFormatInfo().GenxSurfaceFormat);
+    EXPECT_EQ(GMM_FORMAT_R16G16_FLOAT_TYPE, image->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
+    EXPECT_EQ(GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT, image->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat);
 }
 
 template <typename GfxFamily, bool pageTableManagerSupported>

@@ -143,7 +143,7 @@ HWTEST_F(ImageSetArgTest, setKernelArgImageUsingMediaBlockImage) {
     srcImage->setImageArg(&surfaceState, true, 0);
 
     auto computedWidth = surfaceState.getWidth();
-    auto expectedWidth = (srcImage->getImageDesc().image_width * srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes) / sizeof(uint32_t);
+    auto expectedWidth = (srcImage->getImageDesc().image_width * srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes) / sizeof(uint32_t);
 
     EXPECT_EQ(expectedWidth, computedWidth);
 }
@@ -266,9 +266,9 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
     MockGraphicsAllocation *allocation = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo imageInfo = {};
 
-    SurfaceFormatInfo surfaceFormatInfo{};
-    surfaceFormatInfo.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
-    imageInfo.surfaceFormat = &surfaceFormatInfo;
+    ClSurfaceFormatInfo surfaceFormatInfo{};
+    surfaceFormatInfo.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    imageInfo.surfaceFormat = &surfaceFormatInfo.surfaceFormat;
     cl_image_desc imageDesc = Image2dDefaults::imageDesc;
     imageDesc.image_array_size = 3u;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
@@ -285,6 +285,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
         allocation,
         nullptr,
         CL_MEM_READ_WRITE,
+        &surfaceFormatInfo,
         imageInfo,
         0, 0, 0)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
@@ -372,7 +373,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
-    EXPECT_EQ(srcImage->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
+    EXPECT_EQ(srcImage->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());
@@ -443,7 +444,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage2Darray) {
     EXPECT_EQ(image2Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
-    EXPECT_EQ(image2Darray->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
+    EXPECT_EQ(image2Darray->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, surfaceState->getSurfaceType());
     EXPECT_TRUE((GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceArray());
 
@@ -490,7 +491,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Darray) {
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
     EXPECT_EQ(image1Darray->getGraphicsAllocation()->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQpitch());
 
-    EXPECT_EQ(image1Darray->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
+    EXPECT_EQ(image1Darray->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());
     EXPECT_TRUE((GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceArray());
 
@@ -804,7 +805,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
 
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch());
-    EXPECT_EQ(image->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
+    EXPECT_EQ(image->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceState->getSurfaceType());
     EXPECT_FALSE((GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceArray());
 
@@ -965,7 +966,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
 
-    uint32_t element_size = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+    uint32_t element_size = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
 
     SetupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
 
@@ -975,7 +976,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(rPitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
-    EXPECT_EQ(srcImage->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
+    EXPECT_EQ(srcImage->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, surfaceState->getSurfaceType());
     EXPECT_EQ(expectedChannelRed, surfaceState->getShaderChannelSelectRed());
     EXPECT_EQ(expectedChannelGreen, surfaceState->getShaderChannelSelectGreen());

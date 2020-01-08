@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class ImageValidateTest : public testing::TestWithParam<cl_image_desc> {
 
     cl_int retVal = CL_SUCCESS;
     MockContext context;
-    SurfaceFormatInfo surfaceFormat;
+    ClSurfaceFormatInfo surfaceFormat;
     cl_image_format *imageFormat;
     cl_image_desc imageDesc;
 };
@@ -111,12 +111,12 @@ TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthFormats) {
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
 TEST(ImageDepthFormatTest, returnSurfaceFormatForWriteOnlyDepthFormats) {
@@ -126,12 +126,12 @@ TEST(ImageDepthFormatTest, returnSurfaceFormatForWriteOnlyDepthFormats) {
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32_FLOAT_TYPE);
 
     imgFormat.image_channel_data_type = CL_UNORM_INT16;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_WRITE_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
 TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthStencilFormats) {
@@ -141,13 +141,13 @@ TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthStencilFormats) {
 
     auto surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_GENERIC_32BIT);
 
     imgFormat.image_channel_order = CL_DEPTH_STENCIL;
     imgFormat.image_channel_data_type = CL_FLOAT;
     surfaceFormatInfo = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imgFormat);
     ASSERT_NE(surfaceFormatInfo, nullptr);
-    EXPECT_TRUE(surfaceFormatInfo->GMMSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
+    EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R32G32_FLOAT_TYPE);
 }
 
 static cl_image_desc validImageDesc[] = {
@@ -762,7 +762,7 @@ struct NullImage : public Image {
 
     NullImage() : Image(nullptr, MemoryPropertiesFlags(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                         cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
-                        0, 0, SurfaceFormatInfo{}, nullptr) {
+                        0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }
     ~NullImage() override {
         delete this->graphicsAllocation;
@@ -874,7 +874,7 @@ TEST(ImageValidatorTest, givenInvalidImage2dSizesWithoutParentObjectWhenValidate
     MockContext context;
     cl_image_desc descriptor;
     void *dummyPtr = reinterpret_cast<void *>(0x17);
-    SurfaceFormatInfo surfaceFormat;
+    ClSurfaceFormatInfo surfaceFormat;
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
     descriptor.image_row_pitch = 0;
 
@@ -892,7 +892,7 @@ TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSized
     cl_image_desc descriptor;
     MockContext context;
     void *dummyPtr = reinterpret_cast<void *>(0x17);
-    SurfaceFormatInfo surfaceFormat = {};
+    ClSurfaceFormatInfo surfaceFormat = {};
     image.imageFormat.image_channel_order = CL_NV12_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -908,7 +908,7 @@ TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSi
     cl_image_desc descriptor;
     MockContext context;
     void *dummyPtr = reinterpret_cast<void *>(0x17);
-    SurfaceFormatInfo surfaceFormat;
+    ClSurfaceFormatInfo surfaceFormat;
     image.imageFormat.image_channel_order = CL_BGRA;
     image.imageFormat.image_channel_data_type = CL_UNORM_INT8;
 

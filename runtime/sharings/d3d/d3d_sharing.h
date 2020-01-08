@@ -15,7 +15,7 @@ namespace NEO {
 enum class ImagePlane;
 class Context;
 class Gmm;
-struct SurfaceFormatInfo;
+struct ClSurfaceFormatInfo;
 struct ImageInfo;
 
 template <typename D3D>
@@ -36,7 +36,7 @@ class D3DSharing : public SharingHandler {
     unsigned int &getSubresource() { return subresource; }
     typename D3DQuery *getQuery() { return d3dQuery; }
     bool isSharedResource() { return sharedResource; }
-    static const SurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:

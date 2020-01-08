@@ -112,7 +112,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     auto surfaceFormatInfo = *surfaceFormatInfoAddress;
     if (texInfo.glInternalFormat != GL_RGB10) {
-        surfaceFormatInfo.GenxSurfaceFormat = (GFX3DSTATE_SURFACEFORMAT)texInfo.glHWFormat;
+        surfaceFormatInfo.surfaceFormat.GenxSurfaceFormat = (GFX3DSTATE_SURFACEFORMAT)texInfo.glHWFormat;
     }
 
     GraphicsAllocation *mcsAlloc = nullptr;
@@ -134,7 +134,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
-    imgInfo.surfaceFormat = &surfaceFormatInfo;
+    imgInfo.surfaceFormat = &surfaceFormatInfo.surfaceFormat;
     imgInfo.qPitch = qPitch;
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
@@ -146,7 +146,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                                                                                    : true;
     }
 
-    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
+    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
 } // namespace NEO
 

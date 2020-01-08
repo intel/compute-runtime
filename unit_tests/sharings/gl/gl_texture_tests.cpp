@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,7 +219,7 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
     ASSERT_NE(format, nullptr);
     auto newHwFormat = 217u;
 
-    EXPECT_TRUE(format->GenxSurfaceFormat != newHwFormat);
+    EXPECT_TRUE(format->surfaceFormat.GenxSurfaceFormat != newHwFormat);
 
     glSharing->m_textureInfoOutput.glHWFormat = newHwFormat;
     glSharing->m_textureInfoOutput.glInternalFormat = GL_DEPTH32F_STENCIL8;
@@ -228,7 +228,7 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
 
     auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, &retVal);
     ASSERT_NE(nullptr, glTexture);
-    EXPECT_TRUE(newHwFormat == glTexture->getSurfaceFormatInfo().GenxSurfaceFormat);
+    EXPECT_TRUE(newHwFormat == glTexture->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat);
 
     delete glTexture;
 }
@@ -241,7 +241,7 @@ TEST_F(GlSharingTextureTests, givenGLRGB10FormatWhenSharedGlTextureIsCreatedThen
 
     std::unique_ptr<Image> glTexture(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, &retVal));
     ASSERT_NE(nullptr, glTexture);
-    EXPECT_EQ(glTexture->getSurfaceFormatInfo().GenxSurfaceFormat, GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM);
+    EXPECT_EQ(glTexture->getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat, GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM);
 }
 
 TEST_F(GlSharingTextureTests, givenContextAnd1dTextureWhenClCreateFromGlTextureIsCalledThenImageIsReturned) {

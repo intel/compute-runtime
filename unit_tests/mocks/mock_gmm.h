@@ -15,7 +15,7 @@
 
 namespace NEO {
 namespace MockGmmParams {
-static SurfaceFormatInfo mockSurfaceFormat;
+static ClSurfaceFormatInfo mockSurfaceFormat;
 }
 
 class MockGmm : public Gmm {
@@ -29,16 +29,16 @@ class MockGmm : public Gmm {
         return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}));
     }
 
-    static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {
+    static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const ClSurfaceFormatInfo *surfaceFormat) {
         ImageInfo imgInfo = {};
         imgInfo.baseMipLevel = baseMipLevel;
         imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
         if (!surfaceFormat) {
-            ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+            ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
             MockGmmParams::mockSurfaceFormat = readWriteSurfaceFormats[0]; // any valid format
-            imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat;
+            imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat.surfaceFormat;
         } else {
-            imgInfo.surfaceFormat = surfaceFormat;
+            imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
         }
         return imgInfo;
     }

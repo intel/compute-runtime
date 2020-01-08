@@ -218,7 +218,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItH
     imgDesc.image_row_pitch = 5312;
     imgDesc.buffer = (cl_mem)0x1000;
 
-    SurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
+    ClSurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16}};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     auto queryGmm = MockGmm::queryImgParams(executionEnvironment->getGmmClientContext(), imgInfo);
@@ -238,7 +238,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
     imgDesc.image_row_pitch = 5376;
     imgDesc.buffer = (cl_mem)0x1000;
 
-    SurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
+    ClSurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16}};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.image_row_pitch);
@@ -257,8 +257,8 @@ TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUVOffsetIsQueried)
     imgDesc.image_height = 4;
     imgDesc.image_depth = 1;
 
-    SurfaceFormatInfo surfaceFormatNV12 = {{CL_NV12_INTEL, CL_UNORM_INT8}, GMM_FORMAT_NV12, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1};
-    SurfaceFormatInfo surfaceFormatP010 = {{CL_R, CL_UNORM_INT16}, GMM_FORMAT_P010, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 2, 2};
+    ClSurfaceFormatInfo surfaceFormatNV12 = {{CL_NV12_INTEL, CL_UNORM_INT8}, {GMM_FORMAT_NV12, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1}};
+    ClSurfaceFormatInfo surfaceFormatP010 = {{CL_R, CL_UNORM_INT16}, {GMM_FORMAT_P010, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 2, 2}};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatNV12);
     imgInfo.yOffsetForUVPlane = 0;

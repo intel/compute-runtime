@@ -24,9 +24,10 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
 
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
-    imgInfo.surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
+    imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description);
     if (!graphicsAllocation) {
@@ -47,7 +48,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     const uint32_t sharedMipmapsCount = imageDesc->num_mip_levels;
     auto sharingHandler = new UnifiedImage(sharingFunctions, description.type);
     return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, graphicsAllocation, nullptr,
-                                    flags, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
+                                    flags, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
 }
 
 } // namespace NEO

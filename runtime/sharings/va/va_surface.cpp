@@ -56,7 +56,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         channelType = CL_UNORM_INT16;
         gmmSurfaceFormat = getExtendedSurfaceFormatInfo(vaImage.format.fourcc);
     }
-    imgInfo.surfaceFormat = gmmSurfaceFormat;
+    imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
 
     cl_image_format imgFormat = {channelOrder, channelType};
     auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
@@ -69,7 +69,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     imgDesc.image_row_pitch = imgInfo.rowPitch;
     imgDesc.image_slice_pitch = 0u;
     imgInfo.slicePitch = 0u;
-    imgInfo.surfaceFormat = imgSurfaceFormat;
+    imgInfo.surfaceFormat = &imgSurfaceFormat->surfaceFormat;
     if (plane == 1) {
         imgDesc.image_width /= 2;
         imgDesc.image_height /= 2;
@@ -83,7 +83,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());
 
-    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, alloc, nullptr, flags, imgSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
     image->setMediaPlaneType(plane);
     return image;
 }
@@ -115,15 +115,15 @@ bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
     return true;
 }
 
-const SurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t formatFourCC) {
+const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t formatFourCC) {
     if (formatFourCC == VA_FOURCC_P010) {
-        static const SurfaceFormatInfo formatInfo = {{CL_NV12_INTEL, CL_UNORM_INT16},
-                                                     GMM_RESOURCE_FORMAT::GMM_FORMAT_P010,
-                                                     static_cast<GFX3DSTATE_SURFACEFORMAT>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
-                                                     0,
-                                                     1,
-                                                     2,
-                                                     2};
+        static const ClSurfaceFormatInfo formatInfo = {{CL_NV12_INTEL, CL_UNORM_INT16},
+                                                       {GMM_RESOURCE_FORMAT::GMM_FORMAT_P010,
+                                                        static_cast<GFX3DSTATE_SURFACEFORMAT>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
+                                                        0,
+                                                        1,
+                                                        2,
+                                                        2}};
         return &formatInfo;
     }
     return nullptr;

@@ -91,9 +91,9 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
     McsSurfaceInfo msi = {};
-    SurfaceFormatInfo surfaceFormat;
-    surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
-    info.surfaceFormat = &surfaceFormat;
+    ClSurfaceFormatInfo surfaceFormat;
+    surfaceFormat.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
@@ -109,6 +109,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
         alloc,
         nullptr,
         CL_MEM_READ_WRITE,
+        &surfaceFormat,
         info,
         0, 0, 0);
 
@@ -126,12 +127,12 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
     McsSurfaceInfo msi = {};
-    SurfaceFormatInfo surfaceFormat;
+    ClSurfaceFormatInfo surfaceFormat;
 
     imageDesc.image_height = 1;
 
-    surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
-    info.surfaceFormat = &surfaceFormat;
+    surfaceFormat.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    info.surfaceFormat = &surfaceFormat.surfaceFormat;
 
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
@@ -147,6 +148,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
         alloc,
         nullptr,
         CL_MEM_READ_WRITE,
+        &surfaceFormat,
         info,
         0, 0, 0);
 

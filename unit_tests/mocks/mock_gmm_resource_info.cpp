@@ -80,11 +80,11 @@ void MockGmmResourceInfo::computeRowPitch() {
 }
 
 void MockGmmResourceInfo::setSurfaceFormat() {
-    auto iterate = [&](ArrayRef<const SurfaceFormatInfo> formats) {
+    auto iterate = [&](ArrayRef<const ClSurfaceFormatInfo> formats) {
         if (!surfaceFormatInfo) {
             for (auto &format : formats) {
-                if (mockResourceCreateParams.Format == format.GMMSurfaceFormat) {
-                    surfaceFormatInfo = &format;
+                if (mockResourceCreateParams.Format == format.surfaceFormat.GMMSurfaceFormat) {
+                    surfaceFormatInfo = &format.surfaceFormat;
                     break;
                 }
             }

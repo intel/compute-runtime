@@ -396,7 +396,7 @@ TYPED_TEST_P(D3DTests, fillTexture3dDesc) {
 }
 
 TYPED_TEST_P(D3DTests, givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat) {
-    const SurfaceFormatInfo *surfaceFormat;
+    const ClSurfaceFormatInfo *surfaceFormat;
     DXGI_FORMAT testFormat[] = {DXGI_FORMAT::DXGI_FORMAT_NV12, DXGI_FORMAT::DXGI_FORMAT_P010, DXGI_FORMAT::DXGI_FORMAT_P016};
     int channelDataType[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_UNORM_INT16};
     for (int n = 0; n < 3; n++) {

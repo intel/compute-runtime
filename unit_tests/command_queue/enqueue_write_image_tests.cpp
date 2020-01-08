@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -471,7 +471,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
     EXPECT_NE(nullptr, image.get());
 
     auto hostPtrSize = Image::calculateHostPtrSize(region, image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                                   image->getSurfaceFormatInfo().ImageElementSizeInBytes, image_type);
+                                                   image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes, image_type);
     std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[hostPtrSize]);
 
     retVal = pCmdQ->enqueueWriteImage(image.get(),

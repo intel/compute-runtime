@@ -79,10 +79,13 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
+    const ClSurfaceFormatInfo *clSurfaceFormat = nullptr;
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
-        imgInfo.surfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
+        clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
+        imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
+        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
+        imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
     auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
@@ -92,7 +95,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
                                                                                                    : true;
     }
 
-    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 template <typename D3D>
@@ -140,10 +143,10 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-
+    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
-    imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
+    imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
@@ -152,11 +155,11 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
                                                                                                    : true;
     }
 
-    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 template <typename D3D>
-const SurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, ImagePlane imagePlane, cl_mem_flags flags) {
+const ClSurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, ImagePlane imagePlane, cl_mem_flags flags) {
     cl_image_format imgFormat = {};
     if (imagePlane == ImagePlane::PLANE_Y) {
         imgFormat.image_channel_order = CL_R;

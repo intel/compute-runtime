@@ -53,6 +53,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/surface_format_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
 )
 

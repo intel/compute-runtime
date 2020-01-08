@@ -440,7 +440,7 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto hostPtr = alignedMalloc(imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes, MemoryConstants::cacheLineSize);
+    auto hostPtr = alignedMalloc(imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes, MemoryConstants::cacheLineSize);
 
     auto image = std::unique_ptr<Image>(Image::create(
         &context,
@@ -982,7 +982,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorre
     MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1008,7 +1008,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_row_pitch * origin[1] +
                             image->getImageDesc().image_slice_pitch * origin[2];
 
@@ -1022,7 +1022,7 @@ TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrec
     MemObjOffsetArray origin = {{4, 5, 0}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_slice_pitch * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1039,7 +1039,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorre
     MemObjSizeArray region = {{4, 5, 6}};
 
     auto retLength = image->calculateMappedPtrLength(region);
-    size_t expectedLength = image->getSurfaceFormatInfo().ImageElementSizeInBytes * region[0] +
+    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * region[0] +
                             image->getHostPtrRowPitch() * region[1] + image->getHostPtrSlicePitch() * region[2];
 
     EXPECT_EQ(expectedLength, retLength);
@@ -1055,7 +1055,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
     MemObjSizeArray region = {{4, 5, 6}};
 
     auto retLength = image->calculateMappedPtrLength(region);
-    size_t expectedLength = image->getSurfaceFormatInfo().ImageElementSizeInBytes * region[0] +
+    size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * region[0] +
                             image->getImageDesc().image_row_pitch * region[1] +
                             image->getImageDesc().image_slice_pitch * region[2];
 
@@ -1077,7 +1077,7 @@ TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOf
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1098,7 +1098,7 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1119,7 +1119,7 @@ TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThen
     MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
@@ -1139,7 +1139,7 @@ TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     MemObjOffsetArray origin{{1, 1, 0}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
+    size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }
@@ -1195,8 +1195,8 @@ TEST(ImageTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIsReturned) 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
 
@@ -1221,8 +1221,8 @@ TEST(ImageTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTrueIsReturn
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
 
@@ -1245,11 +1245,11 @@ TEST(ImageTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyRequiredIsC
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 4;
     imageDesc.image_height = 2;
-    imageDesc.image_slice_pitch = imageDesc.image_width * (imageDesc.image_height + 3) * surfaceFormat->ImageElementSizeInBytes;
+    imageDesc.image_slice_pitch = imageDesc.image_width * (imageDesc.image_height + 3) * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
     char memory[8];
@@ -1273,8 +1273,8 @@ TEST(ImageTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCalledThenTrue
     imageDesc.image_height = 1;
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
     char memory[8];
@@ -1298,8 +1298,8 @@ TEST(ImageTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhenIsCopyR
     imageDesc.image_height = 1;
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
@@ -1331,8 +1331,8 @@ TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCop
     imageDesc.image_depth = 2;
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
-    imgInfo.surfaceFormat = surfaceFormat;
-    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
@@ -1541,7 +1541,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
 template <typename FamilyName>
 class MockImageHw : public ImageHw<FamilyName> {
   public:
-    MockImageHw(Context *context, const cl_image_format &format, const cl_image_desc &desc, SurfaceFormatInfo &surfaceFormatInfo, GraphicsAllocation *graphicsAllocation) : ImageHw<FamilyName>(context, {}, 0, 0, 0, nullptr, format, desc, false, graphicsAllocation, false, 0, 0, surfaceFormatInfo) {
+    MockImageHw(Context *context, const cl_image_format &format, const cl_image_desc &desc, ClSurfaceFormatInfo &surfaceFormatInfo, GraphicsAllocation *graphicsAllocation) : ImageHw<FamilyName>(context, {}, 0, 0, 0, nullptr, format, desc, false, graphicsAllocation, false, 0, 0, surfaceFormatInfo) {
     }
 
     void setClearColorParams(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) override;
@@ -1581,7 +1581,7 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
 
     auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 
-    SurfaceFormatInfo formatInfo = {};
+    ClSurfaceFormatInfo formatInfo = {};
     std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
@@ -1612,7 +1612,7 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
 
     auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 
-    SurfaceFormatInfo formatInfo = {};
+    ClSurfaceFormatInfo formatInfo = {};
     std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));
 
     McsSurfaceInfo msi = {10, 20, 3};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct MockImageBase : public NEO::Image {
     MockImageBase() : Image(
                           nullptr, MemoryPropertiesFlags(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                           cl_image_desc{}, false, new NEO::MockGraphicsAllocation(nullptr, 0), false,
-                          0, 0, NEO::SurfaceFormatInfo{}, nullptr) {
+                          0, 0, NEO::ClSurfaceFormatInfo{}, nullptr) {
     }
     ~MockImageBase() override {
         delete this->graphicsAllocation;

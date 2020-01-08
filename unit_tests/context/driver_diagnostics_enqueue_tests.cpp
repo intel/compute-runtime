@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -367,7 +367,7 @@ TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnq
                             0,
                             nullptr,
                             nullptr);
-    size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().ImageElementSizeInBytes;
+    size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
     ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
