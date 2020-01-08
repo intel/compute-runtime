@@ -30,11 +30,16 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
 void UnifiedSharing::releaseResource(MemObj *memObject) {
 }
 
-GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description) {
+GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, GraphicsAllocation::AllocationType allocationType) {
+    auto memoryManager = context->getMemoryManager();
     switch (description.type) {
     case UnifiedSharingHandleType::Win32Nt: {
-        auto graphicsAllocation = context->getMemoryManager()->createGraphicsAllocationFromNTHandle(description.handle, 0u);
-        return graphicsAllocation;
+        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, 0u);
+    }
+    case UnifiedSharingHandleType::LinuxFd:
+    case UnifiedSharingHandleType::Win32Shared: {
+        const AllocationProperties properties{0u, false, 0u, allocationType, false};
+        return memoryManager->createGraphicsAllocationFromSharedHandle(((osHandle)(uint64_t)description.handle), properties, false);
     }
     default:
         return nullptr;

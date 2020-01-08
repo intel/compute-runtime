@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,15 +57,7 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnsupportedHandleTypeWhe
     desc.handle = reinterpret_cast<void *>(0x1234);
 
     auto buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
-    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
-
-    desc.type = UnifiedSharingHandleType::Win32Shared;
-    buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
-    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
-
-    desc.type = UnifiedSharingHandleType::LinuxFd;
-    buffer = std::unique_ptr<Buffer>(UnifiedBuffer::createSharedUnifiedBuffer(context.get(), flags, desc, &retVal));
-    ASSERT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
 TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenValidContextAndMemoryManagerWhenCreatingBufferFromSharedHandleThenReturnSuccess) {

@@ -39,7 +39,7 @@ class UnifiedSharing : public SharingHandler {
     void synchronizeObject(UpdateData &updateData) override;
     void releaseResource(MemObj *memObject) override;
 
-    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description);
+    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, GraphicsAllocation::AllocationType allocationType);
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

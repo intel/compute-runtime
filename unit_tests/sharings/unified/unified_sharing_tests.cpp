@@ -162,3 +162,79 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
     sharingHandler->release(buffer.get());
     EXPECT_EQ(1u, sharingHandler->releaseResourceCalled);
 }
+
+struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManager {
+    struct MemoryManagerCheckingAllocationMethod : MockMemoryManager {
+        using MockMemoryManager::MockMemoryManager;
+
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
+            this->createFromNTHandleCalled = true;
+            this->handle = (osHandle)(uint64_t)handle;
+            return nullptr;
+        }
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+            this->createFromSharedHandleCalled = true;
+            this->handle = handle;
+            this->properties = std::make_unique<AllocationProperties>(properties);
+            return nullptr;
+        }
+
+        bool createFromNTHandleCalled = false;
+        bool createFromSharedHandleCalled = false;
+        osHandle handle;
+        std::unique_ptr<AllocationProperties> properties;
+    };
+
+    struct MockSharingHandler : UnifiedSharing {
+        using UnifiedSharing::createGraphicsAllocation;
+    };
+
+    void SetUp() override {
+        UnifiedSharingTestsWithMemoryManager::SetUp();
+        this->memoryManager = std::make_unique<MemoryManagerCheckingAllocationMethod>();
+        this->memoryManagerBackup = std::make_unique<VariableBackup<MemoryManager *>>(&this->context->memoryManager, this->memoryManager.get());
+    }
+
+    std::unique_ptr<MemoryManagerCheckingAllocationMethod> memoryManager;
+    std::unique_ptr<VariableBackup<MemoryManager *>> memoryManagerBackup;
+};
+
+TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsNtHandleWhenCreateGraphicsAllocationIsCalledThenUseNtHandleMethod) {
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Nt;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
+
+    EXPECT_TRUE(memoryManager->createFromNTHandleCalled);
+    EXPECT_FALSE(memoryManager->createFromSharedHandleCalled);
+    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+}
+
+TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGraphicsAllocationIsCalledThenUseSharedHandleMethod) {
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::Win32Shared;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
+
+    EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
+    EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
+    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
+    EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
+}
+
+TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGraphicsAllocationIsCalledThenUseSharedHandleMethod) {
+    UnifiedSharingMemoryDescription desc{};
+    desc.handle = reinterpret_cast<void *>(0x1234);
+    desc.type = UnifiedSharingHandleType::LinuxFd;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::SHARED_IMAGE;
+    MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
+
+    EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
+    EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
+    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
+    EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
+}

@@ -66,16 +66,6 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenUnsupportedHandleTypeWhen
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, desc,
                                                                                &format, &imageDesc, &retVal));
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
-
-    desc.type = UnifiedSharingHandleType::Win32Shared;
-    image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, desc,
-                                                                          &format, &imageDesc, &retVal));
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
-
-    desc.type = UnifiedSharingHandleType::LinuxFd;
-    image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, desc,
-                                                                          &format, &imageDesc, &retVal));
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
 TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenValidContextAndMemoryManagerWhenCreatingImageFromSharedHandleThenReturnSuccess) {
