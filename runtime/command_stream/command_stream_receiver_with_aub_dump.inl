@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,5 +61,15 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::setupContext(OsContext &osContex
     if (aubCSR) {
         aubCSR->setupContext(osContext);
     }
+}
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                                                      bool useQuickKmdSleep, bool forcePowerSavingMode) {
+    if (aubCSR) {
+        aubCSR->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+    }
+
+    BaseCSR::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
 }
 } // namespace NEO
