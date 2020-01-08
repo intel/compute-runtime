@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/helpers/engine_node_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
@@ -61,6 +62,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
         auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
+        if (isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && HwHelperHw<FamilyType>::isOffsetToSkipSetFFIDGPWARequired(pKernel->getDevice().getHardwareInfo())) {
+            kernelIsaAddress += pKernel->getKernelInfo().patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+        }
 
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
@@ -98,8 +102,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
             EXPECT_EQ(sizeCrossThreadData, idData[blockFirstIndex + i].getCrossThreadConstantDataReadLength());
             EXPECT_NE((uint64_t)0u, ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer());
 
-            uint64_t kernelAddress = ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer();
-            EXPECT_EQ(pBlockInfo->getGraphicsAllocation()->getGpuAddressToPatch(), kernelAddress);
+            uint64_t blockKernelAddress = ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer();
+            uint64_t expectedBlockKernelAddress = pBlockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
+            if (isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && HwHelperHw<FamilyType>::isOffsetToSkipSetFFIDGPWARequired(pKernel->getDevice().getHardwareInfo())) {
+                expectedBlockKernelAddress += pBlockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+            }
+
+            EXPECT_EQ(expectedBlockKernelAddress, blockKernelAddress);
         }
     }
 }
