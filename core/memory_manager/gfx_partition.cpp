@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,13 @@ const std::array<HeapIndex, 4> GfxPartition::heap32Names{{HeapIndex::HEAP_INTERN
                                                           HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
                                                           HeapIndex::HEAP_EXTERNAL}};
 
-const std::array<HeapIndex, 6> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+const std::array<HeapIndex, 7> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
                                                               HeapIndex::HEAP_INTERNAL,
                                                               HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
                                                               HeapIndex::HEAP_EXTERNAL,
                                                               HeapIndex::HEAP_STANDARD,
-                                                              HeapIndex::HEAP_STANDARD64KB}};
+                                                              HeapIndex::HEAP_STANDARD64KB,
+                                                              HeapIndex::HEAP_EXTENDED}};
 
 GfxPartition::GfxPartition() : osMemory(OSMemory::create()) {}
 

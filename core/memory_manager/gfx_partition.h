@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ enum class HeapIndex : uint32_t {
     HEAP_STANDARD,
     HEAP_STANDARD64KB,
     HEAP_SVM,
+    HEAP_EXTENDED,
 
     // Please put new heap indexes above this line
     TOTAL_HEAPS
@@ -65,7 +66,7 @@ class GfxPartition {
     static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
 
     static const std::array<HeapIndex, 4> heap32Names;
-    static const std::array<HeapIndex, 6> heapNonSvmNames;
+    static const std::array<HeapIndex, 7> heapNonSvmNames;
 
   protected:
     void initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex);
@@ -76,7 +77,7 @@ class GfxPartition {
         void init(uint64_t base, uint64_t size);
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
-        uint64_t getLimit() const { return base + size - 1; }
+        uint64_t getLimit() const { return size ? base + size - 1 : 0; }
         uint64_t allocate(size_t &size) { return alloc->allocate(size); }
         void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }
 
