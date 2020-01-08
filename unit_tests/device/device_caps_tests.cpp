@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -413,7 +413,6 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
     } else {
         EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation"))));
     }
-    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_subgroups")));
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_spirv_no_integer_wrap_decoration")));
 }
@@ -425,29 +424,58 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesnt
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation"))));
-    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_subgroups"))));
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_spirv_no_integer_wrap_decoration"))));
 }
 
-TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
+TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableNV12.set(true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
-
-    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_planar_yuv")));
-    EXPECT_TRUE(caps.nv12Extension);
+    if (device->getHardwareInfo().capabilityTable.supportsImages) {
+        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_planar_yuv")));
+        EXPECT_TRUE(caps.nv12Extension);
+    } else {
+        EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_planar_yuv"))));
+    }
 }
 
-TEST_F(DeviceGetCapsTest, givenEnablePackedYuvsetToTrueWhenCapsAreCreatedThenDeviceReportsPackedYuvExtension) {
+TEST_F(DeviceGetCapsTest, givenEnablePackedYuvsetToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsPackedYuvExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnablePackedYuv.set(true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
+    if (device->getHardwareInfo().capabilityTable.supportsImages) {
+        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_packed_yuv")));
+        EXPECT_TRUE(caps.packedYuvExtension);
+    } else {
+        EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_packed_yuv"))));
+    }
+}
 
+TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsPackedYuvAndNV12Extensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnablePackedYuv.set(true);
+    DebugManager.flags.EnableNV12.set(true);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = true;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_packed_yuv")));
-    EXPECT_TRUE(caps.packedYuvExtension);
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_planar_yuv")));
+}
+
+TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsPackedYuvAndNV12Extensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnablePackedYuv.set(true);
+    DebugManager.flags.EnableNV12.set(true);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = false;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_packed_yuv"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_planar_yuv"))));
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToFalseWhenCapsAreCreatedThenDeviceDoesNotReportNV12Extension) {
@@ -632,10 +660,37 @@ TEST_F(DeviceGetCapsTest, givenAtleastOCL2DeviceThenExposesMipMapAndUnifiedMemor
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
+    std::string extensionString = caps.deviceExtensions;
+    if (device->getHardwareInfo().capabilityTable.supportsImages) {
+        EXPECT_THAT(extensionString, testing::HasSubstr(std::string("cl_khr_mipmap_image")));
+        EXPECT_THAT(extensionString, testing::HasSubstr(std::string("cl_khr_mipmap_image_writes")));
+    } else {
+        EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_mipmap_image")));
+        EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_mipmap_image_writes")));
+    }
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_unified_shared_memory_preview")));
+}
 
+TEST_F(DeviceGetCapsTest, givenSupportImagesWhenCapsAreCreatedThenDeviceReportsMinMapExtensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(20);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = true;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image")));
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image_writes")));
-    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_unified_shared_memory_preview")));
+}
+
+TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotReportsMinMapExtensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(20);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = false;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image_writes"))));
 }
 
 TEST_F(DeviceGetCapsTest, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemoryExtensions) {
@@ -648,6 +703,32 @@ TEST_F(DeviceGetCapsTest, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemo
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image"))));
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image_writes"))));
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_unified_shared_memory_preview"))));
+}
+
+TEST_F(DeviceGetCapsTest, givenSupporteImagesWhenCreateExtentionsListThenDeviceReportsImagesExtensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(20);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = true;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto extensions = device->getDeviceInfo().deviceExtensions;
+
+    EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_khr_image2d_from_buffer")));
+    EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_khr_depth_images")));
+    EXPECT_THAT(extensions, testing::HasSubstr(std::string("cl_intel_media_block_io")));
+}
+
+TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDeviceNotReportsImagesExtensions) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(20);
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = false;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto extensions = device->getDeviceInfo().deviceExtensions;
+
+    EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_khr_image2d_from_buffer"))));
+    EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_khr_depth_images"))));
+    EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_intel_media_block_io"))));
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReported) {

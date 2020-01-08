@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,9 @@ namespace NEO {
 const char *deviceExtensionsList = "cl_khr_3d_image_writes "
                                    "cl_khr_byte_addressable_store "
                                    "cl_khr_fp16 "
-                                   "cl_khr_depth_images "
                                    "cl_khr_global_int32_base_atomics "
                                    "cl_khr_global_int32_extended_atomics "
                                    "cl_khr_icd "
-                                   "cl_khr_image2d_from_buffer "
                                    "cl_khr_local_int32_base_atomics "
                                    "cl_khr_local_int32_extended_atomics "
                                    "cl_intel_subgroups "
@@ -28,7 +26,6 @@ const char *deviceExtensionsList = "cl_khr_3d_image_writes "
                                    "cl_intel_subgroups_short "
                                    "cl_khr_spir "
                                    "cl_intel_accelerator "
-                                   "cl_intel_media_block_io "
                                    "cl_intel_driver_diagnostics "
                                    "cl_khr_priority_hints "
                                    "cl_khr_throttle_hints "
@@ -46,7 +43,9 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
         if (hwInfo.capabilityTable.supportsVme) {
             allExtensionsList += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
-        allExtensionsList += "cl_intel_spirv_media_block_io ";
+        if (hwInfo.capabilityTable.supportsImages) {
+            allExtensionsList += "cl_intel_spirv_media_block_io ";
+        }
         allExtensionsList += "cl_intel_spirv_subgroups ";
         allExtensionsList += "cl_khr_spirv_no_integer_wrap_decoration ";
     }

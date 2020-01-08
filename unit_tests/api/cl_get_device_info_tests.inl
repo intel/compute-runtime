@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,9 +166,9 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_3d_image_writes ",
         "cl_khr_byte_addressable_store ",
         "cl_khr_fp16 ",
-        "cl_khr_depth_images ",
         "cl_khr_global_int32_base_atomics ",
         "cl_khr_global_int32_extended_atomics ",
+        "cl_khr_icd ",
         "cl_khr_local_int32_base_atomics ",
         "cl_khr_local_int32_extended_atomics ",
         "cl_intel_subgroups ",
@@ -176,8 +176,10 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_intel_subgroups_short ",
         "cl_khr_spir ",
         "cl_intel_accelerator ",
-        "cl_intel_media_block_io ",
         "cl_intel_driver_diagnostics ",
+        "cl_khr_priority_hints ",
+        "cl_khr_throttle_hints ",
+        "cl_khr_create_command_queue ",
     };
 
     for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {

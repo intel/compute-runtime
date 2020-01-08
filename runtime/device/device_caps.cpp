@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,6 @@ void Device::initializeCaps() {
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
-        deviceExtensions += "cl_intel_spirv_media_block_io ";
         deviceExtensions += "cl_intel_spirv_subgroups ";
         deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
     } else {
@@ -138,14 +137,17 @@ void Device::initializeCaps() {
     }
 
     if (enabledClVersion >= 20) {
-        deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes cl_intel_unified_shared_memory_preview ";
+        deviceExtensions += "cl_intel_unified_shared_memory_preview ";
+        if (hwInfo.capabilityTable.supportsImages) {
+            deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
+        }
     }
 
-    if (DebugManager.flags.EnableNV12.get()) {
+    if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
         deviceExtensions += "cl_intel_planar_yuv ";
         deviceInfo.nv12Extension = true;
     }
-    if (DebugManager.flags.EnablePackedYuv.get()) {
+    if (DebugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         deviceExtensions += "cl_intel_packed_yuv ";
         deviceInfo.packedYuvExtension = true;
     }
@@ -168,6 +170,12 @@ void Device::initializeCaps() {
     if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
         deviceExtensions += "cl_khr_int64_base_atomics ";
         deviceExtensions += "cl_khr_int64_extended_atomics ";
+    }
+
+    if (hwInfo.capabilityTable.supportsImages) {
+        deviceExtensions += "cl_khr_image2d_from_buffer ";
+        deviceExtensions += "cl_khr_depth_images ";
+        deviceExtensions += "cl_intel_media_block_io ";
     }
 
     deviceExtensions += sharingFactory.getExtensions();

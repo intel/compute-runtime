@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,21 +49,23 @@ TEST_P(GetDeviceGlInfoStr, StringType) {
         std::string extensionString(paramValue);
         size_t currentOffset = 0u;
         std::string supportedExtensions[] = {
-            "cl_khr_3d_image_writes",
-            "cl_khr_byte_addressable_store",
-            "cl_khr_fp16",
-            "cl_khr_depth_images",
-            "cl_khr_global_int32_base_atomics",
-            "cl_khr_global_int32_extended_atomics",
-            "cl_khr_local_int32_base_atomics",
-            "cl_khr_local_int32_extended_atomics",
-            "cl_intel_subgroups",
-            "cl_intel_required_subgroup_size",
-            "cl_intel_subgroups_short",
-            "cl_khr_spir",
-            "cl_intel_accelerator",
-            "cl_intel_media_block_io",
-            "cl_intel_driver_diagnostics",
+            "cl_khr_3d_image_writes ",
+            "cl_khr_byte_addressable_store ",
+            "cl_khr_fp16 ",
+            "cl_khr_global_int32_base_atomics ",
+            "cl_khr_global_int32_extended_atomics ",
+            "cl_khr_icd ",
+            "cl_khr_local_int32_base_atomics ",
+            "cl_khr_local_int32_extended_atomics ",
+            "cl_intel_subgroups ",
+            "cl_intel_required_subgroup_size ",
+            "cl_intel_subgroups_short ",
+            "cl_khr_spir ",
+            "cl_intel_accelerator ",
+            "cl_intel_driver_diagnostics ",
+            "cl_khr_priority_hints ",
+            "cl_khr_throttle_hints ",
+            "cl_khr_create_command_queue ",
             "cl_khr_gl_depth_images",
             "cl_khr_gl_event",
             "cl_khr_gl_msaa_sharing",

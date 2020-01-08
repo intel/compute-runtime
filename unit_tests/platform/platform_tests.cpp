@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
@@ -258,7 +259,12 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
         } else {
             EXPECT_THAT(compilerExtensions, testing::Not(::testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation"))));
         }
-        EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
+        if (hwInfo->capabilityTable.supportsImages) {
+            EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
+        } else {
+            EXPECT_THAT(compilerExtensions, testing::Not(::testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
+        }
+
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_intel_spirv_subgroups")));
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_spirv_no_integer_wrap_decoration")));
     }
@@ -300,6 +306,26 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
         EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_int64_base_atomics"))));
         EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_int64_extended_atomics"))));
     }
+}
+
+TEST_F(PlatformTest, givenSupporteImagesAndClVersion21WhenCreateExtentionsListThenDeviceReportsSpritvMediaBlockIoExtension) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = true;
+    hwInfo.capabilityTable.clVersionSupport = 21;
+    std::string extensionsList = getExtensionsList(hwInfo);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+
+    EXPECT_THAT(compilerExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
+}
+
+TEST_F(PlatformTest, givenNotSupporteImagesAndClVersion21WhenCreateExtentionsListThenDeviceNotReportsSpritvMediaBlockIoExtension) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = false;
+    hwInfo.capabilityTable.clVersionSupport = 21;
+    std::string extensionsList = getExtensionsList(hwInfo);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+
+    EXPECT_THAT(compilerExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
 }
 
 TEST_F(PlatformTest, testRemoveLastSpace) {

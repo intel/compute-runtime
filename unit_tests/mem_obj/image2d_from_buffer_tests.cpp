@@ -10,6 +10,7 @@
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/platform/extensions.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/raii_hw_helper.h"
@@ -231,10 +232,15 @@ TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlign
 
 TEST_F(Image2dFromBufferTest, ExtensionString) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const auto hwInfo = device->getHardwareInfo();
     const auto &caps = device->getDeviceInfo();
     std::string extensions = caps.deviceExtensions;
     size_t found = extensions.find("cl_khr_image2d_from_buffer");
-    EXPECT_NE(std::string::npos, found);
+    if (hwInfo.capabilityTable.supportsImages) {
+        EXPECT_NE(std::string::npos, found);
+    } else {
+        EXPECT_EQ(std::string::npos, found);
+    }
 }
 
 TEST_F(Image2dFromBufferTest, InterceptBuffersHostPtr) {
