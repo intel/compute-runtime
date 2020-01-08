@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "core/os_interface/windows/windows_wrapper.h"
+
+#include <cstdint>
 
 #define OSAPI WINAPI
 
 typedef uint32_t GLType;
 typedef HDC GLDisplay;
 typedef HGLRC GLContext;
-
-// Windows OpenGL functions

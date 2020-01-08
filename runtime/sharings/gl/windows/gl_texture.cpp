@@ -19,6 +19,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 
 #include "CL/cl_gl.h"
 #include "config.h"
@@ -38,7 +39,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     texInfo.name = texture;
     texInfo.target = getBaseTargetType(target);
 
-    GLSharingFunctions *sharingFunctions = context->getSharing<GLSharingFunctions>();
+    GLSharingFunctionsWindows *sharingFunctions = context->getSharing<GLSharingFunctionsWindows>();
 
     if (target == GL_RENDERBUFFER_EXT) {
         sharingFunctions->acquireSharedRenderBuffer(&texInfo);
@@ -151,6 +152,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 } // namespace NEO
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     CL_GL_RESOURCE_INFO resourceInfo = {0};
     resourceInfo.name = this->clGlObjectId;
     if (target == GL_RENDERBUFFER_EXT) {
@@ -246,6 +248,7 @@ cl_GLenum GlTexture::getBaseTargetType(cl_GLenum target) {
 }
 
 void GlTexture::releaseResource(MemObj *memObject) {
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     if (target == GL_RENDERBUFFER_EXT) {
         sharingFunctions->releaseSharedRenderBuffer(&textureInfo);
     } else {

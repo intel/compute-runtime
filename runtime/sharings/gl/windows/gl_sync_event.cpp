@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,8 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/sharings/gl/gl_context_guard.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 
 namespace NEO {
 GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)
@@ -25,15 +26,17 @@ GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)
     transitionExecutionStatus(CL_SUBMITTED);
 }
 
-GlSyncEvent::~GlSyncEvent() { ctx->getSharing<GLSharingFunctions>()->releaseSync(glSync->pSync); }
+GlSyncEvent::~GlSyncEvent() {
+    ctx->getSharing<GLSharingFunctionsWindows>()->releaseSync(glSync->pSync);
+}
 
 GlSyncEvent *GlSyncEvent::create(Context &context, cl_GLsync sync, cl_int *errCode) {
-    GLContextGuard guard(*context.getSharing<GLSharingFunctions>());
+    GLContextGuard guard(*context.getSharing<GLSharingFunctionsWindows>());
 
     ErrorCodeHelper err(errCode, CL_SUCCESS);
     GL_CL_SYNC_INFO syncInfo = {sync, nullptr};
 
-    context.getSharing<GLSharingFunctions>()->retainSync(&syncInfo);
+    context.getSharing<GLSharingFunctionsWindows>()->retainSync(&syncInfo);
     DEBUG_BREAK_IF(!syncInfo.pSync);
 
     EventBuilder eventBuilder;
@@ -42,10 +45,10 @@ GlSyncEvent *GlSyncEvent::create(Context &context, cl_GLsync sync, cl_int *errCo
 }
 
 void GlSyncEvent::updateExecutionStatus() {
-    GLContextGuard guard(*ctx->getSharing<GLSharingFunctions>());
+    GLContextGuard guard(*ctx->getSharing<GLSharingFunctionsWindows>());
     int retVal = 0;
 
-    ctx->getSharing<GLSharingFunctions>()->getSynciv(glSync->pSync, GL_SYNC_STATUS, &retVal);
+    ctx->getSharing<GLSharingFunctionsWindows>()->getSynciv(glSync->pSync, GL_SYNC_STATUS, &retVal);
     if (retVal == GL_SIGNALED) {
         setStatus(CL_COMPLETE);
     }

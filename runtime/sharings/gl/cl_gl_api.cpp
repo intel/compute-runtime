@@ -19,9 +19,9 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_buffer.h"
-#include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 #include "runtime/tracing/tracing_notify.h"
 
 #include "CL/cl.h"
@@ -337,7 +337,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
         return retVal;
     }
 
-    auto glSharing = std::make_unique<GLSharingFunctions>();
+    auto glSharing = std::make_unique<GLSharingFunctionsWindows>();
     glSharing->initGLFunctions();
     if (glSharing->isOpenGlSharingSupported() == false) {
         retVal = CL_INVALID_CONTEXT;

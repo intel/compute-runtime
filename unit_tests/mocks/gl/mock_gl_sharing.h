@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include "public/cl_gl_private_intel.h"
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 #include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
 
 #include "config.h"
@@ -70,7 +70,7 @@ static const unsigned int supportedTargets[] = {
 };
 }
 
-class GlSharingFunctionsMock : public GLSharingFunctions {
+class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
 
     void initMembers();
 
@@ -81,38 +81,40 @@ class GlSharingFunctionsMock : public GLSharingFunctions {
     };
     ~GlSharingFunctionsMock() override = default;
 
-    using GLSharingFunctions::GLAcquireSharedBuffer;
-    using GLSharingFunctions::GLAcquireSharedRenderBuffer;
-    using GLSharingFunctions::GLAcquireSharedTexture;
-    using GLSharingFunctions::GLGetCurrentContext;
-    using GLSharingFunctions::GLGetCurrentDisplay;
-    using GLSharingFunctions::glGetIntegerv;
-    using GLSharingFunctions::glGetString;
-    using GLSharingFunctions::glGetStringi;
-    using GLSharingFunctions::GLGetSynciv;
-    using GLSharingFunctions::GLReleaseSharedBuffer;
-    using GLSharingFunctions::GLReleaseSharedRenderBuffer;
-    using GLSharingFunctions::GLReleaseSharedTexture;
-    using GLSharingFunctions::GLReleaseSync;
-    using GLSharingFunctions::GLRetainSync;
-    using GLSharingFunctions::GLSetSharedOCLContextState;
-    using GLSharingFunctions::pfnWglCreateContext;
-    using GLSharingFunctions::pfnWglDeleteContext;
-    using GLSharingFunctions::pfnWglShareLists;
-    using GLSharingFunctions::wglMakeCurrent;
+    using GLSharingFunctionsWindows::GLAcquireSharedBuffer;
+    using GLSharingFunctionsWindows::GLAcquireSharedRenderBuffer;
+    using GLSharingFunctionsWindows::GLAcquireSharedTexture;
+    using GLSharingFunctionsWindows::GLGetCurrentContext;
+    using GLSharingFunctionsWindows::GLGetCurrentDisplay;
+    using GLSharingFunctionsWindows::glGetIntegerv;
+    using GLSharingFunctionsWindows::glGetString;
+    using GLSharingFunctionsWindows::glGetStringi;
+    using GLSharingFunctionsWindows::GLGetSynciv;
+    using GLSharingFunctionsWindows::GLReleaseSharedBuffer;
+    using GLSharingFunctionsWindows::GLReleaseSharedRenderBuffer;
+    using GLSharingFunctionsWindows::GLReleaseSharedTexture;
+    using GLSharingFunctionsWindows::GLReleaseSync;
+    using GLSharingFunctionsWindows::GLRetainSync;
+    using GLSharingFunctionsWindows::GLSetSharedOCLContextState;
+    using GLSharingFunctionsWindows::isOpenGlExtensionSupported;
+    using GLSharingFunctionsWindows::pfnWglCreateContext;
+    using GLSharingFunctionsWindows::pfnWglDeleteContext;
+    using GLSharingFunctionsWindows::pfnWglShareLists;
+    using GLSharingFunctionsWindows::setSharedOCLContextState;
+    using GLSharingFunctionsWindows::wglMakeCurrent;
 
-    using GLSharingFunctions::glArbEventMapping;
-    using GLSharingFunctions::GLContextHandle;
-    using GLSharingFunctions::GLDeviceHandle;
+    using GLSharingFunctionsWindows::glArbEventMapping;
+    using GLSharingFunctionsWindows::GLContextHandle;
+    using GLSharingFunctionsWindows::GLDeviceHandle;
 
-    using GLSharingFunctions::getSupportedFormats;
-    using GLSharingFunctions::pfnGlArbSyncObjectCleanup;
-    using GLSharingFunctions::pfnGlArbSyncObjectSetup;
-    using GLSharingFunctions::pfnGlArbSyncObjectSignal;
-    using GLSharingFunctions::pfnGlArbSyncObjectWaitServer;
+    using GLSharingFunctionsWindows::getSupportedFormats;
+    using GLSharingFunctionsWindows::pfnGlArbSyncObjectCleanup;
+    using GLSharingFunctionsWindows::pfnGlArbSyncObjectSetup;
+    using GLSharingFunctionsWindows::pfnGlArbSyncObjectSignal;
+    using GLSharingFunctionsWindows::pfnGlArbSyncObjectWaitServer;
 
     GlSharingFunctionsMock(GLType GLHDCType, GLContext GLHGLRCHandle, GLContext GLHGLRCHandleBkpCtx, GLDisplay GLHDCHandle)
-        : GLSharingFunctions(GLHDCType, GLHGLRCHandle, GLHGLRCHandleBkpCtx, GLHDCHandle) {
+        : GLSharingFunctionsWindows(GLHDCType, GLHGLRCHandle, GLHGLRCHandleBkpCtx, GLHDCHandle) {
         initMembers();
         updateOpenGLContext();
         createBackupContext();
@@ -176,19 +178,22 @@ class MockGlSharing {
     GLMockReturnedValues glMockReturnedValues = {0};
 };
 
-class MockGLSharingFunctions : public GLSharingFunctions {
+class MockGLSharingFunctions : public GLSharingFunctionsWindows {
   public:
+    using GLSharingFunctionsWindows::isOpenGlExtensionSupported;
+    using GLSharingFunctionsWindows::setSharedOCLContextState;
+
     static bool SharingEnabled;
 
     static void OSAPI glGetIntegervTest(GLenum pname, GLint *data) {
         if (pname == GL_NUM_EXTENSIONS)
             *data = 2;
     };
-    using GLSharingFunctions::glGetIntegerv;
-    using GLSharingFunctions::glGetString;
+    using GLSharingFunctionsWindows::glGetIntegerv;
+    using GLSharingFunctionsWindows::glGetString;
     std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
     MockGLSharingFunctions() {
-        GLSharingFunctions::initGLFunctions();
+        GLSharingFunctionsWindows::initGLFunctions();
         MockGLSharingFunctions::SharingEnabled = 1;
     }
 };

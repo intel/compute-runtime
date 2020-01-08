@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/sharings/gl/windows/win_enable_gl.h"
+
 #include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
 #include "runtime/sharings/gl/cl_gl_api_intel.h"
-#include "runtime/sharings/gl/enable_gl.h"
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
 
@@ -58,8 +59,8 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
         return true;
 
     if (contextData->GLHGLRCHandle) {
-        context.registerSharing(
-            new GLSharingFunctions(contextData->GLHDCType, contextData->GLHGLRCHandle, nullptr, contextData->GLHDCHandle));
+        context.registerSharing(new GLSharingFunctionsWindows(contextData->GLHDCType, contextData->GLHGLRCHandle,
+                                                              nullptr, contextData->GLHDCHandle));
     }
 
     contextData.reset(nullptr);
@@ -90,7 +91,7 @@ std::string GlSharingBuilderFactory::getExtensions() {
                "cl_khr_gl_depth_images "
                "cl_khr_gl_event "
                "cl_khr_gl_msaa_sharing ";
-    } else if (GLSharingFunctions::isGlSharingEnabled()) {
+    } else if (GLSharingFunctionsWindows::isGlSharingEnabled()) {
         return "cl_khr_gl_sharing "
                "cl_khr_gl_depth_images "
                "cl_khr_gl_event "
@@ -108,5 +109,5 @@ void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &fu
     return nullptr;
 }
 
-static SharingFactory::RegisterSharing<GlSharingBuilderFactory, GLSharingFunctions> glSharing;
+static SharingFactory::RegisterSharing<GlSharingBuilderFactory, GLSharingFunctionsWindows> glSharing;
 } // namespace NEO

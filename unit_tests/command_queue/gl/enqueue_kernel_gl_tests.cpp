@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "core/helpers/preamble.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/windows/windows_wrapper.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"

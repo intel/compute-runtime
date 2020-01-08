@@ -18,8 +18,10 @@
 #include "runtime/sharings/gl/cl_gl_api_intel.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_buffer.h"
+#include "runtime/sharings/gl/gl_context_guard.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 #include "runtime/sharings/sharing.h"
 #include "test.h"
 #include "unit_tests/libult/create_command_stream.h"
@@ -651,7 +653,7 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextF
 }
 
 TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedThenReturnFalse) {
-    GLSharingFunctions glSharingFunctions;
+    MockGLSharingFunctions glSharingFunctions;
     const unsigned char invalidExtension[] = "InvalidExtensionName";
     bool RetVal = glSharingFunctions.isOpenGlExtensionSupported(invalidExtension);
     EXPECT_FALSE(RetVal);
@@ -1086,7 +1088,7 @@ TEST(glSharingContextSwitch, givenZeroCurrentContextWhenSwitchAttemptedThenMakeS
 }
 
 TEST(glSharingContextSwitch, givenSharingFunctionsWhenGlDeleteContextIsNotPresentThenItIsNotCalled) {
-    auto glSharingFunctions = new GLSharingFunctions();
+    auto glSharingFunctions = new GLSharingFunctionsWindows();
     glDllHelper dllParam;
     auto currentGlDeleteContextCalledCount = dllParam.getParam("GLDeleteContextCalled");
     delete glSharingFunctions;
@@ -1172,7 +1174,7 @@ TEST_F(glSharingTests, givenContextWhenEmptySharingTableEmptyThenReturnsNullptr)
 }
 
 TEST_F(glSharingTests, givenUnknownBaseEventWhenGetGlArbSyncEventIsCalledThenNullptrIsReturned) {
-    auto *sharing = context.getSharing<GLSharingFunctions>();
+    auto *sharing = context.getSharing<GLSharingFunctionsWindows>();
     ASSERT_NE(nullptr, sharing);
     auto event = new MockEvent<UserEvent>();
     MockContext context;

@@ -15,7 +15,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 
 #include <GL/gl.h>
 
@@ -59,8 +59,10 @@ void cleanupArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo)
 }
 
 bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
-    glSyncInfo.hContextToBlock = static_cast<D3DKMT_HANDLE>(sharing.getGLContextHandle());
-    auto glDevice = static_cast<D3DKMT_HANDLE>(sharing.getGLDeviceHandle());
+    auto &sharingFunctions = static_cast<GLSharingFunctionsWindows &>(sharing);
+
+    glSyncInfo.hContextToBlock = static_cast<D3DKMT_HANDLE>(sharingFunctions.getGLContextHandle());
+    auto glDevice = static_cast<D3DKMT_HANDLE>(sharingFunctions.getGLDeviceHandle());
     auto wddm = osInterface.get()->getWddm();
 
     D3DKMT_CREATESYNCHRONIZATIONOBJECT serverSyncInitInfo = {0};

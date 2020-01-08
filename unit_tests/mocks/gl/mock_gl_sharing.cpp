@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ EGLBkpContextParams eglBkpContextParams = {0};
 GLXBkpContextParams glxBkpContextParams = {0};
 
 void GlSharingFunctionsMock::initMembers() {
-    GLSharingFunctions::initGLFunctions();
+    GLSharingFunctionsWindows::initGLFunctions();
     glDllHelper dllParam;
     dllParam.setGLSetSharedOCLContextStateReturnedValue(1u);
     dllParam.resetParam("");

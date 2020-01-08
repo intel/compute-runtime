@@ -5,7 +5,7 @@
  *
  */
 
-#include "gl_buffer.h"
+#include "runtime/sharings/gl/gl_buffer.h"
 
 // clang-format off
 #include "public/cl_gl_private_intel.h"
@@ -16,6 +16,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 
 #include "config.h"
 
@@ -26,7 +27,7 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     CL_GL_BUFFER_INFO bufferInfo = {0};
     bufferInfo.bufferName = bufferId;
 
-    GLSharingFunctions *sharingFunctions = context->getSharing<GLSharingFunctions>();
+    GLSharingFunctionsWindows *sharingFunctions = context->getSharing<GLSharingFunctionsWindows>();
     if (sharingFunctions->acquireSharedBufferINTEL(&bufferInfo) == GL_FALSE) {
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
@@ -43,7 +44,8 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
 }
 
 void GlBuffer::synchronizeObject(UpdateData &updateData) {
-    const auto currentSharedHandle = updateData.memObject->getGraphicsAllocation()->peekSharedHandle();
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
+
     CL_GL_BUFFER_INFO bufferInfo = {};
     bufferInfo.bufferName = this->clGlObjectId;
     sharingFunctions->acquireSharedBufferINTEL(&bufferInfo);
@@ -52,6 +54,7 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
     updateData.memObject->getGraphicsAllocation()->setAllocationOffset(bufferInfo.bufferOffset);
 
+    const auto currentSharedHandle = updateData.memObject->getGraphicsAllocation()->peekSharedHandle();
     if (currentSharedHandle != updateData.sharedHandle) {
         updateData.updateData = new CL_GL_BUFFER_INFO(bufferInfo);
     }
@@ -81,6 +84,8 @@ void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, Upd
 }
 
 void GlBuffer::popGraphicsAllocationFromReuse(GraphicsAllocation *graphicsAllocation) {
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
+
     std::unique_lock<std::mutex> lock(sharingFunctions->mutex);
 
     auto &graphicsAllocations = sharingFunctions->graphicsAllocationsForGlBufferReuse;
@@ -96,6 +101,8 @@ void GlBuffer::popGraphicsAllocationFromReuse(GraphicsAllocation *graphicsAlloca
 }
 
 void GlBuffer::releaseReusedGraphicsAllocation() {
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
+
     std::unique_lock<std::mutex> lock(sharingFunctions->mutex);
 
     auto &allocationsVector = sharingFunctions->graphicsAllocationsForGlBufferReuse;
@@ -113,7 +120,7 @@ void GlBuffer::releaseReusedGraphicsAllocation() {
 }
 
 GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigned int bufferId, _tagCLGLBufferInfo &bufferInfo) {
-    GLSharingFunctions *sharingFunctions = context->getSharing<GLSharingFunctions>();
+    GLSharingFunctionsWindows *sharingFunctions = context->getSharing<GLSharingFunctionsWindows>();
     auto &allocationsVector = sharingFunctions->graphicsAllocationsForGlBufferReuse;
     GraphicsAllocation *graphicsAllocation = nullptr;
     bool reusedAllocation = false;
@@ -155,6 +162,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
 }
 
 void GlBuffer::releaseResource(MemObj *memObject) {
+    auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     CL_GL_BUFFER_INFO bufferInfo = {};
     bufferInfo.bufferName = this->clGlObjectId;
     sharingFunctions->releaseSharedBufferINTEL(&bufferInfo);

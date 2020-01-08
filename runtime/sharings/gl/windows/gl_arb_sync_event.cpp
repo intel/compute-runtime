@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing.h"
 
 #include <GL/gl.h>
 
@@ -30,7 +30,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
     auto cmdQueue = ev.getCommandQueue();
     auto osInterface = cmdQueue->getGpgpuCommandStreamReceiver().getOSInterface();
     UNRECOVERABLE_IF(osInterface == nullptr);
-    if (false == ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
+    if (false == ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
         return false;
     }
 
@@ -45,7 +45,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
 
 GlArbSyncEvent::~GlArbSyncEvent() {
     if (baseEvent != nullptr) {
-        ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectCleanup(*osInterface, glSyncInfo.get());
+        ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectCleanup(*osInterface, glSyncInfo.get());
         baseEvent->decRefInternal();
     }
 }
@@ -69,8 +69,8 @@ void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tr
         return;
     }
 
-    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
-    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
+    ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
+    ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
 } // namespace NEO
 
@@ -104,7 +104,7 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
         return CL_SUCCESS;
     }
 
-    auto sharing = neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>();
+    auto sharing = neoEvent->getContext()->getSharing<NEO::GLSharingFunctionsWindows>();
     if (sharing == nullptr) {
         return CL_INVALID_OPERATION;
     }
@@ -128,8 +128,8 @@ clReleaseGlSharedEventINTEL(cl_event event) {
     if (nullptr == neoEvent) {
         return CL_INVALID_EVENT;
     }
-    auto arbSyncEvent = neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>()->getGlArbSyncEvent(*neoEvent);
-    neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>()->removeGlArbSyncEventMapping(*neoEvent);
+    auto arbSyncEvent = neoEvent->getContext()->getSharing<NEO::GLSharingFunctionsWindows>()->getGlArbSyncEvent(*neoEvent);
+    neoEvent->getContext()->getSharing<NEO::GLSharingFunctionsWindows>()->removeGlArbSyncEventMapping(*neoEvent);
     if (nullptr != arbSyncEvent) {
         arbSyncEvent->release();
     }
