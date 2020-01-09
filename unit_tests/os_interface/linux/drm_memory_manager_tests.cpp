@@ -3073,6 +3073,16 @@ TEST_F(DrmMemoryManagerBasic, ifLimitedRangeAllocatorAvailableWhenAskedForAlloca
     memoryManager->getGfxPartition(0)->heapFree(HeapIndex::HEAP_STANDARD, ptr, size);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenSpecificAddressSpaceWhenInitializingMemoryManagerThenSetCorrectHeaps) {
+    executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    TestedDrmMemoryManager memoryManager(false, false, false, executionEnvironment);
+
+    auto gfxPartition = memoryManager.getGfxPartition(0);
+    auto limit = gfxPartition->getHeapLimit(HeapIndex::HEAP_SVM);
+
+    EXPECT_EQ(maxNBitValue(48 - 1), limit);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenDisabledHostPtrTrackingWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableHostPtrTracking.set(false);
