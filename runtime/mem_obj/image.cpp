@@ -429,8 +429,8 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);
     sharedImage->setQPitch(imgInfo.qPitch);
-    sharedImage->setHostPtrRowPitch(imgInfo.imgDesc.image_row_pitch);
-    sharedImage->setHostPtrSlicePitch(imgInfo.imgDesc.image_slice_pitch);
+    sharedImage->setHostPtrRowPitch(imgInfo.imgDesc.imageRowPitch);
+    sharedImage->setHostPtrSlicePitch(imgInfo.imgDesc.imageSlicePitch);
     sharedImage->setCubeFaceIndex(cubeFaceIndex);
     sharedImage->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
     sharedImage->setMcsSurfaceInfo(mcsSurfaceInfo);
@@ -703,25 +703,25 @@ bool Image::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
         return false;
     }
 
-    size_t imageWidth = imgInfo.imgDesc.image_width;
+    size_t imageWidth = imgInfo.imgDesc.imageWidth;
     size_t imageHeight = 1;
     size_t imageDepth = 1;
     size_t imageCount = 1;
 
-    switch (imgInfo.imgDesc.image_type) {
+    switch (imgInfo.imgDesc.imageType) {
     case ImageType::Image3D:
-        imageDepth = imgInfo.imgDesc.image_depth;
+        imageDepth = imgInfo.imgDesc.imageDepth;
         CPP_ATTRIBUTE_FALLTHROUGH;
     case ImageType::Image2D:
     case ImageType::Image2DArray:
-        imageHeight = imgInfo.imgDesc.image_height;
+        imageHeight = imgInfo.imgDesc.imageHeight;
         break;
     default:
         break;
     }
 
-    auto hostPtrRowPitch = imgInfo.imgDesc.image_row_pitch ? imgInfo.imgDesc.image_row_pitch : imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
-    auto hostPtrSlicePitch = imgInfo.imgDesc.image_slice_pitch ? imgInfo.imgDesc.image_slice_pitch : hostPtrRowPitch * imgInfo.imgDesc.image_height;
+    auto hostPtrRowPitch = imgInfo.imgDesc.imageRowPitch ? imgInfo.imgDesc.imageRowPitch : imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto hostPtrSlicePitch = imgInfo.imgDesc.imageSlicePitch ? imgInfo.imgDesc.imageSlicePitch : hostPtrRowPitch * imgInfo.imgDesc.imageHeight;
 
     size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
     auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
@@ -779,31 +779,31 @@ ImageType Image::convertType(const cl_mem_object_type type) {
 
 ImageDescriptor Image::convertDescriptor(const cl_image_desc &imageDesc) {
     ImageDescriptor desc = {};
-    desc.from_parent = imageDesc.mem_object != nullptr;
-    desc.image_array_size = imageDesc.image_array_size;
-    desc.image_depth = imageDesc.image_depth;
-    desc.image_height = imageDesc.image_height;
-    desc.image_row_pitch = imageDesc.image_row_pitch;
-    desc.image_slice_pitch = imageDesc.image_slice_pitch;
-    desc.image_type = convertType(imageDesc.image_type);
-    desc.image_width = imageDesc.image_width;
-    desc.num_mip_levels = imageDesc.num_mip_levels;
-    desc.num_samples = imageDesc.num_samples;
+    desc.fromParent = imageDesc.mem_object != nullptr;
+    desc.imageArraySize = imageDesc.image_array_size;
+    desc.imageDepth = imageDesc.image_depth;
+    desc.imageHeight = imageDesc.image_height;
+    desc.imageRowPitch = imageDesc.image_row_pitch;
+    desc.imageSlicePitch = imageDesc.image_slice_pitch;
+    desc.imageType = convertType(imageDesc.image_type);
+    desc.imageWidth = imageDesc.image_width;
+    desc.numMipLevels = imageDesc.num_mip_levels;
+    desc.numSamples = imageDesc.num_samples;
     return desc;
 }
 
 cl_image_desc Image::convertDescriptor(const ImageDescriptor &imageDesc) {
     cl_image_desc desc = {};
     desc.mem_object = nullptr;
-    desc.image_array_size = imageDesc.image_array_size;
-    desc.image_depth = imageDesc.image_depth;
-    desc.image_height = imageDesc.image_height;
-    desc.image_row_pitch = imageDesc.image_row_pitch;
-    desc.image_slice_pitch = imageDesc.image_slice_pitch;
-    desc.image_type = convertType(imageDesc.image_type);
-    desc.image_width = imageDesc.image_width;
-    desc.num_mip_levels = imageDesc.num_mip_levels;
-    desc.num_samples = imageDesc.num_samples;
+    desc.image_array_size = imageDesc.imageArraySize;
+    desc.image_depth = imageDesc.imageDepth;
+    desc.image_height = imageDesc.imageHeight;
+    desc.image_row_pitch = imageDesc.imageRowPitch;
+    desc.image_slice_pitch = imageDesc.imageSlicePitch;
+    desc.image_type = convertType(imageDesc.imageType);
+    desc.image_width = imageDesc.imageWidth;
+    desc.num_mip_levels = imageDesc.numMipLevels;
+    desc.num_samples = imageDesc.numSamples;
     return desc;
 }
 

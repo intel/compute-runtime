@@ -182,7 +182,7 @@ enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
     NUM_GFX3DSTATE_SURFACEFORMATS
 };
 
-enum class OCLPlane {
+enum class ImagePlane {
     NO_PLANE = 0,
     PLANE_Y,
     PLANE_U,
@@ -211,16 +211,16 @@ enum class ImageType {
 };
 
 struct ImageDescriptor {
-    ImageType image_type;
-    size_t image_width;
-    size_t image_height;
-    size_t image_depth;
-    size_t image_array_size;
-    size_t image_row_pitch;
-    size_t image_slice_pitch;
-    uint32_t num_mip_levels;
-    uint32_t num_samples;
-    bool from_parent;
+    ImageType imageType;
+    size_t imageWidth;
+    size_t imageHeight;
+    size_t imageDepth;
+    size_t imageArraySize;
+    size_t imageRowPitch;
+    size_t imageSlicePitch;
+    uint32_t numMipLevels;
+    uint32_t numSamples;
+    bool fromParent;
 };
 
 struct ImageInfo {

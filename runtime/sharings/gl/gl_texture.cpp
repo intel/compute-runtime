@@ -147,7 +147,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
-                                    std::max(miplevel, 0), imgInfo.imgDesc.num_mip_levels);
+                                    std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
 } // namespace NEO
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {

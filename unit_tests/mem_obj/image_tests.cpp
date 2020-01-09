@@ -1391,13 +1391,13 @@ struct ImageConvertTypeTest
     void TearDown() override {
     }
 
-    std::array<std::pair<uint32_t, ImageType>, 7> types = {std::make_pair<>(CL_MEM_OBJECT_IMAGE1D, ImageType::Image1D),
-                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE2D, ImageType::Image2D),
-                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE3D, ImageType::Image3D),
-                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_ARRAY, ImageType::Image1DArray),
-                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE2D_ARRAY, ImageType::Image2DArray),
-                                                           std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_BUFFER, ImageType::Image1DBuffer),
-                                                           std::make_pair<>(0, ImageType::Invalid)};
+    std::array<std::pair<uint32_t, ImageType>, 7> types = {{std::make_pair<>(CL_MEM_OBJECT_IMAGE1D, ImageType::Image1D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D, ImageType::Image2D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE3D, ImageType::Image3D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_ARRAY, ImageType::Image1DArray),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D_ARRAY, ImageType::Image2DArray),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_BUFFER, ImageType::Image1DBuffer),
+                                                            std::make_pair<>(0, ImageType::Invalid)}};
 };
 
 TEST_F(ImageConvertTypeTest, givenClMemObjectTypeWhenConvertedThenCorrectImageTypeIsReturned) {
@@ -1418,22 +1418,22 @@ TEST(ImageConvertDescriptorTest, givenClImageDescWhenConvertedThenCorrectImageDe
     cl_image_desc clDesc = {CL_MEM_OBJECT_IMAGE1D, 16, 24, 1, 1, 1024, 2048, 1, 3, {nullptr}};
     auto desc = Image::convertDescriptor(clDesc);
 
-    EXPECT_EQ(ImageType::Image1D, desc.image_type);
-    EXPECT_EQ(clDesc.image_array_size, desc.image_array_size);
-    EXPECT_EQ(clDesc.image_depth, desc.image_depth);
-    EXPECT_EQ(clDesc.image_height, desc.image_height);
-    EXPECT_EQ(clDesc.image_row_pitch, desc.image_row_pitch);
-    EXPECT_EQ(clDesc.image_slice_pitch, desc.image_slice_pitch);
-    EXPECT_EQ(clDesc.image_width, desc.image_width);
-    EXPECT_EQ(clDesc.num_mip_levels, desc.num_mip_levels);
-    EXPECT_EQ(clDesc.num_samples, desc.num_samples);
-    EXPECT_FALSE(desc.from_parent);
+    EXPECT_EQ(ImageType::Image1D, desc.imageType);
+    EXPECT_EQ(clDesc.image_array_size, desc.imageArraySize);
+    EXPECT_EQ(clDesc.image_depth, desc.imageDepth);
+    EXPECT_EQ(clDesc.image_height, desc.imageHeight);
+    EXPECT_EQ(clDesc.image_row_pitch, desc.imageRowPitch);
+    EXPECT_EQ(clDesc.image_slice_pitch, desc.imageSlicePitch);
+    EXPECT_EQ(clDesc.image_width, desc.imageWidth);
+    EXPECT_EQ(clDesc.num_mip_levels, desc.numMipLevels);
+    EXPECT_EQ(clDesc.num_samples, desc.numSamples);
+    EXPECT_FALSE(desc.fromParent);
 
     cl_mem temporary = reinterpret_cast<cl_mem>(0x1234);
     clDesc.mem_object = temporary;
 
     desc = Image::convertDescriptor(clDesc);
-    EXPECT_TRUE(desc.from_parent);
+    EXPECT_TRUE(desc.fromParent);
 }
 
 TEST(ImageConvertDescriptorTest, givenImageDescriptorWhenConvertedThenCorrectClImageDescIsReturned) {
@@ -1441,14 +1441,14 @@ TEST(ImageConvertDescriptorTest, givenImageDescriptorWhenConvertedThenCorrectClI
     auto clDesc = Image::convertDescriptor(desc);
 
     EXPECT_EQ(clDesc.image_type, static_cast<cl_mem_object_type>(CL_MEM_OBJECT_IMAGE2D));
-    EXPECT_EQ(clDesc.image_array_size, desc.image_array_size);
-    EXPECT_EQ(clDesc.image_depth, desc.image_depth);
-    EXPECT_EQ(clDesc.image_height, desc.image_height);
-    EXPECT_EQ(clDesc.image_row_pitch, desc.image_row_pitch);
-    EXPECT_EQ(clDesc.image_slice_pitch, desc.image_slice_pitch);
-    EXPECT_EQ(clDesc.image_width, desc.image_width);
-    EXPECT_EQ(clDesc.num_mip_levels, desc.num_mip_levels);
-    EXPECT_EQ(clDesc.num_samples, desc.num_samples);
+    EXPECT_EQ(clDesc.image_array_size, desc.imageArraySize);
+    EXPECT_EQ(clDesc.image_depth, desc.imageDepth);
+    EXPECT_EQ(clDesc.image_height, desc.imageHeight);
+    EXPECT_EQ(clDesc.image_row_pitch, desc.imageRowPitch);
+    EXPECT_EQ(clDesc.image_slice_pitch, desc.imageSlicePitch);
+    EXPECT_EQ(clDesc.image_width, desc.imageWidth);
+    EXPECT_EQ(clDesc.num_mip_levels, desc.numMipLevels);
+    EXPECT_EQ(clDesc.num_samples, desc.numSamples);
     EXPECT_EQ(nullptr, clDesc.mem_object);
 }
 

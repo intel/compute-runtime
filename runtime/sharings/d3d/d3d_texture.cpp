@@ -26,24 +26,24 @@ template <typename D3D>
 Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_mem_flags flags, cl_uint subresource, cl_int *retCode) {
     ErrorCodeHelper err(retCode, CL_SUCCESS);
     auto sharingFcns = context->getSharing<D3DSharingFunctions<D3D>>();
-    OCLPlane oclPlane = OCLPlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::NO_PLANE;
     void *sharedHandle = nullptr;
     cl_uint arrayIndex = 0u;
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc.image_type = ImageType::Image2D;
+    imgInfo.imgDesc.imageType = ImageType::Image2D;
 
     D3DTexture2dDesc textureDesc = {};
     sharingFcns->getTexture2dDesc(&textureDesc, d3dTexture);
 
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         if ((subresource % 2) == 0) {
-            oclPlane = OCLPlane::PLANE_Y;
+            imagePlane = ImagePlane::PLANE_Y;
         } else {
-            oclPlane = OCLPlane::PLANE_UV;
+            imagePlane = ImagePlane::PLANE_UV;
         }
-        imgInfo.plane = GmmTypesConverter::convertPlane(oclPlane);
+        imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
         arrayIndex = subresource / 2u;
     } else if (subresource >= textureDesc.MipLevels * textureDesc.ArraySize) {
         err.set(CL_INVALID_VALUE);
@@ -75,12 +75,12 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, oclPlane, arrayIndex);
+    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, arrayIndex);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
-        imgInfo.surfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, oclPlane, flags);
+        imgInfo.surfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
     } else {
         imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
     }
@@ -103,7 +103,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc.image_type = ImageType::Image3D;
+    imgInfo.imgDesc.imageType = ImageType::Image3D;
 
     D3DTexture3dDesc textureDesc = {};
     sharingFcns->getTexture3dDesc(&textureDesc, d3dTexture);
@@ -137,7 +137,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, OCLPlane::NO_PLANE, 0u);
+    updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
@@ -156,9 +156,9 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 }
 
 template <typename D3D>
-const SurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, OCLPlane oclPlane, cl_mem_flags flags) {
+const SurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, ImagePlane imagePlane, cl_mem_flags flags) {
     cl_image_format imgFormat = {};
-    if (oclPlane == OCLPlane::PLANE_Y) {
+    if (imagePlane == ImagePlane::PLANE_Y) {
         imgFormat.image_channel_order = CL_R;
     } else {
         imgFormat.image_channel_order = CL_RG;

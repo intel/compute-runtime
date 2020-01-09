@@ -22,9 +22,9 @@
 using namespace NEO;
 
 D3DSurface::D3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3D9Surface *surfaceStaging, cl_uint plane,
-                       OCLPlane oclPlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable)
+                       ImagePlane imagePlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable)
     : D3DSharing(context, surfaceInfo->resource, surfaceStaging, plane, sharedResource), adapterType(adapterType),
-      surfaceInfo(*surfaceInfo), lockable(lockable), plane(plane), oclPlane(oclPlane), d3d9Surface(surfaceInfo->resource),
+      surfaceInfo(*surfaceInfo), lockable(lockable), plane(plane), imagePlane(imagePlane), d3d9Surface(surfaceInfo->resource),
       d3d9SurfaceStaging(surfaceStaging) {
     if (sharingFunctions) {
         resourceDevice = sharingFunctions->getDevice();
@@ -38,7 +38,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     ImageInfo imgInfo = {};
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
-    OCLPlane oclPlane = OCLPlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::NO_PLANE;
 
     if (!context || !context->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>() || !context->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>()->getDevice()) {
         err.set(CL_INVALID_CONTEXT);
@@ -52,24 +52,24 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
     sharingFcns->updateDevice(surfaceInfo->resource);
 
-    imgInfo.imgDesc.image_type = ImageType::Image2D;
+    imgInfo.imgDesc.imageType = ImageType::Image2D;
 
     D3D9SurfaceDesc surfaceDesc = {};
     sharingFcns->getTexture2dDesc(&surfaceDesc, surfaceInfo->resource);
-    imgInfo.imgDesc.image_width = surfaceDesc.Width;
-    imgInfo.imgDesc.image_height = surfaceDesc.Height;
+    imgInfo.imgDesc.imageWidth = surfaceDesc.Width;
+    imgInfo.imgDesc.imageHeight = surfaceDesc.Height;
 
     if (surfaceDesc.Pool != D3DPOOL_DEFAULT) {
         err.set(CL_INVALID_DX9_RESOURCE_INTEL);
         return nullptr;
     }
 
-    err.set(findImgFormat(surfaceDesc.Format, imgFormat, plane, oclPlane));
+    err.set(findImgFormat(surfaceDesc.Format, imgFormat, plane, imagePlane));
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
     }
 
-    imgInfo.plane = GmmTypesConverter::convertPlane(oclPlane);
+    imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
     imgInfo.surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
     bool isSharedResource = false;
@@ -82,15 +82,15 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         AllocationProperties allocProperties(rootDeviceIndex, false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)surfaceInfo->shared_handle), allocProperties,
                                                                                       false);
-        updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, oclPlane, 0u);
+        updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, 0u);
     } else {
-        lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || oclPlane != OCLPlane::NO_PLANE;
+        lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || imagePlane != ImagePlane::NO_PLANE;
         if (!lockable) {
             sharingFcns->createTexture2d(&surfaceStaging, &surfaceDesc, 0u);
         }
-        if (oclPlane == OCLPlane::PLANE_U || oclPlane == OCLPlane::PLANE_V || oclPlane == OCLPlane::PLANE_UV) {
-            imgInfo.imgDesc.image_width /= 2;
-            imgInfo.imgDesc.image_height /= 2;
+        if (imagePlane == ImagePlane::PLANE_U || imagePlane == ImagePlane::PLANE_V || imagePlane == ImagePlane::PLANE_UV) {
+            imgInfo.imgDesc.imageWidth /= 2;
+            imgInfo.imgDesc.imageHeight /= 2;
         }
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, true, memoryProperties);
@@ -98,12 +98,12 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 
-        imgInfo.imgDesc.image_row_pitch = imgInfo.rowPitch;
-        imgInfo.imgDesc.image_slice_pitch = imgInfo.slicePitch;
+        imgInfo.imgDesc.imageRowPitch = imgInfo.rowPitch;
+        imgInfo.imgDesc.imageSlicePitch = imgInfo.slicePitch;
     }
     DEBUG_BREAK_IF(!alloc);
 
-    auto surface = new D3DSurface(context, surfaceInfo, surfaceStaging, plane, oclPlane, adapterType, isSharedResource, lockable);
+    auto surface = new D3DSurface(context, surfaceInfo, surfaceStaging, plane, imagePlane, adapterType, isSharedResource, lockable);
 
     return Image::createSharedImage(context, surface, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
@@ -127,7 +127,7 @@ void D3DSurface::synchronizeObject(UpdateData &updateData) {
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getImageDesc().image_height);
 
-        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 1u, oclPlane);
+        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 1u, imagePlane);
 
         context->getMemoryManager()->unlockResource(updateData.memObject->getGraphicsAllocation());
 
@@ -162,7 +162,7 @@ void D3DSurface::releaseResource(MemObj *memObject) {
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getImageDesc().image_height);
 
-        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 0u, oclPlane);
+        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 0u, imagePlane);
 
         context->getMemoryManager()->unlockResource(memObject->getGraphicsAllocation());
 
@@ -208,8 +208,8 @@ const std::vector<D3DFORMAT> D3DSurface::D3DPlane1Formats = {
 const std::vector<D3DFORMAT> D3DSurface::D3DPlane2Formats =
     {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
 
-cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, OCLPlane &oclPlane) {
-    oclPlane = OCLPlane::NO_PLANE;
+cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, ImagePlane &imagePlane) {
+    imagePlane = ImagePlane::NO_PLANE;
     static const cl_image_format unknown_format = {0, 0};
 
     auto element = D3DtoClFormatConversions.find(d3dFormat);
@@ -224,11 +224,11 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
         switch (plane) {
         case 0:
             imgFormat.image_channel_order = CL_R;
-            oclPlane = OCLPlane::PLANE_Y;
+            imagePlane = ImagePlane::PLANE_Y;
             return CL_SUCCESS;
         case 1:
             imgFormat.image_channel_order = CL_RG;
-            oclPlane = OCLPlane::PLANE_UV;
+            imagePlane = ImagePlane::PLANE_UV;
             return CL_SUCCESS;
         default:
             imgFormat = unknown_format;
@@ -238,15 +238,15 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     case static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')):
         switch (plane) {
         case 0:
-            oclPlane = OCLPlane::PLANE_Y;
+            imagePlane = ImagePlane::PLANE_Y;
             return CL_SUCCESS;
 
         case 1:
-            oclPlane = OCLPlane::PLANE_V;
+            imagePlane = ImagePlane::PLANE_V;
             return CL_SUCCESS;
 
         case 2:
-            oclPlane = OCLPlane::PLANE_U;
+            imagePlane = ImagePlane::PLANE_U;
             return CL_SUCCESS;
 
         default:

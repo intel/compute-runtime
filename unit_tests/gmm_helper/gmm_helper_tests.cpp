@@ -241,7 +241,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
     SurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    EXPECT_EQ(imgInfo.imgDesc.image_row_pitch, imgDesc.image_row_pitch);
+    EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.image_row_pitch);
     auto queryGmm = MockGmm::queryImgParams(executionEnvironment->getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
@@ -455,12 +455,12 @@ static const cl_mem_object_type imgTypes[6] = {
     CL_MEM_OBJECT_IMAGE3D};
 } // namespace GmmTestConst
 
-TEST_F(GmmTests, converOclPlaneToGmmPlane) {
-    std::vector<std::pair<OCLPlane, GMM_YUV_PLANE>> v = {{OCLPlane::NO_PLANE, GMM_YUV_PLANE::GMM_NO_PLANE},
-                                                         {OCLPlane::PLANE_Y, GMM_YUV_PLANE::GMM_PLANE_Y},
-                                                         {OCLPlane::PLANE_U, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                         {OCLPlane::PLANE_UV, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                         {OCLPlane::PLANE_V, GMM_YUV_PLANE::GMM_PLANE_V}};
+TEST_F(GmmTests, converNeoPlaneToGmmPlane) {
+    std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::NO_PLANE, GMM_YUV_PLANE::GMM_NO_PLANE},
+                                                           {ImagePlane::PLANE_Y, GMM_YUV_PLANE::GMM_PLANE_Y},
+                                                           {ImagePlane::PLANE_U, GMM_YUV_PLANE::GMM_PLANE_U},
+                                                           {ImagePlane::PLANE_UV, GMM_YUV_PLANE::GMM_PLANE_U},
+                                                           {ImagePlane::PLANE_V, GMM_YUV_PLANE::GMM_PLANE_V}};
 
     for (auto p : v) {
         EXPECT_TRUE(p.second == GmmTypesConverter::convertPlane(p.first));
@@ -532,12 +532,12 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex);
     EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
-    EXPECT_EQ(imgDesc.image_width, updateImgInfo.imgDesc.image_width);
-    EXPECT_EQ(imgDesc.image_height, updateImgInfo.imgDesc.image_height);
-    EXPECT_EQ(imgDesc.image_depth, updateImgInfo.imgDesc.image_depth);
-    EXPECT_EQ(imgDesc.image_array_size, updateImgInfo.imgDesc.image_array_size);
-    EXPECT_GT(updateImgInfo.imgDesc.image_row_pitch, 0u);
-    EXPECT_GT(updateImgInfo.imgDesc.image_slice_pitch, 0u);
+    EXPECT_EQ(imgDesc.image_width, updateImgInfo.imgDesc.imageWidth);
+    EXPECT_EQ(imgDesc.image_height, updateImgInfo.imgDesc.imageHeight);
+    EXPECT_EQ(imgDesc.image_depth, updateImgInfo.imgDesc.imageDepth);
+    EXPECT_EQ(imgDesc.image_array_size, updateImgInfo.imgDesc.imageArraySize);
+    EXPECT_GT(updateImgInfo.imgDesc.imageRowPitch, 0u);
+    EXPECT_GT(updateImgInfo.imgDesc.imageSlicePitch, 0u);
 
     if (expectCalls == 1) {
         EXPECT_TRUE(memcmp(&expectedReqInfo[1], &mockResInfo->givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
@@ -635,20 +635,20 @@ TEST_F(GmmTests, copyResourceBlt) {
 
     // plane Y
     EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
-    auto retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, OCLPlane::PLANE_Y);
+    auto retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_Y);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 
     // no-plane
     EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
-    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, OCLPlane::NO_PLANE);
+    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::NO_PLANE);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 
     //plane UV
     expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u);
     EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
-    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, OCLPlane::PLANE_UV);
+    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_UV);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 
@@ -657,7 +657,7 @@ TEST_F(GmmTests, copyResourceBlt) {
     expectedCpuBlt.Sys.RowPitch = pitch / 2;
     expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
     EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
-    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, OCLPlane::PLANE_V);
+    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_V);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 
@@ -666,7 +666,7 @@ TEST_F(GmmTests, copyResourceBlt) {
     expectedCpuBlt.Sys.RowPitch = pitch / 2;
     expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
     EXPECT_CALL(*mockResInfo, cpuBlt(_)).Times(1).WillOnce(Invoke(invokeParamsCopy));
-    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, OCLPlane::PLANE_U);
+    retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::PLANE_U);
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }

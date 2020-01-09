@@ -7,7 +7,6 @@
 
 #pragma once
 #include "core/gmm_helper/gmm_lib.h"
-#include "runtime/api/cl_types.h"
 
 #include "storage_info.h"
 
@@ -16,7 +15,7 @@
 #include <memory>
 
 namespace NEO {
-enum class OCLPlane;
+enum class ImagePlane;
 struct HardwareInfo;
 struct ImageInfo;
 class GmmResourceInfo;
@@ -40,9 +39,9 @@ class Gmm {
     bool hasMultisampleControlSurface() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
-    void updateImgInfoAndDesc(ImageInfo &imgInfo, cl_uint arrayIndex);
-    void updateOffsetsInImgInfo(ImageInfo &imgInfo, cl_uint arrayIndex);
-    uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, OCLPlane plane);
+    void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex);
+    void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
+    uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane);
 
     uint32_t getUnifiedAuxPitchTiles();
     uint32_t getAuxQPitch();

@@ -12,7 +12,7 @@
 
 enum GMM_RESOURCE_FORMAT_ENUM;
 namespace NEO {
-enum class OCLPlane;
+enum class ImagePlane;
 class Context;
 class Gmm;
 struct SurfaceFormatInfo;
@@ -40,7 +40,7 @@ class D3DSharing : public SharingHandler {
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:
-    static void updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, OCLPlane oclPlane, cl_uint arrayIndex);
+    static void updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePlane imagePlane, cl_uint arrayIndex);
 
     Context *context;
     D3DSharingFunctions<D3D> *sharingFunctions = nullptr;

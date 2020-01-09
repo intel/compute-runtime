@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class D3DTexture : public D3DSharing<D3D> {
 
     static Image *create3d(Context *context, D3DTexture3d *d3dTexture, cl_mem_flags flags, cl_uint subresource, cl_int *retCode);
 
-    static const SurfaceFormatInfo *findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, OCLPlane oclPlane, cl_mem_flags flags);
+    static const SurfaceFormatInfo *findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, ImagePlane imagePlane, cl_mem_flags flags);
 
   protected:
     D3DTexture(Context *context, D3DResource *d3dTexture, cl_uint subresource, D3DResource *textureStaging, bool sharedResource)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -149,7 +149,7 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -164,7 +164,7 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -179,7 +179,7 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -194,7 +194,7 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -209,7 +209,7 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -224,7 +224,7 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -702,13 +702,13 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
     class MockD3DSurface : public D3DSurface {
       public:
         MockD3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3DTypesHelper::D3D9::D3DTexture2d *surfaceStaging, cl_uint plane,
-                       OCLPlane oclPlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable) : D3DSurface(context, surfaceInfo, surfaceStaging, plane,
-                                                                                                                                      oclPlane, adapterType, sharedResource, lockable) {}
+                       ImagePlane imagePlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable) : D3DSurface(context, surfaceInfo, surfaceStaging, plane,
+                                                                                                                                          imagePlane, adapterType, sharedResource, lockable) {}
     };
     MockContext context;
     cl_dx9_surface_info_khr surfaceInfo = {};
-    OCLPlane oclPlane = OCLPlane::NO_PLANE;
-    std::unique_ptr<D3DSurface> surface(new MockD3DSurface(&context, &surfaceInfo, nullptr, 0, oclPlane, 0, false, false));
+    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    std::unique_ptr<D3DSurface> surface(new MockD3DSurface(&context, &surfaceInfo, nullptr, 0, imagePlane, 0, false, false));
 
     MockBuffer buffer;
     UpdateData updateData;

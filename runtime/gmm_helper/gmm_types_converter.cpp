@@ -18,12 +18,12 @@ using namespace NEO;
 
 void GmmTypesConverter::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc) {
     // 1D or 2D from buffer
-    if (imgInfo.imgDesc.image_row_pitch > 0) {
-        imgInfo.rowPitch = imgInfo.imgDesc.image_row_pitch;
+    if (imgInfo.imgDesc.imageRowPitch > 0) {
+        imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
     } else {
-        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc.image_width) * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+        imgInfo.rowPitch = getValidParam(imgInfo.imgDesc.imageWidth) * imgInfo.surfaceFormat->ImageElementSizeInBytes;
     }
-    imgInfo.slicePitch = imgInfo.rowPitch * getValidParam(imgInfo.imgDesc.image_height);
+    imgInfo.slicePitch = imgInfo.rowPitch * getValidParam(imgInfo.imgDesc.imageHeight);
     imgInfo.size = gfxAlloc->getUnderlyingBufferSize();
     imgInfo.qPitch = 0;
 }
@@ -41,12 +41,12 @@ uint32_t GmmTypesConverter::getRenderMultisamplesCount(uint32_t numSamples) {
     return 0;
 }
 
-GMM_YUV_PLANE GmmTypesConverter::convertPlane(OCLPlane oclPlane) {
-    if (oclPlane == OCLPlane::PLANE_Y) {
+GMM_YUV_PLANE GmmTypesConverter::convertPlane(ImagePlane imagePlane) {
+    if (imagePlane == ImagePlane::PLANE_Y) {
         return GMM_PLANE_Y;
-    } else if (oclPlane == OCLPlane::PLANE_U || oclPlane == OCLPlane::PLANE_UV) {
+    } else if (imagePlane == ImagePlane::PLANE_U || imagePlane == ImagePlane::PLANE_UV) {
         return GMM_PLANE_U;
-    } else if (oclPlane == OCLPlane::PLANE_V) {
+    } else if (imagePlane == ImagePlane::PLANE_V) {
         return GMM_PLANE_V;
     }
 
