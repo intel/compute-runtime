@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/gmm_helper/gmm.h"
 #include "core/helpers/options.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_device.h"

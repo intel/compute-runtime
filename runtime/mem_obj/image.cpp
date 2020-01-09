@@ -9,6 +9,7 @@
 
 #include "common/compiler_support.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
@@ -19,7 +20,6 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"

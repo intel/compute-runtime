@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "test.h"

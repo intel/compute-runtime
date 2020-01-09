@@ -7,9 +7,9 @@
 
 #include "runtime/sharings/d3d/d3d_surface.h"
 
+#include "core/gmm_helper/gmm.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_types_converter.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"

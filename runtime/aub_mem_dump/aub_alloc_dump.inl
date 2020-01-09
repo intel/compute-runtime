@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
-#include "runtime/gmm_helper/gmm.h"
 
 #include "third_party/aub_stream/headers/aubstream.h"
 

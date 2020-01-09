@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/gmm_helper/gmm.h"
+#include "core/gmm_helper/gmm.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"

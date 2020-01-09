@@ -7,9 +7,9 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"

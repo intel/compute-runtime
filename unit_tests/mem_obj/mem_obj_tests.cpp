@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/gmm_helper/gmm.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/mem_obj/mem_obj.h"

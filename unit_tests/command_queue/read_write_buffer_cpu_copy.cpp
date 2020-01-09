@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/gmm_helper/gmm.h"
 #include "core/helpers/basic_math.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm.h"
+#include "core/gmm_helper/gmm.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sharings/unified/unified_image.h"
 #include "unit_tests/helpers/raii_hw_helper.h"

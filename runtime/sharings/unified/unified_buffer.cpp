@@ -7,8 +7,8 @@
 
 #include "unified_buffer.h"
 
+#include "core/gmm_helper/gmm.h"
 #include "runtime/context/context.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"

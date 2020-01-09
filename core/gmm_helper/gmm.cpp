@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm.h"
+#include "core/gmm_helper/gmm.h"
 
 #include "core/gmm_helper/client_context/gmm_client_context.h"
 #include "core/gmm_helper/gmm_helper.h"

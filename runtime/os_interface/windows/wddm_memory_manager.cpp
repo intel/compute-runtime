@@ -8,6 +8,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "core/execution_environment/root_device_environment.h"
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/gmm_helper/resource_info.h"
@@ -20,7 +21,6 @@
 #include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"

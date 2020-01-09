@@ -7,9 +7,9 @@
 
 #include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "core/gmm_helper/gmm.h"
 #include "core/memory_manager/deferred_deleter.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #
-#include "runtime/gmm_helper/gmm.h"
+#include "core/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 
 using namespace NEO;

@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

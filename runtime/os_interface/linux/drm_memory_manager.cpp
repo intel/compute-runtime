@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 
+#include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/hw_info.h"
@@ -17,7 +18,6 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
