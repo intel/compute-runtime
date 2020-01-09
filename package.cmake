@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -132,6 +132,8 @@ if(UNIX)
   string(REPLACE ";" ", " CPACK_RPM_OPENCL_PACKAGE_REQUIRES "${_external_package_dependencies_rpm}")
   string(REPLACE ";" ", " CPACK_RPM_OCLOC_PACKAGE_REQUIRES "${_igc_package_dependencies_rpm}")
 
+  set(CPACK_PROPERTIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package_config.cmake")
+  set(CPACK_LD_LIBRARY_PATH "${IGDRCL__GMM_LIBRARY_PATH}")
   include(CPack)
 
   get_directory_property(__HAS_PARENT PARENT_DIRECTORY)

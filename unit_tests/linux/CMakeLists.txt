@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -49,6 +49,7 @@ foreach(target_name linux_tests linux_dll_tests)
     ${IGDRCL_SRCS_${target_name}}
     $<TARGET_OBJECTS:igdrcl_libult>
     $<TARGET_OBJECTS:igdrcl_libult_cs>
+    $<TARGET_OBJECTS:mock_gmm>
   )
   target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gmock-gtest)
 

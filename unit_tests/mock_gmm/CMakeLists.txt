@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,21 +11,12 @@ project(${target_name})
 set(IGDRCL_SRCS_tests_mock_gmm
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.def
 )
-add_library(${target_name} EXCLUDE_FROM_ALL SHARED ${IGDRCL_SRCS_tests_mock_gmm})
+add_library(${target_name} EXCLUDE_FROM_ALL OBJECT ${IGDRCL_SRCS_tests_mock_gmm})
 
 target_include_directories(${target_name} PRIVATE
   ${WDK_INCLUDE_PATHS}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-)
-
-set_target_properties(
-  ${target_name}
-  PROPERTIES DEBUG_OUTPUT_NAME ${target_name}
-  RELEASE_OUTPUT_NAME ${target_name}
-  RELEASEINTERNAL_OUTPUT_NAME ${target_name}
-  OUTPUT_NAME ${target_name}
 )
 
 create_project_source_tree(${target_name})

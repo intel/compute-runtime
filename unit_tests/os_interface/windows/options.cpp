@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,6 @@ namespace Os {
 const char *frontEndDllName = "";
 const char *igcDllName = "";
 const char *gdiDllName = "gdi32_mock.dll";
-const char *gmmDllName = "mock_gmm.dll";
-const char *gmmInitFuncName = "initMockGmm";
-const char *gmmDestroyFuncName = "destroyMockGmm";
 const char *testDllName = "test_dynamic_lib.dll";
 const char *metricsLibraryDllName = "";
 } // namespace Os

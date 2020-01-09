@@ -10,6 +10,7 @@ add_executable(neo_page_fault_manager_tests
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
   $<TARGET_OBJECTS:igdrcl_libult_env>
+  $<TARGET_OBJECTS:mock_gmm>
   ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   ${NEO_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${NEO_SOURCE_DIR}/unit_tests/ult_configuration.cpp

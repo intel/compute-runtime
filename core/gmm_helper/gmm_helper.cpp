@@ -36,10 +36,9 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
 }
 
 GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
-    loadLib();
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
     GmmHelper::addressWidth = std::max(hwInfoAddressWidth, static_cast<uint32_t>(48));
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo), this->initGmmFunc, this->destroyGmmFunc);
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo), InitializeGmm, GmmAdapterDestroy);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 

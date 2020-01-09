@@ -7,22 +7,24 @@
 
 #include "GmmLib.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+GMM_INIT_IN_ARGS passedInputArgs = {};
+SKU_FEATURE_TABLE passedFtrTable = {};
+WA_TABLE passedWaTable = {};
+bool copyInputArgs = false;
 
-GMM_STATUS GMM_STDCALL initMockGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
+GMM_STATUS GMM_STDCALL InitializeGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
     pOutArgs->pGmmClientContext = reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x01);
     if (pInArgs->Platform.eProductFamily == PRODUCT_FAMILY::IGFX_UNKNOWN &&
         pInArgs->Platform.ePCHProductFamily == PCH_PRODUCT_FAMILY::PCH_UNKNOWN) {
         return GMM_ERROR;
     }
+    if (copyInputArgs && pInArgs) {
+        passedInputArgs = *pInArgs;
+        passedFtrTable = *reinterpret_cast<SKU_FEATURE_TABLE *>(pInArgs->pSkuTable);
+        passedWaTable = *reinterpret_cast<WA_TABLE *>(pInArgs->pWaTable);
+    }
     return GMM_SUCCESS;
 }
 
-void GMM_STDCALL destroyMockGmm(GMM_INIT_OUT_ARGS *pInArgs) {
+void GMM_STDCALL GmmAdapterDestroy(GMM_INIT_OUT_ARGS *pInArgs) {
 }
-
-#ifdef __cplusplus
-}
-#endif

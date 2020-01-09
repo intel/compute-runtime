@@ -42,13 +42,8 @@ class GmmHelper {
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmAdapterDestroy));
 
   protected:
-    void loadLib();
-
     static uint32_t addressWidth;
     const HardwareInfo *hwInfo = nullptr;
-    std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;
-    decltype(&InitializeGmm) initGmmFunc;
-    decltype(&GmmAdapterDestroy) destroyGmmFunc;
 };
 } // namespace NEO

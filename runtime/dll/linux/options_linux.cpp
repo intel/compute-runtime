@@ -15,9 +15,6 @@ namespace Os {
 const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *libvaDllName = "libva.so.2";
-const char *gmmDllName = GMM_UMD_DLL;
-const char *gmmInitFuncName = GMM_ADAPTER_INIT_NAME;
-const char *gmmDestroyFuncName = GMM_ADAPTER_DESTROY_NAME;
 
 const char *sysFsPciPath = "/sys/bus/pci/devices/";
 const char *tbxLibName = "libtbxAccess.so";

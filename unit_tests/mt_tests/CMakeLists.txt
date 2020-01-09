@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
   $<TARGET_OBJECTS:igdrcl_libult_env>
+  $<TARGET_OBJECTS:mock_gmm>
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 
@@ -45,7 +46,7 @@ endif()
 
 add_custom_target(run_mt_unit_tests)
 
-add_dependencies(igdrcl_mt_tests test_dynamic_lib mock_gmm)
+add_dependencies(igdrcl_mt_tests test_dynamic_lib)
 
 create_project_source_tree(igdrcl_mt_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
 

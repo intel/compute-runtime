@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ project(igdrcl_windows_dll_tests)
 set(NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_env>
+  $<TARGET_OBJECTS:mock_gmm>
 )
 
 add_executable(igdrcl_windows_dll_tests

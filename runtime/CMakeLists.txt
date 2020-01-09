@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -140,8 +140,8 @@ if(${GENERATE_EXECUTABLE})
     set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST "opencl")
   endif()
 
-  if(TARGET ${GMMUMD_LIB_NAME})
-    add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})
+  if(TARGET ${GMM_TARGET_NAME})
+    add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMM_TARGET_NAME})
   endif()
 
   if(NOT DISABLED_GTPIN_SUPPORT)
@@ -153,7 +153,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_subdirectory(dll)
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS} ${GMM_LINK_NAME})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}

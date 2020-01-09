@@ -54,11 +54,6 @@ namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
 }
 } // namespace NEO
-namespace Os {
-extern const char *gmmDllName;
-extern const char *gmmInitFuncName;
-extern const char *gmmDestroyFuncName;
-} // namespace Os
 
 using namespace NEO;
 TestEnvironment *gEnvironment;
@@ -459,14 +454,9 @@ int main(int argc, char **argv) {
 #else
     SetUnhandledExceptionFilter(&UltExceptionFilter);
 #endif
-    if (!useMockGmm) {
-        Os::gmmDllName = GMM_UMD_DLL;
-        Os::gmmInitFuncName = GMM_ADAPTER_INIT_NAME;
-        Os::gmmDestroyFuncName = GMM_ADAPTER_DESTROY_NAME;
-    } else {
+    if (useMockGmm) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }
-    std::unique_ptr<OsLibrary> gmmLib(OsLibrary::load(Os::gmmDllName));
     initializeTestHelpers();
 
     retVal = RUN_ALL_TESTS();
