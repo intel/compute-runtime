@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmitt
     EXPECT_EQ(100u, this->pCmdQ->taskLevel);
 }
 
-HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChnage) {
+HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChange) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -220,7 +220,7 @@ HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqu
     clReleaseEvent(retEvent);
 }
 
-TEST_F(OOQTaskTests, enqueueKernel_doesntChangeTaskLevel) {
+TEST_F(OOQTaskTests, WhenEnqueingKernelThenTaskLevelIsNotIncremented) {
     auto previousTaskLevel = this->pCmdQ->taskLevel;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ,
@@ -228,7 +228,7 @@ TEST_F(OOQTaskTests, enqueueKernel_doesntChangeTaskLevel) {
     EXPECT_EQ(previousTaskLevel, this->pCmdQ->taskLevel);
 }
 
-TEST_F(OOQTaskTests, enqueueReadBuffer_blockingAndNonBlockedOnUserEvent) {
+TEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
