@@ -29,10 +29,15 @@ class GmmClientContextBase {
         return std::make_unique<T>(osInterface, hwInfo, initFunc, destroyFunc);
     }
 
+    HardwareInfo *getHardwareInfo() {
+        return hardwareInfo;
+    }
+
     MOCKABLE_VIRTUAL uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
     MOCKABLE_VIRTUAL uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format);
 
   protected:
+    HardwareInfo *hardwareInfo;
     GMM_CLIENT_CONTEXT *clientContext;
     GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc);
     decltype(&GmmAdapterDestroy) destroyFunc;

@@ -14,7 +14,7 @@
 #include "runtime/os_interface/os_interface.h"
 
 namespace NEO {
-GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc) : destroyFunc(destroyFunc) {
+GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc) : hardwareInfo(hwInfo), destroyFunc(destroyFunc) {
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hwInfo->featureTable);
