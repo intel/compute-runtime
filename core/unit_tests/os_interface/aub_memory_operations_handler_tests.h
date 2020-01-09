@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,8 @@ class AubMemoryOperationsHandlerTests : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.SetCommandStreamReceiver.set(2);
         residencyHandler = std::unique_ptr<AubMemoryOperationsHandler>(new AubMemoryOperationsHandler(nullptr));
+
+        allocPtr = &allocation;
     }
 
     AubMemoryOperationsHandler *getMemoryOperationsHandler() {
@@ -30,6 +32,7 @@ class AubMemoryOperationsHandlerTests : public ::testing::Test {
     }
 
     MockGraphicsAllocation allocation;
+    GraphicsAllocation *allocPtr;
     DebugManagerStateRestore dbgRestore;
     std::unique_ptr<AubMemoryOperationsHandler> residencyHandler;
 };

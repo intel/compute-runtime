@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ class MockMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandler() {}
     virtual ~MockMemoryOperationsHandler() {}
-    MemoryOperationsStatus makeResident(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) { return MemoryOperationsStatus::UNSUPPORTED; }
     MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
     MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
 };

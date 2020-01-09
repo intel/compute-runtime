@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,14 +18,21 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
     this->aubManager = aubManager;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) {
     if (!aubManager) {
         return MemoryOperationsStatus::DEVICE_UNINITIALIZED;
     }
     auto lock = acquireLock(resourcesLock);
     int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-    aubManager->writeMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(), gfxAllocation.storageInfo.getMemoryBanks(), hint, gfxAllocation.getUsedPageSize());
-    residentAllocations.push_back(&gfxAllocation);
+    for (const auto &allocation : gfxAllocations) {
+        aubManager->writeMemory(allocation->getGpuAddress(),
+                                allocation->getUnderlyingBuffer(),
+                                allocation->getUnderlyingBufferSize(),
+                                allocation->storageInfo.getMemoryBanks(),
+                                hint,
+                                allocation->getUsedPageSize());
+        residentAllocations.push_back(allocation);
+    }
     return MemoryOperationsStatus::SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResidentCalledThenFalseReturned) {
     getMemoryOperationsHandler()->setAubManager(nullptr);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    auto result = memoryOperationsInterface->makeResident(allocation);
+    auto result = memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::DEVICE_UNINITIALIZED);
 }
 
@@ -21,7 +21,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    auto result = memoryOperationsInterface->makeResident(allocation);
+    auto result = memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
     EXPECT_TRUE(aubManager.writeMemoryCalled);
 }
@@ -30,7 +30,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAllocationWhenMakeResidentCalledThe
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    memoryOperationsInterface->makeResident(allocation);
+    memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(aubManager.hintToWriteMemory, AubMemDump::DataTypeHintValues::TraceNotype);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenIsResidentCalledThenFalseReturned) {
@@ -44,7 +44,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenIsResidentCal
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    memoryOperationsInterface->makeResident(allocation);
+    memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     auto result = memoryOperationsInterface->isResident(allocation);
     EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
 }
@@ -59,7 +59,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenEvictCalledTh
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
-    memoryOperationsInterface->makeResident(allocation);
+    memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     auto result = memoryOperationsInterface->evict(allocation);
     EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
 }
