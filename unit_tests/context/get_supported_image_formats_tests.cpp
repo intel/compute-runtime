@@ -136,7 +136,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
         }
     }
 
-    if (isReadOnly) {
+    if (isReadOnly && ((&castToObject<ClDevice>(devices[0])->getDevice())->getHardwareInfo().capabilityTable.clVersionSupport >= 20)) {
         EXPECT_TRUE(sRGBAFormatFound & sBGRAFormatFound);
     } else {
         EXPECT_FALSE(sRGBAFormatFound | sBGRAFormatFound);
@@ -146,7 +146,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
 }
 
 TEST(ImageFormats, isDepthFormat) {
-    for (auto &format : SurfaceFormats::readOnly()) {
+    for (auto &format : SurfaceFormats::readOnly20()) {
         EXPECT_FALSE(Image::isDepthFormat(format.OCLImageFormat));
     }
 
@@ -276,7 +276,9 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
         nullptr,
         &numImageFormats);
 
-    size_t expectedNumReadOnlyFormats = SurfaceFormats::readOnly().size();
+    unsigned int clVersionSupport = device.get()->getHardwareInfo().capabilityTable.clVersionSupport;
+    size_t expectedNumReadOnlyFormats = (clVersionSupport >= 20) ? SurfaceFormats::readOnly20().size() : SurfaceFormats::readOnly12().size();
+
     if (Image::isImage2dOr2dArray(imageFormats) && imageFormatsFlags == CL_MEM_READ_ONLY) {
         expectedNumReadOnlyFormats += SurfaceFormats::readOnlyDepth().size();
     }

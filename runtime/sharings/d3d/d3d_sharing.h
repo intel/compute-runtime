@@ -36,7 +36,7 @@ class D3DSharing : public SharingHandler {
     unsigned int &getSubresource() { return subresource; }
     typename D3DQuery *getQuery() { return d3dQuery; }
     bool isSharedResource() { return sharedResource; }
-    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags);
+    static const ClSurfaceFormatInfo *findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, unsigned int clVersionSupport);
     static bool isFormatWithPlane1(DXGI_FORMAT format);
 
   protected:

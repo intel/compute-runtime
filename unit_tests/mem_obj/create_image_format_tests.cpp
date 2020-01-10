@@ -28,7 +28,8 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
     void SetUp() override {
         indexImageFormat = GetParam();
 
-        ArrayRef<const ClSurfaceFormatInfo> surfaceFormatTable = SurfaceFormats::surfaceFormats(flags);
+        ArrayRef<const ClSurfaceFormatInfo>
+            surfaceFormatTable = SurfaceFormats::surfaceFormats(flags, platformDevices[0]->capabilityTable.clVersionSupport);
         ASSERT_GT(surfaceFormatTable.size(), indexImageFormat);
 
         surfaceFormat = &surfaceFormatTable[indexImageFormat];
@@ -104,7 +105,7 @@ TEST_P(ReadOnlyFormatTest, returnsSuccess) {
 INSTANTIATE_TEST_CASE_P(
     CreateImage,
     ReadOnlyFormatTest,
-    testing::Range(zero, SurfaceFormats::readOnly().size()));
+    testing::Range(zero, SurfaceFormats::readOnly12().size()));
 
 typedef CreateImageFormatTest<CL_MEM_WRITE_ONLY> WriteOnlyFormatTest;
 

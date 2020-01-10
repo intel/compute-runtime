@@ -1098,7 +1098,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
         retVal = Image::validateImageFormat(imageFormat);
     }
     if (CL_SUCCESS == retVal) {
-        surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat);
+        surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         retVal = Image::validate(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memFlags, 0, 0), surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {

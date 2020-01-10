@@ -42,7 +42,7 @@ class CreateImageTest : public DeviceFixture,
     CreateImageTest() {
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         return Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                              flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
@@ -116,7 +116,7 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_slice_pitch = 0;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto image = Image::create(
         &context,
         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
@@ -341,7 +341,7 @@ TEST(TestCreateImage, UseSharedContextToCreateImage) {
     imageDesc.image_slice_pitch = 0;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = Image::create(
         &context,
@@ -402,7 +402,7 @@ TEST(TestCreateImageUseHostPtr, CheckMemoryAllocationForDifferenHostPtrAlignment
                      true};
 
     cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     for (int i = 0; i < 4; i++) {
         auto image = Image::create(
             &context,
@@ -439,7 +439,7 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto hostPtr = alignedMalloc(imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes, MemoryConstants::cacheLineSize);
 
     auto image = std::unique_ptr<Image>(Image::create(
@@ -530,7 +530,7 @@ struct CreateImageHostPtr
     }
 
     Image *createImage(cl_int &retVal) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         return Image::create(
             context,
             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
@@ -936,7 +936,8 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(ValidHostPtrFlags));
 
 TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIsCalledThenReturnsNullptr) {
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, nullptr);
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, nullptr, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     EXPECT_EQ(nullptr, surfaceFormat);
 }
 
@@ -944,8 +945,8 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferR
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 5;
     imageDesc.image_height = 5;
-
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(mockContext.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                                                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -958,8 +959,8 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferR
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferRenderCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 5;
-
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(mockContext.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                                                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
@@ -1157,7 +1158,7 @@ TEST(ImageTest, givenClMemForceLinearStorageSetWhenCreateImageThenDisallowTiling
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(
         &context,
@@ -1203,8 +1204,8 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
     imageFormat.image_channel_order = CL_R;
-
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    MockContext context;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     std::unique_ptr<Image> image(Image::create(&ctx, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, memory, retVal));
     EXPECT_NE(nullptr, image);

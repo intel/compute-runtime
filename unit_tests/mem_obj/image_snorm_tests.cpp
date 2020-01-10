@@ -17,7 +17,8 @@ using namespace NEO;
 const cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
 
 const ArrayRef<const ClSurfaceFormatInfo> paramsForSnormTests[] = {
-    SurfaceFormats::readOnly(),
+    SurfaceFormats::readOnly12(),
+    SurfaceFormats::readOnly20(),
     SurfaceFormats::writeOnly(),
     SurfaceFormats::readWrite()};
 
@@ -39,7 +40,12 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     cl_mem_flags flags = GetParam();
 
     for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
-        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat);
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat, 12);
+        EXPECT_NE(nullptr, format);
+        EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
+    }
+    for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat, 20);
         EXPECT_NE(nullptr, format);
         EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(ClSurfaceFormatInfo)) == 0);
     }

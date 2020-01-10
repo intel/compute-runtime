@@ -84,7 +84,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
+        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
@@ -143,7 +143,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
+    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
@@ -172,5 +172,5 @@ const ClSurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT
         imgFormat.image_channel_data_type = CL_UNORM_INT8;
     }
 
-    return Image::getSurfaceFormatFromTable(flags, &imgFormat);
+    return Image::getSurfaceFormatFromTable(flags, &imgFormat, 12);
 }

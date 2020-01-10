@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,7 +94,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
         imageDesc.image_height = 1;
     }
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
     imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(imageDesc), false);
     auto queryGmm = MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
@@ -220,7 +220,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(copyHostPtrFlags));
 
 HWTEST_P(CopyHostPtrTest, imageWithDoubledRowPitchThatIsCreatedWithCopyHostPtrFlagHasProperRowPitchSet) {
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
 
     MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
@@ -290,7 +290,7 @@ HWTEST_P(CopyHostPtrTest, imageWithDoubledRowPitchThatIsCreatedWithCopyHostPtrFl
 HWTEST_P(UseHostPtrTest, imageWithRowPitchCreatedWithUseHostPtrFlagCopiedActuallyVerifyMapImageData) {
     imageDesc.image_width = 546;
     imageDesc.image_height = 1;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
     MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
     auto passedRowPitch = imgInfo.rowPitch + 32;
@@ -406,7 +406,7 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
         data += inputSlicePitch;
     }
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     image.reset(Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                               flags, 0, surfaceFormat, &imageDesc, host_ptr, retVal));
 

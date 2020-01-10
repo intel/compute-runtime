@@ -701,7 +701,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
     imgInfo.rowPitch = imgDesc.image_width * 4;
@@ -741,7 +741,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
     imgInfo.rowPitch = imgDesc.image_width * 4;
@@ -1831,7 +1831,7 @@ TEST(MemoryManagerTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIsRe
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -1857,7 +1857,7 @@ TEST(MemoryManagerTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTrue
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -1878,7 +1878,7 @@ TEST(MemoryManagerTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyReq
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1904,7 +1904,7 @@ TEST(MemoryManagerTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCalled
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1929,7 +1929,7 @@ TEST(MemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhe
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1961,7 +1961,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;

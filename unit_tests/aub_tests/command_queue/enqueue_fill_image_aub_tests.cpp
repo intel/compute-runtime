@@ -90,6 +90,7 @@ struct AubFillImage
         }
         auto dataType = std::get<0>(GetParam()).type;
         auto channelOrder = std::get<1>(GetParam());
+
         if (dataType != CL_UNORM_INT8 && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
             //sRGBA and sBGRA support only unorm int8 type
             GTEST_SKIP();
@@ -98,6 +99,9 @@ struct AubFillImage
         CommandStreamFixture::SetUp(pCmdQ);
 
         context = std::make_unique<MockContext>(pClDevice);
+        if ((pClDevice->getHardwareInfo().capabilityTable.clVersionSupport < 20) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
+            GTEST_SKIP();
+        }
     }
 
     void TearDown() override {
@@ -177,7 +181,7 @@ HWTEST_P(AubFillImage, simple) {
 
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     image.reset(Image::create(
         context.get(),
         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),

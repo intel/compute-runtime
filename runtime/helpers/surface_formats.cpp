@@ -84,7 +84,8 @@ namespace NEO {
 
 //Initialize this with the required formats first.
 //Append the optional one later
-const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats[] = { COMMONFORMATS, READONLYFORMATS, SRGBFORMATS };
+const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats12[] = { COMMONFORMATS, READONLYFORMATS };
+const ClSurfaceFormatInfo SurfaceFormats::readOnlySurfaceFormats20[] = { COMMONFORMATS, READONLYFORMATS, SRGBFORMATS };
 
 const ClSurfaceFormatInfo SurfaceFormats::writeOnlySurfaceFormats[] = { COMMONFORMATS };
 
@@ -105,8 +106,12 @@ const ClSurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = { DEPT
 
 const ClSurfaceFormatInfo SurfaceFormats::readWriteDepthSurfaceFormats[] = { DEPTHFORMATS };
 
-ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readOnly() noexcept {
-    return ArrayRef<const ClSurfaceFormatInfo>(readOnlySurfaceFormats);
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readOnly12() noexcept {
+    return ArrayRef<const ClSurfaceFormatInfo>(readOnlySurfaceFormats12);
+}
+
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readOnly20() noexcept {
+    return ArrayRef<const ClSurfaceFormatInfo>(readOnlySurfaceFormats20);
 }
 
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::writeOnly() noexcept {
@@ -133,9 +138,14 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readWriteDepth() noexcept {
     return ArrayRef<const ClSurfaceFormatInfo>(readWriteDepthSurfaceFormats);
 }
 
-ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags) noexcept {
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, unsigned int clVersionSupport) noexcept {
     if (flags & CL_MEM_READ_ONLY) {
-        return readOnly();
+        if(clVersionSupport >= 20 ) {
+            return readOnly20();
+        }
+        else {
+            return readOnly12();
+        }
     }
     else if (flags & CL_MEM_WRITE_ONLY) {
         return writeOnly();
@@ -145,7 +155,7 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
     }
 }
 
-ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept {
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport) noexcept {
     if (NEO::IsNV12Image(imageFormat)) {
         return planarYuv();
     }
@@ -161,7 +171,12 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
         }
     }
     else if (flags & CL_MEM_READ_ONLY) {
-        return readOnly();
+        if(clVersionSupport >= 20 ) {
+            return readOnly20();
+        }
+        else {
+            return readOnly12();
+        }
     }
     else if (flags & CL_MEM_WRITE_ONLY) {
         return writeOnly();

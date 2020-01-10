@@ -70,7 +70,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     }
 
     imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     bool isSharedResource = false;

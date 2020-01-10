@@ -104,7 +104,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
     }
-    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat);
+    auto surfaceFormatInfoAddress = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     if (!surfaceFormatInfoAddress) {
         memoryManager->freeGraphicsMemory(alloc);
         errorCode.set(CL_INVALID_GL_OBJECT);

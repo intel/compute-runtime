@@ -53,7 +53,7 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
     desc.image_row_pitch = 0;
     desc.image_slice_pitch = 0;
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> image(Image::create(
         pContext,
         {},

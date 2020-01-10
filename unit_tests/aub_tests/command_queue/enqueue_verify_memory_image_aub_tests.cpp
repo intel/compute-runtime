@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,8 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
     size_t elementSize = 16;
 
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::
+        getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Image> image(Image::create(
         context,

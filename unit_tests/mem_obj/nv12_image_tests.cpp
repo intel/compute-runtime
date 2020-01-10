@@ -70,12 +70,12 @@ class Nv12ImageTest : public testing::Test {
     }
 
     void validateImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         retVal = Image::validate(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), surfaceFormat, &imageDesc, nullptr);
     }
 
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         return Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                              flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
@@ -390,7 +390,7 @@ HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
 
     // Create Parent NV12 image
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imageNV12 = Image::create(contextWithMockCmdQ, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
                                    flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal);
 

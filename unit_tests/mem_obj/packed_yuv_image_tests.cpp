@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ class PackedYuvImageTest : public testing::Test,
         retVal = Image::validateImageFormat(&imageFormat);
         if (retVal != CL_SUCCESS)
             return;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         retVal = Image::validate(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), surfaceFormat, &imageDesc, nullptr);
     }
 
@@ -69,7 +69,7 @@ cl_channel_order packedYuvChannels[] = {CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_IN
 TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
 
     flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto image = Image::create(
         &context,
         MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),

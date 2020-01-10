@@ -54,7 +54,7 @@ class CreateImage2DTest : public DeviceFixture,
         DeviceFixture::TearDown();
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         return Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
     cl_image_format imageFormat;

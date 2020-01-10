@@ -172,7 +172,7 @@ class Image : public MemObj {
     uint32_t peekMipCount() { return mipCount; }
     void setMipCount(uint32_t mipCountNew) { this->mipCount = mipCountNew; }
 
-    static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
+    static const ClSurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport);
     static cl_int validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);

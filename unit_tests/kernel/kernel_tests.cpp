@@ -2046,7 +2046,7 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_NV12_INTEL;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc = {};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -2063,7 +2063,7 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     //create Y plane
     imageFormat.image_channel_order = CL_R;
     flags = CL_MEM_READ_ONLY;
-    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     imageDesc.image_width = 0;
     imageDesc.image_height = 0;

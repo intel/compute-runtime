@@ -957,7 +957,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
     imageFormat.image_channel_order = CL_RGBA;
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT16;
 
-    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto allocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{imgSize});
     ASSERT_NE(allocation, nullptr);
 

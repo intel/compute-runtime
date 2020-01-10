@@ -558,7 +558,7 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     imageDesc.image_slice_pitch = 0;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
@@ -617,7 +617,7 @@ TEST_F(PerformanceHintTest, givenImageWithNoGmmWhenItsCreatedThenNoPerformanceHi
     imageDesc.image_slice_pitch = 0;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
@@ -678,7 +678,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     imageDesc.image_slice_pitch = 0;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),

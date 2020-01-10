@@ -14,6 +14,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/context/context.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 
@@ -24,7 +25,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
 
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;

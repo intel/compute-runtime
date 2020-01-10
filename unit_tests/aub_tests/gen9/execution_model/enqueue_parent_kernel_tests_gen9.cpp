@@ -37,21 +37,21 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
     size_t lws[3] = {1, 1, 1};
 
     // clang-format off
-        cl_image_format imageFormat;
-        imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
-        imageFormat.image_channel_order = CL_R;
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
 
-        cl_image_desc desc = { 0 };
-        desc.image_array_size = 0;
-        desc.image_depth = 1;
-        desc.image_height = 4;
-        desc.image_width = 4;
-        desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-        desc.image_row_pitch = 0;
-        desc.image_slice_pitch = 0;
+    cl_image_desc desc = { 0 };
+    desc.image_array_size = 0;
+    desc.image_depth = 1;
+    desc.image_height = 4;
+    desc.image_width = 4;
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_row_pitch = 0;
+    desc.image_slice_pitch = 0;
     // clang-format on
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     Image *image = Image::create(
         pContext,
         {},

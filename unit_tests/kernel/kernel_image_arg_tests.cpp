@@ -94,7 +94,7 @@ TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNu
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto sampleImg = Image::create(context.get(), {}, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -116,7 +116,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadOnly;
     cl_mem memObj = img.get();
@@ -155,7 +155,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::WriteOnly;
     cl_mem memObj = img.get();
@@ -175,7 +175,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndReadOnlyArgWhenCheckCo
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadOnly;
     cl_mem memObj = img.get();
@@ -191,7 +191,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndWriteOnlyArgWhenCheck
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     pKernelInfo->kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::WriteOnly;
     cl_mem memObj = img.get();
@@ -208,7 +208,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto img = Image::create(context.get(), {}, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -236,7 +236,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSettedArgWhenUnSetCalledThenArgIsUnset
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 
@@ -273,7 +273,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     imgDesc.image_width = 5;
     imgDesc.image_height = 5;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     std::unique_ptr<Image> img(Image::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imgDesc, nullptr, retVal));
     cl_mem memObj = img.get();
 

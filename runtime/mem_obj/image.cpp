@@ -995,7 +995,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
     imageDesc.mem_object = this;
     // get access to the Y plane (CL_R)
     imageDesc.image_depth = 0;
-    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    const ClSurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageYPlane(Image::create(
@@ -1020,7 +1020,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
     imageFormat.image_channel_order = CL_RG;
 
     hostPtr = static_cast<const void *>(static_cast<const char *>(hostPtr) + (hostPtrRowPitch * this->imageDesc.image_height));
-    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageUVPlane(Image::create(
         context,
@@ -1037,13 +1037,13 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
     return retVal;
 }
 
-const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat) {
+const ClSurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport) {
     if (!imageFormat) {
         DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
 
-    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat);
+    ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat, clVersionSupport);
 
     for (auto &format : formats) {
         if (format.OCLImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
@@ -1101,7 +1101,7 @@ Image *Image::validateAndCreateImage(Context *context,
         return nullptr;
     }
 
-    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
+    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     errcodeRet = Image::validate(context, memoryProperties, surfaceFormat, imageDesc, hostPtr);
     if (errcodeRet != CL_SUCCESS) {

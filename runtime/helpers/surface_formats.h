@@ -21,7 +21,8 @@ struct ClSurfaceFormatInfo {
 
 class SurfaceFormats {
   private:
-    static const ClSurfaceFormatInfo readOnlySurfaceFormats[];
+    static const ClSurfaceFormatInfo readOnlySurfaceFormats12[];
+    static const ClSurfaceFormatInfo readOnlySurfaceFormats20[];
     static const ClSurfaceFormatInfo writeOnlySurfaceFormats[];
     static const ClSurfaceFormatInfo readWriteSurfaceFormats[];
     static const ClSurfaceFormatInfo readOnlyDepthSurfaceFormats[];
@@ -31,7 +32,8 @@ class SurfaceFormats {
     static const ClSurfaceFormatInfo planarYuvSurfaceFormats[];
 
   public:
-    static ArrayRef<const ClSurfaceFormatInfo> readOnly() noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> readOnly12() noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> readOnly20() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> writeOnly() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWrite() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> packedYuv() noexcept;
@@ -39,8 +41,8 @@ class SurfaceFormats {
     static ArrayRef<const ClSurfaceFormatInfo> readOnlyDepth() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWriteDepth() noexcept;
 
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags) noexcept;
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, unsigned int clVersionSupport) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport) noexcept;
 };
 
 } // namespace NEO

@@ -82,7 +82,7 @@ HWTEST_P(AUBCopyImage, simple) {
     imageDesc.num_samples       = 0;
     imageDesc.mem_object = NULL;
     // clang-format on
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
     auto retVal = CL_INVALID_VALUE;
     srcImage.reset(Image::create(
         context.get(),

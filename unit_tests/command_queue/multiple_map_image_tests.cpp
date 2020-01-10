@@ -111,7 +111,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
         VariableBackup<ImageCreatFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
         imageFactory[eRenderCoreFamily].createImageFunction = MockImage<FamilyType>::createMockImage;
 
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
         cl_int retVal = CL_SUCCESS;
         auto img = Image::create(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(Traits::flags, 0, 0), Traits::flags, 0, surfaceFormat, &Traits::imageDesc, Traits::hostPtr, retVal);

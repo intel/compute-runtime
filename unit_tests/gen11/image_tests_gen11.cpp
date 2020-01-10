@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ struct AppendSurfaceStateParamsTest : public ::testing::Test {
     }
 
     void createImage() {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         EXPECT_NE(nullptr, surfaceFormat);
         image.reset(Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     }

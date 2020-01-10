@@ -100,7 +100,8 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         surfaceFormatInfo = &tempSurface;
     }
 
-    iterate(SurfaceFormats::readOnly());
+    iterate(SurfaceFormats::readOnly12());
+    iterate(SurfaceFormats::readOnly20());
     iterate(SurfaceFormats::writeOnly());
     iterate(SurfaceFormats::readWrite());
 
