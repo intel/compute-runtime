@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,11 +35,6 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
 
     surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
-}
-
-template <>
-void ImageHw<Family>::appendSurfaceStateParams(Family::RENDER_SURFACE_STATE *surfaceState) {
-    Gen12LPHelpers::setAdditionalSurfaceStateParamsForImageCompression(*this, surfaceState);
 }
 
 // clang-format off

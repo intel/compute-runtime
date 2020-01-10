@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,27 +138,6 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionSurfaceStateParamsAreSetFo
 
     EXPECT_TRUE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-}
-
-GEN12LPTEST_F(gen12LpImageTests, givenCompressionEnabledWhenAppendingSurfaceStateParamsForImageCompressionThenSetCompressionFormat) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using ImageHwTgllp = ImageHw<FamilyType>;
-    constexpr static uint8_t mockCompressionFormat = 13u;
-
-    RENDER_SURFACE_STATE rss{};
-    rss.setMemoryCompressionEnable(true);
-    MockContext context{};
-    std::unique_ptr<ImageHwTgllp> image{static_cast<ImageHwTgllp *>(ImageHelper<Image2dDefaults>::create(&context))};
-    MockGmmClientContext *gmmClientContext = static_cast<MockGmmClientContext *>(platform()->peekGmmClientContext());
-
-    uint8_t expectedCompressionFormat = rss.getCompressionFormat();
-    if (SpecialUltHelperGen12lp::isAdditionalSurfaceStateParamForCompressionRequired(context.getDevice(0)->getHardwareInfo())) {
-        expectedCompressionFormat = mockCompressionFormat;
-    }
-
-    gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
-    image->appendSurfaceStateParams(&rss);
-    EXPECT_EQ(expectedCompressionFormat, rss.getCompressionFormat());
 }
 
 using Gen12lpRenderSurfaceStateDataTests = ::testing::Test;

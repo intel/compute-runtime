@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,17 +38,6 @@ void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTT
 void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const PipelineSelectArgs &pipelineSelectArgs,
                                        const HardwareInfo &hwInfo) {}
-
-bool isPageTableManagerSupported(const HardwareInfo &hwInfo) {
-    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
-}
-
-bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) {
-    return false;
-}
-
-void setAdditionalSurfaceStateParamsForImageCompression(Image &image, TGLLPFamily::RENDER_SURFACE_STATE *surfaceState) {
-}
 
 } // namespace Gen12LPHelpers
 } // namespace NEO

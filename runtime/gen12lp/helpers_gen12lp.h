@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,5 @@ void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTT
 void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const PipelineSelectArgs &pipelineSelectArgs,
                                        const HardwareInfo &hwInfo);
-bool isPageTableManagerSupported(const HardwareInfo &hwInfo);
-bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size);
-void setAdditionalSurfaceStateParamsForImageCompression(Image &image, typename TGLLPFamily::RENDER_SURFACE_STATE *surfaceState);
 } // namespace Gen12LPHelpers
 } // namespace NEO

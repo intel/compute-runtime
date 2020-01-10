@@ -1825,8 +1825,7 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint64_t ProceduralTexture : BITFIELD_RANGE(11, 11);
             uint64_t Reserved_332 : BITFIELD_RANGE(12, 63);
             // DWORD 12
-            uint32_t CompressionFormat : BITFIELD_RANGE(0, 4);
-            uint32_t Reserved_389 : BITFIELD_RANGE(5, 5);
+            uint32_t Reserved_384 : BITFIELD_RANGE(0, 5);
             uint32_t ClearAddressLow : BITFIELD_RANGE(6, 31);
             // DWORD 13
             uint32_t ClearAddressHigh : BITFIELD_RANGE(0, 15);
@@ -2673,13 +2672,6 @@ typedef struct tagRENDER_SURFACE_STATE {
     }
     inline MEMORY_COMPRESSION_MODE getMemoryCompressionMode(void) const {
         return static_cast<MEMORY_COMPRESSION_MODE>(TheStructure.Common.MemoryCompressionMode);
-    }
-    inline void setCompressionFormat(uint32_t compressionFormat) {
-        UNRECOVERABLE_IF(compressionFormat > 0x1F);
-        TheStructure.Common.CompressionFormat = compressionFormat;
-    }
-    inline uint32_t getCompressionFormat(void) const {
-        return TheStructure.Common.CompressionFormat;
     }
     inline void setSurfaceBaseAddress(const uint64_t value) {
         TheStructure.Common.SurfaceBaseAddress = value;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ bool UnitTestHelper<Family>::isL3ConfigProgrammable() {
 
 template <>
 bool UnitTestHelper<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
-    return SpecialUltHelperGen12lp::isPageTableManagerSupported(hwInfo);
+    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
 }
 
 template <>

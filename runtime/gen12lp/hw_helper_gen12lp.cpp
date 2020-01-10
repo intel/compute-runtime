@@ -52,12 +52,12 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 
 template <>
 bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::isPageTableManagerSupported(hwInfo);
+    return hwInfo.capabilityTable.ftrRenderCompressedBuffers || hwInfo.capabilityTable.ftrRenderCompressedImages;
 }
 
 template <>
 bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const {
-    return Gen12LPHelpers::obtainRenderBufferCompressionPreference(hwInfo, size);
+    return false;
 }
 
 template <>
