@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,9 @@
 using namespace NEO;
 
 TEST(IcllpDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 11> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 9> expectedDescriptors = {{
         {IICL_LP_1x1x8_ULT_DEVICE_A0_ID, &ICLLP_1x1x8::hwInfo, &ICLLP_1x1x8::setupHardwareInfo, GTTYPE_GT1},
 
-        {IICL_LP_1x4x8_ULT_DEVICE_F0_ID, &ICLLP_1x4x8::hwInfo, &ICLLP_1x4x8::setupHardwareInfo, GTTYPE_GT1},
-        {IICL_LP_1x4x8_ULX_DEVICE_F0_ID, &ICLLP_1x4x8::hwInfo, &ICLLP_1x4x8::setupHardwareInfo, GTTYPE_GT1},
         {IICL_LP_GT1_MOB_DEVICE_F0_ID, &ICLLP_1x4x8::hwInfo, &ICLLP_1x4x8::setupHardwareInfo, GTTYPE_GT1},
         {IICL_LP_1x4x8_LOW_MEDIA_ULT_DEVICE_F0_ID, &ICLLP_1x4x8::hwInfo, &ICLLP_1x4x8::setupHardwareInfo, GTTYPE_GT1},
         {IICL_LP_1x4x8_LOW_MEDIA_ULX_DEVICE_F0_ID, &ICLLP_1x4x8::hwInfo, &ICLLP_1x4x8::setupHardwareInfo, GTTYPE_GT1},
