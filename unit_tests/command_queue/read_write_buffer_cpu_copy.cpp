@@ -31,7 +31,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
     alignedFree(alignedPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenMemoryIsReadCorrectly) {
     cl_int retVal;
     size_t offset = 1;
     size_t size = 4;
@@ -69,7 +69,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
     alignedFree(alignedReadPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, simpleWrite) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMemoryIsWrittenCorrectly) {
     cl_int retVal;
     size_t offset = 1;
     size_t size = 4;
@@ -114,7 +114,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleWrite) {
     delete[] bufferPtrBase;
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
     cl_int retVal;
     size_t size = MemoryConstants::cacheLineSize;
     auto alignedBufferPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
@@ -165,7 +165,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
     alignedFree(alignedBufferPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
     cl_int retVal;
     size_t size = MemoryConstants::cacheLineSize;
     auto alignedBufferPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
