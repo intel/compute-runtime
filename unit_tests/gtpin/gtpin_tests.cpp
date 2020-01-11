@@ -22,7 +22,9 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/program/create.inl"
 #include "test.h"
+#include "unit_tests/compiler_interface/patchtokens_tests.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -978,69 +980,25 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_NE(nullptr, context);
     auto pContext = castToObject<Context>(context);
 
-    // Prepare a kernel without SSH
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
     MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    char *pBin = &binary[0];
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
+    PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 4;
-    pKHdr->PatchListSize = 0;
-    pKHdr->KernelHeapSize = 16;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-    char *pKernelBin = pBin;
-
-    strcpy(pBin, "Tst");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    strcpy(pBin, "fake_ISA_code__");
-    binSize += pKHdr->KernelHeapSize;
-
-    uint32_t kernelBinSize =
-        pKHdr->DynamicStateHeapSize +
-        pKHdr->GeneralStateHeapSize +
-        pKHdr->KernelHeapSize +
-        pKHdr->KernelNameSize +
-        pKHdr->PatchListSize +
-        pKHdr->SurfaceStateHeapSize;
-    uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-    pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
-
-    pProgram->genBinary = makeCopy(&binary[0], binSize);
-    pProgram->genBinarySize = binSize;
+    pProgram->genBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
+    pProgram->genBinarySize = programTokens.storage.size();
     retVal = pProgram->processGenBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Verify that GT-Pin Kernel Create callback is not called
     int prevCount = KernelCreateCallbackCount;
-    cl_kernel kernel = clCreateKernel(pProgram, "Tst", &retVal);
+    cl_kernel kernel = clCreateKernel(pProgram, std::string(programTokens.kernels[0].name.begin(), programTokens.kernels[0].name.size()).c_str(), &retVal);
     EXPECT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount, KernelCreateCallbackCount);
 
-    // Cleanup
     retVal = clReleaseKernel(kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2074,68 +2032,16 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
         EXPECT_NE(nullptr, context);
         auto pContext = castToObject<Context>(context);
 
-        // Prepare a program with one kernel having Stateless Private Surface
         char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
         size_t binSize = 10;
         MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
         ASSERT_NE(nullptr, pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        char *pBin = &binary[0];
-        SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-        pBHdr->Magic = iOpenCL::MAGIC_CL;
-        pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-        pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-        pBHdr->GPUPointerSizeInBytes = 8;
-        pBHdr->NumberOfKernels = 1;
-        pBHdr->SteppingId = 0;
-        pBHdr->PatchListSize = 0;
-        pBin += sizeof(SProgramBinaryHeader);
-        binSize += sizeof(SProgramBinaryHeader);
+        PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-        SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-        pKHdr->CheckSum = 0;
-        pKHdr->ShaderHashCode = 0;
-        pKHdr->KernelNameSize = 4;
-        pKHdr->PatchListSize = sizeof(SPatchAllocateStatelessPrivateSurface);
-        pKHdr->KernelHeapSize = 16;
-        pKHdr->GeneralStateHeapSize = 0;
-        pKHdr->DynamicStateHeapSize = 0;
-        pKHdr->SurfaceStateHeapSize = 0;
-        pKHdr->KernelUnpaddedSize = 0;
-        pBin += sizeof(SKernelBinaryHeaderCommon);
-        binSize += sizeof(SKernelBinaryHeaderCommon);
-        char *pKernelBin = pBin;
-
-        strcpy(pBin, "Tst");
-        pBin += pKHdr->KernelNameSize;
-        binSize += pKHdr->KernelNameSize;
-
-        strcpy(pBin, "fake_ISA_code__");
-        pBin += pKHdr->KernelHeapSize;
-        binSize += pKHdr->KernelHeapSize;
-
-        SPatchAllocateStatelessPrivateSurface *pPatch = (SPatchAllocateStatelessPrivateSurface *)pBin;
-        pPatch->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_STATELESS_PRIVATE_MEMORY;
-        pPatch->Size = sizeof(iOpenCL::SPatchAllocateStatelessPrivateSurface);
-        pPatch->SurfaceStateHeapOffset = 0;
-        pPatch->DataParamOffset = 0;
-        pPatch->DataParamSize = 0;
-        pPatch->PerThreadPrivateMemorySize = 4;
-        binSize += sizeof(SPatchAllocateStatelessPrivateSurface);
-
-        uint32_t kernelBinSize =
-            pKHdr->DynamicStateHeapSize +
-            pKHdr->GeneralStateHeapSize +
-            pKHdr->KernelHeapSize +
-            pKHdr->KernelNameSize +
-            pKHdr->PatchListSize +
-            pKHdr->SurfaceStateHeapSize;
-        uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-        pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
-
-        pProgram->genBinary = makeCopy(&binary[0], binSize);
-        pProgram->genBinarySize = binSize;
+        pProgram->genBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
+        pProgram->genBinarySize = programTokens.storage.size();
         retVal = pProgram->processGenBinary();
         if (retVal == CL_OUT_OF_HOST_MEMORY) {
             auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;
@@ -2430,64 +2336,17 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnContextCreateIsCalledThen
     EXPECT_NE(gtpinGetIgcInit(), nullptr);
 }
 
-TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGtpinInfoIsSet) {
-    cl_int retVal = CL_INVALID_BINARY;
-    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-
-    std::unique_ptr<MockProgram> pProgram(Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal));
-    EXPECT_NE(nullptr, pProgram.get());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
-
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    char *pBin = &genBin[0];
-    retVal = CL_INVALID_BINARY;
-    binSize = 0;
-
-    // Prepare simple program binary containing patch token PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 8;
-    pKHdr->PatchListSize = 8;
-    pKHdr->KernelHeapSize = 0;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-
-    strcpy(pBin, "TstCopy");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    iOpenCL::SPatchItemHeader *pPatch = (iOpenCL::SPatchItemHeader *)pBin;
-    pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_INFO;
-    pPatch->Size = sizeof(iOpenCL::SPatchItemHeader);
-    binSize += sizeof(iOpenCL::SPatchItemHeader);
-    pBin += sizeof(iOpenCL::SPatchItemHeader);
-
-    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
-    // Decode prepared program binary
-    pProgram->genBinary = makeCopy(&genBin[0], binSize);
-    pProgram->genBinarySize = binSize;
-    retVal = pProgram->processGenBinary();
-    auto kernelInfo = pProgram->getKernelInfo("TstCopy");
-    EXPECT_NE(kernelInfo->igcInfoForGtpin, nullptr);
-    ASSERT_EQ(CL_SUCCESS, retVal);
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelCreateIsCalledWithNullptrThenCallIsIgnored) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    auto prevCreateCount = KernelCreateCallbackCount;
+    gtpinNotifyKernelCreate(nullptr);
+    EXPECT_EQ(prevCreateCount, KernelCreateCallbackCount);
 }
+
 } // namespace ULT

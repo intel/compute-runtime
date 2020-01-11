@@ -264,7 +264,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImage) {
     auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
     EXPECT_EQ(objectId, *crossThreadData);
 
-    auto argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
+    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
 
     auto pImgWidth = ptrOffset(crossThreadData, argInfo.offsetImgWidth);
     EXPECT_EQ(imageWidth, *pImgWidth);
@@ -315,7 +315,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgAccelerator) {
 
     auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
 
-    auto argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
+    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
 
     uint32_t *pMbBlockType = ptrOffset(crossThreadData, argInfo.offsetVmeMbBlockType);
     EXPECT_EQ(desc.mb_block_type, *pMbBlockType);
@@ -369,7 +369,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSampler) {
     auto crossThreadData = reinterpret_cast<uint32_t *>(pClonedKernel->getCrossThreadData());
     EXPECT_EQ(objectId, *crossThreadData);
 
-    auto argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
+    const auto &argInfo = pClonedKernel->getKernelInfo().kernelArgInfo[0];
 
     auto pSnapWa = ptrOffset(crossThreadData, argInfo.offsetSamplerSnapWa);
     EXPECT_EQ(sampler->getSnapWaValue(), *pSnapWa);

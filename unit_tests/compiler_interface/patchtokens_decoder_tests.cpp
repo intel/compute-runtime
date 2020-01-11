@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,7 +199,8 @@ TEST(KernelDecoder, GivenValidEmptyKernelThenDecodingOfHeaderSucceeds) {
     EXPECT_EQ(0U, decodedKernel.isa.size());
     EXPECT_TRUE(hasEmptyHeaps(decodedKernel));
     EXPECT_EQ(0U, decodedKernel.unhandledTokens.size());
-    EXPECT_TRUE(hasEmptyTokensInfo(decodedKernel));
+    EXPECT_FALSE(hasEmptyTokensInfo(decodedKernel));
+    EXPECT_NE(nullptr, decodedKernel.tokens.executionEnvironment);
 }
 
 TEST(KernelDecoder, GivenEmptyKernelWhenBlobSmallerThanKernelHeaderThenDecodingFails) {
@@ -220,6 +221,8 @@ TEST(KernelDecoder, GivenValidKernelWithHeapsThenDecodingSucceedsAndHeapsAreProp
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
+    auto kernelExecEnv = *reinterpret_cast<const iOpenCL::SPatchExecutionEnvironment *>(kernelToEncode.blobs.patchList.begin());
+    storage.resize(storage.size() - sizeof(kernelExecEnv));
 
     size_t isaOffset = storage.size();
     kernelHeader->KernelHeapSize = 16U;
@@ -237,6 +240,9 @@ TEST(KernelDecoder, GivenValidKernelWithHeapsThenDecodingSucceedsAndHeapsAreProp
     kernelHeader->SurfaceStateHeapSize = 32U;
     storage.resize(storage.size() + kernelHeader->SurfaceStateHeapSize);
 
+    // patchlist needs to come after heaps
+    storage.insert(storage.end(), reinterpret_cast<uint8_t *>(&kernelExecEnv), reinterpret_cast<uint8_t *>(&kernelExecEnv + 1));
+
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
@@ -244,7 +250,8 @@ TEST(KernelDecoder, GivenValidKernelWithHeapsThenDecodingSucceedsAndHeapsAreProp
 
     EXPECT_EQ(kernelToEncode.header, decodedKernel.header);
     EXPECT_EQ(0U, decodedKernel.unhandledTokens.size());
-    EXPECT_TRUE(hasEmptyTokensInfo(decodedKernel));
+    EXPECT_FALSE(hasEmptyTokensInfo(decodedKernel));
+    EXPECT_NE(nullptr, decodedKernel.tokens.executionEnvironment);
 
     EXPECT_EQ(kernelToEncode.name, decodedKernel.name);
     EXPECT_EQ(ArrayRef<const uint8_t>(storage.data() + isaOffset, kernelHeader->KernelHeapSize), decodedKernel.isa);
@@ -308,7 +315,7 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     storage.reserve(1024);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     auto samplerStateArrayOff = pushBackToken<SPatchSamplerStateArray>(PATCH_TOKEN_SAMPLER_STATE_ARRAY, storage);
     auto bindingTableStateOff = pushBackToken<SPatchBindingTableState>(PATCH_TOKEN_BINDING_TABLE_STATE, storage);
     auto allocateLocalSurfaceOff = pushBackToken<SPatchAllocateLocalSurface>(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE, storage);
@@ -335,7 +342,7 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -379,14 +386,14 @@ TEST(KernelDecoder, GivenKernelWithValidStringPatchtokensThenDecodingSucceedsAnd
     iOpenCL::SPatchString stringTok = {};
     stringTok.Token = iOpenCL::PATCH_TOKEN::PATCH_TOKEN_STRING;
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     auto string1Off = PatchTokensTestData::pushBackStringToken("str1", 1, storage);
     auto string2Off = PatchTokensTestData::pushBackStringToken("str2", 2, storage);
     auto string0Off = PatchTokensTestData::pushBackStringToken("str0", 0, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -409,7 +416,7 @@ TEST(KernelDecoder, GivenKernelWithValidArgInfoPatchtokensThenDecodingSucceedsAn
     iOpenCL::SPatchKernelArgumentInfo argInfoTok = {};
     argInfoTok.Token = iOpenCL::PATCH_TOKEN::PATCH_TOKEN_KERNEL_ARGUMENT_INFO;
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto arg1Off = static_cast<uint32_t>(storage.size());
     argInfoTok.ArgumentNumber = 1;
@@ -434,7 +441,7 @@ TEST(KernelDecoder, GivenKernelWithValidArgInfoPatchtokensThenDecodingSucceedsAn
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -454,7 +461,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     storage.reserve(512);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     iOpenCL::SPatchSamplerKernelArgument samplerTok = {};
     samplerTok.Token = iOpenCL::PATCH_TOKEN::PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
@@ -495,7 +502,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -544,7 +551,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     storage.reserve(2048);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     auto localWorkSize0Off = pushBackDataParameterToken(DATA_PARAMETER_LOCAL_WORK_SIZE, storage, 0U);
     auto localWorkSize20Off = pushBackDataParameterToken(DATA_PARAMETER_LOCAL_WORK_SIZE, storage, 0U);
     auto localWorkSize1Off = pushBackDataParameterToken(DATA_PARAMETER_LOCAL_WORK_SIZE, storage, 1U);
@@ -577,7 +584,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -623,7 +630,7 @@ TEST(KernelDecoder, GivenKernelWithArgCrossThreadDataPatchtokensWhenSourceIndexI
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto localWorkSize3Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_LOCAL_WORK_SIZE, storage, 3U);
     auto globalWorkOffset3Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_GLOBAL_WORK_OFFSET, storage, 3U);
@@ -632,7 +639,7 @@ TEST(KernelDecoder, GivenKernelWithArgCrossThreadDataPatchtokensWhenSourceIndexI
     auto numWorkGroups3Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_NUM_WORK_GROUPS, storage, 3U);
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -653,12 +660,12 @@ TEST(KernelDecoder, GivenKernelWithUnkownPatchtokensThenDecodingSucceedsButToken
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     auto unknownTokOff = pushBackToken<iOpenCL::SPatchItemHeader>(iOpenCL::NUM_PATCH_TOKENS, storage);
     auto unknownCrossThreadTokOff = pushBackDataParameterToken(iOpenCL::NUM_DATA_PARAMETER_TOKENS, storage);
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -676,7 +683,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     storage.reserve(1024);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto arg0ObjectIdOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_OBJECT_ID, storage, 0U, 0U);
     auto arg0BufferOffsetOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET, storage, 0U, 0U);
@@ -704,7 +711,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -754,7 +761,7 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto arg0Metadata0Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL, storage, 0U, 0U);
     auto arg0Metadata1Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET, storage, 0U, 0U);
@@ -764,7 +771,7 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -862,7 +869,7 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL, storage, 0U, 0U);
     pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_DEPTH, storage, 0U, 0U);
@@ -871,7 +878,7 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -885,7 +892,7 @@ TEST(KernelDecoder, GivenKernelWithByValArgMetadataPatchtokensThenDecodingSuccee
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto arg0Val0Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT, storage, 0U, 0U);
     auto arg0Val1Off = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT, storage, 0U, 0U);
@@ -893,7 +900,7 @@ TEST(KernelDecoder, GivenKernelWithByValArgMetadataPatchtokensThenDecodingSuccee
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -919,7 +926,7 @@ TEST(KernelDecoder, GivenKernelWithVmeMetadataPatchtokensThenDecodingSucceedsAnd
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
     auto arg0VmeBlockTypeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE, storage, 0U, 0U);
     auto arg0VmeSubpixelModeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE, storage, 0U, 0U);
@@ -928,7 +935,7 @@ TEST(KernelDecoder, GivenKernelWithVmeMetadataPatchtokensThenDecodingSucceedsAnd
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
@@ -953,12 +960,12 @@ TEST(KernelDecoder, GivenKernelWithOutOfBoundsTokenThenDecodingFails) {
     storage.reserve(128);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    auto patchListOffset = static_cast<uint32_t>(storage.size());
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     pushBackToken<iOpenCL::SPatchSamplerStateArray>(iOpenCL::PATCH_TOKEN_SAMPLER_STATE_ARRAY, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size()) - patchListOffset;
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
     kernelHeader->PatchListSize -= 1;
 
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;

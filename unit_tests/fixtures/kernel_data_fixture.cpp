@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/program/program_info_from_patchtokens.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 
 void KernelDataTest::buildAndDecode() {
@@ -88,7 +89,9 @@ void KernelDataTest::buildAndDecode() {
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelBlob, kernelFromPatchtokens);
     EXPECT_TRUE(decodeSuccess);
 
-    program->populateKernelInfo(programFromPatchtokens, 0, error);
+    ProgramInfo programInfo;
+    NEO::populateProgramInfo(programInfo, programFromPatchtokens, DeviceInfoKernelPayloadConstants());
+    error = program->processProgramInfo(programInfo);
     EXPECT_EQ(CL_SUCCESS, error);
 
     // extract the kernel info

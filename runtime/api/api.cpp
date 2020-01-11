@@ -35,6 +35,7 @@
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/kernel/kernel_info_cl.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
@@ -1576,11 +1577,6 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
-        if (pKernelInfo->isValid == false) {
-            retVal = CL_INVALID_PROGRAM_EXECUTABLE;
-            break;
-        }
-
         kernel = Kernel::create(
             pProgram,
             *pKernelInfo,
@@ -1592,9 +1588,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    if (kernel != nullptr) {
-        gtpinNotifyKernelCreate(kernel);
-    }
+    gtpinNotifyKernelCreate(kernel);
     TRACING_EXIT(clCreateKernel, &kernel);
     return kernel;
 }
@@ -1621,17 +1615,14 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                 return retVal;
             }
 
-            for (unsigned int ordinal = 0; ordinal < numKernelsInProgram; ++ordinal) {
-                const auto kernelInfo = program->getKernelInfo(ordinal);
+            for (unsigned int i = 0; i < numKernelsInProgram; ++i) {
+                const auto kernelInfo = program->getKernelInfo(i);
                 DEBUG_BREAK_IF(kernelInfo == nullptr);
-                DEBUG_BREAK_IF(!kernelInfo->isValid);
-                kernels[ordinal] = Kernel::create(
+                kernels[i] = Kernel::create(
                     program,
                     *kernelInfo,
                     nullptr);
-                if (kernels[ordinal] != nullptr) {
-                    gtpinNotifyKernelCreate(kernels[ordinal]);
-                }
+                gtpinNotifyKernelCreate(kernels[i]);
             }
         }
 
@@ -4367,7 +4358,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    cl_int kernelArgAddressQualifier = pKernel->getKernelArgAddressQualifier(argIndex);
+    cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo().kernelArgInfo[argIndex].metadata.addressQualifier);
     if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
         (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
         retVal = CL_INVALID_ARG_VALUE;
@@ -5140,7 +5131,7 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
         Program *pProgram = (Program *)(program);
         const auto &symbols = pProgram->getSymbols();
         auto symbolIt = symbols.find(globalVariableName);
-        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.type == NEO::SymbolInfo::Function)) {
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
             retVal = CL_INVALID_ARG_VALUE;
         } else {
             if (globalVariableSizeRet != nullptr) {
@@ -5172,7 +5163,7 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
         Program *pProgram = (Program *)(program);
         const auto &symbols = pProgram->getSymbols();
         auto symbolIt = symbols.find(functionName);
-        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.type != NEO::SymbolInfo::Function)) {
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment != NEO::SegmentType::Instructions)) {
             retVal = CL_INVALID_ARG_VALUE;
         } else {
             *functionPointerRet = static_cast<cl_ulong>(symbolIt->second.gpuAddress);

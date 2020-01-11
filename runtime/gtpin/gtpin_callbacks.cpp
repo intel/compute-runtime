@@ -58,6 +58,9 @@ void gtpinNotifyContextDestroy(cl_context context) {
 }
 
 void gtpinNotifyKernelCreate(cl_kernel kernel) {
+    if (nullptr == kernel) {
+        return;
+    }
     if (isGTPinInitialized) {
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,5 +27,11 @@ set(IGDRCL_SRCS_tests_program
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_kernel_debug_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_source.h
 )
+
+get_property(NEO_CORE_SRCS_tests_program GLOBAL PROPERTY NEO_CORE_SRCS_tests_program)
+list(APPEND IGDRCL_SRCS_tests_program
+   ${NEO_CORE_SRCS_tests_program}
+)
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_program})
 add_subdirectories()

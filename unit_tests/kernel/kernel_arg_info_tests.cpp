@@ -191,3 +191,100 @@ INSTANTIATE_TEST_CASE_P(KernelArgInfoTests,
                             ::testing::ValuesIn(SourceFileNames),
                             ::testing::ValuesIn(BinaryForSourceFileNames),
                             ::testing::ValuesIn(KernelNames)));
+
+TEST(KernelArgMetadata, WhenParseAccessQualifierIsCalledThenQualifierIsProperlyParsed) {
+    using namespace NEO::KernelArgMetadata;
+    EXPECT_EQ(AccessQualifier::None, KernelArgMetadata::parseAccessQualifier(""));
+    EXPECT_EQ(AccessQualifier::None, KernelArgMetadata::parseAccessQualifier("NONE"));
+    EXPECT_EQ(AccessQualifier::ReadOnly, KernelArgMetadata::parseAccessQualifier("read_only"));
+    EXPECT_EQ(AccessQualifier::WriteOnly, KernelArgMetadata::parseAccessQualifier("write_only"));
+    EXPECT_EQ(AccessQualifier::ReadWrite, KernelArgMetadata::parseAccessQualifier("read_write"));
+    EXPECT_EQ(AccessQualifier::ReadOnly, KernelArgMetadata::parseAccessQualifier("__read_only"));
+    EXPECT_EQ(AccessQualifier::WriteOnly, KernelArgMetadata::parseAccessQualifier("__write_only"));
+    EXPECT_EQ(AccessQualifier::ReadWrite, KernelArgMetadata::parseAccessQualifier("__read_write"));
+
+    EXPECT_EQ(AccessQualifier::Unknown, KernelArgMetadata::parseAccessQualifier("re"));
+    EXPECT_EQ(AccessQualifier::Unknown, KernelArgMetadata::parseAccessQualifier("read"));
+    EXPECT_EQ(AccessQualifier::Unknown, KernelArgMetadata::parseAccessQualifier("write"));
+}
+
+TEST(KernelArgMetadata, WhenParseAddressQualifierIsCalledThenQualifierIsProperlyParsed) {
+    using namespace NEO::KernelArgMetadata;
+    EXPECT_EQ(AddressSpaceQualifier::Global, KernelArgMetadata::parseAddressSpace(""));
+    EXPECT_EQ(AddressSpaceQualifier::Global, KernelArgMetadata::parseAddressSpace("__global"));
+    EXPECT_EQ(AddressSpaceQualifier::Local, KernelArgMetadata::parseAddressSpace("__local"));
+    EXPECT_EQ(AddressSpaceQualifier::Private, KernelArgMetadata::parseAddressSpace("__private"));
+    EXPECT_EQ(AddressSpaceQualifier::Constant, KernelArgMetadata::parseAddressSpace("__constant"));
+    EXPECT_EQ(AddressSpaceQualifier::Private, KernelArgMetadata::parseAddressSpace("not_specified"));
+
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("wrong"));
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("__glob"));
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("__loc"));
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("__priv"));
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("__const"));
+    EXPECT_EQ(AddressSpaceQualifier::Unknown, KernelArgMetadata::parseAddressSpace("not"));
+}
+
+TEST(KernelArgMetadata, WhenParseTypeQualifiersIsCalledThenQualifierIsProperlyParsed) {
+    using namespace NEO::KernelArgMetadata;
+
+    TypeQualifiers qual = {};
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("").packed);
+
+    qual = {};
+    qual.constQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("const").packed);
+
+    qual = {};
+    qual.volatileQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("volatile").packed);
+
+    qual = {};
+    qual.restrictQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("restrict").packed);
+
+    qual = {};
+    qual.pipeQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("pipe").packed);
+
+    qual = {};
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("inval").packed);
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("cons").packed);
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("volat").packed);
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("restr").packed);
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("pip").packed);
+
+    qual = {};
+    qual.constQual = true;
+    qual.volatileQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("const volatile").packed);
+
+    qual = {};
+    qual.constQual = true;
+    qual.volatileQual = true;
+    qual.restrictQual = true;
+    qual.pipeQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("pipe const restrict volatile").packed);
+
+    qual = {};
+    qual.constQual = true;
+    qual.volatileQual = true;
+    qual.restrictQual = true;
+    qual.pipeQual = true;
+    qual.unknownQual = true;
+    EXPECT_EQ(qual.packed, KernelArgMetadata::parseTypeQualifiers("pipe const restrict volatile some").packed);
+}
+
+TEST(KernelArgMetadata, WhenParseLimitedStringIsCalledThenReturnedStringDoesntContainExcessiveTrailingZeroes) {
+    char str1[] = "abcd\0\0\0after\0";
+    EXPECT_STREQ("abcd", NEO::parseLimitedString(str1, sizeof(str1)).c_str());
+    EXPECT_EQ(4U, NEO::parseLimitedString(str1, sizeof(str1)).size());
+
+    EXPECT_STREQ("ab", NEO::parseLimitedString(str1, 2).c_str());
+    EXPECT_EQ(2U, NEO::parseLimitedString(str1, 2).size());
+
+    char str2[] = {'a', 'b', 'd', 'e', 'f'};
+    EXPECT_STREQ("abdef", NEO::parseLimitedString(str2, sizeof(str2)).c_str());
+    EXPECT_EQ(5U, NEO::parseLimitedString(str2, sizeof(str2)).size());
+}

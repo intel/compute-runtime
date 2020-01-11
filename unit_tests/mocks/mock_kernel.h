@@ -307,10 +307,14 @@ class MockKernelWithInternals {
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+            kernelInfo.kernelArgInfo[0].metadata.addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::Global;
+            kernelInfo.kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadWrite;
 
             kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector.resize(1);
             kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
             kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+            kernelInfo.kernelArgInfo[1].metadata.addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::Global;
+            kernelInfo.kernelArgInfo[1].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadWrite;
 
             mockKernel->setKernelArguments(defaultKernelArguments);
             mockKernel->kernelArgRequiresCacheFlush.resize(2);

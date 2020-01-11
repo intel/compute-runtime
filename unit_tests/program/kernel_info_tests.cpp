@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/program/kernel_arg_info.h"
 #include "runtime/program/kernel_info.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
@@ -18,20 +19,16 @@
 
 using namespace NEO;
 
-TEST(KernelInfo, NonCopyable) {
-    EXPECT_FALSE(std::is_move_constructible<KernelInfo>::value);
-    EXPECT_FALSE(std::is_copy_constructible<KernelInfo>::value);
+TEST(KernelInfo, KernelInfoHasCopyMoveAssingmentDisabled) {
+    static_assert(false == std::is_move_constructible<KernelInfo>::value, "");
+    static_assert(false == std::is_copy_constructible<KernelInfo>::value, "");
+    static_assert(false == std::is_move_assignable<KernelInfo>::value, "");
+    static_assert(false == std::is_copy_assignable<KernelInfo>::value, "");
 }
 
-TEST(KernelInfo, NonAssignable) {
-    EXPECT_FALSE(std::is_move_assignable<KernelInfo>::value);
-    EXPECT_FALSE(std::is_copy_assignable<KernelInfo>::value);
-}
-
-TEST(KernelInfo, defaultBehavior) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    EXPECT_FALSE(pKernelInfo->usesSsh);
-    EXPECT_FALSE(pKernelInfo->isValid);
+TEST(KernelInfo, whenDefaultConstructedThenUsesSshFlagIsNotSet) {
+    KernelInfo kernelInfo;
+    EXPECT_FALSE(kernelInfo.usesSsh);
 }
 
 TEST(KernelInfo, decodeConstantMemoryKernelArgument) {
@@ -99,13 +96,11 @@ TEST(KernelInfo, decodeImageKernelArgument) {
     EXPECT_TRUE(pKernelInfo->usesSsh);
 
     const auto &argInfo = pKernelInfo->kernelArgInfo[argumentNumber];
-    //EXPECT_EQ(???, argInfo.argSize);
+    EXPECT_EQ(sizeof(cl_mem), static_cast<size_t>(argInfo.metadata.argByValSize));
     EXPECT_EQ(arg.Offset, argInfo.offsetHeap);
     EXPECT_TRUE(argInfo.isImage);
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_WRITE), argInfo.accessQualifier);
-    //EXPECT_EQ(CL_KERNEL_ARG_ACCESS_READ_WRITE, argInfo.accessQualifier);
-    //EXPECT_EQ(CL_KERNEL_ARG_ADDRESS_, argInfo.addressQualifier);
-    //EXPECT_EQ(CL_KERNEL_ARG_TYPE_NONE, argInfo.typeQualifier);
+    EXPECT_EQ(KernelArgMetadata::AccessQualifier::ReadWrite, argInfo.metadata.accessQualifier);
+    EXPECT_TRUE(argInfo.metadata.typeQualifiers.empty());
 }
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
@@ -190,39 +185,23 @@ TEST(KernelInfo, decodeSamplerKernelArgument) {
     EXPECT_TRUE(pKernelInfo->usesSsh);
 }
 
-typedef KernelInfo KernelInfo_resolveKernelInfo;
-TEST(KernelInfo_resolveKernelInfo, basicArgument) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
+TEST(KernelInfo, whenStoringArgInfoThenMetadataIsProperlyPopulated) {
+    KernelInfo kernelInfo;
+    NEO::ArgTypeMetadata metadata;
+    metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::WriteOnly;
+    metadata.addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::Global;
+    metadata.argByValSize = sizeof(void *);
+    metadata.typeQualifiers.pipeQual = true;
+    auto metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
+    auto metadataExtendedPtr = metadataExtended.get();
+    kernelInfo.storeArgInfo(2, metadata, std::move(metadataExtended));
 
-    pKernelInfo->kernelArgInfo.resize(1);
-    auto &kernelArgInfo = pKernelInfo->kernelArgInfo[0];
-    kernelArgInfo.accessQualifierStr = "read_only";
-    kernelArgInfo.addressQualifierStr = "__global";
-    kernelArgInfo.typeQualifierStr = "restrict";
-
-    auto retVal = pKernelInfo->resolveKernelInfo();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_ONLY), kernelArgInfo.accessQualifier);
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), kernelArgInfo.addressQualifier);
-    EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_RESTRICT), kernelArgInfo.typeQualifier);
-}
-
-TEST(KernelInfo_resolveKernelInfo, complexArgumentType) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    pKernelInfo->kernelArgInfo.resize(1);
-    auto &kernelArgInfo = pKernelInfo->kernelArgInfo[0];
-    kernelArgInfo.accessQualifierStr = "read_only";
-    kernelArgInfo.addressQualifierStr = "__global";
-    kernelArgInfo.typeQualifierStr = "restrict const";
-
-    auto retVal = pKernelInfo->resolveKernelInfo();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_ONLY), kernelArgInfo.accessQualifier);
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), kernelArgInfo.addressQualifier);
-    EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_RESTRICT | CL_KERNEL_ARG_TYPE_CONST), kernelArgInfo.typeQualifier);
+    ASSERT_EQ(3U, kernelInfo.kernelArgInfo.size());
+    EXPECT_EQ(metadata.accessQualifier, kernelInfo.kernelArgInfo[2].metadata.accessQualifier);
+    EXPECT_EQ(metadata.addressQualifier, kernelInfo.kernelArgInfo[2].metadata.addressQualifier);
+    EXPECT_EQ(metadata.argByValSize, kernelInfo.kernelArgInfo[2].metadata.argByValSize);
+    EXPECT_EQ(metadata.typeQualifiers.packed, kernelInfo.kernelArgInfo[2].metadata.typeQualifiers.packed);
+    EXPECT_EQ(metadataExtendedPtr, kernelInfo.kernelArgInfo[2].metadataExtended.get());
 }
 
 TEST(KernelInfo, givenKernelInfoWhenStoreTransformableArgThenArgInfoIsTransformable) {
@@ -266,4 +245,16 @@ TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());
     mockMemoryManager->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+}
+
+TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenated) {
+    ExecutionEnvironment execEnv;
+    KernelInfo kernel1 = {};
+    kernel1.name = "kern1";
+    KernelInfo kernel2 = {};
+    kernel2.name = "kern2";
+    std::vector<KernelInfo *> kernelInfoArray;
+    kernelInfoArray.push_back(&kernel1);
+    kernelInfoArray.push_back(&kernel2);
+    EXPECT_STREQ("kern1;kern2", concatenateKernelNames(kernelInfoArray).c_str());
 }

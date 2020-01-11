@@ -93,10 +93,11 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledImageArgum
     const uint32_t offsetArraySize = 32;
 
     info.storeKernelArgument(&imageMemObjKernelArg);
-    info.kernelArgInfo[0].accessQualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
-    info.kernelArgInfo[0].accessQualifierStr = "read_only";
+    info.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
+    info.kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadOnly;
+    info.kernelArgInfo[0].metadataExtended->accessQualifier = "read_only";
     info.kernelArgInfo[0].isImage = true;
-    info.kernelArgInfo[0].name = "img";
+    info.kernelArgInfo[0].metadataExtended->argName = "img";
     info.kernelArgInfo[0].offsetChannelDataType = offsetDataType;
     info.kernelArgInfo[0].offsetChannelOrder = offsetChannelOrder;
     info.kernelArgInfo[0].offsetHeap = offsetHeap;
@@ -282,8 +283,9 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledSamplerArg
     const uint32_t offsetObjectID = 28;
 
     info.storeKernelArgument(&samplerMemObjKernelArg);
+    info.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
     info.kernelArgInfo[0].isSampler = true;
-    info.kernelArgInfo[0].name = "smp";
+    info.kernelArgInfo[0].metadataExtended->argName = "smp";
     info.kernelArgInfo[0].offsetSamplerAddressingMode = offsetSamplerAddressingMode;
     info.kernelArgInfo[0].offsetSamplerNormalizedCoords = offsetSamplerNormalizedCoords;
     info.kernelArgInfo[0].offsetSamplerSnapWa = offsetSamplerSnapWa;
@@ -725,7 +727,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQ
     argInfo.isDeviceQueue = true;
 
     info.kernelArgInfo.resize(1);
-    info.kernelArgInfo[0] = argInfo;
+    info.kernelArgInfo[0] = std::move(argInfo);
 
     info.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;
@@ -1654,32 +1656,35 @@ TEST_F(ReflectionSurfaceHelperFixture, setParentImageParams) {
 
     argInfo.offsetHeap = 0;
     argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     imgInfo.type = Kernel::kernelArgType::IMAGE_OBJ;
     imgInfo.object = (cl_mem)image2d.get();
     kernelArguments.push_back(imgInfo);
 
+    argInfo = {};
     argInfo.offsetHeap = imageID[0];
     argInfo.isImage = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     // Buffer Object should never be dereferenced by setParentImageParams
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
     kernelArguments.push_back(imgInfo);
 
+    argInfo = {};
     argInfo.offsetHeap = 0;
     argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     imgInfo.type = Kernel::kernelArgType::IMAGE_OBJ;
     imgInfo.object = (cl_mem)image1d.get();
     kernelArguments.push_back(imgInfo);
 
+    argInfo = {};
     argInfo.offsetHeap = imageID[1];
     argInfo.isImage = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     std::unique_ptr<char> reflectionSurfaceMemory(new char[4096]);
 
@@ -1737,36 +1742,42 @@ TEST_F(ReflectionSurfaceHelperFixture, setParentSamplerParams) {
     // Buffer Object should never be dereferenced by setParentImageParams
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
-    kernelArguments.push_back(imgInfo);
+    kernelArguments.push_back(std::move(imgInfo));
 
     argInfo.offsetHeap = 0;
     argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
+    imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::SAMPLER_OBJ;
     imgInfo.object = (cl_sampler)sampler1.get();
-    kernelArguments.push_back(imgInfo);
+    kernelArguments.push_back(std::move(imgInfo));
 
+    argInfo = {};
     argInfo.offsetHeap = samplerID[0];
     argInfo.isSampler = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     // Buffer Object should never be dereferenced by setParentImageParams
+    imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::BUFFER_OBJ;
     imgInfo.object = reinterpret_cast<void *>(0x0);
-    kernelArguments.push_back(imgInfo);
+    kernelArguments.push_back(std::move(imgInfo));
 
+    argInfo = {};
     argInfo.offsetHeap = 0;
     argInfo.isBuffer = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
+    imgInfo = {};
     imgInfo.type = Kernel::kernelArgType::SAMPLER_OBJ;
     imgInfo.object = (cl_sampler)sampler2.get();
-    kernelArguments.push_back(imgInfo);
+    kernelArguments.push_back(std::move(imgInfo));
 
+    argInfo = {};
     argInfo.offsetHeap = samplerID[1];
     argInfo.isSampler = true;
-    info.kernelArgInfo.push_back(argInfo);
+    info.kernelArgInfo.push_back(std::move(argInfo));
 
     std::unique_ptr<char> reflectionSurfaceMemory(new char[4096]);
 
@@ -2196,7 +2207,7 @@ TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithDeviceQ
     argInfo.isDeviceQueue = true;
 
     info.kernelArgInfo.resize(1);
-    info.kernelArgInfo[0] = argInfo;
+    info.kernelArgInfo[0] = std::move(argInfo);
 
     info.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
     info.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = devQueueCurbeOffset;

@@ -26,39 +26,9 @@
 
 namespace NEO {
 
-const uint32_t WorkloadInfo::undefinedOffset = (uint32_t)-1;
-const uint32_t WorkloadInfo::invalidParentEvent = (uint32_t)-1;
-
-std::unordered_map<std::string, uint32_t> accessQualifierMap = {
-    {"", CL_KERNEL_ARG_ACCESS_NONE},
-    {"NONE", CL_KERNEL_ARG_ACCESS_NONE},
-    {"read_only", CL_KERNEL_ARG_ACCESS_READ_ONLY},
-    {"__read_only", CL_KERNEL_ARG_ACCESS_READ_ONLY},
-    {"write_only", CL_KERNEL_ARG_ACCESS_WRITE_ONLY},
-    {"__write_only", CL_KERNEL_ARG_ACCESS_WRITE_ONLY},
-    {"read_write", CL_KERNEL_ARG_ACCESS_READ_WRITE},
-    {"__read_write", CL_KERNEL_ARG_ACCESS_READ_WRITE},
-};
-
-std::unordered_map<std::string, uint32_t> addressQualifierMap = {
-    {"", CL_KERNEL_ARG_ADDRESS_GLOBAL},
-    {"__global", CL_KERNEL_ARG_ADDRESS_GLOBAL},
-    {"__local", CL_KERNEL_ARG_ADDRESS_LOCAL},
-    {"__private", CL_KERNEL_ARG_ADDRESS_PRIVATE},
-    {"__constant", CL_KERNEL_ARG_ADDRESS_CONSTANT},
-    {"not_specified", CL_KERNEL_ARG_ADDRESS_PRIVATE},
-};
-
 struct KernelArgumentType {
     const char *argTypeQualifier;
     uint64_t argTypeQualifierValue;
-};
-
-constexpr KernelArgumentType typeQualifiers[] = {
-    {"const", CL_KERNEL_ARG_TYPE_CONST},
-    {"volatile", CL_KERNEL_ARG_TYPE_VOLATILE},
-    {"restrict", CL_KERNEL_ARG_TYPE_RESTRICT},
-    {"pipe", CL_KERNEL_ARG_TYPE_PIPE},
 };
 
 std::map<std::string, size_t> typeSizeMap = {
@@ -235,26 +205,12 @@ void KernelInfo::storePatchToken(const SPatchExecutionEnvironment *execEnv) {
     }
 }
 
-void KernelInfo::storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo) {
-    if (pkernelArgInfo == nullptr) {
-        return;
-    }
-
-    uint32_t argNum = pkernelArgInfo->ArgumentNumber;
+void KernelInfo::storeArgInfo(uint32_t argNum, ArgTypeMetadata metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended) {
     resizeKernelArgInfoAndRegisterParameter(argNum);
-
-    auto inlineData = PatchTokenBinary::getInlineData(pkernelArgInfo);
-
-    kernelArgInfo[argNum].addressQualifierStr = std::string(inlineData.addressQualifier.begin(), inlineData.addressQualifier.end()).c_str();
-    kernelArgInfo[argNum].accessQualifierStr = std::string(inlineData.accessQualifier.begin(), inlineData.accessQualifier.end()).c_str();
-    kernelArgInfo[argNum].name = std::string(inlineData.argName.begin(), inlineData.argName.end()).c_str();
-
-    auto argTypeDelim = strchr(inlineData.typeName.begin(), ';');
-    DEBUG_BREAK_IF(argTypeDelim == nullptr);
-    kernelArgInfo[argNum].typeStr = std::string(inlineData.typeName.begin(), ptrDiff(argTypeDelim, inlineData.typeName.begin())).c_str();
-    kernelArgInfo[argNum].typeQualifierStr = std::string(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.end()).c_str();
-
-    patchInfo.kernelArgumentInfo.push_back(pkernelArgInfo);
+    auto &argInfo = kernelArgInfo[argNum];
+    argInfo.metadata = metadata;
+    argInfo.metadataExtended = std::move(metadataExtended);
+    argInfo.isReadOnly |= argInfo.metadata.typeQualifiers.constQual;
 }
 
 void KernelInfo::storeKernelArgument(
@@ -295,9 +251,11 @@ void KernelInfo::storeKernelArgument(
         kernelArgInfo[argNum].isMediaBlockImage = true;
     }
 
-    kernelArgInfo[argNum].accessQualifier = pImageMemObjKernelArg->Writeable
-                                                ? CL_KERNEL_ARG_ACCESS_READ_WRITE
-                                                : CL_KERNEL_ARG_ACCESS_READ_ONLY;
+    kernelArgInfo[argNum].metadata.accessQualifier = pImageMemObjKernelArg->Writeable
+                                                         ? KernelArgMetadata::AccessQualifier::ReadWrite
+                                                         : KernelArgMetadata::AccessQualifier::ReadOnly;
+
+    kernelArgInfo[argNum].metadata.argByValSize = sizeof(cl_mem);
 
     kernelArgInfo[argNum].isTransformable = pImageMemObjKernelArg->Transformable != 0;
     patchInfo.imageMemObjKernelArgs.push_back(pImageMemObjKernelArg);
@@ -311,8 +269,6 @@ void KernelInfo::storeKernelArgument(
     usesSsh |= true;
     storeKernelArgPatchInfo(argNum, 0, 0, 0, offsetSurfaceState);
     kernelArgInfo[argNum].isBuffer = true;
-
-    patchInfo.globalMemObjKernelArgs.push_back(pGlobalMemObjKernelArg);
 }
 
 void KernelInfo::storeKernelArgument(
@@ -417,43 +373,6 @@ void KernelInfo::storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBu
     patchInfo.pAllocateSyncBuffer = pAllocateSyncBuffer;
 }
 
-cl_int KernelInfo::resolveKernelInfo() {
-    cl_int retVal = CL_SUCCESS;
-    std::unordered_map<std::string, uint32_t>::iterator iterUint;
-    std::unordered_map<std::string, size_t>::iterator iterSizeT;
-
-    for (auto &argInfo : kernelArgInfo) {
-        iterUint = accessQualifierMap.find(argInfo.accessQualifierStr);
-        if (iterUint != accessQualifierMap.end()) {
-            argInfo.accessQualifier = iterUint->second;
-        } else {
-            retVal = CL_INVALID_BINARY;
-            break;
-        }
-
-        iterUint = addressQualifierMap.find(argInfo.addressQualifierStr);
-        if (iterUint != addressQualifierMap.end()) {
-            argInfo.addressQualifier = iterUint->second;
-        } else {
-            retVal = CL_INVALID_BINARY;
-            break;
-        }
-
-        auto qualifierCount = sizeof(typeQualifiers) / sizeof(typeQualifiers[0]);
-
-        for (auto qualifierId = 0u; qualifierId < qualifierCount; qualifierId++) {
-            if (strstr(argInfo.typeQualifierStr.c_str(), typeQualifiers[qualifierId].argTypeQualifier) != nullptr) {
-                argInfo.typeQualifier |= typeQualifiers[qualifierId].argTypeQualifierValue;
-                if (argInfo.typeQualifier == CL_KERNEL_ARG_TYPE_CONST) {
-                    argInfo.isReadOnly = true;
-                }
-            }
-        }
-    }
-
-    return retVal;
-}
-
 void KernelInfo::storeKernelArgPatchInfo(uint32_t argNum, uint32_t dataSize, uint32_t dataOffset, uint32_t sourceOffset, uint32_t offsetSSH) {
     resizeKernelArgInfoAndRegisterParameter(argNum);
 
@@ -503,6 +422,19 @@ bool KernelInfo::createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager 
         return false;
     }
     return memoryManager->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
+}
+
+std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
+    std::string semiColonDelimitedKernelNameStr;
+
+    for (const auto &kernelInfo : kernelInfos) {
+        if (!semiColonDelimitedKernelNameStr.empty()) {
+            semiColonDelimitedKernelNameStr += ';';
+        }
+        semiColonDelimitedKernelNameStr += kernelInfo->name;
+    }
+
+    return semiColonDelimitedKernelNameStr;
 }
 
 } // namespace NEO

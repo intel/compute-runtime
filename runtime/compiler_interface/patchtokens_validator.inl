@@ -9,6 +9,7 @@
 
 #include "core/helpers/hw_info.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
+#include "runtime/program/kernel_arg_info.h"
 
 #include "igfxfmid.h"
 
@@ -90,6 +91,11 @@ inline ValidatorError validate(const ProgramFromPatchtokens &decodedProgram,
         return ValidatorError::InvalidBinary;
     }
 
+    if ((decodedProgram.header->GPUPointerSizeInBytes != 4U) && (decodedProgram.header->GPUPointerSizeInBytes != 8U)) {
+        outErrReason = "Invalid pointer size";
+        return ValidatorError::InvalidBinary;
+    }
+
     if (false == isDeviceSupported(static_cast<GFXCORE_FAMILY>(decodedProgram.header->Device))) {
         outErrReason = "Unsupported device binary, device GFXCORE_FAMILY : " + std::to_string(decodedProgram.header->Device);
         return ValidatorError::InvalidBinary;
@@ -107,10 +113,47 @@ inline ValidatorError validate(const ProgramFromPatchtokens &decodedProgram,
             return ValidatorError::InvalidBinary;
         }
 
+        if (nullptr == decodedKernel.tokens.executionEnvironment) {
+            outErrReason = "Missing execution environment";
+            return ValidatorError::InvalidBinary;
+        } else {
+            switch (decodedKernel.tokens.executionEnvironment->LargestCompiledSIMDSize) {
+            case 1:
+                break;
+            case 8:
+                break;
+            case 16:
+                break;
+            case 32:
+                break;
+            default:
+                outErrReason = "Invalid LargestCompiledSIMDSize";
+                return ValidatorError::InvalidBinary;
+            }
+        }
+
         if (decodedKernel.tokens.allocateLocalSurface) {
             if (sharedLocalMemorySize < decodedKernel.tokens.allocateLocalSurface->TotalInlineLocalMemorySize) {
                 outErrReason = "KernelFromPatchtokens requires too much SLM";
                 return ValidatorError::NotEnoughSlm;
+            }
+        }
+
+        for (auto &kernelArg : decodedKernel.tokens.kernelArgs) {
+            if (kernelArg.argInfo == nullptr) {
+                outErrReason = "Missing kernelArgInfo";
+                return ValidatorError::InvalidBinary;
+            }
+            auto argInfoInlineData = getInlineData(kernelArg.argInfo);
+            auto accessQualifier = KernelArgMetadata::parseAccessQualifier(parseLimitedString(argInfoInlineData.accessQualifier.begin(), argInfoInlineData.accessQualifier.size()));
+            if (KernelArgMetadata::AccessQualifier::Unknown == accessQualifier) {
+                outErrReason = "Unhandled access qualifier";
+                return ValidatorError::InvalidBinary;
+            }
+            auto addressQualifier = KernelArgMetadata::parseAddressSpace(parseLimitedString(argInfoInlineData.addressQualifier.begin(), argInfoInlineData.addressQualifier.size()));
+            if (KernelArgMetadata::AddressSpaceQualifier::Unknown == addressQualifier) {
+                outErrReason = "Unhandled address qualifier";
+                return ValidatorError::InvalidBinary;
             }
         }
 

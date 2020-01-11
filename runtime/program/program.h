@@ -9,6 +9,7 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/linker.h"
 #include "core/elf/writer.h"
+#include "core/program/program_info.h"
 #include "core/utilities/const_stringref.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
@@ -131,6 +132,8 @@ class Program : public BaseObject<_cl_program> {
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
     MOCKABLE_VIRTUAL cl_int processGenBinary();
+    MOCKABLE_VIRTUAL cl_int processPatchTokensBinary(ArrayRef<const uint8_t> src, ProgramInfo &dst);
+    MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
 
     cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
                    cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames,
@@ -269,15 +272,11 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int linkBinary();
 
     MOCKABLE_VIRTUAL cl_int isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const;
-    void processProgramScopeMetadata(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram);
-    void populateKernelInfo(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram, uint32_t kernelNum, cl_int &retVal);
 
     MOCKABLE_VIRTUAL cl_int rebuildProgramFromIr();
 
     bool validateGenBinaryDevice(GFXCORE_FAMILY device) const;
     bool validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenBinaryHeader) const;
-
-    std::string getKernelNamesString() const;
 
     void separateBlockKernels();
 
@@ -291,8 +290,6 @@ class Program : public BaseObject<_cl_program> {
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
     void notifyDebuggerWithSourceCode(std::string &filename);
-
-    void prepareLinkerInputStorage();
 
     static const std::string clOptNameClVer;
 
@@ -353,7 +350,5 @@ class Program : public BaseObject<_cl_program> {
     bool isBuiltIn;
     bool kernelDebugEnabled = false;
 };
-
-GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::ClDevice *device, size_t size, bool constant, bool globalsAreExported, const void *initData);
 
 } // namespace NEO

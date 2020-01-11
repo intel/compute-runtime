@@ -525,7 +525,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsLocalBuffer) {
 
     kernelInfo->kernelArgInfo.resize(1);
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].addressQualifier = static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_LOCAL);
+    kernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Local;
 
     std::string testFile = "testfile";
     DebugVariables flags;
@@ -547,8 +547,9 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsBufferNotSet) {
     KernelArgPatchInfo kernelArgPatchInfo;
 
     kernelInfo->kernelArgInfo.resize(1);
+    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].typeStr = "uint8 *buffer";
+    kernelInfo->kernelArgInfo[0].metadataExtended->type = "uint8 *buffer";
 
     kernel->initialize();
 
@@ -580,8 +581,9 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsBuffer) {
     KernelArgPatchInfo kernelArgPatchInfo;
 
     kernelInfo->kernelArgInfo.resize(1);
+    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].typeStr = "uint8 *buffer";
+    kernelInfo->kernelArgInfo[0].metadataExtended->type = "uint8 *buffer";
     kernelInfo->kernelArgInfo.at(0).isBuffer = true;
 
     kernel->initialize();
@@ -618,8 +620,9 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsSampler) {
     KernelArgPatchInfo kernelArgPatchInfo;
 
     kernelInfo->kernelArgInfo.resize(1);
+    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].typeStr = "sampler test";
+    kernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler test";
 
     kernel->initialize();
 
@@ -653,8 +656,9 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsImageNotSet) {
     KernelArgPatchInfo kernelArgPatchInfo;
 
     kernelInfo->kernelArgInfo.resize(1);
+    kernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].typeStr = "image2d buffer";
+    kernelInfo->kernelArgInfo[0].metadataExtended->type = "image2d buffer";
     kernelInfo->kernelArgInfo[0].isImage = true;
     kernelInfo->kernelArgInfo[0].offsetImgWidth = 0x4;
 

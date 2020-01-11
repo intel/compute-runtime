@@ -7,8 +7,9 @@
 
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/compiler_interface/patchtokens_validator.inl"
-#include "test.h"
 
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "patchtokens_tests.h"
 
 struct UknownTokenValidator {
@@ -25,8 +26,8 @@ TEST(PatchtokensValidator, GivenValidProgramThenValidationSucceeds) {
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidOrUnknownStatusThenValidationFails) {
@@ -36,7 +37,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidOrUnknownStatusThenValidationF
     prog.decodeStatus = NEO::PatchTokenBinary::DecoderError::Undefined;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("ProgramFromPatchtokens wasn't successfully decoded", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 
     error.clear();
     warning.clear();
@@ -44,7 +45,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidOrUnknownStatusThenValidationF
     prog.decodeStatus = NEO::PatchTokenBinary::DecoderError::InvalidBinary;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("ProgramFromPatchtokens wasn't successfully decoded", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithASingleConstantSurfaceThenValidationSucceeds) {
@@ -52,8 +53,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithASingleConstantSurfaceThenValida
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithMultipleConstantSurfacesThenValidationFails) {
@@ -64,7 +65,7 @@ TEST(PatchtokensValidator, GivenProgramWithMultipleConstantSurfacesThenValidatio
     prog.programScopeTokens.allocateConstantMemorySurface.push_back(&constSurface2);
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled number of global constants surfaces > 1", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithASingleGlobalSurfaceThenValidationSucceeds) {
@@ -72,8 +73,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithASingleGlobalSurfaceThenValidati
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithMultipleGlobalSurfacesThenValidationFails) {
@@ -84,7 +85,7 @@ TEST(PatchtokensValidator, GivenProgramWithMultipleGlobalSurfacesThenValidationF
     prog.programScopeTokens.allocateGlobalMemorySurface.push_back(&globSurface2);
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled number of global variables surfaces > 1", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithValidConstantPointerThenValidationSucceeds) {
@@ -92,8 +93,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithValidConstantPointerThenValidati
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerBufferIndexThenValidationFails) {
@@ -103,7 +104,44 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerBufferIndexThen
     prog.constantPointerMutable->BufferIndex = 1;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenProgramWithInvalidGpuPointerSizeThenValidationFails) {
+    PatchTokensTestData::ValidEmptyProgram prog;
+    std::string error, warning;
+
+    prog.headerMutable->GPUPointerSizeInBytes = 0U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+    EXPECT_STREQ("Invalid pointer size", error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    prog.headerMutable->GPUPointerSizeInBytes = 1U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 2U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 3U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 4U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 5U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 6U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 7U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 8U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
+
+    prog.headerMutable->GPUPointerSizeInBytes = 9U;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerConstantBufferIndexThenValidationFails) {
@@ -113,7 +151,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerConstantBufferI
     prog.constantPointerMutable->ConstantBufferIndex = 1;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerBufferTypeThenValidationFails) {
@@ -123,7 +161,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerBufferTypeThenV
     prog.constantPointerMutable->BufferType = iOpenCL::NUM_PROGRAM_SCOPE_BUFFER_TYPE;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerOffsetThenValidationFails) {
@@ -133,7 +171,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidConstantPointerOffsetThenValid
     prog.constantPointerMutable->ConstantPointerOffset = prog.constSurfMutable->InlineDataSize;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithoutConstantSurfaceButWithConstantPointerThenValidationFails) {
@@ -143,7 +181,7 @@ TEST(PatchtokensValidator, GivenProgramWithoutConstantSurfaceButWithConstantPoin
     prog.programScopeTokens.allocateConstantMemorySurface.clear();
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchConstantPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithValidGlobalPointerThenValidationSucceeds) {
@@ -151,8 +189,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithValidGlobalPointerThenValidation
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithMixedGlobalVarAndConstSurfacesAndPointersThenValidationSucceeds) {
@@ -160,24 +198,24 @@ TEST(PatchtokensValidator, GivenValidProgramWithMixedGlobalVarAndConstSurfacesAn
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
-TEST(PatchtokensValidator, GivenInvalidProgramWithMixedGlobalVarAndConstSurfacesAndPointersThenValidationSucceeds) {
+TEST(PatchtokensValidator, GivenInvalidProgramWithMixedGlobalVarAndConstSurfacesAndPointersThenValidationFails) {
     std::string error, warning;
 
     PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer progGlobalVar;
     progGlobalVar.globalPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(progGlobalVar, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_NE(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_FALSE(error.empty());
+    EXPECT_TRUE(warning.empty());
 
     PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer progConstVar;
     progConstVar.constantPointerMutable->BufferType = iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER;
-    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(progGlobalVar, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_NE(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(progConstVar, 0U, UknownTokenValidator(), error, warning));
+    EXPECT_FALSE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferIndexThenValidationFails) {
@@ -187,7 +225,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferIndexThenVa
     prog.globalPointerMutable->BufferIndex = 1;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerGlobalBufferIndexThenValidationFails) {
@@ -197,7 +235,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerGlobalBufferIndex
     prog.globalPointerMutable->GlobalBufferIndex = 1;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferTypeThenValidationFails) {
@@ -207,7 +245,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerBufferTypeThenVal
     prog.globalPointerMutable->BufferType = iOpenCL::NUM_PROGRAM_SCOPE_BUFFER_TYPE;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerOffsetThenValidationFails) {
@@ -217,7 +255,7 @@ TEST(PatchtokensValidator, GivenProgramWithInvalidGlobalPointerOffsetThenValidat
     prog.globalPointerMutable->GlobalPointerOffset = prog.globalSurfMutable->InlineDataSize;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithoutGlobalSurfaceButWithGlobalPointerThenValidationFails) {
@@ -227,7 +265,7 @@ TEST(PatchtokensValidator, GivenProgramWithoutGlobalSurfaceButWithGlobalPointerT
     prog.programScopeTokens.allocateGlobalMemorySurface.clear();
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("Unhandled SPatchGlobalPointerProgramBinaryInfo", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithUnknownPatchTokenWhenUknownTokenCantBeSkippedThenValidationFails) {
@@ -240,7 +278,7 @@ TEST(PatchtokensValidator, GivenValidProgramWithUnknownPatchTokenWhenUknownToken
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(false), error, warning));
     auto expectedError = "Unhandled required program-scope Patch Token : " + std::to_string(unknownToken.Token);
     EXPECT_STREQ(expectedError.c_str(), error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithUnknownPatchTokenWhenUknownTokenCanBeSkippedThenValidationSucceedsAndEmitsWarning) {
@@ -252,7 +290,7 @@ TEST(PatchtokensValidator, GivenValidProgramWithUnknownPatchTokenWhenUknownToken
     prog.unhandledTokens.push_back(&unknownToken);
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
     auto expectedWarning = "Unknown program-scope Patch Token : " + std::to_string(unknownToken.Token);
-    EXPECT_EQ(0U, error.size());
+    EXPECT_TRUE(error.empty());
     EXPECT_STREQ(expectedWarning.c_str(), warning.c_str());
 }
 
@@ -264,7 +302,7 @@ TEST(PatchtokensValidator, GivenProgramWithUnsupportedPatchTokenVersionThenValid
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
     auto expectedError = "Unhandled Version of Patchtokens: expected: " + std::to_string(iOpenCL::CURRENT_ICBE_VERSION) + ", got: " + std::to_string(prog.header->Version);
     EXPECT_STREQ(expectedError.c_str(), error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithUnsupportedPlatformThenValidationFails) {
@@ -283,8 +321,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithKernelThenValidationSucceeds) {
     std::string error, warning;
 
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelHasInvalidOrUnknownStatusThenValidationFails) {
@@ -294,7 +332,7 @@ TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelHasInvalidOrUnknownSt
     prog.kernels[0].decodeStatus = NEO::PatchTokenBinary::DecoderError::Undefined;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("KernelFromPatchtokens wasn't successfully decoded", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 
     error.clear();
     warning.clear();
@@ -302,7 +340,7 @@ TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelHasInvalidOrUnknownSt
     prog.kernels[0].decodeStatus = NEO::PatchTokenBinary::DecoderError::InvalidBinary;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("KernelFromPatchtokens wasn't successfully decoded", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelHasInvalidChecksumThenValidationFails) {
@@ -312,7 +350,7 @@ TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelHasInvalidChecksumThe
     prog.kernelHeaderMutable->CheckSum += 1;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("KernelFromPatchtokens has invalid checksum", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithKernelUsingSlmThenValidationSucceeds) {
@@ -321,8 +359,8 @@ TEST(PatchtokensValidator, GivenValidProgramWithKernelUsingSlmThenValidationSucc
 
     size_t slmSizeAvailable = 1 + prog.kernels[0].tokens.allocateLocalSurface->TotalInlineLocalMemorySize;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, slmSizeAvailable, UknownTokenValidator(), error, warning));
-    EXPECT_EQ(0U, error.size());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenProgramWithKernelUsingSlmWhenKernelRequiresTooMuchSlmThenValidationFails) {
@@ -332,7 +370,7 @@ TEST(PatchtokensValidator, GivenProgramWithKernelUsingSlmWhenKernelRequiresTooMu
     size_t slmSizeAvailable = -1 + prog.kernels[0].tokens.allocateLocalSurface->TotalInlineLocalMemorySize;
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::NotEnoughSlm, NEO::PatchTokenBinary::validate(prog, slmSizeAvailable, UknownTokenValidator(), error, warning));
     EXPECT_STREQ("KernelFromPatchtokens requires too much SLM", error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithKernelContainingUnknownPatchTokenWhenUknownTokenCantBeSkippedThenValidationFails) {
@@ -345,7 +383,7 @@ TEST(PatchtokensValidator, GivenValidProgramWithKernelContainingUnknownPatchToke
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(false), error, warning));
     auto expectedError = "Unhandled required kernel-scope Patch Token : " + std::to_string(unknownToken.Token);
     EXPECT_STREQ(expectedError.c_str(), error.c_str());
-    EXPECT_EQ(0U, warning.size());
+    EXPECT_TRUE(warning.empty());
 }
 
 TEST(PatchtokensValidator, GivenValidProgramWithKernelContainingUnknownPatchTokenWhenUknownTokenCanBeSkippedThenValidationSucceedsAndEmitsWarning) {
@@ -357,6 +395,145 @@ TEST(PatchtokensValidator, GivenValidProgramWithKernelContainingUnknownPatchToke
     prog.kernels[0].unhandledTokens.push_back(&unknownToken);
     EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
     auto expectedWarning = "Unknown kernel-scope Patch Token : " + std::to_string(unknownToken.Token);
-    EXPECT_EQ(0U, error.size());
+    EXPECT_TRUE(error.empty());
     EXPECT_STREQ(expectedWarning.c_str(), warning.c_str());
+}
+
+TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelArgsHasProperQualifiersThenValidationSucceeds) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg prog;
+    std::string error, warning;
+
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelsArgDoesntHaveKernelArgInfoThenValidationFails) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg prog;
+    std::string error, warning;
+    prog.kernels[0].tokens.kernelArgs[0].argInfo = nullptr;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    auto expectedError = "Missing kernelArgInfo";
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelsArgHasUnknownAddressSpaceThenValidationFails) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg prog;
+    std::string error, warning;
+    prog.arg0InfoAddressQualifierMutable[2] = '\0';
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    auto expectedError = "Unhandled address qualifier";
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelsArgHasUnknownAccessQualifierThenValidationFails) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg prog;
+    std::string error, warning;
+    prog.arg0InfoAccessQualifierMutable[2] = '\0';
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    auto expectedError = "Unhandled access qualifier";
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenKernelWhenExecutionEnvironmentIsMissingThenValidationFails) {
+    PatchTokensTestData::ValidProgramWithKernel prog;
+    std::string error, warning;
+    prog.kernels[0].tokens.executionEnvironment = nullptr;
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    auto expectedError = "Missing execution environment";
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+}
+
+TEST(PatchtokensValidator, GivenKernelWhenExecutionEnvironmentHasInvalidSimdSizeThenValidationFails) {
+    PatchTokensTestData::ValidProgramWithKernel prog;
+    std::string error, warning;
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 0U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    auto expectedError = "Invalid LargestCompiledSIMDSize";
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 1U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 2U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 3U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 4U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 5U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 6U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 7U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 8U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 9U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 16U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
+
+    error.clear();
+    prog.kernelExecEnvMutable->LargestCompiledSIMDSize = 32U;
+    prog.recalcTokPtr();
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
+    EXPECT_TRUE(warning.empty());
 }

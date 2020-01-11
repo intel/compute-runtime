@@ -50,7 +50,7 @@ class MockSchedulerKernel : public SchedulerKernel {
             bufferArg.kernelArgPatchInfoVector[0].crossthreadOffset = 0;
             bufferArg.kernelArgPatchInfoVector[0].size = 0;
             bufferArg.kernelArgPatchInfoVector[0].sourceOffset = 0;
-            info->kernelArgInfo.push_back(bufferArg);
+            info->kernelArgInfo.push_back(std::move(bufferArg));
         }
 
         MockSchedulerKernel *mock = Kernel::create<MockSchedulerKernel>(&program, *info, nullptr);

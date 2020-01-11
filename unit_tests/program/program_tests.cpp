@@ -26,11 +26,13 @@
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/create.inl"
 #include "test.h"
+#include "unit_tests/compiler_interface/patchtokens_tests.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
@@ -604,6 +606,23 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.pKernelHeader->KernelHeapSize));
     auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
     EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pProgram->getDevice(0).getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex));
+}
+
+TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
+    cl_device_id device = pClDevice;
+    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    EXPECT_EQ(nullptr, pProgram->constantSurface);
+    EXPECT_EQ(nullptr, pProgram->globalSurface);
+
+    pProgram->constantSurface = new MockGraphicsAllocation();
+    pProgram->processGenBinary();
+    EXPECT_EQ(nullptr, pProgram->constantSurface);
+    EXPECT_EQ(nullptr, pProgram->globalSurface);
+
+    pProgram->globalSurface = new MockGraphicsAllocation();
+    pProgram->processGenBinary();
+    EXPECT_EQ(nullptr, pProgram->constantSurface);
+    EXPECT_EQ(nullptr, pProgram->globalSurface);
 }
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
@@ -1916,201 +1935,16 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithNullcontext) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT) {
-    cl_int retVal = CL_INVALID_BINARY;
-    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal);
-    EXPECT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
-
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    char *pBin = &genBin[0];
-    retVal = CL_INVALID_BINARY;
-    binSize = 0;
-
-    // Prepare simple program binary containing patch token PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 8;
-    pKHdr->PatchListSize = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    pKHdr->KernelHeapSize = 0;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-
-    strcpy(pBin, "TstCopy");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    SPatchGlobalMemoryObjectKernelArgument *pPatch = (SPatchGlobalMemoryObjectKernelArgument *)pBin;
-    pPatch->Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
-    pPatch->Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    pPatch->ArgumentNumber = 0;
-    pPatch->Offset = 0x40;
-    pPatch->LocationIndex = iOpenCL::INVALID_INDEX;
-    pPatch->LocationIndex2 = iOpenCL::INVALID_INDEX;
-    binSize += pPatch->Size;
-    pBin += pPatch->Size;
-
-    ArrayRef<const uint8_t> kernelBlob(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin));
-    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(kernelBlob);
-
-    // Decode prepared program binary
-    pProgram->genBinary = makeCopy(&genBin[0], binSize);
-    pProgram->genBinarySize = binSize;
-    retVal = pProgram->processGenBinary();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    delete pProgram;
-}
-
 TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenReturnError) {
-    cl_int retVal = CL_INVALID_BINARY;
-    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-
-    auto program = std::unique_ptr<MockProgram>(Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal));
-
-    EXPECT_NE(nullptr, program.get());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)program->getProgramBinaryType());
-
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    program->setDevice(pDevice);
-    char *pBin = &genBin[0];
-    retVal = CL_INVALID_BINARY;
-    binSize = 0;
-
-    // Prepare simple program binary containing patch token PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 8;
-    pKHdr->PatchListSize = sizeof(iOpenCL::SPatchAllocateLocalSurface);
-    pKHdr->KernelHeapSize = 0;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-
-    strcpy(pBin, "TstCopy");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    SPatchAllocateLocalSurface *pPatch = (SPatchAllocateLocalSurface *)pBin;
-    pPatch->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE;
-    pPatch->Size = sizeof(iOpenCL::SPatchAllocateLocalSurface);
-    pPatch->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
-
-    binSize += sizeof(SPatchAllocateLocalSurface);
-    pBin += sizeof(SPatchAllocateLocalSurface);
-    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
-
-    // Decode prepared program binary
-    program->genBinary = makeCopy(&genBin[0], binSize);
-    program->genBinarySize = binSize;
-    retVal = program->processGenBinary();
+    PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
+    patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
+    patchtokensProgram.recalcTokPtr();
+    auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, false);
+    program->genBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
+    program->genBinarySize = patchtokensProgram.storage.size();
+    auto retVal = program->processGenBinary();
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-}
-
-TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
-#define GRF_INFO_SIZE 44u
-    cl_int retVal = CL_INVALID_BINARY;
-    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal);
-    EXPECT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
-
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    char *pBin = &genBin[0];
-    retVal = CL_INVALID_BINARY;
-    binSize = 0;
-
-    // Prepare simple program binary containing patch token PATCH_TOKEN_GTPIN_FREE_GRF_INFO
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBin += sizeof(SProgramBinaryHeader);
-    binSize += sizeof(SProgramBinaryHeader);
-
-    uint32_t patchTokenSize = sizeof(iOpenCL::SPatchGtpinFreeGRFInfo) + GRF_INFO_SIZE;
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 8;
-    pKHdr->PatchListSize = patchTokenSize;
-    pKHdr->KernelHeapSize = 0;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBin += sizeof(SKernelBinaryHeaderCommon);
-    binSize += sizeof(SKernelBinaryHeaderCommon);
-
-    strcpy(pBin, "TstCopy");
-    pBin += pKHdr->KernelNameSize;
-    binSize += pKHdr->KernelNameSize;
-
-    SPatchGtpinFreeGRFInfo *pPatch = (SPatchGtpinFreeGRFInfo *)pBin;
-    pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_FREE_GRF_INFO;
-    pPatch->Size = patchTokenSize;
-    pPatch->BufferSize = GRF_INFO_SIZE;
-
-    binSize += pPatch->Size;
-    pBin += pPatch->Size;
-    pKHdr->CheckSum = PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(pKHdr), reinterpret_cast<uint8_t *>(pBin)));
-
-    // Decode prepared program binary
-    pProgram->genBinary = makeCopy(&genBin[0], binSize);
-    pProgram->genBinarySize = binSize;
-    retVal = pProgram->processGenBinary();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    delete pProgram;
-#undef GRF_INFO_SIZE
 }
 
 TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
@@ -2987,19 +2821,6 @@ TEST(RebuildProgramFromIrTests, givenBinaryProgramWhenKernelRebulildIsNotForcedT
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(pProgram->processElfBinaryCalled);
     EXPECT_FALSE(pProgram->rebuildProgramFromIrCalled);
-}
-
-TEST(Program, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenated) {
-    ExecutionEnvironment execEnv;
-    MockProgram program{execEnv};
-    KernelInfo kernel1 = {};
-    kernel1.name = "kern1";
-    KernelInfo kernel2 = {};
-    kernel2.name = "kern2";
-    program.getKernelInfoArray().push_back(&kernel1);
-    program.getKernelInfoArray().push_back(&kernel2);
-    EXPECT_EQ("kern1;kern2", program.getKernelNamesString());
-    program.getKernelInfoArray().clear();
 }
 
 struct SpecializationConstantProgramMock : public MockProgram {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,7 @@ TEST(ProgramDumper, GivenProgramWithPatchtokensThenProperlyCreatesDump) {
     std::string generated = NEO::PatchTokenBinary::asString(progWithConst);
     std::stringstream expected;
     expected <<
-        R"===(Program of size : 200 decoded successfully
+        R"===(Program of size : )===" << progWithConst.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -136,27 +136,32 @@ struct SProgramBinaryHeader {
 
     uint32_t   Device; // = )==="
              << renderCoreFamily << R"===(
-    uint32_t   GPUPointerSizeInBytes; // = 0
+    uint32_t   GPUPointerSizeInBytes; // = )==="
+             << progWithConst.header->GPUPointerSizeInBytes << R"===(
 
     uint32_t   NumberOfKernels; // = 0
 
     uint32_t   SteppingId; // = 0
 
-    uint32_t   PatchListSize; // = 172
+    uint32_t   PatchListSize; // = )==="
+             << progWithConst.header->PatchListSize << R"===(
 };
-Program-scope tokens section size : 172
+Program-scope tokens section size : )==="
+             << progWithConst.blobs.patchList.size() << R"===(
   WARNING : Unhandled program-scope tokens detected [2] :
    + [0]:
    |  struct SPatchItemHeader {
    |      uint32_t   Token;// = )==="
              << NUM_PATCH_TOKENS << R"===(
-   |      uint32_t   Size;// = 28
+   |      uint32_t   Size;// = )==="
+             << progWithConst.unhandledTokens[0]->Size << R"===(
    |  };
    + [1]:
    |  struct SPatchItemHeader {
    |      uint32_t   Token;// = )==="
              << (NUM_PATCH_TOKENS) << R"===(
-   |      uint32_t   Size;// = 28
+   |      uint32_t   Size;// = )==="
+             << progWithConst.unhandledTokens[1]->Size << R"===(
    |  };
   Inline Costant Surface(s) [2] :
    + [0]:
@@ -262,7 +267,7 @@ TEST(ProgramDumper, GivenProgramWithKernelThenProperlyCreatesDump) {
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
     expected <<
-        R"===(Program of size : 96 decoded successfully
+        R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -270,7 +275,8 @@ struct SProgramBinaryHeader {
 
     uint32_t   Device; // = )==="
              << renderCoreFamily << R"===(
-    uint32_t   GPUPointerSizeInBytes; // = 0
+    uint32_t   GPUPointerSizeInBytes; // = )==="
+             << program.header->GPUPointerSizeInBytes << R"===(
 
     uint32_t   NumberOfKernels; // = 1
 
@@ -281,14 +287,46 @@ struct SProgramBinaryHeader {
 Program-scope tokens section size : 0
 Kernels section size : 0
 kernel[0] test_kernel:
-Kernel of size : 68  decoded successfully
+Kernel of size : )==="
+             << program.kernels[0].blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 2446215414
+    uint32_t   CheckSum;// = )==="
+             << program.kernels[0].header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 16
+    uint32_t   PatchListSize;// = )==="
+             << program.kernels[0].header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 16
+Kernel-scope tokens section size : )==="
+             << program.kernels[0].blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
              << sizeof(iOpenCL::SPatchAllocateLocalSurface) << R"===()
@@ -311,7 +349,7 @@ TEST(ProgramDumper, GivenProgramWithMultipleKerneslThenProperlyCreatesDump) {
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
     expected <<
-        R"===(Program of size : 96 decoded successfully
+        R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -319,7 +357,8 @@ struct SProgramBinaryHeader {
 
     uint32_t   Device; // = )==="
              << renderCoreFamily << R"===(
-    uint32_t   GPUPointerSizeInBytes; // = 0
+    uint32_t   GPUPointerSizeInBytes; // = )==="
+             << program.header->GPUPointerSizeInBytes << R"===(
 
     uint32_t   NumberOfKernels; // = 1
 
@@ -330,14 +369,46 @@ struct SProgramBinaryHeader {
 Program-scope tokens section size : 0
 Kernels section size : 0
 kernel[0] test_kernel:
-Kernel of size : 68  decoded successfully
+Kernel of size : )==="
+             << program.kernels[0].blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 2446215414
+    uint32_t   CheckSum;// = )==="
+             << program.kernels[0].header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 16
+    uint32_t   PatchListSize;// = )==="
+             << program.kernels[0].header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 16
+Kernel-scope tokens section size : )==="
+             << program.kernels[0].blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
              << sizeof(iOpenCL::SPatchAllocateLocalSurface) << R"===()
@@ -346,23 +417,87 @@ Kernel-scope tokens section size : 16
       uint32_t   TotalInlineLocalMemorySize;// = 16
   }
 kernel[1] different_kernel:
-Kernel of size : 68  decoded successfully
+Kernel of size : )==="
+             << program.kernels[1].blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 2446215414
+    uint32_t   CheckSum;// = )==="
+             << program.kernels[1].header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 16
+    uint32_t   PatchListSize;// = )==="
+             << program.kernels[1].header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << program.kernels[1].blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
 kernel[2] <UNNAMED>:
-Kernel of size : 68  decoded successfully
+Kernel of size : )==="
+             << program.kernels[2].blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 2446215414
+    uint32_t   CheckSum;// = )==="
+             << program.kernels[2].header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 16
+    uint32_t   PatchListSize;// = )==="
+             << program.kernels[2].header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << program.kernels[2].blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
@@ -428,14 +563,17 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     std::string generated = NEO::PatchTokenBinary::asString(kernel);
     std::stringstream expected;
     expected <<
-        R"===(Kernel of size : 52  decoded successfully
+        R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 3223116527
+    uint32_t   CheckSum;// = )==="
+             << kernel.header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 0
+    uint32_t   PatchListSize;// = )==="
+             << kernel.header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << kernel.blobs.patchList.size() << R"===(
   WARNING : Unhandled kernel-scope tokens detected [2] :
    + [0]:
    |  struct SPatchItemHeader {
@@ -613,7 +751,8 @@ Kernel-scope tokens section size : 0
   }
   struct SPatchItemHeader {
       uint32_t   Token;// = 50(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO)
-      uint32_t   Size;// = 8
+      uint32_t   Size;// = )==="
+             << sizeof(SPatchItemHeader) << R"===(
   };
   struct SPatchGtpinFreeGRFInfo :
          SPatchItemHeader (Token=51(PATCH_TOKEN_GTPIN_FREE_GRF_INFO), Size=)==="
@@ -637,7 +776,8 @@ Kernel-scope tokens section size : 0
   }
   struct SPatchItemHeader {
       uint32_t   Token;// = 52(PATCH_TOKEN_GTPIN_INFO)
-      uint32_t   Size;// = 8
+      uint32_t   Size;// = )==="
+             << sizeof(SPatchItemHeader) << R"===(
   };
   struct SPatchFunctionTableInfo :
          SPatchItemHeader (Token=53(PATCH_TOKEN_PROGRAM_SYMBOL_TABLE), Size=)==="
@@ -679,14 +819,45 @@ TEST(KernelDumper, GivenKernelWithStringPatchTokensThenProperlyCreatesDump) {
     kernel.tokens.strings.push_back(reinterpret_cast<iOpenCL::SPatchString *>(strTokStream.data() + string2Off));
     std::string generated = NEO::PatchTokenBinary::asString(kernel);
     std::stringstream expected;
-    expected << R"===(Kernel of size : 52  decoded successfully
+    expected << R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 3223116527
+    uint32_t   CheckSum;// = )==="
+             << kernel.header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 0
+    uint32_t   PatchListSize;// = )==="
+             << kernel.header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << kernel.blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
   String literals [3] :
    + [0]:
    |  struct SPatchString :
@@ -787,14 +958,17 @@ TEST(KernelDumper, GivenKernelWithNonArgCrossThreadDataPatchtokensThenProperlyCr
     std::string generated = NEO::PatchTokenBinary::asString(kernel);
     static constexpr auto tokenSize = sizeof(SPatchDataParameterBuffer);
     std::stringstream expected;
-    expected << R"===(Kernel of size : 52  decoded successfully
+    expected << R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 3223116527
+    uint32_t   CheckSum;// = )==="
+             << kernel.header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 0
+    uint32_t   PatchListSize;// = )==="
+             << kernel.header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << kernel.blobs.patchList.size() << R"===(
   WARNING : Unhandled kernel-scope tokens detected [2] :
    + [0]:
    |  struct SPatchDataParameterBuffer :
@@ -826,6 +1000,34 @@ Kernel-scope tokens section size : 0
    |      uint32_t   LocationIndex2;// = 0
    |      uint32_t   IsEmulationArgument;// = 0
    |  }
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
   localWorkSize [3] :
    + [0]:
    |  struct SPatchDataParameterBuffer :
@@ -1188,14 +1390,45 @@ TEST(KernelDumper, GivenKernelWithArgThenProperlyCreatesDump) {
     kernel.tokens.kernelArgs.push_back(kernel.tokens.kernelArgs[0]);
     auto generated = NEO::PatchTokenBinary::asString(kernel);
     std::stringstream expected;
-    expected << R"===(Kernel of size : 52  decoded successfully
+    expected << R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
-    uint32_t   CheckSum;// = 3223116527
+    uint32_t   CheckSum;// = )==="
+             << kernel.header->CheckSum << R"===(
     uint64_t   ShaderHashCode;// = 0
     uint32_t   KernelNameSize;// = 12
-    uint32_t   PatchListSize;// = 0
+    uint32_t   PatchListSize;// = )==="
+             << kernel.header->PatchListSize << R"===(
 };
-Kernel-scope tokens section size : 0
+Kernel-scope tokens section size : )==="
+             << kernel.blobs.patchList.size() << R"===(
+  struct SPatchExecutionEnvironment :
+         SPatchItemHeader (Token=23(PATCH_TOKEN_EXECUTION_ENVIRONMENT), Size=)==="
+             << sizeof(iOpenCL::SPatchExecutionEnvironment) << R"===()
+  {
+      uint32_t    RequiredWorkGroupSizeX;// = 0
+      uint32_t    RequiredWorkGroupSizeY;// = 0
+      uint32_t    RequiredWorkGroupSizeZ;// = 0
+      uint32_t    LargestCompiledSIMDSize;// = 32
+      uint32_t    CompiledSubGroupsNumber;// = 0
+      uint32_t    HasBarriers;// = 0
+      uint32_t    DisableMidThreadPreemption;// = 0
+      uint32_t    CompiledSIMD8;// = 0
+      uint32_t    CompiledSIMD16;// = 0
+      uint32_t    CompiledSIMD32;// = 1
+      uint32_t    HasDeviceEnqueue;// = 0
+      uint32_t    MayAccessUndeclaredResource;// = 0
+      uint32_t    UsesFencesForReadWriteImages;// = 0
+      uint32_t    UsesStatelessSpillFill;// = 0
+      uint32_t    UsesMultiScratchSpaces;// = 0
+      uint32_t    IsCoherent;// = 0
+      uint32_t    IsInitializer;// = 0
+      uint32_t    IsFinalizer;// = 0
+      uint32_t    SubgroupIndependentForwardProgressRequired;// = 0
+      uint32_t    CompiledForGreaterThan4GBBuffers;// = 0
+      uint32_t    NumGRFRequired;// = 0
+      uint32_t    WorkgroupWalkOrderDims;// = 0
+      uint32_t    HasGlobalAtomics;// = 0
+  }
 Kernel arguments [2] :
   + kernelArg[0]:
   | Kernel argument of type unspecified
@@ -1831,13 +2064,14 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
     iOpenCL::SPatchItemHeader *kernelToken = nullptr;
     auto kernelToDecode = PatchTokensTestData::ValidEmptyKernel::create(kernelToDecodeStorage);
     {
-        auto kernelPatchListOffset = kernelToDecodeStorage.size();
+        auto kernelPatchListOffset = ptrDiff(kernelToDecode.blobs.patchList.begin(), kernelToDecodeStorage.data());
         kernelToDecodeStorage.resize(kernelToDecodeStorage.size() + maxTokenSize, 0U);
         kernelToDecode.blobs.kernelInfo = ArrayRef<const uint8_t>(kernelToDecodeStorage.data(), kernelToDecodeStorage.data() + kernelToDecodeStorage.size());
         kernelToDecode.blobs.patchList = ArrayRef<const uint8_t>(kernelToDecodeStorage.data() + kernelPatchListOffset, kernelToDecodeStorage.data() + kernelToDecodeStorage.size());
         auto kernelHeaderMutable = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(&*(kernelToDecodeStorage.begin()));
         kernelHeaderMutable->PatchListSize = static_cast<uint32_t>(kernelToDecode.blobs.patchList.size());
-        kernelToken = reinterpret_cast<iOpenCL::SPatchItemHeader *>(kernelToDecodeStorage.data() + kernelPatchListOffset);
+        kernelToDecode.tokens.executionEnvironment = reinterpret_cast<iOpenCL::SPatchExecutionEnvironment *>(kernelToDecodeStorage.data() + kernelPatchListOffset);
+        kernelToken = reinterpret_cast<iOpenCL::SPatchItemHeader *>(kernelToDecodeStorage.data() + kernelPatchListOffset + sizeof(iOpenCL::SPatchExecutionEnvironment));
     }
     kernelToken->Size = maxTokenSize;
 

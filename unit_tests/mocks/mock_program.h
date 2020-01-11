@@ -26,12 +26,9 @@ class GraphicsAllocation;
 class MockProgram : public Program {
   public:
     using Program::createProgramFromBinary;
-    using Program::getKernelNamesString;
     using Program::internalOptionsToExtract;
     using Program::isKernelDebugEnabled;
     using Program::linkBinary;
-    using Program::populateKernelInfo;
-    using Program::prepareLinkerInputStorage;
     using Program::rebuildProgramFromIr;
     using Program::resolveProgramBinary;
     using Program::separateBlockKernels;
@@ -58,7 +55,6 @@ class MockProgram : public Program {
     using Program::isSpirV;
     using Program::linkerInput;
     using Program::pDevice;
-    using Program::processProgramScopeMetadata;
     using Program::programBinaryType;
     using Program::sourceCode;
     using Program::specConstantsIds;

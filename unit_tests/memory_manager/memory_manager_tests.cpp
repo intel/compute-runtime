@@ -14,6 +14,8 @@
 #include "core/memory_manager/residency.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
+#include "core/program/program_initialization.h"
+#include "core/unit_tests/compiler_interface/linker_mock.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
@@ -2118,17 +2120,15 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
     MockClDevice device{new MockDevice};
     std::unique_ptr<MemoryManager> memoryManager(new MemoryManagerWithFailure());
     device.injectMemoryManager(memoryManager.release());
-    MockContext context(&device, true);
 
-    delete context.svmAllocsManager;
-    context.svmAllocsManager = nullptr;
-
-    GraphicsAllocation *allocation = allocateGlobalsSurface(&context, &device, 1024, false, true, nullptr);
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.exportsGlobalConstants = true;
+    linkerInput.traits.exportsGlobalVariables = true;
+    GraphicsAllocation *allocation = allocateGlobalsSurface(nullptr, device.getDevice(), 1024, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);
 
-    context.svmAllocsManager = new SVMAllocsManager(device.getMemoryManager());
-
-    allocation = allocateGlobalsSurface(&context, &device, 1024, false, true, nullptr);
+    auto svmAllocsManager = std::make_unique<SVMAllocsManager>(device.getMemoryManager());
+    allocation = allocateGlobalsSurface(svmAllocsManager.get(), device.getDevice(), 1024, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);
 }
 
@@ -2161,7 +2161,10 @@ TEST_F(MemoryManagerMultiRootDeviceTests, globalsSurfaceHasCorrectRootDeviceInde
     }
 
     std::vector<unsigned char> initData(1024, 0x5B);
-    GraphicsAllocation *allocation = allocateGlobalsSurface(context.get(), device.get(), initData.size(), false, true, initData.data());
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.exportsGlobalConstants = true;
+    linkerInput.traits.exportsGlobalVariables = true;
+    GraphicsAllocation *allocation = allocateGlobalsSurface(context->svmAllocsManager, device->getDevice(), initData.size(), false, &linkerInput, initData.data());
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());

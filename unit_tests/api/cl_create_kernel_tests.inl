@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,24 +73,6 @@ TEST_F(clCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, GivenInvalidKernelWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
-    cl_kernel kernel = nullptr;
-    KernelInfo *pKernelInfo = new KernelInfo();
-    pKernelInfo->isValid = false;
-
-    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false);
-    pMockProg->addKernelInfo(pKernelInfo);
-    pMockProg->SetBuildStatus(CL_BUILD_SUCCESS);
-
-    kernel = clCreateKernel(
-        pMockProg.get(),
-        "",
-        &retVal);
-
-    EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
-    EXPECT_EQ(nullptr, kernel);
-}
-
 TEST_F(clCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
@@ -157,7 +139,6 @@ TEST_F(clCreateKernelTests, GivenNullProgramWhenCreatingNewKernelThenInvalidProg
 TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidValueErrorIsReturned) {
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = new KernelInfo();
-    pKernelInfo->isValid = true;
 
     std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false);
     pMockProg->addKernelInfo(pKernelInfo);

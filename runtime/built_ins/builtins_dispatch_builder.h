@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,9 +84,7 @@ class BuiltinDispatchInfoBuilder {
     template <typename KernelNameT, typename... KernelsDescArgsT>
     void grabKernels(KernelNameT &&kernelName, Kernel *&kernelDst, KernelsDescArgsT &&... kernelsDesc) {
         const KernelInfo *kernelInfo = prog->getKernelInfo(kernelName);
-        if (!kernelInfo) {
-            return;
-        }
+        UNRECOVERABLE_IF(nullptr == kernelInfo);
         cl_int err = 0;
         kernelDst = Kernel::create(prog.get(), *kernelInfo, &err);
         kernelDst->isBuiltIn = true;

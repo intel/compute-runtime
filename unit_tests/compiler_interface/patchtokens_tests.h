@@ -8,17 +8,81 @@
 #pragma once
 
 #include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "test.h"
+
+#include "igfxfmid.h"
 
 #include <vector>
 
+extern GFXCORE_FAMILY renderCoreFamily;
+
 namespace PatchTokensTestData {
+template <typename TokenT>
+inline TokenT initToken(iOpenCL::PATCH_TOKEN tok) {
+    TokenT ret = {};
+    ret.Size = sizeof(TokenT);
+    ret.Token = tok;
+    return ret;
+}
+
+inline iOpenCL::SPatchDataParameterBuffer initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_TOKEN type, uint32_t sourceIndex = 0, uint32_t argNum = 0) {
+    iOpenCL::SPatchDataParameterBuffer tok = {};
+    tok.Size = static_cast<uint32_t>(sizeof(iOpenCL::SPatchDataParameterBuffer));
+    tok.Token = iOpenCL::PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+    tok.Type = type;
+    tok.SourceOffset = sourceIndex * sizeof(uint32_t);
+    tok.ArgumentNumber = argNum;
+    return tok;
+}
+
+inline uint32_t pushBackString(const std::string &str, std::vector<uint8_t> &storage) {
+    auto offset = storage.size();
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(str.c_str()), reinterpret_cast<const uint8_t *>(str.c_str()) + str.size());
+    return static_cast<uint32_t>(offset);
+}
+
+inline uint32_t pushBackStringToken(const std::string &str, uint32_t stringIndex, std::vector<uint8_t> &outStream) {
+    auto off = outStream.size();
+    outStream.reserve(outStream.size() + sizeof(iOpenCL::SPatchString) + str.length());
+    outStream.resize(outStream.size() + sizeof(iOpenCL::SPatchString));
+    iOpenCL::SPatchString *tok = reinterpret_cast<iOpenCL::SPatchString *>(outStream.data() + off);
+    *tok = initToken<iOpenCL::SPatchString>(iOpenCL::PATCH_TOKEN::PATCH_TOKEN_STRING);
+    tok->StringSize = static_cast<uint32_t>(str.length());
+    tok->Size += tok->StringSize;
+    tok->Index = stringIndex;
+    pushBackString(str, outStream);
+    return static_cast<uint32_t>(off);
+};
+
+inline uint32_t pushBackArgInfoToken(std::vector<uint8_t> &outStream,
+                                     uint32_t argNum = 0,
+                                     const std::string &addressQualifier = "__global", const std::string &accessQualifier = "read_write",
+                                     const std::string &argName = "custom_arg", const std::string &typeName = "int*;", std::string typeQualifier = "const") {
+    auto off = outStream.size();
+    iOpenCL::SPatchKernelArgumentInfo tok = {};
+    tok.Token = iOpenCL::PATCH_TOKEN_KERNEL_ARGUMENT_INFO;
+    tok.AddressQualifierSize = static_cast<uint32_t>(addressQualifier.size());
+    tok.AccessQualifierSize = static_cast<uint32_t>(accessQualifier.size());
+    tok.ArgumentNameSize = static_cast<uint32_t>(argName.size());
+    tok.TypeNameSize = static_cast<uint32_t>(typeName.size());
+    tok.TypeQualifierSize = static_cast<uint32_t>(typeQualifier.size());
+    tok.Size = sizeof(iOpenCL::SPatchKernelArgumentInfo) + tok.AddressQualifierSize + tok.AccessQualifierSize + tok.ArgumentNameSize + tok.TypeNameSize + tok.TypeQualifierSize;
+
+    outStream.insert(outStream.end(), reinterpret_cast<const uint8_t *>(&tok), reinterpret_cast<const uint8_t *>(&tok) + sizeof(tok));
+    pushBackString(addressQualifier, outStream);
+    pushBackString(accessQualifier, outStream);
+    pushBackString(argName, outStream);
+    pushBackString(typeName, outStream);
+    pushBackString(typeQualifier, outStream);
+    return static_cast<uint32_t>(off);
+}
+
 struct ValidEmptyProgram : NEO::PatchTokenBinary::ProgramFromPatchtokens {
     ValidEmptyProgram() {
         iOpenCL::SProgramBinaryHeader headerTok = {};
         headerTok.Magic = iOpenCL::MAGIC_CL;
         headerTok.Version = iOpenCL::CURRENT_ICBE_VERSION;
         headerTok.Device = renderCoreFamily;
+        headerTok.GPUPointerSizeInBytes = sizeof(uintptr_t);
         this->decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
 
         storage.insert(storage.end(), reinterpret_cast<uint8_t *>(&headerTok), reinterpret_cast<uint8_t *>((&headerTok) + 1));
@@ -160,6 +224,10 @@ struct ValidEmptyKernel {
     static NEO::PatchTokenBinary::KernelFromPatchtokens create(std::vector<uint8_t> &storage) {
         NEO::PatchTokenBinary::KernelFromPatchtokens ret;
         iOpenCL::SKernelBinaryHeaderCommon headerTokInl = {};
+        auto execEnvTokInl = initToken<iOpenCL::SPatchExecutionEnvironment>(iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT);
+        execEnvTokInl.LargestCompiledSIMDSize = 32U;
+        execEnvTokInl.CompiledSIMD32 = 1U;
+        headerTokInl.PatchListSize = sizeof(execEnvTokInl);
         ret.decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
         ret.name = "test_kernel";
         headerTokInl.KernelNameSize = static_cast<uint32_t>(ret.name.size());
@@ -170,8 +238,12 @@ struct ValidEmptyKernel {
         auto headerTok = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(&*(storage.begin() + kernOffset));
         ret.NEO::PatchTokenBinary::KernelFromPatchtokens::header = headerTok;
         storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(ret.name.begin()), reinterpret_cast<const uint8_t *>(ret.name.end()));
-        ret.blobs.kernelInfo = ArrayRef<const uint8_t>(storage.data() + kernOffset, storage.data() + storage.size());
+        auto execEnvOffset = storage.size();
+        storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&execEnvTokInl), reinterpret_cast<const uint8_t *>((&execEnvTokInl) + 1));
+        ret.blobs.kernelInfo = ArrayRef<const uint8_t>(storage.data() + kernOffset, storage.data() + kernOffset + storage.size());
         headerTok->CheckSum = NEO::PatchTokenBinary::calcKernelChecksum(ret.blobs.kernelInfo);
+        ret.blobs.patchList = ArrayRef<const uint8_t>(storage.data() + execEnvOffset, storage.data() + storage.size());
+        ret.tokens.executionEnvironment = reinterpret_cast<iOpenCL::SPatchExecutionEnvironment *>(storage.data() + execEnvOffset);
         return ret;
     }
 };
@@ -182,6 +254,7 @@ struct ValidProgramWithKernel : ValidEmptyProgram {
         kernOffset = storage.size();
         this->kernels.push_back(ValidEmptyKernel::create(storage));
         this->kernels[0].decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+        kernExecEnvOffset = ptrDiff(this->kernels[0].blobs.patchList.begin(), storage.data());
         recalcTokPtr();
     }
 
@@ -190,16 +263,25 @@ struct ValidProgramWithKernel : ValidEmptyProgram {
         this->kernels[0].blobs.kernelInfo = ArrayRef<const uint8_t>(storage.data() + kernOffset, storage.data() + storage.size());
         kernelHeaderMutable = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(&*(storage.begin() + kernOffset));
         this->kernels[0].header = kernelHeaderMutable;
+        char *name = reinterpret_cast<char *>(storage.data() + kernOffset + sizeof(iOpenCL::SKernelBinaryHeaderCommon));
+        this->kernels[0].name = ArrayRef<const char>(name, name + kernelHeaderMutable->KernelNameSize);
+        kernelExecEnvMutable = reinterpret_cast<iOpenCL::SPatchExecutionEnvironment *>(&*(storage.begin() + kernExecEnvOffset));
+        this->kernels[0].tokens.executionEnvironment = kernelExecEnvMutable;
+
+        this->kernels[0].blobs.patchList = ArrayRef<const uint8_t>(storage.data() + kernExecEnvOffset, storage.data() + storage.size());
+        this->kernelHeaderMutable->PatchListSize = static_cast<uint32_t>(this->kernels[0].blobs.patchList.size());
         kernelHeaderMutable->CheckSum = NEO::PatchTokenBinary::calcKernelChecksum(this->kernels[0].blobs.kernelInfo);
     }
 
     size_t kernOffset = 0U;
+    size_t kernExecEnvOffset = 0U;
     iOpenCL::SKernelBinaryHeaderCommon *kernelHeaderMutable = nullptr;
+    iOpenCL::SPatchExecutionEnvironment *kernelExecEnvMutable = nullptr;
 };
 
 struct ValidProgramWithKernelUsingSlm : ValidProgramWithKernel {
     ValidProgramWithKernelUsingSlm() {
-        patchlistOffset = storage.size();
+        slmMutableOffset = storage.size();
         iOpenCL::SPatchAllocateLocalSurface slmTok = {};
         slmTok.Token = iOpenCL::PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE;
         slmTok.Size = sizeof(slmTok);
@@ -210,73 +292,42 @@ struct ValidProgramWithKernelUsingSlm : ValidProgramWithKernel {
 
     void recalcTokPtr() {
         ValidProgramWithKernel::recalcTokPtr();
-        this->kernels[0].blobs.patchList = ArrayRef<const uint8_t>(storage.data() + patchlistOffset, storage.data() + storage.size());
-        slmMutable = reinterpret_cast<iOpenCL::SPatchAllocateLocalSurface *>(storage.data() + patchlistOffset);
+        slmMutable = reinterpret_cast<iOpenCL::SPatchAllocateLocalSurface *>(storage.data() + slmMutableOffset);
         this->kernels[0].tokens.allocateLocalSurface = slmMutable;
-        this->kernelHeaderMutable->PatchListSize = static_cast<uint32_t>(this->kernels[0].blobs.patchList.size());
     }
 
     iOpenCL::SPatchAllocateLocalSurface *slmMutable = nullptr;
-    size_t patchlistOffset = 0U;
+    size_t slmMutableOffset = 0U;
 };
 
-template <typename TokenT>
-inline TokenT initToken(iOpenCL::PATCH_TOKEN tok) {
-    TokenT ret = {};
-    ret.Size = sizeof(TokenT);
-    ret.Token = tok;
-    return ret;
-}
+struct ValidProgramWithKernelAndArg : ValidProgramWithKernel {
+    ValidProgramWithKernelAndArg() {
+        kernelArgOffset = storage.size();
 
-inline iOpenCL::SPatchDataParameterBuffer initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_TOKEN type, uint32_t sourceIndex = 0, uint32_t argNum = 0) {
-    iOpenCL::SPatchDataParameterBuffer tok = {};
-    tok.Size = static_cast<uint32_t>(sizeof(iOpenCL::SPatchDataParameterBuffer));
-    tok.Token = iOpenCL::PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-    tok.Type = type;
-    tok.SourceOffset = sourceIndex * sizeof(uint32_t);
-    tok.ArgumentNumber = argNum;
-    return tok;
-}
+        pushBackArgInfoToken(storage);
+        this->kernels[0].tokens.kernelArgs.resize(1);
 
-inline uint32_t pushBackString(const std::string &str, std::vector<uint8_t> &storage) {
-    auto offset = storage.size();
-    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(str.c_str()), reinterpret_cast<const uint8_t *>(str.c_str()) + str.size());
-    return static_cast<uint32_t>(offset);
-}
+        recalcTokPtr();
+    }
 
-inline uint32_t pushBackStringToken(const std::string &str, uint32_t stringIndex, std::vector<uint8_t> &outStream) {
-    auto off = outStream.size();
-    outStream.reserve(outStream.size() + sizeof(iOpenCL::SPatchString) + str.length());
-    outStream.resize(outStream.size() + sizeof(iOpenCL::SPatchString));
-    iOpenCL::SPatchString *tok = reinterpret_cast<iOpenCL::SPatchString *>(outStream.data() + off);
-    *tok = initToken<iOpenCL::SPatchString>(iOpenCL::PATCH_TOKEN::PATCH_TOKEN_STRING);
-    tok->StringSize = static_cast<uint32_t>(str.length());
-    tok->Size += tok->StringSize;
-    tok->Index = stringIndex;
-    pushBackString(str, outStream);
-    return static_cast<uint32_t>(off);
+    void recalcTokPtr() {
+        ValidProgramWithKernel::recalcTokPtr();
+        arg0InfoMutable = reinterpret_cast<iOpenCL::SPatchKernelArgumentInfo *>(storage.data() + kernelArgOffset);
+        this->kernels[0].tokens.kernelArgs[0].argInfo = arg0InfoMutable;
+        arg0InfoAddressQualifierMutable = reinterpret_cast<char *>(arg0InfoMutable + 1);
+        arg0InfoAccessQualifierMutable = arg0InfoAddressQualifierMutable + arg0InfoMutable->AddressQualifierSize;
+        arg0NameMutable = arg0InfoAccessQualifierMutable + arg0InfoMutable->AccessQualifierSize;
+        arg0TypeMutable = arg0NameMutable + arg0InfoMutable->ArgumentNameSize;
+        arg0TypeQualifierMutable = arg0TypeMutable + arg0InfoMutable->TypeNameSize;
+    }
+
+    iOpenCL::SPatchKernelArgumentInfo *arg0InfoMutable = nullptr;
+    char *arg0InfoAddressQualifierMutable = nullptr;
+    char *arg0InfoAccessQualifierMutable = nullptr;
+    char *arg0NameMutable = nullptr;
+    char *arg0TypeMutable = nullptr;
+    char *arg0TypeQualifierMutable = nullptr;
+    size_t kernelArgOffset = 0U;
 };
 
-inline uint32_t pushBackArgInfoToken(std::vector<uint8_t> &outStream,
-                                     uint32_t argNum = 0,
-                                     const std::string &addressQualifier = "__global", const std::string &accessQualifier = "read_write",
-                                     const std::string &argName = "custom_arg", const std::string &typeName = "int*;", std::string typeQualifier = "const") {
-    auto off = outStream.size();
-    iOpenCL::SPatchKernelArgumentInfo tok = {};
-    tok.Token = iOpenCL::PATCH_TOKEN_KERNEL_ARGUMENT_INFO;
-    tok.AddressQualifierSize = static_cast<uint32_t>(addressQualifier.size());
-    tok.AccessQualifierSize = static_cast<uint32_t>(accessQualifier.size());
-    tok.ArgumentNameSize = static_cast<uint32_t>(argName.size());
-    tok.TypeNameSize = static_cast<uint32_t>(typeName.size());
-    tok.TypeQualifierSize = static_cast<uint32_t>(typeQualifier.size());
-    tok.Size = sizeof(iOpenCL::SPatchKernelArgumentInfo) + tok.AddressQualifierSize + tok.AccessQualifierSize + tok.ArgumentNameSize + tok.TypeNameSize + tok.TypeQualifierSize;
-
-    outStream.insert(outStream.end(), reinterpret_cast<const uint8_t *>(&tok), reinterpret_cast<const uint8_t *>(&tok) + sizeof(tok));
-    pushBackString(addressQualifier, outStream);
-    pushBackString(accessQualifier, outStream);
-    pushBackString(argName, outStream);
-    pushBackString(typeName, outStream);
-    pushBackString(typeQualifier, outStream);
-    return static_cast<uint32_t>(off);
-}
 } // namespace PatchTokensTestData

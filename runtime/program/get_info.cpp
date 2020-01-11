@@ -11,6 +11,7 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/program/kernel_info.h"
 
 #include "program.h"
 
@@ -56,7 +57,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_KERNEL_NAMES:
-        kernelNamesString = getKernelNamesString();
+        kernelNamesString = concatenateKernelNames(kernelInfoArray);
         pSrc = kernelNamesString.c_str();
         retSize = srcSize = kernelNamesString.length() + 1;
 

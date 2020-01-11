@@ -10,6 +10,8 @@
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/program/kernel_info.h"
 
+#include <cstring>
+
 namespace NEO {
 
 using namespace iOpenCL;
@@ -29,14 +31,42 @@ inline uint32_t getOffset(T *token) {
     return WorkloadInfo::undefinedOffset;
 }
 
+void populateKernelInfoArgMetadata(KernelInfo &dstKernelInfoArg, const SPatchKernelArgumentInfo *src) {
+    if (nullptr == src) {
+        return;
+    }
+
+    uint32_t argNum = src->ArgumentNumber;
+
+    auto inlineData = PatchTokenBinary::getInlineData(src);
+
+    auto metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    metadataExtended->addressQualifier = parseLimitedString(inlineData.addressQualifier.begin(), inlineData.addressQualifier.size());
+    metadataExtended->accessQualifier = parseLimitedString(inlineData.accessQualifier.begin(), inlineData.accessQualifier.size());
+    metadataExtended->argName = parseLimitedString(inlineData.argName.begin(), inlineData.argName.size());
+
+    auto argTypeFull = parseLimitedString(inlineData.typeName.begin(), inlineData.typeName.size());
+    const char *argTypeDelim = strchr(argTypeFull.data(), ';');
+    if (nullptr == argTypeDelim) {
+        argTypeDelim = argTypeFull.data() + argTypeFull.size();
+    }
+    metadataExtended->type = std::string(argTypeFull.data(), argTypeDelim).c_str();
+    metadataExtended->typeQualifiers = parseLimitedString(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.size());
+
+    ArgTypeMetadata metadata = {};
+    metadata.accessQualifier = KernelArgMetadata::parseAccessQualifier(metadataExtended->accessQualifier);
+    metadata.addressQualifier = KernelArgMetadata::parseAddressSpace(metadataExtended->addressQualifier);
+    metadata.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(metadataExtended->typeQualifiers);
+
+    dstKernelInfoArg.storeArgInfo(argNum, metadata, std::move(metadataExtended));
+}
+
 void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelInfoArg, const PatchTokenBinary::KernelArgFromPatchtokens &src) {
-    dstKernelInfoArg.needPatch = true;
-    dstKernelInfo.storeArgInfo(src.argInfo);
+    populateKernelInfoArgMetadata(dstKernelInfo, src.argInfo);
     if (src.objectArg != nullptr) {
         switch (src.objectArg->Token) {
         default:
-            UNRECOVERABLE_IF(true);
-        case PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT:
+            UNRECOVERABLE_IF(PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT != src.objectArg->Token);
             dstKernelInfo.storeKernelArgument(reinterpret_cast<const SPatchImageMemoryObjectKernelArgument *>(src.objectArg));
             break;
         case PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT:
@@ -111,7 +141,9 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
     dstKernelInfoArg.offsetObjectId = getOffset(src.objectId);
 }
 
-void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src) {
+void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes,
+                        const DeviceInfoKernelPayloadConstants &constants) {
+    UNRECOVERABLE_IF(nullptr == src.header);
     dst.heapInfo.pKernelHeader = src.header;
     dst.name = std::string(src.name.begin(), src.name.end()).c_str();
     dst.heapInfo.pKernelHeap = src.isa.begin();
@@ -132,9 +164,7 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     dst.patchInfo.threadPayload = src.tokens.threadPayload;
     dst.patchInfo.dataParameterStream = src.tokens.dataParameterStream;
 
-    dst.patchInfo.kernelArgumentInfo.reserve(src.tokens.kernelArgs.size());
     dst.kernelArgInfo.resize(src.tokens.kernelArgs.size());
-    dst.argumentsToPatchNum = static_cast<uint32_t>(src.tokens.kernelArgs.size());
 
     for (size_t i = 0U; i < src.tokens.kernelArgs.size(); ++i) {
         auto &decodedKernelArg = src.tokens.kernelArgs[i];
@@ -184,7 +214,38 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
         dst.igcInfoForGtpin = reinterpret_cast<const gtpin::igc_info_t *>(src.tokens.gtpinInfo + 1);
     }
 
-    dst.isValid = (false == NEO::PatchTokenBinary::hasInvalidChecksum(src));
+    dst.gpuPointerSize = gpuPointerSizeInBytes;
+
+    if (dst.patchInfo.dataParameterStream && dst.patchInfo.dataParameterStream->DataParameterStreamSize) {
+        uint32_t crossThreadDataSize = dst.patchInfo.dataParameterStream->DataParameterStreamSize;
+        dst.crossThreadData = new char[crossThreadDataSize];
+        memset(dst.crossThreadData, 0x00, crossThreadDataSize);
+
+        uint32_t privateMemoryStatelessSizeOffset = dst.workloadInfo.privateMemoryStatelessSizeOffset;
+        uint32_t localMemoryStatelessWindowSizeOffset = dst.workloadInfo.localMemoryStatelessWindowSizeOffset;
+        uint32_t localMemoryStatelessWindowStartAddressOffset = dst.workloadInfo.localMemoryStatelessWindowStartAddressOffset;
+
+        if (localMemoryStatelessWindowStartAddressOffset != WorkloadInfo::undefinedOffset) {
+            *(uintptr_t *)&(dst.crossThreadData[localMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(constants.slmWindow);
+        }
+
+        if (localMemoryStatelessWindowSizeOffset != WorkloadInfo::undefinedOffset) {
+            *(uint32_t *)&(dst.crossThreadData[localMemoryStatelessWindowSizeOffset]) = constants.slmWindowSize;
+        }
+
+        uint32_t privateMemorySize = 0U;
+        if (dst.patchInfo.pAllocateStatelessPrivateSurface) {
+            privateMemorySize = dst.patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize * constants.computeUnitsUsedForScratch * dst.getMaxSimdSize();
+        }
+
+        if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {
+            *(uint32_t *)&(dst.crossThreadData[privateMemoryStatelessSizeOffset]) = privateMemorySize;
+        }
+
+        if (dst.workloadInfo.maxWorkGroupSizeOffset != WorkloadInfo::undefinedOffset) {
+            *(uint32_t *)&(dst.crossThreadData[dst.workloadInfo.maxWorkGroupSizeOffset]) = constants.maxWorkGroupSize;
+        }
+    }
 }
 
 } // namespace NEO

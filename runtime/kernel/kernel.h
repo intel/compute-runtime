@@ -72,15 +72,12 @@ class Kernel : public BaseObject<_cl_kernel> {
                                                 const void *argVal);
 
     template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(Program *program, const KernelInfo &kernelInfo, cl_int *errcodeRet) {
+    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, cl_int *errcodeRet) {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        do {
-            // copy the kernel data into our new allocation
-            pKernel = new kernel_t(program, kernelInfo, program->getDevice(0));
-            retVal = pKernel->initialize();
-        } while (false);
+        pKernel = new kernel_t(program, kernelInfo, program->getDevice(0));
+        retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
             delete pKernel;
@@ -177,10 +174,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     size_t getKernelArgsNumber() const {
         return kernelInfo.kernelArgInfo.size();
-    }
-
-    uint32_t getKernelArgAddressQualifier(uint32_t argIndex) const {
-        return kernelInfo.kernelArgInfo[argIndex].addressQualifier;
     }
 
     bool requiresSshForBuffers() const {

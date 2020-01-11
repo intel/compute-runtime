@@ -105,7 +105,7 @@ TEST_F(KernelArgAcceleratorTest, SetKernelArgValidAccelerator) {
 
     char *crossThreadData = pKernel->getCrossThreadData();
 
-    auto arginfo = pKernelInfo->kernelArgInfo[0];
+    const auto &arginfo = pKernelInfo->kernelArgInfo[0];
 
     uint32_t *pMbBlockType = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData),
                                        arginfo.offsetVmeMbBlockType);

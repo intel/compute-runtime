@@ -440,8 +440,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
-    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    mockKernel.kernelInfo.kernelArgInfo[0].metadataExtended->argName = "arg0";
+    mockKernel.kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = false;
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
@@ -451,7 +453,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->fillWithBuffersForAuxTranslation(memObjects);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
-             mockKernel.mockKernel->getKernelInfo().name.c_str(), 0, mockKernel.mockKernel->getKernelInfo().kernelArgInfo.at(0).name.c_str());
+             mockKernel.mockKernel->getKernelInfo().name.c_str(), 0, mockKernel.mockKernel->getKernelInfo().kernelArgInfo.at(0).metadataExtended->argName.c_str());
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());

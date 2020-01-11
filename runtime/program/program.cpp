@@ -456,9 +456,4 @@ void Program::updateNonUniformFlag(const Program **inputPrograms, size_t numInpu
     this->allowNonUniform = allowNonUniform;
 }
 
-void Program::prepareLinkerInputStorage() {
-    if (this->linkerInput == nullptr) {
-        this->linkerInput = std::make_unique<LinkerInput>();
-    }
-}
 } // namespace NEO

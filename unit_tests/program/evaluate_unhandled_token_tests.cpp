@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/program.h"
+#include "unit_tests/compiler_interface/patchtokens_tests.h"
 
 #include "gtest/gtest.h"
 
@@ -61,60 +62,28 @@ inline std::vector<char> CreateBinary(bool addUnhandledProgramScopePatchToken, b
                                       int32_t unhandledTokenId = static_cast<int32_t>(iOpenCL::NUM_PATCH_TOKENS)) {
     std::vector<char> ret;
 
-    {
-        iOpenCL::SProgramBinaryHeader progBinHeader = {};
-        progBinHeader.Magic = iOpenCL::MAGIC_CL;
-        progBinHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-        progBinHeader.Device = renderCoreFamily;
-        progBinHeader.GPUPointerSizeInBytes = 8;
-        progBinHeader.NumberOfKernels = 1;
-        progBinHeader.SteppingId = 0;
-        progBinHeader.PatchListSize = 0;
-        if (false == addUnhandledProgramScopePatchToken) {
-            PushBackToken(ret, progBinHeader);
-        } else {
-            progBinHeader.PatchListSize = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
-            PushBackToken(ret, progBinHeader);
-
-            iOpenCL::SPatchItemHeader unhandledToken = {};
-            unhandledToken.Size = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
-            unhandledToken.Token = static_cast<uint32_t>(unhandledTokenId);
-            PushBackToken(ret, unhandledToken);
-        }
+    if (addUnhandledProgramScopePatchToken && addUnhandledKernelScopePatchToken) {
+        return {};
     }
 
-    {
-        std::string kernelName = "testKernel";
-        while (kernelName.size() % 4 != 0) {
-            // pad with \0 to get 4-byte size alignment of kernelName
-            kernelName.push_back('\0');
-        }
-        iOpenCL::SKernelBinaryHeaderCommon kernBinHeader = {};
-        kernBinHeader.CheckSum = 0U;
-        kernBinHeader.ShaderHashCode = 0;
-        kernBinHeader.KernelNameSize = static_cast<uint32_t>(kernelName.size());
-        kernBinHeader.PatchListSize = 0;
-        kernBinHeader.KernelHeapSize = 0;
-        kernBinHeader.GeneralStateHeapSize = 0;
-        kernBinHeader.DynamicStateHeapSize = 0;
-        kernBinHeader.SurfaceStateHeapSize = 0;
-        kernBinHeader.KernelUnpaddedSize = 0;
+    if (addUnhandledProgramScopePatchToken) {
+        PatchTokensTestData::ValidProgramWithConstantSurface programWithUnhandledToken;
 
-        auto headerOffset = ret.size();
-        PushBackToken(ret, kernBinHeader);
-        ret.insert(ret.end(), kernelName.begin(), kernelName.end());
-        uint32_t patchListSize = 0;
-        if (addUnhandledKernelScopePatchToken) {
-            iOpenCL::SPatchItemHeader unhandledToken = {};
-            unhandledToken.Size = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
-            unhandledToken.Token = static_cast<uint32_t>(unhandledTokenId);
-            PushBackToken(ret, unhandledToken);
-            patchListSize = static_cast<uint32_t>(sizeof(iOpenCL::SPatchItemHeader));
-        }
-        iOpenCL::SKernelBinaryHeaderCommon *kernHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(ret.data() + headerOffset);
-        kernHeader->PatchListSize = patchListSize;
-        auto kernelData = reinterpret_cast<const uint8_t *>(kernHeader);
-        kernHeader->CheckSum = NEO::PatchTokenBinary::calcKernelChecksum(ArrayRef<const uint8_t>(kernelData, reinterpret_cast<const uint8_t *>(&*ret.rbegin()) + 1));
+        iOpenCL::SPatchItemHeader &unhandledToken = *programWithUnhandledToken.constSurfMutable;
+        unhandledToken.Size += programWithUnhandledToken.constSurfMutable->InlineDataSize;
+        unhandledToken.Token = static_cast<uint32_t>(unhandledTokenId);
+        ret.assign(reinterpret_cast<char *>(programWithUnhandledToken.storage.data()),
+                   reinterpret_cast<char *>(programWithUnhandledToken.storage.data() + programWithUnhandledToken.storage.size()));
+    } else if (addUnhandledKernelScopePatchToken) {
+        PatchTokensTestData::ValidProgramWithKernelAndArg programWithKernelWithUnhandledToken;
+        iOpenCL::SPatchItemHeader &unhandledToken = *programWithKernelWithUnhandledToken.arg0InfoMutable;
+        unhandledToken.Token = static_cast<uint32_t>(unhandledTokenId);
+        programWithKernelWithUnhandledToken.recalcTokPtr();
+        ret.assign(reinterpret_cast<char *>(programWithKernelWithUnhandledToken.storage.data()),
+                   reinterpret_cast<char *>(programWithKernelWithUnhandledToken.storage.data() + programWithKernelWithUnhandledToken.storage.size()));
+    } else {
+        PatchTokensTestData::ValidProgramWithKernel regularProgramTokens;
+        ret.assign(reinterpret_cast<char *>(regularProgramTokens.storage.data()), reinterpret_cast<char *>(regularProgramTokens.storage.data() + regularProgramTokens.storage.size()));
     }
 
     return ret;

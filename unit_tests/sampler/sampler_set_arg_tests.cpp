@@ -367,9 +367,11 @@ HWTEST_F(SamplerSetArgTest, setKernelArgWithInvalidSampler) {
 
 TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKernelThenKernelArgumentsTypeIsSamplerObj) {
     pKernelInfo->kernelArgInfo.resize(2);
-    pKernelInfo->kernelArgInfo[0].typeStr = "sampler*";
+    pKernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    pKernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler*";
     pKernelInfo->kernelArgInfo[0].isSampler = true;
-    pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
+    pKernelInfo->kernelArgInfo[1].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = true;
 
     auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
@@ -380,9 +382,11 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKerne
 
 TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeKernelThenKernelArgumentsTypeIsNotSamplerObj) {
     pKernelInfo->kernelArgInfo.resize(2);
-    pKernelInfo->kernelArgInfo[0].typeStr = "sampler*";
+    pKernelInfo->kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    pKernelInfo->kernelArgInfo[0].metadataExtended->type = "sampler*";
     pKernelInfo->kernelArgInfo[0].isSampler = false;
-    pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
+    pKernelInfo->kernelArgInfo[1].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    pKernelInfo->kernelArgInfo[1].metadataExtended->type = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = false;
 
     auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);

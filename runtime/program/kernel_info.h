@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/hw_info.h"
+#include "core/utilities/arrayref.h"
+#include "core/utilities/const_stringref.h"
 #include "runtime/program/heap_info.h"
 #include "runtime/program/kernel_arg_info.h"
 
-#include "CL/cl.h"
-#include "ocl_igc_shared/gtpin/gtpin_driver_common.h"
 #include "patch_info.h"
 
 #include <algorithm>
@@ -23,6 +23,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace gtpin {
+typedef struct igc_info_s igc_info_t;
+}
+
 namespace NEO {
 class BuiltinDispatchInfoBuilder;
 class Device;
@@ -33,13 +37,11 @@ struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
 
-extern std::unordered_map<std::string, uint32_t> accessQualifierMap;
-extern std::unordered_map<std::string, uint32_t> addressQualifierMap;
 extern std::map<std::string, size_t> typeSizeMap;
 
 struct WorkloadInfo {
-    static const uint32_t undefinedOffset;
-    static const uint32_t invalidParentEvent;
+    enum : uint32_t { undefinedOffset = std::numeric_limits<uint32_t>::max() };
+    enum : uint32_t { invalidParentEvent = std::numeric_limits<uint32_t>::max() };
 
     uint32_t globalWorkOffsetOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
     uint32_t globalWorkSizeOffsets[3] = {undefinedOffset, undefinedOffset, undefinedOffset};
@@ -90,6 +92,13 @@ struct DebugData {
     const char *genIsa = nullptr;
 };
 
+struct DeviceInfoKernelPayloadConstants {
+    void *slmWindow = nullptr;
+    uint32_t slmWindowSize = 0U;
+    uint32_t computeUnitsUsedForScratch = 0U;
+    uint32_t maxWorkGroupSize = 0U;
+};
+
 struct KernelInfo {
   public:
     KernelInfo() = default;
@@ -97,7 +106,7 @@ struct KernelInfo {
     KernelInfo &operator=(const KernelInfo &) = delete;
     ~KernelInfo();
 
-    void storeArgInfo(const SPatchKernelArgumentInfo *pkernelArgInfo);
+    void storeArgInfo(uint32_t argNum, ArgTypeMetadata metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended);
     void storeKernelArgument(const SPatchDataParameterBuffer *pDataParameterKernelArg);
     void storeKernelArgument(const SPatchStatelessGlobalMemoryObjectKernelArgument *pStatelessGlobalKernelArg);
     void storeKernelArgument(const SPatchImageMemoryObjectKernelArgument *pImageMemObjKernelArg);
@@ -117,7 +126,6 @@ struct KernelInfo {
     void storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface);
     void storePatchToken(const SPatchAllocateSyncBuffer *pAllocateSyncBuffer);
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
-    cl_int resolveKernelInfo();
     void resizeKernelArgInfoAndRegisterParameter(uint32_t argCount) {
         if (kernelArgInfo.size() <= argCount) {
             kernelArgInfo.resize(argCount + 1);
@@ -171,7 +179,7 @@ struct KernelInfo {
     int32_t getArgNumByName(const char *name) const {
         int32_t argNum = 0;
         for (auto &arg : kernelArgInfo) {
-            if (arg.name == name) {
+            if (arg.metadataExtended && (arg.metadataExtended->argName == name)) {
                 return argNum;
             }
             ++argNum;
@@ -191,7 +199,6 @@ struct KernelInfo {
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     bool usesSsh = false;
     bool requiresSshForBuffers = false;
-    bool isValid = false;
     bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
     size_t reqdWorkGroupSize[3] = {WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset};
@@ -210,4 +217,7 @@ struct KernelInfo {
     bool computeMode = false;
     const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
 };
+
+std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos);
+
 } // namespace NEO

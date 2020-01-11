@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,7 +172,7 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
 TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    unsigned char llvm[16] = "BC\xc0\xde";
+    unsigned char llvm[16] = "BC\xc0\xde_unique";
     size_t binarySize = sizeof(llvm);
 
     const unsigned char *binaries[1] = {llvm};
@@ -193,6 +193,7 @@ TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
     progBin.Magic = iOpenCL::MAGIC_CL;
     progBin.Version = iOpenCL::CURRENT_ICBE_VERSION;
     progBin.Device = pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily;
+    progBin.GPUPointerSizeInBytes = sizeof(uintptr_t);
     igcDebugVars.binaryToReturn = &progBin;
     igcDebugVars.binaryToReturnSize = sizeof(progBin);
     auto prevDebugVars = getIgcDebugVars();

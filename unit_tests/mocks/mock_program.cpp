@@ -9,6 +9,8 @@
 
 #include "core/compiler_interface/compiler_cache.h"
 #include "core/helpers/hash.h"
+#include "core/program/program_info_from_patchtokens.h"
+#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/context/context.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/kernel_info.h"
@@ -81,56 +83,30 @@ void GlobalMockSipProgram::shutDownSipProgram() {
 }
 
 Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
-    char binary[1024];
-    char *pBinary = binary;
-    auto totalSize = 0u;
+    NEO::PatchTokenBinary::ProgramFromPatchtokens programTokens;
+    programTokens.kernels.resize(1);
 
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)binary;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = platformDevices[0]->platform.eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBinary += sizeof(SProgramBinaryHeader);
-    totalSize += sizeof(SProgramBinaryHeader);
+    const uint8_t isa[] = "kernel morphEUs()";
+    const char name[] = "sip";
 
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBinary;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 4;
-    pKHdr->PatchListSize = 0;
-    pKHdr->KernelHeapSize = 16;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBinary += sizeof(SKernelBinaryHeaderCommon);
-    totalSize += sizeof(SKernelBinaryHeaderCommon);
-    char *pKernelBin = pBinary;
-    strcpy_s(pBinary, 4, "sip");
-    pBinary += pKHdr->KernelNameSize;
-    totalSize += pKHdr->KernelNameSize;
+    SProgramBinaryHeader progHeader = {};
+    progHeader.NumberOfKernels = 1;
 
-    strcpy_s(pBinary, 18, "kernel morphEUs()");
-    totalSize += pKHdr->KernelHeapSize;
+    SKernelBinaryHeaderCommon kernHeader = {};
+    kernHeader.KernelNameSize = sizeof(name);
+    kernHeader.KernelHeapSize = sizeof(isa);
+    kernHeader.KernelUnpaddedSize = sizeof(isa);
 
-    uint32_t kernelBinSize =
-        pKHdr->DynamicStateHeapSize +
-        pKHdr->GeneralStateHeapSize +
-        pKHdr->KernelHeapSize +
-        pKHdr->KernelNameSize +
-        pKHdr->PatchListSize +
-        pKHdr->SurfaceStateHeapSize;
-    uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-    pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
+    programTokens.header = &progHeader;
+    programTokens.kernels[0].header = &kernHeader;
+    programTokens.kernels[0].isa = isa;
+    programTokens.kernels[0].name = name;
 
-    auto errCode = CL_SUCCESS;
-    auto program = Program::createFromGenBinary(executionEnvironment, nullptr, binary, totalSize, false, &errCode);
-    UNRECOVERABLE_IF(errCode != CL_SUCCESS);
-    errCode = program->processGenBinary();
-    UNRECOVERABLE_IF(errCode != CL_SUCCESS);
-    return program;
+    NEO::ProgramInfo programInfo;
+    NEO::populateProgramInfo(programInfo, programTokens, {});
+
+    Program *ret = new Program(executionEnvironment, nullptr, false);
+    ret->processProgramInfo(programInfo);
+    return ret;
 }
 } // namespace NEO

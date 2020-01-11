@@ -34,6 +34,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/image_transformer.h"
 #include "runtime/kernel/kernel.inl"
+#include "runtime/kernel/kernel_info_cl.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/pipe.h"
@@ -337,22 +338,20 @@ cl_int Kernel::initialize() {
 
             // set the argument handler
             auto &argInfo = kernelInfo.kernelArgInfo[i];
-            if (argInfo.addressQualifier == CL_KERNEL_ARG_ADDRESS_LOCAL) {
+            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddressSpaceQualifier::Local) {
                 kernelArgHandlers[i] = &Kernel::setArgLocal;
             } else if (argInfo.isAccelerator) {
                 kernelArgHandlers[i] = &Kernel::setArgAccelerator;
-            } else if (argInfo.typeQualifierStr.find("pipe") != std::string::npos) {
+            } else if (argInfo.metadata.typeQualifiers.pipeQual) {
                 kernelArgHandlers[i] = &Kernel::setArgPipe;
                 kernelArguments[i].type = PIPE_OBJ;
             } else if (argInfo.isImage) {
                 kernelArgHandlers[i] = &Kernel::setArgImage;
                 kernelArguments[i].type = IMAGE_OBJ;
                 usingImages = true;
-                DEBUG_BREAK_IF(argInfo.typeStr.find("image") == std::string::npos);
             } else if (argInfo.isSampler) {
                 kernelArgHandlers[i] = &Kernel::setArgSampler;
                 kernelArguments[i].type = SAMPLER_OBJ;
-                DEBUG_BREAK_IF(!(*argInfo.typeStr.c_str() == '\0' || argInfo.typeStr.find("sampler") != std::string::npos));
             } else if (argInfo.isBuffer) {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
@@ -506,37 +505,44 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
     const void *pSrc = nullptr;
     size_t srcSize = 0;
     auto numArgs = (cl_uint)kernelInfo.kernelArgInfo.size();
-    auto argInfoIdx = kernelInfo.kernelArgInfo[argIndx];
+    const auto &argInfo = kernelInfo.kernelArgInfo[argIndx];
 
     if (argIndx >= numArgs) {
         retVal = CL_INVALID_ARG_INDEX;
         return retVal;
     }
 
+    cl_kernel_arg_address_qualifier addressQualifier;
+    cl_kernel_arg_access_qualifier accessQualifier;
+    cl_kernel_arg_type_qualifier typeQualifier;
+
     switch (paramName) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
-        srcSize = sizeof(cl_uint);
-        pSrc = &argInfoIdx.addressQualifier;
+        addressQualifier = asClKernelArgAddressQualifier(argInfo.metadata.addressQualifier);
+        srcSize = sizeof(addressQualifier);
+        pSrc = &addressQualifier;
         break;
 
     case CL_KERNEL_ARG_ACCESS_QUALIFIER:
-        srcSize = sizeof(cl_uint);
-        pSrc = &argInfoIdx.accessQualifier;
-        break;
-
-    case CL_KERNEL_ARG_TYPE_NAME:
-        srcSize = argInfoIdx.typeStr.length() + 1;
-        pSrc = argInfoIdx.typeStr.c_str();
+        accessQualifier = asClKernelArgAccessQualifier(argInfo.metadata.accessQualifier);
+        srcSize = sizeof(accessQualifier);
+        pSrc = &accessQualifier;
         break;
 
     case CL_KERNEL_ARG_TYPE_QUALIFIER:
-        srcSize = sizeof(argInfoIdx.typeQualifier);
-        pSrc = &argInfoIdx.typeQualifier;
+        typeQualifier = asClKernelArgTypeQualifier(argInfo.metadata.typeQualifiers);
+        srcSize = sizeof(typeQualifier);
+        pSrc = &typeQualifier;
+        break;
+
+    case CL_KERNEL_ARG_TYPE_NAME:
+        srcSize = argInfo.metadataExtended->type.length() + 1;
+        pSrc = argInfo.metadataExtended->type.c_str();
         break;
 
     case CL_KERNEL_ARG_NAME:
-        srcSize = argInfoIdx.name.length() + 1;
-        pSrc = argInfoIdx.name.c_str();
+        srcSize = argInfo.metadataExtended->argName.length() + 1;
+        pSrc = argInfo.metadataExtended->argName.c_str();
         break;
 
     default:
@@ -2290,10 +2296,10 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         MemObj *pMemObj = nullptr;
         WithCastToInternal(mem, &pMemObj);
         if (pMemObj) {
-            cl_kernel_arg_access_qualifier accessQualifier = getKernelInfo().kernelArgInfo[argIndex].accessQualifier;
+            auto accessQualifier = getKernelInfo().kernelArgInfo[argIndex].metadata.accessQualifier;
             cl_mem_flags flags = pMemObj->getMemoryPropertiesFlags();
-            if ((accessQualifier == CL_KERNEL_ARG_ACCESS_READ_ONLY && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
-                (accessQualifier == CL_KERNEL_ARG_ACCESS_WRITE_ONLY && ((flags | CL_MEM_READ_ONLY) == flags))) {
+            if ((accessQualifier == KernelArgMetadata::AccessQualifier::ReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
+                (accessQualifier == KernelArgMetadata::AccessQualifier::WriteOnly && ((flags | CL_MEM_READ_ONLY) == flags))) {
                 return CL_INVALID_ARG_VALUE;
             }
         } else {
@@ -2341,7 +2347,7 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ARGUMENT_AUX_TRANSLATION,
-                                                   kernelInfo.name.c_str(), i, kernelInfo.kernelArgInfo.at(i).name.c_str());
+                                                   kernelInfo.name.c_str(), i, kernelInfo.kernelArgInfo.at(i).metadataExtended->argName.c_str());
                 }
             }
         }
