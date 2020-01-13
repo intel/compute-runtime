@@ -684,7 +684,7 @@ TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenR
 }
 
 TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;
@@ -735,12 +735,12 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
 }
 
 TEST(GmmTest, givenGmmWithNotSetMCSInResourceInfoGpuFlagsWhenCallHasMultisampleControlSurfaceThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false));
     EXPECT_FALSE(gmm->hasMultisampleControlSurface());
 }
 
 TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleControlSurfaceThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResource->setMultisampleControlSurface();
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
