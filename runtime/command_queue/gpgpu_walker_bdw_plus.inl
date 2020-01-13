@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,7 +194,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     }
     if (reservePerfCounters) {
 
-        const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+        const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
                                            ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                            : MetricsLibraryApi::GpuCommandBufferType::Render;
 

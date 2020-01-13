@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 
     auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
-    bool isCcsUsed = isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
+    bool isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if (executionModelKernel) {
         while (!devQueue->isEMCriticalSectionFree())

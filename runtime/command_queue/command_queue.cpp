@@ -292,7 +292,7 @@ bool CommandQueue::setPerfCountersEnabled() {
     DEBUG_BREAK_IF(device == nullptr);
 
     auto perfCounters = device->getPerformanceCounters();
-    bool isCcsEngine = isCcs(getGpgpuEngine().osContext->getEngineType());
+    bool isCcsEngine = EngineHelpers::isCcs(getGpgpuEngine().osContext->getEngineType());
 
     perfCountersEnabled = perfCounters->enable(isCcsEngine);
 

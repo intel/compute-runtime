@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,7 +159,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
                                        ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                        : MetricsLibraryApi::GpuCommandBufferType::Render;
     const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, true);
@@ -175,7 +175,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const auto commandBufferType = isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
                                        ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                        : MetricsLibraryApi::GpuCommandBufferType::Render;
     const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, false);
