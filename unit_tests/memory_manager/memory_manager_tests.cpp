@@ -709,7 +709,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
 
     auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
 
-    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+    bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
     MockMemoryManager::AllocationData allocationData;
@@ -748,7 +748,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
 
     auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
 
-    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+    bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_TRUE(copyRequired);
 
     MockMemoryManager::AllocationData allocationData;
@@ -1809,6 +1809,174 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
         MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
         EXPECT_FALSE(allocData.flags.flushL3);
     }
+}
+
+TEST(MemoryManagerTest, givenNullHostPtrWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
+    ImageInfo imgInfo{};
+    EXPECT_FALSE(MockMemoryManager::isCopyRequired(imgInfo, nullptr));
+}
+
+TEST(MemoryManagerTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIsReturned) {
+    ImageInfo imgInfo{};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 1;
+    imageDesc.image_height = 1;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+
+    char memory;
+
+    EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, &memory));
+}
+
+TEST(MemoryManagerTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTrueIsReturned) {
+    ImageInfo imgInfo{};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 1;
+    imageDesc.image_height = 1;
+    imageDesc.image_row_pitch = 10;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+
+    char memory[10];
+
+    EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, memory));
+}
+
+TEST(MemoryManagerTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyRequiredIsCalledThenTrueIsReturned) {
+    ImageInfo imgInfo{};
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 2;
+    imageDesc.image_slice_pitch = imageDesc.image_width * (imageDesc.image_height + 3) * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+    char memory[8];
+
+    EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, memory));
+}
+
+TEST(MemoryManagerTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCalledThenTrueIsReturned) {
+    ImageInfo imgInfo{};
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 4096;
+    imageDesc.image_height = 1;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+    char memory[8];
+
+    EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, &memory[1]));
+}
+
+TEST(MemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
+    ImageInfo imgInfo{};
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 2;
+    imageDesc.image_height = 1;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+    imgInfo.linearStorage = true;
+
+    auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
+
+    EXPECT_FALSE(MockMemoryManager::isCopyRequired(imgInfo, hostPtr));
+    alignedFree(hostPtr);
+}
+
+TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+
+    ImageInfo imgInfo{};
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.image_width = 2;
+    imageDesc.image_height = 2;
+    imageDesc.image_depth = 2;
+
+    imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
+    imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
+    imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+    imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
+
+    auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
+
+    EXPECT_FALSE(MockMemoryManager::isCopyRequired(imgInfo, hostPtr));
+    alignedFree(hostPtr);
 }
 
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {

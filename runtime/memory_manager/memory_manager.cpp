@@ -7,6 +7,7 @@
 
 #include "runtime/memory_manager/memory_manager.h"
 
+#include "common/compiler_support.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -17,12 +18,13 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
+#include "core/helpers/string.h"
+#include "core/helpers/surface_format_info.h"
 #include "core/memory_manager/deferrable_allocation_deletion.h"
 #include "core/memory_manager/deferred_deleter.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
@@ -103,7 +105,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData) {
-    bool copyRequired = Image::isCopyRequired(*allocationData.imgInfo, allocationData.hostPtr);
+    bool copyRequired = isCopyRequired(*allocationData.imgInfo, allocationData.hostPtr);
 
     if (allocationData.hostPtr && !copyRequired) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
@@ -497,4 +499,42 @@ bool MemoryManager::isHostPointerTrackingEnabled() {
     return (peekExecutionEnvironment().getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
 
+bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
+    if (!hostPtr) {
+        return false;
+    }
+
+    size_t imageWidth = imgInfo.imgDesc.imageWidth;
+    size_t imageHeight = 1;
+    size_t imageDepth = 1;
+    size_t imageCount = 1;
+
+    switch (imgInfo.imgDesc.imageType) {
+    case ImageType::Image3D:
+        imageDepth = imgInfo.imgDesc.imageDepth;
+        CPP_ATTRIBUTE_FALLTHROUGH;
+    case ImageType::Image2D:
+    case ImageType::Image2DArray:
+        imageHeight = imgInfo.imgDesc.imageHeight;
+        break;
+    default:
+        break;
+    }
+
+    auto hostPtrRowPitch = imgInfo.imgDesc.imageRowPitch ? imgInfo.imgDesc.imageRowPitch : imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto hostPtrSlicePitch = imgInfo.imgDesc.imageSlicePitch ? imgInfo.imgDesc.imageSlicePitch : hostPtrRowPitch * imgInfo.imgDesc.imageHeight;
+
+    size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
+    auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
+    auto alignedSizeRequiredForAllocation = alignSizeWholePage(const_cast<void *>(hostPtr), imgInfo.size);
+
+    // Passed pointer doesn't have enough memory, copy is needed
+    bool copyRequired = (alignedSizeRequiredForAllocation > alignedSizePassedPointer) |
+                        (imgInfo.rowPitch != hostPtrRowPitch) |
+                        (imgInfo.slicePitch != hostPtrSlicePitch) |
+                        ((reinterpret_cast<uintptr_t>(hostPtr) & (MemoryConstants::cacheLineSize - 1)) != 0) |
+                        !imgInfo.linearStorage;
+
+    return copyRequired;
+}
 } // namespace NEO

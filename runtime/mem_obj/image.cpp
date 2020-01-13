@@ -698,45 +698,6 @@ const ClSurfaceFormatInfo &Image::getSurfaceFormatInfo() const {
     return surfaceFormatInfo;
 }
 
-bool Image::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
-    if (!hostPtr) {
-        return false;
-    }
-
-    size_t imageWidth = imgInfo.imgDesc.imageWidth;
-    size_t imageHeight = 1;
-    size_t imageDepth = 1;
-    size_t imageCount = 1;
-
-    switch (imgInfo.imgDesc.imageType) {
-    case ImageType::Image3D:
-        imageDepth = imgInfo.imgDesc.imageDepth;
-        CPP_ATTRIBUTE_FALLTHROUGH;
-    case ImageType::Image2D:
-    case ImageType::Image2DArray:
-        imageHeight = imgInfo.imgDesc.imageHeight;
-        break;
-    default:
-        break;
-    }
-
-    auto hostPtrRowPitch = imgInfo.imgDesc.imageRowPitch ? imgInfo.imgDesc.imageRowPitch : imageWidth * imgInfo.surfaceFormat->ImageElementSizeInBytes;
-    auto hostPtrSlicePitch = imgInfo.imgDesc.imageSlicePitch ? imgInfo.imgDesc.imageSlicePitch : hostPtrRowPitch * imgInfo.imgDesc.imageHeight;
-
-    size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
-    auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
-    auto alignedSizeRequiredForAllocation = alignSizeWholePage(const_cast<void *>(hostPtr), imgInfo.size);
-
-    // Passed pointer doesn't have enough memory, copy is needed
-    bool copyRequired = (alignedSizeRequiredForAllocation > alignedSizePassedPointer) |
-                        (imgInfo.rowPitch != hostPtrRowPitch) |
-                        (imgInfo.slicePitch != hostPtrSlicePitch) |
-                        ((reinterpret_cast<uintptr_t>(hostPtr) & (MemoryConstants::cacheLineSize - 1)) != 0) |
-                        !imgInfo.linearStorage;
-
-    return copyRequired;
-}
-
 cl_mem_object_type Image::convertType(const ImageType type) {
     switch (type) {
     case ImageType::Image2D:

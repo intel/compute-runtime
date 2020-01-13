@@ -118,8 +118,6 @@ class Image : public MemObj {
         return (type == CL_MEM_OBJECT_IMAGE3D) || (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) || (type == CL_MEM_OBJECT_IMAGE2D_ARRAY);
     }
 
-    static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
-
     static ImageType convertType(const cl_mem_object_type type);
     static cl_mem_object_type convertType(const ImageType type);
     static ImageDescriptor convertDescriptor(const cl_image_desc &imageDesc);

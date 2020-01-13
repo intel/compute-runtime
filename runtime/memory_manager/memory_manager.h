@@ -194,6 +194,8 @@ class MemoryManager {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
+    static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
+
     bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType) {
         return ((allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR || allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
                 (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()) & !is32bit);
