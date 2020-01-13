@@ -333,15 +333,6 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
             retVal = enqueueWriteImage(image, CL_FALSE, writeOrigin, &unmapInfo.size[0],
                                        image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(),
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
-            bool mustCallFinish = true;
-            if (!(image->getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR)) {
-                mustCallFinish = true;
-            } else {
-                mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(this->taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList) != Event::eventNotReady);
-            }
-            if (mustCallFinish) {
-                finish();
-            }
         }
     } else {
         retVal = enqueueMarkerWithWaitList(eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);

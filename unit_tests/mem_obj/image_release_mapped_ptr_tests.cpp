@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,58 +79,6 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     } else {
         EXPECT_EQ(0u, commandQueue->enqueueWriteImageCalled);
     }
-}
-
-HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
-    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
-    image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(context.get()));
-    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
-    MemObjOffsetArray origin = {{0, 0, 0}};
-    MemObjSizeArray region = {{1, 1, 1}};
-    cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
-    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported ? 1u : 0u,
-              commandQueue->finishCalled);
-}
-
-HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrThenFinishIsCalled) {
-    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
-    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
-    MemObjOffsetArray origin = {{0, 0, 0}};
-    MemObjSizeArray region = {{1, 1, 1}};
-    cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 2, mapFlags, region, origin, 0);
-    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported ? 1u : 0u,
-              commandQueue->finishCalled);
-}
-
-HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithNotReadyEventsThenFinishIsNotCalled) {
-    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
-    image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(context.get()));
-
-    MockEvent<UserEvent> mockEvent(context.get());
-    mockEvent.setStatus(Event::eventNotReady);
-    cl_event clEvent = &mockEvent;
-    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 1, &clEvent, nullptr);
-    EXPECT_EQ(0u, commandQueue->finishCalled);
-}
-
-HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutNotReadyEventsThenFinishIsCalled) {
-    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(context.get(), device.get()));
-    image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(context.get()));
-    MockEvent<UserEvent> mockEvent(context.get());
-    mockEvent.setStatus(0);
-    cl_event clEvent = &mockEvent;
-    auto ptr = image->getBasePtrForMap(device->getRootDeviceIndex());
-    MemObjOffsetArray origin = {{0, 0, 0}};
-    MemObjSizeArray region = {{1, 1, 1}};
-    cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
-    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 1, &clEvent, nullptr);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported ? 1u : 0u,
-              commandQueue->finishCalled);
 }
 
 HWTEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMemoryPtrIsNotOverridden) {
