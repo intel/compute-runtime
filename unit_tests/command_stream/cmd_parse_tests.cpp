@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,13 +23,13 @@ struct CommandParse
     }
 };
 
-HWTEST_F(CommandParse, parseCommandBufferWithNULLBuffer) {
+HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenIsNotNull) {
     typedef typename FamilyType::PARSE PARSE;
     GenCmdList cmds;
     EXPECT_FALSE(PARSE::parseCommandBuffer(cmds, nullptr, sizeof(void *)));
 }
 
-HWTEST_F(CommandParse, parseCommandBufferWithGarbage) {
+HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenDoesNotContainGarbage) {
     typedef typename FamilyType::PARSE PARSE;
     uint32_t buffer[30] = {0xbaadf00d};
     GenCmdList cmds;
@@ -37,14 +37,14 @@ HWTEST_F(CommandParse, parseCommandBufferWithGarbage) {
     EXPECT_FALSE(PARSE::parseCommandBuffer(cmds, buffer, sizeof(uint32_t)));
 }
 
-HWTEST_F(CommandParse, getCommandLengthWithGarbage) {
+HWTEST_F(CommandParse, GivenGarbageWhenGeneratingCommandBufferThenLengthIsZero) {
     typedef typename FamilyType::PARSE PARSE;
     uint32_t buffer[30] = {0xbaadf00d};
 
     EXPECT_EQ(0u, PARSE::getCommandLength(buffer));
 }
 
-HWTEST_F(CommandParse, parseCommandBufferWithLength) {
+HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenBufferIsCorrect) {
     typedef typename FamilyType::PARSE PARSE;
     typedef typename FamilyType::WALKER_TYPE WALKER_TYPE;
     GenCmdList cmds;
