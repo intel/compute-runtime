@@ -23,6 +23,8 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex));
+        UNRECOVERABLE_IF(!aubCSR->initializeTagAllocation());
+        *aubCSR->getTagAddress() = std::numeric_limits<uint32_t>::max();
     }
 }
 
