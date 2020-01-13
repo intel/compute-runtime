@@ -624,6 +624,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     }
 
     mock->reset();
+    size_t dummySize = 13u;
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     mock->ioctl_res_ext = &ioctlResExt;
@@ -633,14 +634,25 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     mock->ioctl_expected.gemClose = 1;
 
     AllocationData allocationData;
-    allocationData.size = 13;
+    allocationData.size = dummySize;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+
+    auto gfxPartition = memoryManager->getGfxPartition(0u);
+
+    auto allocatedPointer = gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, dummySize);
+    gfxPartition->freeGpuAddressRange(allocatedPointer, dummySize);
 
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 
     EXPECT_EQ(nullptr, allocation);
     mock->testIoctls();
     mock->ioctl_res_ext = &mock->NONE;
+
+    //make sure that partition is free
+    size_t dummySize2 = 13u;
+    auto allocatedPointer2 = gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, dummySize2);
+    EXPECT_EQ(allocatedPointer2, allocatedPointer);
+    gfxPartition->freeGpuAddressRange(allocatedPointer, dummySize2);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenHostPtrDoesntCausePinningFailThenAlocateMemoryForNonSvmHostPtrReturnsAllocation) {
@@ -663,7 +675,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     mock->ioctl_expected.execbuffer2 = 1;
 
     AllocationData allocationData;
-    allocationData.size = 13;
+    allocationData.size = 13u;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
 
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
@@ -672,6 +684,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     mock->testIoctls();
     mock->ioctl_res_ext = &mock->NONE;
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 

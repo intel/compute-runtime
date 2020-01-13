@@ -255,6 +255,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         int result = pinBB->pin(&bo, 1, getDefaultDrmContextId());
         if (result != SUCCESS) {
             unreference(bo, true);
+            releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
             return nullptr;
         }
     }
