@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/os_interface/os_context.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
@@ -13,7 +14,6 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_banks.h"
-#include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/tests_configuration.h"

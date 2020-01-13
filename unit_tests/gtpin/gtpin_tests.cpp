@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/options.h"
+#include "core/os_interface/os_context.h"
 #include "runtime/api/api.h"
 #include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/context/context.h"
@@ -21,7 +22,6 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/os_context.h"
+#include "core/os_interface/os_context.h"
 
 #include "gtest/gtest.h"
 

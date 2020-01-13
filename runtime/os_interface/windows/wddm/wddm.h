@@ -10,8 +10,8 @@
 #include "core/gmm_helper/gmm_lib.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/gfx_partition.h"
+#include "core/os_interface/os_context.h"
 #include "core/utilities/spinlock.h"
-#include "runtime/os_interface/os_context.h"
 
 #include "sku_info.h"
 

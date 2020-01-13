@@ -29,6 +29,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_engine_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h

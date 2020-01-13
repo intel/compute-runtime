@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/os_interface/os_context.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
@@ -14,7 +15,6 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"

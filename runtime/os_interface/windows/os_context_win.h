@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/os_context.h"
+#include "core/os_interface/os_context.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 
 namespace NEO {

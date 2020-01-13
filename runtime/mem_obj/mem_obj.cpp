@@ -12,6 +12,7 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/memory_manager/deferred_deleter.h"
+#include "core/os_interface/os_context.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
@@ -19,7 +20,6 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/os_context.h"
 
 #include <algorithm>
 

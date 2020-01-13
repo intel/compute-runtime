@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
+#include "core/os_interface/os_context.h"
+#include "core/os_interface/windows/wddm_allocation.h"
 #include "core/os_interface/windows/windows_wrapper.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/os_context.h"
-#include "runtime/os_interface/windows/wddm_allocation.h"
 
 #include <d3dkmthk.h>
 

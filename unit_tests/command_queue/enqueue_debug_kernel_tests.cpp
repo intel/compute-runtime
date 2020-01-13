@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/os_interface/os_context.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/os_interface/os_context.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"

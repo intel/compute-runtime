@@ -31,6 +31,7 @@ set(NEO_CORE_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h
   ${CMAKE_CURRENT_SOURCE_DIR}/residency.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/residency.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/residency_container.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
 )

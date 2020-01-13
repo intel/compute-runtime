@@ -7,6 +7,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "core/os_interface/os_context.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
@@ -15,7 +16,6 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "core/memory_manager/residency_container.h"
 #include "core/os_interface/windows/windows_defs.h"
 #include "core/os_interface/windows/windows_wrapper.h"
 #include "core/utilities/spinlock.h"
-#include "runtime/memory_manager/residency_container.h"
 
 #include <atomic>
 #include <mutex>

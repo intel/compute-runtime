@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "core/memory_manager/residency_container.h"
 #include "core/utilities/idlist.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/properties_helper.h"
-#include "runtime/memory_manager/residency_container.h"
 
 #include <vector>
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/os_interface/os_context.h"
+#include "core/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 

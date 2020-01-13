@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/os_interface/windows/wddm_allocation.h"
 #include "core/utilities/spinlock.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 

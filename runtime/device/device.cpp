@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "core/os_interface/os_context.h"
 #include "core/program/sync_buffer_handler.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
@@ -16,7 +17,6 @@
 #include "runtime/device/driver_info.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
