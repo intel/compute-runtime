@@ -71,6 +71,14 @@ HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenI
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
     gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableImage(*gfxAllocation));

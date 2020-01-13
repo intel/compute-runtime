@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -920,6 +920,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, "INTERNAL_HOST_MEMORY"},
     {GraphicsAllocation::AllocationType::KERNEL_ISA, "KERNEL_ISA"},
     {GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
+    {GraphicsAllocation::AllocationType::MAP_ALLOCATION, "MAP_ALLOCATION"},
     {GraphicsAllocation::AllocationType::MCS, "MCS"},
     {GraphicsAllocation::AllocationType::PIPE, "PIPE"},
     {GraphicsAllocation::AllocationType::PREEMPTION, "PREEMPTION"},

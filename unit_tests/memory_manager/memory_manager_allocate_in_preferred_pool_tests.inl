@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -623,4 +623,17 @@ TEST(MemoryManagerTest, getAllocationDataProperlyHandlesRootDeviceIndexFromAllca
     AllocationProperties properties2{100, 1, GraphicsAllocation::AllocationType::BUFFER};
     MockMemoryManager::getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_EQ(allocData.rootDeviceIndex, properties2.rootDeviceIndex);
+}
+
+TEST(MemoryManagerTest, givenMapAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+    AllocationData allocData;
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, false, 1, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
+    MockMemoryManager::getAllocationData(allocData, properties, hostPtr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.allocateMemory);
+    EXPECT_FALSE(allocData.flags.allow32Bit);
+    EXPECT_FALSE(allocData.flags.allow64kbPages);
+    EXPECT_EQ(allocData.hostPtr, hostPtr);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -281,6 +281,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "KERNEL_ISA";
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
+    case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
+        return "MAP_ALLOCATION";
     case GraphicsAllocation::AllocationType::MCS:
         return "MCS";
     case GraphicsAllocation::AllocationType::PIPE:

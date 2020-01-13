@@ -66,7 +66,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     cl_map_flags mapFlags = CL_MAP_WRITE;
     image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
 
-    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
     auto allocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties, ptr);
     image->setMapAllocation(allocation);
 
