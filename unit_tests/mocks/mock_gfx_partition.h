@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@ using namespace NEO;
 
 class MockGfxPartition : public GfxPartition {
   public:
+    using GfxPartition::osMemory;
+
     uint64_t getHeapSize(HeapIndex heapIndex) {
         return getHeap(heapIndex).getSize();
     }
