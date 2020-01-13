@@ -23,7 +23,7 @@ class GmmClientContext;
 
 class Gmm {
   public:
-    virtual ~Gmm() = default;
+    virtual ~Gmm();
     Gmm() = delete;
     Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo);
     Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable);

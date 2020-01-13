@@ -57,6 +57,8 @@ Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientC
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, inputGmm));
 }
 
+Gmm::~Gmm() = default;
+
 Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo) : clientContext(clientContext) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo);
