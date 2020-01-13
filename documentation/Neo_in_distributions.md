@@ -1,5 +1,7 @@
 # NEO in Linux distributions
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/intel-compute-runtime.svg)](https://repology.org/project/intel-compute-runtime/versions)
+
 ## Arch Linux*
 
 ```
@@ -106,7 +108,7 @@ docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-openc
 
 # NEO in other distributions
 
-## FreeBSD*
+## FreeBSD*, DragonFly*
 
 ```
 pkg install intel-compute-runtime
