@@ -29,6 +29,7 @@
 #include "unit_tests/mocks/gl/mock_gl_arb_sync_event.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
@@ -598,18 +599,15 @@ TEST_F(glSharingTests, givenHwCommandQueueWhenAcquireAndReleaseCallsAreMadeWithE
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(glSharingTests, givenCommandQueueWhenReleaseGlObjectIsCalledThenFinishIsCalled) {
-    auto commandQueue = clCreateCommandQueue(&context, context.getDevice(0), 0, nullptr);
+HWTEST_F(glSharingTests, givenCommandQueueWhenReleaseGlObjectIsCalledThenFinishIsCalled) {
+    MockCommandQueueHw<FamilyType> mockCmdQueue(&context, context.getDevice(0), nullptr);
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, nullptr);
 
-    auto neoQueue = castToObject<CommandQueue>(commandQueue);
-    clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
-    neoQueue->taskCount = 5u;
-    clEnqueueReleaseGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, clEnqueueAcquireGLObjects(&mockCmdQueue, 1, &glBuffer, 0, nullptr, nullptr));
+    mockCmdQueue.taskCount = 5u;
+    EXPECT_EQ(CL_SUCCESS, clEnqueueReleaseGLObjects(&mockCmdQueue, 1, &glBuffer, 0, nullptr, nullptr));
+    EXPECT_EQ(5u, mockCmdQueue.latestTaskCountWaited);
 
-    EXPECT_EQ(5u, neoQueue->latestTaskCountWaited);
-
-    clReleaseCommandQueue(commandQueue);
     clReleaseMemObject(glBuffer);
 }
 

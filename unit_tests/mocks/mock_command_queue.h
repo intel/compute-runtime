@@ -57,6 +57,11 @@ class MockCommandQueue : public CommandQueue {
         return writeBufferRetValue;
     }
 
+    void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        latestTaskCountWaited = taskCountToWait;
+        return CommandQueue::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
+    }
+
     bool releaseIndirectHeapCalled = false;
 
     cl_int writeBufferRetValue = CL_SUCCESS;
@@ -66,6 +71,7 @@ class MockCommandQueue : public CommandQueue {
     size_t writeBufferSize = 0;
     void *writeBufferPtr = nullptr;
     size_t requestedCmdStreamSize = 0;
+    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
 };
 
 template <typename GfxFamily>
@@ -146,6 +152,11 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         notifyEnqueueReadImageCalled = true;
     }
 
+    void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        latestTaskCountWaited = taskCountToWait;
+        return BaseClass::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
+    }
+
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
@@ -157,6 +168,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueReadImageCalled = false;
     bool cpuDataTransferHandlerCalled = false;
     BuiltinOpParams kernelParams;
+    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

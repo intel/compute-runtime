@@ -555,15 +555,42 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
 
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     MockKernelWithInternals mockKernel(*pClDevice);
+
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto &csr = mockCmdQueue.getGpgpuCommandStreamReceiver();
     auto latestSentTaskCount = csr.peekTaskCount();
-    enqueueKernel<FamilyType, false>(mockKernel);
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    FillValues();
+    // Compute # of expected work items
+    expectedWorkItems = 1;
+    for (auto i = 0u; i < workDim; i++) {
+        expectedWorkItems *= globalWorkSize[i];
+    }
+
+    auto retVal = mockCmdQueue.enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
     auto newLatestSentTaskCount = csr.peekTaskCount();
     EXPECT_GT(newLatestSentTaskCount, latestSentTaskCount);
-    EXPECT_EQ(pCmdQ->latestTaskCountWaited, newLatestSentTaskCount);
+    EXPECT_EQ(mockCmdQueue.latestTaskCountWaited, newLatestSentTaskCount);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenL3CacheIsFlushed) {
@@ -575,10 +602,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
 
+    MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto &csr = mockCommandQueue.getGpgpuCommandStreamReceiver();
     auto latestSentDcFlushTaskCount = csr.peekTaskCount();
 
     cl_uint workDim = 1;
@@ -587,7 +615,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     FillValues();
 
     cl_event blockedEvent = &userEvent;
-    auto retVal = pCmdQ->enqueueKernel(
+    auto retVal = mockCommandQueue.enqueueKernel(
         mockKernel,
         workDim,
         globalWorkOffset,
@@ -600,11 +628,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<FamilyType>(*pCmdQ);
+    parseCommands<FamilyType>(mockCommandQueue);
 
     auto newLatestSentDCFlushTaskCount = csr.peekTaskCount();
     EXPECT_GT(newLatestSentDCFlushTaskCount, latestSentDcFlushTaskCount);
-    EXPECT_EQ(pCmdQ->latestTaskCountWaited, newLatestSentDCFlushTaskCount);
+    EXPECT_EQ(mockCommandQueue.latestTaskCountWaited, newLatestSentDCFlushTaskCount);
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenOutputPrinted) {

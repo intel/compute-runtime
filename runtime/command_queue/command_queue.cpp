@@ -148,9 +148,7 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait,
                                                                           useQuickKmdSleep, forcePowerSavingMode);
-
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
-    latestTaskCountWaited = taskCountToWait;
 
     if (auto bcsCsr = getBcsCommandStreamReceiver()) {
         bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCount, 0, false, false);

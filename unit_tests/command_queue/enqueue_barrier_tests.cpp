@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
@@ -12,6 +13,7 @@
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 
 using namespace NEO;
 
@@ -187,10 +189,12 @@ HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenDependenciesShouldSync)
     delete pEvent;
 }
 HWTEST_F(BarrierTest, givenNotBlockedCommandQueueAndEnqueueBarrierWithWaitlistReturningEventWhenCallIsMadeThenDontWaitUntilEventIsSignaled) {
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+
     // In N:1, event.level <= pCmdQ.level
-    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
-    Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
-    Event event3(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 17);
+    Event event1(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
+    Event event2(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
+    Event event3(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 1, 17);
     cl_event eventWaitList[] =
         {
             &event1,
@@ -199,17 +203,18 @@ HWTEST_F(BarrierTest, givenNotBlockedCommandQueueAndEnqueueBarrierWithWaitlistRe
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
     cl_event event = nullptr;
 
-    auto latestTaskCountWaitedBeforeEnqueue = this->pCmdQ->latestTaskCountWaited.load();
-    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
+    auto latestTaskCountWaitedBeforeEnqueue = mockCmdQueue.latestTaskCountWaited.load();
+    auto retVal = mockCmdQueue.enqueueBarrierWithWaitList(
         numEventsInWaitList,
         eventWaitList,
         &event);
 
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto &csr = mockCmdQueue.getGpgpuCommandStreamReceiver();
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(latestTaskCountWaitedBeforeEnqueue, this->pCmdQ->latestTaskCountWaited);
+    EXPECT_EQ(latestTaskCountWaitedBeforeEnqueue, mockCmdQueue.latestTaskCountWaited);
     auto pEvent = castToObject<Event>(event);
+    EXPECT_NE(nullptr, pEvent);
 
     if (csr.peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(csr.peekTaskCount(), pEvent->peekTaskCount());

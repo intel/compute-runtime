@@ -542,17 +542,18 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
 }
 
 TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOutput) {
+    MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr);
+
     testing::internal::CaptureStdout();
-    CommandQueue cmdQ(mockContext, pClDevice, nullptr);
-    MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
 
-    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
@@ -580,12 +581,12 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(cmdQ, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
 
-    EXPECT_EQ(1u, cmdQ.latestTaskCountWaited);
+    EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());

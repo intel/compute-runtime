@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 
 #include "event_fixture.h"
 
@@ -108,8 +109,8 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
     t.join();
 }
 
-TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFinishIsCalledThenItWaitsForCorrectTaskCount) {
-
+HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFinishIsCalledThenItWaitsForCorrectTaskCount) {
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
     for (uint32_t i = 0; i < 100; i++) {
@@ -129,7 +130,7 @@ TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFini
             uEvent.setStatus(CL_COMPLETE);
         });
 
-        auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_FALSE, 0, srcBuffer->getSize(), dst.get(), nullptr, sizeOfWaitList, eventWaitList, &returnedEvent);
+        auto retVal = mockCmdQueue.enqueueReadBuffer(srcBuffer.get(), CL_FALSE, 0, srcBuffer->getSize(), dst.get(), nullptr, sizeOfWaitList, eventWaitList, &returnedEvent);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         std::thread t2([&]() {
@@ -140,8 +141,8 @@ TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFini
 
         go = true;
 
-        clFinish(pCmdQ);
-        EXPECT_EQ(pCmdQ->latestTaskCountWaited, i + 1);
+        clFinish(&mockCmdQueue);
+        EXPECT_EQ(mockCmdQueue.latestTaskCountWaited, i + 1);
 
         t.join();
         updateEvent = false;

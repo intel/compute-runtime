@@ -14,6 +14,7 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
@@ -260,7 +261,7 @@ TEST_F(EnqueueMapBufferTest, GivenValidArgsWhenMappingBufferThenSuccessIsReturne
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWhenItIsCalledThenSynchronizationIsNotMadeUntilWaitForEvents) {
+HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWhenItIsCalledThenSynchronizationIsNotMadeUntilWaitForEvents) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -285,18 +286,20 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWh
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+
+    auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     uint32_t taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that can be finished...
-    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
 
     auto ptrResult = clEnqueueMapBuffer(
-        pCmdQ,
+        &mockCmdQueue,
         buffer,
         CL_FALSE,
         CL_MAP_READ,
@@ -334,14 +337,14 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWh
 
     //wait for event do not sent flushTask
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
-    EXPECT_EQ(1u, pCmdQ->latestTaskCountWaited);
+    EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
 
     EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
 
     EXPECT_EQ(1u, callbackCalled);
 
     retVal = clEnqueueUnmapMemObject(
-        pCmdQ,
+        &mockCmdQueue,
         buffer,
         ptrResult,
         0,
@@ -514,7 +517,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCalledThenFinishIsCalledAndDataTransferred) {
+HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCalledThenFinishIsCalledAndDataTransferred) {
     const auto bufferSize = 100;
     auto localSize = bufferSize;
     char misaligned[bufferSize] = {1};
@@ -540,16 +543,18 @@ TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCal
     auto pBuffer = castToObject<Buffer>(buffer);
     ASSERT_FALSE(pBuffer->isMemObjZeroCopy());
 
+    MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
+
     // enqueue something that can be finished
-    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
     uint32_t taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     auto ptrResult = clEnqueueMapBuffer(
-        pCmdQ,
+        &mockCmdQueue,
         buffer,
         CL_FALSE,
         CL_MAP_READ,
@@ -566,7 +571,7 @@ TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCal
     commandStreamReceiver.peekTaskCount();
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
-    EXPECT_EQ(1u, pCmdQ->latestTaskCountWaited);
+    EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

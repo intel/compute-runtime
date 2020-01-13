@@ -415,8 +415,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     std::unique_ptr<FlushStampTracker> flushStamp;
 
-    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
-
     // virtual event that holds last Enqueue information
     Event *virtualEvent = nullptr;
 
