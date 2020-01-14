@@ -261,8 +261,6 @@ Buffer *Buffer::create(Context *context,
     memory->setAllocationType(allocationType);
     memory->setMemObjectsAllocationWithWritableFlags(!(memoryProperties.flags.readOnly || memoryProperties.flags.hostReadOnly || memoryProperties.flags.hostNoAccess));
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
-
     pBuffer = createBufferHw(context,
                              memoryProperties,
                              flags,
@@ -274,12 +272,15 @@ Buffer *Buffer::create(Context *context,
                              zeroCopyAllowed,
                              isHostPtrSVM,
                              false);
+
     if (!pBuffer) {
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
         memoryManager->removeAllocationFromHostPtrManager(memory);
         memoryManager->freeGraphicsMemory(memory);
         return nullptr;
     }
+
+    DBG_LOG(LogMemoryObject, __FUNCTION__, "Buffer:", pBuffer, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 
     if (memoryProperties.flags.useHostPtr) {
         if (!zeroCopyAllowed && !isHostPtrSVM) {
