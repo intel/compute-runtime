@@ -106,9 +106,9 @@ set(CLOC_INCLUDES
   ${ENGINE_NODE_DIR}
   ${IGC_OCL_ADAPTOR_DIR}
   ${CIF_BASE_DIR}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+  ${NEO__GMM_INCLUDE_DIR}
   ${KHRONOS_HEADERS_DIR}
-  ${IGDRCL__IGC_INCLUDE_DIR}
+  ${NEO__IGC_INCLUDE_DIR}
 )
 
 target_include_directories(ocloc BEFORE PRIVATE ${CLOC_INCLUDES})
@@ -116,7 +116,7 @@ target_include_directories(ocloc BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
 target_compile_definitions(ocloc PUBLIC ${CLOC_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} 
                                         IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-target_compile_definitions(ocloc PRIVATE ${IGDRCL__IGC_COMPILE_DEFINITIONS})
+target_compile_definitions(ocloc PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(MSVC)
   target_link_libraries(ocloc dbghelp)
@@ -130,11 +130,11 @@ target_link_libraries(ocloc elflib)
 
 set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
 
-add_custom_target(copy_compiler_files DEPENDS ${IGDRCL__IGC_TARGETS})
+add_custom_target(copy_compiler_files DEPENDS ${NEO__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
 
 if(WIN32)
-  foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+  foreach(TARGET_tmp ${NEO__IGC_TARGETS})
     add_custom_command(
       TARGET copy_compiler_files
       PRE_BUILD

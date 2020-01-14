@@ -16,7 +16,7 @@ add_library(${target_name} EXCLUDE_FROM_ALL OBJECT ${IGDRCL_SRCS_tests_mock_gmm}
 
 target_include_directories(${target_name} PRIVATE
   ${WDK_INCLUDE_PATHS}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+  ${NEO__GMM_INCLUDE_DIR}
 )
 
 create_project_source_tree(${target_name})

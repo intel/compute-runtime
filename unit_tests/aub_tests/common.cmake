@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,10 +16,10 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss opti
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${gen}_aub/cl_cache
     )
 
-    if(WIN32 OR NOT DEFINED IGDRCL__GMM_LIBRARY_PATH)
+    if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)
         set(aub_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
     else()
-        set(aub_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__GMM_LIBRARY_PATH} IGDRCL_TEST_SELF_EXEC=off $<TARGET_FILE:igdrcl_aub_tests>)
+        set(aub_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} IGDRCL_TEST_SELF_EXEC=off $<TARGET_FILE:igdrcl_aub_tests>)
     endif()
 
     add_custom_command(

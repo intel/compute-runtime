@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,7 +25,7 @@ if(WIN32)
 
   target_include_directories(mock_gdi PRIVATE
     ${WDK_INCLUDE_PATHS}
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+    ${NEO__GMM_INCLUDE_DIR}
   )
 
   set_target_properties(

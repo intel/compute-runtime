@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,6 @@ set(RUNTIME_SRCS_SHARINGS_VA
 )
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_SHARINGS_VA ${RUNTIME_SRCS_SHARINGS_VA})
 
-if(IGDRCL__LIBVA_FOUND)
+if(NEO__LIBVA_FOUND)
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS_VA})
-endif(IGDRCL__LIBVA_FOUND)
+endif(NEO__LIBVA_FOUND)

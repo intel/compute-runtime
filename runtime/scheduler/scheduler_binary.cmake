@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,8 +9,8 @@ set(SCHEDULER_OUTDIR_WITH_ARCH "${TargetDir}/scheduler/${NEO_ARCH}")
 set_target_properties(scheduler PROPERTIES FOLDER "scheduler")
 
 set (SCHEDULER_KERNEL scheduler.cl)
-if(DEFINED IGDRCL__IGC_INCLUDE_DIR)
-  list(APPEND __cloc__options__ "-I$<JOIN:${IGDRCL__IGC_INCLUDE_DIR}, -I>")
+if(DEFINED NEO__IGC_INCLUDE_DIR)
+  list(APPEND __cloc__options__ "-I$<JOIN:${NEO__IGC_INCLUDE_DIR}, -I>")
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -34,8 +34,8 @@ function(compile_kernel target gen_type platform_type kernel)
   if(WIN32)
     set(cloc_cmd_prefix ocloc)
   else()
-    if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:ocloc>)
+    if(DEFINED NEO__IGC_LIBRARY_PATH)
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH} $<TARGET_FILE:ocloc>)
     else()
       set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc> $<TARGET_FILE:ocloc>)
     endif()
@@ -91,7 +91,7 @@ add_dependencies(${SCHEDULER_BINARY_LIB_NAME} scheduler)
 target_include_directories(${SCHEDULER_BINARY_LIB_NAME} PRIVATE
   ${ENGINE_NODE_DIR}
   ${KHRONOS_HEADERS_DIR}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-  ${IGDRCL__IGC_INCLUDE_DIR}
+  ${NEO__GMM_INCLUDE_DIR}
+  ${NEO__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
 )

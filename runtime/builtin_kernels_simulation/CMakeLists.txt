@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -47,10 +47,10 @@ apply_macro_for_each_gen("SUPPORTED")
 add_library(${BIKSIM_LIB_NAME} OBJECT EXCLUDE_FROM_ALL ${BUILTIN_KERNELS_SIMULATION_SRCS})
 target_include_directories(${BIKSIM_LIB_NAME} BEFORE PRIVATE
   ${ENGINE_NODE_DIR}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+  ${NEO__GMM_INCLUDE_DIR}
   ${KHRONOS_HEADERS_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
-  ${IGDRCL__IGC_INCLUDE_DIR}
+  ${NEO__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
 )
 set_target_properties(${BIKSIM_LIB_NAME} PROPERTIES FOLDER "built_ins")

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,8 +12,8 @@ set_target_properties (${SHARINGS_ENABLE_LIB_NAME} PROPERTIES FOLDER "opencl run
 target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE
   ${KHRONOS_HEADERS_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-  ${IGDRCL__IGC_INCLUDE_DIR}
+  ${NEO__GMM_INCLUDE_DIR}
+  ${NEO__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
 )
 

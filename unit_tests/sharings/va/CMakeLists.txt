@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Intel Corporation
+# Copyright (C) 2017-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,7 +19,7 @@ set(IGDRCL_SRCS_tests_sharings_va
 )
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_sharings_va ${IGDRCL_SRCS_tests_sharings_va})
 
-if(IGDRCL__LIBVA_FOUND)
+if(NEO__LIBVA_FOUND)
   list(APPEND IGDRCL_SRCS_tests_sharings_va ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_enable_tests.cpp)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sharings_va})
-endif(IGDRCL__LIBVA_FOUND)
+endif(NEO__LIBVA_FOUND)
