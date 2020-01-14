@@ -7,11 +7,11 @@
 set(NEO_CORE_UTILITIES_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/clflush_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/containers_tests_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/destructor_counted.h
   ${CMAKE_CURRENT_SOURCE_DIR}/directory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp

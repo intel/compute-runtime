@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "core/utilities/cpuintrinsics.h"
 #include "runtime/tracing/tracing_handle.h"
 
 #include <atomic>
-#include <immintrin.h>
 #include <thread>
 #include <vector>
 
@@ -68,7 +68,7 @@ class AtomicBackoff {
     void pause() {
         if (count < loopsBeforeYield) {
             for (uint32_t i = 0; i < count; i++) {
-                _mm_pause();
+                NEO::CpuIntrinsics::pause();
             }
             count *= 2;
         } else {

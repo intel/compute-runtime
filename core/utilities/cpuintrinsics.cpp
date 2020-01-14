@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/utilities/clflush.h"
+#include "core/utilities/cpuintrinsics.h"
 
 #include <emmintrin.h>
 
@@ -14,6 +14,10 @@ namespace CpuIntrinsics {
 
 void clFlush(void const *ptr) {
     _mm_clflush(ptr);
+}
+
+void pause() {
+    _mm_pause();
 }
 
 } // namespace CpuIntrinsics

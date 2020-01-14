@@ -25,7 +25,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
   ${NEO_SOURCE_DIR}/core/helpers/debug_helpers.cpp
   ${NEO_SOURCE_DIR}/core/helpers/allow_deferred_deleter.cpp
-  ${NEO_SOURCE_DIR}/core/utilities/clflush.cpp
+  ${NEO_SOURCE_DIR}/core/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/core/utilities/debug_settings_reader_creator.cpp
   ${NEO_SOURCE_DIR}/runtime/api/api.cpp
   ${NEO_SOURCE_DIR}/runtime/helpers/built_ins_helper.cpp

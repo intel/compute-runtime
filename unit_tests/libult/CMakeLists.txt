@@ -23,7 +23,7 @@ apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/core/helpers/allow_deferred_deleter.cpp
-  ${NEO_SOURCE_DIR}/core/unit_tests/utilities/clflush.cpp
+  ${NEO_SOURCE_DIR}/core/unit_tests/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/unit_tests/abort.cpp
   ${NEO_SOURCE_DIR}/unit_tests/helpers/built_ins_helper.cpp
   ${NEO_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp

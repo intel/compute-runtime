@@ -8,7 +8,7 @@ set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/api_intercept.h
   ${CMAKE_CURRENT_SOURCE_DIR}/arrayref.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/clflush.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics.h
   ${CMAKE_CURRENT_SOURCE_DIR}/const_stringref.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader.cpp
