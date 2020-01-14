@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
 
     Device *getDevice() const { return device; }
+
+    IndirectHeap *getHeapWithRequiredSizeAndAlignment(NEO::HeapType heapType, size_t sizeRequired, size_t alignment);
 
     void reset();
 

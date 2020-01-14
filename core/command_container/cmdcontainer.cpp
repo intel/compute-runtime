@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,6 +108,37 @@ void CommandContainer::reset() {
                                     indirectHeap->getMaxAvailableSpace());
         addToResidencyContainer(indirectHeap->getGraphicsAllocation());
     }
+}
+
+IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(NEO::HeapType heapType, size_t sizeRequired, size_t alignment) {
+    auto indirectHeap = getIndirectHeap(heapType);
+    auto sizeRequested = sizeRequired;
+
+    auto heapBuffer = indirectHeap->getSpace(0);
+    if (alignment && (heapBuffer != alignUp(heapBuffer, alignment))) {
+        sizeRequested += alignment;
+    }
+
+    if (indirectHeap->getAvailableSpace() < sizeRequested) {
+        size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
+        newSize = alignUp(newSize, 4096U);
+        auto oldAlloc = getIndirectHeapAllocation(heapType);
+        auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, newSize, 4096u, device->getRootDeviceIndex());
+        UNRECOVERABLE_IF(!oldAlloc);
+        UNRECOVERABLE_IF(!newAlloc);
+        indirectHeap->replaceGraphicsAllocation(newAlloc);
+        indirectHeap->replaceBuffer(newAlloc->getUnderlyingBuffer(),
+                                    newAlloc->getUnderlyingBufferSize());
+        getResidencyContainer().push_back(newAlloc);
+        getDeallocationContainer().push_back(oldAlloc);
+        setIndirectHeapAllocation(heapType, newAlloc);
+        setHeapDirty(heapType);
+    }
+
+    if (alignment) {
+        indirectHeap->align(alignment);
+    }
+    return indirectHeap;
 }
 
 } // namespace NEO

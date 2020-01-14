@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,4 +186,103 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAleradyAddedAlloc
     auto sizeAfterSecondAdd = cmdContainer.getResidencyContainer().size();
 
     EXPECT_EQ(sizeAfterFirstAdd, sizeAfterSecondAdd);
+}
+
+TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenExistingAllocationIsReturned) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+
+    const size_t sizeRequested = 32;
+    const size_t alignment = 32;
+
+    EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
+
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto newAllocation = heapRequested->getGraphicsAllocation();
+
+    EXPECT_EQ(heap, heapRequested);
+    EXPECT_EQ(heapAllocation, newAllocation);
+
+    EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+}
+
+TEST_F(CommandContainerTest, givenUnalignedAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenHeapReturnedIsCorrectlyAligned) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+
+    const size_t sizeRequested = 32;
+    const size_t alignment = 32;
+
+    heap->getSpace(sizeRequested / 2);
+
+    EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
+
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto newAllocation = heapRequested->getGraphicsAllocation();
+
+    EXPECT_EQ(heap, heapRequested);
+    EXPECT_EQ(heapAllocation, newAllocation);
+
+    EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+}
+
+TEST_F(CommandContainerTest, givenNoAlignmentAndAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenHeapReturnedIsNotAligned) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+
+    const size_t sizeRequested = 32;
+    const size_t alignment = 0;
+
+    heap->getSpace(sizeRequested / 2);
+
+    EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
+
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto newAllocation = heapRequested->getGraphicsAllocation();
+
+    EXPECT_EQ(heap, heapRequested);
+    EXPECT_EQ(heapAllocation, newAllocation);
+
+    EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (sizeRequested / 2)) == sizeRequested / 2);
+    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+}
+
+TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenNewAllocationIsReturned) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->setDirtyStateForAllHeaps(false);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+
+    const size_t sizeRequested = 32;
+    const size_t alignment = 32;
+    size_t availableSize = heap->getAvailableSpace();
+
+    heap->getSpace(availableSize - sizeRequested / 2);
+
+    EXPECT_LT(heap->getAvailableSpace(), sizeRequested + alignment);
+
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto newAllocation = heapRequested->getGraphicsAllocation();
+
+    EXPECT_EQ(heap, heapRequested);
+    EXPECT_NE(heapAllocation, newAllocation);
+
+    EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+    EXPECT_TRUE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+
+    for (auto deallocation : cmdContainer->getDeallocationContainer()) {
+        cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
+    }
 }
