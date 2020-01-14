@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,9 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
 
 uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
     return getTotalMemBankSize();
+}
+
+void AubHelper::setAdditionalMmioList() {
 }
 
 } // namespace NEO

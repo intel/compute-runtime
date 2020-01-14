@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
+        AubHelper::setAdditionalMmioList();
         if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
             aub_stream::injectMMIOList(AubHelper::getAdditionalMmioList());
         }
