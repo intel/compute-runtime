@@ -130,6 +130,9 @@ void Device::initializeCaps() {
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
+        if (hwInfo.capabilityTable.supportsImages) {
+            deviceExtensions += "cl_intel_spirv_media_block_io ";
+        }
         deviceExtensions += "cl_intel_spirv_subgroups ";
         deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
     } else {
