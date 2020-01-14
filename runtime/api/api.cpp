@@ -4506,8 +4506,6 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
                    "const cl_pipe_properties", properties,
                    "cl_int", errcodeRet);
 
-    auto pPlatform = platform();
-    auto pDevice = pPlatform->getDevice(0);
     Context *pContext = nullptr;
 
     const cl_mem_flags allValidFlags =
@@ -4534,6 +4532,7 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
         if (retVal != CL_SUCCESS) {
             break;
         }
+        auto pDevice = pContext->getDevice(0);
 
         if (pipePacketSize > pDevice->getDeviceInfo().pipeMaxPacketSize) {
             retVal = CL_INVALID_PIPE_SIZE;

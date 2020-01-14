@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
@@ -158,6 +159,31 @@ TEST_F(clCreatePipeTests, GivenNullContextWhenCreatingPipeThenInvalidContextErro
 
     EXPECT_EQ(nullptr, pipe);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+
+    clReleaseMemObject(pipe);
+}
+
+TEST(clCreatePipeTest, givenPlatformWithoutDevicesWhenClCreatePipeIsCalledThenDeviceIsTakenFromContext) {
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, 0u));
+    const DeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+    cl_device_id clDevice = device.get();
+    cl_int retVal;
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, platform()->getNumDevices());
+    cl_uint packetSize = context->getDevice(0)->getDeviceInfo().pipeMaxPacketSize;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    auto pipe = clCreatePipe(context.get(), flags, packetSize, 20, nullptr, &retVal);
+    EXPECT_NE(nullptr, pipe);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     clReleaseMemObject(pipe);
 }
