@@ -220,7 +220,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateW
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;
 
-HWTEST_F(CommandStreamReceiverFlushTests, addsBatchBufferEnd) {
+HWTEST_F(CommandStreamReceiverFlushTests, WhenAddingBatchBufferEndThenBatchBufferEndIsAppendedCorrectly) {
     auto usedPrevious = commandStream.getUsed();
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(commandStream, nullptr);
@@ -232,7 +232,7 @@ HWTEST_F(CommandStreamReceiverFlushTests, addsBatchBufferEnd) {
     EXPECT_NE(nullptr, batchBufferEnd);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTests, shouldAlignToCacheLineSize) {
+HWTEST_F(CommandStreamReceiverFlushTests, WhenAligningCommandStreamReceiverToCacheLineSizeThenItIsAlignedCorrectly) {
     commandStream.getSpace(sizeof(uint32_t));
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(commandStream);
 
