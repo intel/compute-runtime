@@ -65,8 +65,15 @@ add_subdirectories()
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS} ${GMM_LINK_NAME})
-
+target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
+if(UNIX)
+  target_link_libraries(igdrcl_aub_tests ${GMM_LINK_NAME})
+else()
+  add_dependencies(igdrcl_aub_tests ${GMM_TARGET_NAME})
+  target_sources(igdrcl_aub_tests PRIVATE
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface.cpp
+  )
+endif()
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
