@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2019-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,10 +25,13 @@ append_sources_from_properties(NEO_CORE_SOURCES
   NEO_UNIFIED_MEMORY
 )
 
+
+
 append_sources_from_properties(NEO_CORE_SOURCES_WINDOWS
   NEO_CORE_OS_INTERFACE_WINDOWS
   NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
   NEO_CORE_SKU_INFO_WINDOWS
+  NEO_CORE_SRCS_HELPERS_WINDOWS
   NEO_CORE_UTILITIES_WINDOWS
 )
 

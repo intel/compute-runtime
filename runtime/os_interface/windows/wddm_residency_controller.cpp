@@ -11,7 +11,6 @@
 #include "core/os_interface/windows/wddm_allocation.h"
 #include "core/utilities/spinlock.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 
 namespace NEO {

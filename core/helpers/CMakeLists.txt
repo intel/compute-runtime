@@ -58,4 +58,13 @@ set(NEO_CORE_HELPERS
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})
+if(WIN32)
+  set(NEO_CORE_SRCS_HELPERS_WINDOWS
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
+  )
+  set_property(GLOBAL PROPERTY NEO_CORE_SRCS_HELPERS_WINDOWS ${NEO_CORE_SRCS_HELPERS_WINDOWS})
+endif()
+
 add_subdirectories()

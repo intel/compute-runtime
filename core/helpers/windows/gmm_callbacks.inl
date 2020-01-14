@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/helpers/windows/gmm_callbacks.h"
+#include "core/helpers/windows/gmm_callbacks.h"
 
 #include <cstdint>
 

@@ -70,9 +70,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
 )
 
 set(RUNTIME_SRCS_HELPERS_WINDOWS
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
