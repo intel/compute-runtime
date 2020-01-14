@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,9 +42,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParamete
     check(params);
 }
 
-TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtensionDisabled) {
+TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtensionDisabledAndSupportImageEnabled) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
+    device->deviceInfo.imageSupport = true;
     device->deviceInfo.nv12Extension = false;
     uint32_t value;
 
@@ -65,9 +65,9 @@ TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtens
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarYuvExtensionEnabled) {
+TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarYuvExtensionEnabledAndSupportImageEnabled) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
+    device->deviceInfo.imageSupport = true;
     device->deviceInfo.nv12Extension = true;
     size_t value = 0;
 
@@ -88,6 +88,342 @@ TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarY
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(16352u, value);
+}
+
+TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtensionDisabledAndSupportImageDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->deviceInfo.imageSupport = false;
+    device->deviceInfo.nv12Extension = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL,
+        4,
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL,
+        4,
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtensionEnabledAndSupportImageDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->deviceInfo.imageSupport = false;
+    device->deviceInfo.nv12Extension = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL,
+        4,
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL,
+        4,
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImage2dMaxWidthHeightReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE2D_MAX_WIDTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE2D_MAX_HEIGHT,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImage2dMaxWidthHeightReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE2D_MAX_WIDTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE2D_MAX_HEIGHT,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImage3dMaxWidthHeightDepthReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_WIDTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_HEIGHT,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_DEPTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImage3dMaxWidthHeightDepthReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_WIDTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_HEIGHT,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE3D_MAX_DEPTH,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxArgsReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_READ_IMAGE_ARGS,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_WRITE_IMAGE_ARGS,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxArgsReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_READ_IMAGE_ARGS,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_MAX_WRITE_IMAGE_ARGS,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageBaseAddressAlignmentReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageBaseAddressAlignmentReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxArraySizeReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_MAX_ARRAY_SIZE,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxArraySizeReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_MAX_ARRAY_SIZE,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxBufferSizeReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImageMaxBufferSizeReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
+        sizeof(size_t),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImagePtichAlignmentReturnsErrorWhenImageSupportDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = false;
+    uint32_t value;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_PITCH_ALIGNMENT,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(GetDeviceInfo, clDeviceImagePtichAlignmentReturnsCorrectValuesWhenImageSupportEnabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    device->deviceInfo.imageSupport = true;
+    size_t value = 0;
+
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_IMAGE_PITCH_ALIGNMENT,
+        sizeof(cl_uint),
+        &value,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(GetDeviceInfo, numSimultaneousInterops) {
@@ -195,15 +531,6 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE,
     CL_DEVICE_HALF_FP_CONFIG,
     CL_DEVICE_HOST_UNIFIED_MEMORY,
-    CL_DEVICE_IMAGE2D_MAX_HEIGHT,
-    CL_DEVICE_IMAGE2D_MAX_WIDTH,
-    CL_DEVICE_IMAGE3D_MAX_DEPTH,
-    CL_DEVICE_IMAGE3D_MAX_HEIGHT,
-    CL_DEVICE_IMAGE3D_MAX_WIDTH,
-    CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,
-    CL_DEVICE_IMAGE_MAX_ARRAY_SIZE,
-    CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
-    CL_DEVICE_IMAGE_PITCH_ALIGNMENT,
     CL_DEVICE_IMAGE_SUPPORT,
     CL_DEVICE_LINKER_AVAILABLE,
     CL_DEVICE_LOCAL_MEM_SIZE,
@@ -219,13 +546,10 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_MAX_ON_DEVICE_QUEUES,
     CL_DEVICE_MAX_PARAMETER_SIZE,
     CL_DEVICE_MAX_PIPE_ARGS,
-    CL_DEVICE_MAX_READ_IMAGE_ARGS,
-    CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS,
     CL_DEVICE_MAX_SAMPLERS,
     CL_DEVICE_MAX_WORK_GROUP_SIZE,
     CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
     CL_DEVICE_MAX_WORK_ITEM_SIZES,
-    CL_DEVICE_MAX_WRITE_IMAGE_ARGS,
     CL_DEVICE_MEM_BASE_ADDR_ALIGN,
     CL_DEVICE_ME_VERSION_INTEL,
     CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE,

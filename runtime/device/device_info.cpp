@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
                              size_t paramValueSize,
                              void *paramValue,
                              size_t *paramValueSizeRet) {
-    cl_int retVal;
+    cl_int retVal = CL_INVALID_VALUE;
     size_t srcSize = 0;
     size_t retSize = 0;
     cl_uint param;
@@ -100,15 +100,6 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:                 getCap<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_UNIFIED_MEMORY:                         getCap<CL_DEVICE_HOST_UNIFIED_MEMORY                         >(src, srcSize, retSize); break;
     case CL_DEVICE_IL_VERSION:                                  getStr<CL_DEVICE_IL_VERSION                                  >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE2D_MAX_HEIGHT:                          getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT                          >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE2D_MAX_WIDTH:                           getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH                           >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE3D_MAX_DEPTH:                           getCap<CL_DEVICE_IMAGE3D_MAX_DEPTH                           >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE3D_MAX_HEIGHT:                          getCap<CL_DEVICE_IMAGE3D_MAX_HEIGHT                          >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE3D_MAX_WIDTH:                           getCap<CL_DEVICE_IMAGE3D_MAX_WIDTH                           >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT:                getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT                >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE:                        getCap<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE                        >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE:                       getCap<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE                       >(src, srcSize, retSize); break;
-    case CL_DEVICE_IMAGE_PITCH_ALIGNMENT:                       getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT                       >(src, srcSize, retSize); break;
     case CL_DEVICE_IMAGE_SUPPORT:                               getCap<CL_DEVICE_IMAGE_SUPPORT                               >(src, srcSize, retSize); break;
     case CL_DEVICE_LINKER_AVAILABLE:                            getCap<CL_DEVICE_LINKER_AVAILABLE                            >(src, srcSize, retSize); break;
     case CL_DEVICE_LOCAL_MEM_SIZE:                              getCap<CL_DEVICE_LOCAL_MEM_SIZE                              >(src, srcSize, retSize); break;
@@ -124,13 +115,10 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_MAX_ON_DEVICE_QUEUES:                        getCap<CL_DEVICE_MAX_ON_DEVICE_QUEUES                        >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_PARAMETER_SIZE:                          getCap<CL_DEVICE_MAX_PARAMETER_SIZE                          >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_PIPE_ARGS:                               getCap<CL_DEVICE_MAX_PIPE_ARGS                               >(src, srcSize, retSize); break;
-    case CL_DEVICE_MAX_READ_IMAGE_ARGS:                         getCap<CL_DEVICE_MAX_READ_IMAGE_ARGS                         >(src, srcSize, retSize); break;
-    case CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS:                   getCap<CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS                   >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_SAMPLERS:                                getCap<CL_DEVICE_MAX_SAMPLERS                                >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_WORK_GROUP_SIZE:                         getCap<CL_DEVICE_MAX_WORK_GROUP_SIZE                         >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:                    getCap<CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS                    >(src, srcSize, retSize); break;
     case CL_DEVICE_MAX_WORK_ITEM_SIZES:                         getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES                         >(src, srcSize, retSize); break;
-    case CL_DEVICE_MAX_WRITE_IMAGE_ARGS:                        getCap<CL_DEVICE_MAX_WRITE_IMAGE_ARGS                        >(src, srcSize, retSize); break;
     case CL_DEVICE_MEM_BASE_ADDR_ALIGN:                         getCap<CL_DEVICE_MEM_BASE_ADDR_ALIGN                         >(src, srcSize, retSize); break;
     case CL_DEVICE_ME_VERSION_INTEL:                            getCap<CL_DEVICE_ME_VERSION_INTEL                            >(src, srcSize, retSize); break;
     case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE:                    getCap<CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE                    >(src, srcSize, retSize); break;
@@ -203,15 +191,10 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(param);
         break;
     }
-    case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
-        if (deviceInfo.nv12Extension)
-            getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(src, srcSize, retSize);
-        break;
-    case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
-        if (deviceInfo.nv12Extension)
-            getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
-        break;
     default:
+        if (deviceInfo.imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
+            break;
+        }
         DeviceHelper::getExtraDeviceInfo(getHardwareInfo(), paramName, param, src, srcSize, retSize);
     }
 
@@ -222,6 +205,61 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     }
 
     return retVal;
+}
+
+bool Device::getDeviceInfoForImage(cl_device_info paramName,
+                                   const void *&src,
+                                   size_t &srcSize,
+                                   size_t &retSize) {
+    switch (paramName) {
+    case CL_DEVICE_MAX_READ_IMAGE_ARGS:
+        getCap<CL_DEVICE_MAX_READ_IMAGE_ARGS>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS:
+        getCap<CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_MAX_WRITE_IMAGE_ARGS:
+        getCap<CL_DEVICE_MAX_WRITE_IMAGE_ARGS>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
+        getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE2D_MAX_WIDTH:
+        getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE3D_MAX_DEPTH:
+        getCap<CL_DEVICE_IMAGE3D_MAX_DEPTH>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE3D_MAX_HEIGHT:
+        getCap<CL_DEVICE_IMAGE3D_MAX_HEIGHT>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE3D_MAX_WIDTH:
+        getCap<CL_DEVICE_IMAGE3D_MAX_WIDTH>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT:
+        getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE:
+        getCap<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE:
+        getCap<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_IMAGE_PITCH_ALIGNMENT:
+        getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
+        if (deviceInfo.nv12Extension)
+            getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(src, srcSize, retSize);
+        break;
+    case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
+        if (deviceInfo.nv12Extension)
+            getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
+        break;
+    default:
+        return false;
+    }
+    return true;
 }
 
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {

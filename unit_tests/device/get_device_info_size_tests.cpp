@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,15 +53,6 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong)},
     {CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, sizeof(size_t)},
     //    {CL_DEVICE_IL_VERSION, sizeof(char[])},
-    {CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t)},
-    {CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t)},
-    {CL_DEVICE_IMAGE3D_MAX_DEPTH, sizeof(size_t)},
-    {CL_DEVICE_IMAGE3D_MAX_HEIGHT, sizeof(size_t)},
-    {CL_DEVICE_IMAGE3D_MAX_WIDTH, sizeof(size_t)},
-    {CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT, sizeof(cl_uint)},
-    {CL_DEVICE_IMAGE_MAX_ARRAY_SIZE, sizeof(size_t)},
-    {CL_DEVICE_IMAGE_MAX_BUFFER_SIZE, sizeof(size_t)},
-    {CL_DEVICE_IMAGE_PITCH_ALIGNMENT, sizeof(cl_uint)},
     {CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool)},
     {CL_DEVICE_LINKER_AVAILABLE, sizeof(cl_bool)},
     {CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong)},
@@ -77,13 +68,10 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_MAX_ON_DEVICE_QUEUES, sizeof(cl_uint)},
     {CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(size_t)},
     {CL_DEVICE_MAX_PIPE_ARGS, sizeof(cl_uint)},
-    {CL_DEVICE_MAX_READ_IMAGE_ARGS, sizeof(cl_uint)},
-    {CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS, sizeof(cl_uint)},
     {CL_DEVICE_MAX_SAMPLERS, sizeof(cl_uint)},
     {CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t)},
     {CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint)},
     {CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t[3])},
-    {CL_DEVICE_MAX_WRITE_IMAGE_ARGS, sizeof(cl_uint)},
     {CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(cl_uint)},
     //    {CL_DEVICE_NAME, sizeof(char[])},
     {CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, sizeof(cl_uint)},
@@ -137,6 +125,93 @@ INSTANTIATE_TEST_CASE_P(
     Device_,
     GetDeviceInfoSize,
     testing::ValuesIn(deviceInfoParams2));
+
+struct GetDeviceInfoForImage : public GetDeviceInfoSize {};
+
+TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    if (!device->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+    size_t sizeReturned = 0;
+    auto retVal = device->getDeviceInfo(
+        param.first,
+        0,
+        nullptr,
+        &sizeReturned);
+    if (CL_SUCCESS != retVal) {
+        ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param.first;
+    }
+    ASSERT_NE(0u, sizeReturned);
+    EXPECT_EQ(param.second, sizeReturned);
+}
+
+TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClInvalidValueIsReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    if (device->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+    size_t sizeReturned = 0;
+    auto retVal = device->getDeviceInfo(
+        param.first,
+        0,
+        nullptr,
+        &sizeReturned);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_P(GetDeviceInfoForImage, givenInfoImageParamsWhenCallGetDeviceInfoForImageThenSizeIsValidAndTrueReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    size_t srcSize = 0;
+    size_t retSize = 0;
+    const void *src = nullptr;
+    auto retVal = device->getDeviceInfoForImage(
+        param.first,
+        src,
+        srcSize,
+        retSize);
+    EXPECT_TRUE(retVal);
+    ASSERT_NE(0u, srcSize);
+    EXPECT_EQ(param.second, srcSize);
+    EXPECT_EQ(param.second, retSize);
+}
+
+TEST(GetDeviceInfoForImage, givenNotImageParamWhenCallGetDeviceInfoForImageThenSizeIsNotValidAndFalseReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    size_t srcSize = 0;
+    size_t retSize = 0;
+    const void *src = nullptr;
+    cl_device_info notImageParam = CL_DEVICE_ADDRESS_BITS;
+    size_t paramSize = sizeof(cl_uint);
+    auto retVal = device->getDeviceInfoForImage(
+        notImageParam,
+        src,
+        srcSize,
+        retSize);
+    EXPECT_FALSE(retVal);
+    EXPECT_EQ(0u, srcSize);
+    EXPECT_NE(paramSize, srcSize);
+    EXPECT_NE(paramSize, retSize);
+}
+std::pair<uint32_t, size_t> deviceInfoImageParams[] = {
+    {CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t)},
+    {CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t)},
+    {CL_DEVICE_IMAGE3D_MAX_DEPTH, sizeof(size_t)},
+    {CL_DEVICE_IMAGE3D_MAX_HEIGHT, sizeof(size_t)},
+    {CL_DEVICE_IMAGE3D_MAX_WIDTH, sizeof(size_t)},
+    {CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT, sizeof(cl_uint)},
+    {CL_DEVICE_IMAGE_MAX_ARRAY_SIZE, sizeof(size_t)},
+    {CL_DEVICE_IMAGE_MAX_BUFFER_SIZE, sizeof(size_t)},
+    {CL_DEVICE_IMAGE_PITCH_ALIGNMENT, sizeof(cl_uint)},
+    {CL_DEVICE_MAX_READ_IMAGE_ARGS, sizeof(cl_uint)},
+    {CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS, sizeof(cl_uint)},
+    {CL_DEVICE_MAX_WRITE_IMAGE_ARGS, sizeof(cl_uint)},
+};
+
+INSTANTIATE_TEST_CASE_P(
+    Device_,
+    GetDeviceInfoForImage,
+    testing::ValuesIn(deviceInfoImageParams));
 
 TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForDeviceVersionThenProperSizeIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

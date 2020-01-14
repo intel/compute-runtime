@@ -998,12 +998,14 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
                    "imageFormats", imageFormats,
                    "numImageFormats", numImageFormats);
     auto pContext = castToObject<Context>(context);
-    auto pPlatform = platform();
-    auto pDevice = pPlatform->getDevice(0);
-
     if (pContext) {
-        retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
-                                                    imageFormats, numImageFormats);
+        auto pDevice = pContext->getDevice(0);
+        if (pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
+                                                        imageFormats, numImageFormats);
+        } else {
+            retVal = CL_INVALID_VALUE;
+        }
     } else {
         retVal = CL_INVALID_CONTEXT;
     }

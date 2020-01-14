@@ -41,6 +41,11 @@ class Device : public BaseObject<_cl_device_id> {
                          void *paramValue,
                          size_t *paramValueSizeRet);
 
+    bool getDeviceInfoForImage(cl_device_info paramName,
+                               const void *&src,
+                               size_t &srcSize,
+                               size_t &retSize);
+
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info Param>
     void getCap(const void *&src,
