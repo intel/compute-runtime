@@ -140,10 +140,6 @@ if(${GENERATE_EXECUTABLE})
     set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST "opencl")
   endif()
 
-  if(TARGET ${GMM_TARGET_NAME})
-    add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMM_TARGET_NAME})
-  endif()
-
   if(NOT DISABLED_GTPIN_SUPPORT)
     macro(macro_for_each_gen)
       target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)

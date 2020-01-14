@@ -444,7 +444,6 @@ endif()
 
 macro(copy_gmm_dll_for target)
   if(NOT UNIX)
-    add_dependencies(${target} ${GMM_TARGET_NAME})
     add_custom_command(
       TARGET ${target}
       POST_BUILD
