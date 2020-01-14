@@ -39,7 +39,7 @@ class GmmHelper {
 
     GmmClientContext *getClientContext() const;
 
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *, decltype(&InitializeGmm), decltype(&GmmAdapterDestroy));
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *);
 
   protected:
     static uint32_t addressWidth;

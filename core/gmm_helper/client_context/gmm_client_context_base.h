@@ -25,8 +25,8 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static std::unique_ptr<GmmClientContext> create(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc) {
-        return std::make_unique<T>(osInterface, hwInfo, initFunc, destroyFunc);
+    static std::unique_ptr<GmmClientContext> create(OSInterface *osInterface, HardwareInfo *hwInfo) {
+        return std::make_unique<T>(osInterface, hwInfo);
     }
 
     const HardwareInfo *getHardwareInfo() {
@@ -39,7 +39,6 @@ class GmmClientContextBase {
   protected:
     HardwareInfo *hardwareInfo = nullptr;
     GMM_CLIENT_CONTEXT *clientContext;
-    GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc);
-    decltype(&GmmAdapterDestroy) destroyFunc;
+    GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo);
 };
 } // namespace NEO

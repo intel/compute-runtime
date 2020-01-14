@@ -14,7 +14,7 @@
 #include "runtime/os_interface/os_interface.h"
 
 namespace NEO {
-GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo, decltype(&InitializeGmm) initFunc, decltype(&GmmAdapterDestroy) destroyFunc) : hardwareInfo(hwInfo), destroyFunc(destroyFunc) {
+GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo) : hardwareInfo(hwInfo) {
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hwInfo->featureTable);
@@ -33,7 +33,7 @@ GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInf
         osInterface->setGmmInputArgs(&inArgs);
     }
 
-    auto ret = initFunc(&inArgs, &outArgs);
+    auto ret = InitializeGmm(&inArgs, &outArgs);
 
     UNRECOVERABLE_IF(ret != GMM_SUCCESS);
 
@@ -43,7 +43,7 @@ GmmClientContextBase::~GmmClientContextBase() {
     GMM_INIT_OUT_ARGS outArgs;
     outArgs.pGmmClientContext = clientContext;
 
-    destroyFunc(&outArgs);
+    GmmAdapterDestroy(&outArgs);
 };
 
 MEMORY_OBJECT_CONTROL_STATE GmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
