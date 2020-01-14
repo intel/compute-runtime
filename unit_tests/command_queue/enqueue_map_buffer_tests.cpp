@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ struct EnqueueMapBufferTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pDevice, 0);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         BufferDefaults::context = new MockContext;
 
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
@@ -266,7 +266,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWh
     cl_event mapEventReturned = nullptr;
     cl_event unmapEventReturned = nullptr;
     *pTagMemory = 0;
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pClDevice);
     size_t GWS = 1;
 
     struct E2Clb {
@@ -451,7 +451,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     cl_event eventReturned = nullptr;
     uint32_t tagHW = 0;
     *pTagMemory = tagHW;
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pClDevice);
     size_t GWS = 1;
 
     auto buffer = clCreateBuffer(
@@ -518,7 +518,7 @@ TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCal
     const auto bufferSize = 100;
     auto localSize = bufferSize;
     char misaligned[bufferSize] = {1};
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pClDevice);
     size_t GWS = 1;
 
     uintptr_t address = (uintptr_t)&misaligned[0];

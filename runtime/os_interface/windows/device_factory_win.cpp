@@ -53,8 +53,8 @@ void DeviceFactory::releaseDevices() {
     DeviceFactory::numDevices = 0;
 }
 
-void Device::appendOSExtensions(std::string &deviceExtensions) {
-    deviceExtensions += "cl_intel_simultaneous_sharing ";
+void ClDevice::initializeCaps() {
+    device.appendOSExtensions("cl_intel_simultaneous_sharing ");
 
     simultaneousInterops = {CL_GL_CONTEXT_KHR,
                             CL_WGL_HDC_KHR,
@@ -68,6 +68,7 @@ void Device::appendOSExtensions(std::string &deviceExtensions) {
                             CL_CONTEXT_D3D11_DEVICE_KHR,
                             0};
 }
+
 } // namespace NEO
 
 #endif

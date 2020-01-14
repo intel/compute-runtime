@@ -28,6 +28,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/platform/platform.h"
 
 #include "igfxfmid.h"
 
@@ -442,7 +443,7 @@ cl_int Image::validate(Context *context,
                        const ClSurfaceFormatInfo *surfaceFormat,
                        const cl_image_desc *imageDesc,
                        const void *hostPtr) {
-    auto pDevice = context->getDevice(0);
+    auto pClDevice = context->getDevice(0);
     size_t srcSize = 0;
     size_t retSize = 0;
     const size_t *maxWidth = nullptr;
@@ -456,15 +457,15 @@ cl_int Image::validate(Context *context,
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) {
-        pDevice->getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
-        pDevice->getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
+        pClDevice->getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
+        pClDevice->getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
         if (imageDesc->image_width > *maxWidth ||
             imageDesc->image_height > *maxHeight) {
             return CL_INVALID_IMAGE_SIZE;
         }
         if (parentBuffer) { // Image 2d from buffer
-            pDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
-            pDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
+            pClDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
+            pClDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
 
             const auto rowSize = imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : alignUp(imageDesc->image_width * surfaceFormat->surfaceFormat.NumChannels * surfaceFormat->surfaceFormat.PerChannelSizeInBytes, *pitchAlignment);
             const auto minimumBufferSize = imageDesc->image_height * rowSize;
@@ -538,7 +539,7 @@ cl_int Image::validatePlanarYUV(Context *context,
                                 const cl_image_desc *imageDesc,
                                 const void *hostPtr) {
     cl_int errorCode = CL_SUCCESS;
-    auto pDevice = context->getDevice(0);
+    auto pClDevice = context->getDevice(0);
     const size_t *maxWidth = nullptr;
     const size_t *maxHeight = nullptr;
     size_t srcSize = 0;
@@ -572,8 +573,8 @@ cl_int Image::validatePlanarYUV(Context *context,
             }
         }
 
-        pDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
-        pDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
+        pClDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
+        pClDevice->getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
         if (imageDesc->image_width > *maxWidth || imageDesc->image_height > *maxHeight) {
             errorCode = CL_INVALID_IMAGE_SIZE;
             break;

@@ -60,29 +60,41 @@ struct MockPlatformWithMockExecutionEnvironment : public Platform {
     }
 };
 
-TEST_F(PlatformTest, getDevices) {
-    size_t devNum = pPlatform->getNumDevices();
-    EXPECT_EQ(0u, devNum);
+TEST_F(PlatformTest, GivenUninitializedPlatformWhenInitializeIsCalledThenPlatformIsInitialized) {
+    EXPECT_FALSE(pPlatform->isInitialized());
 
-    Device *device = pPlatform->getDevice(0);
-    EXPECT_EQ(nullptr, device);
-
-    bool ret = pPlatform->initialize();
-    EXPECT_TRUE(ret);
-
+    EXPECT_TRUE(pPlatform->initialize());
     EXPECT_TRUE(pPlatform->isInitialized());
+}
 
-    devNum = pPlatform->getNumDevices();
-    EXPECT_EQ(numPlatformDevices, devNum);
+TEST_F(PlatformTest, WhenGetNumDevicesIsCalledThenExpectedValuesAreReturned) {
+    EXPECT_EQ(0u, pPlatform->getNumDevices());
 
-    device = pPlatform->getDevice(0);
-    EXPECT_NE(nullptr, device);
+    pPlatform->initialize();
 
-    device = pPlatform->getDevice(numPlatformDevices);
-    EXPECT_EQ(nullptr, device);
+    EXPECT_GT(pPlatform->getNumDevices(), 0u);
+}
 
-    auto allDevices = pPlatform->getDevices();
-    EXPECT_NE(nullptr, allDevices);
+TEST_F(PlatformTest, WhenGetDeviceIsCalledThenExpectedValuesAreReturned) {
+    EXPECT_EQ(nullptr, pPlatform->getDevice(0));
+    EXPECT_EQ(nullptr, pPlatform->getClDevice(0));
+
+    pPlatform->initialize();
+
+    EXPECT_NE(nullptr, pPlatform->getDevice(0));
+    EXPECT_NE(nullptr, pPlatform->getClDevice(0));
+
+    auto numDevices = pPlatform->getNumDevices();
+    EXPECT_EQ(nullptr, pPlatform->getDevice(numDevices));
+    EXPECT_EQ(nullptr, pPlatform->getClDevice(numDevices));
+}
+
+TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
+    EXPECT_EQ(nullptr, pPlatform->getClDevices());
+
+    pPlatform->initialize();
+
+    EXPECT_NE(nullptr, pPlatform->getClDevices());
 }
 
 TEST_F(PlatformTest, givenDebugFlagSetWhenInitializingPlatformThenOverrideGpuAddressSpace) {
@@ -362,12 +374,6 @@ TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetT
     EXPECT_NE(platform, nullptr);
     EXPECT_NE(platform2, nullptr);
     platformImpl.reset(nullptr);
-}
-
-TEST(PlatformConstructionTest, givenPlatformThatIsNotInitializedWhenGetDevicesIsCalledThenNullptrIsReturned) {
-    Platform platform;
-    auto devices = platform.getDevices();
-    EXPECT_EQ(nullptr, devices);
 }
 
 TEST(PlatformInitLoopTests, givenPlatformWhenInitLoopHelperIsCalledThenItDoesNothing) {

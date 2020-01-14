@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ struct TimestampPacketAubTests : public CommandEnqueueAUBFixture, public ::testi
 };
 
 HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolvedThenDecrementCounterOnGpu) {
-    MockContext context(&pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
     pCommandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     const size_t bufferSize = 1024;
@@ -70,7 +70,7 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
 }
 
 HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAllTimestamps) {
-    MockContext context(&pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
     const size_t bufferSize = 70;
     const size_t writeSize = bufferSize - 2;
     uint8_t writeData[writeSize] = {};

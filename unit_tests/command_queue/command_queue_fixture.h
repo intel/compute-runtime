@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,32 +16,32 @@ namespace NEO {
 class Device;
 
 struct CommandQueueHwFixture {
-    CommandQueue *createCommandQueue(Device *device) {
+    CommandQueue *createCommandQueue(ClDevice *device) {
         return createCommandQueue(device, cl_command_queue_properties{0});
     }
 
     CommandQueue *createCommandQueue(
-        Device *device,
+        ClDevice *device,
         cl_command_queue_properties properties);
 
     CommandQueue *createCommandQueue(
-        Device *device,
+        ClDevice *device,
         const cl_command_queue_properties *properties);
 
     virtual void SetUp();
-    virtual void SetUp(Device *_pDevice, cl_command_queue_properties properties);
+    virtual void SetUp(ClDevice *_pDevice, cl_command_queue_properties properties);
 
     virtual void TearDown();
 
     CommandQueue *pCmdQ = nullptr;
-    Device *device = nullptr;
+    ClDevice *device = nullptr;
     MockContext *context = nullptr;
 };
 
 struct OOQueueFixture : public CommandQueueHwFixture {
     typedef CommandQueueHwFixture BaseClass;
 
-    virtual void SetUp(Device *_pDevice, cl_command_queue_properties _properties) override {
+    virtual void SetUp(ClDevice *_pDevice, cl_command_queue_properties _properties) override {
         ASSERT_NE(nullptr, _pDevice);
         BaseClass::pCmdQ = BaseClass::createCommandQueue(_pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
         ASSERT_NE(nullptr, BaseClass::pCmdQ);
@@ -53,13 +53,13 @@ struct CommandQueueFixture {
 
     virtual void SetUp(
         Context *context,
-        Device *device,
+        ClDevice *device,
         cl_command_queue_properties properties);
     virtual void TearDown();
 
     CommandQueue *createCommandQueue(
         Context *context,
-        Device *device,
+        ClDevice *device,
         cl_command_queue_properties properties);
 
     CommandQueue *pCmdQ;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -574,7 +574,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentSliceCountSetti
 
 struct SubmissionsAggregatorTests : public ::testing::Test {
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         context.reset(new MockContext(device.get()));
     }
 
@@ -583,7 +583,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
         newCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     }
 
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
 };
 

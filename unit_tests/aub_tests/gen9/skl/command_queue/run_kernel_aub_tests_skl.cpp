@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
-    cl_device_id device = pDevice;
+    cl_device_id device = pClDevice;
     retVal = pProgram->build(
         1,
         &device,
@@ -171,7 +171,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
 
     // Create a second command queue (beyond the default one)
     CommandQueue *pCmdQ2 = nullptr;
-    pCmdQ2 = createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    pCmdQ2 = createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     ASSERT_NE(nullptr, pCmdQ2);
 
     auto &csr = pCmdQ2->getGpgpuCommandStreamReceiver();
@@ -269,7 +269,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
-    cl_device_id device = pDevice;
+    cl_device_id device = pClDevice;
 
     retVal = pProgram->build(
         1,

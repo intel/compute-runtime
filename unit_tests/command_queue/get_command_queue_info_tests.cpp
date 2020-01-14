@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,9 +27,9 @@ struct GetCommandQueueInfoTest : public DeviceFixture,
         properties = GetParam();
         DeviceFixture::SetUp();
 
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
-        CommandQueueFixture::SetUp(pContext, pDevice, properties);
+        CommandQueueFixture::SetUp(pContext, pClDevice, properties);
     }
 
     void TearDown() override {
@@ -55,7 +55,7 @@ TEST_P(GetCommandQueueInfoTest, CONTEXT) {
 }
 
 TEST_P(GetCommandQueueInfoTest, DEVICE) {
-    cl_device_id device_expected = pDevice;
+    cl_device_id device_expected = pClDevice;
     cl_device_id device_id_returned = nullptr;
 
     auto retVal = pCmdQ->getCommandQueueInfo(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class MigrateMemObjectsFixture
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pDevice, 0);
+        CommandQueueHwFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
     }
 

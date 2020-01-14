@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
         invalidContent2.get()[offset + itemOffset] = pTestItemWrong2[itemOffset];
     }
 
-    MockContext context(&this->pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
     cl_int retVal = CL_INVALID_VALUE;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(

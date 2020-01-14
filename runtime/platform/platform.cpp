@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,8 @@ Platform *constructPlatform() {
 }
 
 Platform::Platform() {
-    devices.reserve(4);
+    clDevices.reserve(4);
+    clDeviceMap.reserve(20);
     setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(new AsyncEventsHandler()));
     executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->incRefInternal();
@@ -58,9 +59,9 @@ Platform::Platform() {
 
 Platform::~Platform() {
     asyncEventsHandler->closeThread();
-    for (auto dev : this->devices) {
-        if (dev) {
-            dev->decRefInternal();
+    for (auto clDevice : this->clDevices) {
+        if (clDevice) {
+            clDevice->decRefInternal();
         }
     }
 
@@ -79,7 +80,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
 
     switch (paramName) {
     case CL_PLATFORM_HOST_TIMER_RESOLUTION:
-        pVal = static_cast<uint64_t>(this->devices[0]->getPlatformHostTimerResolution());
+        pVal = static_cast<uint64_t>(this->clDevices[0]->getPlatformHostTimerResolution());
         paramSize = sizeof(uint64_t);
         retVal = ::getInfo(paramValue, paramValueSize, &pVal, paramSize);
         break;
@@ -152,12 +153,18 @@ bool Platform::initialize() {
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
 
-    this->devices.resize(numDevicesReturned);
+    this->clDevices.resize(numDevicesReturned);
     for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
         auto pDevice = createRootDevice(deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
+        ClDevice *pClDevice = nullptr;
         if (pDevice) {
-            this->devices[deviceOrdinal] = pDevice;
+            pClDevice = new ClDevice{*pDevice};
+        }
+        DEBUG_BREAK_IF(!pClDevice);
+        if (pClDevice) {
+            this->clDevices[deviceOrdinal] = pClDevice;
+            this->clDeviceMap.emplace(pDevice, pClDevice);
 
             this->platformInfo->extensions = pDevice->getDeviceInfo().deviceExtensions;
 
@@ -182,19 +189,19 @@ bool Platform::initialize() {
     auto hwInfo = executionEnvironment->getHardwareInfo();
 
     const bool sourceLevelDebuggerActive = executionEnvironment->sourceLevelDebugger && executionEnvironment->sourceLevelDebugger->isDebuggerActive();
-    if (devices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
-        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, devices[0]->isSourceLevelDebuggerActive());
-        initSipKernel(sipType, *devices[0]);
+    if (clDevices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
+        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, clDevices[0]->isSourceLevelDebuggerActive());
+        initSipKernel(sipType, *clDevices[0]);
     }
 
-    CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
+    CommandStreamReceiverType csrType = this->clDevices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
         auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initAubCenter(enableLocalMemory, "aubfile", csrType);
     }
 
     this->fillGlobalDispatchTable();
-    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleRootDevices.get() > 1 && !this->devices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
+    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleRootDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
 }
@@ -212,14 +219,27 @@ bool Platform::isInitialized() {
 Device *Platform::getDevice(size_t deviceOrdinal) {
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
 
-    if (this->state != StateInited || deviceOrdinal >= devices.size()) {
+    if (this->state != StateInited || deviceOrdinal >= clDevices.size()) {
         return nullptr;
     }
 
-    auto pDevice = devices[deviceOrdinal];
+    auto pDevice = &clDevices[deviceOrdinal]->getDevice();
     DEBUG_BREAK_IF(pDevice == nullptr);
 
     return pDevice;
+}
+
+ClDevice *Platform::getClDevice(size_t deviceOrdinal) {
+    TakeOwnershipWrapper<Platform> platformOwnership(*this);
+
+    if (this->state != StateInited || deviceOrdinal >= clDevices.size()) {
+        return nullptr;
+    }
+
+    auto pClDevice = clDevices[deviceOrdinal];
+    DEBUG_BREAK_IF(pClDevice == nullptr);
+
+    return pClDevice;
 }
 
 size_t Platform::getNumDevices() const {
@@ -229,17 +249,17 @@ size_t Platform::getNumDevices() const {
         return 0;
     }
 
-    return devices.size();
+    return clDevices.size();
 }
 
-Device **Platform::getDevices() {
+ClDevice **Platform::getClDevices() {
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
 
     if (this->state != StateInited) {
         return nullptr;
     }
 
-    return devices.data();
+    return clDevices.data();
 }
 
 const PlatformInfo &Platform::getPlatformInfo() const {

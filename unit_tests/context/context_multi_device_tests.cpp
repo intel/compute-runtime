@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,18 +16,18 @@ using namespace NEO;
 
 TEST(ContextMultiDevice, singleDevice) {
     cl_device_id devices[] = {
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)}};
     auto numDevices = static_cast<cl_uint>(arrayCount(devices));
 
     auto retVal = CL_SUCCESS;
-    auto pContext = Context::create<Context>(nullptr, DeviceVector(devices, numDevices),
+    auto pContext = Context::create<Context>(nullptr, ClDeviceVector(devices, numDevices),
                                              nullptr, nullptr, retVal);
     ASSERT_NE(nullptr, pContext);
 
     auto numDevicesReturned = pContext->getNumDevices();
     EXPECT_EQ(numDevices, numDevicesReturned);
 
-    DeviceVector ctxDevices;
+    ClDeviceVector ctxDevices;
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
         ctxDevices.push_back(pContext->getDevice(deviceOrdinal));
     }
@@ -35,7 +35,7 @@ TEST(ContextMultiDevice, singleDevice) {
     delete pContext;
 
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = (Device *)devices[deviceOrdinal];
+        auto pDevice = (ClDevice *)devices[deviceOrdinal];
         ASSERT_NE(nullptr, pDevice);
 
         EXPECT_EQ(pDevice, ctxDevices[deviceOrdinal]);
@@ -45,26 +45,26 @@ TEST(ContextMultiDevice, singleDevice) {
 
 TEST(ContextMultiDevice, eightDevices) {
     cl_device_id devices[] = {
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
-        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
+        new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)}};
     auto numDevices = static_cast<cl_uint>(arrayCount(devices));
     ASSERT_EQ(8u, numDevices);
 
     auto retVal = CL_SUCCESS;
-    auto pContext = Context::create<Context>(nullptr, DeviceVector(devices, numDevices),
+    auto pContext = Context::create<Context>(nullptr, ClDeviceVector(devices, numDevices),
                                              nullptr, nullptr, retVal);
     ASSERT_NE(nullptr, pContext);
 
     auto numDevicesReturned = pContext->getNumDevices();
     EXPECT_EQ(numDevices, numDevicesReturned);
 
-    DeviceVector ctxDevices;
+    ClDeviceVector ctxDevices;
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
         ctxDevices.push_back(pContext->getDevice(deviceOrdinal));
     }
@@ -72,7 +72,7 @@ TEST(ContextMultiDevice, eightDevices) {
     delete pContext;
 
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = (Device *)devices[deviceOrdinal];
+        auto pDevice = (ClDevice *)devices[deviceOrdinal];
         ASSERT_NE(nullptr, pDevice);
 
         EXPECT_EQ(pDevice, ctxDevices[deviceOrdinal]);

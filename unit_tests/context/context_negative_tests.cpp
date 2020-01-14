@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,12 +22,12 @@ using namespace NEO;
 typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, failedAllocationInjection) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 
     InjectedFunction method = [deviceID](size_t failureIndex) {
         auto retVal = CL_INVALID_VALUE;
-        auto context = Context::create<Context>(nullptr, DeviceVector(&deviceID, 1), nullptr,
+        auto context = Context::create<Context>(nullptr, ClDeviceVector(&deviceID, 1), nullptr,
                                                 nullptr, retVal);
 
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
@@ -45,7 +45,7 @@ TEST_F(ContextFailureInjection, failedAllocationInjection) {
 }
 
 TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenErrorIsReturned) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
     auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
@@ -54,14 +54,14 @@ TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenE
     cl_context_properties invalidProperties2[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], (cl_context_properties)0xdeadbeef, 0x10000, 0};
 
     cl_int retVal = 0;
-    auto context = Context::create<Context>(invalidProperties, DeviceVector(&deviceID, 1), nullptr,
+    auto context = Context::create<Context>(invalidProperties, ClDeviceVector(&deviceID, 1), nullptr,
                                             nullptr, retVal);
 
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
     EXPECT_EQ(nullptr, context);
     delete context;
 
-    context = Context::create<Context>(invalidProperties2, DeviceVector(&deviceID, 1), nullptr,
+    context = Context::create<Context>(invalidProperties2, ClDeviceVector(&deviceID, 1), nullptr,
                                        nullptr, retVal);
 
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);

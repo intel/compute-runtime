@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ SipKernelType calledType = SipKernelType::COUNT;
 bool called = false;
 } // namespace MockSipData
 
-const SipKernel &initSipKernel(SipKernelType type, Device &device) {
+const SipKernel &initSipKernel(SipKernelType type, ClDevice &device) {
     MockSipData::calledType = type;
     MockSipData::mockSipKernel->type = type;
     MockSipData::called = true;

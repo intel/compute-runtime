@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,15 +67,15 @@ struct KernelSLMAndBarrierTest : public DeviceFixture,
 static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
-    ASSERT_NE(nullptr, pDevice);
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    ASSERT_NE(nullptr, pClDevice);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     // define kernel info
     executionEnvironment.HasBarriers = 1;
     kernelInfo.workloadInfo.slmStaticSize = GetParam() * KB;
 
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // After creating Mock Kernel now create Indirect Heap

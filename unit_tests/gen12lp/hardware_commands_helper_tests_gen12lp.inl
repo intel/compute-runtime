@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ TGLLPTEST_F(HardwareCommandsGen12LpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroun
     for (auto stepping : steppings) {
 
         hwInfo.platform.usRevId = stepping;
-        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         MockKernelWithInternals mockKernelWithInternals{*device};
         mockKernelWithInternals.kernelInfo.patchInfo.threadPayload = &threadPayload;
 

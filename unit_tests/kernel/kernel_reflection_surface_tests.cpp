@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -606,7 +606,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
 }
 
 TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNonParentKernelDoesNotCreateReflectionSurface) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);
@@ -624,7 +624,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceDispatchScheduler.set(true);
 
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);
@@ -640,7 +640,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
     MockContext context;
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
@@ -691,7 +691,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
     MockContext context;
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockProgram program(*device->getExecutionEnvironment());
 
     KernelInfo *blockInfo = new KernelInfo;
@@ -1958,7 +1958,7 @@ class ReflectionSurfaceConstantValuesPatchingTest : public DeviceFixture,
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramGlobalMemoryAddressIsPatched) {
 
-    MockContext context(pDevice);
+    MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
     // graphicsMemory is released by Program
@@ -1992,7 +1992,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAndProgramWithoutGlobalMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
-    MockContext context(pDevice);
+    MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
     if (parentKernel->mockProgram->getGlobalSurface()) {
@@ -2025,7 +2025,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramConstantMemoryAddressIsPatched) {
 
-    MockContext context(pDevice);
+    MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
     // graphicsMemory is released by Program
@@ -2068,7 +2068,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryAndProgramWithoutConstantMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
-    MockContext context(pDevice);
+    MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
     if (parentKernel->mockProgram->getConstantSurface()) {

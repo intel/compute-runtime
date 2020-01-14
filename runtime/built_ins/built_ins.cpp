@@ -47,7 +47,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     auto initializeSchedulerProgramAndKernel = [&] {
         cl_int retVal = CL_SUCCESS;
 
-        auto src = context.getDevice(0)->getExecutionEnvironment()->getBuiltIns()->builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
+        auto src = context.getDevice(0)->getExecutionEnvironment()->getBuiltIns()->builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, context.getDevice(0)->getDevice());
 
         auto program = Program::createFromGenBinary(*context.getDevice(0)->getExecutionEnvironment(),
                                                     &context,
@@ -179,9 +179,8 @@ Program *BuiltIns::createBuiltInProgram(
             &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
             &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
-        const cl_device_id clDevice = &device;
         errcodeRet = pBuiltInProgram->build(
-            clDevice,
+            &device,
             mediaKernelsBuildOptions,
             enableCacheing,
             builtinsBuilders);

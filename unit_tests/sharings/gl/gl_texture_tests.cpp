@@ -58,7 +58,7 @@ class GlSharingTextureTests : public ::testing::Test {
 
         tempMM = new TempMM(*executionEnvironment);
         executionEnvironment->memoryManager.reset(tempMM);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
         clContext = std::make_unique<MockContext>(device.get());
 
         mockGlSharingFunctions = glSharing->sharingFunctions.release();
@@ -80,7 +80,7 @@ class GlSharingTextureTests : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment;
     cl_image_desc imgDesc;
     TempMM *tempMM;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> clContext;
     std::unique_ptr<MockGlSharing> glSharing = std::make_unique<MockGlSharing>();
     GlSharingFunctionsMock *mockGlSharingFunctions;

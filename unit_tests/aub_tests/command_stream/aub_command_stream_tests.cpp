@@ -29,7 +29,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
     void SetUp() {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pDevice, 0);
+        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
         AUBCommandStreamFixture::SetUp(pCmdQ);
     }
 

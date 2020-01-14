@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ TEST_P(VerboseLevelTest, GivenVerboseLevelWhenProvidedHintLevelIsSameOrAllThenCa
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, (cl_context_properties)diagnosticsLevel, 0};
     retVal = CL_SUCCESS;
 
-    auto context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
@@ -66,7 +66,7 @@ TEST_P(VerboseLevelTest, GivenVerboseLevelAllWhenAnyHintIsProvidedThenCallbackFu
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
     retVal = CL_SUCCESS;
 
-    auto context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 
@@ -110,7 +110,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenC
     if (profilingEnabled) {
         properties = CL_QUEUE_PROFILING_ENABLE;
     }
-    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    cmdQ = clCreateCommandQueue(context, clDevice, properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -135,7 +135,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPre
         properties[0] = CL_QUEUE_PROPERTIES;
         properties[1] = CL_QUEUE_PROFILING_ENABLE;
     }
-    cmdQ = clCreateCommandQueueWithProperties(context, device, properties, &retVal);
+    cmdQ = clCreateCommandQueueWithProperties(context, clDevice, properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -242,7 +242,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableCompute
 
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeNDIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -251,7 +251,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -261,7 +261,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -270,7 +270,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -280,7 +280,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -290,7 +290,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -298,7 +298,7 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -308,7 +308,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -318,7 +318,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
@@ -347,10 +347,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticValueWhenContextIsCreatedT
     auto hintLevel = 1;
     DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
 
-    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
     EXPECT_TRUE(!!context->isProvidingPerformanceHints());
     auto driverDiagnostics = context->driverDiagnostics;
@@ -364,10 +364,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintI
     auto hintLevel = 255;
     DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
 
-    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
     testing::internal::CaptureStdout();
     auto buffer = Buffer::create(
@@ -390,10 +390,10 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
     auto hintLevel = 8;
     DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
 
-    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
     testing::internal::CaptureStdout();
     auto buffer = Buffer::create(
@@ -415,11 +415,11 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenConte
     auto hintLevel = 1;
     DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
     auto retValue = CL_SUCCESS;
-    auto context = Context::create<MockContext>(validProperties, DeviceVector(&clDevice, 1), callbackFunction, (void *)userData, retVal);
+    auto context = Context::create<MockContext>(validProperties, ClDeviceVector(&clDevice, 1), callbackFunction, (void *)userData, retVal);
     EXPECT_EQ(CL_SUCCESS, retValue);
     auto driverDiagnostics = context->driverDiagnostics;
     ASSERT_NE(nullptr, driverDiagnostics);
@@ -433,7 +433,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     MockBuffer buffer;
     cl_mem clMem = &buffer;
@@ -463,12 +463,12 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = static_cast<cl_device_id>(device.get());
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = device.get();
     size_t size = 8192u;
 
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     context->isSharedContext = false;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags((1 << 21), 0, 0), (1 << 21), 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
@@ -486,14 +486,14 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = static_cast<cl_device_id>(device.get());
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = device.get();
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE, 0, 0);
 
     size_t size = 0u;
 
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     std::unique_ptr<Buffer> buffer;
     bool isCompressed = true;
     if (context->getMemoryManager()) {
@@ -519,11 +519,11 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = static_cast<cl_device_id>(device.get());
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = device.get();
 
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
 
     const size_t width = 5;
     const size_t height = 3;
@@ -582,11 +582,11 @@ TEST_F(PerformanceHintTest, givenImageWithNoGmmWhenItsCreatedThenNoPerformanceHi
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = static_cast<cl_device_id>(device.get());
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = device.get();
 
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
 
     const size_t width = 5;
     const size_t height = 3;
@@ -639,11 +639,11 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    cl_device_id deviceId = static_cast<cl_device_id>(device.get());
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id deviceId = device.get();
 
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
 
     const size_t width = 5;
     const size_t height = 3;
@@ -700,7 +700,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     auto size = zeroSized ? 0 : 1024;
     MockKernelWithInternals mockKernel(*pDevice, context);
     SPatchMediaVFEState mediaVFEstate;
@@ -719,7 +719,7 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
 
-    auto pDevice = castToObject<Device>(devices[0]);
+    auto pDevice = castToObject<ClDevice>(devices[0]);
     auto size = zeroSized ? 0 : 1024;
     MockKernelWithInternals mockKernel(*pDevice, context);
     SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;
@@ -798,7 +798,7 @@ TEST(PerformanceHintsTransferTest, givenCommandTypeAndMemoryTransferRequiredWhen
 TEST_F(DriverDiagnosticsTest, givenInvalidCommandTypeWhenAskingForZeroCopyOperatonThenAbort) {
     cl_device_id deviceId = devices[0];
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(validProperties, DeviceVector(&deviceId, 1),
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(validProperties, ClDeviceVector(&deviceId, 1),
                                                                              callbackFunction, (void *)userData, retVal));
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));

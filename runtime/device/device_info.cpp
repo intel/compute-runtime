@@ -20,53 +20,50 @@ using DeviceInfoTable::Map;
 namespace NEO {
 
 template <cl_device_info Param>
-inline void Device::getStr(const void *&src,
-                           size_t &size,
-                           size_t &retSize) {
-    src = Map<Param>::getValue(deviceInfo);
-    retSize = size = strlen(Map<Param>::getValue(deviceInfo)) + 1;
+inline void ClDevice::getStr(const void *&src,
+                             size_t &size,
+                             size_t &retSize) {
+    src = Map<Param>::getValue(device.getDeviceInfo());
+    retSize = size = strlen(Map<Param>::getValue(device.getDeviceInfo())) + 1;
 }
 
 template <>
-inline void Device::getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES>(const void *&src,
-                                                          size_t &size,
-                                                          size_t &retSize) {
-    src = deviceInfo.maxWorkItemSizes;
-    retSize = size = sizeof(deviceInfo.maxWorkItemSizes);
+inline void ClDevice::getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES>(const void *&src,
+                                                            size_t &size,
+                                                            size_t &retSize) {
+    src = device.getDeviceInfo().maxWorkItemSizes;
+    retSize = size = sizeof(device.getDeviceInfo().maxWorkItemSizes);
 }
 
 template <>
-inline void Device::getCap<CL_DEVICE_PARTITION_PROPERTIES>(const void *&src,
-                                                           size_t &size,
-                                                           size_t &retSize) {
+inline void ClDevice::getCap<CL_DEVICE_PARTITION_PROPERTIES>(const void *&src,
+                                                             size_t &size,
+                                                             size_t &retSize) {
     static cl_device_partition_property property = 0;
     src = &property;
     retSize = size = sizeof(cl_device_partition_property *);
 }
 
 template <>
-inline void Device::getCap<CL_DEVICE_PLATFORM>(const void *&src,
-                                               size_t &size,
-                                               size_t &retSize) {
-    // This isn't referenced externally but because we're passing a pointer to a pointer,
-    // we need a persistent location
-    static cl_platform_id pPlatform = platform();
-    src = &pPlatform;
+inline void ClDevice::getCap<CL_DEVICE_PLATFORM>(const void *&src,
+                                                 size_t &size,
+                                                 size_t &retSize) {
+    src = &platformId;
     retSize = size = sizeof(cl_platform_id);
 }
 
 template <>
-inline void Device::getCap<CL_DEVICE_SUB_GROUP_SIZES_INTEL>(const void *&src,
-                                                            size_t &size,
-                                                            size_t &retSize) {
-    src = deviceInfo.maxSubGroups;
-    retSize = size = sizeof(deviceInfo.maxSubGroups);
+inline void ClDevice::getCap<CL_DEVICE_SUB_GROUP_SIZES_INTEL>(const void *&src,
+                                                              size_t &size,
+                                                              size_t &retSize) {
+    src = device.getDeviceInfo().maxSubGroups;
+    retSize = size = sizeof(device.getDeviceInfo().maxSubGroups);
 }
 
-cl_int Device::getDeviceInfo(cl_device_info paramName,
-                             size_t paramValueSize,
-                             void *paramValue,
-                             size_t *paramValueSizeRet) {
+cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
+                               size_t paramValueSize,
+                               void *paramValue,
+                               size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_VALUE;
     size_t srcSize = 0;
     size_t retSize = 0;
@@ -192,10 +189,10 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
         break;
     }
     default:
-        if (deviceInfo.imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
+        if (device.getDeviceInfo().imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
             break;
         }
-        DeviceHelper::getExtraDeviceInfo(getHardwareInfo(), paramName, param, src, srcSize, retSize);
+        DeviceHelper::getExtraDeviceInfo(device.getHardwareInfo(), paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
@@ -207,10 +204,10 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     return retVal;
 }
 
-bool Device::getDeviceInfoForImage(cl_device_info paramName,
-                                   const void *&src,
-                                   size_t &srcSize,
-                                   size_t &retSize) {
+bool ClDevice::getDeviceInfoForImage(cl_device_info paramName,
+                                     const void *&src,
+                                     size_t &srcSize,
+                                     size_t &retSize) {
     switch (paramName) {
     case CL_DEVICE_MAX_READ_IMAGE_ARGS:
         getCap<CL_DEVICE_MAX_READ_IMAGE_ARGS>(src, srcSize, retSize);
@@ -249,11 +246,11 @@ bool Device::getDeviceInfoForImage(cl_device_info paramName,
         getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(src, srcSize, retSize);
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
-        if (deviceInfo.nv12Extension)
+        if (getDeviceInfo().nv12Extension)
             getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(src, srcSize, retSize);
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
-        if (deviceInfo.nv12Extension)
+        if (getDeviceInfo().nv12Extension)
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
         break;
     default:

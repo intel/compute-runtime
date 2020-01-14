@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class CreateImage3DTest : public DeviceFixture,
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
 
         // clang-format off
         imageFormat.image_channel_data_type = CL_UNORM_INT8;

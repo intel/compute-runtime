@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct WriteBufferHw
 typedef WriteBufferHw AUBWriteBuffer;
 
 HWTEST_P(AUBWriteBuffer, simple) {
-    MockContext context(&this->pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
 
     cl_float *srcMemory = new float[1024];
     cl_float *destMemory = new float[1024];
@@ -124,7 +124,7 @@ struct AUBWriteBufferUnaligned
 
     template <typename FamilyType>
     void testWriteBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(&pCmdQ->getDevice());
+        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const auto bufferSize = sizeof(srcMemory);

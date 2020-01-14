@@ -191,7 +191,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
 TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv12IsReturned) {
     size_t paramRetSize = 0;
 
-    Device *pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    ClDevice *pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
     if (pDevice->getSupportedClVersion() < 21)
         return;

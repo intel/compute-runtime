@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
   protected:
     void SetUp() {
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
@@ -56,7 +56,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
@@ -270,7 +270,7 @@ HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
         {
             void *addressToPatch = svmAlloc.getUnderlyingBuffer();
             size_t sizeToPatch = svmAlloc.getUnderlyingBufferSize();
-            Buffer::setSurfaceState(pDevice, &expectedSurfaceState, sizeToPatch, addressToPatch, &svmAlloc);
+            Buffer::setSurfaceState(pClDevice, &expectedSurfaceState, sizeToPatch, addressToPatch, &svmAlloc);
         }
 
         // verify ssh was properly patched
@@ -376,7 +376,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr size_t rendSurfSize = sizeof(RENDER_SURFACE_STATE);
 
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     uint32_t svmSize = MemoryConstants::pageSize;
     char *svmPtr = reinterpret_cast<char *>(alignedMalloc(svmSize, MemoryConstants::pageSize));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ bool isExtraToken(const cl_queue_properties *property) {
     return false;
 }
 
-bool verifyExtraTokens(Device *&device, Context &context, const cl_queue_properties *properties) {
+bool verifyExtraTokens(ClDevice *&device, Context &context, const cl_queue_properties *properties) {
     return true;
 }
 

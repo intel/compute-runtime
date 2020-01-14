@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,10 @@ struct ProgramFromPatchtokens;
 
 class BlockKernelManager;
 class BuiltinDispatchInfoBuilder;
+class ClDevice;
 class Context;
 class CompilerInterface;
+class Device;
 class ExecutionEnvironment;
 struct KernelInfo;
 template <>
@@ -88,6 +90,14 @@ class Program : public BaseObject<_cl_program> {
     static T *create(
         const char *nullTerminatedString,
         Context *context,
+        ClDevice &device,
+        bool isBuiltIn,
+        cl_int *errcodeRet);
+
+    template <typename T = Program>
+    static T *create(
+        const char *nullTerminatedString,
+        Context *context,
         Device &device,
         bool isBuiltIn,
         cl_int *errcodeRet);
@@ -117,7 +127,7 @@ class Program : public BaseObject<_cl_program> {
                  void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                  void *userData, bool enableCaching);
 
-    cl_int build(const cl_device_id device, const char *buildOptions, bool enableCaching,
+    cl_int build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
     MOCKABLE_VIRTUAL cl_int processGenBinary();
@@ -161,12 +171,12 @@ class Program : public BaseObject<_cl_program> {
         return executionEnvironment;
     }
 
-    const Device &getDevice(cl_uint deviceOrdinal) const {
+    const ClDevice &getDevice(cl_uint deviceOrdinal) const {
         UNRECOVERABLE_IF(pDevice == nullptr);
         return *pDevice;
     }
 
-    void setDevice(Device *device) { this->pDevice = device; }
+    void setDevice(Device *device);
 
     MOCKABLE_VIRTUAL cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion);
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
@@ -175,9 +185,9 @@ class Program : public BaseObject<_cl_program> {
 
     void processDebugData();
 
-    void updateBuildLog(const Device *pDevice, const char *pErrorString, const size_t errorStringSize);
+    void updateBuildLog(const ClDevice *pDevice, const char *pErrorString, const size_t errorStringSize);
 
-    const char *getBuildLog(const Device *pDevice) const;
+    const char *getBuildLog(const ClDevice *pDevice) const;
 
     cl_uint getProgramBinaryType() const {
         return programBinaryType;
@@ -327,7 +337,7 @@ class Program : public BaseObject<_cl_program> {
     std::unique_ptr<LinkerInput> linkerInput;
     Linker::RelocatedSymbolsMap symbols;
 
-    std::map<const Device *, std::string> buildLog;
+    std::map<const ClDevice *, std::string> buildLog;
 
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
@@ -337,13 +347,13 @@ class Program : public BaseObject<_cl_program> {
     BlockKernelManager *blockKernelManager;
     ExecutionEnvironment &executionEnvironment;
     Context *context;
-    Device *pDevice;
+    ClDevice *pDevice;
     cl_uint numDevices;
 
     bool isBuiltIn;
     bool kernelDebugEnabled = false;
 };
 
-GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *device, size_t size, bool constant, bool globalsAreExported, const void *initData);
+GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::ClDevice *device, size_t size, bool constant, bool globalsAreExported, const void *initData);
 
 } // namespace NEO

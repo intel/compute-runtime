@@ -18,6 +18,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/platform/platform.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/kernel_info.h"
 
@@ -204,7 +205,7 @@ cl_int Program::rebuildProgramFromIr() {
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions);
 
     TranslationOutput compilerOuput = {};
-    auto err = pCompilerInterface->link(*this->pDevice, inputArgs, compilerOuput);
+    auto err = pCompilerInterface->link(this->pDevice->getDevice(), inputArgs, compilerOuput);
     this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
     this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
     if (TranslationOutput::ErrorCode::Success != err) {
@@ -243,7 +244,7 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
         }
 
         SpecConstantInfo specConstInfo;
-        auto retVal = pCompilerInterface->getSpecConstantsInfo(this->getDevice(0), ArrayRef<const char>(sourceCode), specConstInfo);
+        auto retVal = pCompilerInterface->getSpecConstantsInfo(this->getDevice(0).getDevice(), ArrayRef<const char>(sourceCode), specConstInfo);
 
         if (retVal != TranslationOutput::ErrorCode::Success) {
             return CL_INVALID_VALUE;
@@ -285,6 +286,10 @@ bool Program::isValidLlvmBinary(
     return retVal;
 }
 
+void Program::setDevice(Device *device) {
+    this->pDevice = platform()->clDeviceMap[device];
+}
+
 cl_int Program::getSource(std::string &binary) const {
     cl_int retVal = CL_INVALID_PROGRAM;
     binary = {};
@@ -295,7 +300,7 @@ cl_int Program::getSource(std::string &binary) const {
     return retVal;
 }
 
-void Program::updateBuildLog(const Device *pDevice, const char *pErrorString,
+void Program::updateBuildLog(const ClDevice *pDevice, const char *pErrorString,
                              size_t errorStringSize) {
     if ((pErrorString == nullptr) || (errorStringSize == 0) || (pErrorString[0] == '\0')) {
         return;
@@ -316,7 +321,7 @@ void Program::updateBuildLog(const Device *pDevice, const char *pErrorString,
     buildLog[pDevice].append(pErrorString, pErrorString + errorStringSize);
 }
 
-const char *Program::getBuildLog(const Device *pDevice) const {
+const char *Program::getBuildLog(const ClDevice *pDevice) const {
     const char *entry = nullptr;
 
     auto it = buildLog.find(pDevice);

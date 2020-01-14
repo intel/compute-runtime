@@ -70,7 +70,7 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
     if (status != CL_SUCCESS) {
         status = CL_INVALID_PLATFORM;
     } else {
-        cl_device_id device = pPlatform->getDevice(0);
+        cl_device_id device = pPlatform->getClDevice(0);
         GetInfoHelper::set(devices, device);
         GetInfoHelper::set(numDevices, 1u);
     }

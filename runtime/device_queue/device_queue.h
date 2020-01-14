@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "runtime/helpers/base_object.h"
 
 namespace NEO {
+class ClDevice;
 class CommandQueue;
 class Context;
 class Device;
@@ -40,10 +41,10 @@ class DeviceQueue : public BaseObject<_device_queue> {
         }
         offsetDsh = 0;
     }
-    DeviceQueue(Context *context, Device *device, cl_queue_properties &properties);
+    DeviceQueue(Context *context, ClDevice *device, cl_queue_properties &properties);
     ~DeviceQueue() override;
 
-    Device &getDevice() { return *device; }
+    Device &getDevice();
     Context &getContext() { return *context; }
     cl_uint getQueueSize() { return queueSize; }
     cl_command_queue_properties getCommandQueueProperties() const { return commandQueueProperties; }
@@ -60,7 +61,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     }
 
     static DeviceQueue *create(Context *context,
-                               Device *device,
+                               ClDevice *device,
                                const cl_queue_properties &properties,
                                cl_int &errcodeRet);
 
@@ -111,7 +112,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     void initDeviceQueue();
 
     Context *context = nullptr;
-    Device *device = nullptr;
+    ClDevice *device = nullptr;
     cl_command_queue_properties commandQueueProperties = 0;
     cl_uint queueSize = 0;
 
@@ -130,5 +131,5 @@ class DeviceQueue : public BaseObject<_device_queue> {
 };
 
 typedef DeviceQueue *(*DeviceQueueCreateFunc)(
-    Context *context, Device *device, cl_queue_properties &properties);
+    Context *context, ClDevice *device, cl_queue_properties &properties);
 } // namespace NEO

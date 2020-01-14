@@ -345,7 +345,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     }
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
-        info.set<cl_device_id>(::platform()->getDevice(0));
+        info.set<cl_device_id>(::platform()->getClDevice(0));
         return retVal;
     }
 

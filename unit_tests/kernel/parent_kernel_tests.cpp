@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class MockKernelWithArgumentAccess : public Kernel {
     class ObjectCountsPublic : public Kernel::ObjectCounts {
     };
 
-    MockKernelWithArgumentAccess(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
+    MockKernelWithArgumentAccess(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
     }
 
     void getParentObjectCountsPublic(MockKernelWithArgumentAccess::ObjectCountsPublic &objectCount) {
@@ -36,9 +36,8 @@ class MockKernelWithArgumentAccess : public Kernel {
 
 TEST(ParentKernelTest, GetObjectCounts) {
     KernelInfo info;
-    MockDevice *device = new MockDevice;
+    MockClDevice *device = new MockClDevice{new MockDevice};
     MockProgram program(*device->getExecutionEnvironment());
-
     SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
 
@@ -65,7 +64,7 @@ TEST(ParentKernelTest, GetObjectCounts) {
 }
 
 TEST(ParentKernelTest, patchBlocksSimdSize) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
@@ -79,7 +78,7 @@ TEST(ParentKernelTest, patchBlocksSimdSize) {
 }
 
 TEST(ParentKernelTest, hasDeviceEnqueue) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context));
 
@@ -87,14 +86,14 @@ TEST(ParentKernelTest, hasDeviceEnqueue) {
 }
 
 TEST(ParentKernelTest, doesnthaveDeviceEnqueue) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
 
     EXPECT_FALSE(kernel.kernelInfo.hasDeviceEnqueue());
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
@@ -108,7 +107,7 @@ TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;

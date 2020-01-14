@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -280,12 +280,12 @@ struct EnqueueCopyImageToBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context = std::make_unique<MockContext>(device.get());
         srcImage = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
     }
 
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> srcImage;
     MockBuffer dstBuffer;

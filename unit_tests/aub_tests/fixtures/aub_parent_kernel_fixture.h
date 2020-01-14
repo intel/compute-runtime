@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,8 @@ class AUBParentKernelFixture : public CommandEnqueueAUBFixture,
             GTEST_SKIP();
         }
         CommandEnqueueAUBFixture::SetUp();
-        ASSERT_NE(nullptr, pDevice);
-        HelloWorldKernelFixture::SetUp(pDevice, programFile, kernelName, "-cl-std=CL2.0");
+        ASSERT_NE(nullptr, pClDevice);
+        HelloWorldKernelFixture::SetUp(pClDevice, programFile, kernelName, "-cl-std=CL2.0");
     }
     void TearDown() {
         if (IsSkipped()) {

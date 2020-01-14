@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class ProgramFromSourceTest : public ContextFixture,
         kbHelper = new KernelBinaryHelper(BinaryFileName);
 
         PlatformFixture::SetUp();
-        cl_device_id device = pPlatform->getDevice(0);
+        cl_device_id device = pPlatform->getClDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
 

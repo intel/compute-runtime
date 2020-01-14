@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -312,7 +312,7 @@ TEST(CompilerInterfaceCachedTests, wasCached) {
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device, true);
     MockProgram program(*device.getExecutionEnvironment(), &context, false);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
@@ -337,7 +337,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
 
     gEnvironment->fclPopDebugVars();
@@ -345,7 +345,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
 }
 
 TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockContext context(&device, true);
     MockProgram program(*device.getExecutionEnvironment(), &context, false);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
@@ -363,7 +363,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
-    auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
+    auto retVal = compilerInterface->build(device.getDevice(), inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
 
     gEnvironment->fclPopDebugVars();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
 
     void SetUp() override {
         PlatformFixture::SetUp();
-        device = pPlatform->getDevice(0);
+        device = pPlatform->getClDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class AUBFixture : public CommandQueueHwFixture {
             this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
         }
 
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
         device->resetCommandStreamReceiver(this->csr);
 
         CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));
@@ -97,7 +97,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
     CommandStreamReceiver *csr = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
 
     ExecutionEnvironment *executionEnvironment;
 

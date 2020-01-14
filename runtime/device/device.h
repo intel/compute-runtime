@@ -18,22 +18,56 @@
 #include "engine_node.h"
 
 namespace NEO {
+class Device;
 class DriverInfo;
 class OSTime;
 class SyncBufferHandler;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
-    typedef class Device DerivedType;
+    typedef class ClDevice DerivedType;
 };
 
-class Device : public BaseObject<_cl_device_id> {
+class ClDevice : public BaseObject<_cl_device_id> {
   public:
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
-    Device &operator=(const Device &) = delete;
-    Device(const Device &) = delete;
-    ~Device() override;
+    ClDevice &operator=(const ClDevice &) = delete;
+    ClDevice(const ClDevice &) = delete;
+
+    explicit ClDevice(Device &device);
+    ~ClDevice() override;
+
+    unsigned int getEnabledClVersion() const; //CL
+    unsigned int getSupportedClVersion() const;
+
+    void retainApi();
+    unique_ptr_if_unused<ClDevice> releaseApi();
+
+    bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
+    bool getHostTimer(uint64_t *hostTimestamp) const;
+    const HardwareInfo &getHardwareInfo() const;
+    const DeviceInfo &getDeviceInfo() const;
+    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
+    EngineControl &getDefaultEngine();
+    MemoryManager *getMemoryManager() const;
+    GmmHelper *getGmmHelper() const;
+    double getProfilingTimerResolution();
+    double getPlatformHostTimerResolution() const;
+    bool isSimulation() const;
+    GFXCORE_FAMILY getRenderCoreFamily() const;
+    void allocateSyncBufferHandler();
+    PerformanceCounters *getPerformanceCounters();
+    PreemptionMode getPreemptionMode() const;
+    bool isSourceLevelDebuggerActive() const;
+    SourceLevelDebugger *getSourceLevelDebugger();
+    ExecutionEnvironment *getExecutionEnvironment() const;
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const;
+    const HardwareCapabilities &getHardwareCapabilities() const;
+    bool isFullRangeSvm() const;
+    bool areSharedSystemAllocationsAllowed() const;
+    uint32_t getRootDeviceIndex() const;
+    uint32_t getNumAvailableDevices() const;
 
     // API entry points
     cl_int getDeviceInfo(cl_device_info paramName,
@@ -56,14 +90,38 @@ class Device : public BaseObject<_cl_device_id> {
     void getStr(const void *&src,
                 size_t &size,
                 size_t &retSize);
+
+    constexpr Device &getDevice() const noexcept { return device; }
+    ClDevice *getDeviceById(uint32_t deviceId);
+    void initializeCaps();
+    std::unique_ptr<SyncBufferHandler> syncBufferHandler;
+
+  protected:
+    Device &device;
+    std::vector<std::unique_ptr<ClDevice>> subDevices;
+    cl_platform_id platformId;
+
+    std::vector<unsigned int> simultaneousInterops = {0};
+    void appendOSExtensions(std::string &deviceExtensions);
+};
+
+class Device : public ReferenceTrackedObject<Device> {
+  public:
+    Device &operator=(const Device &) = delete;
+    Device(const Device &) = delete;
+    ~Device() override;
+
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
+    void appendOSExtensions(const std::string &newExtensions);
 
     template <typename DeviceT, typename... ArgsT>
     static DeviceT *create(ArgsT &&... args) {
         DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);
         return createDeviceInternals(device);
     }
+
+    virtual bool isReleasable() = 0;
 
     bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
     bool getHostTimer(uint64_t *hostTimestamp) const;
@@ -78,7 +136,6 @@ class Device : public BaseObject<_cl_device_id> {
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
-    void allocateSyncBufferHandler();
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
@@ -99,7 +156,6 @@ class Device : public BaseObject<_cl_device_id> {
     virtual DeviceBitfield getDeviceBitfield() const = 0;
 
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
-    std::unique_ptr<SyncBufferHandler> syncBufferHandler;
 
   protected:
     Device() = delete;
@@ -107,7 +163,6 @@ class Device : public BaseObject<_cl_device_id> {
 
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
-    void appendOSExtensions(std::string &deviceExtensions);
 
     template <typename T>
     static T *createDeviceInternals(T *device) {
@@ -123,7 +178,6 @@ class Device : public BaseObject<_cl_device_id> {
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
 
-    std::vector<unsigned int> simultaneousInterops;
     unsigned int enabledClVersion = 0u;
     std::string deviceExtensions;
     std::string exposedBuiltinKernels = "";
@@ -143,10 +197,10 @@ class Device : public BaseObject<_cl_device_id> {
 };
 
 template <cl_device_info Param>
-inline void Device::getCap(const void *&src,
-                           size_t &size,
-                           size_t &retSize) {
-    src = &DeviceInfoTable::Map<Param>::getValue(deviceInfo);
+inline void ClDevice::getCap(const void *&src,
+                             size_t &size,
+                             size_t &retSize) {
+    src = &DeviceInfoTable::Map<Param>::getValue(device.getDeviceInfo());
     retSize = size = DeviceInfoTable::Map<Param>::size;
 }
 

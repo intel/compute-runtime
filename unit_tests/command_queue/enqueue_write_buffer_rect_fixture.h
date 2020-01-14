@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-        context.reset(new MockContext(&pCmdQ->getDevice()));
+        context.reset(new MockContext(pClDevice));
         BufferDefaults::context = context.get();
 
         //For 3D

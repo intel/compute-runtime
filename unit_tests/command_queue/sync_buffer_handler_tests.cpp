@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,9 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
     template <typename FamilyType>
     void SetUpT() {
         EnqueueHandlerTest::SetUp();
-        kernelInternals = std::make_unique<MockKernelWithInternals>(*pDevice, context);
+        kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernel = kernelInternals->mockKernel;
-        commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+        commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     }
 
     template <typename FamilyType>
@@ -50,7 +50,7 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
     }
 
     MockSyncBufferHandler *getSyncBufferHandler() {
-        return reinterpret_cast<MockSyncBufferHandler *>(pDevice->syncBufferHandler.get());
+        return reinterpret_cast<MockSyncBufferHandler *>(pClDevice->syncBufferHandler.get());
     }
 
     const cl_uint workDim = 1;
@@ -114,7 +114,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
     kernelInternals->kernelInfo.requiresSshForBuffers = true;
     patchAllocateSyncBuffer();
 
-    pDevice->allocateSyncBufferHandler();
+    pClDevice->allocateSyncBufferHandler();
     auto syncBufferHandler = getSyncBufferHandler();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(),
                                                                            sPatchAllocateSyncBuffer.SurfaceStateHeapOffset));
@@ -138,7 +138,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenKernelUsingSyncBufferWhenUsingSta
 
 TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
     const size_t testUsedBufferSize = 100;
-    MockDevice rootDevice;
+    MockClDevice rootDevice{new MockDevice};
     rootDevice.allocateSyncBufferHandler();
     auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(rootDevice.syncBufferHandler.get());
 
@@ -153,16 +153,16 @@ TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledT
 
 TEST(SyncBufferHandlerDeviceTest, GivenSubDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
     const size_t testUsedBufferSize = 100;
-    MockDevice rootDevice;
-    std::unique_ptr<MockSubDevice> subDevice{reinterpret_cast<MockSubDevice *>(rootDevice.createSubDevice(0))};
-    subDevice->allocateSyncBufferHandler();
-    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
+    MockClDevice rootDevice{new MockDevice};
+    ClDevice subDevice{*rootDevice.createSubDevice(0)};
+    subDevice.allocateSyncBufferHandler();
+    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice.syncBufferHandler.get());
 
     ASSERT_NE(syncBufferHandler->usedBufferSize, testUsedBufferSize);
     syncBufferHandler->usedBufferSize = testUsedBufferSize;
 
-    subDevice->allocateSyncBufferHandler();
-    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
+    subDevice.allocateSyncBufferHandler();
+    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice.syncBufferHandler.get());
 
     EXPECT_EQ(testUsedBufferSize, syncBufferHandler->usedBufferSize);
 }

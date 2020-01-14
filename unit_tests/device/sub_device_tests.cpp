@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,28 +55,26 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedTh
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    constructPlatform()->initialize();
+    auto device = platform()->getClDevice(0);
 
-    auto subDevice0 = device->subdevices.at(0).get();
-    auto subDevice1 = device->subdevices.at(1).get();
-    auto baseApiRefCount = device->getRefApiCount();
-    auto baseInternalRefCount = device->getRefInternalCount();
+    auto subDevice = device->getDeviceById(1);
+    auto baseDeviceApiRefCount = device->getRefApiCount();
+    auto baseDeviceInternalRefCount = device->getRefInternalCount();
+    auto baseSubDeviceApiRefCount = subDevice->getRefApiCount();
+    auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
 
-    subDevice0->retain();
-    EXPECT_EQ(baseInternalRefCount + 1, device->getRefInternalCount());
-    EXPECT_EQ(baseApiRefCount, device->getRefApiCount());
+    subDevice->retainApi();
+    EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
+    EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceApiRefCount + 1, subDevice->getRefApiCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount + 1, subDevice->getRefInternalCount());
 
-    subDevice1->retainInternal();
-    EXPECT_EQ(baseInternalRefCount + 2, device->getRefInternalCount());
-    EXPECT_EQ(baseApiRefCount, device->getRefApiCount());
-
-    subDevice0->release();
-    EXPECT_EQ(baseInternalRefCount + 1, device->getRefInternalCount());
-    EXPECT_EQ(baseApiRefCount, device->getRefApiCount());
-
-    subDevice1->releaseInternal();
-    EXPECT_EQ(baseInternalRefCount, device->getRefInternalCount());
-    EXPECT_EQ(baseApiRefCount, device->getRefApiCount());
+    subDevice->releaseApi();
+    EXPECT_EQ(baseDeviceApiRefCount, device->getRefApiCount());
+    EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceApiRefCount, subDevice->getRefApiCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
 }
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
@@ -119,8 +117,8 @@ TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnS
 
     EXPECT_EQ(2u, device->getNumSubDevices());
 
-    auto firstSubDevice = static_cast<SubDevice *>(device->subdevices.at(0).get());
-    auto secondSubDevice = static_cast<SubDevice *>(device->subdevices.at(1).get());
+    auto firstSubDevice = static_cast<SubDevice *>(device->subdevices.at(0));
+    auto secondSubDevice = static_cast<SubDevice *>(device->subdevices.at(1));
     uint32_t firstSubDeviceMask = (1u << 0);
     uint32_t secondSubDeviceMask = (1u << 1);
     EXPECT_EQ(firstSubDeviceMask, static_cast<uint32_t>(firstSubDevice->getDefaultEngine().osContext->getDeviceBitfield().to_ulong()));
@@ -141,8 +139,8 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrec
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     EXPECT_EQ(2u, device->getNumSubDevices());
-    EXPECT_EQ(device->subdevices.at(0).get(), device->getDeviceById(0));
-    EXPECT_EQ(device->subdevices.at(1).get(), device->getDeviceById(1));
+    EXPECT_EQ(device->subdevices.at(0), device->getDeviceById(0));
+    EXPECT_EQ(device->subdevices.at(1), device->getDeviceById(1));
     EXPECT_THROW(device->getDeviceById(2), std::exception);
 }
 
@@ -152,7 +150,7 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     EXPECT_EQ(2u, device->getNumSubDevices());
-    auto subDevice = device->subdevices.at(0).get();
+    auto subDevice = device->subdevices.at(0);
 
     EXPECT_EQ(subDevice, subDevice->getDeviceById(0));
     EXPECT_THROW(subDevice->getDeviceById(1), std::exception);

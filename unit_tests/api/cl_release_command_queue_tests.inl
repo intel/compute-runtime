@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class clReleaseCommandQueueTypeTests : public DeviceHostQueueFixture<T> {};
 TYPED_TEST_CASE(clReleaseCommandQueueTypeTests, QueueTypes);
 
 TYPED_TEST(clReleaseCommandQueueTypeTests, GivenValidCmdQueueWhenReleasingCmdQueueThenSucessIsReturned) {
-    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[this->testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<ClDevice>(this->devices[this->testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
         return;
     }
 
@@ -52,7 +52,7 @@ typedef api_tests clReleaseCommandQueueTests;
 TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
-    Device *device = (Device *)devices[testedRootDeviceIndex];
+    ClDevice *device = (ClDevice *)devices[testedRootDeviceIndex];
     MockKernelWithInternals kernelInternals(*device, pContext);
     Kernel *kernel = kernelInternals.mockKernel;
 

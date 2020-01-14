@@ -67,7 +67,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment, 0);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(*executionEnvironment);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         device->resetCommandStreamReceiver(mockCsr);
         ctx.reset(new MockContext);
         cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr));
@@ -119,7 +119,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         sharing->pfnGlArbSyncObjectWaitServer = glArbSyncObjectWaitServerMock<true>;
     }
 
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> ctx;
     std::unique_ptr<MockCommandQueue> cmdQ;
     OSInterface *osInterface = nullptr;

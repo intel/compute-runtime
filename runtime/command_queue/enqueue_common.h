@@ -557,7 +557,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                       this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
                       devQueueHw->getDebugQueue());
 
-    auto preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
+    auto preemptionMode = PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
     GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         *this->commandStream,
         *devQueueHw,
@@ -731,7 +731,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         {},                                                                                         //pipelineSelectArgs
         this->flushStamp->getStampReference(),                                                      //flushStampReference
         getThrottle(),                                                                              //throttle
-        PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo),                           //preemptionMode
+        PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                       //preemptionMode
         numGrfRequired,                                                                             //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                                       //threadArbitrationPolicy
@@ -786,7 +786,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
         taskLevel,
         dispatchFlags,
-        *device);
+        getDevice());
 
     return completionStamp;
 }
@@ -859,7 +859,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             allSurfaces.push_back(surface->duplicate());
         }
 
-        PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
+        PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo);
         bool slmUsed = multiDispatchInfo.usesSlm() || multiDispatchInfo.peekParentKernel();
         command = std::make_unique<CommandComputeKernel>(*this,
                                                          blockedCommandsData,
@@ -955,7 +955,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
         taskLevel,
         dispatchFlags,
-        *device);
+        getDevice());
 
     return completionStamp;
 }

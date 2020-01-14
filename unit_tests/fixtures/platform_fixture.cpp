@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ void PlatformFixture::SetUp() {
     num_devices = static_cast<cl_uint>(pPlatform->getNumDevices());
     ASSERT_GT(num_devices, 0u);
 
-    auto allDev = pPlatform->getDevices();
+    auto allDev = pPlatform->getClDevices();
     ASSERT_NE(nullptr, allDev);
 
     devices = new cl_device_id[num_devices];

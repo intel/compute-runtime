@@ -59,7 +59,7 @@ class BuiltInTests
     void SetUp() override {
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         BuiltInFixture::SetUp(pDevice);
     }
@@ -470,8 +470,8 @@ HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThe
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
     mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
 
-    MockKernelWithInternals mockKernel(*pDevice, pContext);
-    MockCommandQueueHw<FamilyType> cmdQ(pContext, pDevice, nullptr);
+    MockKernelWithInternals mockKernel(*pClDevice, pContext);
+    MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;
     cl_mem clMem = &buffer;
@@ -1039,7 +1039,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
 }
 
 TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
-    MockKernelWithInternals mockKernel{*pDevice};
+    MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
     mockKernel.kernelInfo.reqdWorkGroupSize[0] = 16;
@@ -1089,7 +1089,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
 }
 
 TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
-    MockKernelWithInternals mockKernel{*pDevice};
+    MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
     mockKernel.kernelInfo.reqdWorkGroupSize[0] = 16;
@@ -1365,7 +1365,7 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Source, *pDevice).size());
 
-    if (pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+    if (pClDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
         EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Source, *pDevice).size());
     }
 }
@@ -1393,7 +1393,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    if (this->pDevice->getEnabledClVersion() >= 20) {
+    if (this->pClDevice->getEnabledClVersion() >= 20) {
         EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Binary, *pDevice).size());
     }
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *pDevice).size());
@@ -1487,7 +1487,7 @@ TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
         GTEST_SKIP();
     }
     cl_uint param;
-    auto ret = pDevice->getDeviceInfo(CL_DEVICE_ME_VERSION_INTEL, sizeof(param), &param, nullptr);
+    auto ret = pClDevice->getDeviceInfo(CL_DEVICE_ME_VERSION_INTEL, sizeof(param), &param, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_VERSION_ADVANCED_VER_2_INTEL), param);
 }
@@ -2057,7 +2057,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     errCode = p->processGenBinary();
     ASSERT_EQ(CL_SUCCESS, errCode);
 
-    const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
 
     const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0));
 
@@ -2072,7 +2072,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
 }
 
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
-    const SipKernel &sipKern = pDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    const SipKernel &sipKern = pDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());
     auto sipAllocation = sipKern.getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
 }

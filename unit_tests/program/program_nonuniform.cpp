@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,10 +102,10 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
 
 TEST(KernelNonUniform, GetAllowNonUniformFlag) {
     KernelInfo ki;
-    MockDevice d;
+    MockClDevice d{new MockDevice};
     MockProgram pm(*d.getExecutionEnvironment());
     struct KernelMock : Kernel {
-        KernelMock(Program *p, KernelInfo &ki, Device &d)
+        KernelMock(Program *p, KernelInfo &ki, ClDevice &d)
             : Kernel(p, ki, d) {
         }
     };
@@ -175,10 +175,10 @@ class ProgramNonUniformTest : public ContextFixture,
 
     void SetUp() override {
         PlatformFixture::SetUp();
-        device = pPlatform->getDevice(0);
+        device = pPlatform->getClDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pPlatform->getDevice(0), 0);
+        CommandQueueHwFixture::SetUp(pPlatform->getClDevice(0), 0);
     }
 
     void TearDown() override {

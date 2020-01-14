@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ void DeviceFixture::SetUp() {
 void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
     ASSERT_NE(nullptr, pDevice);
+    pClDevice = new MockClDevice{pDevice};
+    ASSERT_NE(nullptr, pClDevice);
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     pTagMemory = commandStreamReceiver.getTagAddress();
@@ -25,7 +27,8 @@ void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
 }
 
 void DeviceFixture::TearDown() {
-    delete pDevice;
+    delete pClDevice;
+    pClDevice = nullptr;
     pDevice = nullptr;
 }
 

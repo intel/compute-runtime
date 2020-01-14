@@ -36,7 +36,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     std::unique_ptr<DrmMockCustom> mock;
     TestedDrmMemoryManager *memoryManager = nullptr;
-    MockDevice *device = nullptr;
+    MockClDevice *device = nullptr;
 
     void SetUp() override {
         SetUp(new DrmMockCustom, false);
@@ -56,7 +56,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device = MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0);
+        device = new MockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0)};
     }
 
     void TearDown() override {

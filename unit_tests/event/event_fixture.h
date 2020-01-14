@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct EventTest
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(&mockContext, pDevice, 0);
+        CommandQueueFixture::SetUp(&mockContext, pClDevice, 0);
         CommandStreamFixture::SetUp(pCmdQ);
     }
 
@@ -54,7 +54,7 @@ struct InternalsEventTest
 
     void SetUp() {
         DeviceFixture::SetUp();
-        mockContext = new MockContext(pDevice);
+        mockContext = new MockContext(pClDevice);
     }
 
     void TearDown() {

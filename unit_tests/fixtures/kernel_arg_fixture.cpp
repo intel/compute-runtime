@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ void KernelImageArgTest::SetUp() {
 
     DeviceFixture::SetUp();
     program = std::make_unique<NEO::MockProgram>(*pDevice->getExecutionEnvironment());
-    pKernel.reset(new NEO::MockKernel(program.get(), *pKernelInfo, *pDevice));
+    pKernel.reset(new NEO::MockKernel(program.get(), *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     pKernel->setKernelArgHandler(0, &NEO::Kernel::setArgImage);
@@ -69,7 +69,7 @@ void KernelImageArgTest::SetUp() {
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    context.reset(new NEO::MockContext(pDevice));
+    context.reset(new NEO::MockContext(pClDevice));
     image.reset(Image2dHelper<>::create(context.get()));
     pKernel->setContext(context.get());
     ASSERT_NE(nullptr, image);

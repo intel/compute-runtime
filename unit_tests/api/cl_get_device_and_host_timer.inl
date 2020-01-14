@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenValidOSTimeWhenGettingDeviceAndHostTime
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+    auto mDev = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     mDev->setOSTime(new MockOSTime());
 
     retVal = clGetDeviceAndHostTimer(
@@ -86,7 +86,7 @@ TEST_F(clGetDeviceAndHostTimerTest, GivenInvalidOSTimeWhenGettingDeviceAndHostTi
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+    auto mDev = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     mDev->setOSTime(new FailOSTime());
 
     retVal = clGetDeviceAndHostTimer(
@@ -135,7 +135,7 @@ TEST_F(clGetHostTimerTest, GivenValidOSTimeWhenGettingHostTimerThenSuccessIsRetu
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+    auto mDev = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     mDev->setOSTime(new MockOSTime());
 
     retVal = clGetHostTimer(
@@ -152,7 +152,7 @@ TEST_F(clGetHostTimerTest, GivenInvalidOSTimeWhenGettingHostTimerThenOutOfResour
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+    auto mDev = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     mDev->setOSTime(new FailOSTime());
 
     retVal = clGetHostTimer(

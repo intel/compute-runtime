@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,9 @@
 #include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
+class ClDevice;
 
-const SipKernel &initSipKernel(SipKernelType type, Device &device);
+const SipKernel &initSipKernel(SipKernelType type, ClDevice &device);
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,
                              std::vector<char> &binary,

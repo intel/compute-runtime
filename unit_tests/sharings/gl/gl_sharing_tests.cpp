@@ -1100,7 +1100,7 @@ HWTEST_F(glSharingTests, givenSyncObjectWhenCreateEventIsCalledThenCreateGLSyncO
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, event);
 
-    auto &csr = reinterpret_cast<MockDevice *>(context.getDevice(0))->getUltCommandStreamReceiver<FamilyType>();
+    auto &csr = reinterpret_cast<MockClDevice *>(context.getDevice(0))->getUltCommandStreamReceiver<FamilyType>();
     csr.taskLevel = 123;
     auto eventObj = castToObject<Event>(event);
     EXPECT_TRUE(eventObj->getCommandType() == CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR);

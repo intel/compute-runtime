@@ -38,7 +38,7 @@ class BufferSetArgTest : public ContextFixture,
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
@@ -69,7 +69,7 @@ class BufferSetArgTest : public ContextFixture,
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
@@ -78,7 +78,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernel->setKernelArgHandler(2, &Kernel::setArgBuffer);
         pKernel->setKernelArgHandler(0, &Kernel::setArgBuffer);
 
-        BufferDefaults::context = new MockContext(pDevice);
+        BufferDefaults::context = new MockContext(pClDevice);
         buffer = BufferHelper<>::create(BufferDefaults::context);
     }
 

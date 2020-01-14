@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct VAContextTest : public PlatformFixture,
         properties[1] = (cl_context_properties)platform;
         properties[2] = 0;
 
-        context = Context::create<Context>(properties, DeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<Context>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 
@@ -62,7 +62,7 @@ TEST_F(VAContextTest, GivenVaContextParamWhenCreateContextThenReturnError) {
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0],
                                                 CL_CONTEXT_VA_API_DISPLAY_INTEL, 0x10000, 0};
     cl_int retVal = CL_SUCCESS;
-    auto ctx = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    auto ctx = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
 
     // not supported by default
     // use MockVaSharing to test va-sharing functionality

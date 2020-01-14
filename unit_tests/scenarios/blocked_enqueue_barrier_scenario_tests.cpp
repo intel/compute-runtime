@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ typedef ScenarioTest BarrierScenarioTest;
 HWTEST_F(BarrierScenarioTest, givenBlockedEnqueueBarrierOnOOQWhenUserEventIsUnblockedThenNextEnqueuesAreNotBlocked) {
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
-    auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pPlatform->getDevice(0), properties));
+    auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pPlatform->getClDevice(0), properties));
     clCommandQ = mockCmdQ.get();
 
     cl_kernel clKernel = kernel;

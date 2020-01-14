@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct FlushTest
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pDevice, 0);
+        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
         CommandStreamFixture::SetUp(pCmdQ);
     }
 

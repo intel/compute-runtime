@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,17 +59,17 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
   public:
     virtual void SetUp() {
         DeviceFixture::SetUp();
-        ASSERT_NE(nullptr, pDevice);
-        CommandQueueFixture::SetUp(pDevice, 0);
+        ASSERT_NE(nullptr, pClDevice);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::SetUp(pCmdQ);
-        KernelFixture::SetUp(pDevice, kernelFilename, kernelName);
+        KernelFixture::SetUp(pClDevice, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;
-        BufferDefaults::context = new MockContext(pDevice);
+        BufferDefaults::context = new MockContext(pClDevice);
 
         destBuffer = Buffer::create(
             BufferDefaults::context,

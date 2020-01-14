@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
 
   public:
     MockDeviceQueueHwWithCriticalSectionRelease(Context *context,
-                                                Device *device,
+                                                ClDevice *device,
                                                 cl_queue_properties &properties) : BaseClass(context, device, properties) {}
 
     bool isEMCriticalSectionFree() override {

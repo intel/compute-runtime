@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
         DriverDiagnosticsTest::SetUp();
         cl_device_id deviceID = devices[0];
         cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-        context = Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+        context = Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
@@ -115,14 +115,16 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
         std::tie(profilingEnabled, preemptionSupported) = GetParam();
         device = new MockDevice;
         device->deviceInfo.preemptionSupported = preemptionSupported;
+        clDevice = new MockClDevice{device};
     }
 
     void TearDown() override {
         clReleaseCommandQueue(cmdQ);
-        delete device;
+        delete clDevice;
         PerformanceHintTest::TearDown();
     }
     MockDevice *device;
+    ClDevice *clDevice;
     cl_command_queue cmdQ;
     bool profilingEnabled;
     bool preemptionSupported;
@@ -131,7 +133,7 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
 struct PerformanceHintEnqueueTest : public PerformanceHintTest {
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        pCmdQ = createCommandQueue(pPlatform->getDevice(0));
+        pCmdQ = createCommandQueue(pPlatform->getClDevice(0));
     }
 
     void TearDown() override {
@@ -227,7 +229,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        cl_device_id device = pPlatform->getDevice(0);
+        cl_device_id device = pPlatform->getClDevice(0);
         CreateProgramFromBinary(context, &device, "CopyBuffer_simd32");
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -263,7 +265,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        cl_device_id device = pPlatform->getDevice(0);
+        cl_device_id device = pPlatform->getClDevice(0);
         CreateProgramFromBinary(context, &device, "printf");
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);

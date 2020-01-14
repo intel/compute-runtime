@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     } expectedCmds;
 
     MockDeviceQueueHw(Context *context,
-                      Device *device,
+                      ClDevice *device,
                       cl_queue_properties &properties) : BaseClass(context, device, properties) {
         auto slb = this->getSlbBuffer();
         LinearStream *slbCS = getSlbCS();

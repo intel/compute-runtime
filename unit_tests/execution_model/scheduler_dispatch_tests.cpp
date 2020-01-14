@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -249,7 +249,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, ForceDispatchSchedul
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
 
-        MockCommandQueueHw<FamilyType> *mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
+        MockCommandQueueHw<FamilyType> *mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
         mockCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 

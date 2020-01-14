@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class PrintFormatterTest : public testing::Test {
     MockKernel *kernel;
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<KernelInfo> kernelInfo;
-    Device *device;
+    ClDevice *device;
 
     uint8_t underlyingBuffer[PrintFormatter::maxPrintfOutputLength];
     uint32_t offset;
@@ -46,7 +46,7 @@ class PrintFormatterTest : public testing::Test {
         data = new MockGraphicsAllocation(underlyingBuffer, PrintFormatter::maxPrintfOutputLength);
 
         kernelInfo = std::make_unique<KernelInfo>();
-        device = MockDevice::createWithNewExecutionEnvironment<Device>(nullptr);
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
         program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
 

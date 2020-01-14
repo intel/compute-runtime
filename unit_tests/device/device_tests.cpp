@@ -99,15 +99,25 @@ TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedT
 }
 
 TEST_F(DeviceTest, retainAndRelease) {
-    ASSERT_NE(nullptr, pDevice);
+    ASSERT_NE(nullptr, pClDevice);
 
-    pDevice->retain();
-    pDevice->retain();
-    pDevice->retain();
-    ASSERT_EQ(1, pDevice->getReference());
+    pClDevice->retainApi();
+    pClDevice->retainApi();
+    pClDevice->retainApi();
+    ASSERT_EQ(1, pClDevice->getReference());
 
-    ASSERT_FALSE(pDevice->release().isUnused());
-    ASSERT_EQ(1, pDevice->getReference());
+    ASSERT_FALSE(pClDevice->releaseApi().isUnused());
+    ASSERT_EQ(1, pClDevice->getReference());
+}
+
+TEST_F(DeviceTest, WhenAppendingOsExtensionsThenDeviceInfoIsProperlyUpdated) {
+    EXPECT_NE(nullptr, pDevice);
+    std::string testedValue = "1234!@#$";
+    std::string expectedExtensions = pDevice->deviceExtensions + testedValue;
+
+    pDevice->appendOSExtensions(testedValue);
+    EXPECT_EQ(expectedExtensions, pDevice->deviceExtensions);
+    EXPECT_STREQ(expectedExtensions.c_str(), pDevice->deviceInfo.deviceExtensions);
 }
 
 TEST_F(DeviceTest, getEngineTypeDefault) {

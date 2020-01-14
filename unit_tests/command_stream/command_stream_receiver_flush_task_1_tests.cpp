@@ -117,7 +117,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
     configureCSRtoNonDirtyState<FamilyType>();
 
@@ -196,7 +196,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -817,7 +817,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsChainsWith
 
 typedef Test<DeviceFixture> CommandStreamReceiverCQFlushTaskTests;
 HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSizeCSRTraffic) {
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
     // NOTE: This test attempts to reserve the maximum amount
@@ -872,7 +872,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -919,7 +919,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWithDCFlush) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     configureCSRtoNonDirtyState<FamilyType>();
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
@@ -971,8 +971,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlushWhenUnblockedThenDCFlushIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     cl_event blockingEvent;
@@ -1018,7 +1018,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

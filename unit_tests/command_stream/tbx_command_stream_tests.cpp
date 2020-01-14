@@ -842,7 +842,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pDevice);
+    MockKernelWithInternals kernelInternals(*pClDevice);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -867,7 +867,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pDevice);
+    MockKernelWithInternals kernelInternals(*pClDevice);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -892,7 +892,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
-    MockKernelWithInternals kernelInternals(*pDevice);
+    MockKernelWithInternals kernelInternals(*pClDevice);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -921,7 +921,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCor
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
 
-    MockContext context(pDevice);
+    MockContext context(pClDevice);
 
     MockTbxCsr<FamilyType> tbxCsr0{*pDevice->executionEnvironment};
     tbxCsr0.initializeTagAllocation();
@@ -936,7 +936,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCor
     tbxCsr1.setupContext(osContext0);
     EngineControl engineControl1{&tbxCsr1, &osContext1};
 
-    MockCommandQueueHw<FamilyType> cmdQ(&context, pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
     cmdQ.gpgpuEngine = &engineControl0;
     cmdQ.bcsEngine = &engineControl1;
 

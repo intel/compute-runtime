@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         device.reset();
+        platformImpl.reset();
         MemoryManagementFixture::TearDown();
     }
 

@@ -44,7 +44,7 @@ namespace NEO {
 CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE] = {};
 
 CommandQueue *CommandQueue::create(Context *context,
-                                   Device *device,
+                                   ClDevice *device,
                                    const cl_queue_properties *properties,
                                    cl_int &retVal) {
     retVal = CL_SUCCESS;
@@ -58,8 +58,8 @@ CommandQueue *CommandQueue::create(Context *context,
 CommandQueue::CommandQueue() : CommandQueue(nullptr, nullptr, 0) {
 }
 
-CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_properties *properties)
-    : context(context), device(deviceId) {
+CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties)
+    : context(context), device(device) {
     if (context) {
         context->incRefInternal();
     }
@@ -117,6 +117,10 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
         return bcsEngine->commandStreamReceiver;
     }
     return nullptr;
+}
+
+Device &CommandQueue::getDevice() const noexcept {
+    return device->getDevice();
 }
 
 uint32_t CommandQueue::getHwTag() const {
@@ -414,7 +418,6 @@ void *CommandQueue::enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
                                      size_t size, cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList, cl_event *event,
                                      cl_int &errcodeRet) {
-
     TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, mapFlags, blockingMap != CL_FALSE, &offset, &size, nullptr, false);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
@@ -454,7 +457,6 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
 }
 
 cl_int CommandQueue::enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-
     TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, nullptr, nullptr, mappedPtr, false);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct CopyBufferHw
 typedef CopyBufferHw AUBCopyBuffer;
 
 HWTEST_P(AUBCopyBuffer, simple) {
-    MockContext context(&pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};

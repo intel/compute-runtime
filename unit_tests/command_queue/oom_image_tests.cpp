@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ struct OOMCommandQueueImageTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
-        CommandQueueFixture::SetUp(context, pDevice, 0);
+        context = new MockContext(pClDevice);
+        CommandQueueFixture::SetUp(context, pClDevice, 0);
 
         srcImage = Image2dHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
@@ -76,7 +76,7 @@ struct OOMCommandQueueImageTest : public DeviceFixture,
 };
 
 HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -100,7 +100,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
 }
 
 HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -124,7 +124,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
 }
 
 HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -148,7 +148,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
 }
 
 HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);

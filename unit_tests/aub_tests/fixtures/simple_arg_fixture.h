@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,13 +56,13 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
   public:
     virtual void SetUp() {
         DeviceFixture::SetUp();
-        ASSERT_NE(nullptr, pDevice);
-        CommandQueueFixture::SetUp(pDevice, 0);
+        ASSERT_NE(nullptr, pClDevice);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::SetUp(pCmdQ);
-        KernelFixture::SetUp(pDevice);
+        KernelFixture::SetUp(pClDevice);
         ASSERT_NE(nullptr, pKernel);
 
         argVal = static_cast<int>(0x22222222);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ HWTEST_P(AUBCopyBufferRect, simple) {
     static const size_t rowPitch = 20;
     static const size_t slicePitch = rowPitch * rowPitch;
     static const size_t elementCount = slicePitch * rowPitch;
-    MockContext context(this->pDevice);
+    MockContext context(this->pClDevice);
 
     cl_uchar *srcMemory = new uint8_t[elementCount + 8];
     cl_uchar *dstMemory = new uint8_t[elementCount + 8];

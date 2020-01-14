@@ -51,7 +51,7 @@ class CreateImageTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        CommandQueueFixture::SetUp(pDevice, 0);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         flags = GetParam();
 
         // clang-format off
@@ -525,6 +525,7 @@ struct CreateImageHostPtr
     void TearDown() override {
         delete image;
         BaseClass::TearDown();
+        platformImpl.reset();
         MemoryManagementFixture::TearDown();
     }
 
@@ -546,8 +547,6 @@ struct CreateImageHostPtr
 };
 
 TEST_P(CreateImageHostPtr, isResidentDefaultsToFalseAfterCreate) {
-    KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
-
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
@@ -1182,7 +1181,7 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
-    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(executionEnvironment, 0));
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     MockContext ctx(device.get());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))

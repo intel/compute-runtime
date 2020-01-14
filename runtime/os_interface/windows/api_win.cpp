@@ -95,7 +95,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromDX9INTEL(cl_platform_id platform, cl_dx9_de
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
-    cl_device_id device = platformInternal->getDevice(0);
+    cl_device_id device = platformInternal->getClDevice(0);
 
     GetInfoHelper::set(devices, device);
     GetInfoHelper::set(numDevices, 1u);
@@ -202,7 +202,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromDX9MediaAdapterKHR(cl_platform_id platform,
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
-    cl_device_id device = platformInternal->getDevice(0);
+    cl_device_id device = platformInternal->getClDevice(0);
 
     GetInfoHelper::set(devices, device);
     GetInfoHelper::set(numDevices, 1u);
@@ -311,7 +311,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D10>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    Device *device = platformInternal->getDevice(0);
+    ClDevice *device = platformInternal->getClDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D10_DEVICE_KHR:
@@ -518,7 +518,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D11>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    Device *device = platformInternal->getDevice(0);
+    ClDevice *device = platformInternal->getClDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D11_DEVICE_KHR:

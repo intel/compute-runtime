@@ -19,6 +19,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
+#include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
@@ -26,14 +27,96 @@ namespace NEO {
 decltype(&PerformanceCounters::create) Device::createPerformanceCountersFunc = PerformanceCounters::create;
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
-DeviceVector::DeviceVector(const cl_device_id *devices,
-                           cl_uint numDevices) {
-    for (cl_uint i = 0; i < numDevices; i++) {
-        this->push_back(castToObject<Device>(devices[i]));
+ClDevice::ClDevice(Device &device) : device(device), platformId(platform()) {
+    device.incRefInternal();
+    initializeCaps();
+
+    auto numAvailableDevices = device.getNumAvailableDevices();
+    if (numAvailableDevices > 1) {
+        for (uint32_t i = 0; i < numAvailableDevices; i++) {
+            subDevices.push_back(std::make_unique<ClDevice>(*device.getDeviceById(i)));
+            platform()->clDeviceMap.emplace(device.getDeviceById(i), subDevices[i].get());
+        }
     }
 }
 
-void DeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
+ClDevice::~ClDevice() {
+    syncBufferHandler.reset();
+    for (auto &subDevice : subDevices) {
+        subDevice.reset();
+    }
+    device.decRefInternal();
+}
+
+void ClDevice::allocateSyncBufferHandler() {
+    TakeOwnershipWrapper<ClDevice> lock(*this);
+    if (syncBufferHandler.get() == nullptr) {
+        syncBufferHandler = std::make_unique<SyncBufferHandler>(this->getDevice());
+        UNRECOVERABLE_IF(syncBufferHandler.get() == nullptr);
+    }
+}
+
+unsigned int ClDevice::getEnabledClVersion() const { return device.getEnabledClVersion(); }
+unsigned int ClDevice::getSupportedClVersion() const { return device.getSupportedClVersion(); }
+
+void ClDevice::retainApi() {
+    if (!device.isReleasable()) {
+        DEBUG_BREAK_IF(true);
+    } else {
+        platform()->getClDevice(device.getRootDeviceIndex())->incRefInternal();
+        this->incRefApi();
+    }
+};
+unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
+    if (!device.isReleasable()) {
+        DEBUG_BREAK_IF(true);
+        return unique_ptr_if_unused<ClDevice>(this, false);
+    }
+    platform()->getClDevice(device.getRootDeviceIndex())->decRefInternal();
+    return this->decRefApi();
+}
+
+ClDevice *ClDevice::getDeviceById(uint32_t deviceId) {
+    UNRECOVERABLE_IF(deviceId >= getNumAvailableDevices());
+    if (subDevices.empty()) {
+        return this;
+    }
+    return subDevices[deviceId].get();
+}
+
+bool ClDevice::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const { return device.getDeviceAndHostTimer(deviceTimestamp, hostTimestamp); }
+bool ClDevice::getHostTimer(uint64_t *hostTimestamp) const { return device.getHostTimer(hostTimestamp); }
+const HardwareInfo &ClDevice::getHardwareInfo() const { return device.getHardwareInfo(); }
+const DeviceInfo &ClDevice::getDeviceInfo() const { return device.getDeviceInfo(); }
+EngineControl &ClDevice::getEngine(aub_stream::EngineType engineType, bool lowPriority) { return device.getEngine(engineType, lowPriority); }
+EngineControl &ClDevice::getDefaultEngine() { return device.getDefaultEngine(); }
+MemoryManager *ClDevice::getMemoryManager() const { return device.getMemoryManager(); }
+GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
+double ClDevice::getProfilingTimerResolution() { return device.getProfilingTimerResolution(); }
+double ClDevice::getPlatformHostTimerResolution() const { return device.getPlatformHostTimerResolution(); }
+bool ClDevice::isSimulation() const { return device.isSimulation(); }
+GFXCORE_FAMILY ClDevice::getRenderCoreFamily() const { return device.getRenderCoreFamily(); }
+PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerformanceCounters(); }
+PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemptionMode(); }
+bool ClDevice::isSourceLevelDebuggerActive() const { return device.isSourceLevelDebuggerActive(); }
+SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return device.getSourceLevelDebugger(); }
+ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
+const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
+const HardwareCapabilities &ClDevice::getHardwareCapabilities() const { return device.getHardwareCapabilities(); }
+bool ClDevice::isFullRangeSvm() const { return device.isFullRangeSvm(); }
+bool ClDevice::areSharedSystemAllocationsAllowed() const { return device.areSharedSystemAllocationsAllowed(); }
+uint32_t ClDevice::getRootDeviceIndex() const { return device.getRootDeviceIndex(); }
+uint32_t ClDevice::getNumAvailableDevices() const { return device.getNumAvailableDevices(); }
+
+ClDeviceVector::ClDeviceVector(const cl_device_id *devices,
+                               cl_uint numDevices) {
+    for (cl_uint i = 0; i < numDevices; i++) {
+        auto pClDevice = castToObject<ClDevice>(devices[i]);
+        this->push_back(pClDevice);
+    }
+}
+
+void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
     int i = 0;
     devIDs.resize(this->size());
 
@@ -61,7 +144,6 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
 
 Device::~Device() {
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
-    syncBufferHandler.reset();
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
@@ -204,14 +286,6 @@ double Device::getPlatformHostTimerResolution() const {
     if (osTime.get())
         return osTime->getHostTimerResolution();
     return 0.0;
-}
-
-void Device::allocateSyncBufferHandler() {
-    TakeOwnershipWrapper<Device> lock(*this);
-    if (syncBufferHandler.get() == nullptr) {
-        syncBufferHandler = std::make_unique<SyncBufferHandler>(*this);
-        UNRECOVERABLE_IF(syncBufferHandler.get() == nullptr);
-    }
 }
 
 GFXCORE_FAMILY Device::getRenderCoreFamily() const {

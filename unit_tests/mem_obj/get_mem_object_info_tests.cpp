@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -321,7 +321,7 @@ class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {
         GetMemObjectInfo::SetUp();
 
         delete BufferDefaults::context;
-        BufferDefaults::context = new MockContext(pDevice, true);
+        BufferDefaults::context = new MockContext(pClDevice, true);
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;

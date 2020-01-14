@@ -141,7 +141,7 @@ inline uint64_t readMisalignedUint64(const uint64_t *address) {
     return static_cast<uint64_t>(static_cast<uint64_t>(addressBits[1]) << 32) | addressBits[0];
 }
 
-GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *device, size_t size, bool constant, bool globalsAreExported, const void *initData) {
+GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::ClDevice *device, size_t size, bool constant, bool globalsAreExported, const void *initData) {
     UNRECOVERABLE_IF(device == nullptr);
     if (globalsAreExported && (ctx != nullptr) && (ctx->getSVMAllocsManager() != nullptr)) {
         NEO::SVMAllocsManager::SvmAllocationProperties svmProps = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
 
     void SetUp() override {
         PlatformFixture::SetUp();
-        context = new MockContext(pPlatform->getDevice(0));
+        context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 

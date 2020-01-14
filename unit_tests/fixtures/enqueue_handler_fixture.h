@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ class EnqueueHandlerTest : public NEO::DeviceFixture,
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new NEO::MockContext(pDevice);
+        context = new NEO::MockContext(pClDevice);
     }
 
     void TearDown() override {

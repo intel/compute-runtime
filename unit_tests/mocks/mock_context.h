@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class MockContext : public Context {
     using Context::preferD3dSharedResources;
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
-    MockContext(Device *device, bool noSpecialQueue = false);
+    MockContext(ClDevice *device, bool noSpecialQueue = false);
     MockContext(
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
         void *data);
@@ -34,6 +34,6 @@ class MockContext : public Context {
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
 
   private:
-    Device *device;
+    ClDevice *device;
 };
 } // namespace NEO

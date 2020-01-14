@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@
 using namespace ::testing;
 
 namespace NEO {
-TEST(DeviceOsTest, osSpecificExtensions) {
+TEST(DeviceOsTest, GivenDefaultDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
     auto hwInfo = *platformDevices;
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
 
@@ -38,8 +38,25 @@ TEST(DeviceOsTest, osSpecificExtensions) {
     delete pDevice;
 }
 
+TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
+    auto hwInfo = *platformDevices;
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
+    auto pClDevice = new ClDevice{*pDevice};
+
+    std::string extensionString(pClDevice->getDeviceInfo().deviceExtensions);
+
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_intel_dx9_media_sharing "))));
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_khr_dx9_media_sharing "))));
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_khr_d3d10_sharing "))));
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_khr_d3d11_sharing "))));
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_intel_d3d11_nv12_media_sharing "))));
+    EXPECT_THAT(extensionString, Not(testing::HasSubstr(std::string("cl_intel_simultaneous_sharing "))));
+
+    delete pClDevice;
+}
+
 TEST(DeviceOsTest, supportedSimultaneousInterops) {
-    auto pDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     std::vector<unsigned int> expected = {0};
 

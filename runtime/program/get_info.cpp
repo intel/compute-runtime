@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,7 +166,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         return CL_INVALID_DEVICE;
     }
 
-    auto pDev = castToObject<Device>(device);
+    auto pClDev = castToObject<ClDevice>(device);
 
     switch (paramName) {
     case CL_PROGRAM_BUILD_STATUS:
@@ -180,7 +180,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
 
     case CL_PROGRAM_BUILD_LOG: {
-        const char *pBuildLog = getBuildLog(pDev);
+        const char *pBuildLog = getBuildLog(pClDev);
 
         if (pBuildLog != nullptr) {
             pSrc = pBuildLog;

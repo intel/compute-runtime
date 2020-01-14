@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ struct BufferEnqueueFixture : public HardwareParse,
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
-        device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
         context = std::make_unique<MockContext>(device.get());
 
@@ -64,7 +64,7 @@ struct BufferEnqueueFixture : public HardwareParse,
     ExecutionEnvironment *executionEnvironment;
     cl_queue_properties properties = {};
     std::unique_ptr<uint32_t[]> bufferMemory;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Buffer> buffer;
 

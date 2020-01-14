@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct ContextTest : public PlatformFixture, public ::testing::Test {
         properties[1] = (cl_context_properties)platform;
         properties[2] = 0;
 
-        context = Context::create<MockContext>(properties, DeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<MockContext>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 
@@ -64,28 +64,28 @@ TEST_F(ContextTest, GivenPropertiesWhenContextIsCreatedThenSuccess) {
 
     cl_context_properties validProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], CL_GL_CONTEXT_KHR, 0x10000, 0};
 
-    auto context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[2] = CL_EGL_DISPLAY_KHR;
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[2] = CL_GLX_DISPLAY_KHR;
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[2] = CL_WGL_HDC_KHR;
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
@@ -102,21 +102,21 @@ TEST_F(ContextTest, GivenTwoGlPropertiesWhenContextIsCreatedThenSuccess) {
         CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], CL_GL_CONTEXT_KHR, 0x10000, CL_GL_CONTEXT_KHR, 0x10000, 0};
 
     validProperties[4] = CL_EGL_DISPLAY_KHR;
-    auto context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[4] = CL_GLX_DISPLAY_KHR;
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[4] = CL_WGL_HDC_KHR;
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
@@ -131,7 +131,7 @@ TEST_F(ContextTest, GivenGlContextParamWhenCreateContextThenInitSharingFunctions
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], CL_GL_CONTEXT_KHR, 0x10000, 0};
     cl_int retVal = CL_SUCCESS;
-    auto ctx = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    auto ctx = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, ctx);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,9 +216,9 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto device = std::make_unique<MockDevice>();
-    cl_device_id clDevice = static_cast<cl_device_id>(device.get());
-    auto deviceVector = DeviceVector(&clDevice, 1);
+    auto device = std::make_unique<MockClDevice>(new MockDevice);
+    cl_device_id clDevice = device.get();
+    auto deviceVector = ClDeviceVector(&clDevice, 1);
     cl_int retVal;
 
     cl_platform_id platformId[] = {platform()};

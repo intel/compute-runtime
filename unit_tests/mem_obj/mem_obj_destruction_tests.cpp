@@ -34,7 +34,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
         context.reset(new MockContext(device.get()));
 
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
@@ -67,7 +67,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 
     constexpr static uint32_t taskCountReady = 3u;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     uint32_t contextId = 0;
     MockMemoryManager *memoryManager = nullptr;
     std::unique_ptr<MockContext> context;

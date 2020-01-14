@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         context.reset(new MockContext(device.get()));
         program.reset(Program::create("FillBufferBytes", context.get(), *device.get(), true, &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -30,7 +30,7 @@ class PatchedKernelTest : public ::testing::Test {
     }
 
     std::unique_ptr<MockContext> context;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<Program> program;
     std::unique_ptr<Kernel> kernel;
     cl_int retVal = CL_SUCCESS;

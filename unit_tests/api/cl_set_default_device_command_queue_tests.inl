@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                         0,
                                         0};
-    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
     if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
         auto newDeviceQueue = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], properties, &retVal);

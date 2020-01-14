@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 class DeviceQueueFixture {
   public:
-    void SetUp(Context *context, Device *device) {
+    void SetUp(Context *context, ClDevice *device) {
         cl_int errcodeRet = 0;
         cl_queue_properties properties[3];
 
@@ -54,8 +54,8 @@ class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(0);
         ExecutionModelKernelFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pDevice, 0);
-        DeviceQueueFixture::SetUp(context, pDevice);
+        CommandQueueHwFixture::SetUp(pClDevice, 0);
+        DeviceQueueFixture::SetUp(context, pClDevice);
     }
 
     void TearDown() override {
@@ -85,8 +85,8 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pDevice, 0);
-        DeviceQueueFixture::SetUp(context, pDevice);
+        CommandQueueHwFixture::SetUp(pClDevice, 0);
+        DeviceQueueFixture::SetUp(context, pClDevice);
 
         parentKernel = MockParentKernel::create(*context);
         ASSERT_NE(nullptr, parentKernel);
@@ -107,7 +107,7 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
                                          testing::Test {
 
     void SetUp() override {
-        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
         CommandQueueHwFixture::SetUp(device, 0);
     }
     void TearDown() override {
@@ -124,5 +124,5 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
         return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
     }
 
-    MockDevice *device;
+    MockClDevice *device;
 };

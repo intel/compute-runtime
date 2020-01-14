@@ -25,17 +25,17 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         osInterface->get()->setDrm(drm.get());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
         executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
-        mdevice.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        mdevice = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
         clDevice = mdevice.get();
         retVal = CL_SUCCESS;
-        context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+        context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     }
     void TearDown() override {
         UltCommandStreamReceiverTest::TearDown();
     }
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
-    std::unique_ptr<MockDevice> mdevice = nullptr;
+    std::unique_ptr<MockClDevice> mdevice = nullptr;
     std::unique_ptr<Context> context;
     cl_device_id clDevice;
     cl_int retVal;
@@ -139,7 +139,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
                        ssh,
                        taskLevel,
                        dispatchFlags,
-                       *mdevice);
+                       mdevice->getDevice());
     auto expectedSliceMask = drm->getSliceMask(newSliceCount);
     EXPECT_EQ(expectedSliceMask, drm->storedParamSseu);
     drm_i915_gem_context_param_sseu sseu = {};
@@ -184,7 +184,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlyS
                        ssh,
                        taskLevel,
                        dispatchFlags,
-                       *mdevice);
+                       mdevice->getDevice());
     auto expectedSliceMask = drm->getSliceMask(newSliceCount);
     EXPECT_NE(expectedSliceMask, drm->storedParamSseu);
     drm_i915_gem_context_param_sseu sseu = {};
@@ -228,7 +228,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
                        ssh,
                        taskLevel,
                        dispatchFlags,
-                       *mdevice);
+                       mdevice->getDevice());
 
     EXPECT_NE(newSliceCount, mockCsr->lastSentSliceCount);
     EXPECT_EQ(lastSliceCountBeforeFlushTask, mockCsr->lastSentSliceCount);

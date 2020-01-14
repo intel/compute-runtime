@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,14 +41,14 @@ MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
 // PerformanceCountersFixture::createPerfCounters
 //////////////////////////////////////////////////////
 void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = MockPerformanceCounters::create(device.get());
+    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
 }
 
 //////////////////////////////////////////////////////
 // PerformanceCountersFixture::SetUp
 //////////////////////////////////////////////////////
 void PerformanceCountersFixture::SetUp() {
-    device = std::unique_ptr<MockDevice>(new MockDevice());
+    device = std::make_unique<MockClDevice>(new MockDevice());
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
     osInterface = std::unique_ptr<OSInterface>(new OSInterface());

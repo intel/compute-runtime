@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -306,7 +306,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
 
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
     auto sizeToProgram = (scratchSize / MemoryConstants::kiloByte);
@@ -441,7 +441,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
 
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
     auto sizeToProgram = (scratchSize / MemoryConstants::kiloByte);
@@ -483,7 +483,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         auto scratchSize = 1024;
         mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
-        MockKernelWithInternals mockKernel(*pDevice);
+        MockKernelWithInternals mockKernel(*pClDevice);
         mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
         enqueueKernel<FamilyType>(mockKernel);
@@ -539,7 +539,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossTHreadData)
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
 
@@ -555,7 +555,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -575,7 +575,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     patchData.Size = 256;
     patchData.DataParamOffset = 64;
 
-    MockKernelWithInternals mockKernel(*pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -623,7 +623,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
         patchData.DataParamSize = 8;
         patchData.DataParamOffset = 0;
 
-        MockKernelWithInternals mockKernel(*pDevice);
+        MockKernelWithInternals mockKernel(*pClDevice);
         mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
 
         auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
@@ -675,7 +675,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
         using CommandQueueHw<FamilyType>::commandStream;
         using CommandQueueHw<FamilyType>::gpgpuEngine;
         using CommandQueueHw<FamilyType>::bcsEngine;
-        MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
+        MyCmdQ(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
         void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
             auxTranslationDirections.push_back(auxTranslationDirection);
@@ -708,8 +708,8 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
 };
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutArgumentsWhenEnqueuedThenNoGuardKernelWithAuxTranslations) {
-    MockKernelWithInternals mockKernel(*pDevice, context);
-    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
 
     mockKernel.mockKernel->auxTranslationRequired = true;
@@ -722,7 +722,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
         GTEST_SKIP();
     }
 
-    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer0, buffer1, buffer2, buffer3;
     cl_mem clMem0 = &buffer0;
@@ -734,7 +734,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     buffer2.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     buffer3.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*pClDevice, context);
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.kernelInfo.kernelArgInfo.resize(6);
     for (auto &kernelInfo : mockKernel.kernelInfo.kernelArgInfo) {
@@ -783,8 +783,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
-    MockKernelWithInternals mockKernel(*pDevice, context);
-    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer;
     cl_mem clMem = &buffer;
@@ -817,8 +817,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
-    MockKernelWithInternals mockKernel(*pDevice, context);
-    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    MockKernelWithInternals mockKernel(*pClDevice, context);
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     cmdQ.bcsEngine = cmdQ.gpgpuEngine;
 
     size_t gws[3] = {1, 0, 0};
@@ -852,8 +852,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    MockKernelWithInternals mockKernel(*pDevice, context);
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+    MockKernelWithInternals mockKernel(*pClDevice, context);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
 
     size_t gws[3] = {1, 0, 0};
 
@@ -874,11 +874,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        MyCmdQ<FamilyType> cmdQ(context, pDevice);
+        MyCmdQ<FamilyType> cmdQ(context, pClDevice);
         size_t gws[3] = {1, 0, 0};
 
         cl_queue_properties queueProperties = {};
-        auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pDevice, queueProperties);
+        auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
         context->setDefaultDeviceQueue(mockDevQueue.get());
         std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
         parentKernel->initialize();
@@ -896,7 +896,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledItReturnsInvalidOperation) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        MyCmdQ<FamilyType> cmdQ(context, pDevice);
+        MyCmdQ<FamilyType> cmdQ(context, pClDevice);
         size_t gws[3] = {1, 0, 0};
 
         std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));

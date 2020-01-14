@@ -69,15 +69,15 @@ TEST_P(ValidDescriptor, given3dImageFormatWhenGetSupportedFormatIsCalledThenDont
     uint32_t writeOnlyformatCount;
     uint32_t readWriteOnlyformatCount;
 
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_READ_ONLY, imageDesc.image_type, 0, nullptr, &readOnlyformatCount);
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_WRITE_ONLY, imageDesc.image_type, 0, nullptr, &writeOnlyformatCount);
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_READ_WRITE, imageDesc.image_type, 0, nullptr, &readWriteOnlyformatCount);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, 0, nullptr, &readOnlyformatCount);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, 0, nullptr, &writeOnlyformatCount);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, 0, nullptr, &readWriteOnlyformatCount);
     auto readOnlyImgFormats = new cl_image_format[readOnlyformatCount];
     auto writeOnlyImgFormats = new cl_image_format[writeOnlyformatCount];
     auto readWriteOnlyImgFormats = new cl_image_format[readWriteOnlyformatCount];
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_READ_ONLY, imageDesc.image_type, readOnlyformatCount, readOnlyImgFormats, 0);
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_WRITE_ONLY, imageDesc.image_type, writeOnlyformatCount, writeOnlyImgFormats, 0);
-    context.getSupportedImageFormats(context.getDevice(0), CL_MEM_READ_WRITE, imageDesc.image_type, readWriteOnlyformatCount, readWriteOnlyImgFormats, 0);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_ONLY, imageDesc.image_type, readOnlyformatCount, readOnlyImgFormats, 0);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_WRITE_ONLY, imageDesc.image_type, writeOnlyformatCount, writeOnlyImgFormats, 0);
+    context.getSupportedImageFormats(&context.getDevice(0)->getDevice(), CL_MEM_READ_WRITE, imageDesc.image_type, readWriteOnlyformatCount, readWriteOnlyImgFormats, 0);
 
     bool depthFound = false;
     for (uint32_t i = 0; i < readOnlyformatCount; i++) {

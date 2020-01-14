@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,20 +12,9 @@
 namespace NEO {
 
 SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice) : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {}
-void SubDevice::retain() {
-    rootDevice.incRefInternal();
-    Device::retain();
+bool SubDevice::isReleasable() {
+    return true;
 };
-unique_ptr_if_unused<Device> SubDevice::release() {
-    rootDevice.decRefInternal();
-    return Device::release();
-};
-void SubDevice::retainInternal() {
-    rootDevice.incRefInternal();
-}
-void SubDevice::releaseInternal() {
-    rootDevice.decRefInternal();
-}
 
 DeviceBitfield SubDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield;

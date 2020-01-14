@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct SimpleTest : public CommandDeviceFixture,
     void SetUp() override {
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         AUBCommandStreamFixture::SetUp(pCmdQ);
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
     }
     void TearDown() override {
         delete context;

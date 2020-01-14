@@ -183,9 +183,6 @@ void Device::initializeCaps() {
 
     deviceExtensions += sharingFactory.getExtensions();
 
-    simultaneousInterops = {0};
-    appendOSExtensions(deviceExtensions);
-
     deviceExtensions += hwHelper.getExtensions();
 
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
@@ -385,4 +382,10 @@ void Device::initializeCaps() {
         }
     }
 }
+
+void Device::appendOSExtensions(const std::string &newExtensions) {
+    deviceExtensions += newExtensions;
+    deviceInfo.deviceExtensions = deviceExtensions.c_str();
+}
+
 } // namespace NEO

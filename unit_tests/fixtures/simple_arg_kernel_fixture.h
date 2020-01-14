@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
     }
 
   protected:
-    virtual void SetUp(Device *pDevice) {
+    virtual void SetUp(ClDevice *pDevice) {
         ProgramFixture::SetUp();
 
         std::string testFile;
@@ -93,7 +93,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         }
 
         cl_device_id device = pDevice;
-        pContext = Context::create<MockContext>(nullptr, DeviceVector(&device, 1), nullptr, nullptr, retVal);
+        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
@@ -146,7 +146,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
     }
 
   protected:
-    void SetUp(Device *device, Context *context) {
+    void SetUp(ClDevice *device, Context *context) {
         ProgramFixture::SetUp();
 
         cl_device_id deviceId = device;
@@ -194,7 +194,7 @@ class SimpleKernelFixture : public ProgramFixture {
     using ProgramFixture::SetUp;
 
   protected:
-    void SetUp(Device *device, Context *context) {
+    void SetUp(ClDevice *device, Context *context) {
         ProgramFixture::SetUp();
 
         cl_device_id deviceId = device;
@@ -252,7 +252,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
     SimpleKernelStatelessFixture() = default;
 
   protected:
-    void SetUp(Device *device, Context *context) {
+    void SetUp(ClDevice *device, Context *context) {
         ProgramFixture::SetUp();
         cl_device_id deviceId = device;
         cl_context clContext = context;

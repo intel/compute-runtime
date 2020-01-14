@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ class CreateImage2DTest : public DeviceFixture,
         if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
             imageDesc.image_array_size = 10;
         }
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
     }
 
     void TearDown() override {

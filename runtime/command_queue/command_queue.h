@@ -19,6 +19,7 @@ namespace NEO {
 class BarrierCommand;
 class Buffer;
 class LinearStream;
+class ClDevice;
 class Context;
 class Device;
 class Event;
@@ -55,13 +56,13 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
   public:
     static const cl_ulong objectMagic = 0x1234567890987654LL;
 
-    static CommandQueue *create(Context *context, Device *device,
+    static CommandQueue *create(Context *context, ClDevice *device,
                                 const cl_queue_properties *properties,
                                 cl_int &errcodeRet);
 
     CommandQueue();
 
-    CommandQueue(Context *context, Device *device,
+    CommandQueue(Context *context, ClDevice *device,
                  const cl_queue_properties *properties);
 
     CommandQueue &operator=(const CommandQueue &) = delete;
@@ -336,7 +337,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     CommandStreamReceiver *getBcsCommandStreamReceiver() const;
-    Device &getDevice() const { return *device; }
+    Device &getDevice() const noexcept;
     Context &getContext() const { return *context; }
     Context *getContextPtr() const { return context; }
     EngineControl &getGpgpuEngine() const { return *gpgpuEngine; }
@@ -445,7 +446,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
 
     Context *context = nullptr;
-    Device *device = nullptr;
+    ClDevice *device = nullptr;
     EngineControl *gpgpuEngine = nullptr;
     EngineControl *bcsEngine = nullptr;
 
@@ -467,6 +468,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 };
 
 typedef CommandQueue *(*CommandQueueCreateFunc)(
-    Context *context, Device *device, const cl_queue_properties *properties);
+    Context *context, ClDevice *device, const cl_queue_properties *properties);
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,7 +111,7 @@ cl_int Program::build(
                     "\nBuild Internal Options", inputArgs.internalOptions.begin());
             inputArgs.allowCaching = enableCaching;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->build(*this->pDevice, inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->build(this->pDevice->getDevice(), inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);
@@ -183,9 +183,10 @@ void Program::notifyDebuggerWithSourceCode(std::string &filename) {
     }
 }
 
-cl_int Program::build(const cl_device_id device, const char *buildOptions, bool enableCaching,
+cl_int Program::build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                       std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
-    auto ret = this->build(1, &device, buildOptions, nullptr, nullptr, enableCaching);
+    cl_device_id deviceId = platform()->clDeviceMap[pDevice];
+    auto ret = this->build(1, &deviceId, buildOptions, nullptr, nullptr, enableCaching);
     if (ret != CL_SUCCESS) {
         return ret;
     }

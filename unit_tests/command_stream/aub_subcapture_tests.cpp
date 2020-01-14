@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,7 +175,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -190,7 +190,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -206,7 +206,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -222,7 +222,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -239,7 +239,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -255,7 +255,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -401,7 +401,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
@@ -514,9 +514,9 @@ TEST_F(AubSubCaptureTest, givenMultiDispatchInfoWithMultipleKernelsWhenGenerateT
     KernelInfo mainKernelInfo = {};
     mainKernelInfo.name = "main_kernel";
 
-    MockKernel mainKernel(program.get(), mainKernelInfo, *pDevice);
-    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
-    MockKernel kernel2(program.get(), kernelInfo, *pDevice);
+    MockKernel mainKernel(program.get(), mainKernelInfo, *pClDevice);
+    MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
+    MockKernel kernel2(program.get(), kernelInfo, *pClDevice);
 
     DispatchInfo mainDispatchInfo(&mainKernel, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
     DispatchInfo dispatchInfo1(&kernel1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
@@ -544,7 +544,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpec
     subCaptureCommon.subCaptureFilter.dumpKernelName = kernelName;
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);

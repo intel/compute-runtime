@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevi
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(numEntries, numDevices);
     for (auto i = 0u; i < numRootDevices; i++) {
-        EXPECT_EQ(devices[i], platform()->getDevice(i));
+        EXPECT_EQ(devices[i], platform()->getClDevice(i));
     }
 }
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIsLowerThanNumDevicesThenSubsetOfRootDevicesIsReturned) {
@@ -141,7 +141,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     EXPECT_LT(numDevices, maxNumDevices);
     EXPECT_EQ(numEntries, numDevices);
     for (auto i = 0u; i < numEntries; i++) {
-        EXPECT_EQ(devices[i], platform()->getDevice(i));
+        EXPECT_EQ(devices[i], platform()->getClDevice(i));
     }
     EXPECT_EQ(devices[numEntries], dummyDevice);
 }
@@ -166,7 +166,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(numEntries - 1, numDevices);
     for (auto i = 0u; i < numDevices; i++) {
-        EXPECT_EQ(devices[i], platform()->getDevice(i));
+        EXPECT_EQ(devices[i], platform()->getClDevice(i));
     }
     EXPECT_EQ(devices[numDevices], dummyDevice);
 }

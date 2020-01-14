@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
 
     DeviceQueue *devQueue = DeviceQueue::create(
         &pCmdQ->getContext(),
-        pDevice,
+        pClDevice,
         properties[0],
         retVal);
 

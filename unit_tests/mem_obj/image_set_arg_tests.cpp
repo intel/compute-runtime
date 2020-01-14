@@ -82,13 +82,13 @@ class ImageSetArgTest : public DeviceFixture,
         pKernelInfo->kernelArgInfo[0].isImage = true;
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         srcImage = Image3dHelper<>::create(context);
         ASSERT_NE(nullptr, srcImage);
 
@@ -932,13 +932,13 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernelInfo->kernelArgInfo[0].isMediaBlockImage = true;
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         srcImage = Image3dHelper<>::create(context);
         ASSERT_NE(nullptr, srcImage);
     }

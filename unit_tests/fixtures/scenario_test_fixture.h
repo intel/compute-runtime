@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,11 +27,11 @@ class ScenarioTest : public ::testing::Test,
         DebugManager.flags.EnableTimestampPacket.set(false);
         PlatformFixture::SetUp();
 
-        auto pDevice = pPlatform->getDevice(0);
+        auto pDevice = pPlatform->getClDevice(0);
         ASSERT_NE(nullptr, pDevice);
 
         cl_device_id clDevice = pDevice;
-        context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+        context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
         commandQueue = new MockCommandQueue(context, pDevice, 0);
         program = new MockProgram(*pDevice->getExecutionEnvironment(), context, false);
 

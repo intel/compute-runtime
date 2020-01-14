@@ -291,7 +291,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostP
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image1dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
-    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, 1, 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();

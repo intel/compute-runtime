@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
 
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
         sizeof(size_t) * 3,
         inputValue,
@@ -112,7 +112,7 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGrou
 
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
         sizeof(size_t) * 3,
         inputValue,
@@ -136,7 +136,7 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
 
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
         0,
         nullptr,
@@ -162,7 +162,7 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
 TEST_F(KernelSubGroupInfoKhrTest, GivenNullKernelWhenGettingKernelSubGroupInfoThenInvalidKernelErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         nullptr,
-        pDevice,
+        pClDevice,
         0,
         0,
         nullptr,
@@ -190,7 +190,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingKernelSubGroupInfoTh
 TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         0,
         sizeof(size_t),
         inputValue,
@@ -215,7 +215,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
     // work dim == 0
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         0,
         inputValue,
@@ -228,7 +228,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
     // work dim % sizeof(size_t) != 0
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         (sizeof(size_t) * MaxWorkDim) - 1,
         inputValue,
@@ -241,7 +241,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
     // work dim > MaxWorkDim
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim + 1),
         inputValue,
@@ -254,7 +254,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
     // null input_value
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         sizeof(size_t) * (MaxWorkDim),
         nullptr,
@@ -269,7 +269,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKer
     //param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         sizeof(size_t),
         inputValue,
@@ -283,7 +283,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKer
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
-        pDevice,
+        pClDevice,
         GetParam(),
         sizeof(size_t),
         inputValue,

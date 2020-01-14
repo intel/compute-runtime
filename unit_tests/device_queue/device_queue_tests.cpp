@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     }
 
     DeviceQueue *deviceQueue;
-    Device *device;
+    ClDevice *device;
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueueWhenNoDeviceQueueIsSupported) {

@@ -55,7 +55,7 @@ class Surface;
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 
-Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg, bool schedulerKernel)
+Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool schedulerKernel)
     : globalWorkOffsetX(&Kernel::dummyPatchLocation),
       globalWorkOffsetY(&Kernel::dummyPatchLocation),
       globalWorkOffsetZ(&Kernel::dummyPatchLocation),
@@ -2231,7 +2231,7 @@ void Kernel::patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, 
                                       patchInfo.pAllocateSyncBuffer->SurfaceStateHeapOffset);
         auto addressToPatch = gfxAllocation->getUnderlyingBuffer();
         auto sizeToPatch = gfxAllocation->getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&device, surfaceState, sizeToPatch, addressToPatch, gfxAllocation);
+        Buffer::setSurfaceState(platform()->clDeviceMap[&device], surfaceState, sizeToPatch, addressToPatch, gfxAllocation);
     }
 }
 

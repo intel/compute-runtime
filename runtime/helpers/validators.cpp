@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ cl_int validateObject(cl_context object) {
 }
 
 cl_int validateObject(cl_device_id object) {
-    return castToObject<Device>(object) != nullptr
+    return castToObject<ClDevice>(object) != nullptr
                ? CL_SUCCESS
                : CL_INVALID_DEVICE;
 }

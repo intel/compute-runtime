@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,12 @@
 
 namespace NEO {
 
+class ClDevice;
 struct MultiDispatchInfo;
 
 class PrintfHandler {
   public:
-    static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, Device &deviceArg);
+    static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &deviceArg);
 
     ~PrintfHandler();
 
@@ -29,10 +30,10 @@ class PrintfHandler {
     }
 
   protected:
-    PrintfHandler(Device &device);
+    PrintfHandler(ClDevice &device);
 
     static const uint32_t printfSurfaceInitialDataSize = sizeof(uint32_t);
-    Device &device;
+    ClDevice &device;
     Kernel *kernel = nullptr;
     GraphicsAllocation *printfSurface = nullptr;
 };

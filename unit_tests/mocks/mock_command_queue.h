@@ -32,7 +32,7 @@ class MockCommandQueue : public CommandQueue {
     }
     MockCommandQueue() : CommandQueue(nullptr, nullptr, 0) {}
     MockCommandQueue(Context &context) : MockCommandQueue(&context, context.getDevice(0), nullptr) {}
-    MockCommandQueue(Context *context, Device *device, const cl_queue_properties *props)
+    MockCommandQueue(Context *context, ClDevice *device, const cl_queue_properties *props)
         : CommandQueue(context, device, props) {
     }
 
@@ -84,7 +84,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::timestampPacketContainer;
 
     MockCommandQueueHw(Context *context,
-                       Device *device,
+                       ClDevice *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties) {
     }
 

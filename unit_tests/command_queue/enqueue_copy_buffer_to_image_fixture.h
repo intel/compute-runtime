@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ struct EnqueueCopyBufferToImageTest : public CommandEnqueueFixture,
     virtual void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
 
-        BufferDefaults::context = new MockContext(pDevice);
-        context = new MockContext(pDevice);
+        BufferDefaults::context = new MockContext(pClDevice);
+        context = new MockContext(pClDevice);
         srcBuffer = BufferHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
     }
@@ -65,8 +65,8 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
 
     virtual void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
-        BufferDefaults::context = new MockContext(pDevice);
-        context = new MockContext(pDevice);
+        BufferDefaults::context = new MockContext(pClDevice);
+        context = new MockContext(pClDevice);
         srcBuffer = BufferHelper<>::create(context);
     }
 

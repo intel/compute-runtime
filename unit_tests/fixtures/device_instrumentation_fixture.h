@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,14 @@
 
 namespace NEO {
 
+class ClDevice;
 class Device;
 struct HardwareInfo;
 
 struct DeviceInstrumentationFixture {
     void SetUp(bool instrumentation);
 
-    std::unique_ptr<Device> device = nullptr;
+    std::unique_ptr<ClDevice> device = nullptr;
     HardwareInfo *hwInfo = nullptr;
 };
 } // namespace NEO

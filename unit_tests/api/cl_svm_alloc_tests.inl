@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,14 +40,15 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, 0u));
+    auto device = Device::create<RootDevice>(executionEnvironment, 0u);
+    auto clDevice = std::make_unique<ClDevice>(*device);
     const DeviceInfo &devInfo = device->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
-    cl_device_id clDevice = device.get();
+    cl_device_id deviceId = clDevice.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());

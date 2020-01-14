@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ struct AUBImageUnaligned
 
     template <typename FamilyType>
     void testReadImageUnaligned(size_t offset, size_t size, size_t pixelSize) {
-        MockContext context(&pCmdQ->getDevice());
+        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
         char srcMemory[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuwxyz";
         const auto bufferSize = sizeof(srcMemory) - 1;
@@ -128,7 +128,7 @@ struct AUBImageUnaligned
     void testWriteImageUnaligned(size_t offset, size_t size, size_t pixelSize) {
         DebugManagerStateRestore restorer;
         DebugManager.flags.ForceLinearImages.set(true);
-        MockContext context(&pCmdQ->getDevice());
+        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuwxyz";
         const auto bufferSize = sizeof(srcMemory);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/platform/platform.h"
 
 namespace NEO {
 
@@ -61,7 +62,7 @@ cl_int getQueueInfo(QueueType *queue,
         getInfoHelper.set<cl_context>(&queue->getContext());
         break;
     case CL_QUEUE_DEVICE:
-        getInfoHelper.set<cl_device_id>(&queue->getDevice());
+        getInfoHelper.set<cl_device_id>(platform()->clDeviceMap[&queue->getDevice()]);
         break;
     case CL_QUEUE_REFERENCE_COUNT:
         getInfoHelper.set<cl_int>(queue->getReference());
@@ -123,5 +124,5 @@ returnType getCmdQueueProperties(const cl_queue_properties *properties,
     return retVal;
 }
 bool isExtraToken(const cl_queue_properties *property);
-bool verifyExtraTokens(Device *&device, Context &context, const cl_queue_properties *properties);
+bool verifyExtraTokens(ClDevice *&device, Context &context, const cl_queue_properties *properties);
 } // namespace NEO

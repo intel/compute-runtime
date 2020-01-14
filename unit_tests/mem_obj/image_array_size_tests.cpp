@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ class ImageArraySizeTest : public DeviceFixture,
         imageDesc.mem_object = NULL;
         // clang-format on
 
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
 
         if (types == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
             imageDesc.mem_object = clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR, testImageDimensions, nullptr, nullptr);

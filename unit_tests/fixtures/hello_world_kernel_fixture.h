@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class Program;
 struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::SetUp;
 
-    virtual void SetUp(Device *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options = nullptr) {
+    virtual void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options = nullptr) {
         ProgramFixture::SetUp();
 
         pTestFilename = new std::string(kernelFilenameStr);
@@ -40,7 +40,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         }
 
         cl_device_id device = pDevice;
-        pContext = Context::create<MockContext>(nullptr, DeviceVector(&device, 1), nullptr, nullptr, retVal);
+        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 

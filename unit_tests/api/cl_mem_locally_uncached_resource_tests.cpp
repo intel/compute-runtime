@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFix
 
 HWTEST_F(clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
     cl_int retVal = CL_SUCCESS;
-    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     mockKernel.kernelInfo.usesSsh = true;
     mockKernel.kernelInfo.requiresSshForBuffers = true;
 
@@ -136,7 +136,7 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableR
 HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedItIsCached) {
     cl_int retVal = CL_SUCCESS;
 
-    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     mockKernel.kernelInfo.usesSsh = true;
     mockKernel.kernelInfo.requiresSshForBuffers = true;
@@ -211,7 +211,7 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfa
 HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessessThenSurfacesAreNotRecordedAsUncacheable) {
     cl_int retVal = CL_SUCCESS;
 
-    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     mockKernel.kernelInfo.usesSsh = true;
     mockKernel.kernelInfo.requiresSshForBuffers = true;
@@ -290,7 +290,7 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKern
 
 HWTEST_F(clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThanKernelContinuesToCorrectlySetMocs) {
     cl_int retVal = CL_SUCCESS;
-    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     mockKernel.kernelInfo.usesSsh = true;
     mockKernel.kernelInfo.requiresSshForBuffers = true;
@@ -356,7 +356,7 @@ HWTEST_F(clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFr
 HWTEST_F(clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateAndAreNotUsedInStatelessFashionThenThoseResourcesAreNotRegistredAsResourcesForCacheFlush) {
     cl_int retVal = CL_SUCCESS;
 
-    MockKernelWithInternals mockKernel(*this->pDevice, context, true);
+    MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto kernel = mockKernel.mockKernel;
     mockKernel.kernelInfo.usesSsh = true;
     mockKernel.kernelInfo.requiresSshForBuffers = true;

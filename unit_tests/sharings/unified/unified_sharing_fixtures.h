@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,9 @@ namespace NEO {
 template <bool validContext>
 struct UnifiedSharingContextFixture : ::testing::Test {
     void SetUp() override {
-        device = std::make_unique<MockDevice>();
-        cl_device_id deviceId = static_cast<cl_device_id>(device.get());
-        deviceVector = std::make_unique<DeviceVector>(&deviceId, 1);
+        device = std::make_unique<MockClDevice>(new MockDevice);
+        cl_device_id deviceId = device.get();
+        deviceVector = std::make_unique<ClDeviceVector>(&deviceId, 1);
         if (validContext) {
             context = createValidContext();
         } else {
@@ -47,8 +47,8 @@ struct UnifiedSharingContextFixture : ::testing::Test {
         return createContext(nullptr);
     }
 
-    std::unique_ptr<MockDevice> device;
-    std::unique_ptr<DeviceVector> deviceVector;
+    std::unique_ptr<MockClDevice> device;
+    std::unique_ptr<ClDeviceVector> deviceVector;
     std::unique_ptr<MockContext> context;
 };
 

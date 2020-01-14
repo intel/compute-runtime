@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
 
         if (temp.find("OpenCL 1.2") != std::string::npos) {
             pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+            pClDevice = new MockClDevice{pDevice};
             return;
         }
 
@@ -43,7 +44,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         retVal = pProgram->build(
             1,
             &device,
@@ -78,6 +79,10 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
             if (pDevice != nullptr) {
                 delete pDevice;
                 pDevice = nullptr;
+            }
+            if (pClDevice != nullptr) {
+                delete pClDevice;
+                pClDevice = nullptr;
             }
         }
     }

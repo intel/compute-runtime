@@ -52,10 +52,10 @@ TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportIma
 TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSupportImageFormatsThenClInvalidValueIsReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsImages = false;
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     cl_device_id clDevice = device.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_uint numImageFormats = 0;
@@ -74,14 +74,14 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformWithoutDevicesWhenClGetSupport
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, 0u));
+    auto device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0u));
     const DeviceInfo &devInfo = device->getDeviceInfo();
     if (!devInfo.imageSupport) {
         GTEST_SKIP();
     }
     cl_device_id clDevice = device.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());

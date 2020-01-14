@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ typedef api_tests clGetGLContextInfoKHR_;
 namespace ULT {
 
 TEST_F(clGetGLContextInfoKHR_, success) {
-    auto expectedDevice = ::platform()->getDevice(0);
+    auto expectedDevice = ::platform()->getClDevice(0);
     cl_device_id retDevice = 0;
     size_t retSize = 0;
 

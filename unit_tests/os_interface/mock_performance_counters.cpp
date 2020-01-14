@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -361,7 +361,7 @@ PerformanceCountersFixture::~PerformanceCountersFixture() {
 // PerformanceCountersMetricsLibraryFixture::createPerformanceCounters
 //////////////////////////////////////////////////////
 void PerformanceCountersMetricsLibraryFixture::createPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMetricsLibrary) {
-    performanceCountersBase = MockPerformanceCounters::create(device.get());
+    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
     auto metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
     auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
     EXPECT_NE(performanceCountersBase, nullptr);

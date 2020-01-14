@@ -79,7 +79,7 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
     const auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
                                                                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     const auto deviceQueueShouldBeCreated = (commandQueueProperties & minimumCreateDeviceQueueFlags) == minimumCreateDeviceQueueFlags;
-    if (deviceQueueShouldBeCreated && !castToObject<Device>(this->devices[testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+    if (deviceQueueShouldBeCreated && !castToObject<ClDevice>(this->devices[testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
         return;
     }
 
@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
         GTEST_SKIP();
     }
     cl_int retVal = CL_SUCCESS;
-    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
 
     auto cmdq1 = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], odq, &retVal);

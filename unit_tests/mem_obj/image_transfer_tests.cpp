@@ -18,7 +18,7 @@ class ImageHostPtrTransferTests : public testing::Test {
 
   public:
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
     }
 
@@ -51,7 +51,7 @@ class ImageHostPtrTransferTests : public testing::Test {
         }
     }
 
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> image;
 

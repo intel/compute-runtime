@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ ContextFixture::ContextFixture()
 
 void ContextFixture::SetUp(cl_uint numDevices, cl_device_id *pDeviceList) {
     auto retVal = CL_SUCCESS;
-    pContext = Context::create<MockContext>(nullptr, DeviceVector(pDeviceList, numDevices),
+    pContext = Context::create<MockContext>(nullptr, ClDeviceVector(pDeviceList, numDevices),
                                             nullptr, nullptr, retVal);
     ASSERT_NE(nullptr, pContext);
     ASSERT_EQ(CL_SUCCESS, retVal);

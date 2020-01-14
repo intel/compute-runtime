@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
   protected:
     void SetUp() {
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
@@ -82,12 +82,12 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-        pSourceKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pSourceKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pSourceKernel->initialize());
         char pSourceCrossThreadData[64] = {};
         pSourceKernel->setCrossThreadData(pSourceCrossThreadData, sizeof(pSourceCrossThreadData));
 
-        pClonedKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pClonedKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pClonedKernel->initialize());
         char pClonedCrossThreadData[64] = {};
         pClonedKernel->setCrossThreadData(pClonedCrossThreadData, sizeof(pClonedCrossThreadData));
@@ -387,7 +387,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, cloneKernelWithArgDeviceQueue) {
         CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
         0, 0, 0};
 
-    MockDeviceQueueHw<FamilyType> mockDevQueue(pContext, pDevice, queueProps[0]);
+    MockDeviceQueueHw<FamilyType> mockDevQueue(pContext, pClDevice, queueProps[0]);
     auto clDeviceQueue = static_cast<cl_command_queue>(&mockDevQueue);
 
     pSourceKernel->setKernelArgHandler(0, &Kernel::setArgDevQueue);

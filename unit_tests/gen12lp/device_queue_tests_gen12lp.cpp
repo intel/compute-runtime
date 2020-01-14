@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,19 +25,19 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     const_cast<HardwareInfo &>(device->getHardwareInfo()).platform.usRevId = REVISION_A0;
 
     uint64_t expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch() + blockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
-    uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
+    uint64_t offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);
     EXPECT_EQ(expectedOffset, offset);
 
     expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, false);
     EXPECT_EQ(expectedOffset, offset);
 
     const_cast<HardwareInfo &>(device->getHardwareInfo()).platform.usRevId = REVISION_B;
 
     expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, true);
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);
     EXPECT_EQ(expectedOffset, offset);
 
-    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(*device, blockInfo, false);
+    offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, false);
     EXPECT_EQ(expectedOffset, offset);
 }

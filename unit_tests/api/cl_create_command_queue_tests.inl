@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,8 @@ TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIs
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto mockDevice = castToObject<MockDevice>(devices[testedRootDeviceIndex]);
+    auto clDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 
@@ -76,7 +77,8 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto mockDevice = castToObject<MockDevice>(devices[testedRootDeviceIndex]);
+    auto clDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_FALSE(csr.isNTo1SubmissionModelEnabled());
 

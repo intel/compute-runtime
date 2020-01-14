@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,9 +31,9 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     size_t GWS = 1;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<GfxFamily> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -72,9 +72,9 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
 
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t GWS = 1;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<GfxFamily> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
     cl_event blockingEvent;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ void DevicePreemptionTests::SetUp() {
     }
     const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     kernelInfo = std::make_unique<KernelInfo>();
-    device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     context.reset(new MockContext(device.get()));
     cmdQ.reset(new MockCommandQueue(context.get(), device.get(), properties));
     executionEnvironment.reset(new SPatchExecutionEnvironment);

@@ -95,7 +95,7 @@ bool Context::areMultiStorageAllocationsPreferred() {
 }
 
 bool Context::createImpl(const cl_context_properties *properties,
-                         const DeviceVector &inputDevices,
+                         const ClDeviceVector &inputDevices,
                          void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
                          void *data, cl_int &errcodeRet) {
 
@@ -257,8 +257,8 @@ size_t Context::getTotalNumDevices() const {
     return numAvailableDevices;
 }
 
-Device *Context::getDevice(size_t deviceOrdinal) {
-    return (Device *)devices[deviceOrdinal];
+ClDevice *Context::getDevice(size_t deviceOrdinal) {
+    return (ClDevice *)devices[deviceOrdinal];
 }
 
 cl_int Context::getSupportedImageFormats(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "core/kernel/grf_config.h"
 #include "runtime/device/device.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/platform/platform.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -87,7 +88,7 @@ class MockKernel : public Kernel {
         }
     };
 
-    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg, bool scheduler = false)
+    MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg, bool scheduler = false)
         : Kernel(programArg, kernelInfoArg, deviceArg, scheduler) {
     }
 
@@ -114,6 +115,7 @@ class MockKernel : public Kernel {
     static KernelType *create(Device &device, Program *program, uint32_t grfNumber) {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
+        auto pClDevice = platform()->clDeviceMap[&device];
 
         SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
         header->DynamicStateHeapSize = 0;
@@ -141,7 +143,7 @@ class MockKernel : public Kernel {
 
         info->crossThreadData = new char[crossThreadSize];
 
-        auto kernel = new KernelType(program, *info, device);
+        auto kernel = new KernelType(program, *info, *pClDevice);
         kernel->crossThreadData = new char[crossThreadSize];
         memset(kernel->crossThreadData, 0, crossThreadSize);
         kernel->crossThreadDataSize = crossThreadSize;
@@ -257,7 +259,7 @@ class MockKernel : public Kernel {
 //class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(const Device &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment newExecutionEnvironment = {}) {
+    MockKernelWithInternals(const ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment newExecutionEnvironment = {}) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
         memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         memcpy(&executionEnvironment, &newExecutionEnvironment, sizeof(SPatchExecutionEnvironment));
@@ -320,7 +322,7 @@ class MockKernelWithInternals {
         }
     }
 
-    MockKernelWithInternals(const Device &deviceArg, SPatchExecutionEnvironment newExecutionEnvironment) : MockKernelWithInternals(deviceArg, nullptr, false, newExecutionEnvironment) {
+    MockKernelWithInternals(const ClDevice &deviceArg, SPatchExecutionEnvironment newExecutionEnvironment) : MockKernelWithInternals(deviceArg, nullptr, false, newExecutionEnvironment) {
         mockKernel->initialize();
     }
 
@@ -357,7 +359,7 @@ class MockParentKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::patchBlocksCurbeWithConstantValues;
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
-        Device &device = *context.getDevice(0);
+        ClDevice &device = *context.getDevice(0);
 
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
@@ -545,7 +547,7 @@ class MockParentKernel : public Kernel {
         return parent;
     }
 
-    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
+    MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
     }
 
     ~MockParentKernel() {
@@ -592,12 +594,12 @@ class MockParentKernel : public Kernel {
 
 class MockSchedulerKernel : public SchedulerKernel {
   public:
-    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg) : SchedulerKernel(programArg, kernelInfoArg, deviceArg){};
+    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : SchedulerKernel(programArg, kernelInfoArg, deviceArg){};
 };
 
 class MockDebugKernel : public MockKernel {
   public:
-    MockDebugKernel(Program *program, KernelInfo &kernelInfo, const Device &device) : MockKernel(program, kernelInfo, device) {
+    MockDebugKernel(Program *program, KernelInfo &kernelInfo, const ClDevice &device) : MockKernel(program, kernelInfo, device) {
         if (!kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
 

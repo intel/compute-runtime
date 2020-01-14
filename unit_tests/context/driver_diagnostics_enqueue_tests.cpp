@@ -794,7 +794,7 @@ TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIs
     size_t preferredWorkGroupSize[3];
     size_t globalWorkGroupSize[3] = {1, 1, 1};
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getDevice(0)->getDeviceInfo().maxWorkGroupSize);
-    MockKernelWithInternals mockKernel(*pPlatform->getDevice(0), context);
+    MockKernelWithInternals mockKernel(*pPlatform->getClDevice(0), context);
     Kernel::SimpleKernelArgInfo kernelArgInfo;
 
     if (DebugManager.flags.EnableComputeWorkSizeND.get()) {

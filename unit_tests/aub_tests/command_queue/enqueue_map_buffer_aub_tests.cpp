@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct AUBMapBuffer
 };
 
 HWTEST_F(AUBMapBuffer, MapUpdateUnmapVerify) {
-    MockContext context(&this->pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
     auto retVal = CL_INVALID_VALUE;
     size_t bufferSize = 10;
 

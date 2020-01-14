@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "platform_info.h"
 
 #include <condition_variable>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -52,8 +53,10 @@ class Platform : public BaseObject<_cl_platform_id> {
     bool isInitialized();
 
     size_t getNumDevices() const;
-    Device **getDevices();
     Device *getDevice(size_t deviceOrdinal);
+    ClDevice **getClDevices();
+    ClDevice *getClDevice(size_t deviceOrdinal);
+    std::unordered_map<const Device *, ClDevice *> clDeviceMap;
 
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();
@@ -73,7 +76,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     MOCKABLE_VIRTUAL void initializationLoopHelper(){};
     MOCKABLE_VIRTUAL RootDevice *createRootDevice(uint32_t rootDeviceIndex) const;
     std::unique_ptr<PlatformInfo> platformInfo;
-    DeviceVector devices;
+    ClDeviceVector clDevices;
     std::string compilerExtensions;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
     ExecutionEnvironment *executionEnvironment = nullptr;

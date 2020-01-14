@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
 
     std::unique_ptr<DeviceQueue> devQueue(DeviceQueue::create(
         &pCmdQ->getContext(),
-        pDevice,
+        pClDevice,
         properties[0],
         retVal));
 

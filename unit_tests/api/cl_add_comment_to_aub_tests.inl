@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ struct clAddCommentToAubTest : api_tests {
         api_tests::TearDown();
     }
 
-    Device *pDevice = nullptr;
+    ClDevice *pDevice = nullptr;
 };
 
 TEST_F(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {

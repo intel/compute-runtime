@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,7 +227,7 @@ struct PerformanceCountersFixture {
     virtual void TearDown();
     virtual void createPerfCounters();
     cl_queue_properties queueProperties = {};
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockCommandQueue> queue;
     std::unique_ptr<OSInterface> osInterface;

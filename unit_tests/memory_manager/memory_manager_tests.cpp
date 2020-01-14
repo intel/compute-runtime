@@ -475,13 +475,13 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphi
 
 class MockPrintfHandler : public PrintfHandler {
   public:
-    static MockPrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, Device &deviceArg) {
+    static MockPrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &deviceArg) {
         return (MockPrintfHandler *)PrintfHandler::create(multiDispatchInfo, deviceArg);
     }
 };
 
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -499,7 +499,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
     kernel.kernelInfo.usesSsh = false;
     kernel.kernelInfo.requiresSshForBuffers = false;
 
-    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device);
+    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
 
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -517,7 +517,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
 }
 
 HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithCpuAddress) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -535,7 +535,7 @@ HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCr
     kernel.kernelInfo.usesSsh = true;
     kernel.kernelInfo.requiresSshForBuffers = true;
 
-    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device);
+    auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
 
     printfHandler->prepareDispatch(multiDispatchInfo);
 
@@ -559,7 +559,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
     DebugManagerStateRestore dbgRestorer;
     if (is64bit) {
         DebugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         MockKernelWithInternals kernel(*device);
         MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
         SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -573,7 +573,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
 
         kernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &printfSurface;
 
-        auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device);
+        auto printfHandler = MockPrintfHandler::create(multiDispatchInfo, *device.get());
 
         for (int i = 0; i < 8; i++) {
             kernel.mockKernel->mockCrossThreadData[i] = 50;
@@ -2115,7 +2115,7 @@ class MemoryManagerWithFailure : public MockMemoryManager {
 };
 
 TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfaceAlsoReturnsNullptr) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     std::unique_ptr<MemoryManager> memoryManager(new MemoryManagerWithFailure());
     device.injectMemoryManager(memoryManager.release());
     MockContext context(&device, true);

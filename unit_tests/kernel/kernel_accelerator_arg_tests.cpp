@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL};
 
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -61,7 +61,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
         pKernelInfo->kernelArgInfo[0].offsetVmeSearchPathType = 0x1c;
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgAccelerator);

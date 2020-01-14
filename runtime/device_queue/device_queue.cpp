@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ DeviceQueueCreateFunc deviceQueueFactory[IGFX_MAX_CORE] = {};
 const uint32_t DeviceQueue::numberOfDeviceEnqueues = 128;
 
 DeviceQueue::DeviceQueue(Context *context,
-                         Device *device,
+                         ClDevice *device,
                          cl_queue_properties &properties) : DeviceQueue() {
     this->context = context;
     this->device = device;
@@ -40,7 +40,7 @@ DeviceQueue::DeviceQueue(Context *context,
     initDeviceQueue();
 }
 
-DeviceQueue *DeviceQueue::create(Context *context, Device *device,
+DeviceQueue *DeviceQueue::create(Context *context, ClDevice *device,
                                  const cl_queue_properties &properties,
                                  cl_int &errcodeRet) {
     errcodeRet = CL_SUCCESS;
@@ -87,6 +87,10 @@ DeviceQueue::~DeviceQueue() {
         context->setDefaultDeviceQueue(nullptr);
         context->decRefInternal();
     }
+}
+
+Device &DeviceQueue::getDevice() {
+    return device->getDevice();
 }
 
 cl_int DeviceQueue::getCommandQueueInfo(cl_command_queue_info paramName,

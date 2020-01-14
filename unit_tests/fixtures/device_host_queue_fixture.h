@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ class DeviceQueueHwTest : public DeviceHostQueueFixture<DeviceQueue> {
     using BaseClass = DeviceHostQueueFixture<DeviceQueue>;
     void SetUp() override {
         BaseClass::SetUp();
-        device = castToObject<Device>(devices[testedRootDeviceIndex]);
+        device = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
         ASSERT_NE(device, nullptr);
         if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
             GTEST_SKIP();
@@ -84,6 +84,6 @@ class DeviceQueueHwTest : public DeviceHostQueueFixture<DeviceQueue> {
     }
 
     DeviceQueue *deviceQueue;
-    Device *device;
+    ClDevice *device;
 };
 } // namespace DeviceHostQueue

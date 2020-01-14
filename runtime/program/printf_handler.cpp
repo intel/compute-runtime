@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,13 +18,13 @@
 
 namespace NEO {
 
-PrintfHandler::PrintfHandler(Device &deviceArg) : device(deviceArg) {}
+PrintfHandler::PrintfHandler(ClDevice &deviceArg) : device(deviceArg) {}
 
 PrintfHandler::~PrintfHandler() {
     device.getMemoryManager()->freeGraphicsMemory(printfSurface);
 }
 
-PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, Device &device) {
+PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &device) {
     if (multiDispatchInfo.usesStatelessPrintfSurface()) {
         return new PrintfHandler(device);
     }

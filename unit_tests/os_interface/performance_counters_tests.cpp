@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct PerformanceCountersTest : public PerformanceCountersFixture,
 };
 
 TEST_F(PerformanceCountersTest, createPerformanceCounters) {
-    auto performanceCounters = PerformanceCounters::create(device.get());
+    auto performanceCounters = PerformanceCounters::create(&device->getDevice());
     EXPECT_NE(nullptr, performanceCounters);
     EXPECT_NE(nullptr, performanceCounters.get());
 }

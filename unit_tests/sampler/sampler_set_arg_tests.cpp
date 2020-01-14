@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ class SamplerSetArgFixture : public DeviceFixture {
         pKernelInfo->kernelArgInfo[1].isSampler = true;
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
@@ -64,7 +64,7 @@ class SamplerSetArgFixture : public DeviceFixture {
 
         uint32_t crossThreadData[crossThreadDataSize] = {};
         pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         retVal = CL_INVALID_VALUE;
     }
 
@@ -200,7 +200,7 @@ HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledThenSample
 }
 
 HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledAndKernelIsDeletedThenRefCountIsUnchanged) {
-    auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_NE(nullptr, myKernel.get());
     ASSERT_EQ(CL_SUCCESS, myKernel->initialize());
 
@@ -372,7 +372,7 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKerne
     pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = true;
 
-    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
     EXPECT_EQ(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
     EXPECT_EQ(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);
@@ -385,7 +385,7 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeK
     pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
     pKernelInfo->kernelArgInfo[1].isSampler = false;
 
-    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
     EXPECT_NE(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
     EXPECT_NE(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);

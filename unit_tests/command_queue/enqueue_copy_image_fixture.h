@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
 
     virtual void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         srcImage = Image2dHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
     }
@@ -59,7 +59,7 @@ struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
 
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
     }
 
     virtual void TearDown(void) override {

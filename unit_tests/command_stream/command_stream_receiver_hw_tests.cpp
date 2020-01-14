@@ -66,7 +66,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndTh
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWhenFirstTaskIsFlushedThenStateSipCmdIsAddedAndIsStateSipSentSetToTrue) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         mockDevice->setPreemptionMode(PreemptionMode::MidThread);
@@ -90,7 +90,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
                       heap,
                       0,
                       dispatchFlags,
-                      *mockDevice);
+                      mockDevice->getDevice());
 
         EXPECT_TRUE(csr.isStateSipSent);
 
@@ -314,7 +314,7 @@ struct BcsTests : public CommandStreamReceiverHwTest {
         engine->osContext->incRefInternal();
         csr.setupContext(*engine->osContext);
 
-        context = std::make_unique<MockContext>(pDevice);
+        context = std::make_unique<MockContext>(pClDevice);
     }
 
     void TearDown() override {

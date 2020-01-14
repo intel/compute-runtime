@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ TEST_P(GetSupportedImageFormatsTest, checkNumImageFormats) {
     uint32_t imageFormats;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
     retVal = pContext->getSupportedImageFormats(
-        castToObject<Device>(devices[0]),
+        &castToObject<ClDevice>(devices[0])->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -65,7 +65,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
     uint32_t imageFormats;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
     retVal = pContext->getSupportedImageFormats(
-        castToObject<Device>(devices[0]),
+        &castToObject<ClDevice>(devices[0])->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -77,7 +77,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = pContext->getSupportedImageFormats(
-        castToObject<Device>(devices[0]),
+        &castToObject<ClDevice>(devices[0])->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,
@@ -102,7 +102,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
     bool isReadOnly = false;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
     retVal = pContext->getSupportedImageFormats(
-        castToObject<Device>(devices[0]),
+        &castToObject<ClDevice>(devices[0])->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -114,7 +114,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = pContext->getSupportedImageFormats(
-        castToObject<Device>(devices[0]),
+        &castToObject<ClDevice>(devices[0])->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,
@@ -159,13 +159,13 @@ TEST(ImageFormats, isDepthFormat) {
 struct PackedYuvExtensionSupportedImageFormatsTest : public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
     void SetUp() override {
-        device = std::unique_ptr<MockDevice>(new MockDevice());
+        device = std::make_unique<MockClDevice>(new MockDevice());
         context = std::unique_ptr<MockContext>(new MockContext(device.get(), true));
     }
 
     void TearDown() override {
     }
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     cl_int retVal;
 };
@@ -185,7 +185,7 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYU
     device->deviceInfo.packedYuvExtension = true;
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -197,7 +197,7 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYU
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,
@@ -246,13 +246,13 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYU
 struct NV12ExtensionSupportedImageFormatsTest : public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
     void SetUp() override {
-        device = std::unique_ptr<MockDevice>(new MockDevice());
+        device = std::make_unique<MockClDevice>(new MockDevice());
         context = std::unique_ptr<MockContext>(new MockContext(device.get(), true));
     }
 
     void TearDown() override {
     }
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     cl_int retVal;
 };
@@ -270,7 +270,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
     device->deviceInfo.packedYuvExtension = false;
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -302,7 +302,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,
@@ -338,7 +338,7 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
     device->deviceInfo.nv12Extension = true;
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -367,7 +367,7 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,
@@ -398,7 +398,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, retrieveLessImageFormatsThanAvail
     device->deviceInfo.nv12Extension = true;
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         0,
@@ -413,7 +413,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, retrieveLessImageFormatsThanAvail
     memset(imageFormatList, 0, numImageFormats * sizeof(cl_image_format));
 
     retVal = context->getSupportedImageFormats(
-        device.get(),
+        &device->getDevice(),
         imageFormatsFlags,
         imageFormats,
         numImageFormats,

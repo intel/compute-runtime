@@ -526,7 +526,7 @@ Buffer *Buffer::createBufferHw(Context *context,
     return pBuffer;
 }
 
-Buffer *Buffer::createBufferHwFromDevice(const Device *device,
+Buffer *Buffer::createBufferHwFromDevice(const ClDevice *device,
                                          cl_mem_flags flags,
                                          cl_mem_flags_intel flagsIntel,
                                          size_t size,
@@ -572,7 +572,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     }
 }
 
-void Buffer::setSurfaceState(const Device *device,
+void Buffer::setSurfaceState(const ClDevice *device,
                              void *surfaceState,
                              size_t svmSize,
                              void *svmPtr,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ struct EnqueueSvmTest : public DeviceFixture,
             GTEST_SKIP();
         }
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pDevice, 0);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
     }
 
@@ -321,7 +321,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
     char srcHostPtr[260];
     void *pSrcSVM = srcHostPtr;
     void *pDstSVM = ptrSVM;
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -352,7 +352,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -421,7 +421,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
     char srcHostPtr[] = {1, 2, 3};
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -454,7 +454,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcp
     char srcHostPtr[] = {1, 2, 3};
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         true,    // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -497,7 +497,7 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemc
 HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThenSvmMemcpyCommandIsEnqueued) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -601,7 +601,7 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsR
 HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoHasAlignedAddressAndProperOffset) {
     void *pDstSVM = reinterpret_cast<void *>(0x17);
     void *pSrcSVM = ptrSVM;
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -642,7 +642,7 @@ TEST_F(EnqueueSvmTest, GivenNullSvmPtrWhenFillingMemoryThenInvalidValueErrorIsRe
 HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccesIsReturnedAndAddressIsProperlyAligned) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
-    MockCommandQueueHw<FamilyType> myCmdQ(context, pDevice, 0);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     retVal = myCmdQ.enqueueSVMMemFill(
         ptrSVM,      // void *svm_ptr
         pattern,     // const void *pattern
@@ -734,8 +734,8 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
     EXPECT_NE(nullptr, ptrSVM);
 
-    std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
-    cl_device_id device = pDevice;
+    std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pClDevice, true, &retVal));
+    cl_device_id device = pClDevice;
     program->build(1, &device, nullptr, nullptr, nullptr, false);
     std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
 
@@ -763,8 +763,8 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
     EXPECT_NE(nullptr, ptrSVM);
 
-    auto program = clUniquePtr(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
-    cl_device_id device = pDevice;
+    auto program = clUniquePtr(Program::create("FillBufferBytes", context, *pClDevice, true, &retVal));
+    cl_device_id device = pClDevice;
     program->build(1, &device, nullptr, nullptr, nullptr, false);
     auto kernel = clUniquePtr(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
 
@@ -874,7 +874,7 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 
     for (auto isLocalMemorySupported : ::testing::Bool()) {
         DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
-        auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         auto mockContext = std::make_unique<MockContext>(mockDevice.get());
 
         for (auto isReadOnly : ::testing::Bool()) {
@@ -900,7 +900,7 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
         DebugManager.flags.EnableLocalMemory.set(1);
 
         DeviceFixture::SetUp();
-        context = std::make_unique<MockContext>(pDevice, true);
+        context = std::make_unique<MockContext>(pClDevice, true);
         size = 256;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), size, {});
         ASSERT_NE(nullptr, svmPtr);
@@ -926,7 +926,7 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
 };
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsFalse) {
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
@@ -945,7 +945,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvm
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenMapWriteFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsFalse) {
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
@@ -964,7 +964,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenMapWriteFlagWhenMappingSvmThenMapIsSucc
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsTrue) {
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
@@ -983,7 +983,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadFlagWhenMappingSvmThenMapIsSucce
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsTrue) {
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
@@ -1003,7 +1003,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenM
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvmPtrThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     cl_event event = nullptr;
@@ -1043,7 +1043,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvm
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTwiceThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     uintptr_t offset = 64;
@@ -1096,7 +1096,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTw
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThenExpectNoUnmapCopyKernel) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     cl_event event = nullptr;
@@ -1122,7 +1122,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThe
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsReadOnlyThenExpectNoUnmapCopyKernel) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     retVal = queue.enqueueSVMMap(
@@ -1170,7 +1170,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenExpectMapAndUnmapCopyKernel) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     cl_event eventMap = nullptr;
@@ -1217,7 +1217,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAndNoEventIsUsedIsWritableThenExpectMapAndUnmapCopyKernelAnNo) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
     retVal = queue.enqueueSVMMap(
@@ -1286,7 +1286,7 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
     char dstHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = ptrSVM;
-    MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
@@ -1307,7 +1307,7 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
     char srcHostPtr[260];
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = srcHostPtr;
-    MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
@@ -1329,7 +1329,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
     char srcHostPtr[260];
     void *pDstSVM = dstHostPtr;
     void *pSrcSVM = srcHostPtr;
-    MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
     CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();

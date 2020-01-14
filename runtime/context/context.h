@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,13 +41,13 @@ class Context : public BaseObject<_cl_context> {
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
 
     bool createImpl(const cl_context_properties *properties,
-                    const DeviceVector &devices,
+                    const ClDeviceVector &devices,
                     void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *),
                     void *userData, cl_int &errcodeRet);
 
     template <typename T>
     static T *create(const cl_context_properties *properties,
-                     const DeviceVector &devices,
+                     const ClDeviceVector &devices,
                      void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
                      void *data, cl_int &errcodeRet) {
 
@@ -75,7 +75,7 @@ class Context : public BaseObject<_cl_context> {
 
     size_t getNumDevices() const;
     size_t getTotalNumDevices() const;
-    Device *getDevice(size_t deviceOrdinal);
+    ClDevice *getDevice(size_t deviceOrdinal);
 
     MemoryManager *getMemoryManager() {
         return memoryManager;
@@ -150,7 +150,7 @@ class Context : public BaseObject<_cl_context> {
     void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *);
     void *userData;
 
-    DeviceVector devices;
+    ClDeviceVector devices;
     MemoryManager *memoryManager;
     SVMAllocsManager *svmAllocsManager = nullptr;
     CommandQueue *specialQueue;

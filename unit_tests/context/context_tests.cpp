@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct ContextTest : public PlatformFixture,
         properties[1] = (cl_context_properties)platform;
         properties[2] = 0;
 
-        context = Context::create<WhiteBoxContext>(properties, DeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<WhiteBoxContext>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 
@@ -109,12 +109,12 @@ TEST_F(ContextTest, specialQueue) {
 }
 
 TEST_F(ContextTest, setSpecialQueue) {
-    MockContext context((Device *)devices[0], true);
+    MockContext context((ClDevice *)devices[0], true);
 
     auto specialQ = context.getSpecialQueue();
     EXPECT_EQ(specialQ, nullptr);
 
-    auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
+    auto cmdQ = new CommandQueue(&context, (ClDevice *)devices[0], 0);
     context.setSpecialQueue(cmdQ);
     specialQ = context.getSpecialQueue();
     EXPECT_NE(specialQ, nullptr);
@@ -129,7 +129,7 @@ TEST_F(ContextTest, defaultQueue) {
 }
 
 TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    MockContext context((Device *)devices[0]);
+    MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ1 = new CommandQueue();
@@ -138,7 +138,7 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
     delete cmdQ1;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ2 = new CommandQueue(nullptr, (Device *)devices[0], 0);
+    auto cmdQ2 = new CommandQueue(nullptr, (ClDevice *)devices[0], 0);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ2;
@@ -146,7 +146,7 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
 }
 
 TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    MockContext context((Device *)devices[0]);
+    MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ1 = new DeviceQueue();
@@ -156,7 +156,7 @@ TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThe
     EXPECT_EQ(1, context.getRefInternalCount());
 
     cl_queue_properties properties = 0;
-    auto cmdQ2 = new DeviceQueue(nullptr, (Device *)devices[0], properties);
+    auto cmdQ2 = new DeviceQueue(nullptr, (ClDevice *)devices[0], properties);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ2;
@@ -164,10 +164,10 @@ TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThe
 }
 
 TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    MockContext context((Device *)devices[0]);
+    MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
+    auto cmdQ = new CommandQueue(&context, (ClDevice *)devices[0], 0);
     EXPECT_EQ(2, context.getRefInternalCount());
 
     delete cmdQ;
@@ -175,11 +175,11 @@ TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenConte
 }
 
 TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    MockContext context((Device *)devices[0]);
+    MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (Device *)devices[0], properties);
+    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
     EXPECT_EQ(2, context.getRefInternalCount());
 
     delete cmdQ;
@@ -187,11 +187,11 @@ TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThe
 }
 
 TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
-    MockContext context((Device *)devices[0]);
+    MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     cl_queue_properties properties = 0;
-    auto cmdQ = new DeviceQueue(&context, (Device *)devices[0], properties);
+    auto cmdQ = new DeviceQueue(&context, (ClDevice *)devices[0], properties);
     context.setDefaultDeviceQueue(cmdQ);
     EXPECT_EQ(2, context.getRefInternalCount());
 
@@ -200,20 +200,20 @@ TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDel
 }
 
 TEST_F(ContextTest, givenContextWhenItIsCreatedFromDeviceThenItAddsRefCountToThisDevice) {
-    auto device = castToObject<Device>(devices[0]);
+    auto device = castToObject<ClDevice>(devices[0]);
     EXPECT_EQ(2, device->getRefInternalCount());
     cl_device_id deviceID = devices[0];
-    std::unique_ptr<Context> context(Context::create<Context>(0, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+    std::unique_ptr<Context> context(Context::create<Context>(0, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(3, device->getRefInternalCount());
     context.reset(nullptr);
     EXPECT_EQ(2, device->getRefInternalCount());
 }
 
 TEST_F(ContextTest, givenContextWhenItIsCreatedFromMultipleDevicesThenItAddsRefCountToThoseDevices) {
-    auto device = castToObject<Device>(devices[0]);
+    auto device = castToObject<ClDevice>(devices[0]);
     EXPECT_EQ(2, device->getRefInternalCount());
 
-    DeviceVector devicesVector;
+    ClDeviceVector devicesVector;
     devicesVector.push_back(device);
     devicesVector.push_back(device);
 
@@ -224,10 +224,10 @@ TEST_F(ContextTest, givenContextWhenItIsCreatedFromMultipleDevicesThenItAddsRefC
 }
 
 TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    MockContext context((Device *)devices[0], true);
+    MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
+    auto cmdQ = new CommandQueue(&context, (ClDevice *)devices[0], 0);
     context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
     EXPECT_EQ(1, context.getRefInternalCount());
 
@@ -235,10 +235,10 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
 }
 
 TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
-    MockContext context((Device *)devices[0], true);
+    MockContext context((ClDevice *)devices[0], true);
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
+    auto cmdQ = new CommandQueue(&context, (ClDevice *)devices[0], 0);
     context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
     EXPECT_EQ(1, context.getRefInternalCount());
 
@@ -257,14 +257,14 @@ TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0],
                                                 CL_CONTEXT_INTEROP_USER_SYNC, 1, 0};
     cl_int retVal = CL_SUCCESS;
-    auto context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_TRUE(context->getInteropUserSyncEnabled());
     delete context;
 
     validProperties[3] = 0; // false
-    context = Context::create<Context>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
+    context = Context::create<Context>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
@@ -305,11 +305,11 @@ TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreat
     auto hwInfo = executionEnvironment->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
-    std::unique_ptr<MockDevice> device(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, executionEnvironment, 0));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, executionEnvironment, 0));
 
     cl_device_id clDevice = device.get();
     cl_int retVal = CL_SUCCESS;
-    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     ASSERT_NE(nullptr, context);
     auto svmManager = context->getSVMAllocsManager();
     EXPECT_EQ(nullptr, svmManager);
@@ -323,11 +323,11 @@ TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumb
     numDevicesBackup = numDevices;
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     platform()->initialize();
-    auto device0 = platform()->getDevice(0);
-    auto device1 = platform()->getDevice(1);
+    auto device0 = platform()->getClDevice(0);
+    auto device1 = platform()->getClDevice(1);
     cl_device_id clDevices[2]{device0, device1};
 
-    DeviceVector deviceVector(clDevices, 2);
+    ClDeviceVector deviceVector(clDevices, 2);
     cl_int retVal = CL_OUT_OF_HOST_MEMORY;
     auto context = std::unique_ptr<Context>(Context::create<Context>(nullptr, deviceVector, nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -342,7 +342,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
-        device = new MockDevice;
+        device = new MockClDevice{new MockDevice};
         deleter = new MockDeferredDeleter();
         device->injectMemoryManager(memoryManager);
         memoryManager->setDeferredDeleter(deleter);
@@ -353,13 +353,13 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
     Context *context;
     MockMemoryManager *memoryManager;
     MockDeferredDeleter *deleter;
-    MockDevice *device;
+    MockClDevice *device;
 };
 
 TEST_P(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDeleterIsEnabledThenUsesDeletersMethods) {
-    cl_device_id clDevice = static_cast<cl_device_id>(device);
+    cl_device_id clDevice = device;
     cl_int retVal;
-    DeviceVector deviceVector((cl_device_id *)&clDevice, 1);
+    ClDeviceVector deviceVector(&clDevice, 1);
     bool asyncDeleterEnabled = GetParam();
     memoryManager->overrideAsyncDeleterFlag(asyncDeleterEnabled);
 

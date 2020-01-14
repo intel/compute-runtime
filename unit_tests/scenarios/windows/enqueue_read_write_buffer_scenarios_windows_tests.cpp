@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
-        device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
+        device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0));
         context = std::make_unique<MockContext>(device.get());
 
         const size_t bufferMisalignment = 1;
@@ -66,7 +66,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     ExecutionEnvironment *executionEnvironment;
     cl_queue_properties properties = {};
     std::unique_ptr<uint32_t[]> bufferMemory;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Buffer> buffer;
 

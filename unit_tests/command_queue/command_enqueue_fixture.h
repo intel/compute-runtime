@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct CommandDeviceFixture : public DeviceFixture,
     using CommandQueueHwFixture::SetUp;
     void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
         DeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pDevice, cmdQueueProperties);
+        CommandQueueHwFixture::SetUp(pClDevice, cmdQueueProperties);
     }
 
     void TearDown() {
@@ -95,7 +95,7 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
 
 template <typename FamilyType>
 struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
-    CommandQueueStateless(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+    CommandQueueStateless(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
@@ -106,7 +106,7 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 
 template <typename FamilyType>
 struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
-    CommandQueueStateful(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();

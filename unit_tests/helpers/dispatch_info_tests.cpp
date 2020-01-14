@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
   protected:
     void SetUp() {
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
 
@@ -39,7 +39,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
         pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         pKernel->slmTotalSize = 128;
     }
     void TearDown() override {

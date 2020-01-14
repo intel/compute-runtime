@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ TEST(EventCallbackTest, NestedCallbacksAreCalledForUserEvent) {
 }
 
 TEST(EventCallbackTest, NestedCallbacksAreCalledForEvent) {
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
     MockCommandQueue queue(&context, device.get(), nullptr);
     MockEvent<Event> event(&queue, CL_COMMAND_MARKER, 0, 0);

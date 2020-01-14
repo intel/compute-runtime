@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ cl_int Program::link(
         if (!isCreateLibrary) {
             inputArgs.outType = IGC::CodeType::oclGenBin;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->link(*this->pDevice, inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->link(this->pDevice->getDevice(), inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);
@@ -146,7 +146,7 @@ cl_int Program::link(
         } else {
             inputArgs.outType = IGC::CodeType::llvmBc;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->createLibrary(*this->pDevice, inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->createLibrary(this->pDevice->getDevice(), inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);

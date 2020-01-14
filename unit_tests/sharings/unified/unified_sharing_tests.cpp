@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,9 @@
 using namespace NEO;
 
 TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhenGettingUnifiedSharingThenReturnIt) {
-    MockDevice device{};
-    cl_device_id deviceId = static_cast<cl_device_id>(&device);
-    DeviceVector allDevs(&deviceId, 1);
+    MockClDevice device{new MockDevice};
+    cl_device_id deviceId = &device;
+    ClDeviceVector allDevs(&deviceId, 1);
     cl_int retVal{};
 
     const cl_context_properties context_props[] = {

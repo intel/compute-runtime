@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pDevice, 0);
+        CommandQueueFixture::SetUp(pClDevice, 0);
         const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
         if (!hwInfo.capabilityTable.ftrSvm) {
             GTEST_SKIP();
@@ -153,7 +153,7 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
 
     void SetUp() override {
 
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         if (is32bit || !device->isFullRangeSvm()) {
             GTEST_SKIP();
         }
@@ -170,7 +170,7 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
     }
 
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     uint64_t bigSize = 5ull * MemoryConstants::gigaByte;
     uint64_t smallSize = 4ull * MemoryConstants::gigaByte - 1;

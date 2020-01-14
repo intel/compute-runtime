@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
 
     template <typename T>
     struct MockCmdQ : public CommandQueueHw<T> {
-        MockCmdQ(Context *context, Device *device) : CommandQueueHw<T>(context, device, 0) {}
+        MockCmdQ(Context *context, ClDevice *device) : CommandQueueHw<T>(context, device, 0) {}
 
         cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t size, void *ptr,
                                  GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
@@ -101,12 +101,12 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
 
     template <typename FamilyType>
     std::unique_ptr<MockCmdQ<FamilyType>> createMockCmdQ() {
-        return std::unique_ptr<MockCmdQ<FamilyType>>(new MockCmdQ<FamilyType>(context, pDevice));
+        return std::unique_ptr<MockCmdQ<FamilyType>>(new MockCmdQ<FamilyType>(context, pClDevice));
     }
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
     }
 
     void TearDown() override {

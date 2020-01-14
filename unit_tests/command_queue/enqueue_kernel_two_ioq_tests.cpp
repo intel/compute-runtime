@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
         HardwareParse::parseCommands<FamilyType>(*pCmdQ);
 
         // Create a second command queue (beyond the default one)
-        pCmdQ2 = createCommandQueue(pDevice);
+        pCmdQ2 = createCommandQueue(pClDevice);
         ASSERT_NE(nullptr, pCmdQ2);
 
         retVal = pCmdQ2->enqueueKernel(

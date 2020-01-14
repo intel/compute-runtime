@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ typedef ReadBufferRectHw AUBReadBufferRect;
 static const size_t width = 10;
 
 HWTEST_P(AUBReadBufferRect, simple3D) {
-    MockContext context(this->pDevice);
+    MockContext context(this->pClDevice);
     size_t rowPitch = width;
     size_t slicePitch = rowPitch * rowPitch;
 
@@ -127,7 +127,7 @@ struct AUBReadBufferRectUnaligned
 
     template <typename FamilyType>
     void testReadBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(&pCmdQ->getDevice());
+        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const auto bufferSize = sizeof(srcMemory);

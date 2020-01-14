@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ class DevicePreemptionTests : public ::testing::Test {
     std::unique_ptr<NEO::DispatchInfo> dispatchInfo;
     std::unique_ptr<NEO::MockKernel> kernel;
     std::unique_ptr<NEO::MockCommandQueue> cmdQ;
-    std::unique_ptr<NEO::MockDevice> device;
+    std::unique_ptr<NEO::MockClDevice> device;
     std::unique_ptr<NEO::MockContext> context;
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
     std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,13 @@
 class SchedulerSourceTest : public testing::Test {
   public:
     void SetUp() override {
-        pDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr);
+        pDevice = new MockClDevice{NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr)};
     }
     void TearDown() override {
         delete pDevice;
     }
 
-    NEO::Device *pDevice;
+    NEO::MockClDevice *pDevice;
     NEO::MockContext context;
 
     template <typename GfxFamily>

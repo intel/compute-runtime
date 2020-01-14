@@ -64,6 +64,6 @@ void DeviceFactory::releaseDevices() {
     DeviceFactory::numDevices = 0;
 }
 
-void Device::appendOSExtensions(std::string &deviceExtensions) {
+void ClDevice::initializeCaps() {
 }
 } // namespace NEO

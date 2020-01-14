@@ -70,7 +70,7 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
     std::unique_ptr<Platform> platform(new Platform);
     auto executionEnvironment = platform->peekExecutionEnvironment();
     platform->initialize();
-    auto device = platform->getDevice(0);
+    auto device = platform->getClDevice(0);
     EXPECT_EQ(1, device->getRefInternalCount());
     device->incRefInternal();
     platform.reset(nullptr);

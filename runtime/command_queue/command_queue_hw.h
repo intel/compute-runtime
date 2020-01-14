@@ -32,7 +32,7 @@ class CommandQueueHw : public CommandQueue {
 
   public:
     CommandQueueHw(Context *context,
-                   Device *device,
+                   ClDevice *device,
                    const cl_queue_properties *properties) : BaseClass(context, device, properties) {
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
@@ -68,7 +68,7 @@ class CommandQueueHw : public CommandQueue {
     }
 
     static CommandQueue *create(Context *context,
-                                Device *device,
+                                ClDevice *device,
                                 const cl_queue_properties *properties) {
         return new CommandQueueHw<GfxFamily>(context, device, properties);
     }

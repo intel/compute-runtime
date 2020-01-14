@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,8 @@
 #include "runtime/program/program.h"
 
 namespace NEO {
-const SipKernel &initSipKernel(SipKernelType type, Device &device) {
-    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device);
+const SipKernel &initSipKernel(SipKernelType type, ClDevice &device) {
+    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device.getDevice());
 }
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,

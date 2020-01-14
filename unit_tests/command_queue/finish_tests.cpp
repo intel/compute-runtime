@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct FinishFixture : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pDevice, 0);
+        CommandQueueHwFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
@@ -86,8 +86,8 @@ HWTEST_F(FinishTest, WhenFinishIsCalledThenPipeControlIsNotAddedToCqCommandStrea
     EXPECT_EQ(cmdList.rend(), itorCmd);
 }
 HWTEST_F(FinishTest, givenFreshQueueWhenFinishIsCalledThenCommandStreamIsNotAllocated) {
-    MockContext contextWithMockCmdQ(pDevice, true);
-    MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pDevice, 0);
+    MockContext contextWithMockCmdQ(pClDevice, true);
+    MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pClDevice, 0);
 
     auto retVal = cmdQ.finish();
     ASSERT_EQ(CL_SUCCESS, retVal);

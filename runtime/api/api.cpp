@@ -207,7 +207,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         cl_uint retNum = 0;
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < numDev; rootDeviceIndex++) {
 
-            Device *device = pPlatform->getDevice(rootDeviceIndex);
+            ClDevice *device = pPlatform->getClDevice(rootDeviceIndex);
             DEBUG_BREAK_IF(device == nullptr);
 
             if (deviceType & device->getDeviceInfo().deviceType) {
@@ -243,7 +243,7 @@ cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clDevice", device, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", NEO::FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet", paramValueSizeRet);
 
-    Device *pDevice = castToObject<Device>(device);
+    ClDevice *pDevice = castToObject<ClDevice>(device);
     if (pDevice != nullptr) {
         retVal = pDevice->getDeviceInfo(paramName, paramValueSize,
                                         paramValue, paramValueSizeRet);
@@ -258,7 +258,7 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
                                       cl_device_id *outDevices,
                                       cl_uint *numDevicesRet) {
 
-    Device *pInDevice = castToObject<Device>(inDevice);
+    ClDevice *pInDevice = castToObject<ClDevice>(inDevice);
     if (pInDevice == nullptr) {
         return CL_INVALID_DEVICE;
     }
@@ -295,9 +295,9 @@ cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device);
-    auto pDevice = castToObject<Device>(device);
+    auto pDevice = castToObject<ClDevice>(device);
     if (pDevice) {
-        pDevice->retain();
+        pDevice->retainApi();
         retVal = CL_SUCCESS;
     }
 
@@ -310,9 +310,9 @@ cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device);
-    auto pDevice = castToObject<Device>(device);
+    auto pDevice = castToObject<ClDevice>(device);
     if (pDevice) {
-        pDevice->release();
+        pDevice->releaseApi();
         retVal = CL_SUCCESS;
     }
 
@@ -351,7 +351,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
             break;
         }
 
-        DeviceVector allDevs(devices, numDevices);
+        ClDeviceVector allDevs(devices, numDevices);
         context = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
         if (context != nullptr) {
             gtpinNotifyContextCreate(context);
@@ -397,7 +397,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         retVal = clGetDeviceIDs(nullptr, deviceType, numDevices, supportedDevs.begin(), nullptr);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
-        DeviceVector allDevs(supportedDevs.begin(), numDevices);
+        ClDeviceVector allDevs(supportedDevs.begin(), numDevices);
         pContext = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
         if (pContext != nullptr) {
             gtpinNotifyContextCreate((cl_context)pContext);
@@ -488,7 +488,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
         }
 
         Context *pContext = nullptr;
-        Device *pDevice = nullptr;
+        ClDevice *pDevice = nullptr;
 
         retVal = validateObjects(
             WithCastToInternal(context, &pContext),
@@ -999,9 +999,9 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
                    "numImageFormats", numImageFormats);
     auto pContext = castToObject<Context>(context);
     if (pContext) {
-        auto pDevice = pContext->getDevice(0);
-        if (pDevice->getHardwareInfo().capabilityTable.supportsImages) {
-            retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
+        auto pClDevice = pContext->getDevice(0);
+        if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            retVal = pContext->getSupportedImageFormats(&pClDevice->getDevice(), flags, imageType, numEntries,
                                                         imageFormats, numImageFormats);
         } else {
             retVal = CL_INVALID_VALUE;
@@ -1346,12 +1346,12 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
         for (cl_uint i = 0; i < numDevices; i++) {
             auto pContext = castToObject<Context>(context);
             validateObject(pContext);
-            auto pDev = castToObject<Device>(*deviceList);
-            validateObject(pDev);
+            auto pDevice = castToObject<ClDevice>(*deviceList);
+            validateObject(pDevice);
 
-            program = pDev->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
+            program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
                 *pContext,
-                *pDev,
+                pDevice->getDevice(),
                 kernelNames,
                 retVal);
             if (program && retVal == CL_SUCCESS) {
@@ -3382,12 +3382,13 @@ clCreatePerfCountersCommandQueueINTEL(
     cl_command_queue commandQueue = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-    Device *pDevice = nullptr;
+    ClDevice *pDevice = nullptr;
     WithCastToInternal(device, &pDevice);
     if (pDevice == nullptr) {
         err.set(CL_INVALID_DEVICE);
         return commandQueue;
     }
+
     if (!pDevice->getHardwareInfo().capabilityTable.instrumentationEnabled) {
         err.set(CL_INVALID_DEVICE);
         return commandQueue;
@@ -3477,7 +3478,7 @@ void *clDeviceMemAllocINTEL(
     cl_uint alignment,
     cl_int *errcodeRet) {
     Context *neoContext = nullptr;
-    Device *neoDevice = nullptr;
+    ClDevice *neoDevice = nullptr;
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
@@ -3516,7 +3517,7 @@ void *clSharedMemAllocINTEL(
     cl_uint alignment,
     cl_int *errcodeRet) {
     Context *neoContext = nullptr;
-    Device *neoDevice = nullptr;
+    ClDevice *neoDevice = nullptr;
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
@@ -4593,7 +4594,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     Context *pContext = nullptr;
-    Device *pDevice = nullptr;
+    ClDevice *pDevice = nullptr;
 
     retVal = validateObjects(
         WithCastToInternal(context, &pContext),
@@ -4814,7 +4815,7 @@ cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
                    "deviceTimestamp", deviceTimestamp,
                    "hostTimestamp", hostTimestamp);
     do {
-        Device *pDevice = castToObject<Device>(device);
+        ClDevice *pDevice = castToObject<ClDevice>(device);
         if (pDevice == nullptr) {
             retVal = CL_INVALID_DEVICE;
             break;
@@ -4842,7 +4843,7 @@ cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
                    "hostTimestamp", hostTimestamp);
 
     do {
-        Device *pDevice = castToObject<Device>(device);
+        ClDevice *pDevice = castToObject<ClDevice>(device);
         if (pDevice == nullptr) {
             retVal = CL_INVALID_DEVICE;
             break;
@@ -5090,7 +5091,7 @@ cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device, "comment", comment);
 
-    Device *pDevice = nullptr;
+    ClDevice *pDevice = nullptr;
     retVal = validateObjects(WithCastToInternal(device, &pDevice));
     if (retVal != CL_SUCCESS) {
         return retVal;
@@ -5290,7 +5291,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernelINTEL(cl_command_queue commandQueue,
         gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
 
-    pCommandQueue->getDevice().allocateSyncBufferHandler();
+    platform()->clDeviceMap[&pCommandQueue->getDevice()]->allocateSyncBufferHandler();
 
     retVal = pCommandQueue->enqueueKernel(
         kernel,

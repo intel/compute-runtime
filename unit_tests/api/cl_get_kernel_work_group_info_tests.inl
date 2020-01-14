@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
 TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchMediaVFEState mediaVFEstate;
@@ -126,7 +126,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchAllocateStatelessPrivateSurface privateAllocation;
@@ -149,7 +149,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWh
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<Device>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
     MockKernelWithInternals mockKernel(*pDevice);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace NEO {
 extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
 
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
-    Device *pDevice,
+    ClDevice *pDevice,
     cl_command_queue_properties properties) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
 
@@ -28,12 +28,12 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
 }
 
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
-    Device *pDevice,
+    ClDevice *pDevice,
     const cl_command_queue_properties *properties) {
 
     if (pDevice == nullptr) {
         if (this->device == nullptr) {
-            this->device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+            this->device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
         }
         pDevice = this->device;
     }
@@ -53,7 +53,7 @@ void CommandQueueHwFixture::SetUp() {
 }
 
 void CommandQueueHwFixture::SetUp(
-    Device *pDevice,
+    ClDevice *pDevice,
     cl_command_queue_properties properties) {
     ASSERT_NE(nullptr, pDevice);
     context = new MockContext(pDevice);
@@ -82,7 +82,7 @@ CommandQueueFixture::CommandQueueFixture()
 
 CommandQueue *CommandQueueFixture::createCommandQueue(
     Context *context,
-    Device *device,
+    ClDevice *device,
     cl_command_queue_properties properties) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
     return new CommandQueue(
@@ -93,7 +93,7 @@ CommandQueue *CommandQueueFixture::createCommandQueue(
 
 void CommandQueueFixture::SetUp(
     Context *context,
-    Device *device,
+    ClDevice *device,
     cl_command_queue_properties properties) {
     pCmdQ = createCommandQueue(
         context,

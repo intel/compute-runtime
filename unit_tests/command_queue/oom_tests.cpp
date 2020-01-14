@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ struct OOMCommandQueueTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
-        CommandQueueFixture::SetUp(context, pDevice, 0);
+        context = new MockContext(pClDevice);
+        CommandQueueFixture::SetUp(context, pClDevice, 0);
 
         const auto &oomSetting = GetParam();
         auto oomSize = 10u;

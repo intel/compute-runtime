@@ -625,7 +625,7 @@ TEST(localWorkSizeTest, givenDeviceWith56ThreadsPerSubsliceWhenSimd16KernelIsBei
 }
 
 TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorrectNumberOfThreads) {
-    MockDevice device;
+    MockClDevice device{new MockDevice};
     MockKernelWithInternals kernel(device);
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(kernel.mockKernel);

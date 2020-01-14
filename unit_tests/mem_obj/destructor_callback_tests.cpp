@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -25,6 +26,7 @@ class DestructorCallbackFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         delete BufferDefaults::context;
+        platformImpl.reset();
         MemoryManagementFixture::TearDown();
     }
 

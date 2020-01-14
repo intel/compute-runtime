@@ -34,7 +34,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
 
     class MockCmdQ : public CommandQueue {
       public:
-        MockCmdQ(Context *context, Device *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -62,7 +62,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhe
 
     class MockCmdQ : public CommandQueue {
       public:
-        MockCmdQ(Context *context, Device *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -95,7 +95,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
 
     class MockCmdQ : public CommandQueue {
       public:
-        MockCmdQ(Context *context, Device *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -123,7 +123,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
 
     class MockCmdQ : public CommandQueue {
       public:
-        MockCmdQ(Context *context, Device *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -272,7 +272,7 @@ TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], param, 0, 0};
     cl_int retVal = CL_SUCCESS;
-    auto ctx = std::unique_ptr<MockContext>(Context::create<MockContext>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+    auto ctx = std::unique_ptr<MockContext>(Context::create<MockContext>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, ctx.get());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
   protected:
     void SetUp() {
         DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
@@ -57,7 +57,7 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
 
-        pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
+        pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 

@@ -24,7 +24,7 @@ using namespace NEO;
 
 struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
@@ -90,7 +90,7 @@ struct KmdNotifyTests : public ::testing::Test {
     MockKmdNotifyHelper *mockKmdNotifyHelper = nullptr;
     HardwareInfo *hwInfo = nullptr;
     MockContext context;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockCommandQueue> cmdQ;
     FlushStamp flushStampToWait = 1000;
     uint32_t taskCountToWait = 5;

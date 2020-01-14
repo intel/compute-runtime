@@ -91,7 +91,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
         PlatformFixture::SetUp();
         memoryManager = std::make_unique<MockMM>(*pPlatform->peekExecutionEnvironment());
-        context = new MockContext(pPlatform->getDevice(0));
+        context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
         context->memoryManager = memoryManager.get();
 
@@ -147,7 +147,7 @@ TEST_F(D3D9Tests, givenD3DDeviceParamWhenContextCreationThenSetProperValues) {
 
     for (int i = 0; i < 6; i++) {
         validProperties[2] = validAdapters[i];
-        ctx.reset(Context::create<MockContext>(validProperties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+        ctx.reset(Context::create<MockContext>(validProperties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
 
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, ctx.get());
@@ -814,7 +814,7 @@ TEST_F(D3D9Tests, givenNullD3dDeviceWhenContextIsCreatedThenReturnErrorOnSurface
     cl_context_properties properties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(cl_platform_id)pPlatform,
                                            CL_CONTEXT_ADAPTER_D3D9_KHR, 0, 0};
 
-    std::unique_ptr<MockContext> ctx(Context::create<MockContext>(properties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+    std::unique_ptr<MockContext> ctx(Context::create<MockContext>(properties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, ctx->getSharing<D3DSharingFunctions<D3D9>>()->getDevice());
@@ -830,7 +830,7 @@ TEST_F(D3D9Tests, givenInvalidContextWhenSurfaceIsCreatedThenReturnError) {
 
     cl_context_properties properties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(cl_platform_id)pPlatform, 0};
 
-    std::unique_ptr<MockContext> ctx(Context::create<MockContext>(properties, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+    std::unique_ptr<MockContext> ctx(Context::create<MockContext>(properties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, ctx->getSharing<D3DSharingFunctions<D3D9>>());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
     virtual void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
 
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         srcImage = Image2dHelper<>::create(context);
         const auto &imageDesc = srcImage->getImageDesc();
         dstPtr = new float[imageDesc.image_width * imageDesc.image_height];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class KernelArgSvmFixture : public ApiFixture, public DeviceFixture {
         pKernelInfo->kernelArgInfo[0].typeStr = "char *";
         pKernelInfo->kernelArgInfo[0].addressQualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL;
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *this->pDevice);
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *this->pClDevice);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }

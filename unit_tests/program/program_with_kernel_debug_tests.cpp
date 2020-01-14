@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
   public:
     void SetUp() override {
         ProgramSimpleFixture::SetUp();
-        device = pDevice;
+        device = pClDevice;
         if (!pDevice->getHardwareInfo().capabilityTable.sourceLevelDebuggerSupported) {
             GTEST_SKIP();
         }

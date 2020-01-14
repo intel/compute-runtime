@@ -20,7 +20,7 @@
 
 namespace NEO {
 
-MockContext::MockContext(Device *device, bool noSpecialQueue) {
+MockContext::MockContext(ClDevice *device, bool noSpecialQueue) {
     memoryManager = device->getMemoryManager();
     devices.push_back(device);
     svmAllocsManager = new SVMAllocsManager(memoryManager);
@@ -59,7 +59,7 @@ MockContext::~MockContext() {
 }
 
 MockContext::MockContext() {
-    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+    device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     devices.push_back(device);
     memoryManager = device->getMemoryManager();
     svmAllocsManager = new SVMAllocsManager(memoryManager);

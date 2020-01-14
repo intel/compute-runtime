@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,13 @@
 namespace NEO {
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
-RootDevice::~RootDevice() = default;
+RootDevice::~RootDevice() {
+    for (auto subdevice : subdevices) {
+        if (subdevice) {
+            subdevice->decRefInternal();
+        }
+    }
+}
 
 uint32_t RootDevice::getNumSubDevices() const {
     return static_cast<uint32_t>(subdevices.size());
@@ -36,7 +42,7 @@ Device *RootDevice::getDeviceById(uint32_t deviceId) const {
     if (subdevices.empty()) {
         return const_cast<RootDevice *>(this);
     }
-    return subdevices[deviceId].get();
+    return subdevices[deviceId];
 };
 
 SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
@@ -48,14 +54,16 @@ bool RootDevice::createDeviceImpl() {
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }
-    subdevices.resize(numSubDevices);
+    UNRECOVERABLE_IF(!subdevices.empty());
+    subdevices.resize(numSubDevices, nullptr);
     for (auto i = 0u; i < numSubDevices; i++) {
 
         auto subDevice = createSubDevice(i);
         if (!subDevice) {
             return false;
         }
-        subdevices[i].reset(subDevice);
+        subDevice->incRefInternal();
+        subdevices[i] = subDevice;
     }
     auto status = Device::createDeviceImpl();
     if (!status) {
@@ -63,16 +71,9 @@ bool RootDevice::createDeviceImpl() {
     }
     return true;
 }
-
-/* We hide the retain and release function of BaseObject. */
-void RootDevice::retain() {
-    DEBUG_BREAK_IF(!isValid());
-}
-
-unique_ptr_if_unused<Device> RootDevice::release() {
-    DEBUG_BREAK_IF(!isValid());
-    return unique_ptr_if_unused<Device>(this, false);
-}
+bool RootDevice::isReleasable() {
+    return false;
+};
 DeviceBitfield RootDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(getNumAvailableDevices()))};
     return deviceBitfield;

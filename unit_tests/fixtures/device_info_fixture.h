@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
     };
 
     void check(std::vector<TestParams> &params) {
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
         for (auto param : params) {
             cl_unified_shared_memory_capabilities_intel unifiedSharedMemoryCapabilities{};

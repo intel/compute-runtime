@@ -31,8 +31,8 @@ struct EnqueueMapImageTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pDevice, 0);
-        context = new MockContext(pDevice);
+        CommandQueueFixture::SetUp(pClDevice, 0);
+        context = new MockContext(pClDevice);
         image = ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context);
     }
 
@@ -319,7 +319,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     size_t imageSlicePitch = 0;
     size_t GWS = 1;
 
-    MockKernelWithInternals kernel(*pDevice);
+    MockKernelWithInternals kernel(*pClDevice);
     *pTagMemory = tagHW;
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto tag_address = commandStreamReceiver.getTagAddress();

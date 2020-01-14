@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,14 +16,14 @@ class MultiRootDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(2 * expectedRootDeviceIndex);
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, expectedRootDeviceIndex));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, expectedRootDeviceIndex));
         context.reset(new MockContext(device.get()));
         mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
     DebugManagerStateRestore restorer;
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     MockMemoryManager *mockMemoryManager;
 };

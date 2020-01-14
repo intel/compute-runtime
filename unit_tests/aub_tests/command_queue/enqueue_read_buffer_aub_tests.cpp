@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct ReadBufferHw
 typedef ReadBufferHw AUBReadBuffer;
 
 HWTEST_P(AUBReadBuffer, simple) {
-    MockContext context(this->pDevice);
+    MockContext context(this->pClDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -112,7 +112,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
         return;
     }
 
-    MockContext context(this->pDevice);
+    MockContext context(this->pClDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -171,7 +171,7 @@ struct AUBReadBufferUnaligned
 
     template <typename FamilyType>
     void testReadBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(&pCmdQ->getDevice());
+        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const auto bufferSize = sizeof(srcMemory);

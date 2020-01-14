@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,7 +160,7 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStrin
 TEST_F(clGetPlatformInfoTests, GivenDeviceWhenGettingIcdDispatchTableThenDeviceAndPlatformTablesMatch) {
     EXPECT_NE(pPlatform->dispatch.icdDispatch, nullptr);
     for (size_t deviceOrdinal = 0; deviceOrdinal < pPlatform->getNumDevices(); ++deviceOrdinal) {
-        auto device = pPlatform->getDevice(deviceOrdinal);
+        auto device = pPlatform->getClDevice(deviceOrdinal);
         ASSERT_NE(nullptr, device);
         EXPECT_EQ(pPlatform->dispatch.icdDispatch, device->dispatch.icdDispatch);
     }

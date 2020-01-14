@@ -62,7 +62,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 
     template <typename T>
     struct MockCmdQ : public CommandQueueHw<T> {
-        MockCmdQ(Context *context, Device *device) : CommandQueueHw<T>(context, device, 0) {}
+        MockCmdQ(Context *context, ClDevice *device) : CommandQueueHw<T>(context, device, 0) {}
 
         cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, void *ptr,
                                 GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
@@ -122,12 +122,12 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 
     template <typename FamilyType>
     std::unique_ptr<MockCmdQ<FamilyType>> createMockCmdQ() {
-        return std::unique_ptr<MockCmdQ<FamilyType>>(new MockCmdQ<FamilyType>(context, pDevice));
+        return std::unique_ptr<MockCmdQ<FamilyType>>(new MockCmdQ<FamilyType>(context, pClDevice));
     }
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
     }
 
     void TearDown() override {

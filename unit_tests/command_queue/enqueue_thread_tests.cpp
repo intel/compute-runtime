@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,11 +27,13 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
   private:
     std::vector<GraphicsAllocation *> toFree; // pointers to be freed on destruction
     Device *pDevice;
+    ClDevice *pClDevice;
 
   public:
     size_t expectedToFreeCount = (size_t)-1;
     CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex()) {
         this->pDevice = pDevice;
+        this->pClDevice = platform()->clDeviceMap[pDevice];
     }
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
@@ -47,7 +49,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     }
 
     ~CommandStreamReceiverMock() override {
-        EXPECT_FALSE(pDevice->hasOwnership());
+        EXPECT_FALSE(pClDevice->hasOwnership());
         if (expectedToFreeCount == (size_t)-1) {
             EXPECT_GT(toFree.size(), 0u); //make sure flush was called
         } else {
@@ -64,7 +66,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 struct EnqueueThreadingFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
-        context = new MockContext(pDevice);
+        context = new MockContext(pClDevice);
         pCmdQ = nullptr;
     }
 
@@ -78,12 +80,12 @@ struct EnqueueThreadingFixture : public DeviceFixture {
     class MyCommandQueue : public CommandQueueHw<FamilyType> {
       public:
         MyCommandQueue(Context *context,
-                       Device *device,
+                       ClDevice *device,
                        const cl_queue_properties *props) : CommandQueueHw<FamilyType>(context, device, props), kernel(nullptr) {
         }
 
         static CommandQueue *create(Context *context,
-                                    Device *device,
+                                    ClDevice *device,
                                     cl_command_queue_properties props) {
             const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, props, 0};
             return new MyCommandQueue<FamilyType>(context, device, properties);
@@ -110,7 +112,7 @@ struct EnqueueThreadingFixture : public DeviceFixture {
 
     template <typename FamilyType>
     void createCQ() {
-        pCmdQ = MyCommandQueue<FamilyType>::create(context, pDevice, 0);
+        pCmdQ = MyCommandQueue<FamilyType>::create(context, pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
 
         auto pCommandStreamReceiver = new CommandStreamReceiverMock<FamilyType>(pDevice);

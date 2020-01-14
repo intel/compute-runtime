@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace ULT {
 struct clCreateSubDevicesTests : ::testing::Test {
     DebugManagerStateRestore restorer;
     VariableBackup<bool> mockDeviceCreateSingleDeviceBackup{&MockDevice::createSingleDevice};
-    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockClDevice> device;
     cl_device_partition_property properties[3] = {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, CL_DEVICE_AFFINITY_DOMAIN_NUMA, 0};
     cl_uint outDevicesCount = 2;
     cl_device_id outDevices[2];
@@ -27,7 +27,7 @@ struct clCreateSubDevicesTests : ::testing::Test {
     void setup(int numberOfDevices) {
         DebugManager.flags.CreateMultipleSubDevices.set(numberOfDevices);
         mockDeviceCreateSingleDeviceBackup = (numberOfDevices == 1);
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     }
 };
 

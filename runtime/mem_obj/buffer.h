@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 
 namespace NEO {
 class Buffer;
-class Device;
+class ClDevice;
 class MemoryManager;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
@@ -87,7 +87,7 @@ class Buffer : public MemObj {
                                   bool isHostPtrSVM,
                                   bool isImageRedescribed);
 
-    static Buffer *createBufferHwFromDevice(const Device *device,
+    static Buffer *createBufferHwFromDevice(const ClDevice *device,
                                             cl_mem_flags flags,
                                             cl_mem_flags_intel flagsIntel,
                                             size_t size,
@@ -103,7 +103,7 @@ class Buffer : public MemObj {
                             const cl_buffer_region *region,
                             cl_int &errcodeRet);
 
-    static void setSurfaceState(const Device *device,
+    static void setSurfaceState(const ClDevice *device,
                                 void *surfaceState,
                                 size_t svmSize,
                                 void *svmPtr,

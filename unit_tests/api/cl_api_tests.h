@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@ namespace NEO {
 
 class CommandQueue;
 class Context;
+class MockClDevice;
 class MockKernel;
 class MockProgram;
-class MockAlignedMallocManagerDevice;
 struct RootDeviceEnvironment;
 extern size_t numPlatformDevices;
 
@@ -70,7 +70,7 @@ struct api_fixture_using_aligned_memory_manager {
     Context *context;
     MockKernel *kernel;
     MockProgram *program;
-    MockAlignedMallocManagerDevice *device;
+    MockClDevice *device;
 };
 
 using api_test_using_aligned_memory_manager = Test<api_fixture_using_aligned_memory_manager>;

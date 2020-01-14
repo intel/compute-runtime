@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class ProgramFromBinaryTest : public DeviceFixture,
 
         DeviceFixture::SetUp();
 
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
 
@@ -82,7 +82,7 @@ class ProgramSimpleFixture : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        cl_device_id device = pDevice;
+        cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
     }

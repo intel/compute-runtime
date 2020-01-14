@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ cl_int Program::compile(
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
         TranslationOutput compilerOuput;
-        auto compilerErr = pCompilerInterface->compile(*this->pDevice, inputArgs, compilerOuput);
+        auto compilerErr = pCompilerInterface->compile(this->pDevice->getDevice(), inputArgs, compilerOuput);
         this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
         this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
         retVal = asClError(compilerErr);

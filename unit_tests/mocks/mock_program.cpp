@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,9 @@
 namespace NEO {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
 ExecutionEnvironment GlobalMockSipProgram::executionEnvironment;
+
+ClDevice *MockProgram::getDevicePtr() { return this->pDevice; }
+
 std::string MockProgram::getCachedFileName() const {
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());

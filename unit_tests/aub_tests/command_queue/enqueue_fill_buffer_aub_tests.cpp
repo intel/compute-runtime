@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ typedef FillBufferHw AUBFillBuffer;
 HWTEST_P(AUBFillBuffer, simple) {
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     auto pDestMemory = &destMemory[0];
-    MockContext context(&this->pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
     auto retVal = CL_INVALID_VALUE;
     auto destBuffer = Buffer::create(
         &context,
@@ -97,7 +97,7 @@ HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompl
 
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     auto pDestMemory = &destMemory[0];
-    MockContext context(&this->pCmdQ->getDevice());
+    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Buffer> destBuffer(Buffer::create(
         &context,

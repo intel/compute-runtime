@@ -26,14 +26,14 @@ using namespace NEO;
 
 void HardwareCommandsTest::SetUp() {
     DeviceFixture::SetUp();
-    ASSERT_NE(nullptr, pDevice);
-    cl_device_id device = pDevice;
+    ASSERT_NE(nullptr, pClDevice);
+    cl_device_id device = pClDevice;
     ContextFixture::SetUp(1, &device);
     ASSERT_NE(nullptr, pContext);
     BuiltInFixture::SetUp(pDevice);
     ASSERT_NE(nullptr, pBuiltIns);
 
-    mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pDevice, pContext);
+    mockKernelWithInternal = std::make_unique<MockKernelWithInternals>(*pClDevice, pContext);
 }
 
 void HardwareCommandsTest::TearDown() {
@@ -56,7 +56,7 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorDataResourceUsage) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
@@ -94,7 +94,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorData
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaInterfaceDescriptorLoadResourceUsage) {
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -112,7 +112,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaInterfaceDescripto
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaStateFlushResourceUsage) {
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename FamilyType::MEDIA_STATE_FLUSH MEDIA_STATE_FLUSH;
@@ -128,7 +128,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaStateFlushResource
 }
 
 HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
@@ -167,14 +167,14 @@ HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
 }
 
 HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataOffsetsAreNotMoved) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     MockContext context;
 
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     auto kernelInfo = std::make_unique<KernelInfo>();
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
 
@@ -233,14 +233,14 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     MockContext context;
 
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     auto kernelInfo = std::make_unique<KernelInfo>();
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     indirectHeap.getSpace(128u);
@@ -276,7 +276,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
@@ -362,7 +362,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsCorrectBindingTableEntryCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -405,7 +405,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsZeroBindingTableEntryCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -446,7 +446,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorHas31BindingTableEntriesSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -490,7 +490,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
 
     std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
 
@@ -570,7 +570,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0);
     std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
@@ -702,7 +702,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
     program.setConstantSurface(&gfxConstAlloc);
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
 
     SKernelBinaryHeaderCommon kernelHeader;
 
@@ -756,7 +756,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
 
     // try with different offsets to surface state base address
     for (uint32_t ssbaOffset : {0U, (uint32_t)sizeof(typename FamilyType::RENDER_SURFACE_STATE)}) {
-        CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+        CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
 
         auto &commandStream = cmdQ.getCS(1024);
         auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
@@ -823,7 +823,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequi
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[256];
@@ -848,7 +848,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequi
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     ssh.align(8);
@@ -881,7 +881,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[256];
@@ -897,7 +897,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
     // initialize kernel
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     // Initialize binding table state pointers with pattern
@@ -1013,7 +1013,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     const size_t localWorkSizes[3]{1, 1, 1};
 
     auto &commandStream = cmdQ.getCS(1024);
@@ -1281,7 +1281,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     auto &commandStream = cmdQ.getCS(1024);
 
     MockGraphicsAllocation globalAllocation;
@@ -1315,7 +1315,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     auto &commandStream = cmdQ.getCS(1024);
 
     char buff[MemoryConstants::pageSize * 2];
@@ -1353,7 +1353,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
     auto &commandStream = cmdQ.getCS(1024);
 
     addSpaceForSingleKernelArg();
@@ -1384,7 +1384,7 @@ HWTEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerDisabledWhenGettingRequ
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
 
     size_t expectedSize = 0U;
     size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U);

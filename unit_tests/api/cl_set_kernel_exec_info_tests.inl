@@ -20,7 +20,7 @@ class KernelExecInfoFixture : public ApiFixture {
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getDevice(0));
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getClDevice(0));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
         svmCapabilities = pPlatform->getDevice(0)->getDeviceInfo().svmCapabilities;
         if (svmCapabilities != 0) {

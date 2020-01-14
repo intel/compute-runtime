@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ struct AubFillImage
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
 
-        context = std::make_unique<MockContext>(pDevice);
+        context = std::make_unique<MockContext>(pClDevice);
     }
 
     void TearDown() override {

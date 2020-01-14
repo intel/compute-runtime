@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,7 +153,7 @@ struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
 
     void SetUp() override {
         PlatformFixture::SetUp();
-        context = new MockContext(pPlatform->getDevice(0));
+        context = new MockContext(pPlatform->getClDevice(0));
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
         context->setSharingFunctions(mockSharingFcns);
 

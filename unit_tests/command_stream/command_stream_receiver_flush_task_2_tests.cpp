@@ -34,8 +34,8 @@ typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFlushWhenUnblockedThenDCFlushIsNotAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     cl_event blockingEvent;
@@ -78,7 +78,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommandStreamParam) {
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &commandStreamTask = commandQueue.getCS(1024);
@@ -102,8 +102,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEmptyQueue) {
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     uint32_t taskCount = 0;
     taskLevel = taskCount;
@@ -122,9 +122,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEmptyQueue) {
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenNonDcFlushWithInitialTaskCountZero) {
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t GWS = 1;
 
@@ -151,9 +151,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenNonDcFlushWithIni
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenDcFlush) {
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t GWS = 1;
     size_t tempBuffer[] = {0, 1, 2};
@@ -207,10 +207,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenDcFlush) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenPowerOfTwoGlobalWorkSizeAndNullLocalWorkgroupSizeWhenEnqueueKernelIsCalledThenGpGpuWalkerHasOptimalSIMDmask) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
     size_t GWS = 1024;
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
     auto &commandStreamTask = commandQueue.getCS(1024);
     parseCommands<FamilyType>(commandStreamTask, 0);
@@ -224,8 +224,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenPowerOfTwo
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEventIsQueried) {
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     cl_event event = nullptr;
     Event *pEvent;
 
@@ -263,8 +263,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEventIsQueried) {
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapWhenFinishIsCalledThenNothingIsSubmittedToTheHardware) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t tempBuffer[] = {0, 1, 2};
     cl_int retVal;
@@ -300,8 +300,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
             GivenFlushedCallRequiringDCFlushWhenBlockingEnqueueIsCalledThenPipeControlWithDCFlushIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    MockContext ctx(pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     cl_event event = nullptr;
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
@@ -366,9 +366,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverT
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t GWS = 1;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -548,9 +548,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -662,9 +662,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
+    MockContext ctx(pClDevice);
+    MockKernelWithInternals kernel(*pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -1054,7 +1054,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentT
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
@@ -1078,7 +1078,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTa
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());

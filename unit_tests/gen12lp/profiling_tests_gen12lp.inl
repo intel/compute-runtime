@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct ProfilingTestsGen12LP : public CommandEnqueueFixture,
                                public ::testing::Test {
     void SetUp() override {
         CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
-        mockKernelWithInternals = std::make_unique<MockKernelWithInternals>(*pDevice, nullptr);
+        mockKernelWithInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, nullptr);
     }
 
     void TearDown() override {

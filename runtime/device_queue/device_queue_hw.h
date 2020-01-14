@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class DeviceQueueHw : public DeviceQueue {
 
   public:
     DeviceQueueHw(Context *context,
-                  Device *device,
+                  ClDevice *device,
                   cl_queue_properties &properties) : BaseClass(context, device, properties) {
         allocateSlbBuffer();
         offsetDsh = colorCalcStateSize + (uint32_t)sizeof(INTERFACE_DESCRIPTOR_DATA) * interfaceDescriptorEntries * numberOfIDTables;
@@ -42,7 +42,7 @@ class DeviceQueueHw : public DeviceQueue {
     }
 
     static DeviceQueue *create(Context *context,
-                               Device *device,
+                               ClDevice *device,
                                cl_queue_properties &properties) {
         return new (std::nothrow) DeviceQueueHw<GfxFamily>(context, device, properties);
     }

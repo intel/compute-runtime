@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,11 @@ void TestEnvironment::fclPushDebugVars(
 
 void TestEnvironment::fclPopDebugVars() {
     fclDebugVarStack.pop_back();
-    NEO::setFclDebugVars(fclDebugVarStack.back());
+    if (fclDebugVarStack.empty()) {
+        NEO::clearFclDebugVars();
+    } else {
+        NEO::setFclDebugVars(fclDebugVarStack.back());
+    }
 }
 
 void TestEnvironment::igcPushDebugVars(
@@ -58,7 +62,11 @@ void TestEnvironment::igcPushDebugVars(
 
 void TestEnvironment::igcPopDebugVars() {
     igcDebugVarStack.pop_back();
-    NEO::setIgcDebugVars(igcDebugVarStack.back());
+    if (igcDebugVarStack.empty()) {
+        NEO::clearIgcDebugVars();
+    } else {
+        NEO::setIgcDebugVars(igcDebugVarStack.back());
+    }
 }
 
 void TestEnvironment::setDefaultDebugVars(

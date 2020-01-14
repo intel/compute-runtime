@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,7 +108,7 @@ TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGrou
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
             sizeof(size_t) * workDim,
             inputValue,
@@ -162,7 +162,7 @@ TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupC
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
             sizeof(size_t) * workDim,
             inputValue,
@@ -210,7 +210,7 @@ TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocal
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
             sizeof(size_t),
             inputValue,
@@ -243,7 +243,7 @@ TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNu
     if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_MAX_NUM_SUB_GROUPS,
             0,
             nullptr,
@@ -263,7 +263,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
     if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_COMPILE_NUM_SUB_GROUPS,
             0,
             nullptr,
@@ -283,7 +283,7 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
     if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
             0,
             nullptr,
@@ -311,7 +311,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalid
     if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             nullptr,
-            pDevice,
+            pClDevice,
             0,
             0,
             nullptr,
@@ -343,7 +343,7 @@ TEST_F(KernelSubGroupInfoTest, GivenInvalidParamNameWhenGettingSubGroupInfoThenI
     if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             0,
             sizeof(size_t),
             inputValue,
@@ -379,7 +379,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             0,
             nullptr,
@@ -402,7 +402,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInf
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             0,
             inputValue,
@@ -426,7 +426,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenIndivisibleWorkDimWhenGettingSubG
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             (sizeof(size_t) * workDim) - 1,
             inputValue,
@@ -450,7 +450,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimGreaterThanMaxWorkDimWhenG
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t) * (workDim + 1),
             inputValue,
@@ -474,7 +474,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenInputValueIsNullWhenGettingSubGro
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t) * (workDim),
             nullptr,
@@ -491,7 +491,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenParamValueSizeZeroWhenGettingSubG
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t),
             inputValue,
@@ -509,7 +509,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenUnalignedParamValueSizeWhenGettin
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t),
             inputValue,
@@ -529,7 +529,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenTooLargeParamValueSizeWhenGetting
         // paramValue size / sizeof(size_t) > MaxWorkDim
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t),
             inputValue,
@@ -547,7 +547,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenNullPtrForReturnWhenGettingKernel
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
-            pDevice,
+            pClDevice,
             GetParam(),
             sizeof(size_t),
             inputValue,

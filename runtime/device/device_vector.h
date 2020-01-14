@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,14 +11,15 @@
 #include <vector>
 
 namespace NEO {
-class Device;
-class DeviceVector : public std::vector<Device *> {
+class ClDevice;
+
+class ClDeviceVector : public std::vector<ClDevice *> {
   public:
-    DeviceVector() = default;
-    DeviceVector(const DeviceVector &) = default;
-    DeviceVector &operator=(const DeviceVector &) = default;
-    DeviceVector(const cl_device_id *devices,
-                 cl_uint numDevices);
+    ClDeviceVector() = default;
+    ClDeviceVector(const ClDeviceVector &) = default;
+    ClDeviceVector &operator=(const ClDeviceVector &) = default;
+    ClDeviceVector(const cl_device_id *devices,
+                   cl_uint numDevices);
     void toDeviceIDs(std::vector<cl_device_id> &devIDs);
 };
 
