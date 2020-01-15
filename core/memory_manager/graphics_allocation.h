@@ -81,7 +81,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         TAG_BUFFER,
         GLOBAL_FENCE,
         TIMESTAMP_PACKET_TAG_BUFFER,
-        WRITE_COMBINED
+        WRITE_COMBINED,
+        RING_BUFFER,
+        SEMAPHORE_BUFFER
     };
 
     ~GraphicsAllocation() override;
@@ -185,7 +187,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::LINEAR_STREAM ||
                allocationType == AllocationType::PIPE ||
                allocationType == AllocationType::PRINTF_SURFACE ||
-               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
+               allocationType == AllocationType::RING_BUFFER ||
+               allocationType == AllocationType::SEMAPHORE_BUFFER;
     }
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;

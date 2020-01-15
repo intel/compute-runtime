@@ -194,6 +194,14 @@ class CommandStreamReceiver {
 
     uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
 
+    virtual bool initDirectSubmission(Device &device, OsContext &osContext) {
+        return true;
+    }
+
+    virtual bool isDirectSubmissionEnabled() const {
+        return false;
+    }
+
   protected:
     void cleanupResources();
 

@@ -43,6 +43,9 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch i
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationMode, -1, "-1: Default, 0: Builtin, 1: Blit")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGpuAddressSpace, -1, "-1: Default, !=-1: GPU address space range in bits")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkgroupSize, -1, "-1: Default, !=-1: Overrides max worgkroup size to this value")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCpuCacheFlush, -1, "-1: do not override, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
 DECLARE_DEBUG_VARIABLE(bool, FlushAllCaches, false, "pipe controls between enqueues flush all possible caches")
 DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of finish after each enqueue")
@@ -90,8 +93,8 @@ DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, false, "disables c
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(bool, DisableDcFlushInEpilogue, false, "Disable DC flush in epilogue")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
@@ -143,6 +146,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinal, -1, "-1: default do not override, 0
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (dont override) or any valid config (0: Age Based, 1: Round Robin)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 dont override, any other: use this value for AUB generation device id")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPacket, -1, "-1: default, 0: disable, 1:enable. Write Timestamp Packet for each set of gpu walkers")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
 DECLARE_DEBUG_VARIABLE(int32_t, AllocateSharedAllocationsWithCpuAndGpuStorage, -1, "When enabled driver creates cpu & gpu storage for shared unified memory allocations. (-1 - devices default mode, 0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")

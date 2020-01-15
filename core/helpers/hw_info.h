@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/command_stream/preemption_mode.h"
+#include "core/direct_submission/direct_submission_properties.h"
 #include "core/helpers/kmd_notify_properties.h"
 
 #include "engine_node.h"
@@ -20,6 +21,7 @@
 namespace NEO {
 
 struct RuntimeCapabilityTable {
+    DirectSubmissionProperyEngines directSubmissionEngines;
     KmdNotifyProperties kmdNotifyProperties;
     uint64_t gpuAddressSpace;
     double defaultProfilingTimerResolution;

@@ -8,6 +8,7 @@
 #include "core/memory_manager/memory_manager.h"
 
 #include "common/compiler_support.h"
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -327,6 +328,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
     getAllocationData(allocationData, properties, hostPtr, createStorageInfoFromProperties(properties));
+    overrideAllocationData(allocationData, properties);
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
@@ -546,5 +548,30 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
                         !imgInfo.linearStorage;
 
     return copyRequired;
+}
+
+void MemoryManager::overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties) {
+    int32_t directRingPlacement = DebugManager.flags.DirectSubmissionBufferPlacement.get();
+    if (properties.allocationType == GraphicsAllocation::AllocationType::RING_BUFFER &&
+        directRingPlacement != -1) {
+        if (directRingPlacement == 0) {
+            allocationData.flags.requiresCpuAccess = true;
+            allocationData.flags.useSystemMemory = false;
+        } else {
+            allocationData.flags.requiresCpuAccess = false;
+            allocationData.flags.useSystemMemory = true;
+        }
+    }
+    int32_t directSemaphorePlacement = DebugManager.flags.DirectSubmissionSemaphorePlacement.get();
+    if (properties.allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER &&
+        directSemaphorePlacement != -1) {
+        if (directSemaphorePlacement == 0) {
+            allocationData.flags.requiresCpuAccess = true;
+            allocationData.flags.useSystemMemory = false;
+        } else {
+            allocationData.flags.requiresCpuAccess = false;
+            allocationData.flags.useSystemMemory = true;
+        }
+    }
 }
 } // namespace NEO

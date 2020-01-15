@@ -35,6 +35,8 @@ const PLATFORM LKF::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable LKF::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
     MemoryConstants::max36BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution

@@ -5,7 +5,9 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/execution_environment.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
@@ -644,4 +646,94 @@ TEST(MemoryManagerTest, givenMapAllocationWhenGetAllocationDataIsCalledThenItHas
     EXPECT_FALSE(allocData.flags.allow32Bit);
     EXPECT_FALSE(allocData.flags.allow64kbPages);
     EXPECT_EQ(allocData.hostPtr, hostPtr);
+}
+
+TEST(MemoryManagerTest, givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, true, 0x10000u, GraphicsAllocation::AllocationType::RING_BUFFER, false};
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.allocateMemory);
+    EXPECT_FALSE(allocData.flags.allow32Bit);
+    EXPECT_FALSE(allocData.flags.allow64kbPages);
+    EXPECT_EQ(0x10000u, allocData.size);
+    EXPECT_EQ(nullptr, allocData.hostPtr);
+    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+}
+
+TEST(MemoryManagerTest, givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, true, 0x1000u, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER, false};
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.allocateMemory);
+    EXPECT_FALSE(allocData.flags.allow32Bit);
+    EXPECT_FALSE(allocData.flags.allow64kbPages);
+    EXPECT_EQ(0x1000u, allocData.size);
+    EXPECT_EQ(nullptr, allocData.hostPtr);
+    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+}
+
+TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenDefaultIsUsedThenExpectNoFlagsChanged) {
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(0u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenOverrideToNonSystemThenExpectNonSystemFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(0u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenOverrideToSystemThenExpectNonFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionBufferPlacement.set(1);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenDefaultIsUsedThenExpectNoFlagsChanged) {
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(0u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToNonSystemThenExpectNonSystemFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionSemaphorePlacement.set(0);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(0u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToSystemThenExpectNonFlags) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionSemaphorePlacement.set(1);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.requiresCpuAccess);
+    EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
 }

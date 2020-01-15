@@ -15,6 +15,8 @@
 namespace NEO {
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
+template <typename GfxFamily>
+class DirectSubmissionHw;
 
 template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
@@ -27,6 +29,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+    ~CommandStreamReceiverHw() override;
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
@@ -37,6 +40,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool flushBatchedSubmissions() override;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
+    void programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
     static void alignToCacheLine(LinearStream &commandStream);
 
@@ -77,6 +81,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     bool isMultiOsContextCapable() const override;
 
+    bool isDirectSubmissionEnabled() const override {
+        return directSubmission.get() != nullptr;
+    }
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
@@ -111,6 +119,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     HeapDirtyState sshState;
 
     CsrSizeRequestFlags csrSizeRequestFlags = {};
+
+    std::unique_ptr<DirectSubmissionHw<GfxFamily>> directSubmission;
 };
 
 } // namespace NEO

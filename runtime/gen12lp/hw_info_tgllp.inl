@@ -36,6 +36,9 @@ const PLATFORM TGLLP::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable TGLLP::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}},
+        {aub_stream::ENGINE_CCS, {true, true}}},     // directSubmissionEngines
     {0, 0, 0, false, false, false},                  // kmdNotifyProperties
     MemoryConstants::max64BitAppAddress,             // gpuAddressSpace
     83.333,                                          // defaultProfilingTimerResolution

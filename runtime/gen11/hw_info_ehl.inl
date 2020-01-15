@@ -35,6 +35,8 @@ const PLATFORM EHL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable EHL::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
     MemoryConstants::max36BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution

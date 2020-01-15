@@ -21,8 +21,6 @@ append_sources_from_properties(NEO_CORE_SOURCES
   NEO_CORE_IMAGE
 )
 
-
-
 append_sources_from_properties(NEO_CORE_SOURCES_WINDOWS
   NEO_CORE_GMM_HELPER_WINDOWS
   NEO_CORE_OS_INTERFACE_WINDOWS

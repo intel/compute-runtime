@@ -32,6 +32,8 @@ const PLATFORM GLK::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable GLK::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {30000, 0, 0, true, false, false},             // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     52.083,                                        // defaultProfilingTimerResolution

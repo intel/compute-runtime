@@ -12,6 +12,10 @@ struct UltHwConfig {
     bool useHwCsr = false;
     bool useMockedGetDevicesFunc = true;
     bool forceOsAgnosticMemoryManager = true;
+
+    bool csrFailInitDirectSubmission = false;
+    bool csrBaseCallDirectSubmissionAvailable = false;
+    bool csrSuperBaseCallDirectSubmissionAvailable = false;
 };
 
 extern UltHwConfig ultHwConfig;

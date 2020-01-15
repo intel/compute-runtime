@@ -7,8 +7,10 @@
 
 #pragma once
 #include "core/device/device.h"
+#include "core/direct_submission/direct_submission_hw.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/os_context.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
@@ -32,6 +34,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getScratchSpaceController;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
+    using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::programEnginePrologue;
     using BaseClass::programPreamble;
@@ -48,7 +51,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::GSBAFor32BitProgrammed;
+    using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
+    using BaseClass::CommandStreamReceiver::isDirectSubmissionEnabled;
     using BaseClass::CommandStreamReceiver::isEnginePrologueSent;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
     using BaseClass::CommandStreamReceiver::isStateSipSent;
@@ -202,6 +207,22 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return multiOsContextCapable;
     }
 
+    bool initDirectSubmission(Device &device, OsContext &osContext) override {
+        if (ultHwConfig.csrFailInitDirectSubmission) {
+            return false;
+        }
+        return BaseClass::CommandStreamReceiver::initDirectSubmission(device, osContext);
+    }
+
+    bool isDirectSubmissionEnabled() const override {
+        if (ultHwConfig.csrBaseCallDirectSubmissionAvailable) {
+            return BaseClass::isDirectSubmissionEnabled();
+        }
+        if (ultHwConfig.csrSuperBaseCallDirectSubmissionAvailable) {
+            return BaseClass::CommandStreamReceiver::isDirectSubmissionEnabled();
+        }
+        return directSubmissionAvailable;
+    }
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -220,5 +241,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
     DispatchFlags recordedDispatchFlags;
     bool multiOsContextCapable = false;
+    bool directSubmissionAvailable = false;
 };
 } // namespace NEO

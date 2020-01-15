@@ -16,6 +16,14 @@ set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
   preemption
 )
 
+set(CORE_RUNTIME_SRCS_GENX_CPP_WINDOWS
+  windows/direct_submission
+)
+
+set(CORE_RUNTIME_SRCS_GENX_CPP_LINUX
+  linux/direct_submission
+)
+
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
 
@@ -42,6 +50,11 @@ macro(macro_for_each_gen)
     list(APPEND CORE_SRCS_${GEN_TYPE}_CPP_BASE ${CORE_GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
   endforeach()
 
+  foreach(OS_IT "BASE" "WINDOWS" "LINUX")
+    foreach(SRC_IT ${CORE_RUNTIME_SRCS_GENX_CPP_${OS_IT}})
+      list(APPEND CORE_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${CORE_GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
+    endforeach()
+  endforeach()
   apply_macro_for_each_platform()
 
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp)
@@ -50,8 +63,11 @@ macro(macro_for_each_gen)
 
   list(APPEND CORE_SRCS_GENX_ALL_BASE ${CORE_SRCS_${GEN_TYPE}_H_BASE})
   list(APPEND CORE_SRCS_GENX_ALL_BASE ${CORE_SRCS_${GEN_TYPE}_CPP_BASE})
-  list(APPEND CORE_SRCS_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
 
+  list(APPEND CORE_SRCS_GENX_ALL_WINDOWS ${CORE_SRCS_${GEN_TYPE}_CPP_WINDOWS})
+  list(APPEND CORE_SRCS_GENX_ALL_LINUX ${CORE_SRCS_${GEN_TYPE}_CPP_LINUX})
+
+  list(APPEND CORE_SRCS_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")

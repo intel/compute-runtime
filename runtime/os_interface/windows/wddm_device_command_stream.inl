@@ -11,6 +11,9 @@
 #pragma warning(disable : 4005)
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "core/direct_submission/dispatchers/render_dispatcher.h"
+#include "core/direct_submission/windows/wddm_direct_submission.h"
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_cmds.h"
@@ -63,14 +66,13 @@ template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
 
-    if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-        makeResident(*batchBuffer.commandBufferAllocation);
-    } else {
-        allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
-        batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
-    }
+    allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
+    batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
 
     this->processResidency(allocationsForResidency, 0u);
+    if (directSubmission.get()) {
+        return directSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));
+    }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
@@ -149,4 +151,30 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
         }
     }
 }
+
+template <typename GfxFamily>
+bool WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(Device &device, OsContext &osContext) {
+    bool ret = true;
+
+    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+        auto contextEngineType = osContext.getEngineType();
+        const DirectSubmissionProperties &directSubmissionProperty =
+            device.getHardwareInfo().capabilityTable.directSubmissionEngines.data[contextEngineType];
+        if (directSubmissionProperty.engineSupported) {
+            if (contextEngineType == ENGINE_TYPE_BCS) {
+                directSubmission = std::make_unique<WddmDirectSubmission<GfxFamily>>(device,
+                                                                                     std::make_unique<BlitterDispatcher<GfxFamily>>(),
+                                                                                     osContext);
+            } else {
+                directSubmission = std::make_unique<WddmDirectSubmission<GfxFamily>>(device,
+                                                                                     std::make_unique<RenderDispatcher<GfxFamily>>(),
+                                                                                     osContext);
+            }
+            ret = directSubmission->initialize(directSubmissionProperty.submitOnInit);
+            this->dispatchMode = DispatchMode::ImmediateDispatch;
+        }
+    }
+    return ret;
+}
+
 } // namespace NEO

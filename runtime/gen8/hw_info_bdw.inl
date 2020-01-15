@@ -40,6 +40,8 @@ const PLATFORM BDW::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable BDW::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {50000, 5000, 200000, true, true, true},       // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     80,                                            // defaultProfilingTimerResolution

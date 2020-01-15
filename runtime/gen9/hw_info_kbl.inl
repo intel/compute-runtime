@@ -32,6 +32,8 @@ const PLATFORM KBL::platform = {
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable KBL::capabilityTable{
+    EngineDirectSubmissionInitVec{
+        {aub_stream::ENGINE_RCS, {true, true}}},   // directSubmissionEngines
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution

@@ -146,6 +146,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
         return false;
     }
 
+    if (!commandStreamReceiver->initDirectSubmission(*this, *osContext)) {
+        return false;
+    }
+
     engines.push_back({commandStreamReceiver.get(), osContext});
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 

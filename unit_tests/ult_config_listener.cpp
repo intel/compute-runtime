@@ -28,7 +28,7 @@ void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
 
     // Ensure that global state is restored
     UltHwConfig expectedState{};
-    static_assert(sizeof(UltHwConfig) == 4 * sizeof(bool), ""); // Ensure that there is no internal padding
+    static_assert(sizeof(UltHwConfig) == 7 * sizeof(bool), ""); // Ensure that there is no internal padding
     EXPECT_EQ(0, memcmp(&expectedState, &ultHwConfig, sizeof(UltHwConfig)));
     EXPECT_EQ(0, memcmp(&referencedHwInfo, platformDevices[0], sizeof(HardwareInfo)));
 }
