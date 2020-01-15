@@ -1,30 +1,28 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/gen12lp/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue_hw.h"
+#include "runtime/event/perf_counter.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"
 
+#include <type_traits>
+
 namespace NEO {
 
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
+typedef BDWFamily Family;
 
-typedef TGLLPFamily Family;
-static auto gfxFamily = IGFX_GEN12LP_CORE;
-
-struct EnableGen12LP {
-    EnableGen12LP() {
+struct EnableOCLGen8 {
+    EnableOCLGen8() {
         populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
@@ -33,9 +31,8 @@ struct EnableGen12LP {
         populateFactoryTable<BufferHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();
-        hwHelperFactory[gfxFamily] = &HwHelperHw<Family>::get();
     }
 };
 
-static EnableGen12LP enable;
+static EnableOCLGen8 enable;
 } // namespace NEO

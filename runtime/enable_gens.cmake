@@ -117,7 +117,8 @@ macro(macro_for_each_gen)
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${GEN_TYPE_LOWER}.cpp)
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${GEN_TYPE_LOWER}.cpp)
   
-  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp)
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp)
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_${GEN_TYPE_LOWER}.cpp)
 

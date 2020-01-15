@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/gen8/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -21,13 +19,10 @@
 
 namespace NEO {
 
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
-
 typedef SKLFamily Family;
-static const auto gfxFamily = IGFX_GEN9_CORE;
 
-struct EnableGen9 {
-    EnableGen9() {
+struct EnableOCLGen9 {
+    EnableOCLGen9() {
         populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
@@ -36,9 +31,8 @@ struct EnableGen9 {
         populateFactoryTable<BufferHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();
-        hwHelperFactory[gfxFamily] = &HwHelperHw<Family>::get();
     }
 };
 
-static EnableGen9 enable;
+static EnableOCLGen9 enable;
 } // namespace NEO
