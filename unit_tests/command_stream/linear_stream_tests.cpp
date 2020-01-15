@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 
-TEST(LinearStreamCtorTest, establishInitialValues) {
+TEST(LinearStreamCtorTest, WhenConstructingLinearStreamThenInitialValuesValuesAreSet) {
     LinearStream linearStream;
     EXPECT_EQ(nullptr, linearStream.getCpuBase());
     EXPECT_EQ(0u, linearStream.getMaxAvailableSpace());
@@ -28,15 +28,15 @@ TEST(LinearStreamCtorTest, whenProvidedAllArgumentsThenExpectSameValuesSet) {
     EXPECT_EQ(gfxAllocation, linearStream.getGraphicsAllocation());
 }
 
-TEST_F(LinearStreamTest, getSpaceTestSizeZero) {
+TEST_F(LinearStreamTest, GivenSizeZeroWhenGettingSpaceUsedThenNonNullPointerIsReturned) {
     EXPECT_NE(nullptr, linearStream.getSpace(0));
 }
 
-TEST_F(LinearStreamTest, getSpaceTestSizeNonZero) {
+TEST_F(LinearStreamTest, GivenSizeUint32WhenGettingSpaceUsedThenNonNullPointerIsReturned) {
     EXPECT_NE(nullptr, linearStream.getSpace(sizeof(uint32_t)));
 }
 
-TEST_F(LinearStreamTest, getSpaceIncrementsPointerCorrectly) {
+TEST_F(LinearStreamTest, WhenAllocatingMultipleTimesThenPointersIncrementedCorrectly) {
     size_t allocSize = 1;
     auto ptr1 = linearStream.getSpace(allocSize);
     ASSERT_NE(nullptr, ptr1);
@@ -47,36 +47,36 @@ TEST_F(LinearStreamTest, getSpaceIncrementsPointerCorrectly) {
     EXPECT_EQ(allocSize, (uintptr_t)ptr2 - (uintptr_t)ptr1);
 }
 
-TEST_F(LinearStreamTest, getSpaceTestReturnsWritablePointer) {
+TEST_F(LinearStreamTest, WhenGettingSpaceThenPointerIsWriteable) {
     uint32_t cmd = 0xbaddf00d;
     auto pCmd = linearStream.getSpace(sizeof(cmd));
     ASSERT_NE(nullptr, pCmd);
     *(uint32_t *)pCmd = cmd;
 }
 
-TEST_F(LinearStreamTest, getSpaceReturnsDifferentPointersForEachRequest) {
+TEST_F(LinearStreamTest, WhenRequestingMutltipleAllocationsThenDifferentPointersAreReturnedForEachRequest) {
     auto pCmd = linearStream.getSpace(sizeof(uint32_t));
     ASSERT_NE(nullptr, pCmd);
     auto pCmd2 = linearStream.getSpace(sizeof(uint32_t));
     ASSERT_NE(pCmd2, pCmd);
 }
 
-TEST_F(LinearStreamTest, getMaxAvailableSpace) {
+TEST_F(LinearStreamTest, GivenNoAllocationsWhenGettingSpaceThenAvailableSpaceIsEqualMaximumSpace) {
     ASSERT_EQ(linearStream.getMaxAvailableSpace(), linearStream.getAvailableSpace());
 }
 
-TEST_F(LinearStreamTest, getAvailableSpaceShouldBeNonZeroAfterInit) {
+TEST_F(LinearStreamTest, GivenNoAllocationsWhenGettingSpaceThenAvailableSpaceIsGreaterThanZero) {
     EXPECT_NE(0u, linearStream.getAvailableSpace());
 }
 
-TEST_F(LinearStreamTest, getSpaceReducesAvailableSpace) {
+TEST_F(LinearStreamTest, GivenAllocationWhenGettingSpaceThenAvailableSpaceIsReduced) {
     auto originalAvailable = linearStream.getAvailableSpace();
     linearStream.getSpace(sizeof(uint32_t));
 
     EXPECT_LT(linearStream.getAvailableSpace(), originalAvailable);
 }
 
-TEST_F(LinearStreamTest, testGetUsed) {
+TEST_F(LinearStreamTest, GivenOneAllocationsWhenGettingSpaceThenSpaceUsedIsEqualToAllocationSize) {
     size_t sizeToAllocate = 2 * sizeof(uint32_t);
     ASSERT_NE(nullptr, linearStream.getSpace(sizeToAllocate));
 
@@ -92,7 +92,7 @@ TEST_F(LinearStreamTest, givenNotEnoughSpaceWhenGetSpaceIsCalledThenThrowExcepti
     EXPECT_THROW(linearStream.getSpace(1), std::exception);
 }
 
-TEST_F(LinearStreamTest, testReplaceBuffer) {
+TEST_F(LinearStreamTest, WhenReplacingBufferThenAvailableSizeIsEqualToBufferSizeAndAllSpaceIsAvailable) {
     char buffer[256];
     linearStream.replaceBuffer(buffer, sizeof(buffer));
     EXPECT_EQ(buffer, linearStream.getCpuBase());
