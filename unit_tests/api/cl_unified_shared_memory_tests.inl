@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -230,15 +230,18 @@ TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThenE
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, properties, 4, 0, &retVal);
 
-    EXPECT_EQ(nullptr, unifiedMemoryHostAllocation);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_NE(nullptr, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenDeviceMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
@@ -264,15 +267,18 @@ TEST(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidPropertiesTokenThe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedTokenThenErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), properties, 4, 0, &retVal);
 
-    EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_NE(nullptr, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGetMemAllocFlagsThenDefaultValueIsReturned) {
