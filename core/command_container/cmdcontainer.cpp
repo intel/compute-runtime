@@ -27,7 +27,9 @@ CommandContainer::~CommandContainer() {
 
     auto memoryManager = device->getMemoryManager();
 
-    memoryManager->freeGraphicsMemory(cmdBufferAllocation);
+    for (auto *alloc : cmdBufferAllocations) {
+        memoryManager->freeGraphicsMemory(alloc);
+    }
 
     for (auto allocationIndirectHeap : allocationIndirectHeaps) {
         heapHelper->storeHeapAllocation(allocationIndirectHeap);
@@ -55,9 +57,10 @@ bool CommandContainer::initialize(Device *device) {
                                          false,
                                          {}};
 
-    cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-
+    auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(!cmdBufferAllocation);
+
+    cmdBufferAllocations.push_back(cmdBufferAllocation);
 
     commandStream = std::unique_ptr<LinearStream>(new LinearStream(cmdBufferAllocation->getUnderlyingBuffer(),
                                                                    defaultListCmdBufferSize));
@@ -99,7 +102,12 @@ void CommandContainer::reset() {
     getResidencyContainer().clear();
     getDeallocationContainer().clear();
 
-    commandStream->replaceBuffer(this->getCommandStream()->getCpuBase(),
+    for (size_t i = 1; i < cmdBufferAllocations.size(); i++) {
+        device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
+    }
+    cmdBufferAllocations.erase(cmdBufferAllocations.begin() + 1, cmdBufferAllocations.end());
+
+    commandStream->replaceBuffer(cmdBufferAllocations[0]->getUnderlyingBuffer(),
                                  defaultListCmdBufferSize);
     addToResidencyContainer(commandStream->getGraphicsAllocation());
 
@@ -139,6 +147,27 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(NEO::HeapTyp
         indirectHeap->align(alignment);
     }
     return indirectHeap;
+}
+
+void CommandContainer::allocateNextCommandBuffer() {
+    size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
+    NEO::AllocationProperties properties{0u,
+                                         true /* allocateMemory*/,
+                                         alignedSize,
+                                         GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                         (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
+                                         false,
+                                         {}};
+
+    auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    UNRECOVERABLE_IF(!cmdBufferAllocation);
+
+    cmdBufferAllocations.push_back(cmdBufferAllocation);
+
+    commandStream->replaceBuffer(cmdBufferAllocation->getUnderlyingBuffer(), defaultListCmdBufferSize);
+    commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
+
+    addToResidencyContainer(cmdBufferAllocation);
 }
 
 } // namespace NEO

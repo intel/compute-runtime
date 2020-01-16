@@ -21,6 +21,7 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
+using CmdBufferContainer = std::vector<GraphicsAllocation *>;
 using HeapType = IndirectHeap::Type;
 
 class CommandContainer : public NonCopyableOrMovableClass {
@@ -33,7 +34,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     CommandContainer() = default;
 
-    GraphicsAllocation *getCmdBufferAllocation() { return cmdBufferAllocation; }
+    CmdBufferContainer &getCmdBufferAllocations() { return cmdBufferAllocations; }
 
     ResidencyContainer &getResidencyContainer() { return residencyContainer; }
 
@@ -51,8 +52,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void setIndirectHeapAllocation(HeapType heapType, GraphicsAllocation *allocation) { allocationIndirectHeaps[heapType] = allocation; }
 
-    void setCmdBufferAllocation(GraphicsAllocation *allocation) { cmdBufferAllocation = allocation; }
-
     uint64_t getInstructionHeapBaseAddress() const { return instructionHeapBaseAddress; }
 
     bool initialize(Device *device);
@@ -64,6 +63,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     Device *getDevice() const { return device; }
 
     IndirectHeap *getHeapWithRequiredSizeAndAlignment(NEO::HeapType heapType, size_t sizeRequired, size_t alignment);
+    void allocateNextCommandBuffer();
 
     void reset();
 
@@ -76,7 +76,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     Device *device = nullptr;
     std::unique_ptr<HeapHelper> heapHelper;
 
-    GraphicsAllocation *cmdBufferAllocation = nullptr;
+    CmdBufferContainer cmdBufferAllocations;
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
 
     uint64_t instructionHeapBaseAddress = 0u;

@@ -105,7 +105,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
     EXPECT_NE(cmdContainer.getHeapHelper(), nullptr);
-    EXPECT_NE(cmdContainer.getCmdBufferAllocation(), nullptr);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
 
     for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
@@ -128,13 +128,6 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocat
     auto heapType = HeapType::DYNAMIC_STATE;
     cmdContainer.setIndirectHeapAllocation(heapType, &mockAllocation);
     EXPECT_EQ(cmdContainer.getIndirectHeapAllocation(heapType), &mockAllocation);
-}
-
-TEST_F(CommandContainerTest, givenCommandContainerWhenSettingCommandBufferAllocationThenAllocationIsSet) {
-    CommandContainer cmdContainer;
-    MockGraphicsAllocation mockAllocation;
-    cmdContainer.setCmdBufferAllocation(&mockAllocation);
-    EXPECT_EQ(cmdContainer.getCmdBufferAllocation(), &mockAllocation);
 }
 
 TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThenHeapAllocationsAreReused) {
@@ -285,4 +278,54 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     for (auto deallocation : cmdContainer->getDeallocationContainer()) {
         cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
     }
+}
+
+TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationIsCreatedAndCommandStreamReplaced) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+    auto stream = cmdContainer->getCommandStream();
+    ASSERT_NE(nullptr, stream);
+
+    auto initialBuffer = stream->getSpace(0);
+    EXPECT_NE(nullptr, initialBuffer);
+
+    cmdContainer->allocateNextCommandBuffer();
+
+    auto nextBuffer = stream->getSpace(0);
+    auto sizeUsed = stream->getUsed();
+    auto availableSize = stream->getMaxAvailableSpace();
+
+    EXPECT_NE(nullptr, nextBuffer);
+    EXPECT_EQ(0u, sizeUsed);
+    EXPECT_NE(initialBuffer, nextBuffer);
+    const size_t cmdBufSize = CommandContainer::defaultListCmdBufferSize;
+    EXPECT_EQ(cmdBufSize, availableSize);
+
+    ASSERT_EQ(2u, cmdContainer->getCmdBufferAllocations().size());
+    EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[1], cmdContainer->getCommandStream()->getGraphicsAllocation());
+
+    EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[1], cmdContainer->getResidencyContainer().back());
+}
+
+TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAreFreedAndStreamIsReplacedWithInitialBuffer) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->initialize(pDevice);
+
+    cmdContainer->allocateNextCommandBuffer();
+    cmdContainer->allocateNextCommandBuffer();
+
+    EXPECT_EQ(3u, cmdContainer->getCmdBufferAllocations().size());
+
+    cmdContainer->reset();
+
+    ASSERT_EQ(1u, cmdContainer->getCmdBufferAllocations().size());
+
+    auto stream = cmdContainer->getCommandStream();
+    ASSERT_NE(nullptr, stream);
+
+    auto buffer = stream->getSpace(0);
+    const size_t cmdBufSize = CommandContainer::defaultListCmdBufferSize;
+
+    EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[0]->getUnderlyingBuffer(), buffer);
+    EXPECT_EQ(cmdBufSize, stream->getMaxAvailableSpace());
 }
