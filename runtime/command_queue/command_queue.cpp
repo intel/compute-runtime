@@ -72,8 +72,9 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
         if (gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
-        if (device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported) {
-            bcsEngine = &device->getDeviceById(0)->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
+        auto hwInfo = device->getExecutionEnvironment()->getHardwareInfo();
+        if (hwInfo->capabilityTable.blitterOperationsSupported) {
+            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(*hwInfo), false);
         }
     }
 
