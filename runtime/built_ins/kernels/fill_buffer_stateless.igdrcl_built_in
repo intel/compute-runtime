@@ -21,7 +21,7 @@ __kernel void FillBufferLeftLeftover(
     __global uchar* pDst,
     ulong dstOffsetInBytes,
     const __global uchar* pPattern,
-    const size_t patternSizeInEls )
+    const ulong patternSizeInEls )
 {
     size_t gid = get_global_id(0);
     pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
