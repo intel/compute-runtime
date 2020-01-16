@@ -69,6 +69,7 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
             EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrGpGpuThreadGroupLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrPerCtxtPreemptionGranularityControl);
+            EXPECT_EQ(setParamBool, featureTable.ftrE2ECompression);
 
             EXPECT_EQ(setParamBool, workaroundTable.wa4kAlignUVOffsetNV12LinearSurface);
             EXPECT_EQ(setParamBool, workaroundTable.waEnablePreemptionGranularityControlByUMD);

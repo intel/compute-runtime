@@ -2473,7 +2473,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         return TheStructure.Common.EnableUnormPathInColorPipe;
     }
     inline void setWidth(const uint32_t value) {
-        DEBUG_BREAK_IF(value > 0x3fff);
+        DEBUG_BREAK_IF(value > 0x4000);
         TheStructure.Common.Width = value - 1;
     }
     inline uint32_t getWidth(void) const {

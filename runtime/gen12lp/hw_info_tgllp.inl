@@ -94,6 +94,7 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->ftrFbcBlitterTracking = true;
     featureTable->ftrFbcCpuTracking = true;
     featureTable->ftrTileY = true;
+    featureTable->ftrE2ECompression = true;
 
     featureTable->ftrAstcHdr2D = true;
     featureTable->ftrAstcLdr2D = true;
