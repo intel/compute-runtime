@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class ZeroSizeEnqueueHandlerTestZeroGws : public ZeroSizeEnqueueHandlerTest {
     std::tuple<unsigned int, size_t *> testGwsInputs[14];
 };
 
-HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDetectedAndOpenCLAtLeast21ThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClAtLeast21WhenEnqueingKernelThenCommandMarkerShouldBeEnqueued) {
     pDevice->enabledClVersion = 21;
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
@@ -77,7 +77,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDe
     }
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDetectedAndOpenCLIs20OrOlderThenErrorIsReturned) {
+HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClIs20OrOlderWhenEnqueingKernelThenErrorIsReturned) {
     int oclVersionsToTest[] = {12, 20};
     for (auto oclVersion : oclVersionsToTest) {
         pDevice->enabledClVersion = oclVersion;
@@ -98,7 +98,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDe
     }
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDetectedAndLocalWorkSizeIsSetThenNoExceptionIsThrown) {
+HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndLocalWorkSizeIsSetWhenEnqueingKernelThenNoExceptionIsThrown) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -113,7 +113,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, enqueueKernelWhenZeroSizeEnqueueIsDe
     EXPECT_EQ(expected, retVal);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueKernelWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShoudBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenEventCommandTypeShoudBeUnchanged) {
     if (pDevice->getEnabledClVersion() < 21) {
         return;
     }
@@ -135,7 +135,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueKernelWhenZeroSizeEnqueueIsDetectedT
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer buffer;
@@ -145,7 +145,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetec
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingBufferThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -165,7 +165,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetec
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferRectWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingBufferRectThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer buffer;
@@ -202,7 +202,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferRectWhenZeroSizeEnqueueIsD
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferRectWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingBufferRectThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -224,7 +224,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferRectWhenZeroSizeEnqueueIsD
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer buffer;
@@ -234,7 +234,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDete
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingBufferThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -254,7 +254,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDete
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferRectWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingBufferRectThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer buffer;
@@ -291,7 +291,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferRectWhenZeroSizeEnqueueIs
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferRectWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingBufferRectThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -313,7 +313,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferRectWhenZeroSizeEnqueueIs
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer srcBuffer;
@@ -323,7 +323,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferWhenZeroSizeEnqueueIsDetec
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingBufferThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -343,7 +343,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferWhenZeroSizeEnqueueIsDetec
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferRectWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingBufferRectThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer srcBuffer;
@@ -380,7 +380,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferRectWhenZeroSizeEnqueueIsD
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferRectWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, WhenCopyingBufferZeroSizeEnqueueIsDetectedWhenCopyingBufferRectThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -402,7 +402,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferRectWhenZeroSizeEnqueueIsD
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillBufferWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     MockBuffer buffer;
@@ -412,7 +412,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillBufferWhenZeroSizeEnqueueIsDetec
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillBufferWhenZeroSizeEnqueueIsDetectedTheEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingBufferTheEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -432,7 +432,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillBufferWhenZeroSizeEnqueueIsDetec
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
@@ -468,7 +468,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetect
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenReadingImageThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -489,7 +489,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetect
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
@@ -525,7 +525,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetec
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenWritingImageThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -546,7 +546,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetec
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
@@ -583,7 +583,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageWhenZeroSizeEnqueueIsDetect
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -605,7 +605,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageWhenZeroSizeEnqueueIsDetect
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageToBufferWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageToBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
@@ -641,7 +641,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageToBufferWhenZeroSizeEnqueue
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageToBufferWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageToBufferThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -662,7 +662,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyImageToBufferWhenZeroSizeEnqueue
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferToImageWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingBufferToImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Buffer> srcBuffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
@@ -698,7 +698,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferToImageWhenZeroSizeEnqueue
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferToImageWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingBufferToImageThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -719,7 +719,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueCopyBufferToImageWhenZeroSizeEnqueue
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillImageWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
@@ -755,7 +755,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillImageWhenZeroSizeEnqueueIsDetect
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillImageWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingImageThenEventCommandTypeShouldBeUnchanged) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
 
     cl_event event;
@@ -776,7 +776,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueFillImageWhenZeroSizeEnqueueIsDetect
     delete pEvent;
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemcpyWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenCommandMarkerShouldBeEnqueued) {
     if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
         GTEST_SKIP();
     }
@@ -792,7 +792,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemcpyWhenZeroSizeEnqueueIsDetect
     context.getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemcpyWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenEventCommandTypeShouldBeUnchanged) {
     if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
         GTEST_SKIP();
     }
@@ -818,7 +818,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemcpyWhenZeroSizeEnqueueIsDetect
     context.getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemFillWhenZeroSizeEnqueueIsDetectedThenCommandMarkerShouldBeEnqueued) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenCommandMarkerShouldBeEnqueued) {
     if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
         GTEST_SKIP();
     }
@@ -833,7 +833,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemFillWhenZeroSizeEnqueueIsDetec
     context.getSVMAllocsManager()->freeSVMAlloc(pSVM);
 }
 
-HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueSVMMemFillWhenZeroSizeEnqueueIsDetectedThenEventCommandTypeShouldBeUnchanged) {
+HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenEventCommandTypeShouldBeUnchanged) {
     if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
         GTEST_SKIP();
     }
