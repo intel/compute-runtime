@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,14 @@
 
 #include "core/helpers/debug_helpers.h"
 
-#include <exception>
+#include <stdexcept>
+#include <string>
 
 namespace NEO {
 void debugBreak(int line, const char *file) {
 }
 void abortUnrecoverable(int line, const char *file) {
-    throw std::exception();
+    std::string message = "Abort was called at " + std::to_string(line) + " line in file " + file;
+    throw std::runtime_error(message);
 }
 } // namespace NEO
