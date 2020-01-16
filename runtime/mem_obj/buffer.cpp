@@ -280,7 +280,9 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "Buffer:", pBuffer, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
+    printDebugString(DebugManager.flags.LogMemoryObject.get(), stdout,
+                     "\nCreated Buffer: Handle %p, hostPtr %p, size %llu, memoryStorage %p, GPU address %#llx\n",
+                     pBuffer, hostPtr, size, memory->getUnderlyingBuffer(), memory->getGpuAddress());
 
     if (memoryProperties.flags.useHostPtr) {
         if (!zeroCopyAllowed && !isHostPtrSVM) {
