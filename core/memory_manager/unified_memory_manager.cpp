@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, 
                                                  memoryProperties.subdeviceBitfield.count() > 1,
                                                  memoryProperties.subdeviceBitfield.count() > 1,
                                                  memoryProperties.subdeviceBitfield};
+    unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
     if (!unifiedMemoryAllocation) {

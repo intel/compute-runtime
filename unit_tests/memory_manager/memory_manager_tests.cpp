@@ -1279,7 +1279,7 @@ TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAlloc
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
-TEST(MemoryManager, givenInteProcessShareableWhenAllocatingGraphicsMemoryThenAllocateShareableIsCalled) {
+TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateShareableIsCalled) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -463,11 +463,13 @@ struct MemoryManagerPropertiesCheck : public MockMemoryManager {
         this->multiOsContextCapablePassed = properties.flags.multiOsContextCapable;
         this->multiStorageResourcePassed = properties.multiStorageResource;
         this->subDevicesBitfieldPassed = properties.subDevicesBitfield;
+        this->shareablePassed = properties.flags.shareable;
         return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
     }
 
     bool multiOsContextCapablePassed;
     bool multiStorageResourcePassed;
+    bool shareablePassed;
     DeviceBitfield subDevicesBitfieldPassed;
 };
 
@@ -544,5 +546,33 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
     EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
     EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfield, memoryManager->subDevicesBitfieldPassed);
 
+    svmManager->freeSVMAlloc(ptr);
+}
+
+struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        bool svmSupported = executionEnvironment->getHardwareInfo()->capabilityTable.ftrSvm;
+        if (!svmSupported) {
+            GTEST_SKIP();
+        }
+        memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, *executionEnvironment);
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+        memoryManager->pageFaultManager.reset(new MockPageFaultManager);
+    }
+
+    ExecutionEnvironment *executionEnvironment;
+    std::unique_ptr<MemoryManagerPropertiesCheck> memoryManager;
+    std::unique_ptr<MockSVMAllocsManager> svmManager;
+};
+
+TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropertyFlagThenShareableAllocationPropertyFlagIsSet) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.allocationFlags.flags.shareable = 1;
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+
+    EXPECT_TRUE(memoryManager->shareablePassed);
     svmManager->freeSVMAlloc(ptr);
 }

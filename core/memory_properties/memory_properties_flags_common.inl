@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct MemoryFlags {
     uint32_t locallyUncachedInSurfaceState : 1;
     uint32_t allowUnrestrictedSize : 1;
     uint32_t forceSharedPhysicalMemory : 1;
+    uint32_t shareable : 1;
 };
 
 struct MemoryAllocFlags {
