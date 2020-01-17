@@ -20,6 +20,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class LinearStream;
+
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
 using HeapType = IndirectHeap::Type;
@@ -30,9 +31,17 @@ class CommandContainer : public NonCopyableOrMovableClass {
     static constexpr size_t totalCmdBufferSize =
         defaultListCmdBufferSize +
         MemoryConstants::cacheLineSize +
-        NEO::CSRequirements::csOverfetchSize;
+        CSRequirements::csOverfetchSize;
 
-    CommandContainer() = default;
+    CommandContainer() {
+        for (auto &indirectHeap : indirectHeaps) {
+            indirectHeap = nullptr;
+        }
+
+        for (auto &allocationIndirectHeap : allocationIndirectHeaps) {
+            allocationIndirectHeap = nullptr;
+        }
+    }
 
     CmdBufferContainer &getCmdBufferAllocations() { return cmdBufferAllocations; }
 
@@ -54,15 +63,20 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     uint64_t getInstructionHeapBaseAddress() const { return instructionHeapBaseAddress; }
 
+    void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
+
     bool initialize(Device *device);
 
     virtual ~CommandContainer();
 
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
+    static const uint32_t numIddsPerBlock = 64;
+    uint32_t nextIddInBlock = 0;
+    uint32_t lastSentNumGrfRequired = 0;
 
     Device *getDevice() const { return device; }
 
-    IndirectHeap *getHeapWithRequiredSizeAndAlignment(NEO::HeapType heapType, size_t sizeRequired, size_t alignment);
+    IndirectHeap *getHeapWithRequiredSizeAndAlignment(HeapType heapType, size_t sizeRequired, size_t alignment);
     void allocateNextCommandBuffer();
 
     void reset();
@@ -71,19 +85,21 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool isAnyHeapDirty() const { return dirtyHeaps != 0; }
     void setHeapDirty(HeapType heapType) { dirtyHeaps |= (1u << heapType); }
     void setDirtyStateForAllHeaps(bool dirty) { dirtyHeaps = dirty ? std::numeric_limits<uint32_t>::max() : 0; }
+    void setIddBlock(void *iddBlock) { this->iddBlock = iddBlock; }
+    void *getIddBlock() { return iddBlock; }
 
   protected:
+    void *iddBlock = nullptr;
     Device *device = nullptr;
     std::unique_ptr<HeapHelper> heapHelper;
 
     CmdBufferContainer cmdBufferAllocations;
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
-
     uint64_t instructionHeapBaseAddress = 0u;
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
 
     std::unique_ptr<LinearStream> commandStream;
-    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES] = {};
+    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
     ResidencyContainer residencyContainer;
     std::vector<GraphicsAllocation *> deallocationContainer;
 };

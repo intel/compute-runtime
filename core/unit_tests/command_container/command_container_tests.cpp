@@ -278,6 +278,7 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     for (auto deallocation : cmdContainer->getDeallocationContainer()) {
         cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
     }
+    cmdContainer->getDeallocationContainer().clear();
 }
 
 TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationIsCreatedAndCommandStreamReplaced) {
@@ -328,4 +329,65 @@ TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAr
 
     EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[0]->getUnderlyingBuffer(), buffer);
     EXPECT_EQ(cmdBufSize, stream->getMaxAvailableSpace());
+}
+
+class CommandContainerHeaps : public DeviceFixture,
+                              public ::testing::TestWithParam<IndirectHeap::Type> {
+  public:
+    void SetUp() override {
+        DeviceFixture::SetUp();
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+};
+
+INSTANTIATE_TEST_CASE_P(
+    Device,
+    CommandContainerHeaps,
+    testing::Values(
+        IndirectHeap::DYNAMIC_STATE,
+        IndirectHeap::INDIRECT_OBJECT,
+        IndirectHeap::SURFACE_STATE));
+
+TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThenHeapIsReturned) {
+    HeapType heap = GetParam();
+
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+    auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
+    size_t size = 5000;
+    void *ptr = cmdContainer.getHeapSpaceAllowGrow(heap, size);
+    ASSERT_NE(nullptr, ptr);
+
+    auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
+    ASSERT_EQ(usedSpaceBefore + size, usedSpaceAfter);
+}
+
+TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSizeThenBiggerHeapIsReturned) {
+    HeapType heap = GetParam();
+
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+    auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
+    auto availableSizeBefore = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
+
+    void *ptr = cmdContainer.getHeapSpaceAllowGrow(heap, availableSizeBefore + 1);
+    ASSERT_NE(nullptr, ptr);
+
+    auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
+    auto availableSizeAfter = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
+    EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
+}
+
+TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllocationAreNotDestroyed) {
+    std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer());
+    MockGraphicsAllocation alloc;
+    size_t size = 0x1000;
+    alloc.setSize(size);
+    cmdContainer->initialize(pDevice);
+    cmdContainer->getDeallocationContainer().push_back(&alloc);
+    cmdContainer.reset();
+    EXPECT_EQ(alloc.getUnderlyingBufferSize(), size);
 }

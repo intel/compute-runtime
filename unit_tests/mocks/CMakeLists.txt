@@ -113,7 +113,14 @@ endif()
 
 # add_dependencies(igdrcl_mocks gmock-gtest)
 
-target_include_directories(igdrcl_mocks PRIVATE 
+get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
+list(APPEND NEO_CORE_tests_mocks
+   ${NEO_CORE_tests_mocks}
+)
+
+target_sources(igdrcl_mocks PRIVATE ${NEO_CORE_tests_mocks})
+
+target_include_directories(igdrcl_mocks PRIVATE
     $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )

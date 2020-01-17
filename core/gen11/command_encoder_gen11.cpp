@@ -1,0 +1,29 @@
+/*
+ * Copyright (C) 2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "core/command_container/command_encoder.h"
+#include "core/command_container/command_encoder.inl"
+#include "core/command_container/command_encoder_base.inl"
+#include "core/gen11/hw_cmds_base.h"
+#include "runtime/gen11/reg_configs.h"
+namespace NEO {
+
+using Family = ICLFamily;
+
+template struct EncodeDispatchKernel<Family>;
+template struct EncodeStates<Family>;
+template struct EncodeMathMMIO<Family>;
+template struct EncodeIndirectParams<Family>;
+template struct EncodeFlush<Family>;
+template struct EncodeSetMMIO<Family>;
+template struct EncodeL3State<Family>;
+template struct EncodeMediaInterfaceDescriptorLoad<Family>;
+template struct EncodeStateBaseAddress<Family>;
+template struct EncodeStoreMMIO<Family>;
+template struct EncodeSurfaceState<Family>;
+
+} // namespace NEO

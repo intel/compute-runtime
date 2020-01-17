@@ -220,14 +220,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 // Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename GfxFamily>
-size_t HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
+size_t HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
                                                                            const void *srcKernelSsh, size_t srcKernelSshSize,
                                                                            size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
-    if ((srcKernelInfo.patchInfo.bindingTableState == nullptr) || (srcKernelInfo.patchInfo.bindingTableState->Count == 0)) {
+    if (bindingTableCount == 0) {
         // according to compiler, kernel does not reference BTIs to stateful surfaces, so there's nothing to patch
         return 0;
     }

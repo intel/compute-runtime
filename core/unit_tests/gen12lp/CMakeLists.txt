@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2019-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ set(NEO_CORE_TESTS_GEN12LP
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_gen12lp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_gen12lp.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder_gen12lp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen12lp.inl
 )
 set_property(GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP ${NEO_CORE_TESTS_GEN12LP})

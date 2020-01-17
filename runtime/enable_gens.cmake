@@ -41,6 +41,7 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
+  command_encoder
   preamble
   preemption
 )

@@ -84,19 +84,20 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         WALKER_TYPE<GfxFamily> *walkerCmd,
         uint32_t &sizeCrossThreadData);
 
-    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
+    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo) {
-        return pushBindingTableAndSurfaceStates(dstHeap, srcKernelInfo, srcKernelInfo.heapInfo.pSsh,
+        return pushBindingTableAndSurfaceStates(dstHeap, (srcKernelInfo.patchInfo.bindingTableState != nullptr) ? srcKernelInfo.patchInfo.bindingTableState->Count : 0,
+                                                srcKernelInfo.heapInfo.pSsh,
                                                 srcKernelInfo.heapInfo.pKernelHeader->SurfaceStateHeapSize,
                                                 (srcKernelInfo.patchInfo.bindingTableState != nullptr) ? srcKernelInfo.patchInfo.bindingTableState->Count : 0,
                                                 (srcKernelInfo.patchInfo.bindingTableState != nullptr) ? srcKernelInfo.patchInfo.bindingTableState->Offset : 0);
     }
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
-        return pushBindingTableAndSurfaceStates(dstHeap, srcKernel.getKernelInfo(),
+        return pushBindingTableAndSurfaceStates(dstHeap, (srcKernel.getKernelInfo().patchInfo.bindingTableState != nullptr) ? srcKernel.getKernelInfo().patchInfo.bindingTableState->Count : 0,
                                                 srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
                                                 srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
     }
