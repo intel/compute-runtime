@@ -277,16 +277,16 @@ void Device::initializeCaps() {
     deviceInfo.maxNumEUsPerSubSlice = 0;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
     deviceInfo.numThreadsPerEU = 0;
-    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32 : 8;
+    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : 8u;
 
     deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.ftrPooledEuEnabled == 0)
                                           ? (systemInfo.EUCount / systemInfo.SubSliceCount)
                                           : systemInfo.EuCountPerPoolMin;
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-    auto maxWS = deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU * simdSizeUsed;
+    auto maxWS = hwHelper.getMaxThreadsForWorkgroup(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice)) * simdSizeUsed;
 
-    maxWS = Math::prevPowerOfTwo(uint32_t(maxWS));
-    deviceInfo.maxWorkGroupSize = std::min(uint32_t(maxWS), 1024u);
+    maxWS = Math::prevPowerOfTwo(maxWS);
+    deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
     deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize / simdSizeUsed);

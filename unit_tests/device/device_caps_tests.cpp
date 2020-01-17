@@ -851,7 +851,7 @@ TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreE
     EXPECT_EQ(expectedMaxWGS, device->getDeviceInfo().maxWorkGroupSize);
 }
 
-TEST(DeviceGetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
+HWTEST_F(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *platformDevices[0];
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
@@ -884,7 +884,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     EXPECT_EQ(device->getDeviceInfo().maxWorkGroupSize / 32, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
-TEST(DeviceGetCaps, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
+HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
     HardwareInfo myHwInfo = *platformDevices[0];
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 

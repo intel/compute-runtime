@@ -62,6 +62,7 @@ class HwHelper {
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
+    virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const;
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
     virtual bool requiresAuxResolves() const = 0;
@@ -118,6 +119,8 @@ class HwHelperHw : public HwHelper {
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
+
+    uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
 
     uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const override;
 

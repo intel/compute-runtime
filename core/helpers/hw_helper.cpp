@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,4 +45,8 @@ uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     return hwInfo.gtSystemInfo.EUCount * threadsPerEU;
 }
 
+uint32_t HwHelper::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
+    uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    return maxNumEUsPerSubSlice * numThreadsPerEU;
+}
 } // namespace NEO
