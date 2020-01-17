@@ -473,7 +473,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentPrioritySetting
     EXPECT_EQ(1u, cmdBuffer->inspectionId);
 }
 
-TEST(SubmissionsAggregator, dontAllocateFlushStamp) {
+TEST(SubmissionsAggregator, WhenAggregatorIsCreatedThenFlushStampIsNotAllocated) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     CommandBuffer cmdBuffer(*device);
     EXPECT_EQ(nullptr, cmdBuffer.flushStamp->getStampReference());
