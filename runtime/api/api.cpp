@@ -208,7 +208,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < numDev; rootDeviceIndex++) {
 
             ClDevice *device = pPlatform->getClDevice(rootDeviceIndex);
-            DEBUG_BREAK_IF(device == nullptr);
+            UNRECOVERABLE_IF(device == nullptr);
 
             if (deviceType & device->getDeviceInfo().deviceType) {
                 if (devices) {
@@ -1345,9 +1345,7 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
 
         for (cl_uint i = 0; i < numDevices; i++) {
             auto pContext = castToObject<Context>(context);
-            validateObject(pContext);
             auto pDevice = castToObject<ClDevice>(*deviceList);
-            validateObject(pDevice);
 
             program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
                 *pContext,
