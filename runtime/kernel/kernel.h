@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/command_stream/thread_arbitration_policy.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/address_patch.h"
 #include "core/helpers/preamble.h"
@@ -14,7 +15,6 @@
 #include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/properties_helper.h"

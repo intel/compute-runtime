@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/command_stream/thread_arbitration_policy.h"
 #include "public/cl_ext_private.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 
 #include <stdint.h>
 namespace NEO {

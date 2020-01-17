@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/command_stream/thread_arbitration_policy.h"
 #include "core/helpers/preamble.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 
 namespace NEO {
 struct SKLFamily;

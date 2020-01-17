@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/command_stream/queue_throttle.h"
 #include "runtime/api/cl_types.h"
 
 #include <array>
@@ -15,12 +16,6 @@
 namespace NEO {
 class MemObj;
 class Buffer;
-
-enum QueueThrottle : uint32_t {
-    LOW,
-    MEDIUM,
-    HIGH
-};
 
 struct EventsRequest {
     EventsRequest() = delete;
