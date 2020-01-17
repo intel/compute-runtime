@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 
 #include "CL/cl.h"
@@ -41,8 +40,9 @@ SpinLock kernelExecQueueLock;
 void gtpinNotifyContextCreate(cl_context context) {
     if (isGTPinInitialized) {
         platform_info_t gtpinPlatformInfo;
-        auto pPlatform = platform();
-        auto pDevice = pPlatform->getDevice(0);
+        auto pContext = castToObjectOrAbort<Context>(context);
+        auto pDevice = pContext->getDevice(0);
+        UNRECOVERABLE_IF(pDevice == nullptr);
         GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         gtpinPlatformInfo.gen_version = (gtpin::GTPIN_GEN_VERSION)gtpinHelper.getGenVersion();
@@ -62,9 +62,8 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates();
         // Enlarge local copy of SSH by 1 SS
-        auto pPlatform = platform();
-        auto pDevice = pPlatform->getDevice(0);
-        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+        auto &device = pKernel->getDevice();
+        GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         if (!gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
@@ -130,9 +129,8 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         if (!resource) {
             return;
         }
-        auto pPlatform = platform();
-        auto pDevice = pPlatform->getDevice(0);
-        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+        auto &device = pKernel->getDevice();
+        GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
