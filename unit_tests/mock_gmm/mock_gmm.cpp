@@ -5,14 +5,16 @@
  *
  */
 
-#include "GmmLib.h"
+#include "core/gmm_helper/gmm_interface.h"
 
+namespace NEO {
 GMM_INIT_IN_ARGS passedInputArgs = {};
 SKU_FEATURE_TABLE passedFtrTable = {};
 WA_TABLE passedWaTable = {};
 bool copyInputArgs = false;
 
-GMM_STATUS GMM_STDCALL InitializeGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
+namespace GmmInterface {
+GMM_STATUS initialize(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
     pOutArgs->pGmmClientContext = reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x01);
     if (pInArgs) {
         if (pInArgs->Platform.eProductFamily == PRODUCT_FAMILY::IGFX_UNKNOWN &&
@@ -29,5 +31,7 @@ GMM_STATUS GMM_STDCALL InitializeGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARG
     return GMM_INVALIDPARAM;
 }
 
-void GMM_STDCALL GmmAdapterDestroy(GMM_INIT_OUT_ARGS *pInArgs) {
+void destroy(GMM_INIT_OUT_ARGS *pInArgs) {
 }
+} // namespace GmmInterface
+} // namespace NEO

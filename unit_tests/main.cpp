@@ -7,6 +7,7 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/gmm_interface.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/memory_leak_listener.h"
@@ -457,7 +458,7 @@ int main(int argc, char **argv) {
     if (useMockGmm) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     } else {
-        InitializeGmm(nullptr, nullptr);
+        GmmInterface::initialize(nullptr, nullptr);
     }
     initializeTestHelpers();
 

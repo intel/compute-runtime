@@ -14,6 +14,7 @@ set(NEO_CORE_GMM_HELPER
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_lib.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr_impl.cpp

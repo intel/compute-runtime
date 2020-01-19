@@ -5,17 +5,19 @@
  *
  */
 
-#include "core/gmm_helper/gmm_lib.h"
+#include "core/gmm_helper/gmm_interface.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/os_interface/os_library.h"
 
 #include <memory>
 
-using namespace NEO;
+namespace NEO {
 
 static std::unique_ptr<OsLibrary> gmmLib;
 
-GMM_STATUS GMM_STDCALL InitializeGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
+namespace GmmInterface {
+
+GMM_STATUS initialize(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
     if (!gmmLib) {
         gmmLib.reset(OsLibrary::load(GMM_UMD_DLL));
         UNRECOVERABLE_IF(!gmmLib);
@@ -25,8 +27,10 @@ GMM_STATUS GMM_STDCALL InitializeGmm(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARG
     return initGmmFunc(pInArgs, pOutArgs);
 }
 
-void GMM_STDCALL GmmAdapterDestroy(GMM_INIT_OUT_ARGS *pInArgs) {
+void destroy(GMM_INIT_OUT_ARGS *pInArgs) {
     auto destroyGmmFunc = reinterpret_cast<decltype(&GmmAdapterDestroy)>(gmmLib->getProcAddress(GMM_ADAPTER_DESTROY_NAME));
     UNRECOVERABLE_IF(!destroyGmmFunc);
     destroyGmmFunc(pInArgs);
 }
+} // namespace GmmInterface
+} // namespace NEO

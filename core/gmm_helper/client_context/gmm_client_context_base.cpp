@@ -8,6 +8,7 @@
 #include "core/gmm_helper/client_context/gmm_client_context_base.h"
 
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/gmm_helper/gmm_interface.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
@@ -33,7 +34,7 @@ GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInf
         osInterface->setGmmInputArgs(&inArgs);
     }
 
-    auto ret = InitializeGmm(&inArgs, &outArgs);
+    auto ret = GmmInterface::initialize(&inArgs, &outArgs);
 
     UNRECOVERABLE_IF(ret != GMM_SUCCESS);
 
@@ -43,7 +44,7 @@ GmmClientContextBase::~GmmClientContextBase() {
     GMM_INIT_OUT_ARGS outArgs;
     outArgs.pGmmClientContext = clientContext;
 
-    GmmAdapterDestroy(&outArgs);
+    GmmInterface::destroy(&outArgs);
 };
 
 MEMORY_OBJECT_CONTROL_STATE GmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {

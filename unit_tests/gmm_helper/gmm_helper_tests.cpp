@@ -30,11 +30,13 @@
 
 using namespace ::testing;
 
+namespace NEO {
+
 extern GMM_INIT_IN_ARGS passedInputArgs;
 extern SKU_FEATURE_TABLE passedFtrTable;
 extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
-namespace NEO {
+
 struct GmmTests : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();

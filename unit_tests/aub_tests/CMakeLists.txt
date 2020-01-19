@@ -54,8 +54,13 @@ target_sources(igdrcl_aub_tests PRIVATE
 
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
     ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
     ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
+  )
+else()
+  target_sources(igdrcl_aub_tests PRIVATE
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/gmm_interface_linux.cpp
   )
 endif()
 
@@ -71,7 +76,7 @@ if(UNIX)
 else()
   add_dependencies(igdrcl_aub_tests ${GMM_TARGET_NAME})
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface.cpp
+    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
