@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,9 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 
@@ -90,4 +92,10 @@ SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingA
     auto &hwHelper = HwHelper::get(family);
     return hwHelper.getSipKernelType(debuggingActive);
 }
+
+GraphicsAllocation *SipKernel::getSipKernelAllocation(Device &device) {
+    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, device.isSourceLevelDebuggerActive());
+    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
+}
+
 } // namespace NEO

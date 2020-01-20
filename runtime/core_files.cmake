@@ -7,6 +7,7 @@
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/runtime/core_files.cmake)
 
 append_sources_from_properties(NEO_CORE_SOURCES
+  NEO_CORE_BUILT_INS
   NEO_CORE_COMMAND_CONTAINER
   NEO_CORE_COMMAND_STREAM
   NEO_CORE_COMMANDS

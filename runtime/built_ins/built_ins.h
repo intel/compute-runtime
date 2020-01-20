@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/built_ins/sip_kernel_type.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/non_copyable_or_moveable.h"
 #include "core/helpers/vec.h"
-#include "runtime/built_ins/sip.h"
 
 #include "CL/cl.h"
 #include "built_in_ops.h"
@@ -35,6 +35,7 @@ struct KernelInfo;
 struct MultiDispatchInfo;
 class Program;
 class SchedulerKernel;
+class SipKernel;
 
 static constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
     "-D cl_intel_device_side_advanced_vme_enable",

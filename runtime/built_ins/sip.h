@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/built_ins/sip_kernel_type.h"
 #include "core/helpers/hw_info.h"
 
-#include <cinttypes>
 #include <memory>
 
 namespace NEO {
@@ -16,13 +16,6 @@ namespace NEO {
 class Device;
 class Program;
 class GraphicsAllocation;
-
-enum class SipKernelType : std::uint32_t {
-    Csr = 0,
-    DbgCsr,
-    DbgCsrLocal,
-    COUNT
-};
 
 const char *getSipKernelCompilerInternalOptions(SipKernelType kernel);
 
@@ -49,6 +42,7 @@ class SipKernel {
 
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     static SipKernelType getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive);
+    static GraphicsAllocation *getSipKernelAllocation(Device &device);
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
