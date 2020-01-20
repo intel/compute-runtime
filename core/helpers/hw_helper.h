@@ -73,6 +73,9 @@ class HwHelper {
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
 
+    static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
+    static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
+
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
   protected:

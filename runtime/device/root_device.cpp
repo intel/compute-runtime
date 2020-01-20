@@ -8,8 +8,8 @@
 #include "runtime/device/root_device.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/helpers/hw_helper.h"
 #include "runtime/device/sub_device.h"
-#include "runtime/helpers/device_helpers.h"
 
 namespace NEO {
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
@@ -50,7 +50,7 @@ SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
 }
 
 bool RootDevice::createDeviceImpl() {
-    auto numSubDevices = DeviceHelper::getSubDevicesCount(&getHardwareInfo());
+    auto numSubDevices = HwHelper::getSubDevicesCount(&getHardwareInfo());
     if (numSubDevices == 1) {
         numSubDevices = 0;
     }

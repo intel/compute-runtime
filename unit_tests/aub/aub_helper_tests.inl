@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/helpers/device_helpers.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_lrca_helper.h"
@@ -43,11 +42,11 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
-    uint32_t devicesCount = DeviceHelper::getSubDevicesCount(&hwInfo);
+    uint32_t devicesCount = HwHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
     DebugManager.flags.CreateMultipleSubDevices.set(0);
-    devicesCount = DeviceHelper::getSubDevicesCount(&hwInfo);
+    devicesCount = HwHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
 

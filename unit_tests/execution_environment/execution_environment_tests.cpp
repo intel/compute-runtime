@@ -16,7 +16,6 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/device_helpers.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
@@ -226,7 +225,7 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     uint32_t numRootDevices = 17u;
     auto &hwHelper = HwHelper::get(executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
     auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
-    auto subDevicesCount = DeviceHelper::getSubDevicesCount(executionEnvironment.getHardwareInfo());
+    auto subDevicesCount = HwHelper::getSubDevicesCount(executionEnvironment.getHardwareInfo());
     bool hasRootCsr = subDevicesCount > 1;
 
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);

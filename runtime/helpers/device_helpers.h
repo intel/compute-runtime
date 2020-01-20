@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,5 @@ struct HardwareInfo;
 
 namespace DeviceHelper {
 void getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
-uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
-uint32_t getEnginesCount(const HardwareInfo &hwInfo);
 }; // namespace DeviceHelper
 } // namespace NEO

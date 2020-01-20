@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,6 @@
 
 #include "runtime/helpers/device_helpers.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_info.h"
-
 namespace NEO {
 void DeviceHelper::getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize) {}
-
-uint32_t DeviceHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
-    return DebugManager.flags.CreateMultipleSubDevices.get() > 0 ? DebugManager.flags.CreateMultipleSubDevices.get() : 1u;
-}
-
-uint32_t DeviceHelper::getEnginesCount(const HardwareInfo &hwInfo) {
-    return 1u;
-}
 } // namespace NEO

@@ -11,7 +11,6 @@
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/device_helpers.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -267,7 +266,7 @@ TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsAre
 
 TEST(DeviceCreation, givenDeviceWhenCheckingEnginesCountThenNumberGreaterThanZeroIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
-    EXPECT_GT(DeviceHelper::getEnginesCount(device->getHardwareInfo()), 0u);
+    EXPECT_GT(HwHelper::getEnginesCount(device->getHardwareInfo()), 0u);
 }
 
 using DeviceHwTest = ::testing::Test;

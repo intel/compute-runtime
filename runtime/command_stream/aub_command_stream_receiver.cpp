@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 
 #include "core/helpers/debug_helpers.h"
+#include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/device_helpers.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 
@@ -28,7 +28,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     // Generate the full filename
     const auto &gtSystemInfo = hwInfo.gtSystemInfo;
     std::stringstream strfilename;
-    auto subDevicesCount = DeviceHelper::getSubDevicesCount(&hwInfo);
+    auto subDevicesCount = HwHelper::getSubDevicesCount(&hwInfo);
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
     strfilename << hwPrefix << "_";
     if (subDevicesCount > 1) {
