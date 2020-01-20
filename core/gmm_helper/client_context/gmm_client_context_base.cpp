@@ -21,8 +21,8 @@ GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInf
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hwInfo->featureTable);
     SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, &hwInfo->workaroundTable);
 
-    GMM_INIT_IN_ARGS inArgs;
-    GMM_INIT_OUT_ARGS outArgs;
+    GMM_INIT_IN_ARGS inArgs{};
+    GMM_INIT_OUT_ARGS outArgs{};
 
     inArgs.ClientType = GMM_CLIENT::GMM_OCL_VISTA;
     inArgs.pGtSysInfo = &hwInfo->gtSystemInfo;
