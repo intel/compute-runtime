@@ -192,7 +192,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         if (device.getDeviceInfo().imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
             break;
         }
-        DeviceHelper::getExtraDeviceInfo(device.getHardwareInfo(), paramName, param, src, srcSize, retSize);
+        DeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);

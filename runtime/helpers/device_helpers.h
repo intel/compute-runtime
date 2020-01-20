@@ -10,9 +10,10 @@
 
 #include <cstdint>
 namespace NEO {
+class ClDevice;
 struct HardwareInfo;
 
 namespace DeviceHelper {
-void getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
+void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
 }; // namespace DeviceHelper
 } // namespace NEO
