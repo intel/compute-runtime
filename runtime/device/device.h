@@ -91,7 +91,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
                 size_t &size,
                 size_t &retSize);
 
-    constexpr Device &getDevice() const noexcept { return device; }
+    Device &getDevice() const noexcept { return device; }
     ClDevice *getDeviceById(uint32_t deviceId);
     void initializeCaps();
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
