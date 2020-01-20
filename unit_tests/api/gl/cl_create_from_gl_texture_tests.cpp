@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
+
+#include <GL/gl.h>
 
 using namespace NEO;
 

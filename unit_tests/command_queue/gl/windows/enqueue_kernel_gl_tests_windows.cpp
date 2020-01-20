@@ -14,7 +14,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
+#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"

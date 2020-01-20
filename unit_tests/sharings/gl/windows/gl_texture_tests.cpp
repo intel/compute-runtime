@@ -11,7 +11,7 @@
 #include "runtime/sharings/gl/gl_texture.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
+#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"

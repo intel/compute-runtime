@@ -10,7 +10,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "test.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
+#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
