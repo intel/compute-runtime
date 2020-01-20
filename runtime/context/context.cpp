@@ -257,7 +257,7 @@ size_t Context::getTotalNumDevices() const {
     return numAvailableDevices;
 }
 
-ClDevice *Context::getDevice(size_t deviceOrdinal) {
+ClDevice *Context::getDevice(size_t deviceOrdinal) const {
     return (ClDevice *)devices[deviceOrdinal];
 }
 

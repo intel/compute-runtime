@@ -75,9 +75,9 @@ class Context : public BaseObject<_cl_context> {
 
     size_t getNumDevices() const;
     size_t getTotalNumDevices() const;
-    ClDevice *getDevice(size_t deviceOrdinal);
+    ClDevice *getDevice(size_t deviceOrdinal) const;
 
-    MemoryManager *getMemoryManager() {
+    MemoryManager *getMemoryManager() const {
         return memoryManager;
     }
 
