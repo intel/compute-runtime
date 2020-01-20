@@ -167,52 +167,6 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesF
     EXPECT_EQ(requiredDeviceCount, numDevices);
 }
 
-TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeForTgllpProductFamilyWhenGetDevicesForProductFamilyOverrideIsCalledThenAubCenterIsInitializedCorrectly) {
-    DeviceFactoryCleaner cleaner;
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ProductFamilyOverride.set("tgllp");
-
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
-    ASSERT_TRUE(success);
-
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-
-    EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
-    EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
-}
-
-TEST_F(DeviceFactoryTest, givenSetCommandStreamReceiverInAubModeWhenGetDevicesForProductFamilyOverrideIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
-    DeviceFactoryCleaner cleaner;
-    DebugManagerStateRestore stateRestore;
-    auto requiredDeviceCount = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ProductFamilyOverride.set("tgllp");
-
-    MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
-
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
-    ASSERT_TRUE(success);
-    EXPECT_EQ(requiredDeviceCount, numDevices);
-
-    std::set<MemoryOperationsHandler *> memoryOperationHandlers;
-    for (auto rootDeviceIndex = 0u; rootDeviceIndex < requiredDeviceCount; rootDeviceIndex++) {
-        auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get());
-        EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
-        EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
-
-        auto memoryOperationInterface = rootDeviceEnvironment->memoryOperationsInterface.get();
-        EXPECT_NE(nullptr, memoryOperationInterface);
-        EXPECT_EQ(memoryOperationHandlers.end(), memoryOperationHandlers.find(memoryOperationInterface));
-        memoryOperationHandlers.insert(memoryOperationInterface);
-    }
-}
-
 TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
