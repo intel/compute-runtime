@@ -60,14 +60,14 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     InternalAllocationStorage *internalAllocationStorage;
 };
 
-HWTEST_F(CommandStreamReceiverTest, testCtor) {
+HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.peekTaskLevel());
     EXPECT_EQ(0u, csr.peekTaskCount());
     EXPECT_FALSE(csr.isPreambleSent);
 }
 
-HWTEST_F(CommandStreamReceiverTest, testInitProgrammingFlags) {
+HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.initProgrammingFlags();
     EXPECT_FALSE(csr.isPreambleSent);
@@ -81,7 +81,7 @@ HWTEST_F(CommandStreamReceiverTest, testInitProgrammingFlags) {
     EXPECT_EQ(0u, csr.latestSentStatelessMocsConfig);
 }
 
-TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {
+TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet) {
     MockContext context;
     float srcMemory[] = {1.0f};
 
@@ -116,23 +116,23 @@ TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotCh
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(CommandStreamReceiverTest, commandStreamReceiverFromDeviceHasATagValue) {
+TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenItHasATagValue) {
     EXPECT_NE(nullptr, const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
 }
 
-TEST_F(CommandStreamReceiverTest, GetCommandStreamReturnsValidObject) {
+TEST_F(CommandStreamReceiverTest, WhenGettingCommandStreamerThenValidPointerIsReturned) {
     auto &cs = commandStreamReceiver->getCS();
     EXPECT_NE(nullptr, &cs);
 }
 
-TEST_F(CommandStreamReceiverTest, getCommandStreamContainsMemoryForRequest) {
+TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenAvailableMemoryIsGreaterOrEqualRequiredSize) {
     size_t requiredSize = 16384;
     const auto &commandStream = commandStreamReceiver->getCS(requiredSize);
     ASSERT_NE(nullptr, &commandStream);
     EXPECT_GE(commandStream.getAvailableSpace(), requiredSize);
 }
 
-TEST_F(CommandStreamReceiverTest, getCsReturnsCsWithCsOverfetchSizeIncludedInGraphicsAllocation) {
+TEST_F(CommandStreamReceiverTest, WhenCommandStreamReceiverIsCreatedThenCsOverfetchSizeIsIncludedInGraphicsAllocation) {
     size_t sizeRequested = 560;
     const auto &commandStream = commandStreamReceiver->getCS(sizeRequested);
     ASSERT_NE(nullptr, &commandStream);
@@ -146,7 +146,7 @@ TEST_F(CommandStreamReceiverTest, getCsReturnsCsWithCsOverfetchSizeIncludedInGra
     EXPECT_EQ(expectedTotalSize, allocation->getUnderlyingBufferSize());
 }
 
-TEST_F(CommandStreamReceiverTest, getCommandStreamCanRecycle) {
+TEST_F(CommandStreamReceiverTest, WhenRequestingAdditionalSpaceThenCsrGetsAdditionalSpace) {
     auto &commandStreamInitial = commandStreamReceiver->getCS();
     size_t requiredSize = commandStreamInitial.getMaxAvailableSpace() + 42;
 
@@ -182,7 +182,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInit
     EXPECT_EQ(CacheSettings::unknownMocs, csr.latestSentStatelessMocsConfig);
 }
 
-TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerResidencyList) {
+TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenAllocationIsPushedToMemoryManagerResidencyList) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
 
     GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -199,7 +199,7 @@ TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerRes
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(CommandStreamReceiverTest, makeResidentWithoutParametersDoesNothing) {
+TEST_F(CommandStreamReceiverTest, GivenNoParamatersWhenMakingResidentThenResidencyDoesNotOccur) {
     commandStreamReceiver->processResidency(commandStreamReceiver->getResidencyAllocations());
     auto &residencyAllocations = commandStreamReceiver->getResidencyAllocations();
     EXPECT_EQ(0u, residencyAllocations.size());
@@ -243,7 +243,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
     delete dsh;
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
+TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -307,7 +307,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     EXPECT_TRUE(csr.addAubCommentCalled);
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCSRWhenDownloadAllocationCalledVerifyCallOccurs) {
+TEST(CommandStreamReceiverSimpleTest, givenCsrWhenDownloadAllocationCalledVerifyCallOccurs) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -672,6 +672,7 @@ struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> 
     bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}
 };
+
 HWTEST_F(SimulatedCommandStreamReceiverTest, givenCsrWithOsContextWhenGetDeviceIndexThenGetHighestEnabledBitInDeviceBitfield) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
@@ -696,7 +697,7 @@ HWTEST_F(SimulatedCommandStreamReceiverTest, givenOsContextWithNoDeviceBitfieldW
 
 using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
 
-TEST_F(CommandStreamReceiverMultiRootDeviceTest, commandStreamGraphicsAllocationsHaveCorrectRootDeviceIndex) {
+TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphicsAllocationsThenTheyHaveCorrectRootDeviceIndex) {
     auto commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
 
     ASSERT_NE(nullptr, commandStreamReceiver);
@@ -753,6 +754,7 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, commandStreamGraphicsAllocation
 }
 
 using CommandStreamReceiverPageTableManagerTest = ::testing::Test;
+
 TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
@@ -764,6 +766,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenN
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());
     EXPECT_FALSE(commandStreamReceiver.needsPageTableManager(engineType));
 }
+
 TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndExistingPageTableManagerWhenNeedsPageTableManagerIsCalledThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
