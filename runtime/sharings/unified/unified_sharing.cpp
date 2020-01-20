@@ -39,7 +39,7 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
     case UnifiedSharingHandleType::LinuxFd:
     case UnifiedSharingHandleType::Win32Shared: {
         const AllocationProperties properties{0u, false, 0u, allocationType, false};
-        return memoryManager->createGraphicsAllocationFromSharedHandle(((osHandle)(uint64_t)description.handle), properties, false);
+        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false);
     }
     default:
         return nullptr;

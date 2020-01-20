@@ -169,7 +169,7 @@ struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManage
 
         GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex) override {
             this->createFromNTHandleCalled = true;
-            this->handle = (osHandle)(uint64_t)handle;
+            this->handle = toOsHandle(handle);
             return nullptr;
         }
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
@@ -208,7 +208,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsNtHandleWhenCreateGraphi
 
     EXPECT_TRUE(memoryManager->createFromNTHandleCalled);
     EXPECT_FALSE(memoryManager->createFromSharedHandleCalled);
-    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+    EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
 }
 
 TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGraphicsAllocationIsCalledThenUseSharedHandleMethod) {
@@ -220,7 +220,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGr
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
-    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+    EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
     const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
     EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
 }
@@ -234,7 +234,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGrap
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
-    EXPECT_EQ((osHandle)(uint64_t)desc.handle, memoryManager->handle);
+    EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
     const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
     EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
 }

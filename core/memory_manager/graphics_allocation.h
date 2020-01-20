@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,10 @@
 namespace NEO {
 
 using osHandle = unsigned int;
+inline osHandle toOsHandle(const void *handle) {
+    return static_cast<osHandle>(castToUint64(handle));
+}
+
 enum class HeapIndex : uint32_t;
 
 namespace Sharing {

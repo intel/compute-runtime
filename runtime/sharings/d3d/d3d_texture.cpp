@@ -71,7 +71,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
         AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
-        alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
+        alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
 
@@ -136,7 +136,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
         AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
-        alloc = memoryManager->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)sharedHandle), allocProperties, false);
+        alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
 
