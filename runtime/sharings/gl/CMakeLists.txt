@@ -7,7 +7,6 @@
 if(WIN32)
   set(RUNTIME_SRCS_SHARINGS_GL
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_api.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_api_intel.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_arb_sync_event.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gl_buffer.h
