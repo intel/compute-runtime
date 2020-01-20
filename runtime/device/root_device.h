@@ -28,7 +28,7 @@ class RootDevice : public Device {
     DeviceBitfield getDeviceBitfield() const override;
     bool createEngines() override;
 
-    MOCKABLE_VIRTUAL bool initializeRootCommandStreamReceiver();
+    void initializeRootCommandStreamReceiver();
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
 
     std::vector<SubDevice *> subdevices;

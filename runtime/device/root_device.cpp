@@ -7,11 +7,16 @@
 
 #include "runtime/device/root_device.h"
 
+#include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_helper.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/sub_device.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
+
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
@@ -80,9 +85,28 @@ DeviceBitfield RootDevice::getDeviceBitfield() const {
 }
 
 bool RootDevice::createEngines() {
-    if (!initializeRootCommandStreamReceiver()) {
+    if (getNumSubDevices() < 2) {
         return Device::createEngines();
+    } else {
+        initializeRootCommandStreamReceiver();
     }
     return true;
 }
+
+void RootDevice::initializeRootCommandStreamReceiver() {
+    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex));
+
+    auto &hwInfo = getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(hwInfo);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
+
+    auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), defaultEngineType,
+                                                                    getDeviceBitfield(), preemptionMode, false);
+
+    rootCommandStreamReceiver->setupContext(*osContext);
+    rootCommandStreamReceiver->initializeTagAllocation();
+    commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
+    engines.emplace_back(commandStreamReceivers.back().get(), osContext);
+}
+
 } // namespace NEO

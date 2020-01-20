@@ -156,21 +156,26 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
     EXPECT_THROW(subDevice->getDeviceById(1), std::exception);
 }
 
-TEST(RootDevicesTest, givenRootDeviceWhenInitializeRootCommandStreamReceiverReturnsTrueThenDeviceDoesntCreateExtraEngines) {
+TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
+    auto hwInfo = *platformDevices[0];
+    auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
+
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    device.callBaseInitializeRootCommandStreamReceiver = false;
-    device.initializeRootCommandStreamReceiverReturnValue = true;
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
-    EXPECT_EQ(0u, device.engines.size());
+    EXPECT_EQ(gpgpuEngines.size(), device.engines.size());
 }
-TEST(RootDevicesTest, givenRootDeviceWhenInitializeRootCommandStreamReceiverReturnsFalseThenDeviceCreatesExtraEngines) {
+
+TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCreatesSpecialEngine) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
     auto executionEnvironment = new MockExecutionEnvironment;
     MockDevice device(executionEnvironment, 0);
-    device.callBaseInitializeRootCommandStreamReceiver = false;
-    device.initializeRootCommandStreamReceiverReturnValue = false;
+    device.subdevices.resize(2u);
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
-    EXPECT_LT(0u, device.engines.size());
+    EXPECT_EQ(1u, device.engines.size());
 }
