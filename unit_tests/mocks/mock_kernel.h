@@ -30,6 +30,7 @@ class MockKernel : public Kernel {
     using Kernel::allBufferArgsStateful;
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
+    using Kernel::executionType;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;

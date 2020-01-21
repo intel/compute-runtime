@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,14 @@
 #define CL_DEVICE_DRIVER_VERSION_INTEL 0x10010
 
 #define CL_DEVICE_DRIVER_VERSION_INTEL_NEO1 0x454E4831 // Driver version is ENH1
+
+/*********************************************
+ * Internal only kernel exec info properties *
+ *********************************************/
+
+#define CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL 0x1000C
+#define CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL 0x1000D
+#define CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL 0x1000E
 
 /*********************************
  * cl_intel_debug_info extension *
@@ -41,6 +49,7 @@
  * Internal only cl types *
  **************************/
 
+using cl_execution_info_kernel_type_intel = cl_uint;
 using cl_mem_alloc_flags_intel = cl_bitfield;
 using cl_mem_properties_intel = cl_bitfield;
 using cl_mem_flags_intel = cl_mem_flags;

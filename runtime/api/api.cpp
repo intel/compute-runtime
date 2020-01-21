@@ -4468,6 +4468,18 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         TRACING_EXIT(clSetKernelExecInfo, &retVal);
         return retVal;
     }
+    case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL: {
+        if (paramValueSize != sizeof(cl_execution_info_kernel_type_intel) ||
+            paramValue == nullptr) {
+            retVal = CL_INVALID_VALUE;
+            TRACING_EXIT(clSetKernelExecInfo, &retVal);
+            return retVal;
+        }
+        auto kernelType = *static_cast<const cl_execution_info_kernel_type_intel *>(paramValue);
+        retVal = pKernel->setKernelExecutionType(kernelType);
+        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        return retVal;
+    }
     default: {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clSetKernelExecInfo, &retVal);

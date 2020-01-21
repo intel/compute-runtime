@@ -263,4 +263,61 @@ HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettin
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
+
+HWTEST_F(clSetKernelExecInfoTests, givenInvalidParamSizeWhenSettingKernelExecutionTypeThenClInvalidValueErrorIsReturned) {
+    cl_execution_info_kernel_type_intel kernelExecutionType;
+
+    retVal = clSetKernelExecInfo(
+        pMockKernel,                                     // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL,           // cl_kernel_exec_info param_name
+        sizeof(cl_execution_info_kernel_type_intel) - 1, // size_t param_value_size
+        &kernelExecutionType                             // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+HWTEST_F(clSetKernelExecInfoTests, givenInvalidParamValueWhenSettingKernelExecutionTypeThenClInvalidValueErrorIsReturned) {
+    retVal = clSetKernelExecInfo(
+        pMockKernel,                                 // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL,       // cl_kernel_exec_info param_name
+        sizeof(cl_execution_info_kernel_type_intel), // size_t param_value_size
+        nullptr                                      // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditionalKernelInfoThenCorrectValuesAreSet) {
+    cl_kernel_exec_info paramName = CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL;
+    size_t paramSize = sizeof(cl_execution_info_kernel_type_intel);
+    cl_execution_info_kernel_type_intel kernelExecutionType = -1;
+
+    retVal = clSetKernelExecInfo(
+        pMockKernel,         // cl_kernel kernel
+        paramName,           // cl_kernel_exec_info param_name
+        paramSize,           // size_t param_value_size
+        &kernelExecutionType // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    kernelExecutionType = CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL;
+    retVal = clSetKernelExecInfo(
+        pMockKernel,         // cl_kernel kernel
+        paramName,           // cl_kernel_exec_info param_name
+        paramSize,           // size_t param_value_size
+        &kernelExecutionType // const void *param_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::Default, pMockKernel->executionType);
+
+    kernelExecutionType = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
+    retVal = clSetKernelExecInfo(
+        pMockKernel,         // cl_kernel kernel
+        paramName,           // cl_kernel_exec_info param_name
+        paramSize,           // size_t param_value_size
+        &kernelExecutionType // const void *param_value
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::Concurrent, pMockKernel->executionType);
+}
+
 } // namespace ULT

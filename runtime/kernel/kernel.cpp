@@ -984,6 +984,21 @@ void Kernel::clearUnifiedMemoryExecInfo() {
     kernelUnifiedMemoryGfxAllocations.clear();
 }
 
+cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) {
+    switch (executionType) {
+    case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
+        this->executionType = KernelExecutionType::Default;
+        break;
+    case CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL:
+        this->executionType = KernelExecutionType::Concurrent;
+        break;
+    default: {
+        return CL_INVALID_VALUE;
+    }
+    }
+    return CL_SUCCESS;
+}
+
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const {
     auto &hardwareInfo = getDevice().getHardwareInfo();
     auto executionEnvironment = kernelInfo.patchInfo.executionEnvironment;

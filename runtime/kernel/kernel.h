@@ -18,6 +18,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/kernel/kernel_execution_type.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 
@@ -396,6 +397,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
+    cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
     void setThreadArbitrationPolicy(uint32_t policy) {
         this->threadArbitrationPolicy = policy;
     }
@@ -523,6 +525,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
     uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    KernelExecutionType executionType = KernelExecutionType::Default;
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;

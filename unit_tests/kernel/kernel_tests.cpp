@@ -2902,6 +2902,31 @@ TEST(KernelTest, givenPolicyWhensetKernelThreadArbitrationPolicyThenExpectedClVa
     EXPECT_EQ(CL_INVALID_VALUE, kernel.mockKernel->setKernelThreadArbitrationPolicy(notExistPolicy));
 }
 
+TEST(KernelTest, GivenDifferentValuesWhenSetKernelExecutionTypeIsCalledThenCorrectValueIsSet) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals mockKernelWithInternals(*device);
+    auto &kernel = *mockKernelWithInternals.mockKernel;
+    cl_int retVal;
+
+    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+
+    retVal = kernel.setKernelExecutionType(-1);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+
+    retVal = kernel.setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::Concurrent, kernel.executionType);
+
+    retVal = kernel.setKernelExecutionType(-1);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(KernelExecutionType::Concurrent, kernel.executionType);
+
+    retVal = kernel.setKernelExecutionType(CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+}
+
 namespace NEO {
 
 template <typename GfxFamily>
