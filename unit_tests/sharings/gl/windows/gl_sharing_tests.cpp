@@ -21,7 +21,7 @@
 #include "runtime/sharings/gl/gl_context_guard.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "runtime/sharings/sharing.h"
 #include "test.h"
 #include "unit_tests/libult/create_command_stream.h"

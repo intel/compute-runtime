@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "runtime/context/context.inl"
 #include "runtime/helpers/windows/gl_helper.h"

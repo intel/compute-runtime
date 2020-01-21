@@ -5,15 +5,14 @@
  *
  */
 
-#include "runtime/sharings/gl/gl_arb_sync_event.h"
-
 #include "public/cl_gl_private_intel.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/gl_arb_sync_event.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include <GL/gl.h>
 

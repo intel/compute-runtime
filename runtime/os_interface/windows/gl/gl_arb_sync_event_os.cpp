@@ -15,7 +15,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include <GL/gl.h>
 

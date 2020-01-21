@@ -21,7 +21,7 @@
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "runtime/tracing/tracing_notify.h"
 
 #include "CL/cl.h"

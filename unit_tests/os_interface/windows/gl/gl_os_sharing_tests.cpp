@@ -14,7 +14,7 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"

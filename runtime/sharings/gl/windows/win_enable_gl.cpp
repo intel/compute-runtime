@@ -11,7 +11,7 @@
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
 #include "runtime/sharings/gl/cl_gl_api_intel.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
 

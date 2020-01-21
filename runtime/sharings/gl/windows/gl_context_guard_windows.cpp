@@ -6,8 +6,7 @@
  */
 
 #include "runtime/sharings/gl/gl_context_guard.h"
-
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 namespace NEO {
 GLContextGuard::GLContextGuard(GLSharingFunctions &sharingFcns) : sharingFunctions(&sharingFcns) {

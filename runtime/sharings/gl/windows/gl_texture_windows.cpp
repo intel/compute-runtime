@@ -5,8 +5,6 @@
  *
  */
 
-#include "runtime/sharings/gl/gl_texture.h"
-
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
@@ -19,7 +17,8 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/sharings/gl/windows/gl_sharing.h"
+#include "runtime/sharings/gl/gl_texture.h"
+#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "CL/cl_gl.h"
 #include "config.h"
