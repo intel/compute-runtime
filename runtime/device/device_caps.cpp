@@ -181,7 +181,10 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
-    deviceExtensions += sharingFactory.getExtensions();
+    auto sharingAllowed = (HwHelper::getSubDevicesCount(&hwInfo) == 1u);
+    if (sharingAllowed) {
+        deviceExtensions += sharingFactory.getExtensions();
+    }
 
     deviceExtensions += hwHelper.getExtensions();
 
