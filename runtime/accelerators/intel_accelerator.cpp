@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "runtime/accelerators/intel_accelerator.h"
 
+#include "core/helpers/get_info.h"
 #include "core/helpers/string.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/get_info.h"
 
 namespace NEO {
 

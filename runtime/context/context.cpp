@@ -9,6 +9,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/helpers/get_info.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/deferred_deleter.h"
@@ -19,7 +20,6 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"

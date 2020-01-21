@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "runtime/mem_obj/pipe.h"
 
+#include "core/helpers/get_info.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"

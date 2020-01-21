@@ -27,7 +27,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl

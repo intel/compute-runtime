@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/helpers/get_info.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/event/event_builder.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"

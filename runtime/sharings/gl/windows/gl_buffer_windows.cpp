@@ -5,16 +5,14 @@
  *
  */
 
-// clang-format off
-#include "public/cl_gl_private_intel.h"
-// clang-format on
 #include "core/gmm_helper/gmm.h"
-#include "runtime/sharings/gl/gl_buffer.h"
+#include "core/helpers/get_info.h"
+#include "public/cl_gl_private_intel.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/sharings/gl/gl_buffer.h"
 #include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "config.h"

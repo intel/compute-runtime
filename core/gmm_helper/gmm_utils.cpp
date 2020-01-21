@@ -7,7 +7,7 @@
 
 #
 #include "core/gmm_helper/gmm.h"
-#include "runtime/helpers/surface_formats.h"
+#include "core/helpers/surface_format_info.h"
 
 using namespace NEO;
 

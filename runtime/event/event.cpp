@@ -8,6 +8,7 @@
 #include "runtime/event/event.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/get_info.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/utilities/range.h"
 #include "core/utilities/stackvec.h"
@@ -19,7 +20,6 @@
 #include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_tracker.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/mem_obj.h"

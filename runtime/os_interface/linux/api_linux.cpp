@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/helpers/get_info.h"
 #include "runtime/api/api.h"
 #include "runtime/api/dispatch.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
 

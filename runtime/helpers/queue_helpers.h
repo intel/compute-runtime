@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/get_info.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/platform/platform.h"
 
 namespace NEO {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/get_info.h"
+#include "core/helpers/get_info.h"
 
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"

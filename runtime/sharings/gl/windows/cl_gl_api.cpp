@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/get_info.h"
 #include "core/utilities/api_intercept.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
@@ -12,7 +13,6 @@
 #include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"

@@ -9,6 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/engine_node_helper.h"
+#include "core/helpers/get_info.h"
 #include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
@@ -25,7 +26,6 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/convert_color.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/queue_helpers.h"

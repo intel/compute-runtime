@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/helpers/get_info.h"
 #include "core/utilities/api_intercept.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "runtime/sharings/va/va_surface.h"

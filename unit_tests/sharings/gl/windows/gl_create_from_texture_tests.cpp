@@ -5,8 +5,8 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_types_converter.h"
-#include "runtime/helpers/get_info.h"
+#include "core/gmm_helper/gmm_types_converter.h"
+#include "core/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "test.h"
