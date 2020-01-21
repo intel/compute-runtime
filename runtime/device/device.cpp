@@ -60,16 +60,13 @@ unsigned int ClDevice::getEnabledClVersion() const { return device.getEnabledClV
 unsigned int ClDevice::getSupportedClVersion() const { return device.getSupportedClVersion(); }
 
 void ClDevice::retainApi() {
-    if (!device.isReleasable()) {
-        DEBUG_BREAK_IF(true);
-    } else {
+    if (device.isReleasable()) {
         platform()->getClDevice(device.getRootDeviceIndex())->incRefInternal();
         this->incRefApi();
     }
 };
 unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
     if (!device.isReleasable()) {
-        DEBUG_BREAK_IF(true);
         return unique_ptr_if_unused<ClDevice>(this, false);
     }
     platform()->getClDevice(device.getRootDeviceIndex())->decRefInternal();
