@@ -11,8 +11,8 @@
 #include "core/gmm_helper/gmm_interface.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
+#include "core/os_interface/os_interface.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
-#include "runtime/os_interface/os_interface.h"
 
 namespace NEO {
 GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo) : hardwareInfo(hwInfo) {

@@ -15,9 +15,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.h
 )

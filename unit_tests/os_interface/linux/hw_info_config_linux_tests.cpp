@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
-#include "runtime/os_interface/linux/os_interface.h"
+#include "core/os_interface/linux/os_interface.h"
 
 #include <cstring>
 

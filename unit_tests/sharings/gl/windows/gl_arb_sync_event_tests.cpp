@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/os_interface/os_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/event/user_event.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/sharing.h"

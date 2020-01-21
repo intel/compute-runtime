@@ -7,9 +7,9 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/options.h"
+#include "core/os_interface/os_interface.h"
+#include "core/os_interface/os_time.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/os_interface.h"
-#include "runtime/os_interface/os_time.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_device.h"

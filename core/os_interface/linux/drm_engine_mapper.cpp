@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/linux/drm_engine_mapper.h"
+#include "core/os_interface/linux/drm_engine_mapper.h"
 
 #include "core/helpers/debug_helpers.h"
 

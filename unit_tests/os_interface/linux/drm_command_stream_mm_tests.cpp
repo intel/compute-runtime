@@ -6,11 +6,11 @@
  */
 
 #include "core/execution_environment/root_device_environment.h"
+#include "core/os_interface/linux/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_memory_operations_handler.h"
-#include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"

@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/driver_info.h"
-#include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"

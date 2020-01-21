@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "core/helpers/file_io.h"
 #include "core/helpers/options.h"
+#include "core/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
-#include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 

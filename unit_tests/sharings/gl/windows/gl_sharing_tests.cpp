@@ -6,6 +6,7 @@
  */
 
 #include "core/gmm_helper/gmm.h"
+#include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/device.h"
@@ -13,7 +14,6 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/cl_gl_api_intel.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"

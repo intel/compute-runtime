@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,10 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/os_interface/linux/drm_neo.h"
+#include "core/os_interface/linux/os_time_linux.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
-#include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/os_time_linux.h"
 
 #include "drm/i915_drm.h"
 

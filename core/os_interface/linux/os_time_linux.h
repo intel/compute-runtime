@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/os_time.h"
+#include "core/os_interface/linux/drm_neo.h"
+#include "core/os_interface/os_time.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (36)
 #define OCLRT_NUM_TIMESTAMP_BITS_FALLBACK (32)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 
 using namespace NEO;

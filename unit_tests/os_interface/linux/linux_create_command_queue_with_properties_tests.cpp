@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/os_interface/linux/os_interface.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"

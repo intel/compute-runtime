@@ -8,7 +8,7 @@
 #include "mock_performance_counters.h"
 
 #include "core/execution_environment/root_device_environment.h"
-#include "runtime/os_interface/os_interface.h"
+#include "core/os_interface/os_interface.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 using namespace MetricsLibraryApi;
 

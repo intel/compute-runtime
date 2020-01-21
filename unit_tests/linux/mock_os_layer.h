@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/linux/drm_neo.h"
+#include "core/os_interface/linux/drm_neo.h"
 
 #include "drm/i915_drm.h"
 

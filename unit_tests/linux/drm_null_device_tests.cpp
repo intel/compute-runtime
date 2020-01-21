@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/os_interface/linux/drm_null_device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/linux/drm_null_device.h"
 #include "test.h"
 #include "unit_tests/linux/drm_wrap.h"
 #include "unit_tests/linux/mock_os_layer.h"

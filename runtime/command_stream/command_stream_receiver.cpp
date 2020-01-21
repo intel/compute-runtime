@@ -14,6 +14,7 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
+#include "core/os_interface/os_interface.h"
 #include "core/utilities/cpuintrinsics.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
@@ -26,7 +27,6 @@
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 

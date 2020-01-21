@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/os_interface/os_interface.h"
 #include "core/os_interface/windows/gdi_interface.h"
 #include "public/cl_gl_private_intel.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"

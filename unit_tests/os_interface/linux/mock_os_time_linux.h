@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/linux/os_time_linux.h"
+#include "core/os_interface/linux/os_interface.h"
+#include "core/os_interface/linux/os_time_linux.h"
 
 namespace NEO {
 class MockOSTimeLinux : public OSTimeLinux {

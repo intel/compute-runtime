@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "core/helpers/debug_helpers.h"
-#include "runtime/os_interface/os_interface.h"
+#include "core/os_interface/os_interface.h"
 #include "runtime/program/kernel_info.h"
 
 #include "igfx_debug_interchange_types.h"

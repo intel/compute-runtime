@@ -7,12 +7,12 @@
 
 #include "runtime/device/device_info.h"
 
+#include "core/os_interface/os_time.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/os_interface/os_time.h"
 #include "runtime/platform/platform.h"
 
 using DeviceInfoTable::Map;

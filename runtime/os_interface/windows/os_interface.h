@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/os_interface/os_interface.h"
 #include "core/os_interface/windows/windows_wrapper.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
 #include "profileapi.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/linux/drm_neo.h"
+#include "core/os_interface/linux/os_interface.h"
 #include "core/utilities/cpu_info.h"
-#include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/os_interface.h"
 
 #include "instrumentation.h"
 

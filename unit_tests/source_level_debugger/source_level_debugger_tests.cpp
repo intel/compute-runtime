@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/os_interface/os_interface.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"

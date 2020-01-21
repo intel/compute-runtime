@@ -18,6 +18,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/block_kernel_manager.h"
+#include "runtime/scheduler/scheduler_kernel.h"
 
 #include <cstring>
 

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/os_interface/os_time.h"
 #include "core/utilities/arrayref.h"
 #include "core/utilities/idlist.h"
 #include "core/utilities/iflist.h"
@@ -14,7 +15,6 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/os_interface/os_time.h"
 #include "runtime/os_interface/performance_counters.h"
 
 #include <atomic>
