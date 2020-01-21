@@ -95,7 +95,7 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
 
 template <typename FamilyType>
 struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
-    CommandQueueStateless(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+    CommandQueueStateless(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){};
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();
@@ -106,7 +106,7 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 
 template <typename FamilyType>
 struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
-    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr){};
+    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){};
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();

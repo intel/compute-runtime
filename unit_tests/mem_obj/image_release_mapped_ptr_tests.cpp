@@ -21,7 +21,7 @@ template <typename Family>
 class MyMockCommandQueue : public CommandQueueHw<Family> {
 
   public:
-    MyMockCommandQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr){};
+    MyMockCommandQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
 
     cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite,
                              const size_t *origin, const size_t *region,
@@ -89,7 +89,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocated
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(context.get(), device.get(), nullptr, retVal));
+    std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(context.get(), device.get(), nullptr, false, retVal));
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_NE(nullptr, image->getAllocatedMapPtr());
     void *ptr = image->getAllocatedMapPtr();

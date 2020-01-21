@@ -19,7 +19,7 @@ namespace NEO {
 using Gen9EnqueueTest = Test<DeviceFixture>;
 GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
     MockContext mc;
-    CommandQueueHw<SKLFamily> cmdQ{&mc, pClDevice, 0};
+    CommandQueueHw<SKLFamily> cmdQ{&mc, pClDevice, 0, false};
     SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.SubgroupIndependentForwardProgressRequired = true;
     MockKernelWithInternals mockKernel(*pClDevice, executionEnvironment);
@@ -37,7 +37,7 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKe
 
 GEN9TEST_F(Gen9EnqueueTest, givenKernelNotRequiringIndependentForwardProgressWhenKernelIsSubmittedThenAgeBasedPolicyIsProgrammed) {
     MockContext mc;
-    CommandQueueHw<SKLFamily> cmdQ{&mc, pClDevice, 0};
+    CommandQueueHw<SKLFamily> cmdQ{&mc, pClDevice, 0, false};
     SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.SubgroupIndependentForwardProgressRequired = false;
     MockKernelWithInternals mockKernel(*pClDevice, executionEnvironment);

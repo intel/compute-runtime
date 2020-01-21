@@ -41,6 +41,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const DeviceInfo &getDeviceInfo() const;
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
+    EngineControl &getInternalEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     OSTime *getOSTime() const { return osTime.get(); };

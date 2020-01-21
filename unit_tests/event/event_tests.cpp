@@ -398,7 +398,7 @@ struct UpdateEventTest : public ::testing::Test {
         device.reset(new ClDevice{*Device::create<RootDevice>(executionEnvironment, 0u), platform()});
         context = std::make_unique<MockContext>(device.get());
         cl_int retVal = CL_OUT_OF_RESOURCES;
-        commandQueue.reset(CommandQueue::create(context.get(), device.get(), nullptr, retVal));
+        commandQueue.reset(CommandQueue::create(context.get(), device.get(), nullptr, false, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 

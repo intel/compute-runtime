@@ -181,7 +181,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         device->incRefInternal();
     }
 
-    auto commandQueue = CommandQueue::create(this, devices[0], nullptr, errcodeRet);
+    auto commandQueue = CommandQueue::create(this, devices[0], nullptr, true, errcodeRet);
     DEBUG_BREAK_IF(commandQueue == nullptr);
     overrideSpecialQueueAndDecrementRefCount(commandQueue);
 

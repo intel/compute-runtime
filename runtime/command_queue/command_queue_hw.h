@@ -29,12 +29,13 @@ struct EnqueueProperties;
 
 template <typename GfxFamily>
 class CommandQueueHw : public CommandQueue {
-    typedef CommandQueue BaseClass;
+    using BaseClass = CommandQueue;
 
   public:
     CommandQueueHw(Context *context,
                    ClDevice *device,
-                   const cl_queue_properties *properties) : BaseClass(context, device, properties) {
+                   const cl_queue_properties *properties,
+                   bool internalUsage) : BaseClass(context, device, properties) {
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 
@@ -57,6 +58,10 @@ class CommandQueueHw : public CommandQueue {
             throttle = QueueThrottle::HIGH;
         }
 
+        if (internalUsage) {
+            this->gpgpuEngine = &device->getDeviceById(0u)->getInternalEngine();
+        }
+
         if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
             getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
             if (DebugManager.flags.CsrDispatchMode.get() != 0) {
@@ -73,8 +78,9 @@ class CommandQueueHw : public CommandQueue {
 
     static CommandQueue *create(Context *context,
                                 ClDevice *device,
-                                const cl_queue_properties *properties) {
-        return new CommandQueueHw<GfxFamily>(context, device, properties);
+                                const cl_queue_properties *properties,
+                                bool internalUsage) {
+        return new CommandQueueHw<GfxFamily>(context, device, properties, internalUsage);
     }
 
     MOCKABLE_VIRTUAL void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead);

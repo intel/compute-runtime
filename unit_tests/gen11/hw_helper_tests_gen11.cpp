@@ -42,7 +42,7 @@ GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIs
     testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
 }
 
-GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {
+GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
-    EXPECT_EQ(2u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->engines.size());
 }

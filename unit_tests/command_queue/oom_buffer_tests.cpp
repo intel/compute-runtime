@@ -92,7 +92,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
 };
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -116,7 +116,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
 }
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -140,7 +140,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
 }
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -164,7 +164,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
 }
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -188,7 +188,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
 }
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -213,7 +213,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
     typedef HelloWorldKernelFixture KernelFixture;
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
@@ -243,7 +243,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
 
 HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
     typedef SimpleArgKernelFixture KernelFixture;
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);

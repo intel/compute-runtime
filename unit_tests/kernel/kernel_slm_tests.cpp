@@ -68,7 +68,7 @@ static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
     ASSERT_NE(nullptr, pClDevice);
-    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0);
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     // define kernel info

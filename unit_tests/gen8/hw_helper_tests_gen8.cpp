@@ -48,7 +48,7 @@ GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCal
     EXPECT_FALSE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
-GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {
+GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoThreeEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
-    EXPECT_EQ(2u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->engines.size());
 }

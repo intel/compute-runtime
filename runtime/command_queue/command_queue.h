@@ -57,8 +57,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
   public:
     static const cl_ulong objectMagic = 0x1234567890987654LL;
 
-    static CommandQueue *create(Context *context, ClDevice *device,
+    static CommandQueue *create(Context *context,
+                                ClDevice *device,
                                 const cl_queue_properties *properties,
+                                bool internalUsage,
                                 cl_int &errcodeRet);
 
     CommandQueue();
@@ -472,7 +474,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 };
 
-typedef CommandQueue *(*CommandQueueCreateFunc)(
-    Context *context, ClDevice *device, const cl_queue_properties *properties);
+using CommandQueueCreateFunc = CommandQueue *(*)(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
 
 } // namespace NEO

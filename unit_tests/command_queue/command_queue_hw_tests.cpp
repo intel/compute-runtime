@@ -280,7 +280,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
 HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPrecedingCommandsToComplete) {
     struct MockCmdQ : CommandQueueHw<FamilyType> {
         MockCmdQ(Context *context, ClDevice *device)
-            : CommandQueueHw<FamilyType>(context, device, 0) {
+            : CommandQueueHw<FamilyType>(context, device, 0, false) {
             finishWasCalled = false;
         }
         cl_int finish() override {
@@ -1290,7 +1290,7 @@ struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
 
 HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
 
-    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr);
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr, false);
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.flush();
@@ -1298,7 +1298,7 @@ HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenError
 }
 
 HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
-    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr);
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr, false);
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.finish();

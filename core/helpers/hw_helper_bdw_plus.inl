@@ -42,8 +42,9 @@ bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 
 template <typename GfxFamily>
 const std::vector<aub_stream::EngineType> HwHelperHw<GfxFamily>::getGpgpuEngineInstances() const {
-    constexpr std::array<aub_stream::EngineType, 2> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
-                                                                             aub_stream::ENGINE_RCS}}; // low priority
+    constexpr std::array<aub_stream::EngineType, 3> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
+                                                                             aub_stream::ENGINE_RCS,   // low priority
+                                                                             aub_stream::ENGINE_RCS}}; // internal usage
     return std::vector<aub_stream::EngineType>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
 }
 

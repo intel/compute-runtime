@@ -17,7 +17,7 @@ namespace NEO {
 template <bool validContext>
 struct UnifiedSharingContextFixture : ::testing::Test {
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(new MockDevice);
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         cl_device_id deviceId = device.get();
         deviceVector = std::make_unique<ClDeviceVector>(&deviceId, 1);
         if (validContext) {

@@ -36,7 +36,7 @@ GEN12LPTEST_F(Gen12LPAubBatchBufferTests, givenSimpleCCSWithBatchBufferWhenItHas
 
 GEN12LPTEST_F(Gen12LPTimestampTests, DISABLED_GivenCommandQueueWithProfilingEnabledWhenKernelIsEnqueuedThenProfilingTimestampsAreNotZero) {
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, &properties[0]);
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, &properties[0], false);
     EXPECT_EQ(aub_stream::ENGINE_CCS, pDevice->getDefaultEngine().osContext->getEngineType());
 
     const uint32_t bufferSize = 4;

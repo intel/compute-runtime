@@ -49,7 +49,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
 
     auto mockCsr = createCSR<FamilyType>();
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -88,7 +88,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
     auto mockCsr = createCSR<FamilyType>();
 
     if (device->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-        CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
+        CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0, false);
         auto &commandStream = commandQueue.getCS(4096u);
         auto &preambleStream = mockCsr->getCS(0);
 
@@ -139,7 +139,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
     if (device->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
-        CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
+        CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0, false);
         auto &commandStream = commandQueue.getCS(4096u);
         auto &preambleStream = mockCsr->getCS(0);
 

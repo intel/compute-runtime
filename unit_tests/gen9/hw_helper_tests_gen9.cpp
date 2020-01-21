@@ -49,7 +49,7 @@ GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenD
     EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
 }
 
-GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnTwoRcsEngines) {
+GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
-    EXPECT_EQ(2u, pDevice->engines.size());
+    EXPECT_EQ(3u, pDevice->engines.size());
 }

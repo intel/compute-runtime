@@ -45,13 +45,14 @@ CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE] = {};
 CommandQueue *CommandQueue::create(Context *context,
                                    ClDevice *device,
                                    const cl_queue_properties *properties,
+                                   bool internalUsage,
                                    cl_int &retVal) {
     retVal = CL_SUCCESS;
 
     auto funcCreate = commandQueueFactory[device->getRenderCoreFamily()];
     DEBUG_BREAK_IF(nullptr == funcCreate);
 
-    return funcCreate(context, device, properties);
+    return funcCreate(context, device, properties, internalUsage);
 }
 
 CommandQueue::CommandQueue() : CommandQueue(nullptr, nullptr, 0) {

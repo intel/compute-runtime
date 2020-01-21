@@ -589,8 +589,8 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
 
 HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecordedThenAssignFlushStampObjFromCmdQueue) {
     MockKernelWithInternals kernel(*device.get());
-    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
-    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
+    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
+    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
     size_t GWS = 1;
 
@@ -622,7 +622,7 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
 
 HWTEST_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEventIsRecordedThenAssignFlushStampObjForEveryone) {
     MockKernelWithInternals kernel(*device.get());
-    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
+    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
     size_t GWS = 1;
 
@@ -647,8 +647,8 @@ HWTEST_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEventIsRecord
 
 HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushThenUpdateAllRelatedFlushStamps) {
     MockKernelWithInternals kernel(*device.get());
-    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
-    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
+    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
+    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
     size_t GWS = 1;
 
@@ -674,8 +674,8 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushThenUpdateA
 
 HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDuringFlushThenUpdateAllRelatedFlushStamps) {
     MockKernelWithInternals kernel(*device.get());
-    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
-    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
+    CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0, false);
+    CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0, false);
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment, device->getRootDeviceIndex());
     size_t GWS = 1;
 

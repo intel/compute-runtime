@@ -81,7 +81,7 @@ struct EnqueueThreadingFixture : public DeviceFixture {
       public:
         MyCommandQueue(Context *context,
                        ClDevice *device,
-                       const cl_queue_properties *props) : CommandQueueHw<FamilyType>(context, device, props), kernel(nullptr) {
+                       const cl_queue_properties *props) : CommandQueueHw<FamilyType>(context, device, props, false), kernel(nullptr) {
         }
 
         static CommandQueue *create(Context *context,

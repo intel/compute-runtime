@@ -77,6 +77,7 @@ const HardwareInfo &ClDevice::getHardwareInfo() const { return device.getHardwar
 const DeviceInfo &ClDevice::getDeviceInfo() const { return device.getDeviceInfo(); }
 EngineControl &ClDevice::getEngine(aub_stream::EngineType engineType, bool lowPriority) { return device.getEngine(engineType, lowPriority); }
 EngineControl &ClDevice::getDefaultEngine() { return device.getDefaultEngine(); }
+EngineControl &ClDevice::getInternalEngine() { return device.getInternalEngine(); }
 MemoryManager *ClDevice::getMemoryManager() const { return device.getMemoryManager(); }
 GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
 double ClDevice::getProfilingTimerResolution() { return device.getProfilingTimerResolution(); }

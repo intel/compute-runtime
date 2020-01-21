@@ -100,13 +100,14 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCo
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnTwoRcsEnginesAndOneCcsEngine) {
-    EXPECT_EQ(3u, pDevice->engines.size());
+GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnThreeRcsEnginesAndCcsEngine) {
+    EXPECT_EQ(4u, pDevice->engines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances();
-    EXPECT_EQ(3u, engines.size());
+    EXPECT_EQ(4u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
 }
 
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {

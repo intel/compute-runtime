@@ -117,7 +117,7 @@ class GMockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     typedef CommandQueueHw<GfxFamily> BaseClass;
 
   public:
-    GMockCommandQueueHw(Context *context, ClDevice *device, cl_queue_properties *properties) : BaseClass(context, device, properties) {
+    GMockCommandQueueHw(Context *context, ClDevice *device, cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
     }
 
     MOCK_METHOD1(setupDebugSurface, bool(Kernel *kernel));

@@ -43,7 +43,7 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
 
     template <typename T>
     struct MockCmdQ : public CommandQueueHw<T> {
-        MockCmdQ(Context *context, ClDevice *device) : CommandQueueHw<T>(context, device, 0) {}
+        MockCmdQ(Context *context, ClDevice *device) : CommandQueueHw<T>(context, device, 0, false) {}
 
         cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t size, void *ptr,
                                  GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,

@@ -132,6 +132,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     }
 
     bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
+    bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineType,
                                                                                      getDeviceBitfield(), preemptionMode, lowPriority);
     commandStreamReceiver->setupContext(*osContext);
@@ -139,7 +140,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
     }
-    if (engineType == defaultEngineType && !lowPriority) {
+    if (engineType == defaultEngineType && !lowPriority && !internalUsage) {
         defaultEngineIndex = deviceCsrIndex;
     }
 
@@ -206,5 +207,4 @@ EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPrio
     }
     UNRECOVERABLE_IF(true);
 }
-
 } // namespace NEO

@@ -73,7 +73,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
         auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.isPreambleSent = true;
 
-        CommandQueueHw<FamilyType> commandQueue(nullptr, mockDevice.get(), 0);
+        CommandQueueHw<FamilyType> commandQueue(nullptr, mockDevice.get(), 0, false);
         auto &commandStream = commandQueue.getCS(4096u);
 
         DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

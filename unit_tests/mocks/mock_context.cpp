@@ -26,7 +26,7 @@ MockContext::MockContext(ClDevice *device, bool noSpecialQueue) {
     svmAllocsManager = new SVMAllocsManager(memoryManager);
     cl_int retVal;
     if (!specialQueue && !noSpecialQueue) {
-        auto commandQueue = CommandQueue::create(this, device, nullptr, retVal);
+        auto commandQueue = CommandQueue::create(this, device, nullptr, false, retVal);
         assert(retVal == CL_SUCCESS);
         overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }
@@ -65,7 +65,7 @@ MockContext::MockContext() {
     svmAllocsManager = new SVMAllocsManager(memoryManager);
     cl_int retVal;
     if (!specialQueue) {
-        auto commandQueue = CommandQueue::create(this, device, nullptr, retVal);
+        auto commandQueue = CommandQueue::create(this, device, nullptr, false, retVal);
         assert(retVal == CL_SUCCESS);
         overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }

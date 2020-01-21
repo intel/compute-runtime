@@ -80,6 +80,7 @@ class HwHelper {
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
+    static constexpr uint32_t internalUsageEngineIndex = 2;
 
   protected:
     HwHelper() = default;

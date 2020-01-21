@@ -303,3 +303,14 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     auto &csr2 = device->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(csr2.needsPageTableManager(defaultEngineType), csr2.createPageTableManagerCalled);
 }
+
+TEST(DeviceGenEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+
+    auto &internalEngine = device->getInternalEngine();
+    auto &defaultEngine = device->getDefaultEngine();
+    EXPECT_NE(defaultEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
+
+    auto internalEngineIndex = HwHelper::internalUsageEngineIndex;
+    EXPECT_EQ(internalEngineIndex, internalEngine.osContext->getContextId());
+}

@@ -44,7 +44,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     auto funcCreate = commandQueueFactory[pDevice->getRenderCoreFamily()];
     assert(nullptr != funcCreate);
 
-    return funcCreate(context, pDevice, properties);
+    return funcCreate(context, pDevice, properties, false);
 }
 
 void CommandQueueHwFixture::SetUp() {

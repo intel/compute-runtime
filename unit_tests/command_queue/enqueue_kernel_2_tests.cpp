@@ -703,7 +703,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
         using CommandQueueHw<FamilyType>::commandStream;
         using CommandQueueHw<FamilyType>::gpgpuEngine;
         using CommandQueueHw<FamilyType>::bcsEngine;
-        MyCmdQ(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
+        MyCmdQ(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
         void dispatchAuxTranslationBuiltin(MultiDispatchInfo &multiDispatchInfo, AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslationBuiltin(multiDispatchInfo, auxTranslationDirection);
             auxTranslationDirections.push_back(auxTranslationDirection);
@@ -881,7 +881,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
-    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
+    CommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr, false);
 
     size_t gws[3] = {1, 0, 0};
 

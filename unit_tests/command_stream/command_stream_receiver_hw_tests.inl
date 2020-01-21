@@ -33,7 +33,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     size_t GWS = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
-    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0);
+    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -74,7 +74,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
     size_t GWS = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
-    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0);
+    CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
     auto commandStreamReceiver = new MockCsrHw<GfxFamily>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
     cl_event blockingEvent;

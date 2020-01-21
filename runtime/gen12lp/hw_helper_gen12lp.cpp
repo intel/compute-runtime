@@ -98,8 +98,9 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 
 template <>
 const std::vector<aub_stream::EngineType> HwHelperHw<Family>::getGpgpuEngineInstances() const {
-    constexpr std::array<aub_stream::EngineType, 3> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
+    constexpr std::array<aub_stream::EngineType, 4> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
                                                                              aub_stream::ENGINE_RCS, // low priority
+                                                                             aub_stream::ENGINE_RCS, // internal usage
                                                                              aub_stream::ENGINE_CCS}};
     return std::vector<aub_stream::EngineType>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
 };

@@ -18,7 +18,7 @@
 using namespace NEO;
 
 TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhenGettingUnifiedSharingThenReturnIt) {
-    MockClDevice device{new MockDevice};
+    MockClDevice device{MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices)};
     cl_device_id deviceId = &device;
     ClDeviceVector allDevs(&deviceId, 1);
     cl_int retVal{};

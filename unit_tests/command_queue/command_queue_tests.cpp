@@ -93,6 +93,7 @@ TEST_P(CommandQueueTest, GivenNonFailingAllocationWhenCreatingCommandQueueThenCo
             pContext,
             pClDevice,
             nullptr,
+            false,
             retVal);
 
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
@@ -776,7 +777,7 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
 struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
-        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr){};
+        MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
         void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;

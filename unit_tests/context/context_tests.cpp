@@ -314,6 +314,20 @@ TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreat
     EXPECT_EQ(nullptr, svmManager);
 }
 
+TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    cl_device_id clDevice = device.get();
+    cl_int retVal = CL_SUCCESS;
+
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    ASSERT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto specialQueueEngine = context->getSpecialQueue()->getGpgpuEngine();
+    auto internalEngine = device->getInternalEngine();
+    EXPECT_EQ(internalEngine.commandStreamReceiver, specialQueueEngine.commandStreamReceiver);
+}
+
 TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumberOfDevicesThenNumberOfAllAvailableDevicesIsReturned) {
     DebugManagerStateRestore restorer;
     const uint32_t numDevices = 2u;
@@ -341,7 +355,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
-        device = new MockClDevice{new MockDevice};
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices)};
         deleter = new MockDeferredDeleter();
         device->injectMemoryManager(memoryManager);
         memoryManager->setDeferredDeleter(deleter);

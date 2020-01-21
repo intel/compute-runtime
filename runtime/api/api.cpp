@@ -505,6 +505,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
         commandQueue = CommandQueue::create(pContext,
                                             pDevice,
                                             props,
+                                            false,
                                             retVal);
 
         if (pContext->isProvidingPerformanceHints()) {
@@ -4708,6 +4709,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             pContext,
             pDevice,
             properties,
+            false,
             retVal);
         if (pContext->isProvidingPerformanceHints()) {
             pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, DRIVER_CALLS_INTERNAL_CL_FLUSH);
