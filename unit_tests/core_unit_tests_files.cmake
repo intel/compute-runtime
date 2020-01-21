@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2019-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,17 @@ append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
   NEO_CORE_DEBUG_SETTINGS_TESTS
   NEO_CORE_INDIRECT_HEAP_TESTS
 )
+
+if(WIN32)
+  append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
+    NEO_CORE_OS_INTERFACE_TESTS_WINDOWS
+  )
+else()
+  append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
+    NEO_CORE_OS_INTERFACE_TESTS_LINUX
+  )
+
+endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_UNIT_TESTS_SOURCES ${NEO_CORE_UNIT_TESTS_SOURCES})
 
