@@ -188,9 +188,9 @@ TEST_F(EnqueueKernelTest, GivenInvalidWorkGroupSizeWhenEnqueuingKernelThenInvali
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 }
 
-TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingKernelINTELThenInvalidKernelErrorIsReturned) {
+TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingNDCountKernelINTELThenInvalidKernelErrorIsReturned) {
     size_t workgroupCount[3] = {1, 1, 1};
-    auto retVal = clEnqueueNDRangeKernelINTEL(
+    auto retVal = clEnqueueNDCountKernelINTEL(
         pCmdQ,
         nullptr,
         1,
@@ -204,7 +204,7 @@ TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingKernelINTELThenInvalidKern
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernelINTELReturnsSuccess) {
+TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernelINTELReturnsSuccess) {
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -218,21 +218,21 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 1, sizeof(cl_mem), &b1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(b0);
@@ -243,7 +243,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDRangeKernelINTELReturnsError) {
+TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDCountKernelINTELReturnsError) {
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -257,21 +257,21 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b1);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clReleaseMemObject(b0);
@@ -282,7 +282,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeastFailsThenClEnqueueNDRangeKernelINTELReturnsError) {
+TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeastFailsThenClEnqueueNDCountKernelINTELReturnsError) {
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
@@ -296,21 +296,21 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 0, sizeof(cl_mem), &b0);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clSetKernelArg(kernel.get(), 1, 2 * sizeof(cl_mem), &b1);
     EXPECT_NE(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(kernel->isPatched());
-    retVal = clEnqueueNDRangeKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ2, kernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL_ARGS, retVal);
 
     retVal = clReleaseMemObject(b0);
@@ -321,10 +321,10 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingKernelINTELThenInvalidEventWaitListErrorIsReturned) {
+TEST_F(EnqueueKernelTest, GivenInvalidEventListCountWhenEnqueuingNDCountKernelINTELThenInvalidEventWaitListErrorIsReturned) {
     size_t workgroupCount[3] = {1, 1, 1};
 
-    auto retVal = clEnqueueNDRangeKernelINTEL(
+    auto retVal = clEnqueueNDCountKernelINTEL(
         pCmdQ,
         pKernel,
         1,

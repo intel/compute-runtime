@@ -895,7 +895,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     int prevCount14 = CommandBufferCompleteCallbackCount;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {n, 1, 1};
-    retVal = clEnqueueNDRangeKernelINTEL(cmdQ, pKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
@@ -924,7 +924,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     int prevCount22 = KernelSubmitCallbackCount;
     int prevCount23 = CommandBufferCreateCallbackCount;
     int prevCount24 = CommandBufferCompleteCallbackCount;
-    retVal = clEnqueueNDRangeKernelINTEL(cmdQ, pKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    retVal = clEnqueueNDCountKernelINTEL(cmdQ, pKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
     EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);

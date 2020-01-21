@@ -3979,7 +3979,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetExecutionInfoINTEL);
-    RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDRangeKernelINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDCountKernelINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
@@ -5303,7 +5303,7 @@ cl_int CL_API_CALL clGetExecutionInfoINTEL(cl_command_queue commandQueue,
     return retVal;
 }
 
-cl_int CL_API_CALL clEnqueueNDRangeKernelINTEL(cl_command_queue commandQueue,
+cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
                                                cl_kernel kernel,
                                                cl_uint workDim,
                                                const size_t *globalWorkOffset,
