@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/internal_allocation_storage.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/os_interface/os_context.h"

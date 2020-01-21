@@ -8,12 +8,7 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_memory_sync.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/storage_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h

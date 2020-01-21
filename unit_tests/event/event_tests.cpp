@@ -6,12 +6,12 @@
  */
 
 #include "core/helpers/hw_info.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/tag_allocator.h"

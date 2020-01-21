@@ -17,6 +17,7 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/state_base_address.h"
 #include "core/indirect_heap/indirect_heap.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -30,7 +31,6 @@
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/state_compute_mode_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/tag_allocator.h"
 

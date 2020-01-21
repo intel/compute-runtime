@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/mocks/mock_event.h"

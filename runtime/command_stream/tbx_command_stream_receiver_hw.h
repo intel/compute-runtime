@@ -21,14 +21,6 @@ namespace NEO {
 class AubSubCaptureManager;
 class TbxStream;
 
-class TbxMemoryManager : public OsAgnosticMemoryManager {
-  public:
-    TbxMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
-    uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
-        return 1 * GB;
-    }
-};
-
 template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
   protected:
@@ -70,8 +62,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void initializeEngine();
 
-    TbxMemoryManager *getMemoryManager() {
-        return (TbxMemoryManager *)CommandStreamReceiver::getMemoryManager();
+    MemoryManager *getMemoryManager() {
+        return CommandStreamReceiver::getMemoryManager();
     }
 
     TbxStream tbxStream;

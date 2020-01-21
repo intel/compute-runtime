@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "unit_tests/aub_tests/command_queue/enqueue_write_copy_read_buffer_aub_tests.h"
 
-#include "runtime/memory_manager/allocations_list.h"
+#include "core/memory_manager/allocations_list.h"
 #include "test.h"
 
 using namespace NEO;

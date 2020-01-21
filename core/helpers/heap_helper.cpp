@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {

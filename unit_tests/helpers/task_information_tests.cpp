@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/dispatch_flags_fixture.h"

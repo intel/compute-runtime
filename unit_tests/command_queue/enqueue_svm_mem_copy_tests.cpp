@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/memory_manager/allocations_list.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

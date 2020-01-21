@@ -6,13 +6,13 @@
  */
 
 #include "core/gmm_helper/gmm.h"
+#include "core/memory_manager/allocations_list.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/allocations_list.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"

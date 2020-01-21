@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,6 @@ class TbxCommandStreamFixture : public CommandStreamFixture {
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
 
-    MemoryManager *mmTbx;
+    MemoryManager *memoryManager;
 };
 } // namespace NEO

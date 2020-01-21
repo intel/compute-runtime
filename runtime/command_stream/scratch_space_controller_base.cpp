@@ -11,10 +11,10 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "runtime/event/event.h"
 
 #include "core/helpers/aligned_memory.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/utilities/range.h"
 #include "core/utilities/stackvec.h"
 #include "public/cl_ext_private.h"
@@ -22,7 +23,6 @@
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 

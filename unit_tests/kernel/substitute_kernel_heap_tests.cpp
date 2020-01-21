@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"

@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/memory_manager/allocations_list.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/memory_manager/allocations_list.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_read_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"

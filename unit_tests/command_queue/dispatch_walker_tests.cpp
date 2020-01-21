@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -13,7 +14,6 @@
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

@@ -12,10 +12,8 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/default_cl_cache_config.h"
-#include "runtime/helpers/device_helpers.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
@@ -53,8 +51,6 @@ void ExecutionEnvironment::initializeMemoryManager() {
     switch (setCommandStreamReceiverType) {
     case CommandStreamReceiverType::CSR_TBX:
     case CommandStreamReceiverType::CSR_TBX_WITH_AUB:
-        memoryManager = std::make_unique<TbxMemoryManager>(*this);
-        break;
     case CommandStreamReceiverType::CSR_AUB:
         memoryManager = std::make_unique<OsAgnosticMemoryManager>(*this);
         break;

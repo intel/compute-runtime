@@ -8,6 +8,7 @@
 #pragma once
 #include "core/helpers/engine_node_helper.h"
 #include "core/helpers/options.h"
+#include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "core/program/sync_buffer_handler.h"
 #include "core/utilities/range.h"
@@ -28,7 +29,6 @@
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/block_kernel_manager.h"
