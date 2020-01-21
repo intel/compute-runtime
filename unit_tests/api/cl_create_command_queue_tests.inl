@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "test.h"
@@ -71,6 +72,22 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
 
     auto cmdq = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], ooq, &retVal);
     EXPECT_EQ(DispatchMode::BatchedDispatch, csr.dispatchMode);
+    retVal = clReleaseCommandQueue(cmdq);
+}
+
+HWTEST_F(clCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    auto clDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
+    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+
+    auto cmdq = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], ooq, &retVal);
+    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
     retVal = clReleaseCommandQueue(cmdq);
 }
 
