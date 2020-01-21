@@ -20,6 +20,7 @@ set(RUNTIME_SRCS_GENX_H_BASE
 set(CORE_SRCS_GENX_H_BASE
   hw_cmds.h
   hw_info.h
+  hw_cmds_base.h
 )
 
 set(RUNTIME_SRCS_GENX_CPP_BASE
@@ -81,18 +82,13 @@ macro(macro_for_each_gen)
   endforeach()
   foreach(SRC_IT "state_compute_mode_helper_${GEN_TYPE_LOWER}.cpp")
     if(EXISTS ${GENX_PREFIX}/${SRC_IT})
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT})
     endif()
   endforeach()
-  if(EXISTS "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")
-  endif()
-  if(EXISTS "${GENX_PREFIX}/hw_cmds_base.h")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_cmds_base.h")
-  endif()
-  if(EXISTS "${GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
-  endif()
+
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
+
   if(EXISTS "${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
     include("${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
   endif()
