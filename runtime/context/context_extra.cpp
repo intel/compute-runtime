@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,6 @@ namespace NEO {
 
 cl_int Context::processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue) {
     return CL_INVALID_PROPERTY;
-}
-
-CommandStreamReceiver *Context::getCommandStreamReceiverForBlitOperation(MemObj &memObj) const {
-    return nullptr;
 }
 
 BlitOperationResult Context::blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const {

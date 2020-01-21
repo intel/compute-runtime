@@ -133,7 +133,6 @@ class Context : public BaseObject<_cl_context> {
 
     ContextType peekContextType() { return this->contextType; }
 
-    MOCKABLE_VIRTUAL CommandStreamReceiver *getCommandStreamReceiverForBlitOperation(MemObj &memObj) const;
     MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const;
 
   protected:

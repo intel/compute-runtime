@@ -27,9 +27,7 @@ struct BlitAuxTranslationTests : public ::testing::Test {
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
         }
-        CommandStreamReceiver *getCommandStreamReceiverForBlitOperation(MemObj &memObj) const override {
-            return bcsCsr.get();
-        }
+
         BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                         *bcsCsr, memory, nullptr,
