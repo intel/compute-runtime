@@ -116,7 +116,7 @@ TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionT
     alignedFree(originalPtr);
 }
 
-TEST(CompilerCacheHashTests, hashShortBuffers) {
+TEST(CompilerCacheHashTests, WhenHashingThenResultIsDeterministic) {
     Hash hash;
 
     std::list<uint64_t> hashes;
@@ -140,7 +140,7 @@ TEST(CompilerCacheHashTests, hashShortBuffers) {
     }
 }
 
-TEST(CompilerCacheHashTests, testUnique) {
+TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCacheIsReturned) {
     static const size_t bufSize = 64;
     HardwareInfo hwInfo;
 
@@ -219,7 +219,7 @@ TEST(CompilerCacheHashTests, testUnique) {
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
-TEST(CompilerCacheTests, doNotCacheEmpty) {
+TEST(CompilerCacheTests, GivenEmptyBinaryWhenCachingThenBinaryIsNotCached) {
     CompilerCache cache(CompilerCacheConfig{});
     bool ret = cache.cacheBinary("some_hash", nullptr, 12u);
     EXPECT_FALSE(ret);
@@ -229,7 +229,7 @@ TEST(CompilerCacheTests, doNotCacheEmpty) {
     EXPECT_FALSE(ret);
 }
 
-TEST(CompilerCacheTests, loadNotFound) {
+TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsReturned) {
     CompilerCache cache(CompilerCacheConfig{});
     size_t size;
     auto ret = cache.loadCachedBinary("----do-not-exists----", size);
@@ -237,7 +237,7 @@ TEST(CompilerCacheTests, loadNotFound) {
     EXPECT_EQ(0U, size);
 }
 
-TEST(CompilerCacheTests, cacheThenLoad) {
+TEST(CompilerCacheTests, GivenExistingConfigWhenLoadingFromCacheThenBinaryIsLoaded) {
     CompilerCache cache(getDefaultClCompilerCacheConfig());
     static const char *hash = "SOME_HASH";
     std::unique_ptr<char> data(new char[32]);
@@ -253,7 +253,7 @@ TEST(CompilerCacheTests, cacheThenLoad) {
     EXPECT_NE(0U, size);
 }
 
-TEST(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
+TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"header.h\"\n__kernel k() {}";
@@ -282,7 +282,7 @@ TEST(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     gEnvironment->igcPopDebugVars();
 }
 
-TEST(CompilerInterfaceCachedTests, wasCached) {
+TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsReturned) {
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"header.h\"\n__kernel k() {}";
