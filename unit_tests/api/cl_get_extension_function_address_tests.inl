@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,6 +161,11 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceGlobalVariablePointer
 TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceFunctionPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetDeviceFunctionPointerINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceFunctionPointerINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClGetKernelSuggestedLocalWorkSizeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clGetKernelSuggestedLocalWorkSizeINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelSuggestedLocalWorkSizeINTEL));
 }
 
 TEST_F(clGetExtensionFunctionAddressTests, GivenClGetExecutionInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {

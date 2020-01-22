@@ -21,11 +21,13 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/helpers/sampler_helpers.h"
@@ -997,6 +999,31 @@ cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel execut
     }
     }
     return CL_SUCCESS;
+}
+
+void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
+                                       size_t *localWorkSize) {
+    UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
+    UNRECOVERABLE_IF(globalWorkOffset == nullptr);
+    UNRECOVERABLE_IF(globalWorkSize == nullptr);
+    Vec3<size_t> elws{0, 0, 0};
+    Vec3<size_t> gws{
+        globalWorkSize[0],
+        (workDim > 1) ? globalWorkSize[1] : 0,
+        (workDim > 2) ? globalWorkSize[2] : 0};
+    Vec3<size_t> offset{
+        globalWorkOffset[0],
+        (workDim > 1) ? globalWorkOffset[1] : 0,
+        (workDim > 2) ? globalWorkOffset[2] : 0};
+
+    const DispatchInfo dispatchInfo{this, workDim, gws, elws, offset};
+    auto suggestedLws = computeWorkgroupSize(dispatchInfo);
+
+    localWorkSize[0] = suggestedLws.x;
+    if (workDim > 1)
+        localWorkSize[1] = suggestedLws.y;
+    if (workDim > 2)
+        localWorkSize[2] = suggestedLws.z;
 }
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const {

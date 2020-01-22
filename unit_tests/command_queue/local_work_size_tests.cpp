@@ -640,6 +640,24 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
     WorkSizeInfo workSizeInfo(dispatchInfo);
     EXPECT_EQ(workSizeInfo.numThreadsPerSubSlice, threadsPerEu * euPerSubSlice);
 }
+
+TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarriersIsCorrectlySet) {
+    MockClDevice device{new MockDevice};
+    MockKernelWithInternals kernel(device);
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setKernel(kernel.mockKernel);
+
+    kernel.kernelInfo.patchInfo.executionEnvironment = nullptr;
+    EXPECT_FALSE(WorkSizeInfo{dispatchInfo}.hasBarriers);
+
+    kernel.executionEnvironment.HasBarriers = 0;
+    kernel.kernelInfo.patchInfo.executionEnvironment = &kernel.executionEnvironment;
+    EXPECT_FALSE(WorkSizeInfo{dispatchInfo}.hasBarriers);
+
+    kernel.executionEnvironment.HasBarriers = 1;
+    EXPECT_TRUE(WorkSizeInfo{dispatchInfo}.hasBarriers);
+}
+
 TEST(localWorkSizeTest, givenMaxWorkgroupSizeEqualToSimdSizeWhenLwsIsCalculatedThenItIsDownsizedToMaxWorkgroupSize) {
     WorkSizeInfo wsInfo(32, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;

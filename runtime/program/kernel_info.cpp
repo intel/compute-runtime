@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -156,7 +156,8 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
-    this->hasBarriers = !!dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment->HasBarriers;
+    auto pExecutionEnvironment = dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment;
+    this->hasBarriers = (pExecutionEnvironment != nullptr) && (pExecutionEnvironment->HasBarriers);
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
     this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().platform.eRenderCoreFamily;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,6 +76,11 @@ TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClDisableTracingINTEL
 TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetTracingStateINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetTracingStateINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetTracingStateINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetKernelSuggestedLocalWorkSizeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetKernelSuggestedLocalWorkSizeINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelSuggestedLocalWorkSizeINTEL));
 }
 
 TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetExecutionInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {

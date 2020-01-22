@@ -3977,6 +3977,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceFunctionPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetExecutionInfoINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDRangeKernelINTEL);
 
@@ -5195,6 +5196,58 @@ cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uin
     if (retVal == CL_SUCCESS) {
         retVal = pProgram->setProgramSpecializationConstant(specId, specSize, specValue);
     }
+
+    return retVal;
+}
+
+cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue commandQueue,
+                                                          cl_kernel kernel,
+                                                          cl_uint workDim,
+                                                          const size_t *globalWorkOffset,
+                                                          const size_t *globalWorkSize,
+                                                          size_t *suggestedLocalWorkSize) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
+                   "globalWorkOffset[0]", NEO::FileLoggerInstance().getInput(globalWorkOffset, 0),
+                   "globalWorkOffset[1]", NEO::FileLoggerInstance().getInput(globalWorkOffset, 1),
+                   "globalWorkOffset[2]", NEO::FileLoggerInstance().getInput(globalWorkOffset, 2),
+                   "globalWorkSize", NEO::FileLoggerInstance().getSizes(globalWorkSize, workDim, true),
+                   "suggestedLocalWorkSize", suggestedLocalWorkSize);
+
+    retVal = validateObjects(commandQueue, kernel);
+
+    if (CL_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    if ((workDim == 0) || (workDim > 3)) {
+        retVal = CL_INVALID_WORK_DIMENSION;
+        return retVal;
+    }
+
+    if (globalWorkOffset == nullptr) {
+        retVal = CL_INVALID_GLOBAL_OFFSET;
+        return retVal;
+    }
+
+    if (globalWorkSize == nullptr) {
+        retVal = CL_INVALID_GLOBAL_WORK_SIZE;
+        return retVal;
+    }
+
+    auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+    if (!pKernel->isPatched()) {
+        retVal = CL_INVALID_KERNEL;
+        return retVal;
+    }
+
+    if (suggestedLocalWorkSize == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
+
+    pKernel->getSuggestedLocalWorkSize(workDim, globalWorkSize, globalWorkOffset, suggestedLocalWorkSize);
 
     return retVal;
 }
