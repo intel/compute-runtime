@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@ namespace NEO {
 
 class TimestampPacketContainer;
 class CommandStreamReceiver;
-struct EventsRequest;
 
 class CsrDependencies : public StackVec<TimestampPacketContainer *, 32> {
   public:
@@ -21,9 +20,6 @@ class CsrDependencies : public StackVec<TimestampPacketContainer *, 32> {
         OutOfCsr,
         All
     };
-
-    void fillFromEventsRequest(const EventsRequest &eventsRequest, CommandStreamReceiver &currentCsr,
-                               DependenciesType depsType);
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;
 };

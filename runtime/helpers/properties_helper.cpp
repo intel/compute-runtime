@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,38 @@
 
 #include "runtime/helpers/properties_helper.h"
 
+#include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/mipmap.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
+
+void EventsRequest::fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const {
+    for (cl_uint i = 0; i < this->numEventsInWaitList; i++) {
+        auto event = castToObjectOrAbort<Event>(this->eventWaitList[i]);
+        if (event->isUserEvent()) {
+            continue;
+        }
+
+        auto timestampPacketContainer = event->getTimestampPacketNodes();
+        if (!timestampPacketContainer || timestampPacketContainer->peekNodes().empty()) {
+            continue;
+        }
+
+        auto sameCsr = (&event->getCommandQueue()->getGpgpuCommandStreamReceiver() == &currentCsr);
+        bool pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
+                              (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
+                              (CsrDependencies::DependenciesType::All == depsType);
+
+        if (pushDependency) {
+            csrDeps.push_back(timestampPacketContainer);
+        }
+    }
+}
+
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
                                        size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu)
     : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {

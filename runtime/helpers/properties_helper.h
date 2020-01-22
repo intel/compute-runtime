@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/command_stream/csr_deps.h"
 #include "core/command_stream/queue_throttle.h"
 #include "runtime/api/cl_types.h"
 
@@ -21,7 +22,9 @@ struct EventsRequest {
     EventsRequest() = delete;
 
     EventsRequest(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *outEvent)
-        : numEventsInWaitList(numEventsInWaitList), eventWaitList(eventWaitList), outEvent(outEvent){};
+        : numEventsInWaitList(numEventsInWaitList), eventWaitList(eventWaitList), outEvent(outEvent) {}
+
+    void fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamReceiver &currentCsr, CsrDependencies::DependenciesType depsType) const;
 
     cl_uint numEventsInWaitList;
     const cl_event *eventWaitList;

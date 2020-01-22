@@ -17,7 +17,7 @@
 #include <cstdint>
 
 namespace NEO {
-
+class CommandQueue;
 class LinearStream;
 class IndirectHeap;
 struct CrossThreadInfo;

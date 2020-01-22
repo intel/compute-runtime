@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/command_stream/csr_deps.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/properties_helper.h"
 
 #include <cstdint>

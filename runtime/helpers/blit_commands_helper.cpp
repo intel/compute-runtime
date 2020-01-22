@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,8 +197,8 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
 
     // wait for barrier and events before AuxToNonAux
     blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
-    blitPropertiesContainer[0].csrDependencies.fillFromEventsRequest(eventsRequest, bcsCsr,
-                                                                     CsrDependencies::DependenciesType::All);
+    eventsRequest.fillCsrDependencies(blitPropertiesContainer[0].csrDependencies, bcsCsr,
+                                      CsrDependencies::DependenciesType::All);
 
     // wait for NDR before NonAuxToAux
     blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);

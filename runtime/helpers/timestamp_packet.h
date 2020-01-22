@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/command_stream/csr_deps.h"
 #include "core/helpers/non_copyable_or_moveable.h"
-#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 

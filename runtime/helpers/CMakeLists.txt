@@ -16,8 +16,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/device_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
