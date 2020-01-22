@@ -83,9 +83,9 @@ TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetKernelSuggestedL
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelSuggestedLocalWorkSizeINTEL));
 }
 
-TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetExecutionInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
-    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetExecutionInfoINTEL");
-    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetExecutionInfoINTEL));
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetKernelMaxConcurrentWorkGroupCountINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetKernelMaxConcurrentWorkGroupCountINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetKernelMaxConcurrentWorkGroupCountINTEL));
 }
 
 TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClEnqueueNDCountKernelINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {

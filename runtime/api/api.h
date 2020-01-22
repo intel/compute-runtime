@@ -1034,16 +1034,13 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(
     const size_t *globalWorkSize,
     size_t *suggestedLocalWorkSize);
 
-cl_int CL_API_CALL clGetExecutionInfoINTEL(
+cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(
     cl_command_queue commandQueue,
     cl_kernel kernel,
     cl_uint workDim,
     const size_t *globalWorkOffset,
     const size_t *localWorkSize,
-    cl_execution_info_intel paramName,
-    size_t paramValueSize,
-    void *paramValue,
-    size_t *paramValueSizeRet);
+    size_t *suggestedWorkGroupCount);
 
 cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     cl_command_queue commandQueue,

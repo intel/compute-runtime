@@ -3977,8 +3977,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceFunctionPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetKernelMaxConcurrentWorkGroupCountINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeINTEL);
-    RETURN_FUNC_PTR_IF_EXIST(clGetExecutionInfoINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueNDCountKernelINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
@@ -5252,15 +5252,12 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeINTEL(cl_command_queue comma
     return retVal;
 }
 
-cl_int CL_API_CALL clGetExecutionInfoINTEL(cl_command_queue commandQueue,
-                                           cl_kernel kernel,
-                                           cl_uint workDim,
-                                           const size_t *globalWorkOffset,
-                                           const size_t *localWorkSize,
-                                           cl_execution_info_intel paramName,
-                                           size_t paramValueSize,
-                                           void *paramValue,
-                                           size_t *paramValueSizeRet) {
+cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue commandQueue,
+                                                               cl_kernel kernel,
+                                                               cl_uint workDim,
+                                                               const size_t *globalWorkOffset,
+                                                               const size_t *localWorkSize,
+                                                               size_t *suggestedWorkGroupCount) {
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -5269,12 +5266,26 @@ cl_int CL_API_CALL clGetExecutionInfoINTEL(cl_command_queue commandQueue,
                    "globalWorkOffset[1]", NEO::FileLoggerInstance().getInput(globalWorkOffset, 1),
                    "globalWorkOffset[2]", NEO::FileLoggerInstance().getInput(globalWorkOffset, 2),
                    "localWorkSize", NEO::FileLoggerInstance().getSizes(localWorkSize, workDim, true),
-                   "paramName", paramName, "paramValueSize", paramValueSize,
-                   "paramValue", paramValue, "paramValueSizeRet", paramValueSizeRet);
+                   "suggestedWorkGroupCount", suggestedWorkGroupCount);
 
     retVal = validateObjects(commandQueue, kernel);
 
     if (CL_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    if ((workDim == 0) || (workDim > 3)) {
+        retVal = CL_INVALID_WORK_DIMENSION;
+        return retVal;
+    }
+
+    if (globalWorkOffset == nullptr) {
+        retVal = CL_INVALID_GLOBAL_OFFSET;
+        return retVal;
+    }
+
+    if (localWorkSize == nullptr) {
+        retVal = CL_INVALID_WORK_GROUP_SIZE;
         return retVal;
     }
 
@@ -5284,21 +5295,12 @@ cl_int CL_API_CALL clGetExecutionInfoINTEL(cl_command_queue commandQueue,
         return retVal;
     }
 
-    TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
-    switch (paramName) {
-    case CL_EXECUTION_INFO_MAX_WORKGROUP_COUNT_INTEL:
-        if ((paramValueSize < sizeof(uint32_t)) || (paramValue == nullptr)) {
-            retVal = CL_INVALID_VALUE;
-            return retVal;
-        }
-        *reinterpret_cast<uint32_t *>(paramValue) = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
-        if (paramValueSizeRet != nullptr) {
-            *paramValueSizeRet = sizeof(uint32_t);
-        }
-        break;
-    default:
+    if (suggestedWorkGroupCount == nullptr) {
         retVal = CL_INVALID_VALUE;
+        return retVal;
     }
+
+    *suggestedWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
 
     return retVal;
 }
