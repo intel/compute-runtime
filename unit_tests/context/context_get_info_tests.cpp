@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ struct ContextGetInfoTest : public PlatformFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
-TEST_F(ContextGetInfoTest, Invalid) {
+TEST_F(ContextGetInfoTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
     size_t retSize = 0;
 
     retVal = pContext->getInfo(
@@ -48,7 +48,7 @@ TEST_F(ContextGetInfoTest, Invalid) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(ContextGetInfoTest, NumDevices) {
+TEST_F(ContextGetInfoTest, GivenNumDevicesParamNameWhenGettingInfoThenNumberOfDevicesIsReturned) {
     cl_uint numDevices = 0;
     size_t retSize = 0;
 
@@ -72,7 +72,7 @@ TEST_F(ContextGetInfoTest, NumDevices) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ContextGetInfoTest, Devices) {
+TEST_F(ContextGetInfoTest, GivenContextDevicesParamNameWhenGettingInfoThenCorrectDeviceIdsAreReturned) {
     auto devicesReturned = new cl_device_id[this->num_devices];
     retVal = pContext->getInfo(
         CL_CONTEXT_DEVICES,
