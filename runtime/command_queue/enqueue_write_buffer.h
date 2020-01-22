@@ -70,6 +70,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
         auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
+            if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                return CL_INVALID_OPERATION;
+            }
+            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+                return CL_INVALID_OPERATION;
+            }
+
             mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
         }
     }

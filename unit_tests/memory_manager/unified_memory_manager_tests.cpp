@@ -614,6 +614,58 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedAsWr
     ASSERT_EQ(CL_SUCCESS, status);
     clReleaseCommandQueue(commandQueue);
 }
+TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenItIsPassedToWriteBufferAsSourceThenErrorIsReturned) {
+    MockContext mockContext;
+    cl_context clContext = &mockContext;
+
+    auto status = CL_SUCCESS;
+    cl_device_id clDevice = mockContext.getDevice(0u);
+
+    auto deviceMemory = clDeviceMemAllocINTEL(clContext, clDevice, nullptr, 4096u, 0u, &status);
+
+    ASSERT_EQ(CL_SUCCESS, status);
+    auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    auto commandQueue = clCreateCommandQueue(clContext, clDevice, 0u, &status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, status);
+
+    status = clReleaseMemObject(buffer);
+    ASSERT_EQ(CL_SUCCESS, status);
+    status = clMemFreeINTEL(clContext, deviceMemory);
+    ASSERT_EQ(CL_SUCCESS, status);
+    clReleaseCommandQueue(commandQueue);
+}
+
+TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenWriteBufferTranfserSizeWhenTransferCallIsEmittedThenErrorIsReturned) {
+    MockContext mockContext;
+    cl_context clContext = &mockContext;
+
+    auto status = CL_SUCCESS;
+
+    auto hostMemory = clHostMemAllocINTEL(clContext, nullptr, 4u, 0u, &status);
+
+    ASSERT_EQ(CL_SUCCESS, status);
+    auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    cl_device_id clDevice = mockContext.getDevice(0u);
+
+    auto commandQueue = clCreateCommandQueue(clContext, clDevice, 0u, &status);
+    ASSERT_EQ(CL_SUCCESS, status);
+
+    status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, status);
+
+    status = clReleaseMemObject(buffer);
+    ASSERT_EQ(CL_SUCCESS, status);
+    status = clMemFreeINTEL(clContext, hostMemory);
+    ASSERT_EQ(CL_SUCCESS, status);
+    clReleaseCommandQueue(commandQueue);
+}
 
 TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryWhenPointerIsUsedAsWriteBufferSourceThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
