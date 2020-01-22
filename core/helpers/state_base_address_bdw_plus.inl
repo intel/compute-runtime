@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     STATE_BASE_ADDRESS *stateBaseAddress,
     const IndirectHeap *ssh,
+    bool setGeneralStateBaseAddress,
     uint64_t internalHeapBase,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {

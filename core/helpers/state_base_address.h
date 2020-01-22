@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,14 +26,17 @@ struct StateBaseAddressHelper {
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,
         uint64_t generalStateBase,
+        bool setGeneralStateBaseAddress,
         uint32_t statelessMocsIndex,
         uint64_t internalHeapBase,
+        bool setInstructionStateBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable);
 
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,
         const IndirectHeap *ssh,
+        bool setGeneralStateBaseAddress,
         uint64_t internalHeapBase,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable);

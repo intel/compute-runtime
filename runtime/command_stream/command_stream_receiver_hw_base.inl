@@ -318,8 +318,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             &ioh,
             &ssh,
             newGSHbase,
+            true,
             mocsIndex,
             getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex),
+            true,
             device.getGmmHelper(),
             isMultiOsContextCapable());
 

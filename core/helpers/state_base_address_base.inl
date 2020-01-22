@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     const IndirectHeap *ioh,
     const IndirectHeap *ssh,
     uint64_t generalStateBase,
+    bool setGeneralStateBaseAddress,
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase,
+    bool setInstructionStateBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
 
@@ -47,16 +49,21 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         pCmd->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
     }
 
-    pCmd->setInstructionBaseAddressModifyEnable(true);
-    pCmd->setInstructionBaseAddress(internalHeapBase);
-    pCmd->setInstructionBufferSizeModifyEnable(true);
-    pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+    if (setInstructionStateBaseAddress) {
+        pCmd->setInstructionBaseAddressModifyEnable(true);
+        pCmd->setInstructionBaseAddress(internalHeapBase);
+        pCmd->setInstructionBufferSizeModifyEnable(true);
+        pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+        pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+    }
 
-    pCmd->setGeneralStateBaseAddressModifyEnable(true);
-    pCmd->setGeneralStateBufferSizeModifyEnable(true);
-    // GSH must be set to 0 for stateless
-    pCmd->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
-    pCmd->setGeneralStateBufferSize(0xfffff);
+    if (setGeneralStateBaseAddress) {
+        pCmd->setGeneralStateBaseAddressModifyEnable(true);
+        pCmd->setGeneralStateBufferSizeModifyEnable(true);
+        // GSH must be set to 0 for stateless
+        pCmd->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
+        pCmd->setGeneralStateBufferSize(0xfffff);
+    }
 
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
         statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
@@ -65,9 +72,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     statelessMocsIndex = statelessMocsIndex << 1;
 
     pCmd->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
-    pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 
-    appendStateBaseAddressParameters(pCmd, ssh, internalHeapBase, gmmHelper, isMultiOsContextCapable);
+    appendStateBaseAddressParameters(pCmd, ssh, setGeneralStateBaseAddress, internalHeapBase, gmmHelper, isMultiOsContextCapable);
 }
 
 } // namespace NEO

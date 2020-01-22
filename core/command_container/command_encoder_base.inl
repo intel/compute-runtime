@@ -229,8 +229,10 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
         container.isHeapDirty(HeapType::INDIRECT_OBJECT) ? container.getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr,
         container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr,
         0,
+        false,
         (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1),
         container.getInstructionHeapBaseAddress(),
+        false,
         gmmHelper,
         false);
 }

@@ -1119,8 +1119,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
                                                                 &ioh,
                                                                 &ssh,
                                                                 generalStateBaseAddress,
+                                                                true,
                                                                 0,
                                                                 generalStateBaseAddress,
+                                                                true,
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
@@ -1130,6 +1132,57 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
 
     EXPECT_NE(generalStateBaseAddress, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), cmd->getGeneralStateBaseAddress());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
+    uint64_t generalStateBaseAddress = 0x80010000ull;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+                                                                &dsh,
+                                                                &ioh,
+                                                                &ssh,
+                                                                generalStateBaseAddress,
+                                                                false,
+                                                                0,
+                                                                generalStateBaseAddress,
+                                                                true,
+                                                                pDevice->getGmmHelper(),
+                                                                false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+
+    EXPECT_EQ(0ull, cmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(0u, cmd->getGeneralStateBufferSize());
+    EXPECT_FALSE(cmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_FALSE(cmd->getGeneralStateBufferSizeModifyEnable());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
+    uint64_t internalHeapBaseAddress = 0x80010000ull;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+                                                                &dsh,
+                                                                &ioh,
+                                                                &ssh,
+                                                                internalHeapBaseAddress,
+                                                                true,
+                                                                0,
+                                                                internalHeapBaseAddress,
+                                                                false,
+                                                                pDevice->getGmmHelper(),
+                                                                false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+
+    EXPECT_FALSE(cmd->getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(0ull, cmd->getInstructionBaseAddress());
+    EXPECT_FALSE(cmd->getInstructionBufferSizeModifyEnable());
+    EXPECT_EQ(0u, cmd->getInstructionBufferSize());
+    EXPECT_EQ(0u, cmd->getInstructionMemoryObjectControlState());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
@@ -1143,8 +1196,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
                                                                 nullptr,
                                                                 nullptr,
                                                                 generalStateBase,
+                                                                true,
                                                                 0,
                                                                 internalHeapBase,
+                                                                true,
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
