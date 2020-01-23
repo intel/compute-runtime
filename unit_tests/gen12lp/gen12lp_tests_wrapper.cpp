@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "unit_tests/gen12lp/command_stream_receiver_simulated_common_hw_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/compute_mode_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/enqueue_media_kernel_gen12lp.inl"
-#include "unit_tests/gen12lp/hardware_commands_helper_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/hw_helper_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/image_tests_gen12lp.inl"
 #include "unit_tests/gen12lp/kernel_tests_gen12lp.inl"

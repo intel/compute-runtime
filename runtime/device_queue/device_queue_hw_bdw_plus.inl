@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,7 +182,11 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
 
         totalBlockSSHSize += alignUp(pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        auto btOffset = HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(surfaceStateHeap, *pBlockInfo);
+        auto btOffset = HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(surfaceStateHeap, bindingTableCount,
+                                                                                            pBlockInfo->heapInfo.pSsh,
+                                                                                            pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize,
+                                                                                            bindingTableCount,
+                                                                                            pBlockInfo->patchInfo.bindingTableState->Offset);
 
         parentKernel->setReflectionSurfaceBlockBtOffset(i, static_cast<uint32_t>(btOffset));
 

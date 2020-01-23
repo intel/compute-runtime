@@ -126,12 +126,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(scheduler);
+
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         *dsh,
         *ioh,
         *ssh,
         scheduler,
+        scheduler.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
@@ -139,8 +142,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         preemptionMode,
         pGpGpuWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);

@@ -277,6 +277,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     IndirectHeap &ioh,
     IndirectHeap &ssh,
     Kernel &kernel,
+    uint64_t kernelStartOffset,
     uint32_t simd,
     const size_t localWorkSize[3],
     const uint64_t offsetInterfaceDescriptorTable,
@@ -284,26 +285,20 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     PreemptionMode preemptionMode,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-    bool localIdsGenerationByRuntime,
-    bool isCcsUsed) {
+    bool localIdsGenerationByRuntime) {
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
     auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
 
     // Copy the kernel over to the ISH
-    uint64_t kernelStartOffset = 0llu;
     const auto &kernelInfo = kernel.getKernelInfo();
-    auto kernelAllocation = kernelInfo.getGraphicsAllocation();
-    DEBUG_BREAK_IF(!kernelAllocation);
-    setKernelStartOffset(kernelStartOffset, kernelAllocation, kernelInfo, localIdsGenerationByRuntime,
-                         kernelUsesLocalIds, kernel, isCcsUsed);
-
     const auto &patchInfo = kernelInfo.patchInfo;
 
-    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates(ssh, kernel);
+    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates(ssh, (kernelInfo.patchInfo.bindingTableState != nullptr) ? kernelInfo.patchInfo.bindingTableState->Count : 0,
+                                                                   kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
+                                                                   kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
 
     // Copy our sampler state if it exists
     size_t samplerStateOffset = 0;

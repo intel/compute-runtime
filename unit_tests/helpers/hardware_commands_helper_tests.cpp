@@ -325,6 +325,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
         sizeof(INTERFACE_DESCRIPTOR_DATA));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel);
 
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
@@ -332,6 +333,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
         ioh,
         ssh,
         *kernel,
+        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
@@ -339,8 +341,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -378,12 +379,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -391,8 +395,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -423,12 +426,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -436,8 +442,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelThatIsSchedulerWhen
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -462,12 +467,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         mockKernelWithInternal->mockKernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -475,8 +483,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -536,12 +543,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     MockKernel mockKernel{kernel->getProgram(), modifiedKernelInfo, kernel->getDevice(), false};
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         mockKernel,
+        mockKernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         modifiedKernelInfo.getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
@@ -549,8 +559,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     numThreads = Math::divideAndRoundUp(numThreads, modifiedKernelInfo.getMaxSimdSize());
@@ -618,12 +627,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
     const_cast<KernelInfo &>(kernelInfo).requiresSshForBuffers = true;
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*kernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         *kernel,
+        kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
@@ -631,8 +643,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -780,12 +791,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
         // push surfaces states and binding table to given ssh heap
         uint32_t interfaceDescriptorIndex = 0;
         auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+        auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*pKernel);
+
         HardwareCommandsHelper<FamilyType>::sendIndirectState(
             commandStream,
             dsh,
             ioh,
             ssh,
             *pKernel,
+            pKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
             pKernel->getKernelInfo().getMaxSimdSize(),
             localWorkSizes,
             0,
@@ -793,8 +807,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
             pDevice->getPreemptionMode(),
             pWalkerCmd,
             nullptr,
-            true,
-            isCcsUsed);
+            true);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -859,7 +872,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequi
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
-    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernel);
+    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     auto usedAfter = ssh.getUsed();
@@ -904,10 +917,10 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
     auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
-    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernelInfo);
+    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
-    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernel);
+    dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     SPatchBindingTableState bindingTableState;
@@ -918,7 +931,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
     bindingTableState.SurfaceStateOffset = 0;
     pKernelInfo->patchInfo.bindingTableState = &bindingTableState;
 
-    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernel);
+    dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     pKernelInfo->patchInfo.bindingTableState = nullptr;
@@ -1060,12 +1073,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     mockKernelWithInternal->mockKernel->setSshLocal(mockKernelWithInternal->sshLocal, sizeof(mockKernelWithInternal->sshLocal));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel);
+
     HardwareCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
         ioh,
         ssh,
         *mockKernelWithInternal->mockKernel,
+        mockKernelWithInternal->mockKernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         8,
         localWorkSizes,
         interfaceDescriptorTableOffset,
@@ -1073,8 +1089,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);

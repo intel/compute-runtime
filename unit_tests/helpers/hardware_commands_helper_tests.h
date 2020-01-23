@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
@@ -39,4 +40,11 @@ struct HardwareCommandsTest : DeviceFixture,
     std::unique_ptr<MockKernelWithInternals> mockKernelWithInternal;
     Kernel::SimpleKernelArgInfo kernelArgInfo = {};
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
+
+    template <typename GfxFamily>
+    size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
+        return HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(dstHeap, (srcKernel.getKernelInfo().patchInfo.bindingTableState != nullptr) ? srcKernel.getKernelInfo().patchInfo.bindingTableState->Count : 0,
+                                                                                   srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
+                                                                                   srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
+    }
 };

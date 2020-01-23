@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,26 +86,6 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
         *pCmd = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
         pCmd->setInterfaceDescriptorDataStartAddress((uint32_t)offsetInterfaceDescriptorData);
         pCmd->setInterfaceDescriptorTotalLength((uint32_t)sizeInterfaceDescriptorData);
-    }
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::setKernelStartOffset(
-    uint64_t &kernelStartOffset,
-    bool kernelAllocation,
-    const KernelInfo &kernelInfo,
-    const bool &localIdsGenerationByRuntime,
-    const bool &kernelUsesLocalIds,
-    Kernel &kernel,
-    bool isCssUsed) {
-
-    if (kernelAllocation) {
-        kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
-    }
-    kernelStartOffset += kernel.getStartOffset();
-
-    if (isCssUsed && HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(kernel.getDevice().getHardwareInfo())) {
-        kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
     }
 }
 

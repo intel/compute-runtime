@@ -16,7 +16,7 @@ namespace NEO {
 typedef TGLLPFamily Family;
 
 template <>
-bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
+bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
     return (hwInfo.platform.usRevId < REVISION_B);
 }
 

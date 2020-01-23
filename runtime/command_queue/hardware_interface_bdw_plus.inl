@@ -115,6 +115,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -122,6 +123,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
+        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
@@ -129,8 +131,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         preemptionMode,
         walkerCmd,
         nullptr,
-        true,
-        isCcsUsed);
+        true);
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,

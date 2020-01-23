@@ -766,6 +766,7 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, pKernel->getSurfaceStateHeap());
 
     program.setConstantSurface(nullptr);
     delete pKernel;
@@ -1014,6 +1015,7 @@ TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGloba
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, pKernel->getSurfaceStateHeap());
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
@@ -1188,6 +1190,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, pKernel->getSurfaceStateHeap());
 
     program.setConstantSurface(nullptr);
     delete pKernel;
@@ -2934,6 +2937,60 @@ TEST(KernelTest, GivenDifferentValuesWhenSetKernelExecutionTypeIsCalledThenCorre
     retVal = kernel.setKernelExecutionType(CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+}
+
+TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsAdded) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    MockKernelWithInternals mockKernel(*device);
+    SPatchThreadPayload threadPayload = {};
+
+    threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
+    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+
+    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+
+    mockKernel.mockKernel->setStartOffset(128);
+    auto offset = mockKernel.mockKernel->getKernelStartOffset(false, true, false);
+    EXPECT_EQ(allocationOffset + 256u, offset);
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+}
+
+TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsNotAdded) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    MockKernelWithInternals mockKernel(*device);
+    SPatchThreadPayload threadPayload = {};
+
+    threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
+    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+
+    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+
+    mockKernel.mockKernel->setStartOffset(128);
+    auto offset = mockKernel.mockKernel->getKernelStartOffset(true, true, false);
+    EXPECT_EQ(allocationOffset + 128u, offset);
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
+}
+
+TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsNotAdded) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    MockKernelWithInternals mockKernel(*device);
+    SPatchThreadPayload threadPayload = {};
+
+    threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
+    mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
+
+    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+
+    mockKernel.mockKernel->setStartOffset(128);
+    auto offset = mockKernel.mockKernel->getKernelStartOffset(false, false, false);
+    EXPECT_EQ(allocationOffset + 128u, offset);
+    device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
 
 namespace NEO {

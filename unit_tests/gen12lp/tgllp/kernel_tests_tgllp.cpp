@@ -12,9 +12,9 @@
 
 using namespace NEO;
 
-using HardwareCommandsGen12LpTests = ::testing::Test;
+using KernelTgllpTests = ::testing::Test;
 
-TGLLPTEST_F(HardwareCommandsGen12LpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenSettingKernelStartOffsetThenAdditionalOffsetIsSet) {
+TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenSettingKernelStartOffsetThenAdditionalOffsetIsSet) {
     const uint64_t defaultKernelStartOffset = 0;
     const uint64_t additionalOffsetDueToFfid = 0x1234;
     SPatchThreadPayload threadPayload{};
@@ -30,9 +30,7 @@ TGLLPTEST_F(HardwareCommandsGen12LpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroun
         mockKernelWithInternals.kernelInfo.patchInfo.threadPayload = &threadPayload;
 
         for (auto isCcsUsed : ::testing::Bool()) {
-            uint64_t kernelStartOffset = defaultKernelStartOffset;
-            HardwareCommandsHelper<FamilyType>::setKernelStartOffset(kernelStartOffset, false, mockKernelWithInternals.kernelInfo, false,
-                                                                     false, *mockKernelWithInternals.mockKernel, isCcsUsed);
+            uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed);
 
             if (stepping < REVISION_B && isCcsUsed) {
                 EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);

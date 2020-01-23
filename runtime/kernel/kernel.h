@@ -147,8 +147,7 @@ class Kernel : public BaseObject<_cl_kernel> {
                            size_t *paramValueSizeRet) const;
 
     const void *getKernelHeap() const;
-    const void *getSurfaceStateHeap() const;
-    void *getSurfaceStateHeap();
+    void *getSurfaceStateHeap() const;
     const void *getDynamicStateHeap() const;
 
     size_t getKernelHeapSize() const;
@@ -403,6 +402,11 @@ class Kernel : public BaseObject<_cl_kernel> {
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
                                    size_t *localWorkSize);
     uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize) const;
+
+    uint64_t getKernelStartOffset(
+        const bool localIdsGenerationByRuntime,
+        const bool kernelUsesLocalIds,
+        const bool isCssUsed) const;
 
   protected:
     struct ObjectCounts {

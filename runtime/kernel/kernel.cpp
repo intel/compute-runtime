@@ -776,11 +776,7 @@ void Kernel::setStartOffset(uint32_t offset) {
     this->startOffset = offset;
 }
 
-const void *Kernel::getSurfaceStateHeap() const {
-    return kernelInfo.usesSsh ? pSshLocal.get() : nullptr;
-}
-
-void *Kernel::getSurfaceStateHeap() {
+void *Kernel::getSurfaceStateHeap() const {
     return kernelInfo.usesSsh ? pSshLocal.get() : nullptr;
 }
 
@@ -2403,6 +2399,33 @@ void Kernel::setReflectionSurfaceBlockBtOffset(uint32_t blockID, uint32_t offset
 
 bool Kernel::checkIfIsParentKernelAndBlocksUsesPrintf() {
     return isParentKernel && getProgram()->getBlockKernelManager()->getIfBlockUsesPrintf();
+}
+
+uint64_t Kernel::getKernelStartOffset(
+    const bool localIdsGenerationByRuntime,
+    const bool kernelUsesLocalIds,
+    const bool isCssUsed) const {
+
+    uint64_t kernelStartOffset = 0;
+
+    if (kernelInfo.getGraphicsAllocation()) {
+        kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+        if (localIdsGenerationByRuntime == false && kernelUsesLocalIds == true) {
+            DEBUG_BREAK_IF(kernelInfo.patchInfo.threadPayload->OffsetToSkipPerThreadDataLoad != 128);
+            kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipPerThreadDataLoad;
+        }
+    }
+
+    kernelStartOffset += getStartOffset();
+
+    auto &hardwareInfo = getDevice().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    if (isCssUsed && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
+        kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
+    }
+
+    return kernelStartOffset;
 }
 
 } // namespace NEO

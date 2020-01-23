@@ -62,7 +62,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
         auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
         auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
-        if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && HwHelperHw<FamilyType>::isOffsetToSkipSetFFIDGPWARequired(pKernel->getDevice().getHardwareInfo())) {
+
+        auto &hardwareInfo = pKernel->getDevice().getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+        if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
             kernelIsaAddress += pKernel->getKernelInfo().patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
         }
 
@@ -104,7 +108,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 
             uint64_t blockKernelAddress = ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer();
             uint64_t expectedBlockKernelAddress = pBlockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
-            if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && HwHelperHw<FamilyType>::isOffsetToSkipSetFFIDGPWARequired(pKernel->getDevice().getHardwareInfo())) {
+
+            auto &hardwareInfo = pKernel->getDevice().getHardwareInfo();
+            auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+            if (EngineHelpers::isCcs(pCmdQ->getGpgpuEngine().osContext->getEngineType()) && hwHelper.isOffsetToSkipSetFFIDGPWARequired(hardwareInfo)) {
                 expectedBlockKernelAddress += pBlockInfo->patchInfo.threadPayload->OffsetToSkipSetFFIDGP;
             }
 
