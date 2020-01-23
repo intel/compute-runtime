@@ -209,14 +209,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         gmms[handleId] = gmm;
     }
 
-    void setAdditionalData(void *data) {
-        additionalData = data;
-    }
-
-    void *getAdditionalData() const {
-        return additionalData;
-    }
-
     uint32_t getNumHandles() const { return storageInfo.getNumHandles(); }
     uint32_t getUsedPageSize() const;
 
@@ -285,7 +277,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     size_t size = 0;
     void *cpuPtr = nullptr;
     void *lockedPtr = nullptr;
-    void *additionalData = nullptr;
 
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;

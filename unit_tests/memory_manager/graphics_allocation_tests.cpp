@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,20 +10,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAdditionalDataIsSetToNull) {
-    MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull);
-    EXPECT_EQ(graphicsAllocation.getAdditionalData(), nullptr);
-}
-
-TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenSetAdditionalDataThenAdditionalDataIsSetCorrectly) {
-    MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull);
-    uint32_t dataToCheck = 32u;
-
-    graphicsAllocation.setAdditionalData(&dataToCheck);
-
-    EXPECT_EQ(*static_cast<uint32_t *>(graphicsAllocation.getAdditionalData()), dataToCheck);
-}
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
     MockGraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull);
