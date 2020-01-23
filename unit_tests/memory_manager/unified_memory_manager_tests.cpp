@@ -580,7 +580,7 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedAsWriteBufferSourceThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -608,13 +608,18 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedAsWr
 
     EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
 
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
+    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
     status = clMemFreeINTEL(clContext, hostMemory);
     ASSERT_EQ(CL_SUCCESS, status);
     clReleaseCommandQueue(commandQueue);
 }
-TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenItIsPassedToWriteBufferAsSourceThenErrorIsReturned) {
+TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenErrorIsReturned) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -633,6 +638,9 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenItIsPassedToWr
     status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, status);
 
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
+    ASSERT_EQ(CL_INVALID_OPERATION, status);
+
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
     status = clMemFreeINTEL(clContext, deviceMemory);
@@ -640,7 +648,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenItIsPassedToWr
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenWriteBufferTranfserSizeWhenTransferCallIsEmittedThenErrorIsReturned) {
+TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -660,6 +668,9 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenWriteB
     status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, status);
 
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
+    ASSERT_EQ(CL_INVALID_OPERATION, status);
+
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
     status = clMemFreeINTEL(clContext, hostMemory);
@@ -667,7 +678,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenWriteB
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryWhenPointerIsUsedAsWriteBufferSourceThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(0);
 
@@ -697,6 +708,11 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryW
 
     EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
 
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
+    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
     status = clMemFreeINTEL(clContext, sharedMemory);
@@ -704,7 +720,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryW
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithLocalMemoryWhenPointerIsUsedAsWriteBufferSourceThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(1);
 
@@ -736,6 +752,11 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithLocalMemoryWhen
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
 
     EXPECT_EQ(2u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+
+    status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
+    EXPECT_EQ(3u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
