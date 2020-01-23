@@ -7,6 +7,7 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/options.h"
 #include "core/helpers/windows/gmm_callbacks.h"
@@ -18,7 +19,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/helpers/built_ins_helper.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/os_context_win.h"

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/command_stream/csr_definitions.h"
 #include "core/helpers/preamble_bdw_plus.inl"
-#include "runtime/command_stream/csr_definitions.h"
 
 namespace NEO {
 

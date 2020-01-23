@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/command_stream/csr_definitions.h"
 #include "core/helpers/preamble_bdw_plus.inl"
-#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/gen12lp/helpers_gen12lp.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 

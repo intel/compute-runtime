@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,9 +46,9 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
 
-        event1 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, Event::eventNotReady, Event::eventNotReady);
-        event2 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, Event::eventNotReady, Event::eventNotReady);
-        event3 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, Event::eventNotReady, Event::eventNotReady);
+        event1 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+        event2 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+        event3 = new NiceMock<MyEvent>(nullptr, CL_COMMAND_BARRIER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
     }
 
     void TearDown() override {
@@ -85,7 +85,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventsWhenListIsProcessedThenUpdateExecutio
 }
 
 TEST_F(AsyncEventsHandlerTests, updateEventsRefInternalCount) {
-    event1->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
 
     handler->registerEvent(event1);
     EXPECT_EQ(2, event1->getRefInternalCount());
@@ -96,7 +96,7 @@ TEST_F(AsyncEventsHandlerTests, updateEventsRefInternalCount) {
 
 TEST_F(AsyncEventsHandlerTests, givenNotCalledCallbacksWhenListIsProcessedThenDontUnregister) {
     int submittedCounter(0), completeCounter(0);
-    event1->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &submittedCounter);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &completeCounter);
     handler->registerEvent(event1);
@@ -156,7 +156,7 @@ TEST_F(AsyncEventsHandlerTests, givenExternallSynchronizedEventWhenListIsProcess
 }
 
 TEST_F(AsyncEventsHandlerTests, givenDoubleRegisteredEventWhenListIsProcessedAndNoCallbacksToProcessThenUnregister) {
-    event1->setTaskStamp(Event::eventNotReady - 1, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady - 1, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     handler->registerEvent(event1);
     handler->registerEvent(event1);
@@ -169,8 +169,8 @@ TEST_F(AsyncEventsHandlerTests, givenDoubleRegisteredEventWhenListIsProcessedAnd
 
 TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenDestructingThenUnreferenceAll) {
     auto myHandler = new MockHandler();
-    event1->setTaskStamp(Event::eventNotReady, 0);
-    event2->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
+    event2->setTaskStamp(CompletionStamp::levelNotReady, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
 
@@ -193,8 +193,8 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenDestructingTh
 }
 
 TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenAsyncExecutionInterruptedThenUnreferenceAll) {
-    event1->setTaskStamp(Event::eventNotReady, 0);
-    event2->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
+    event2->setTaskStamp(CompletionStamp::levelNotReady, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
 
@@ -224,7 +224,7 @@ TEST_F(AsyncEventsHandlerTests, dontCreateThreadByDefault) {
 }
 
 TEST_F(AsyncEventsHandlerTests, createThreadOnFirstRegister) {
-    event1->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
 
     EXPECT_FALSE(handler->openThreadCalled);
     handler->registerEvent(event1);
@@ -234,8 +234,8 @@ TEST_F(AsyncEventsHandlerTests, createThreadOnFirstRegister) {
 TEST_F(AsyncEventsHandlerTests, processAsynchronously) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
 
-    event1->setTaskStamp(Event::eventNotReady, 0);
-    event2->setTaskStamp(Event::eventNotReady, 0);
+    event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
+    event2->setTaskStamp(CompletionStamp::levelNotReady, 0);
 
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
     event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);

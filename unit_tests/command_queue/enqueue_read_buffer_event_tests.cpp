@@ -223,7 +223,7 @@ TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndEventN
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 4);
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 4);
 
     cl_bool blockingRead = CL_FALSE;
     size_t size = sizeof(cl_float);
@@ -247,8 +247,8 @@ TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndEventN
     ASSERT_NE(nullptr, event);
 
     auto pEvent = (Event *)event;
-    EXPECT_EQ(Event::eventNotReady, pEvent->taskLevel);
-    EXPECT_EQ(Event::eventNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pEvent->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
     event1.taskLevel = 20;
     event1.setStatus(CL_COMPLETE);
     pEvent->updateExecutionStatus();

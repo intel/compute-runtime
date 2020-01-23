@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/flush_stamp.h"
 #include "runtime/command_stream/submissions_aggregator.h"
 #include "runtime/event/event.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"

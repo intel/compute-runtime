@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,14 +46,14 @@ void EventsTracker::dumpQueue(CommandQueue *cmdQ, std::ostream &out, CmdqSet &du
     out << label(cmdQ) << "[label=\"{------CmdQueue, ptr=" << cmdQ << "------|task count=";
     auto taskCount = cmdQ->taskCount;
     auto taskLevel = cmdQ->taskLevel;
-    if (taskCount == Event::eventNotReady) {
+    if (taskCount == CompletionStamp::levelNotReady) {
         out << "NOT_READY";
     } else {
         out << taskCount;
     }
 
     out << ", level=";
-    if (taskLevel == Event::eventNotReady) {
+    if (taskLevel == CompletionStamp::levelNotReady) {
         out << "NOT_READY";
     } else {
         out << taskLevel;
@@ -96,14 +96,14 @@ void EventsTracker::dumpNode(Event *node, std::ostream &out, const EventIdMap &e
                                                                                                  "|"
         << commandType << "|" << status[statusId] << "|"
                                                      "task count=";
-    if (taskCount == Event::eventNotReady) {
+    if (taskCount == CompletionStamp::levelNotReady) {
         out << "NOT_READY";
     } else {
         out << taskCount;
     }
 
     out << ", level=";
-    if (taskLevel == Event::eventNotReady) {
+    if (taskLevel == CompletionStamp::levelNotReady) {
         out << "NOT_READY";
     } else {
         out << taskLevel;

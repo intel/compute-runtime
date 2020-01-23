@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,5 +15,8 @@ struct CompletionStamp {
     uint32_t taskCount;
     uint32_t taskLevel;
     FlushStamp flushStamp;
+
+    static const uint32_t levelNotReady;
 };
+
 } // namespace NEO

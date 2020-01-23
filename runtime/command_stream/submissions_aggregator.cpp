@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "submissions_aggregator.h"
 
+#include "core/helpers/flush_stamp.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/helpers/flush_stamp.h"
 
 void NEO::SubmissionAggregator::recordCommandBuffer(CommandBuffer *commandBuffer) {
     this->cmdBuffers.pushTailOne(*commandBuffer);

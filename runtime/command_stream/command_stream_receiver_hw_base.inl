@@ -11,6 +11,7 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/cache_policy.h"
+#include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
 #include "core/helpers/preamble.h"
@@ -19,17 +20,13 @@
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/device/device.h"
-#include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
-#include "runtime/helpers/flush_stamp.h"
-#include "runtime/helpers/state_compute_mode_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -146,7 +143,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
-    DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
+    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::levelNotReady);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
 

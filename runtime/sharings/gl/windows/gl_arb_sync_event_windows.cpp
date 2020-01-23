@@ -18,7 +18,7 @@
 
 namespace NEO {
 GlArbSyncEvent::GlArbSyncEvent(Context &context)
-    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, eventNotReady, eventNotReady),
+    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady),
       glSyncInfo(std::make_unique<CL_GL_SYNC_INFO>()) {
 }
 

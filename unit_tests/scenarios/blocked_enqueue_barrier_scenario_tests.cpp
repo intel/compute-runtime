@@ -38,14 +38,14 @@ HWTEST_F(BarrierScenarioTest, givenBlockedEnqueueBarrierOnOOQWhenUserEventIsUnbl
     retVal = clEnqueueBarrierWithWaitList(clCommandQ, 1, &eventBlocking, nullptr);
     EXPECT_EQ(success, retVal);
 
-    EXPECT_EQ(Event::eventNotReady, mockCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, mockCmdQ->taskLevel);
     EXPECT_NE(nullptr, mockCmdQ->virtualEvent);
 
     clSetUserEventStatus(eventBlocking, CL_COMPLETE);
     userEvent->release();
 
     mockCmdQ->isQueueBlocked();
-    EXPECT_NE(Event::eventNotReady, mockCmdQ->taskLevel);
+    EXPECT_NE(CompletionStamp::levelNotReady, mockCmdQ->taskLevel);
     EXPECT_EQ(nullptr, mockCmdQ->virtualEvent);
 
     retVal = clEnqueueNDRangeKernel(clCommandQ, clKernel, 1, offset, gws, nullptr, 0, nullptr, nullptr);

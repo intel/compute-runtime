@@ -275,14 +275,14 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerForMarkerOnBlockedQueueThenTask
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
 
     // put queue into initial blocked state
-    mockCmdQ->taskLevel = Event::eventNotReady;
+    mockCmdQ->taskLevel = CompletionStamp::levelNotReady;
 
     mockCmdQ->enqueueMarkerWithWaitList(
         0,
         nullptr,
         nullptr);
 
-    EXPECT_EQ(Event::eventNotReady, mockCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, mockCmdQ->taskLevel);
 }
 
 HWTEST_F(EnqueueHandlerTest, WhenEnqueuingBlockedWithoutReturnEventThenVirtualEventIsCreatedAndCommandQueueInternalRefCountIsIncremeted) {
@@ -296,7 +296,7 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingBlockedWithoutReturnEventThenVirtualEv
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     // put queue into initial blocked state
-    mockCmdQ->taskLevel = Event::eventNotReady;
+    mockCmdQ->taskLevel = CompletionStamp::levelNotReady;
 
     auto initialRefCountInternal = mockCmdQ->getRefInternalCount();
 
@@ -330,7 +330,7 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingBlockedThenVirtualEventIsSetAsCurrentC
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
     // put queue into initial blocked state
-    mockCmdQ->taskLevel = Event::eventNotReady;
+    mockCmdQ->taskLevel = CompletionStamp::levelNotReady;
 
     bool blocking = false;
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,

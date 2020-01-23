@@ -7,6 +7,7 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
 #include "core/memory_manager/allocations_list.h"
@@ -17,7 +18,6 @@
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/kernel.h"

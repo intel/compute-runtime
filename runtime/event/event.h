@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/flush_stamp.h"
 #include "core/os_interface/os_time.h"
 #include "core/utilities/arrayref.h"
 #include "core/utilities/idlist.h"
@@ -13,7 +14,6 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/os_interface/performance_counters.h"
 
@@ -78,7 +78,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     };
 
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
-    static const cl_uint eventNotReady;
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);
@@ -244,13 +243,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
 
     void updateTaskCount(uint32_t taskCount) {
-        if (taskCount == Event::eventNotReady) {
+        if (taskCount == CompletionStamp::levelNotReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
         uint32_t prevTaskCount = this->taskCount.exchange(taskCount);
-        if ((prevTaskCount != Event::eventNotReady) && (prevTaskCount > taskCount)) {
+        if ((prevTaskCount != CompletionStamp::levelNotReady) && (prevTaskCount > taskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
         }
@@ -322,7 +321,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
     MOCKABLE_VIRTUAL void synchronizeTaskCount() {
-        while (this->taskCount == Event::eventNotReady)
+        while (this->taskCount == CompletionStamp::levelNotReady)
             ;
     };
 

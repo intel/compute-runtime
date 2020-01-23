@@ -105,7 +105,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
     MockBaseEvent *getBaseEvent() {
         if (baseEvent == nullptr) {
             triggerEvent = new UserEvent(ctx.get());
-            baseEvent = new MockBaseEvent(cmdQ.get(), CL_COMMAND_RELEASE_GL_OBJECTS, Event::eventNotReady, Event::eventNotReady);
+            baseEvent = new MockBaseEvent(cmdQ.get(), CL_COMMAND_RELEASE_GL_OBJECTS, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
             triggerEvent->addChild(*baseEvent);
         }
         return baseEvent;
@@ -229,7 +229,7 @@ TEST_F(GlArbSyncEventTest, whenGlArbSyncEventGetsUnblockedBySubmittedOrCompleted
 }
 
 TEST_F(GlArbSyncEventTest, whenGlArbSyncEventIsCreatedFromBaseEventWithoutValidContextThenCreationFails) {
-    Event *baseEvent = new Event(nullptr, CL_COMMAND_RELEASE_GL_OBJECTS, Event::eventNotReady, Event::eventNotReady);
+    Event *baseEvent = new Event(nullptr, CL_COMMAND_RELEASE_GL_OBJECTS, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
     auto *arbEvent = GlArbSyncEvent::create(*baseEvent);
     EXPECT_EQ(nullptr, arbEvent);
     baseEvent->release();

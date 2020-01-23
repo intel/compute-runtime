@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,8 +109,8 @@ TEST(EventsTracker, givenAlreadyDumpedCmdqThenNotDumping) {
 
 TEST(EventsTracker, givenCmqdWithTaskCountAndLevelNotReadyThenDumpingCmdqWithNotReadyLabels) {
     CommandQueue cmdq;
-    cmdq.taskCount = Event::eventNotReady;
-    cmdq.taskLevel = Event::eventNotReady;
+    cmdq.taskCount = CompletionStamp::levelNotReady;
+    cmdq.taskLevel = CompletionStamp::levelNotReady;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
@@ -155,8 +155,8 @@ TEST(EventsTracker, whenCallDumpEdgeThenGetStringWithProperLabelOfDumpedEdge) {
 
 TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNotReadyLabels) {
     UserEvent uEvent;
-    uEvent.taskLevel = Event::eventNotReady;
-    uEvent.updateTaskCount(Event::eventNotReady);
+    uEvent.taskLevel = CompletionStamp::levelNotReady;
+    uEvent.updateTaskCount(CompletionStamp::levelNotReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -201,7 +201,7 @@ TEST(EventsTracker, givenNullptrEventThenNotDumpingNode) {
 
 TEST(EventsTracker, givenEventAndUserEventThenDumpingNodeWithProperLabels) {
     UserEvent uEvent;
-    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, Event::eventNotReady);
+    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -264,7 +264,7 @@ TEST(EventsTracker, givenEventWithCallbackThenDumpingWithProperLabel) {
 }
 
 TEST(EventsTracker, givenSubmittedEventThenDumpingWithProperLabel) {
-    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, Event::eventNotReady);
+    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -482,7 +482,7 @@ TEST(EventsTracker, givenTwoEventsWithSamePtrWhenFirstOneIsDeletedThenDumpingFir
 }
 
 TEST(EventsTracker, whenNotifyCreationOfEventThenEventIsDumped) {
-    Event event(nullptr, CL_COMMAND_USER, Event::eventNotReady, Event::eventNotReady);
+    Event event(nullptr, CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
     EventsTrackerMock evTrackerMock;
 
     std::stringstream expected;
@@ -624,7 +624,7 @@ TEST(EventsTracker, whenEventsDebugEnableFlagIsTrueAndCreateOrChangeStatusOrDest
     EventsTrackerMock evTrackerMock;
     evTrackerMock.overrideGlobal();
 
-    Event *ev = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, Event::eventNotReady);
+    Event *ev = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
 
     std::stringstream expected;
     expected << "digraph events_registry_" << &EventsTracker::getEventsTracker() << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";

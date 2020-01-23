@@ -95,7 +95,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
         while (true) {
             pCmdQ->takeOwnership();
 
-            if (pCmdQ->taskLevel == Event::eventNotReady) {
+            if (pCmdQ->taskLevel == CompletionStamp::levelNotReady) {
                 pCmdQ->releaseOwnership();
                 break;
             }

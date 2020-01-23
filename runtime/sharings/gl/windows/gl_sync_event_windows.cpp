@@ -20,7 +20,7 @@
 
 namespace NEO {
 GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)
-    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, eventNotReady, eventNotReady),
+    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady),
       glSync(std::make_unique<GL_CL_SYNC_INFO>(sync)) {
     transitionExecutionStatus(CL_SUBMITTED);
 }
@@ -57,6 +57,6 @@ uint32_t GlSyncEvent::getTaskLevel() {
     if (peekExecutionStatus() == CL_COMPLETE) {
         return 0;
     }
-    return Event::eventNotReady;
+    return CompletionStamp::levelNotReady;
 }
 } // namespace NEO

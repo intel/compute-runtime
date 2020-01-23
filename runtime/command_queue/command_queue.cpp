@@ -134,7 +134,7 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
 
 bool CommandQueue::isCompleted(uint32_t taskCount) const {
     uint32_t tag = getHwTag();
-    DEBUG_BREAK_IF(tag == Event::eventNotReady);
+    DEBUG_BREAK_IF(tag == CompletionStamp::levelNotReady);
     return tag >= taskCount;
 }
 
@@ -284,7 +284,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
 void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionStamp) {
     DEBUG_BREAK_IF(this->taskLevel > completionStamp.taskLevel);
     DEBUG_BREAK_IF(this->taskCount > completionStamp.taskCount);
-    if (completionStamp.taskCount != Event::eventNotReady) {
+    if (completionStamp.taskCount != CompletionStamp::levelNotReady) {
         taskCount = completionStamp.taskCount;
     }
     flushStamp->setStamp(completionStamp.flushStamp);

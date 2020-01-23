@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/csr_definitions.h"
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/address_patch.h"
@@ -14,7 +15,6 @@
 #include "core/helpers/string.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "runtime/command_queue/local_id_gen.h"
-#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/block_kernel_manager.h"

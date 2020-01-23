@@ -17,8 +17,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/device_helpers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
@@ -29,8 +27,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.inl

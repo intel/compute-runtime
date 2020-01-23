@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/helpers/dirty_state_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/helpers/dirty_state_helpers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"

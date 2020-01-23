@@ -175,7 +175,7 @@ TEST(CommandQueue, givenTimeStampWithTaskCountNotReadyStatusWhenupdateFromComple
     cmdQ.taskCount = 1u;
 
     CompletionStamp cs = {
-        Event::eventNotReady,
+        CompletionStamp::levelNotReady,
         0,
         0};
     cmdQ.updateFromCompletionStamp(cs);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ void EventBuilder::finalize() {
 
             //do not add as child if:
             //parent has no parents and is not blocked
-            if (!(parent->peekIsBlocked() == false && parent->taskLevel != Event::eventNotReady) ||
+            if (!(parent->peekIsBlocked() == false && parent->taskLevel != CompletionStamp::levelNotReady) ||
                 (!parent->isEventWithoutCommand() && !parent->peekIsCmdSubmitted())) {
                 parent->addChild(*this->event);
             }

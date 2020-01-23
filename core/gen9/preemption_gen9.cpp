@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/command_stream/csr_definitions.h"
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/preemption.inl"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/csr_definitions.h"
 
 #include <cstring>
 

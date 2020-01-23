@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/command_stream/csr_definitions.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/state_base_address.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"

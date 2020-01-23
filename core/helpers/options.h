@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ struct HardwareInfo;
 extern const char *folderAUB;
 
 // Initial value for HW tag
-// Set to 0 if using HW or simulator, otherwise 0xFFFFFF00, needs to be lower then Event::EventNotReady.
+// Set to 0 if using HW or simulator, otherwise 0xFFFFFF00, needs to be lower then CompletionStamp::levelNotReady.
 extern uint32_t initialHardwareTag;
 
 // Number of devices in the platform
