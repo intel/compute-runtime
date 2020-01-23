@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -289,7 +289,7 @@ Kernel-scope data (<kname> is replaced by corresponding kernel's name):
   - <kname>_KernelHeap.asm       - list of instructions describing
                                    the kernel function (text file)
 
-Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>]
+Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>] [-ignore_isa_padding]
   -file <file>              Input file to be disassembled.
                             This file should be an Intel OpenCL GPU device binary.
 
@@ -310,6 +310,9 @@ Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [
                             a generation - i.e. both skl and kbl will
                             fallback to skl. If specific product (e.g. kbl)
                             is needed, provide it as device_type.
+
+  -ignore_isa_padding       Ignores Kernel Heap padding - Kernel Heap binary
+                            will be saved without padding.
 
   --help                    Print this usage message.
 
@@ -349,7 +352,7 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
 }
 
 void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
-    uint32_t KernelNameSize = 0, KernelPatchListSize = 0, KernelHeapSize = 0, KernelUnpaddedSize = 0,
+    uint32_t KernelNameSize = 0, KernelPatchListSize = 0, KernelHeapSize = 0, KernelHeapUnpaddedSize = 0,
              GeneralStateHeapSize = 0, DynamicStateHeapSize = 0, SurfaceStateHeapSize = 0;
     ptmFile << "KernelBinaryHeader:\n";
     for (const auto &v : kernelHeader.fields) {
@@ -360,7 +363,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
         else if (v.name == "KernelHeapSize")
             KernelHeapSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "KernelUnpaddedSize")
-            KernelUnpaddedSize = readUnaligned<uint32_t>(ptr);
+            KernelHeapUnpaddedSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "GeneralStateHeapSize")
             GeneralStateHeapSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "DynamicStateHeapSize")
@@ -384,10 +387,14 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     std::string fileName = pathToDump + kernelName + "_KernelHeap";
     messagePrinter.printf("Trying to disassemble %s.krn\n", kernelName.c_str());
     std::string disassembledKernel;
-    if (iga->tryDisassembleGenISA(ptr, KernelUnpaddedSize, disassembledKernel)) {
+    if (iga->tryDisassembleGenISA(ptr, KernelHeapUnpaddedSize, disassembledKernel)) {
         writeDataToFile((fileName + ".asm").c_str(), disassembledKernel.data(), disassembledKernel.size());
     } else {
-        writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapSize);
+        if (ignoreIsaPadding) {
+            writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapUnpaddedSize);
+        } else {
+            writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapSize);
+        }
     }
     ptr = ptrOffset(ptr, KernelHeapSize);
 
@@ -435,7 +442,7 @@ void BinaryDecoder::readPatchTokens(void *&patchListPtr, uint32_t patchListSize,
         if (patchTokens.count(token) > 0) {
             uint32_t fieldsSize = 0;
             for (const auto &v : patchTokens[(token)]->fields) {
-                if ((fieldsSize += v.size) > (Size - sizeof(uint32_t) * 2)) {
+                if ((fieldsSize += static_cast<uint32_t>(v.size)) > (Size - sizeof(uint32_t) * 2)) {
                     break;
                 }
                 if (v.name == "InlineDataSize") { // Because InlineData field value is not added to PT size
@@ -494,21 +501,27 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
         return -1;
     }
 
-    for (uint32_t i = 2; i < argc - 1; ++i) {
-        if (!strcmp(argv[i], "-file")) {
-            binaryFile = std::string(argv[++i]);
-        } else if (!strcmp(argv[i], "-device")) {
-            iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
-        } else if (!strcmp(argv[i], "-patch")) {
-            pathToPatch = std::string(argv[++i]);
-            addSlash(pathToPatch);
-        } else if (!strcmp(argv[i], "-dump")) {
-            pathToDump = std::string(argv[++i]);
-            addSlash(pathToDump);
+    for (uint32_t i = 2; i < argc; ++i) {
+        if (i < argc - 1) {
+            if (!strcmp(argv[i], "-file")) {
+                binaryFile = std::string(argv[++i]);
+            } else if (!strcmp(argv[i], "-device")) {
+                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
+            } else if (!strcmp(argv[i], "-patch")) {
+                pathToPatch = std::string(argv[++i]);
+                addSlash(pathToPatch);
+            } else if (!strcmp(argv[i], "-dump")) {
+                pathToDump = std::string(argv[++i]);
+                addSlash(pathToDump);
+            }
         } else {
-            messagePrinter.printf("Unknown argument %s\n", argv[i]);
-            printHelp();
-            return -1;
+            if (!strcmp(argv[i], "-ignore_isa_padding")) {
+                ignoreIsaPadding = true;
+            } else {
+                messagePrinter.printf("Unknown argument %s\n", argv[i]);
+                printHelp();
+                return -1;
+            }
         }
     }
     if (binaryFile.find(".bin") == std::string::npos) {

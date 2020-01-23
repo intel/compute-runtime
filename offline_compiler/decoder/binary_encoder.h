@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class BinaryEncoder {
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
+    bool ignoreIsaPadding = false;
     std::string pathToDump, elfName;
     MessagePrinter messagePrinter;
     std::unique_ptr<IgaWrapper> iga;

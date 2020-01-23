@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ class BinaryDecoder {
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
+    bool ignoreIsaPadding = false;
     BinaryHeader programHeader, kernelHeader;
     CLElfLib::ElfBinaryStorage binary;
     std::unique_ptr<IgaWrapper> iga;
