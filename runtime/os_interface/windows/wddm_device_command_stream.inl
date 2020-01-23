@@ -134,9 +134,11 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
     ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
 
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(TT_TYPE::AUXTT, &ttCallbacks);
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(executionEnvironment.getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);
-    this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->pageTableManager.reset(gmmPageTableMngr);
+    rootDeviceEnvironment->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;
 }
 

@@ -8,8 +8,8 @@
 #include "core/gmm_helper/page_table_mngr.h"
 
 namespace NEO {
-GmmPageTableMngr *GmmPageTableMngr::create(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    return new GmmPageTableMngr(translationTableFlags, translationTableCb);
+GmmPageTableMngr *GmmPageTableMngr::create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+    return new GmmPageTableMngr(clientContext, translationTableFlags, translationTableCb);
 }
 
 } // namespace NEO

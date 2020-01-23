@@ -12,8 +12,7 @@
 #include "gmm_client_context.h"
 
 namespace NEO {
-GmmPageTableMngr::GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = platform()->peekGmmClientContext()->getHandle();
+GmmPageTableMngr::GmmPageTableMngr(GmmClientContext *gmmClientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) : clientContext(gmmClientContext->getHandle()) {
     pageTableManager = clientContext->CreatePageTblMgrObject(translationTableFlags);
 }
 

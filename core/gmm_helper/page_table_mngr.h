@@ -15,12 +15,13 @@
 
 namespace NEO {
 class Gmm;
+class GmmClientContext;
 class LinearStream;
 class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
 
-    static GmmPageTableMngr *create(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    static GmmPageTableMngr *create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
     MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle);
 
@@ -38,7 +39,7 @@ class GmmPageTableMngr {
         return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
     }
 
-    GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    GmmPageTableMngr(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
 };
