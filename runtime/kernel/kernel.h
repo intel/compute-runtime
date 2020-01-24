@@ -345,6 +345,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t getThreadArbitrationPolicy() const {
         return threadArbitrationPolicy;
     }
+    KernelExecutionType getExecutionType() const {
+        return executionType;
+    }
+    bool isUsingSyncBuffer() const {
+        return (kernelInfo.patchInfo.pAllocateSyncBuffer != nullptr);
+    }
 
     bool checkIfIsParentKernelAndBlocksUsesPrintf();
 

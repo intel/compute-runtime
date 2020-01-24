@@ -3143,7 +3143,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (pKernel->getKernelInfo().patchInfo.pAllocateSyncBuffer != nullptr) {
+    if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
+        pKernel->isUsingSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
         return retVal;
@@ -5330,24 +5331,34 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
     }
 
     size_t globalWorkSize[3];
-    size_t requestedNumberOfWorkgroups = 1;
     for (size_t i = 0; i < workDim; i++) {
         globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
-        requestedNumberOfWorkgroups *= workgroupCount[i];
     }
 
-    size_t maximalNumberOfWorkgroupsAllowed = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
-    if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
-        retVal = CL_INVALID_VALUE;
-        return retVal;
+    if (pKernel->getExecutionType() == KernelExecutionType::Concurrent) {
+        size_t requestedNumberOfWorkgroups = 1;
+        for (size_t i = 0; i < workDim; i++) {
+            requestedNumberOfWorkgroups *= workgroupCount[i];
+        }
+        size_t maximalNumberOfWorkgroupsAllowed = pKernel->getMaxWorkGroupCount(workDim, localWorkSize);
+        if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
+            retVal = CL_INVALID_VALUE;
+            return retVal;
+        }
+    }
+
+    if (pKernel->isUsingSyncBuffer()) {
+        if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
+            retVal = CL_INVALID_KERNEL;
+            return retVal;
+        }
+        platform()->clDeviceMap[&pCommandQueue->getDevice()]->allocateSyncBufferHandler();
     }
 
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyKernelSubmit(kernel, pCommandQueue);
     }
-
-    platform()->clDeviceMap[&pCommandQueue->getDevice()]->allocateSyncBufferHandler();
 
     retVal = pCommandQueue->enqueueKernel(
         kernel,

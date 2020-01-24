@@ -32,6 +32,7 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
         EnqueueHandlerTest::SetUp();
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernel = kernelInternals->mockKernel;
+        kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     }
 
@@ -53,10 +54,15 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
         return reinterpret_cast<MockSyncBufferHandler *>(pClDevice->syncBufferHandler.get());
     }
 
+    cl_int enqueueNDCount() {
+        return clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
+    }
+
     const cl_uint workDim = 1;
     const size_t gwOffset[3] = {0, 0, 0};
     const size_t lws[3] = {10, 1, 1};
     size_t workgroupCount[3] = {10, 1, 1};
+    size_t globalWorkSize[3] = {100, 1, 1};
     size_t workItemsCount = 10;
     std::unique_ptr<MockKernelWithInternals> kernelInternals;
     MockKernel *kernel;
@@ -64,10 +70,10 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
     SPatchAllocateSyncBuffer sPatchAllocateSyncBuffer;
 };
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchWhenEnqueuingKernelThenSyncBufferIsUsed) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {
     patchAllocateSyncBuffer();
-    clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
 
+    enqueueNDCount();
     auto syncBufferHandler = getSyncBufferHandler();
     EXPECT_EQ(workItemsCount, syncBufferHandler->usedBufferSize);
 
@@ -77,34 +83,53 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchWhenEnqueu
               pDevice->getUltCommandStreamReceiver<FamilyType>().latestSentTaskCount);
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenNoAllocateSyncBufferPatchWhenEnqueuingKernelThenSyncBufferIsNotUsedAndUsedBufferSizeIsNotUpdated) {
-    clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
-
-    auto syncBufferHandler = getSyncBufferHandler();
-    EXPECT_EQ(0u, syncBufferHandler->usedBufferSize);
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {
+    auto retVal = enqueueNDCount();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, getSyncBufferHandler());
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingKernelThenSuccessIsReturned) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenErrorIsReturnedAndSyncBufferIsNotCreated) {
+    patchAllocateSyncBuffer();
+    kernel->executionType = KernelExecutionType::Default;
+
+    auto retVal = enqueueNDCount();
+    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    EXPECT_EQ(nullptr, getSyncBufferHandler());
+}
+
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated) {
+    patchAllocateSyncBuffer();
+    auto retVal = enqueueNDCount();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, getSyncBufferHandler());
+}
+
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingConcurrentKernelThenSuccessIsReturned) {
     auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws);
     workgroupCount[0] = maxWorkGroupCount;
-    auto retVal = clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
+    globalWorkSize[0] = maxWorkGroupCount * lws[0];
+
+    auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingKernelThenErrorIsReturned) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingConcurrentKernelThenErrorIsReturned) {
     size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws);
     workgroupCount[0] = maxWorkGroupCount + 1;
-    auto retVal = clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
+    globalWorkSize[0] = maxWorkGroupCount * lws[0] + 1;
+
+    auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernelThenNewBufferIsAllocated) {
     patchAllocateSyncBuffer();
-    clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
-
+    enqueueNDCount();
     auto syncBufferHandler = getSyncBufferHandler();
+
     syncBufferHandler->usedBufferSize = syncBufferHandler->bufferSize;
-    clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
+    enqueueNDCount();
     EXPECT_EQ(workItemsCount, syncBufferHandler->usedBufferSize);
 }
 
@@ -126,14 +151,6 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSshRequiredWhenPatchingSyncBuffer
     kernel->patchSyncBuffer(commandQueue->getDevice(), syncBufferHandler->graphicsAllocation, syncBufferHandler->usedBufferSize);
     surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(bufferAddress, surfaceAddress);
-}
-
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenKernelUsingSyncBufferWhenUsingStandardEnqueueThenErrorIsReturned) {
-    patchAllocateSyncBuffer();
-
-    size_t globalWorkSize[3] = {workgroupCount[0] * lws[0], workgroupCount[1] * lws[1], workgroupCount[2] * lws[2]};
-    auto retVal = clEnqueueNDRangeKernel(commandQueue, kernel, workDim, gwOffset, globalWorkSize, lws, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
 TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
