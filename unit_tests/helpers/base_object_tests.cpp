@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,9 @@ class MockObjectBase : public OclObject {
     void setInvalidMagic() {
         validMagic = this->magic;
         this->magic = 0x0101010101010101LL;
+    }
+    void setInvalidIcdDispath() {
+        this->dispatch.icdDispatch = reinterpret_cast<SDispatchTable *>(this);
     }
     void setValidMagic() {
         this->magic = validMagic;
@@ -127,6 +130,14 @@ TYPED_TEST(BaseObjectWithDefaultCtorTests, castToObjectWithInvalidMagicReturnsNu
 
     object->setValidMagic();
     delete object;
+}
+
+TYPED_TEST(BaseObjectWithDefaultCtorTests, whenCastToObjectWithInvalidIcdDispatchThenReturnsNullptr) {
+    auto object = std::make_unique<MockObject<TypeParam>>();
+    object->setInvalidIcdDispath();
+
+    auto objectCasted = castToObject<TypeParam>(object.get());
+    EXPECT_EQ(nullptr, objectCasted);
 }
 
 TYPED_TEST(BaseObjectTests, retain) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,8 @@ NO_SANITIZE inline DerivedType *castToObject(typename DerivedType::BaseType *obj
     }
 
     auto derivedObject = static_cast<DerivedType *>(object);
-    if ((derivedObject->getMagic() & DerivedType::maskMagic) == DerivedType::objectMagic) {
-        DEBUG_BREAK_IF(derivedObject->dispatch.icdDispatch != &icdGlobalDispatchTable);
+    if (((derivedObject->getMagic() & DerivedType::maskMagic) == DerivedType::objectMagic) &&
+        (derivedObject->dispatch.icdDispatch == &icdGlobalDispatchTable)) {
         return derivedObject;
     }
 
