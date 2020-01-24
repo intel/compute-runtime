@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 namespace NEO {
 class GmmMemory : public GmmMemoryBase {
   public:
-    static GmmMemory *create();
+    static GmmMemory *create(GmmClientContext *gmmClientContext);
     virtual ~GmmMemory() = default;
 
   protected:
-    GmmMemory() = default;
+    using GmmMemoryBase::GmmMemoryBase;
 };
 } // namespace NEO

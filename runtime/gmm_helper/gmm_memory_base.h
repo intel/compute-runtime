@@ -11,6 +11,7 @@
 #include <memory>
 
 namespace NEO {
+class GmmClientContext;
 class GmmMemoryBase {
   public:
     virtual ~GmmMemoryBase() = default;
@@ -34,7 +35,7 @@ class GmmMemoryBase {
     MOCKABLE_VIRTUAL bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
 
   protected:
-    GmmMemoryBase();
-    GMM_CLIENT_CONTEXT *clientContext = nullptr;
+    GmmMemoryBase(GmmClientContext *gmmClientContext);
+    GMM_CLIENT_CONTEXT &clientContext;
 };
 } // namespace NEO

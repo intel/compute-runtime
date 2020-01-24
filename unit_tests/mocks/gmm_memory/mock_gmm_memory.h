@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,10 @@
 namespace NEO {
 
 class MockGmmMemory : public MockGmmMemoryBase {
+    using MockGmmMemoryBase::MockGmmMemoryBase;
 };
 
 class GmockGmmMemory : public GmockGmmMemoryBase {
+    using GmockGmmMemoryBase::GmockGmmMemoryBase;
 };
 } // namespace NEO

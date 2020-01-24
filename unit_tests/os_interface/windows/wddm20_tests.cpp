@@ -1175,7 +1175,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
 
-    auto gmockGmmMemory = new ::testing::NiceMock<GmockGmmMemory>();
+    auto gmockGmmMemory = new ::testing::NiceMock<GmockGmmMemory>(executionEnvironment->getGmmClientContext());
     ON_CALL(*gmockGmmMemory, setDeviceInfo(::testing::_))
         .WillByDefault(::testing::Return(false));
     EXPECT_CALL(*gmockGmmMemory, configureDeviceAddressSpace(::testing::_,
@@ -1195,7 +1195,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAd
     if (platformDevices[0]->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
-    auto gmmMemory = new ::testing::NiceMock<GmockGmmMemory>();
+    auto gmmMemory = new ::testing::NiceMock<GmockGmmMemory>(executionEnvironment->getGmmClientContext());
     wddm->gmmMemory.reset(gmmMemory);
     ON_CALL(*gmmMemory, configureDeviceAddressSpace(::testing::_,
                                                     ::testing::_,

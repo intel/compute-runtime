@@ -7,22 +7,20 @@
 
 #include "runtime/gmm_helper/gmm_memory_base.h"
 
-#include "core/gmm_helper/gmm_helper.h"
+#include "core/helpers/debug_helpers.h"
 #include "core/os_interface/windows/windows_defs.h"
-#include "runtime/platform/platform.h"
 
 #include "gmm_client_context.h"
 
 namespace NEO {
-GmmMemoryBase::GmmMemoryBase() {
-    clientContext = platform()->peekGmmHelper()->getClientContext()->getHandle();
+GmmMemoryBase::GmmMemoryBase(GmmClientContext *gmmClientContext) : clientContext(*gmmClientContext->getHandle()) {
 }
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,
                                                 GMM_ESCAPE_FUNC_TYPE pfnEscape,
                                                 GMM_GFX_SIZE_T SvmSize,
                                                 BOOLEAN BDWL3Coherency) {
-    return clientContext->ConfigureDeviceAddressSpace(
+    return clientContext.ConfigureDeviceAddressSpace(
                {hAdapter},
                {hDevice},
                {pfnEscape},
@@ -49,11 +47,11 @@ bool GmmMemoryBase::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
     return retVal;
 }
 uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
-    return static_cast<uintptr_t>(clientContext->GetInternalGpuVaRangeLimit());
+    return static_cast<uintptr_t>(clientContext.GetInternalGpuVaRangeLimit());
 }
 
 bool GmmMemoryBase::setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
-    auto status = clientContext->GmmSetDeviceInfo(deviceInfo);
+    auto status = clientContext.GmmSetDeviceInfo(deviceInfo);
     DEBUG_BREAK_IF(status != GMM_SUCCESS);
     return GMM_SUCCESS == status;
 }

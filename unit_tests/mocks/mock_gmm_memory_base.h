@@ -17,7 +17,7 @@ class MockGmmMemoryBase : public GmmMemory {
   public:
     ~MockGmmMemoryBase() = default;
 
-    MockGmmMemoryBase() = default;
+    MockGmmMemoryBase(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext){};
 
     bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                      GMM_ESCAPE_HANDLE hDevice,
@@ -46,7 +46,7 @@ class GmockGmmMemoryBase : public GmmMemory {
   public:
     ~GmockGmmMemoryBase() = default;
 
-    GmockGmmMemoryBase() {
+    GmockGmmMemoryBase(GmmClientContext *gmmClientContext) : GmmMemory(gmmClientContext) {
         ON_CALL(*this, getInternalGpuVaRangeLimit())
             .WillByDefault(::testing::Return(NEO::windowsMinAddress));
 

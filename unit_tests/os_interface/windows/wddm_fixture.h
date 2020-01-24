@@ -89,7 +89,7 @@ struct WddmInstrumentationGmmFixture {
     void SetUp() {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get())));
-        gmmMem = new ::testing::NiceMock<GmockGmmMemory>();
+        gmmMem = new ::testing::NiceMock<GmockGmmMemory>(executionEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
     }
     void TearDown() {

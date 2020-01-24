@@ -132,7 +132,7 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
         return false;
     }
     if (!gmmMemory) {
-        gmmMemory.reset(GmmMemory::create());
+        gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.executionEnvironment.getGmmClientContext()));
     }
 
     return configureDeviceAddressSpace();
