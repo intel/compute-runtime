@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -283,20 +283,20 @@ void SKL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo SKL::hwInfo = SKL_1x3x8::hwInfo;
-const std::string SKL::defaultHardwareInfoConfig = "1x3x8";
+const uint64_t SKL::defaultHardwareInfoConfig = 0x000100030008;
 
-void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x3x8") {
+void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100030008) {
         SKL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "2x3x8") {
+    } else if (hwInfoConfig == 0x200030008) {
         SKL_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "3x3x8") {
+    } else if (hwInfoConfig == 0x300030008) {
         SKL_3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x2x6") {
+    } else if (hwInfoConfig == 0x100020006) {
         SKL_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x3x6") {
+    } else if (hwInfoConfig == 0x100030006) {
         SKL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         SKL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -304,5 +304,5 @@ void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
     }
 }
 
-void (*SKL::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupSKLHardwareInfoImpl;
+void (*SKL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupSKLHardwareInfoImpl;
 } // namespace NEO

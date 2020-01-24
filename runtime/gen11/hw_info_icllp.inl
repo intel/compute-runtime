@@ -205,16 +205,16 @@ void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 };
 
 const HardwareInfo ICLLP::hwInfo = ICLLP_1x8x8::hwInfo;
-const std::string ICLLP::defaultHardwareInfoConfig = "1x8x8";
+const uint64_t ICLLP::defaultHardwareInfoConfig = 0x100080008;
 
-void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x8x8") {
+void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100080008) {
         ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x4x8") {
+    } else if (hwInfoConfig == 0x100040008) {
         ICLLP_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x6x8") {
+    } else if (hwInfoConfig == 0x100060008) {
         ICLLP_1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -222,5 +222,5 @@ void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-void (*ICLLP::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupICLLPHardwareInfoImpl;
+void (*ICLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupICLLPHardwareInfoImpl;
 } // namespace NEO

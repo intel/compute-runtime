@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,8 @@ const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
 };
 
 // Global table of default hardware info configs
-const std::string *defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
-    nullptr,
+uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
+    0x0,
 };
 
 // Global table of family names
@@ -38,8 +38,8 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const std::string &) = {
-    nullptr,
+void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t) = {
+    0x0,
 };
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
@@ -58,22 +58,34 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
     return ret;
 }
 
-bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareInfo &hwInfoIn) {
-    size_t currPos = hwInfoConfig.find('x', 0);
+void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn) {
+    uint32_t sliceCount = static_cast<uint16_t>(hwInfoConfig >> 32);
+    uint32_t subSlicePerSliceCount = static_cast<uint16_t>(hwInfoConfig >> 16);
+    uint32_t euPerSubSliceCount = static_cast<uint16_t>(hwInfoConfig);
+
+    hwInfoIn.gtSystemInfo.SliceCount = sliceCount;
+    hwInfoIn.gtSystemInfo.SubSliceCount = subSlicePerSliceCount * sliceCount;
+    hwInfoIn.gtSystemInfo.EUCount = euPerSubSliceCount * subSlicePerSliceCount * sliceCount;
+}
+
+bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig) {
+    hwInfoConfig = 0u;
+
+    size_t currPos = hwInfoConfigStr.find('x', 0);
     if (currPos == std::string::npos) {
         return false;
     }
-    uint32_t sliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(0, currPos)));
+    uint32_t sliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfigStr.substr(0, currPos)));
     if (sliceCount > std::numeric_limits<uint16_t>::max()) {
         return false;
     }
     size_t prevPos = currPos + 1;
 
-    currPos = hwInfoConfig.find('x', prevPos);
+    currPos = hwInfoConfigStr.find('x', prevPos);
     if (currPos == std::string::npos) {
         return false;
     }
-    uint32_t subSlicePerSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, currPos)));
+    uint32_t subSlicePerSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfigStr.substr(prevPos, currPos)));
     if (subSlicePerSliceCount > std::numeric_limits<uint16_t>::max()) {
         return false;
     }
@@ -83,7 +95,7 @@ bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareIn
     }
     prevPos = currPos + 1;
 
-    uint32_t euPerSubSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfig.substr(prevPos, std::string::npos)));
+    uint32_t euPerSubSliceCount = static_cast<uint32_t>(std::stoul(hwInfoConfigStr.substr(prevPos, std::string::npos)));
     if (euPerSubSliceCount > std::numeric_limits<uint16_t>::max()) {
         return false;
     }
@@ -92,10 +104,7 @@ bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareIn
         return false;
     }
 
-    hwInfoIn.gtSystemInfo.SliceCount = sliceCount;
-    hwInfoIn.gtSystemInfo.SubSliceCount = subSliceCount;
-    hwInfoIn.gtSystemInfo.EUCount = euCount;
-
+    hwInfoConfig = static_cast<uint64_t>(sliceCount & 0xffff) << 32 | static_cast<uint64_t>(subSlicePerSliceCount & 0xffff) << 16 | static_cast<uint64_t>(euPerSubSliceCount & 0xffff);
     return true;
 }
 

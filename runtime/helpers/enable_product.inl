@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct EnableGfxProductHw {
         EnableGfxFamilyHw<static_cast<GFXCORE_FAMILY>(gfxFamily)> enableFamily;
 
         hardwarePrefix[gfxProduct] = HwMapper<gfxProduct>::abbreviation;
-        defaultHardwareInfoConfigTable[gfxProduct] = &GfxProduct::defaultHardwareInfoConfig;
+        defaultHardwareInfoConfigTable[gfxProduct] = GfxProduct::defaultHardwareInfoConfig;
         hardwareInfoTable[gfxProduct] = &GfxProduct::hwInfo;
         hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
     }

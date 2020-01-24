@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,18 +225,18 @@ void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo BDW::hwInfo = BDW_1x3x8::hwInfo;
-const std::string BDW::defaultHardwareInfoConfig = "1x3x8";
+const uint64_t BDW::defaultHardwareInfoConfig = 0x100030008;
 
-void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "2x3x8") {
+void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x200030008) {
         BDW_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x3x8") {
+    } else if (hwInfoConfig == 0x100030008) {
         BDW_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x3x6") {
+    } else if (hwInfoConfig == 0x100030006) {
         BDW_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x2x6") {
+    } else if (hwInfoConfig == 0x100020006) {
         BDW_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         BDW_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -244,5 +244,5 @@ void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
     }
 }
 
-void (*BDW::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupBDWHardwareInfoImpl;
+void (*BDW::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupBDWHardwareInfoImpl;
 } // namespace NEO

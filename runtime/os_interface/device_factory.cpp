@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,19 +27,19 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     auto hwInfoConst = *platformDevices;
     getHwInfoForPlatformString(productFamily, hwInfoConst);
     numDevices = 0;
-    std::string hwInfoConfig;
-    DebugManager.getHardwareInfoOverride(hwInfoConfig);
+    std::string hwInfoConfigStr;
+    uint64_t hwInfoConfig = 0x0;
+    DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     *hardwareInfo = *hwInfoConst;
 
-    if (hwInfoConfig == "default") {
-        hwInfoConfig = *defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
-    }
-
-    if (!setHwInfoValuesFromConfigString(hwInfoConfig, *hardwareInfo)) {
+    if (hwInfoConfigStr == "default") {
+        hwInfoConfig = defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
+    } else if (!parseHwInfoConfigString(hwInfoConfigStr, hwInfoConfig)) {
         return false;
     }
+    setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
 
     hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 

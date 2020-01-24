@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,9 +85,9 @@ struct GfxFamilyMapper {};
 extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *familyName[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
-extern const std::string *defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT];
+extern uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig);
+extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {
@@ -98,7 +98,8 @@ struct EnableGfxFamilyHw {
 };
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn);
-bool setHwInfoValuesFromConfigString(const std::string &hwInfoConfig, HardwareInfo &hwInfoIn);
+void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn);
+bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
 

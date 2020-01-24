@@ -233,23 +233,23 @@ void EHL_1x4x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo EHL::hwInfo = EHL_1x4x8::hwInfo;
-const std::string EHL::defaultHardwareInfoConfig = "1x4x8";
+const uint64_t EHL::defaultHardwareInfoConfig = 0x100040008;
 
-void setupEHLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x4x8") {
+void setupEHLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100040008) {
         EHL_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x4x6") {
+    } else if (hwInfoConfig == 0x100040006) {
         EHL_1x4x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x4x4") {
+    } else if (hwInfoConfig == 0x100040004) {
         EHL_1x4x4::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x2x4") {
+    } else if (hwInfoConfig == 0x100020004) {
         EHL_1x2x4::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         EHL_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
-void (*EHL::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupEHLHardwareInfoImpl;
+void (*EHL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupEHLHardwareInfoImpl;
 } // namespace NEO

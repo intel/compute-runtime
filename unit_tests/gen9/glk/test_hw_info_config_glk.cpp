@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,9 @@ TEST(GlkHwInfoConfig, givenHwInfoErrorneousConfigString) {
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
-    std::string strConfig = "erroneous";
+    uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
@@ -28,9 +28,9 @@ TEST(GlkHwInfoConfig, givenHwInfoErrorneousConfigString) {
 using GlkHwInfo = ::testing::Test;
 
 GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
-    std::string strConfig[] = {
-        "1x2x6",
-        "1x3x6"};
+    uint64_t configs[] = {
+        0x100020006,
+        0x100030006};
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo;
@@ -38,7 +38,7 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    for (auto &config : strConfig) {
+    for (auto &config : configs) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};

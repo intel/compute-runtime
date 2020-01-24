@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,9 +16,9 @@ TEST(BdwHwInfoConfig, givenHwInfoErrorneousConfigString) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "erroneous";
+    uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
@@ -27,11 +27,11 @@ TEST(BdwHwInfoConfig, givenHwInfoErrorneousConfigString) {
 using BdwHwInfo = ::testing::Test;
 
 BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
-    std::string strConfig[] = {
-        "1x3x8",
-        "2x3x8",
-        "1x2x6",
-        "1x3x6"};
+    uint64_t configs[] = {
+        0x100030008,
+        0x200030008,
+        0x100020006,
+        0x100030006};
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo;
@@ -39,7 +39,7 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    for (auto &config : strConfig) {
+    for (auto &config : configs) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};
@@ -69,8 +69,8 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
 BDWTEST_F(BdwHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo;
 
-    std::string strConfig = "default";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    uint64_t config = 0x0;
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);

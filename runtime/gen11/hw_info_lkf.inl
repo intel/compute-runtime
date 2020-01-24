@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,12 +140,12 @@ void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo LKF::hwInfo = LKF_1x8x8::hwInfo;
-const std::string LKF::defaultHardwareInfoConfig = "1x8x8";
+const uint64_t LKF::defaultHardwareInfoConfig = 0x100080008;
 
-void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x8x8") {
+void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100080008) {
         LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -153,5 +153,5 @@ void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
     }
 }
 
-void (*LKF::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupLKFHardwareInfoImpl;
+void (*LKF::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupLKFHardwareInfoImpl;
 } // namespace NEO

@@ -16,9 +16,9 @@ TEST(EhlHwInfoConfig, givenHwInfoErrorneousConfigString) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "erroneous";
+    uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
@@ -29,8 +29,8 @@ using EhlHwInfo = ::testing::Test;
 EHLTEST_F(EhlHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo;
 
-    std::string strConfig = "1x4x8";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    uint64_t config = 0x100040008;
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
@@ -44,13 +44,13 @@ EHLTEST_F(EhlHwInfo, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    std::string strConfig[] = {
-        "1x4x8",
-        "1x4x6",
-        "1x4x4",
-        "1x2x4"};
+    uint64_t configs[] = {
+        0x100040008,
+        0x100040006,
+        0x100040004,
+        0x100020004};
 
-    for (auto &config : strConfig) {
+    for (auto config : configs) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};

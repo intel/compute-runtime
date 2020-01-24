@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                 hwInfoFromTable.featureTable = {};
                 hwInfoFromTable.workaroundTable = {};
                 hwInfoFromTable.gtSystemInfo = {};
-                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, "default");
+                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0);
                 HwInfoConfig *hwConfig = HwInfoConfig::get(hwInfoFromTable.platform.eProductFamily);
                 hwConfig->configureHardwareCustom(&hwInfoFromTable, nullptr);
                 EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
@@ -179,7 +179,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
             defaultHwInfo.featureTable = {};
             defaultHwInfo.workaroundTable = {};
             defaultHwInfo.gtSystemInfo = {};
-            hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, "default");
+            hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, 0x0);
             HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
             hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
             EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));

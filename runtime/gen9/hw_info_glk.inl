@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,14 +168,14 @@ void GLK_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo GLK::hwInfo = GLK_1x3x6::hwInfo;
-const std::string GLK::defaultHardwareInfoConfig = "1x3x6";
+const uint64_t GLK::defaultHardwareInfoConfig = 0x100030006;
 
-void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x2x6") {
+void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100020006) {
         GLK_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x3x6") {
+    } else if (hwInfoConfig == 0x100030006) {
         GLK_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         GLK_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -183,5 +183,5 @@ void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
     }
 }
 
-void (*GLK::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupGLKHardwareInfoImpl;
+void (*GLK::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupGLKHardwareInfoImpl;
 } // namespace NEO

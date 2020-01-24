@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,9 +16,9 @@ TEST(LkfHwInfoConfig, givenHwInfoErrorneousConfigString) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    std::string strConfig = "erroneous";
+    uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
@@ -29,8 +29,8 @@ using LkfHwInfo = ::testing::Test;
 LKFTEST_F(LkfHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo;
 
-    std::string strConfig = "1x8x8";
-    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    uint64_t config = 0x100080008;
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
@@ -44,14 +44,14 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
-    std::string strConfig = "1x8x8";
+    uint64_t config = 0x100080008;
 
     for (auto setParamBool : boolValue) {
 
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, strConfig);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
         EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);

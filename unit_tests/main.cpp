@@ -194,7 +194,6 @@ int main(int argc, char **argv) {
 #endif
 
     ::testing::InitGoogleMock(&argc, argv);
-    std::string hwInfoConfig = "default";
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
     ::productFamily = device.platform.eProductFamily;
@@ -313,13 +312,8 @@ int main(int argc, char **argv) {
 
     HardwareInfo hwInfo = *hardwareInfo;
 
-    if (hwInfoConfig == "default") {
-        hwInfoConfig = *defaultHardwareInfoConfigTable[productFamily];
-    }
-
-    if (!setHwInfoValuesFromConfigString(hwInfoConfig, hwInfo)) {
-        return -1;
-    }
+    uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
+    setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
 
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);

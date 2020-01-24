@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -271,20 +271,20 @@ void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 const HardwareInfo KBL::hwInfo = KBL_1x3x6::hwInfo;
-const std::string KBL::defaultHardwareInfoConfig = "1x3x6";
+const uint64_t KBL::defaultHardwareInfoConfig = 0x100030006;
 
-void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
-    if (hwInfoConfig == "1x3x8") {
+void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+    if (hwInfoConfig == 0x100030008) {
         KBL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "2x3x8") {
+    } else if (hwInfoConfig == 0x200030008) {
         KBL_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "3x3x8") {
+    } else if (hwInfoConfig == 0x300030008) {
         KBL_3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x2x6") {
+    } else if (hwInfoConfig == 0x100020006) {
         KBL_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x3x6") {
+    } else if (hwInfoConfig == 0x100030006) {
         KBL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "default") {
+    } else if (hwInfoConfig == 0x0) {
         // Default config
         KBL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
@@ -292,5 +292,5 @@ void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
     }
 }
 
-void (*KBL::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupKBLHardwareInfoImpl;
+void (*KBL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupKBLHardwareInfoImpl;
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,32 +31,68 @@ void HwInfoConfigTest::TearDown() {
 }
 
 TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturnsSetsProperValues) {
-    bool success = setHwInfoValuesFromConfigString("2x4x16", outHwInfo);
+    uint64_t hwInfoConfig = 0x0;
+
+    bool success = parseHwInfoConfigString("1x1x1", hwInfoConfig);
     EXPECT_TRUE(success);
+    EXPECT_EQ(hwInfoConfig, 0x100010001u);
+    setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 1u);
+
+    success = parseHwInfoConfigString("7x1x1", hwInfoConfig);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(hwInfoConfig, 0x700010001u);
+    setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+
+    success = parseHwInfoConfigString("1x7x1", hwInfoConfig);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(hwInfoConfig, 0x100070001u);
+    setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 7u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+
+    success = parseHwInfoConfigString("1x1x7", hwInfoConfig);
+    EXPECT_TRUE(success);
+    EXPECT_EQ(hwInfoConfig, 0x100010007u);
+    setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 1u);
+    EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 7u);
+
+    success = parseHwInfoConfigString("2x4x16", hwInfoConfig);
+    EXPECT_TRUE(success);
+    setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 2u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 8u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.EUCount, 128u);
 }
 
 TEST_F(HwInfoConfigTest, givenInvalidHwInfoSetHwInfoValuesFromConfigString) {
-    bool success = setHwInfoValuesFromConfigString("1", outHwInfo);
+    uint64_t hwInfoConfig = 0x0;
+    bool success = parseHwInfoConfigString("1", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("1x3", outHwInfo);
+    success = parseHwInfoConfigString("1x3", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("65536x3x8", outHwInfo);
+    success = parseHwInfoConfigString("65536x3x8", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("1x65536x8", outHwInfo);
+    success = parseHwInfoConfigString("1x65536x8", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("1x3x65536", outHwInfo);
+    success = parseHwInfoConfigString("1x3x65536", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("65535x65535x8", outHwInfo);
+    success = parseHwInfoConfigString("65535x65535x8", hwInfoConfig);
     EXPECT_FALSE(success);
 
-    success = setHwInfoValuesFromConfigString("1x65535x65535", outHwInfo);
+    success = parseHwInfoConfigString("1x65535x65535", hwInfoConfig);
     EXPECT_FALSE(success);
 }
