@@ -217,11 +217,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     static constexpr uint32_t defaultBank = 0b1u;
     static constexpr uint32_t allBanks = 0xffffffff;
-
-  protected:
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
 
+  protected:
     struct UsageInfo {
         uint32_t taskCount = objectNotUsed;
         uint32_t residencyTaskCount = objectNotResident;

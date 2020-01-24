@@ -36,6 +36,24 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
                                                  numEventsInWaitList, eventWaitList);
 
+    //check if we are dealing with SVM pointer here for which we already have an allocation
+    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
+        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
+        if (svmEntry) {
+            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+                return CL_INVALID_OPERATION;
+            }
+
+            if (isCpuCopyAllowed) {
+                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                    isCpuCopyAllowed = false;
+                }
+            }
+
+            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
+        }
+    }
+
     if (isCpuCopyAllowed) {
         if (isMemTransferNeeded) {
             return enqueueReadWriteBufferOnCpuWithMemoryTransfer(cmdType, buffer, offset, size, const_cast<void *>(ptr),
@@ -65,21 +83,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     MemObjSurface bufferSurf(buffer);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&bufferSurf, nullptr};
-
-    //check if we are dealing with SVM pointer here for which we already have an allocation
-    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
-        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
-        if (svmEntry) {
-            if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
-                return CL_INVALID_OPERATION;
-            }
-            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
-                return CL_INVALID_OPERATION;
-            }
-
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
-        }
-    }
 
     if (mapAllocation) {
         surfaces[1] = &mapSurface;

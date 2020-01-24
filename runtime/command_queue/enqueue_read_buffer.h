@@ -41,6 +41,23 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
 
+    //check if we are dealing with SVM pointer here for which we already have an allocation
+    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
+        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
+        if (svmEntry) {
+            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+                return CL_INVALID_OPERATION;
+            }
+
+            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
+            if (isCpuCopyAllowed) {
+                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                    isCpuCopyAllowed = false;
+                }
+            }
+        }
+    }
+
     if (isCpuCopyAllowed) {
         if (isMemTransferNeeded) {
             return enqueueReadWriteBufferOnCpuWithMemoryTransfer(cmdType, buffer, offset, size, ptr,
@@ -69,21 +86,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     HostPtrSurface hostPtrSurf(dstPtr, size);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&bufferSurf, nullptr};
-
-    //check if we are dealing with SVM pointer here for which we already have an allocation
-    if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
-        auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
-        if (svmEntry) {
-            if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
-                return CL_INVALID_OPERATION;
-            }
-            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
-                return CL_INVALID_OPERATION;
-            }
-
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
-        }
-    }
 
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
