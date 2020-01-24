@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,28 @@ TEST_F(clCreateContextFromTypeTests, GivenInvalidContextCreationPropertiesWhenCr
     auto context = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
     EXPECT_EQ(nullptr, context);
+}
+
+TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPropertiesWhenCreatingContextFromTypeThenSuccessIsReturned) {
+    auto nonDefaultPlatform = std::make_unique<Platform>();
+    nonDefaultPlatform->initialize();
+    cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
+    cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};
+    auto clContext = clCreateContextFromType(properties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, clContext);
+    clReleaseContext(clContext);
+}
+
+TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
+    auto nonDefaultPlatform = std::make_unique<Platform>();
+    nonDefaultPlatform->initialize();
+    cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
+    nonDefaultPlatformCl->dispatch.icdDispatch = reinterpret_cast<SDispatchTable *>(nonDefaultPlatform.get());
+    cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};
+    auto clContext = clCreateContextFromType(properties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+    EXPECT_EQ(nullptr, clContext);
 }
 
 } // namespace ULT

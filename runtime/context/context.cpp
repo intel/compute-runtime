@@ -114,8 +114,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
         switch (propertyType) {
         case CL_CONTEXT_PLATFORM: {
-            cl_platform_id pid = platform();
-            if (reinterpret_cast<cl_platform_id>(propertyValue) != pid) {
+            if (castToObject<Platform>(reinterpret_cast<cl_platform_id>(propertyValue)) == nullptr) {
                 errcodeRet = CL_INVALID_PLATFORM;
                 return false;
             }
