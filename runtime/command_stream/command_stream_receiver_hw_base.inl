@@ -27,6 +27,7 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/tag_allocator.h"

@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include "core/command_container/command_encoder.h"
 #include "core/command_stream/csr_deps.h"
 #include "core/helpers/non_copyable_or_moveable.h"
-#include "runtime/helpers/hardware_commands_helper.h"
+#include "runtime/helpers/properties_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include <atomic>
@@ -105,19 +106,23 @@ struct TimestampPacketHelper {
     static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
         auto compareAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
             uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
-            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            auto miSemaphoreCmd = cmdStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+            EncodeSempahore<GfxFamily>::programMiSemaphoreWait(miSemaphoreCmd, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
         timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
 
-        HardwareCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
-                                                           MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
-                                                           MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+        auto miAtomic = cmdStream.getSpaceForCmd<MI_ATOMIC>();
+        EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, dependenciesCountAddress,
+                                                 MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                                 MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
     }
 
     template <typename GfxFamily>

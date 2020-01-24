@@ -291,4 +291,27 @@ size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
     return 3 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) + sizeof(MI_STORE_REGISTER_MEM));
 }
 
+template <typename Family>
+void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
+                                                     uint64_t compareAddress,
+                                                     uint32_t compareData,
+                                                     COMPARE_OPERATION compareMode) {
+    *cmd = Family::cmdInitMiSemaphoreWait;
+    cmd->setCompareOperation(compareMode);
+    cmd->setSemaphoreDataDword(compareData);
+    cmd->setSemaphoreGraphicsAddress(compareAddress);
+    cmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+}
+
+template <typename Family>
+void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
+                                           ATOMIC_OPCODES opcode,
+                                           DATA_SIZE dataSize) {
+    *atomic = Family::cmdInitAtomic;
+    atomic->setAtomicOpcode(opcode);
+    atomic->setDataSize(dataSize);
+    atomic->setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
+    atomic->setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+}
+
 } // namespace NEO

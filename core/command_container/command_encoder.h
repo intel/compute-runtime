@@ -158,4 +158,27 @@ template <typename GfxFamily>
 struct EncodeComputeMode {
     static void adjustComputeMode(CommandContainer &container, uint32_t numGrfRequired);
 };
+
+template <typename GfxFamily>
+struct EncodeSempahore {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    static void programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
+                                       uint64_t compareAddress,
+                                       uint32_t compareData,
+                                       COMPARE_OPERATION compareMode);
+};
+
+template <typename GfxFamily>
+struct EncodeAtomic {
+    using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
+
+    static void programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
+                                ATOMIC_OPCODES opcode,
+                                DATA_SIZE dataSize);
+};
+
 } // namespace NEO

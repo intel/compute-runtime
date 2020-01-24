@@ -26,5 +26,7 @@ template struct EncodeMediaInterfaceDescriptorLoad<Family>;
 template struct EncodeStateBaseAddress<Family>;
 template struct EncodeStoreMMIO<Family>;
 template struct EncodeSurfaceState<Family>;
+template struct EncodeAtomic<Family>;
+template struct EncodeSempahore<Family>;
 
 } // namespace NEO
