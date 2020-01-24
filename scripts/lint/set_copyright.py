@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,12 +24,23 @@ def is_banned(path):
         'third_party'
     ]
 
+    banned_files = [
+        'scripts/lint/set_copyright.sh'
+    ]
+
     path_banned = False
-    dirname = os.path.dirname(path)
-    for banned_path in banned_paths:
-        if dirname.startswith(banned_path):
+
+    for banned_file in banned_files:
+        if os.path.normpath(path) == os.path.normpath(banned_file):
             path_banned = True
             break
+
+    if not path_banned:
+        dirname = os.path.dirname(path)
+        for banned_path in banned_paths:
+            if dirname.startswith(banned_path):
+                path_banned = True
+                break
 
     return path_banned
 

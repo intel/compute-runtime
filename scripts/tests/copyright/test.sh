@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,13 @@
 # diff output is printed
 #
 
-../../lint/set_copyright.py in/*
+python_interpreter="python3"
+
+if [[ "$OSTYPE" == "msys" ]]; then
+    python_interpreter="python"
+fi
+
+$python_interpreter ../../lint/set_copyright.py in/*
 
 for i in in/*
 do
