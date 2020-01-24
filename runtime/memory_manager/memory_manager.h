@@ -140,6 +140,10 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL bool isHostPointerTrackingEnabled();
 
+    void setForceNonSvmForExternalHostPtr(bool mode) {
+        forceNonSvmForExternalHostPtr = mode;
+    }
+
     const ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
 
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, aub_stream::EngineType engineType,
@@ -197,8 +201,16 @@ class MemoryManager {
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
     bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType) {
-        return ((allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR || allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
-                (!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()) & !is32bit);
+        bool isExternalHostPtrAlloc = (allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+        bool isMapAlloc = (allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+
+        if (forceNonSvmForExternalHostPtr && isExternalHostPtrAlloc) {
+            return true;
+        }
+
+        bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()) & !is32bit);
+
+        return isNonSvmPtrCapable && (isExternalHostPtrAlloc || isMapAlloc);
     }
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
@@ -219,6 +231,7 @@ class MemoryManager {
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     uint32_t getBanksCount();
 
+    bool forceNonSvmForExternalHostPtr = false;
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
     std::unique_ptr<DeferredDeleter> deferredDeleter;

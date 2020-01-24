@@ -2187,6 +2187,15 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisab
     EXPECT_EQ(expectedValue, result);
 }
 
+HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmHostPtrUsageIsSet) {
+    memoryManager->setForceNonSvmForExternalHostPtr(true);
+
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    EXPECT_EQ(true, result);
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(false, result);
+}
+
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrUsageDependsOnFullRangeSvm) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableHostPtrTracking.set(1);
