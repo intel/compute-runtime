@@ -5,6 +5,9 @@
  *
  */
 
+#include "core/device_binary_format/patchtokens_decoder.h"
+#include "core/device_binary_format/patchtokens_dumper.h"
+#include "core/device_binary_format/patchtokens_validator.inl"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
@@ -13,9 +16,6 @@
 #include "core/program/program_info.h"
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/program/program_initialization.h"
-#include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "runtime/compiler_interface/patchtokens_dumper.h"
-#include "runtime/compiler_interface/patchtokens_validator.inl"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"

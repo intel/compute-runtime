@@ -5,12 +5,12 @@
  *
  */
 
-#include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "runtime/compiler_interface/patchtokens_validator.inl"
+#include "core/device_binary_format/patchtokens_decoder.h"
+#include "core/device_binary_format/patchtokens_validator.inl"
+#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "patchtokens_tests.h"
 
 struct UknownTokenValidator {
     UknownTokenValidator(bool isSafeToSkip = true) : isSafeToSkip(isSafeToSkip) {

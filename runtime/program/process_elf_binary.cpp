@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "common/compiler_support.h"
+#include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/elf/reader.h"
 #include "core/elf/writer.h"
 #include "core/helpers/string.h"
-#include "runtime/compiler_interface/patchtokens_decoder.h"
 
 #include "program.h"
 

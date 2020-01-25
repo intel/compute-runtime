@@ -5,10 +5,10 @@
  *
  */
 
-#include "runtime/compiler_interface/patchtokens_decoder.h"
+#include "core/device_binary_format/patchtokens_decoder.h"
+#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/kernel_info_from_patchtokens.h"
-#include "unit_tests/compiler_interface/patchtokens_tests.h"
 
 #include "gtest/gtest.h"
 

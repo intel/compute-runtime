@@ -5,11 +5,10 @@
  *
  */
 
-#include "runtime/compiler_interface/patchtokens_decoder.h"
-#include "runtime/compiler_interface/patchtokens_dumper.h"
+#include "core/device_binary_format/patchtokens_decoder.h"
+#include "core/device_binary_format/patchtokens_dumper.h"
+#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "test.h"
-
-#include "patchtokens_tests.h"
 
 #include <sstream>
 

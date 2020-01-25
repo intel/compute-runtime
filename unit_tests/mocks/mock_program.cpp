@@ -8,9 +8,9 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "core/compiler_interface/compiler_cache.h"
+#include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/helpers/hash.h"
 #include "core/program/program_info_from_patchtokens.h"
-#include "runtime/compiler_interface/patchtokens_decoder.h"
 #include "runtime/context/context.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/kernel_info.h"

@@ -6,12 +6,12 @@
  */
 
 #include "core/compiler_interface/linker.h"
+#include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/program/program_info.h"
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
-#include "runtime/compiler_interface/patchtokens_decoder.h"
+#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "runtime/program/kernel_info.h"
-#include "unit_tests/compiler_interface/patchtokens_tests.h"
 
 #include "RelocationInfo.h"
 #include "gmock/gmock.h"
