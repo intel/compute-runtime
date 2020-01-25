@@ -45,6 +45,18 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithArgThenMetadataIsProperlyPop
     EXPECT_STREQ("const", dst.kernelArgInfo[0].metadataExtended->typeQualifiers.c_str());
 }
 
+TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgThenArgAccessQualifierIsPopulatedBasedOnArgInfo) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg src;
+    iOpenCL::SPatchImageMemoryObjectKernelArgument imageArg = {};
+    imageArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    imageArg.Writeable = false;
+    src.kernels[0].tokens.kernelArgs[0].objectArg = &imageArg;
+    NEO::KernelInfo dst = {};
+    NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+    ASSERT_EQ(1U, dst.kernelArgInfo.size());
+    EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
+}
+
 TEST(KernelInfoFromPatchTokens, GivenValidKernelWithNonDelimitedArgTypeThenUsesArgTypeAsIs) {
     PatchTokensTestData::ValidProgramWithKernelAndArg src;
     src.arg0TypeMutable[4] = '*';

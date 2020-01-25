@@ -99,7 +99,7 @@ TEST(KernelInfo, decodeImageKernelArgument) {
     EXPECT_EQ(sizeof(cl_mem), static_cast<size_t>(argInfo.metadata.argByValSize));
     EXPECT_EQ(arg.Offset, argInfo.offsetHeap);
     EXPECT_TRUE(argInfo.isImage);
-    EXPECT_EQ(KernelArgMetadata::AccessQualifier::ReadWrite, argInfo.metadata.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AccessQualifier::Unknown, argInfo.metadata.accessQualifier);
     EXPECT_TRUE(argInfo.metadata.typeQualifiers.empty());
 }
 

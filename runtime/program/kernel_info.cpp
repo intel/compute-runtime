@@ -251,10 +251,6 @@ void KernelInfo::storeKernelArgument(
         kernelArgInfo[argNum].isMediaBlockImage = true;
     }
 
-    kernelArgInfo[argNum].metadata.accessQualifier = pImageMemObjKernelArg->Writeable
-                                                         ? KernelArgMetadata::AccessQualifier::ReadWrite
-                                                         : KernelArgMetadata::AccessQualifier::ReadOnly;
-
     kernelArgInfo[argNum].metadata.argByValSize = sizeof(cl_mem);
 
     kernelArgInfo[argNum].isTransformable = pImageMemObjKernelArg->Transformable != 0;
