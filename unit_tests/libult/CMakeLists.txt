@@ -40,7 +40,6 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
   ${NEO_SOURCE_DIR}/unit_tests/libult/ult_aub_command_stream_receiver.h
   ${NEO_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
-  ${NEO_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${NEO_SOURCE_DIR}/unit_tests/utilities/debug_settings_reader_creator.cpp
   ${NEO_CORE_DIRECTORY}/unit_tests/helpers/memory_leak_listener.cpp
   ${NEO_CORE_DIRECTORY}/unit_tests/helpers/memory_leak_listener.h

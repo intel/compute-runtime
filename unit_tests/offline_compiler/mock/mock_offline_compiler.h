@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ namespace NEO {
 class MockOfflineCompiler : public OfflineCompiler {
   public:
     using OfflineCompiler::deviceName;
+    using OfflineCompiler::elfBinary;
     using OfflineCompiler::fclDeviceCtx;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
@@ -78,14 +79,6 @@ class MockOfflineCompiler : public OfflineCompiler {
 
     bool generateElfBinary() {
         return OfflineCompiler::generateElfBinary();
-    }
-
-    char *getElfBinary() {
-        return elfBinary.data();
-    }
-
-    size_t getElfBinarySize() {
-        return elfBinarySize;
     }
 
     char *getGenBinary() {

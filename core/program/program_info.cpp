@@ -18,4 +18,24 @@ ProgramInfo::~ProgramInfo() {
     kernelInfos.clear();
 }
 
+size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo) {
+    uint32_t ret = 0U;
+    for (const auto &kernelInfo : programInfo.kernelInfos) {
+        if (nullptr == kernelInfo->patchInfo.localsurface) {
+            continue;
+        }
+        ret = std::max(ret, kernelInfo->patchInfo.localsurface->TotalInlineLocalMemorySize);
+    }
+    return ret;
+}
+
+bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo) {
+    for (const auto &kernelInfo : programInfo.kernelInfos) {
+        if (WorkloadInfo::undefinedOffset != kernelInfo->workloadInfo.localMemoryStatelessWindowStartAddressOffset) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace NEO

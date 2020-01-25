@@ -14,7 +14,7 @@
 
 TEST(ProgramDumper, GivenEmptyProgramThenProperlyCreatesDumpStringWithWarnig) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens emptyProgram = {};
-    emptyProgram.decodeStatus = NEO::PatchTokenBinary::DecoderError::Undefined;
+    emptyProgram.decodeStatus = NEO::DecodeError::Undefined;
     std::string generated = NEO::PatchTokenBinary::asString(emptyProgram);
     const char *expected =
         R"===(Program of size : 0 in undefined status
@@ -24,7 +24,7 @@ Kernels section size : 0
 )===";
     EXPECT_STREQ(expected, generated.c_str());
 
-    emptyProgram.decodeStatus = NEO::PatchTokenBinary::DecoderError::InvalidBinary;
+    emptyProgram.decodeStatus = NEO::DecodeError::InvalidBinary;
     generated = NEO::PatchTokenBinary::asString(emptyProgram);
     expected =
         R"===(Program of size : 0 with invalid binary
@@ -34,7 +34,7 @@ Kernels section size : 0
 )===";
     EXPECT_STREQ(expected, generated.c_str());
 
-    emptyProgram.decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+    emptyProgram.decodeStatus = NEO::DecodeError::Success;
     generated = NEO::PatchTokenBinary::asString(emptyProgram);
     expected =
         R"===(Program of size : 0 decoded successfully
@@ -47,7 +47,7 @@ Kernels section size : 0
 
 TEST(KernelDumper, GivenEmptyKernelThenProperlyCreatesDumpStringWithWarnig) {
     NEO::PatchTokenBinary::KernelFromPatchtokens emptyKernel = {};
-    emptyKernel.decodeStatus = NEO::PatchTokenBinary::DecoderError::Undefined;
+    emptyKernel.decodeStatus = NEO::DecodeError::Undefined;
     std::string generated = NEO::PatchTokenBinary::asString(emptyKernel);
     const char *expected =
         R"===(Kernel of size : 0  in undefined status
@@ -56,7 +56,7 @@ Kernel-scope tokens section size : 0
 )===";
     EXPECT_STREQ(expected, generated.c_str());
 
-    emptyKernel.decodeStatus = NEO::PatchTokenBinary::DecoderError::InvalidBinary;
+    emptyKernel.decodeStatus = NEO::DecodeError::InvalidBinary;
     generated = NEO::PatchTokenBinary::asString(emptyKernel);
     expected =
         R"===(Kernel of size : 0  with invalid binary
@@ -65,7 +65,7 @@ Kernel-scope tokens section size : 0
 )===";
     EXPECT_STREQ(expected, generated.c_str());
 
-    emptyKernel.decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+    emptyKernel.decodeStatus = NEO::DecodeError::Success;
     generated = NEO::PatchTokenBinary::asString(emptyKernel);
     expected =
         R"===(Kernel of size : 0  decoded successfully
@@ -2084,7 +2084,7 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
         kernelToken->Token = i;
         decodedKernel = {};
         NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToDecode.blobs.kernelInfo, decodedKernel);
-        EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+        EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
         if (decodedKernel.unhandledTokens.empty()) {
             auto dump = NEO::PatchTokenBinary::asString(decodedKernel);
             EXPECT_EQ(std::string::npos, dump.find("struct SPatchItemHeader")) << "Update patchtokens_dumper.cpp with definition of new patchtoken : " << i;
@@ -2095,7 +2095,7 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
         programToken->Token = i;
         decodedProgram = {};
         NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToDecode.blobs.programInfo, decodedProgram);
-        EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+        EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
         if (decodedProgram.unhandledTokens.empty()) {
             auto dump = NEO::PatchTokenBinary::asString(decodedProgram);
             EXPECT_EQ(std::string::npos, dump.find("struct SPatchItemHeader")) << "Update patchtokens_dumper.cpp with definition of new patchtoken : " << i;

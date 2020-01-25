@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,11 @@ class ArrayRef {
         : begIt((ctr.size() > 0) ? &*ctr.begin() : nullptr), endIt((ctr.size() > 0) ? (&*(ctr.end() - 1) + 1) : nullptr) {
     }
 
+    template <typename SequentialContainerType>
+    ArrayRef(const SequentialContainerType &ctr)
+        : begIt((ctr.size() > 0) ? &*ctr.begin() : nullptr), endIt((ctr.size() > 0) ? (&*(ctr.end() - 1) + 1) : nullptr) {
+    }
+
     template <size_t Size>
     ArrayRef(DataType (&array)[Size])
         : begIt(&array[0]), endIt(&array[Size]) {
@@ -53,6 +58,10 @@ class ArrayRef {
         this->begIt = src.begIt;
         this->endIt = src.endIt;
         return *this;
+    }
+
+    void clear() {
+        endIt = begIt;
     }
 
     size_t size() const {
@@ -94,6 +103,18 @@ class ArrayRef {
 
     operator ArrayRef<const DataType>() {
         return ArrayRef<const DataType>(begIt, endIt);
+    }
+
+    template <typename AnyT>
+    static ArrayRef<DataType> fromAny(AnyT *any, size_t anyCount) {
+        static_assert((sizeof(AnyT) == sizeof(DataType)) || ((sizeof(AnyT) % sizeof(DataType)) == 0), "Unhandled type conversion");
+        return ArrayRef<DataType>(reinterpret_cast<iterator>(any), (anyCount * sizeof(AnyT)) / sizeof(DataType));
+    }
+
+    template <typename AnyT>
+    ArrayRef<AnyT> toArrayRef() {
+        static_assert((sizeof(AnyT) == sizeof(DataType)) || ((sizeof(DataType) % sizeof(AnyT)) == 0), "Unhandled type conversion");
+        return ArrayRef<AnyT>(reinterpret_cast<typename ArrayRef<AnyT>::iterator>(begIt), (this->size() * sizeof(DataType)) / sizeof(AnyT));
     }
 
   private:

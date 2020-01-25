@@ -6,7 +6,9 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
-#include "core/elf/writer.h"
+#include "core/device_binary_format/elf/elf.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/device/cl_device.h"
@@ -30,9 +32,6 @@ cl_int Program::link(
     void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
     void *userData) {
     cl_int retVal = CL_SUCCESS;
-    cl_program program;
-    Program *pInputProgObj;
-    size_t dataSize;
     bool isCreateLibrary;
 
     do {
@@ -73,16 +72,17 @@ cl_int Program::link(
 
         buildStatus = CL_BUILD_IN_PROGRESS;
 
-        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+        NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
 
         StackVec<const Program *, 16> inputProgramsInternal;
         for (cl_uint i = 0; i < numInputPrograms; i++) {
-            program = inputPrograms[i];
+            auto program = inputPrograms[i];
             if (program == nullptr) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
-            pInputProgObj = castToObject<Program>(program);
+            auto pInputProgObj = castToObject<Program>(program);
             if (pInputProgObj == nullptr) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
@@ -93,16 +93,15 @@ cl_int Program::link(
                 break;
             }
 
-            elfWriter.addSection(CLElfLib::SSectionNode(pInputProgObj->getIsSpirV() ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY,
-                                                        CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "", std::string(pInputProgObj->irBinary.get(), pInputProgObj->irBinarySize), static_cast<uint32_t>(pInputProgObj->irBinarySize)));
+            auto sectionType = pInputProgObj->getIsSpirV() ? NEO::Elf::SHT_OPENCL_SPIRV : NEO::Elf::SHT_OPENCL_LLVM_BINARY;
+            ConstStringRef sectionName = pInputProgObj->getIsSpirV() ? NEO::Elf::SectionNamesOpenCl::spirvObject : NEO::Elf::SectionNamesOpenCl::llvmObject;
+            elfEncoder.appendSection(sectionType, sectionName, ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(pInputProgObj->irBinary.get()), pInputProgObj->irBinarySize));
         }
         if (retVal != CL_SUCCESS) {
             break;
         }
 
-        dataSize = elfWriter.getTotalBinarySize();
-        CLElfLib::ElfBinaryStorage data(dataSize);
-        elfWriter.resolveBinary(data);
+        auto clLinkInput = elfEncoder.encode();
 
         CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
         if (!pCompilerInterface) {
@@ -112,7 +111,7 @@ cl_int Program::link(
 
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
-        inputArgs.src = ArrayRef<const char>(data.data(), dataSize);
+        inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(clLinkInput.data()), clLinkInput.size());
         inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
@@ -127,8 +126,7 @@ cl_int Program::link(
                 break;
             }
 
-            this->genBinary = std::move(compilerOuput.deviceBinary.mem);
-            this->genBinarySize = compilerOuput.deviceBinary.size;
+            this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size);
             this->debugData = std::move(compilerOuput.debugData.mem);
             this->debugDataSize = compilerOuput.debugData.size;
 

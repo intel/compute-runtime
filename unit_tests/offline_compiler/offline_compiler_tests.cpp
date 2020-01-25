@@ -768,14 +768,12 @@ TEST(OfflineCompilerTest, generateElfBinary) {
 
     mockOfflineCompiler->storeGenBinary(&binHeader, binSize);
 
-    EXPECT_EQ(nullptr, mockOfflineCompiler->getElfBinary());
-    EXPECT_EQ(0u, mockOfflineCompiler->getElfBinarySize());
+    EXPECT_TRUE(mockOfflineCompiler->elfBinary.empty());
 
     retVal = mockOfflineCompiler->generateElfBinary();
     EXPECT_TRUE(retVal);
 
-    EXPECT_NE(nullptr, mockOfflineCompiler->getElfBinary());
-    EXPECT_NE(0u, mockOfflineCompiler->getElfBinarySize());
+    EXPECT_FALSE(mockOfflineCompiler->elfBinary.empty());
 }
 
 TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {

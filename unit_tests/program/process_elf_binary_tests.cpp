@@ -6,10 +6,14 @@
  */
 
 #include "core/device/device.h"
-#include "core/elf/reader.h"
+#include "core/device_binary_format/elf/elf.h"
+#include "core/device_binary_format/elf/elf_decoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/string.h"
+#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "compiler_options.h"
@@ -22,52 +26,44 @@ using namespace NEO;
 class ProcessElfBinaryTests : public ::testing::Test {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        program = std::make_unique<MockProgram>(*executionEnvironment);
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+        program->pDevice = device.get();
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockProgram> program;
+    std::unique_ptr<ClDevice> device;
 };
 
 TEST_F(ProcessElfBinaryTests, NullBinary) {
-    uint32_t binaryVersion;
-    cl_int retVal = program->processElfBinary(nullptr, 0, binaryVersion);
-
+    cl_int retVal = program->createProgramFromBinary(nullptr, 0);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_NE(0u, binaryVersion);
 }
 
 TEST_F(ProcessElfBinaryTests, InvalidBinary) {
-    uint32_t binaryVersion;
     char pBinary[] = "thisistotallyinvalid\0";
     size_t binarySize = strnlen_s(pBinary, 21);
-    cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
+    cl_int retVal = program->createProgramFromBinary(pBinary, binarySize);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_NE(0u, binaryVersion);
 }
 
 TEST_F(ProcessElfBinaryTests, ValidBinary) {
-    uint32_t binaryVersion;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
-    EXPECT_NE(0u, binaryVersion);
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 }
 
 TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     //clCreateProgramWithIL => SPIR-V stored as source code
     const uint32_t spirvBinary[2] = {0x03022307, 0x07230203};
     size_t spirvBinarySize = sizeof(spirvBinary);
-    auto isSpirV = Program::isValidSpirvBinary(spirvBinary, spirvBinarySize);
-    EXPECT_TRUE(isSpirV);
 
     //clCompileProgram => SPIR-V stored as IR binary
     program->isSpirV = true;
@@ -79,21 +75,22 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     EXPECT_TRUE(program->getIsSpirV());
 
     //clGetProgramInfo => SPIR-V stored as ELF binary
-    cl_int retVal = program->resolveProgramBinary();
+    cl_int retVal = program->packDeviceBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_FALSE(program->elfBinary.empty());
-    EXPECT_NE(0u, program->elfBinarySize);
+    EXPECT_NE(nullptr, program->packedDeviceBinary);
+    EXPECT_NE(0u, program->packedDeviceBinarySize);
 
     //use ELF reader to parse and validate ELF binary
-    CLElfLib::CElfReader elfReader(program->elfBinary);
-    const CLElfLib::SElf64Header *elf64Header = elfReader.getElfHeader();
-    ASSERT_NE(nullptr, elf64Header);
-    EXPECT_EQ(elf64Header->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY);
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto elf = NEO::Elf::decodeElf(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(program->packedDeviceBinary.get()), program->packedDeviceBinarySize), decodeErrors, decodeWarnings);
+    auto header = elf.elfFileHeader;
+    ASSERT_NE(nullptr, header);
 
-    //check if ELF binary contains section SH_TYPE_SPIRV
+    //check if ELF binary contains section SECTION_HEADER_TYPE_SPIRV
     bool hasSpirvSection = false;
-    for (const auto &elfSectionHeader : elfReader.getSectionHeaders()) {
-        if (elfSectionHeader.Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
+    for (const auto &elfSectionHeader : elf.sectionHeaders) {
+        if (elfSectionHeader.header->type == NEO::Elf::SHT_OPENCL_SPIRV) {
             hasSpirvSection = true;
             break;
         }
@@ -102,10 +99,8 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
 
     //clCreateProgramWithBinary => new program should recognize SPIR-V binary
     program->isSpirV = false;
-    uint32_t elfBinaryVersion;
-    auto pElfBinary = std::unique_ptr<char>(new char[program->elfBinarySize]);
-    memcpy_s(pElfBinary.get(), program->elfBinarySize, program->elfBinary.data(), program->elfBinarySize);
-    retVal = program->processElfBinary(pElfBinary.get(), program->elfBinarySize, elfBinaryVersion);
+    auto elfBinary = makeCopy(program->packedDeviceBinary.get(), program->packedDeviceBinarySize);
+    retVal = program->createProgramFromBinary(elfBinary.get(), program->packedDeviceBinarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(program->getIsSpirV());
 }
@@ -118,49 +113,71 @@ unsigned int BinaryTypeValues[] = {
 class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsigned int> {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        program = std::make_unique<MockProgram>(*executionEnvironment);
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+        program->pDevice = device.get();
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockProgram> program;
+    std::unique_ptr<ClDevice> device;
 };
 
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
-    uint32_t binaryVersion;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
-
-    const auto &options = program->getOptions();
-    size_t optionsSize = strlen(options.c_str()) + 1;
-    auto pTmpGenBinary = new char[program->genBinarySize];
-    auto pTmpIrBinary = new char[program->irBinarySize];
-    auto pTmpOptions = new char[optionsSize];
-
-    memcpy_s(pTmpGenBinary, program->genBinarySize, program->genBinary.get(), program->genBinarySize);
-    memcpy_s(pTmpIrBinary, program->irBinarySize, program->irBinary.get(), program->irBinarySize);
-    memcpy_s(pTmpOptions, optionsSize, options.c_str(), optionsSize);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
+    auto options = program->options;
+    auto genBinary = makeCopy(program->unpackedDeviceBinary.get(), program->unpackedDeviceBinarySize);
+    auto genBinarySize = program->unpackedDeviceBinarySize;
+    auto irBinary = makeCopy(program->irBinary.get(), program->irBinarySize);
+    auto irBinarySize = program->irBinarySize;
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
-    EXPECT_NE(0u, binaryVersion);
+    ASSERT_EQ(binarySize, program->packedDeviceBinarySize);
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 
     // delete program's elf reference to force a resolve
-    program->isProgramBinaryResolved = false;
+    program->packedDeviceBinary.reset();
+    program->packedDeviceBinarySize = 0U;
     program->programBinaryType = GetParam();
-    retVal = program->resolveProgramBinary();
+    retVal = program->packDeviceBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pTmpGenBinary, program->genBinary.get(), program->genBinarySize));
-    EXPECT_EQ(0, memcmp(pTmpIrBinary, program->irBinary.get(), program->irBinarySize));
-    EXPECT_EQ(0, memcmp(pTmpOptions, options.c_str(), optionsSize));
+    ASSERT_NE(nullptr, program->packedDeviceBinary);
 
-    delete[] pTmpGenBinary;
-    delete[] pTmpIrBinary;
-    delete[] pTmpOptions;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto elf = NEO::Elf::decodeElf(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(program->packedDeviceBinary.get()), program->packedDeviceBinarySize), decodeErrors, decodeWarnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    ArrayRef<const uint8_t> decodedIr;
+    ArrayRef<const uint8_t> decodedDeviceBinary;
+    ArrayRef<const uint8_t> decodedOptions;
+    for (auto &section : elf.sectionHeaders) {
+        switch (section.header->type) {
+        default:
+            break;
+        case NEO::Elf::SHT_OPENCL_LLVM_BINARY:
+            decodedIr = section.data;
+            break;
+        case NEO::Elf::SHT_OPENCL_SPIRV:
+            decodedIr = section.data;
+            break;
+        case NEO::Elf::SHT_OPENCL_DEV_BINARY:
+            decodedDeviceBinary = section.data;
+            break;
+        case NEO::Elf::SHT_OPENCL_OPTIONS:
+            decodedDeviceBinary = section.data;
+            break;
+        }
+    }
+    ASSERT_EQ(options.size(), decodedOptions.size());
+    ASSERT_EQ(genBinarySize, decodedDeviceBinary.size());
+    ASSERT_EQ(irBinarySize, decodedIr.size());
+
+    EXPECT_EQ(0, memcmp(genBinary.get(), decodedDeviceBinary.begin(), genBinarySize));
+    EXPECT_EQ(0, memcmp(irBinary.get(), decodedIr.begin(), irBinarySize));
 }
 
 INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
@@ -168,85 +185,72 @@ INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
                         ::testing::ValuesIn(BinaryTypeValues));
 
 TEST_F(ProcessElfBinaryTests, BackToBack) {
-    uint32_t binaryVersion;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
-    EXPECT_NE(0u, binaryVersion);
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 
     std::string filePath2;
     retrieveBinaryKernelFilename(filePath2, "simple_arg_int_", ".bin");
 
     pBinary = loadDataFromFile(filePath2.c_str(), binarySize);
-    retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
+    retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary.get(), program->elfBinary.data(), binarySize));
-    EXPECT_NE(0u, binaryVersion);
+    EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 }
 
 TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
-    uint32_t binaryVersion;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
     size_t optionsSize = strlen(options.c_str()) + 1;
     EXPECT_EQ(0, memcmp("", options.c_str(), optionsSize));
-    EXPECT_NE(0u, binaryVersion);
 }
 
 TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
-    uint32_t binaryVersion;
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_opts_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    cl_int retVal = program->processElfBinary(pBinary.get(), binarySize, binaryVersion);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     const auto &options = program->getOptions();
-    size_t optionsSize = strlen(options.c_str()) + 1;
     std::string buildOptionsNotEmpty = CompilerOptions::concatenate(CompilerOptions::optDisable, "-DDEF_WAS_SPECIFIED=1");
-    EXPECT_EQ(0, memcmp(buildOptionsNotEmpty.c_str(), options.c_str(), optionsSize));
-    EXPECT_NE(0u, binaryVersion);
+    EXPECT_STREQ(buildOptionsNotEmpty.c_str(), options.c_str());
 }
 
-TEST_F(ProcessElfBinaryTests, GivenBinaryWhenInvalidCURRENT_ICBE_VERSIONThenInvalidCURRENT_ICBE_VERSIONTIsReturned) {
-    uint32_t binaryVersion;
-    CLElfLib::ElfBinaryStorage elfBinary;
-
-    CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
-
-    char *genBinary;
-    size_t genBinarySize = sizeof(SProgramBinaryHeader);
-    SProgramBinaryHeader genBinaryHeader = {0};
-    genBinaryHeader.Magic = iOpenCL::MAGIC_CL;
-    genBinaryHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3u;
-    genBinary = reinterpret_cast<char *>(&genBinaryHeader);
-
-    if (genBinary) {
-        std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
+TEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenProramCreationFails) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    {
+        NEO::Elf::ElfEncoder<> elfEncoder;
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, programTokens.storage);
+        auto elfBinary = elfEncoder.encode();
+        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size());
+        EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
-    elfBinary.resize(elfWriter.getTotalBinarySize());
-    elfWriter.resolveBinary(elfBinary);
-
-    cl_int retVal = program->processElfBinary(elfBinary.data(), elfBinary.size(), binaryVersion);
-
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_EQ(binaryVersion, iOpenCL::CURRENT_ICBE_VERSION - 3u);
+    {
+        programTokens.headerMutable->Version -= 1;
+        NEO::Elf::ElfEncoder<> elfEncoder;
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, programTokens.storage);
+        auto elfBinary = elfEncoder.encode();
+        cl_int retVal = program->createProgramFromBinary(elfBinary.data(), elfBinary.size());
+        EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    }
 }

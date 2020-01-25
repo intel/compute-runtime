@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,18 @@
 #pragma once
 #include "core/debug_settings/debug_settings_manager.h"
 
+#include <cinttypes>
+#include <cstddef>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <string>
+
 namespace NEO {
+class Kernel;
+struct MultiDispatchInfo;
+
 template <DebugFunctionalityLevel DebugLevel>
 class FileLogger {
   public:

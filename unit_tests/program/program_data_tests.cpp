@@ -153,8 +153,8 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
     pCurPtr += programPatchListSize;
 
     //as we use mock compiler in unit test, replace the genBinary here.
-    pProgram->genBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
-    pProgram->genBinarySize = headerSize + programBinaryHeader.PatchListSize;
+    pProgram->unpackedDeviceBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
+    pProgram->unpackedDeviceBinarySize = headerSize + programBinaryHeader.PatchListSize;
 
     error = pProgram->processGenBinary();
     patchlistDecodeErrorCode = error;
@@ -401,7 +401,7 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
     ProgramInfo programInfo;
     MockProgram program(execEnv);
     program.pDevice = &device;
-    NEO::populateProgramInfo(programInfo, decodedProgram, DeviceInfoKernelPayloadConstants{});
+    NEO::populateProgramInfo(programInfo, decodedProgram);
     program.processProgramInfo(programInfo);
     ASSERT_NE(nullptr, program.globalSurface);
     ASSERT_NE(nullptr, program.constantSurface);
@@ -476,7 +476,6 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     uint32_t sentinel = 0x17192329U;
     globalSurfaceStorage[0] = 0U;
     globalSurfaceStorage[1] = sentinel;
-    this->pProgram->skipValidationOfBinary = true;
 
     pProgram->linkerInput = std::move(programInfo.linkerInput);
     pProgram->linkBinary();

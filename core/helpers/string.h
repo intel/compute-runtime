@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,13 +94,13 @@ inline int memmove_s(void *dst, size_t numberOfElements, const void *src, size_t
 
 #endif
 
-template <typename T = char[]>
-inline std::unique_ptr<T> makeCopy(const void *src, size_t size) {
+template <typename T = char>
+inline std::unique_ptr<T[]> makeCopy(const void *src, size_t size) {
     if (size == 0) {
         return nullptr;
     }
     using ElT = typename std::remove_all_extents<T>::type;
-    std::unique_ptr<T> copiedData(reinterpret_cast<ElT *>(new char[size]));
+    std::unique_ptr<T[]> copiedData(new ElT[size]);
     memcpy_s(copiedData.get(), size, src, size);
     return copiedData;
 }

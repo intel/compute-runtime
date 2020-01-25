@@ -36,10 +36,10 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_BINARIES:
-        resolveProgramBinary();
-        pSrc = elfBinary.data();
+        packDeviceBinary();
+        pSrc = packedDeviceBinary.get();
         retSize = sizeof(void **);
-        srcSize = elfBinarySize;
+        srcSize = packedDeviceBinarySize;
         if (paramValue != nullptr) {
             if (paramValueSize < retSize) {
                 retVal = CL_INVALID_VALUE;
@@ -51,8 +51,8 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_BINARY_SIZES:
-        resolveProgramBinary();
-        pSrc = &elfBinarySize;
+        packDeviceBinary();
+        pSrc = &packedDeviceBinarySize;
         retSize = srcSize = sizeof(size_t *);
         break;
 
@@ -116,13 +116,11 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_DEBUG_INFO_SIZES_INTEL:
-        resolveProgramBinary();
         retSize = srcSize = sizeof(debugDataSize);
         pSrc = &debugDataSize;
         break;
 
     case CL_PROGRAM_DEBUG_INFO_INTEL:
-        resolveProgramBinary();
         pSrc = debugData.get();
         retSize = numDevices * sizeof(void **);
         srcSize = debugDataSize;

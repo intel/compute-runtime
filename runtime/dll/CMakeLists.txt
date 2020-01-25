@@ -30,7 +30,6 @@ set(RUNTIME_SRCS_DLL_BASE
   ${NEO_SOURCE_DIR}/runtime/api/api.cpp
   ${NEO_SOURCE_DIR}/runtime/compiler_interface/default_cache_config.cpp
   ${NEO_SOURCE_DIR}/runtime/helpers/built_ins_helper.cpp
-  ${NEO_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
 
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}

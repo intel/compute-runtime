@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "core/elf/writer.h"
-
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
@@ -98,8 +96,7 @@ class OfflineCompiler {
     bool outputNoSuffix = false;
     bool forceStatelessToStatefulOptimization = false;
 
-    CLElfLib::ElfBinaryStorage elfBinary;
-    size_t elfBinarySize = 0;
+    std::vector<uint8_t> elfBinary;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
     char *irBinary = nullptr;

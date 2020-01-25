@@ -133,6 +133,15 @@ TEST(CompilerInterface, WhenInitializeIsCalledThenFailIfOneOfRequiredCompilersIs
     EXPECT_FALSE(initSuccess);
 }
 
+TEST(CompilerInterfaceCreateInstance, WhenInitializeFailedThenReturnNull) {
+    struct FailInitializeCompilerInterface : CompilerInterface {
+        bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl) override {
+            return false;
+        }
+    };
+    EXPECT_EQ(nullptr, CompilerInterface::createInstance<FailInitializeCompilerInterface>(std::make_unique<CompilerCache>(CompilerCacheConfig{}), false));
+}
+
 TEST_F(CompilerInterfaceTest, WhenCompilingToIsaThenSuccessIsReturned) {
     TranslationOutput translationOutput;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);

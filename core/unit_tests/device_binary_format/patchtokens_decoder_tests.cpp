@@ -191,7 +191,7 @@ TEST(KernelDecoder, GivenValidEmptyKernelThenDecodingOfHeaderSucceeds) {
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     ASSERT_NE(nullptr, decodedKernel.header);
     EXPECT_EQ(kernelToEncode.header, decodedKernel.header);
     EXPECT_EQ(kernelToEncode.name, decodedKernel.name);
@@ -211,7 +211,7 @@ TEST(KernelDecoder, GivenEmptyKernelWhenBlobSmallerThanKernelHeaderThenDecodingF
                                               kernelToEncode.blobs.kernelInfo.begin() + sizeof(iOpenCL::SKernelBinaryHeader) - 1);
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(brokenBlob, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 }
 
 TEST(KernelDecoder, GivenValidKernelWithHeapsThenDecodingSucceedsAndHeapsAreProperlySet) {
@@ -246,7 +246,7 @@ TEST(KernelDecoder, GivenValidKernelWithHeapsThenDecodingSucceedsAndHeapsAreProp
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
 
     EXPECT_EQ(kernelToEncode.header, decodedKernel.header);
     EXPECT_EQ(0U, decodedKernel.unhandledTokens.size());
@@ -274,37 +274,37 @@ TEST(KernelDecoder, GivenEmptyKernelWhenBlobDoesntHaveEnoughSpaceForHeaderDataTh
     kernelHeader->KernelNameSize = outOfBoundsSize;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->KernelNameSize = originalHeader.KernelNameSize;
 
     kernelHeader->KernelHeapSize = outOfBoundsSize;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->KernelHeapSize = originalHeader.KernelHeapSize;
 
     kernelHeader->GeneralStateHeapSize = outOfBoundsSize;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->GeneralStateHeapSize = originalHeader.GeneralStateHeapSize;
 
     kernelHeader->DynamicStateHeapSize = outOfBoundsSize;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->DynamicStateHeapSize = originalHeader.DynamicStateHeapSize;
 
     kernelHeader->SurfaceStateHeapSize = outOfBoundsSize;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->SurfaceStateHeapSize = originalHeader.SurfaceStateHeapSize;
 
     kernelHeader->PatchListSize = outOfBoundsSize;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToEncode.blobs.kernelInfo, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     kernelHeader->PatchListSize = originalHeader.PatchListSize;
 }
 
@@ -347,7 +347,7 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
     EXPECT_EQ(ptrOffset(storage.data(), patchListOffset), decodedKernel.blobs.patchList.begin());
     EXPECT_EQ(ptrOffset(storage.data(), storage.size()), decodedKernel.blobs.patchList.end());
@@ -398,7 +398,7 @@ TEST(KernelDecoder, GivenKernelWithValidStringPatchtokensThenDecodingSucceedsAnd
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     auto base = storage.data();
@@ -446,7 +446,7 @@ TEST(KernelDecoder, GivenKernelWithValidArgInfoPatchtokensThenDecodingSucceedsAn
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     auto base = storage.data();
@@ -507,7 +507,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     auto base = storage.data();
@@ -589,7 +589,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     auto base = storage.data();
@@ -644,7 +644,7 @@ TEST(KernelDecoder, GivenKernelWithArgCrossThreadDataPatchtokensWhenSourceIndexI
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     ASSERT_EQ(5U, decodedKernel.unhandledTokens.size());
 
     auto base = storage.data();
@@ -670,7 +670,7 @@ TEST(KernelDecoder, GivenKernelWithUnkownPatchtokensThenDecodingSucceedsButToken
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     ASSERT_EQ(2U, decodedKernel.unhandledTokens.size());
 
     auto base = storage.data();
@@ -716,7 +716,7 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     ASSERT_EQ(4U, decodedKernel.tokens.kernelArgs.size());
@@ -776,14 +776,14 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     decodedKernel = {};
@@ -791,77 +791,77 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_IMAGE_WIDTH;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 
     decodedKernel = {};
     arg0Metadata0->Type = iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES;
     arg0Metadata1->Type = iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL;
     decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 }
 
 TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingFailsAndStops) {
@@ -883,7 +883,7 @@ TEST(KernelDecoder, GivenKernelWithMismatchedArgMetadataPatchtokensThenDecodingF
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 }
 
@@ -905,7 +905,7 @@ TEST(KernelDecoder, GivenKernelWithByValArgMetadataPatchtokensThenDecodingSuccee
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     ASSERT_EQ(2U, decodedKernel.tokens.kernelArgs.size());
@@ -940,7 +940,7 @@ TEST(KernelDecoder, GivenKernelWithVmeMetadataPatchtokensThenDecodingSucceedsAnd
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
 
     ASSERT_EQ(1U, decodedKernel.tokens.kernelArgs.size());
@@ -971,7 +971,7 @@ TEST(KernelDecoder, GivenKernelWithOutOfBoundsTokenThenDecodingFails) {
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedKernel.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenValidEmptyProgramThenDecodingOfHeaderSucceeds) {
@@ -980,7 +980,7 @@ TEST(ProgramDecoder, GivenValidEmptyProgramThenDecodingOfHeaderSucceeds) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     ASSERT_NE(nullptr, decodedProgram.header);
     EXPECT_EQ(programToEncode.header, decodedProgram.header);
@@ -998,7 +998,7 @@ TEST(ProgramDecoder, GivenProgramWhenBlobSmallerThanProgramHeaderThenDecodingFai
                                               programToEncode.blobs.programInfo.begin() + sizeof(iOpenCL::SProgramBinaryHeader) - 1);
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(brokenBlob, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenProgramWithInvaidProgramMagicThenDecodingFails) {
@@ -1007,7 +1007,7 @@ TEST(ProgramDecoder, GivenProgramWithInvaidProgramMagicThenDecodingFails) {
     programToEncode.headerMutable->Magic += 1;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenProgramWhenBlobDoesntHaveEnoughSpaceForPatchListThenDecodingFails) {
@@ -1016,7 +1016,7 @@ TEST(ProgramDecoder, GivenProgramWhenBlobDoesntHaveEnoughSpaceForPatchListThenDe
     programToEncode.headerMutable->PatchListSize = static_cast<uint32_t>(programToEncode.blobs.patchList.size() + 1);
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAndTokensAreProperlyAssigned) {
@@ -1024,7 +1024,7 @@ TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAn
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     ASSERT_EQ(1U, decodedProgram.programScopeTokens.allocateConstantMemorySurface.size());
     EXPECT_EQ(programToEncode.programScopeTokens.allocateConstantMemorySurface[0], decodedProgram.programScopeTokens.allocateConstantMemorySurface[0]);
@@ -1038,7 +1038,7 @@ TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAn
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
 
     auto base = programToEncode.storage.data();
@@ -1047,13 +1047,22 @@ TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAn
     EXPECT_TRUE(tokenOffsetMatched(base, secondConstantSurfaceOff, decodedProgram.programScopeTokens.allocateConstantMemorySurface[1]));
 }
 
+TEST(ProgramDecoder, GivenProgramWithConstantSurfaceWhenBlobSmallerThanNeededForPatchTokenThenDecodingFails) {
+    PatchTokensTestData::ValidProgramWithConstantSurface programToEncode;
+    NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
+    programToEncode.headerMutable->PatchListSize -= programToEncode.constSurfMutable->InlineDataSize + 1;
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
+    EXPECT_FALSE(decodeSuccess);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
+}
+
 TEST(ProgramDecoder, GivenProgramWithConstantSurfaceWhenBlobSmallerThanNeededForInlineDataThenDecodingFails) {
     PatchTokensTestData::ValidProgramWithConstantSurface programToEncode;
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     programToEncode.headerMutable->PatchListSize -= 1;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndTokensAreProperlyAssigned) {
@@ -1061,7 +1070,7 @@ TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndT
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     ASSERT_EQ(1U, decodedProgram.programScopeTokens.allocateGlobalMemorySurface.size());
     EXPECT_EQ(programToEncode.programScopeTokens.allocateGlobalMemorySurface[0], decodedProgram.programScopeTokens.allocateGlobalMemorySurface[0]);
@@ -1075,7 +1084,7 @@ TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndT
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
 
     auto base = programToEncode.storage.data();
@@ -1084,13 +1093,22 @@ TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndT
     EXPECT_TRUE(tokenOffsetMatched(base, secondGlobalSurfaceOff, decodedProgram.programScopeTokens.allocateGlobalMemorySurface[1]));
 }
 
+TEST(ProgramDecoder, GivenProgramWithGlobalSurfaceWhenBlobSmallerThanNeededForPatchTokenThenDecodingFails) {
+    PatchTokensTestData::ValidProgramWithGlobalSurface programToEncode;
+    NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
+    programToEncode.headerMutable->PatchListSize -= programToEncode.globalSurfMutable->InlineDataSize + 1;
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
+    EXPECT_FALSE(decodeSuccess);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
+}
+
 TEST(ProgramDecoder, GivenProgramWithGlobalSurfaceWhenBlobSmallerThanNeededForInlineDataThenDecodingFails) {
     PatchTokensTestData::ValidProgramWithGlobalSurface programToEncode;
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     programToEncode.headerMutable->PatchListSize -= 1;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenValidProgramWithPatchtokensThenDecodingSucceedsAndTokensAreProperlyAssinged) {
@@ -1106,7 +1124,7 @@ TEST(ProgramDecoder, GivenValidProgramWithPatchtokensThenDecodingSucceedsAndToke
     programToEncode.recalcTokPtr();
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     auto base = programToEncode.storage.data();
 
@@ -1128,7 +1146,7 @@ TEST(ProgramDecoder, GivenProgramWithUnkownPatchtokensThenDecodingSucceedsButTok
     programToEncode.constSurfMutable->Size += programToEncode.constSurfMutable->InlineDataSize;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     ASSERT_EQ(1U, decodedProgram.unhandledTokens.size());
     EXPECT_EQ(programToEncode.constSurfMutable, decodedProgram.unhandledTokens[0]);
 }
@@ -1138,12 +1156,12 @@ TEST(ProgramDecoder, GivenValidProgramWithKernelThenDecodingSucceedsAndTokensAre
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     ASSERT_EQ(1U, decodedProgram.header->NumberOfKernels);
     ASSERT_EQ(1U, decodedProgram.kernels.size());
     auto decodedKernel = decodedProgram.kernels[0];
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
     EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
     EXPECT_NE(nullptr, decodedKernel.tokens.allocateLocalSurface);
 }
@@ -1155,18 +1173,18 @@ TEST(ProgramDecoder, GivenValidProgramWithTwoKernelsWhenThenDecodingSucceeds) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     EXPECT_EQ(2U, decodedProgram.header->NumberOfKernels);
     ASSERT_EQ(2U, decodedProgram.kernels.size());
 
     auto decodedKernel0 = decodedProgram.kernels[0];
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel0.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel0.decodeStatus);
     EXPECT_TRUE(decodedKernel0.unhandledTokens.empty());
     EXPECT_NE(nullptr, decodedKernel0.tokens.allocateLocalSurface);
 
     auto decodedKernel1 = decodedProgram.kernels[0];
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::Success, decodedKernel1.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel1.decodeStatus);
     EXPECT_TRUE(decodedKernel1.unhandledTokens.empty());
     EXPECT_NE(nullptr, decodedKernel1.tokens.allocateLocalSurface);
 }
@@ -1177,7 +1195,7 @@ TEST(ProgramDecoder, GivenPatchTokenWithZeroSizeThenDecodingFailsAndStops) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
 }
 
 TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenDecodingFailsAndStops) {
@@ -1188,7 +1206,7 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_FALSE(decodeSuccess);
-    EXPECT_EQ(NEO::PatchTokenBinary::DecoderError::InvalidBinary, decodedProgram.decodeStatus);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodedProgram.decodeStatus);
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     EXPECT_EQ(2U, decodedProgram.header->NumberOfKernels);
     EXPECT_EQ(1U, decodedProgram.kernels.size());

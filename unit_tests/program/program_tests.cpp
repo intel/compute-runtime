@@ -7,8 +7,10 @@
 
 #include "unit_tests/program/program_tests.h"
 
+#include "core/compiler_interface/intermediate_representations.h"
+#include "core/device_binary_format/elf/elf_decoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/elf/reader.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hash.h"
@@ -1509,61 +1511,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     }
 }
 
-class FailProgram : public Program {
-  public:
-    FailProgram(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn = false) : Program(executionEnvironment, context, isBuiltIn) {}
-    cl_int rebuildProgramFromIr() override {
-        return CL_INVALID_PROGRAM;
-    }
-    // make method visible
-    cl_int createProgramFromBinary(const void *pBinary, size_t binarySize) override {
-        return Program::createProgramFromBinary(pBinary, binarySize);
-    }
-    cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion) override {
-        binaryVersion--;
-        // we should return anything but not CL_SUCCESS
-        return CL_INVALID_BINARY;
-    }
-};
-
-TEST(ProgramFromBinaryTests, CreateWithBinary_FailRecompile) {
-    cl_int retVal = CL_INVALID_BINARY;
-
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    binHeader.Device = platformDevices[0]->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
-
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<FailProgram> pProgram(FailProgram::createFromGenBinary<FailProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
-    ASSERT_NE(nullptr, pProgram.get());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 1;
-    retVal = pProgram->createProgramFromBinary(&binHeader, binSize);
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
-}
-
 TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
-    class TestedProgram : public Program {
-      public:
-        TestedProgram(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn) : Program(executionEnvironment, context, isBuiltIn) {}
-        char *setGenBinary(char *binary) {
-            auto res = genBinary.get();
-            genBinary.release();
-            genBinary.reset(binary);
-            return res;
-        }
-        void setGenBinarySize(size_t size) {
-            genBinarySize = size;
-        }
-    };
     cl_int retVal = CL_INVALID_BINARY;
 
     SProgramBinaryHeader binHeader;
@@ -1578,14 +1526,13 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     size_t binSize = sizeof(SProgramBinaryHeader);
 
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedProgram> pProgram(TestedProgram::createFromGenBinary<TestedProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
+    std::unique_ptr<MockProgram> pProgram(MockProgram::createFromGenBinary<MockProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto originalPtr = pProgram->setGenBinary(nullptr);
+    pProgram->unpackedDeviceBinary.reset(nullptr);
     retVal = pProgram->processGenBinary();
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    pProgram->setGenBinary(originalPtr);
 }
 
 INSTANTIATE_TEST_CASE_P(ProgramFromBinaryTests,
@@ -1942,62 +1889,11 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
     patchtokensProgram.recalcTokPtr();
     auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), nullptr, false);
-    program->genBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
-    program->genBinarySize = patchtokensProgram.storage.size();
+    program->unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
+    program->unpackedDeviceBinarySize = patchtokensProgram.storage.size();
     auto retVal = program->processGenBinary();
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-}
-
-TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
-    cl_int retVal;
-
-    auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-    EXPECT_NE(nullptr, program);
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    program->setDevice(pDevice);
-
-    // Load a binary program file
-    size_t binarySize = 0;
-    std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
-    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    EXPECT_NE(0u, binarySize);
-    program->elfBinary = CLElfLib::ElfBinaryStorage(pBinary.get(), pBinary.get() + binarySize);
-
-    // Find its OpenCL program data and mark that the data were created with unknown compiler version,
-    // which means that the program has to be rebuild from its IR binary
-    CLElfLib::CElfReader elfReader(program->elfBinary);
-    const CLElfLib::SElf64Header *elf64Header = elfReader.getElfHeader();
-    char *pSectionData = nullptr;
-    SProgramBinaryHeader *pBHdr = nullptr;
-    EXPECT_NE(nullptr, elf64Header);
-    EXPECT_EQ(elf64Header->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE);
-
-    for (const auto &elfHeaderSection : elfReader.getSectionHeaders()) {
-        if (elfHeaderSection.Type != CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY) {
-            continue;
-        }
-        pSectionData = elfReader.getSectionData(elfHeaderSection.DataOffset);
-        EXPECT_NE(nullptr, pSectionData);
-        EXPECT_NE(0u, elfHeaderSection.DataSize);
-        pBHdr = (SProgramBinaryHeader *)pSectionData;
-        pBHdr->Version = 0; // Simulate compiler Version = 0
-        break;
-    }
-    EXPECT_NE(nullptr, pBHdr);
-
-    // Create program from modified binary, is should be successfully rebuilt
-    retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Get IR binary and modify its header magic,
-    // then ask to rebuild program from its IR binary - it should fail
-    char *pIrBinary = program->irBinary.get();
-    (*pIrBinary)--;
-    retVal = program->rebuildProgramFromIr();
-    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
@@ -2021,42 +1917,9 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
 
     // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
     retVal = program->rebuildProgramFromIr();
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_NE(CL_SUCCESS, retVal);
 }
 
-TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
-    class MyCompilerInterface : public CompilerInterface {
-      public:
-        MyCompilerInterface(){};
-        ~MyCompilerInterface() override{};
-
-        TranslationOutput::ErrorCode link(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) override {
-            return TranslationOutput::ErrorCode::LinkFailure;
-        }
-    };
-
-    auto cip = std::make_unique<MyCompilerInterface>();
-    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
-    auto program = std::make_unique<MockProgram>(executionEnvironment);
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
-    program->setDevice(pDevice);
-
-    // Load a binary program file
-    std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
-    size_t binarySize = 0;
-    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    EXPECT_NE(0u, binarySize);
-
-    // Create program from loaded binary
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Ask to rebuild program from its IR binary - it should fail (linking error)
-    retVal = program->rebuildProgramFromIr();
-    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
-}
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
@@ -2373,44 +2236,44 @@ TEST_F(ProgramTests, createFromILWhenCreatingProgramFromBinaryThenProperFlagIsSi
     prog->release();
 }
 
-static const char llvmBinary[] = "BC\xc0\xde     ";
+static const uint8_t llvmBinary[] = "BC\xc0\xde     ";
 
 TEST(isValidLlvmBinary, whenLlvmMagicWasFoundThenBinaryIsValidLLvm) {
-    EXPECT_TRUE(Program::isValidLlvmBinary(llvmBinary, sizeof(llvmBinary)));
+    EXPECT_TRUE(NEO::isLlvmBitcode(llvmBinary));
 }
 
 TEST(isValidLlvmBinary, whenBinaryIsNullptrThenBinaryIsNotValidLLvm) {
-    EXPECT_FALSE(Program::isValidLlvmBinary(nullptr, sizeof(llvmBinary)));
+    EXPECT_FALSE(NEO::isLlvmBitcode(ArrayRef<const uint8_t>()));
 }
 
 TEST(isValidLlvmBinary, whenBinaryIsShorterThanLllvMagicThenBinaryIsNotValidLLvm) {
-    EXPECT_FALSE(Program::isValidLlvmBinary(llvmBinary, 2));
+    EXPECT_FALSE(NEO::isLlvmBitcode(ArrayRef<const uint8_t>(llvmBinary, 2)));
 }
 
 TEST(isValidLlvmBinary, whenBinaryDoesNotContainLllvMagicThenBinaryIsNotValidLLvm) {
-    char notLlvmBinary[] = "ABCDEFGHIJKLMNO";
-    EXPECT_FALSE(Program::isValidLlvmBinary(notLlvmBinary, sizeof(notLlvmBinary)));
+    const uint8_t notLlvmBinary[] = "ABCDEFGHIJKLMNO";
+    EXPECT_FALSE(NEO::isLlvmBitcode(notLlvmBinary));
 }
 
 const uint32_t spirv[16] = {0x03022307};
 const uint32_t spirvInvEndianes[16] = {0x07230203};
 
 TEST(isValidSpirvBinary, whenSpirvMagicWasFoundThenBinaryIsValidSpirv) {
-    EXPECT_TRUE(Program::isValidSpirvBinary(spirv, sizeof(spirv)));
-    EXPECT_TRUE(Program::isValidSpirvBinary(spirvInvEndianes, sizeof(spirvInvEndianes)));
+    EXPECT_TRUE(NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(&spirv), sizeof(spirv))));
+    EXPECT_TRUE(NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(&spirvInvEndianes), sizeof(spirvInvEndianes))));
 }
 
 TEST(isValidSpirvBinary, whenBinaryIsNullptrThenBinaryIsNotValidLLvm) {
-    EXPECT_FALSE(Program::isValidSpirvBinary(nullptr, sizeof(spirv)));
+    EXPECT_FALSE(NEO::isSpirVBitcode(ArrayRef<const uint8_t>()));
 }
 
 TEST(isValidSpirvBinary, whenBinaryIsShorterThanLllvMagicThenBinaryIsNotValidLLvm) {
-    EXPECT_FALSE(Program::isValidSpirvBinary(spirv, 2));
+    EXPECT_FALSE(NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(&spirvInvEndianes), 2)));
 }
 
 TEST(isValidSpirvBinary, whenBinaryDoesNotContainLllvMagicThenBinaryIsNotValidLLvm) {
-    char notSpirvBinary[] = "ABCDEFGHIJKLMNO";
-    EXPECT_FALSE(Program::isValidSpirvBinary(notSpirvBinary, sizeof(notSpirvBinary)));
+    const uint8_t notSpirvBinary[] = "ABCDEFGHIJKLMNO";
+    EXPECT_FALSE(NEO::isSpirVBitcode(notSpirvBinary));
 }
 
 TEST_F(ProgramTests, linkingTwoValidSpirvProgramsReturnsValidProgram) {
@@ -2622,20 +2485,11 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     program->isSpirV = true;
     auto buildRet = program->rebuildProgramFromIr();
     EXPECT_NE(CL_SUCCESS, buildRet);
-
-    CLElfLib::ElfBinaryStorage elfBin(receivedInput.begin(), receivedInput.end());
-    CLElfLib::CElfReader elfReader(elfBin);
-
-    char *spvSectionData = nullptr;
-    size_t spvSectionDataSize = 0;
-    for (const auto &elfSectionHeader : elfReader.getSectionHeaders()) {
-        if (elfSectionHeader.Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
-            spvSectionData = elfReader.getSectionData(elfSectionHeader.DataOffset);
-            spvSectionDataSize = static_cast<size_t>(elfSectionHeader.DataSize);
-        }
-    }
-    EXPECT_EQ(sizeof(spirv), spvSectionDataSize);
-    EXPECT_EQ(0, memcmp(spirv, spvSectionData, spvSectionDataSize));
+    ASSERT_EQ(sizeof(spirv), receivedInput.size());
+    EXPECT_EQ(0, memcmp(spirv, receivedInput.c_str(), receivedInput.size()));
+    ASSERT_EQ(1U, compilerInterface->requestedTranslationCtxs.size());
+    EXPECT_EQ(IGC::CodeType::spirV, compilerInterface->requestedTranslationCtxs[0].first);
+    EXPECT_EQ(IGC::CodeType::oclGenBin, compilerInterface->requestedTranslationCtxs[0].second);
 }
 
 TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
@@ -2659,12 +2513,12 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     uint32_t ir[16] = {0x03022307, 0x23471113, 0x17192329};
     program->irBinary = makeCopy(ir, sizeof(ir));
     program->irBinarySize = sizeof(ir);
-    EXPECT_EQ(nullptr, program->genBinary);
-    EXPECT_EQ(0U, program->genBinarySize);
+    EXPECT_EQ(nullptr, program->unpackedDeviceBinary);
+    EXPECT_EQ(0U, program->unpackedDeviceBinarySize);
     program->rebuildProgramFromIr();
-    ASSERT_NE(nullptr, program->genBinary);
-    ASSERT_EQ(sizeof(binaryToReturn), program->genBinarySize);
-    EXPECT_EQ(0, memcmp(binaryToReturn, program->genBinary.get(), program->genBinarySize));
+    ASSERT_NE(nullptr, program->unpackedDeviceBinary);
+    ASSERT_EQ(sizeof(binaryToReturn), program->unpackedDeviceBinarySize);
+    EXPECT_EQ(0, memcmp(binaryToReturn, program->unpackedDeviceBinary.get(), program->unpackedDeviceBinarySize));
 }
 
 TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreAddedToProgramInternalOptions) {
@@ -2672,7 +2526,7 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreAddedToP
     MockProgram program(executionEnvironment);
     program.getInternalOptions().erase();
     EXPECT_EQ(nullptr, program.getDevicePtr());
-    std::string buildOptions(NEO::CompilerOptions::gtpinRera);
+    std::string buildOptions = NEO::CompilerOptions::gtpinRera.str();
     program.extractInternalOptions(buildOptions);
     EXPECT_STREQ(program.getInternalOptions().c_str(), NEO::CompilerOptions::gtpinRera.data());
 }
@@ -2756,73 +2610,44 @@ TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
     EXPECT_EQ(1u, program.applyAdditionalOptionsCalled);
 }
 
-struct RebuildProgram : public Program {
-    using Program::createProgramFromBinary;
-    RebuildProgram(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn = false) : Program(executionEnvironment, context, isBuiltIn) {}
-    cl_int rebuildProgramFromIr() override {
-        rebuildProgramFromIrCalled = true;
-        return CL_SUCCESS;
-    }
-    cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion) override {
-        processElfBinaryCalled = true;
-        return CL_SUCCESS;
-    }
-    bool rebuildProgramFromIrCalled = false;
-    bool processElfBinaryCalled = false;
-};
-
-TEST(RebuildProgramFromIrTests, givenBinaryProgramWhenKernelRebulildIsForcedThenRebuildProgramFromIrCalled) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    binHeader.Device = platformDevices[0]->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
+    PatchTokensTestData::ValidEmptyProgram programTokens;
 
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<RebuildProgram> pProgram(RebuildProgram::createFromGenBinary<RebuildProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockProgram> pProgram(Program::createFromGenBinary<MockProgram>(*clDevice->getExecutionEnvironment(), nullptr, programTokens.storage.data(), programTokens.storage.size(), false, &retVal));
+    pProgram->pDevice = clDevice.get();
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    retVal = pProgram->createProgramFromBinary(&binHeader, binSize);
+    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size());
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(pProgram->processElfBinaryCalled);
-    EXPECT_TRUE(pProgram->rebuildProgramFromIrCalled);
+    EXPECT_EQ(nullptr, pProgram->unpackedDeviceBinary.get());
+    EXPECT_EQ(0U, pProgram->unpackedDeviceBinarySize);
+    EXPECT_EQ(nullptr, pProgram->packedDeviceBinary);
+    EXPECT_EQ(0U, pProgram->packedDeviceBinarySize);
 }
 
-TEST(RebuildProgramFromIrTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenRebuildProgramFromIrNotCalled) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
     cl_int retVal = CL_INVALID_BINARY;
 
-    SProgramBinaryHeader binHeader;
-    memset(&binHeader, 0, sizeof(binHeader));
-    binHeader.Magic = iOpenCL::MAGIC_CL;
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    binHeader.Device = platformDevices[0]->platform.eRenderCoreFamily;
-    binHeader.GPUPointerSizeInBytes = 8;
-    binHeader.NumberOfKernels = 0;
-    binHeader.SteppingId = 0;
-    binHeader.PatchListSize = 0;
-    size_t binSize = sizeof(SProgramBinaryHeader);
+    PatchTokensTestData::ValidEmptyProgram programTokens;
 
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<RebuildProgram> pProgram(RebuildProgram::createFromGenBinary<RebuildProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockProgram> pProgram(Program::createFromGenBinary<MockProgram>(*clDevice->getExecutionEnvironment(), nullptr, programTokens.storage.data(), programTokens.storage.size(), false, &retVal));
+    pProgram->pDevice = clDevice.get();
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    retVal = pProgram->createProgramFromBinary(&binHeader, binSize);
+    retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size());
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(pProgram->processElfBinaryCalled);
-    EXPECT_FALSE(pProgram->rebuildProgramFromIrCalled);
+    EXPECT_NE(nullptr, reinterpret_cast<uint8_t *>(pProgram->unpackedDeviceBinary.get()));
+    EXPECT_EQ(programTokens.storage.size(), pProgram->unpackedDeviceBinarySize);
+    EXPECT_NE(nullptr, reinterpret_cast<uint8_t *>(pProgram->packedDeviceBinary.get()));
+    EXPECT_EQ(programTokens.storage.size(), pProgram->packedDeviceBinarySize);
 }
 
 struct SpecializationConstantProgramMock : public MockProgram {

@@ -81,7 +81,7 @@ void KernelDataTest::buildAndDecode() {
     // now build a program with this kernel data
     iOpenCL::SProgramBinaryHeader header = {};
     NEO::PatchTokenBinary::ProgramFromPatchtokens programFromPatchtokens;
-    programFromPatchtokens.decodeStatus = PatchTokenBinary::DecoderError::Success;
+    programFromPatchtokens.decodeStatus = DecodeError::Success;
     programFromPatchtokens.header = &header;
     programFromPatchtokens.kernels.resize(1);
     auto &kernelFromPatchtokens = *programFromPatchtokens.kernels.rbegin();
@@ -90,7 +90,7 @@ void KernelDataTest::buildAndDecode() {
     EXPECT_TRUE(decodeSuccess);
 
     ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programFromPatchtokens, DeviceInfoKernelPayloadConstants());
+    NEO::populateProgramInfo(programInfo, programFromPatchtokens);
     error = program->processProgramInfo(programInfo);
     EXPECT_EQ(CL_SUCCESS, error);
 

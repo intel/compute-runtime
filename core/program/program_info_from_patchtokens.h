@@ -12,7 +12,6 @@
 namespace NEO {
 
 struct ProgramInfo;
-struct DeviceInfoKernelPayloadConstants;
 
 namespace PatchTokenBinary {
 struct ProgramFromPatchtokens;
@@ -25,6 +24,6 @@ inline uint64_t readMisalignedUint64(const uint64_t *address) {
 
 bool requiresLocalMemoryWindowVA(const PatchTokenBinary::ProgramFromPatchtokens &src);
 
-void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &src, const DeviceInfoKernelPayloadConstants &constants);
+void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &src);
 
 } // namespace NEO

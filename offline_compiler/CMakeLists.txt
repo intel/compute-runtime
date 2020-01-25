@@ -7,6 +7,12 @@
 project(ocloc)
 
 set(CLOC_SRCS_LIB
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_decoder.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_decoder.cpp
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_encoder.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_encoder.cpp
+  ${NEO_SOURCE_DIR}/core/device_binary_format/elf/ocl_elf.h
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
   ${NEO_SOURCE_DIR}/core/helpers/debug_helpers.cpp
   ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
@@ -125,8 +131,6 @@ endif()
 if(UNIX)
   target_link_libraries(ocloc dl pthread)
 endif()
-
-target_link_libraries(ocloc elflib)
 
 set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
 

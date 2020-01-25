@@ -13,6 +13,7 @@ set(NEO_COMPILER_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/create_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/intermediate_representations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/linker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/linker.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options/compiler_options_base.h

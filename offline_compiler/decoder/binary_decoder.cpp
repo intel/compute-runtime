@@ -7,7 +7,8 @@
 
 #include "binary_decoder.h"
 
-#include "core/elf/reader.h"
+#include "core/device_binary_format/elf/elf_decoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/ptr_math.h"
 #include "offline_compiler/offline_compiler.h"
@@ -31,9 +32,9 @@ void BinaryDecoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
 }
 
 template <typename T>
-T readUnaligned(void *ptr) {
+T readUnaligned(const void *ptr) {
     T retVal = 0;
-    uint8_t *tmp1 = reinterpret_cast<uint8_t *>(ptr);
+    const uint8_t *tmp1 = reinterpret_cast<const uint8_t *>(ptr);
     uint8_t *tmp2 = reinterpret_cast<uint8_t *>(&retVal);
     for (uint8_t i = 0; i < sizeof(T); ++i) {
         *(tmp2++) = *(tmp1++);
@@ -52,7 +53,7 @@ int BinaryDecoder::decode() {
     return processBinary(devBinPtr, ptmFile);
 }
 
-void BinaryDecoder::dumpField(void *&binaryPtr, const PTField &field, std::ostream &ptmFile) {
+void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile) {
     ptmFile << '\t' << static_cast<int>(field.size) << ' ';
     switch (field.size) {
     case 1: {
@@ -82,29 +83,33 @@ void BinaryDecoder::dumpField(void *&binaryPtr, const PTField &field, std::ostre
     binaryPtr = ptrOffset(binaryPtr, field.size);
 }
 
-void *BinaryDecoder::getDevBinary() {
+const void *BinaryDecoder::getDevBinary() {
     binary = readBinaryFile(binaryFile);
-    char *data = nullptr;
-    CLElfLib::CElfReader elfReader(binary);
-    for (const auto &sectionHeader : elfReader.getSectionHeaders()) { //Finding right section
-        switch (sectionHeader.Type) {
-        case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY: {
+    const void *data = nullptr;
+    std::string decoderErrors;
+    std::string decoderWarnings;
+    auto input = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(input, decoderErrors, decoderWarnings);
+    for (const auto &sectionHeader : elf.sectionHeaders) { //Finding right section
+        auto sectionData = ArrayRef<const char>(reinterpret_cast<const char *>(sectionHeader.data.begin()), sectionHeader.data.size());
+        switch (sectionHeader.header->type) {
+        case NEO::Elf::SHT_OPENCL_LLVM_BINARY: {
             std::ofstream ofs(pathToDump + "llvm.bin", std::ios::binary);
-            ofs.write(elfReader.getSectionData(sectionHeader.DataOffset), sectionHeader.DataSize);
+            ofs.write(sectionData.begin(), sectionData.size());
             break;
         }
-        case CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV: {
+        case NEO::Elf::SHT_OPENCL_SPIRV: {
             std::ofstream ofs(pathToDump + "spirv.bin", std::ios::binary);
-            ofs.write(elfReader.getSectionData(sectionHeader.DataOffset), sectionHeader.DataSize);
+            ofs.write(sectionData.begin(), sectionData.size());
             break;
         }
-        case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS: {
+        case NEO::Elf::SHT_OPENCL_OPTIONS: {
             std::ofstream ofs(pathToDump + "build.bin", std::ios::binary);
-            ofs.write(elfReader.getSectionData(sectionHeader.DataOffset), sectionHeader.DataSize);
+            ofs.write(sectionData.begin(), sectionData.size());
             break;
         }
-        case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY: {
-            data = elfReader.getSectionData(sectionHeader.DataOffset);
+        case NEO::Elf::SHT_OPENCL_DEV_BINARY: {
+            data = sectionData.begin();
             break;
         }
         default:
@@ -323,7 +328,7 @@ Examples:
                           NEO::getDevicesTypes().c_str());
 }
 
-int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
+int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
     ptmFile << "ProgramBinaryHeader:\n";
     uint32_t numberOfKernels = 0, patchListSize = 0, device = 0;
     for (const auto &v : programHeader.fields) {
@@ -351,7 +356,7 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
     return 0;
 }
 
-void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
+void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     uint32_t KernelNameSize = 0, KernelPatchListSize = 0, KernelHeapSize = 0, KernelHeapUnpaddedSize = 0,
              GeneralStateHeapSize = 0, DynamicStateHeapSize = 0, SurfaceStateHeapSize = 0;
     ptmFile << "KernelBinaryHeader:\n";
@@ -419,7 +424,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     readPatchTokens(ptr, KernelPatchListSize, ptmFile);
 }
 
-void BinaryDecoder::readPatchTokens(void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile) {
+void BinaryDecoder::readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile) {
     auto endPatchListPtr = ptrOffset(patchListPtr, patchListSize);
     while (patchListPtr != endPatchListPtr) {
         auto patchTokenPtr = patchListPtr;
@@ -456,7 +461,7 @@ void BinaryDecoder::readPatchTokens(void *&patchListPtr, uint32_t patchListSize,
 
         if (patchListPtr > patchTokenPtr) {
             ptmFile << "\tHex";
-            uint8_t *byte = reinterpret_cast<uint8_t *>(patchTokenPtr);
+            const uint8_t *byte = reinterpret_cast<const uint8_t *>(patchTokenPtr);
             while (ptrDiff(patchListPtr, patchTokenPtr) != 0) {
                 ptmFile << ' ' << std::hex << +*(byte++);
                 patchTokenPtr = ptrOffset(patchTokenPtr, sizeof(uint8_t));

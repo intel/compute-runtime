@@ -8,8 +8,8 @@
 #pragma once
 
 #include "core/compiler_interface/linker.h"
-#include "core/utilities/stackvec.h"
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -41,5 +41,8 @@ struct ProgramInfo {
 
     std::vector<KernelInfo *> kernelInfos;
 };
+
+size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);
+bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo);
 
 } // namespace NEO

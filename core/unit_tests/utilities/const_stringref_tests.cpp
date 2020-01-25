@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,4 +72,29 @@ TEST(ConstStringRef, WhenComparingAgainstContainersThenUsesLexicographicOrdering
     std::string strTex("Tex");
     EXPECT_TRUE(strTex != constStrText);
     EXPECT_TRUE(constStrText != strTex);
+}
+
+TEST(ConstStringRef, WhenStrIsCalledThenEmitsProperString) {
+    static constexpr ConstStringRef constStrText("Text");
+    std::string str = constStrText.str();
+    EXPECT_EQ(4U, str.size());
+    EXPECT_STREQ("Text", str.c_str());
+}
+
+TEST(ConstStringRef, WhenDefaultInitializedThenEmpty) {
+    ConstStringRef str;
+    EXPECT_TRUE(str.empty());
+}
+
+TEST(ConstStringRef, WhenCopyConstructedThenIdenticalAsOrigin) {
+    static constexpr ConstStringRef a("Text");
+    static constexpr ConstStringRef b(a);
+    EXPECT_EQ(a, b);
+}
+
+TEST(ConstStringRef, WhenCopyAsignedThenIdenticalAsOrigin) {
+    static constexpr ConstStringRef a("Text");
+    ConstStringRef b("OtherText");
+    b = a;
+    EXPECT_EQ(a, b);
 }

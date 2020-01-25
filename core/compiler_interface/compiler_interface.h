@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,8 +106,9 @@ class CompilerInterface {
     CompilerInterface &operator=(CompilerInterface &&) = delete;
     virtual ~CompilerInterface();
 
-    static CompilerInterface *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
-        auto instance = new CompilerInterface();
+    template <typename CompilerInterfaceT = CompilerInterface>
+    static CompilerInterfaceT *createInstance(std::unique_ptr<CompilerCache> cache, bool requireFcl) {
+        auto instance = new CompilerInterfaceT();
         if (!instance->initialize(std::move(cache), requireFcl)) {
             delete instance;
             instance = nullptr;
@@ -137,7 +138,7 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL TranslationOutput::ErrorCode getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary);
 
   protected:
-    bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
+    MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
     MOCKABLE_VIRTUAL bool loadIgc();
 

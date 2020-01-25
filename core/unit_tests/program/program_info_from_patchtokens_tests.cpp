@@ -46,7 +46,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenRequiresLocalMemoryWindowVAIsC
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalConstantsSurfaceThenGlobalConstantsSectionIsPopulated) {
     PatchTokensTestData::ValidProgramWithConstantSurface programTokens;
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programTokens, {});
+    NEO::populateProgramInfo(programInfo, programTokens);
     EXPECT_EQ(programInfo.globalConstants.size, programTokens.programScopeTokens.allocateConstantMemorySurface[0]->InlineDataSize);
     EXPECT_EQ(programInfo.globalConstants.initData, NEO::PatchTokenBinary::getInlineData(programTokens.programScopeTokens.allocateConstantMemorySurface[0]));
     EXPECT_TRUE(programInfo.kernelInfos.empty());
@@ -56,7 +56,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalConstants
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalVariablesSurfaceThenGlobalConstantsSectionIsPopulated) {
     PatchTokensTestData::ValidProgramWithGlobalSurface programTokens;
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programTokens, {});
+    NEO::populateProgramInfo(programInfo, programTokens);
     EXPECT_EQ(programInfo.globalVariables.size, programTokens.programScopeTokens.allocateGlobalMemorySurface[0]->InlineDataSize);
     EXPECT_EQ(programInfo.globalVariables.initData, NEO::PatchTokenBinary::getInlineData(programTokens.programScopeTokens.allocateGlobalMemorySurface[0]));
     EXPECT_TRUE(programInfo.kernelInfos.empty());
@@ -66,7 +66,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalVariables
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalConstantsPointersThenLinkerInputContainsProperRelocations) {
     PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer programFromTokens;
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     EXPECT_TRUE(programInfo.kernelInfos.empty());
     ASSERT_NE(nullptr, programInfo.linkerInput);
     ASSERT_EQ(1U, programInfo.linkerInput->getDataRelocations().size());
@@ -81,7 +81,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalConstants
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalVariablesPointersThenLinkerInputContainsProperRelocations) {
     PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer programFromTokens;
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     EXPECT_TRUE(programInfo.kernelInfos.empty());
     ASSERT_NE(nullptr, programInfo.linkerInput);
     ASSERT_EQ(1U, programInfo.linkerInput->getDataRelocations().size());
@@ -96,7 +96,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresGlobalVariables
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresMixedGlobalVarAndConstPointersThenLinkerInputContainsProperRelocations) {
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers programFromTokens;
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     EXPECT_TRUE(programInfo.kernelInfos.empty());
     ASSERT_NE(nullptr, programInfo.linkerInput);
 
@@ -135,7 +135,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithSpecificPointerSiz
     {
         programFromTokens.headerMutable->GPUPointerSizeInBytes = 8;
         NEO::ProgramInfo programInfo;
-        NEO::populateProgramInfo(programInfo, programFromTokens, {});
+        NEO::populateProgramInfo(programInfo, programFromTokens);
         ASSERT_NE(nullptr, programInfo.linkerInput);
         EXPECT_EQ(NEO::LinkerInput::Traits::Ptr64bit, programInfo.linkerInput->getTraits().pointerSize);
     }
@@ -143,7 +143,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithSpecificPointerSiz
     {
         programFromTokens.headerMutable->GPUPointerSizeInBytes = 4;
         NEO::ProgramInfo programInfo;
-        NEO::populateProgramInfo(programInfo, programFromTokens, {});
+        NEO::populateProgramInfo(programInfo, programFromTokens);
         ASSERT_NE(nullptr, programInfo.linkerInput);
         EXPECT_EQ(NEO::LinkerInput::Traits::Ptr32bit, programInfo.linkerInput->getTraits().pointerSize);
     }
@@ -173,7 +173,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithProgramSymbolTable
         receivedNumEntries = numEntries;
         return true;
     };
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
 
     ASSERT_EQ(mockLinkerInput, programInfo.linkerInput.get());
     EXPECT_EQ(1U, mockLinkerInput->decodeGlobalVariablesSymbolTableMockConfig.timesCalled);
@@ -186,7 +186,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsThenKernelI
     programFromTokens.kernels.push_back(programFromTokens.kernels[0]);
     programFromTokens.kernels.push_back(programFromTokens.kernels[0]);
     NEO::ProgramInfo programInfo = {};
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     ASSERT_EQ(3U, programInfo.kernelInfos.size());
     EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[0]->gpuPointerSize);
     EXPECT_EQ(programFromTokens.header->GPUPointerSizeInBytes, programInfo.kernelInfos[1]->gpuPointerSize);
@@ -232,7 +232,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
         receivedSegmentIds.push_back(instructionsSegmentId);
         return true;
     };
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     ASSERT_EQ(2U, mockLinkerInput->decodeExportedFunctionsSymbolTableMockConfig.timesCalled);
     ASSERT_EQ(2U, receivedData.size());
 
@@ -283,7 +283,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
         receivedSegmentIds.push_back(instructionsSegmentId);
         return true;
     };
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
+    NEO::populateProgramInfo(programInfo, programFromTokens);
     ASSERT_EQ(2U, mockLinkerInput->decodeRelocationTableMockConfig.timesCalled);
     ASSERT_EQ(2U, receivedData.size());
 

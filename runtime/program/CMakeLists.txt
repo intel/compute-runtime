@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,9 +25,8 @@ set(RUNTIME_SRCS_PROGRAM
   ${CMAKE_CURRENT_SOURCE_DIR}/patch_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/process_elf_binary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/process_gen_binary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/process_spir_binary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/process_device_binary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/process_intermediate_binary.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program.h
 )

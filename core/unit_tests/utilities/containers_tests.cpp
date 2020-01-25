@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1598,6 +1598,16 @@ TEST(ArrayRef, WrapContainers) {
     ASSERT_EQ(35, sum(ar3));
 }
 
+TEST(ArrayRef, GivenEmptyContainerThenArrayRefIsEmpty) {
+    StackVec<int, 5> stackVec;
+    ArrayRef<int> arrayRef(stackVec);
+    EXPECT_TRUE(arrayRef.empty());
+
+    const StackVec<int, 5> &constStackVec = stackVec;
+    ArrayRef<const int> constArrayRef(constStackVec);
+    EXPECT_TRUE(constArrayRef.empty());
+}
+
 TEST(ArrayRef, ImplicitCoversionToArrayrefOfConst) {
     int carray[] = {5, 6, 7, 8, 9};
     ArrayRef<int> arrayRef(carray);
@@ -1697,4 +1707,26 @@ TEST(Range, GivenRangeThenValidStandardIteratorsAreAvailable) {
     Range<int> rangeFromVec = vec;
     EXPECT_EQ(&*vec.begin(), &*rangeFromVec.begin());
     EXPECT_EQ(&*vec.rbegin(), &*rangeFromVec.rbegin());
+}
+
+TEST(ArrayRef, WhenFromAnyIsCalledThenPointerIsReinterpretedAndSizeIsAdjusted) {
+    uint32_t x[2] = {};
+    auto arrayRefU8 = ArrayRef<const uint8_t>::fromAny(x, 2);
+    EXPECT_EQ(8U, arrayRefU8.size());
+    EXPECT_EQ(reinterpret_cast<uint8_t *>(x), arrayRefU8.begin());
+}
+
+TEST(ArrayRef, WhenToArrayRefIsCalledThenPointerIsReinterpretedAndSizeIsAdjusted) {
+    uint32_t x[2] = {};
+    auto arrayRefU32 = ArrayRef<const uint32_t>::fromAny(x, 2);
+    auto arrayRefU8 = arrayRefU32.toArrayRef<const uint8_t>();
+    EXPECT_EQ(8U, arrayRefU8.size());
+    EXPECT_EQ(reinterpret_cast<uint8_t *>(x), arrayRefU8.begin());
+}
+
+TEST(ArrayRef, WhenClearedThenEmpty) {
+    uint32_t x[2] = {};
+    auto arrayRefU32 = ArrayRef<const uint32_t>::fromAny(x, 2);
+    arrayRefU32.clear();
+    EXPECT_TRUE(arrayRefU32.empty());
 }

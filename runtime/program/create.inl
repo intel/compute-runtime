@@ -144,11 +144,9 @@ T *Program::createFromGenBinary(
     if (CL_SUCCESS == retVal) {
         program = new T(executionEnvironment, context, isBuiltIn);
         program->numDevices = 1;
-        program->genBinary = makeCopy(binary, size);
-        program->genBinarySize = size;
+        program->replaceDeviceBinary(makeCopy(binary, size), size);
         program->isCreatedFromBinary = true;
         program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-        program->isProgramBinaryResolved = true;
         program->buildStatus = CL_BUILD_SUCCESS;
         program->createdFrom = CreatedFrom::BINARY;
     }

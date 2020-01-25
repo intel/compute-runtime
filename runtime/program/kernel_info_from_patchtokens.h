@@ -11,14 +11,12 @@
 
 namespace NEO {
 
-struct DeviceInfoKernelPayloadConstants;
 struct KernelInfo;
 
 namespace PatchTokenBinary {
 struct KernelFromPatchtokens;
 }
 
-void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes,
-                        const DeviceInfoKernelPayloadConstants &constant);
+void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes);
 
 } // namespace NEO

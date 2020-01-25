@@ -425,6 +425,37 @@ bool KernelInfo::createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager 
     return memoryManager->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
 }
 
+void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
+    if (nullptr == this->crossThreadData) {
+        return;
+    }
+
+    uint32_t privateMemoryStatelessSizeOffset = this->workloadInfo.privateMemoryStatelessSizeOffset;
+    uint32_t localMemoryStatelessWindowSizeOffset = this->workloadInfo.localMemoryStatelessWindowSizeOffset;
+    uint32_t localMemoryStatelessWindowStartAddressOffset = this->workloadInfo.localMemoryStatelessWindowStartAddressOffset;
+
+    if (localMemoryStatelessWindowStartAddressOffset != WorkloadInfo::undefinedOffset) {
+        *(uintptr_t *)&(this->crossThreadData[localMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(constants.slmWindow);
+    }
+
+    if (localMemoryStatelessWindowSizeOffset != WorkloadInfo::undefinedOffset) {
+        *(uint32_t *)&(this->crossThreadData[localMemoryStatelessWindowSizeOffset]) = constants.slmWindowSize;
+    }
+
+    uint32_t privateMemorySize = 0U;
+    if (this->patchInfo.pAllocateStatelessPrivateSurface) {
+        privateMemorySize = this->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize * constants.computeUnitsUsedForScratch * this->getMaxSimdSize();
+    }
+
+    if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {
+        *(uint32_t *)&(this->crossThreadData[privateMemoryStatelessSizeOffset]) = privateMemorySize;
+    }
+
+    if (this->workloadInfo.maxWorkGroupSizeOffset != WorkloadInfo::undefinedOffset) {
+        *(uint32_t *)&(this->crossThreadData[this->workloadInfo.maxWorkGroupSizeOffset]) = constants.maxWorkGroupSize;
+    }
+}
+
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
     std::string semiColonDelimitedKernelNameStr;
 

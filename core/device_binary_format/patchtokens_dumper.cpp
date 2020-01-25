@@ -710,21 +710,6 @@ void dumpVecIfNotEmpty(const T &vector, const std::string &vectorName, std::stri
     }
 }
 
-const char *asString(DecoderError err) {
-    switch (err) {
-    default:
-        DEBUG_BREAK_IF(err != DecoderError::InvalidBinary);
-        return "with invalid binary";
-        break;
-    case DecoderError::Success:
-        return "decoded successfully";
-        break;
-    case DecoderError::Undefined:
-        return "in undefined status";
-        break;
-    }
-}
-
 std::string asString(const ProgramFromPatchtokens &prog) {
     std::stringstream stream;
     stream << "Program of size : " << prog.blobs.programInfo.size()

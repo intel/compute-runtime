@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,18 @@ constexpr size_t constLength(const char *string) {
 
 class ConstStringRef {
   public:
+    constexpr ConstStringRef() {
+    }
+
+    constexpr ConstStringRef(const ConstStringRef &rhs) : ptr(rhs.ptr), len(rhs.len) {
+    }
+
+    ConstStringRef &operator=(const ConstStringRef &rhs) {
+        this->ptr = rhs.ptr;
+        this->len = rhs.len;
+        return *this;
+    }
+
     template <size_t Length>
     constexpr ConstStringRef(const char (&array)[Length]) noexcept
         : ptr(array), len(((Length > 0) && (array[Length - 1] == '\0')) ? (Length - 1) : Length) {
@@ -41,6 +53,10 @@ class ConstStringRef {
 
     constexpr operator const char *() const noexcept {
         return ptr;
+    }
+
+    std::string str() const {
+        return std::string(ptr, len);
     }
 
     constexpr size_t size() const noexcept {
@@ -64,8 +80,8 @@ class ConstStringRef {
     }
 
   protected:
-    const char *const ptr;
-    const size_t len;
+    const char *ptr = nullptr;
+    size_t len = 0U;
 };
 
 constexpr bool equals(const ConstStringRef &lhs, const ConstStringRef &rhs) {

@@ -25,11 +25,11 @@ bool requiresLocalMemoryWindowVA(const PatchTokenBinary::ProgramFromPatchtokens 
     return false;
 }
 
-void populateSingleKernelInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram, const DeviceInfoKernelPayloadConstants &constants, uint32_t kernelNum) {
+void populateSingleKernelInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram, uint32_t kernelNum) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     const PatchTokenBinary::KernelFromPatchtokens &decodedKernel = decodedProgram.kernels[kernelNum];
 
-    NEO::populateKernelInfo(*kernelInfo, decodedKernel, decodedProgram.header->GPUPointerSizeInBytes, constants);
+    NEO::populateKernelInfo(*kernelInfo, decodedKernel, decodedProgram.header->GPUPointerSizeInBytes);
 
     if (decodedKernel.tokens.programSymbolTable) {
         dst.prepareLinkerInputStorage();
@@ -44,9 +44,9 @@ void populateSingleKernelInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramF
     dst.kernelInfos.push_back(kernelInfo.release());
 }
 
-void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &src, const DeviceInfoKernelPayloadConstants &constants) {
+void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPatchtokens &src) {
     for (uint32_t i = 0; i < src.kernels.size(); ++i) {
-        populateSingleKernelInfo(dst, src, constants, i);
+        populateSingleKernelInfo(dst, src, i);
     }
 
     if (src.programScopeTokens.allocateConstantMemorySurface.empty() == false) {

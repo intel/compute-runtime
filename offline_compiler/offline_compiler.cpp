@@ -8,7 +8,9 @@
 #include "offline_compiler.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "core/elf/writer.h"
+#include "core/device_binary_format/device_binary_formats.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
@@ -726,31 +728,45 @@ void OfflineCompiler::storeBinary(
 }
 
 bool OfflineCompiler::generateElfBinary() {
-    bool retVal = true;
-
     if (!genBinary || !genBinarySize) {
-        retVal = false;
+        return false;
     }
 
-    if (retVal) {
-        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+    SingleDeviceBinary binary = {};
+    binary.buildOptions = this->options;
+    binary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary), this->irBinarySize);
+    binary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->genBinary), this->genBinarySize);
+    binary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->debugDataBinary), this->debugDataBinarySize);
+    std::string packErrors;
+    std::string packWarnings;
 
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "BuildOptions", options, static_cast<uint32_t>(strlen(options.c_str()) + 1u)));
-        std::string irBinaryTemp = irBinary ? std::string(irBinary, irBinarySize) : "";
-        elfWriter.addSection(CLElfLib::SSectionNode(isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL LLVM Object", std::move(irBinaryTemp), static_cast<uint32_t>(irBinarySize)));
+    using namespace NEO::Elf;
+    ElfEncoder<EI_CLASS_64> ElfEncoder;
+    ElfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;
+    if (binary.buildOptions.empty() == false) {
+        ElfEncoder.appendSection(SHT_OPENCL_OPTIONS, SectionNamesOpenCl::buildOptions,
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.buildOptions.data()), binary.buildOptions.size()));
+    }
 
-        // Add the device binary if it exists
-        if (genBinary) {
-            std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
-            elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
+    if (binary.intermediateRepresentation.empty() == false) {
+        if (isSpirV) {
+            ElfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
+        } else {
+            ElfEncoder.appendSection(SHT_OPENCL_LLVM_BINARY, SectionNamesOpenCl::llvmObject, binary.intermediateRepresentation);
         }
-
-        elfBinarySize = elfWriter.getTotalBinarySize();
-        elfBinary.resize(elfBinarySize);
-        elfWriter.resolveBinary(elfBinary);
     }
 
-    return retVal;
+    if (binary.debugData.empty() == false) {
+        ElfEncoder.appendSection(SHT_OPENCL_DEV_DEBUG, SectionNamesOpenCl::deviceDebug, binary.debugData);
+    }
+
+    if (binary.deviceBinary.empty() == false) {
+        ElfEncoder.appendSection(SHT_OPENCL_DEV_BINARY, SectionNamesOpenCl::deviceBinary, binary.deviceBinary);
+    }
+
+    this->elfBinary = ElfEncoder.encode();
+
+    return true;
 }
 
 void OfflineCompiler::writeOutAllFiles() {
@@ -821,7 +837,7 @@ void OfflineCompiler::writeOutAllFiles() {
         writeDataToFile(
             elfOutputFile.c_str(),
             elfBinary.data(),
-            elfBinarySize);
+            elfBinary.size());
     }
 
     if (debugDataBinary) {

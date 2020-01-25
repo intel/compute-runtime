@@ -83,7 +83,7 @@ target_include_directories(ocloc_tests PRIVATE
 )
 target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc,INTERFACE_COMPILE_DEFINITIONS>)
 
-target_link_libraries(ocloc_tests gmock-gtest elflib)
+target_link_libraries(ocloc_tests gmock-gtest)
 
 if(WIN32)
     target_link_libraries(ocloc_tests dbghelp)

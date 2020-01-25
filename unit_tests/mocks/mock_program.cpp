@@ -104,7 +104,7 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
     programTokens.kernels[0].name = name;
 
     NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programTokens, {});
+    NEO::populateProgramInfo(programInfo, programTokens);
 
     Program *ret = new Program(executionEnvironment, nullptr, false);
     ret->processProgramInfo(programInfo);

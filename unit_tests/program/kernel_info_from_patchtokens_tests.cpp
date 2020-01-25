@@ -16,7 +16,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidEmptyKernelFromPatchtokensThenReturnEm
     std::vector<uint8_t> storage;
     auto src = PatchTokensTestData::ValidEmptyKernel::create(storage);
     NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src, 4, {});
+    NEO::populateKernelInfo(dst, src, 4);
 
     NEO::KernelInfo expectedKernelInfo = {};
     expectedKernelInfo.name = std::string(src.name.begin()).c_str();
@@ -29,7 +29,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidEmptyKernelFromPatchtokensThenReturnEm
 TEST(KernelInfoFromPatchTokens, GivenValidKernelWithArgThenMetadataIsProperlyPopulated) {
     PatchTokensTestData::ValidProgramWithKernelAndArg src;
     NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+    NEO::populateKernelInfo(dst, src.kernels[0], 4);
     ASSERT_EQ(1U, dst.kernelArgInfo.size());
     EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
     EXPECT_EQ(NEO::KernelArgMetadata::AddressSpaceQualifier::Global, dst.kernelArgInfo[0].metadata.addressQualifier);
@@ -52,7 +52,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgThenArgAccessQualifi
     imageArg.Writeable = false;
     src.kernels[0].tokens.kernelArgs[0].objectArg = &imageArg;
     NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+    NEO::populateKernelInfo(dst, src.kernels[0], 4);
     ASSERT_EQ(1U, dst.kernelArgInfo.size());
     EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
 }
@@ -66,7 +66,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissing
     {
         imageArg.Writeable = false;
         NEO::KernelInfo dst = {};
-        NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+        NEO::populateKernelInfo(dst, src.kernels[0], 4);
         ASSERT_EQ(1U, dst.kernelArgInfo.size());
         EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadOnly, dst.kernelArgInfo[0].metadata.accessQualifier);
     }
@@ -74,7 +74,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissing
     {
         imageArg.Writeable = true;
         NEO::KernelInfo dst = {};
-        NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+        NEO::populateKernelInfo(dst, src.kernels[0], 4);
         ASSERT_EQ(1U, dst.kernelArgInfo.size());
         EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
     }
@@ -84,7 +84,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithNonDelimitedArgTypeThenUsesA
     PatchTokensTestData::ValidProgramWithKernelAndArg src;
     src.arg0TypeMutable[4] = '*';
     NEO::KernelInfo dst = {};
-    NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+    NEO::populateKernelInfo(dst, src.kernels[0], 4);
     ASSERT_EQ(1U, dst.kernelArgInfo.size());
     EXPECT_STREQ("int**", dst.kernelArgInfo[0].metadataExtended->type.c_str());
 }
@@ -96,7 +96,7 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWithEmptySizeThenTokenIs
     src.tokens.dataParameterStream = &dataParameterStream;
     dataParameterStream.DataParameterStreamSize = 0U;
     NEO::KernelInfo dst;
-    NEO::populateKernelInfo(dst, src, 4, {});
+    NEO::populateKernelInfo(dst, src, 4);
     EXPECT_EQ(nullptr, dst.crossThreadData);
 }
 
@@ -107,7 +107,7 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWithNonEmptySizeThenCros
     src.tokens.dataParameterStream = &dataParameterStream;
     dataParameterStream.DataParameterStreamSize = 256U;
     NEO::KernelInfo dst;
-    NEO::populateKernelInfo(dst, src, 4, {});
+    NEO::populateKernelInfo(dst, src, 4);
     EXPECT_NE(nullptr, dst.crossThreadData);
 }
 
@@ -147,8 +147,9 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenTokensRequiringDevic
     src.tokens.crossThreadPayloadArgs.maxWorkGroupSize = &maxWorkgroupSize;
 
     NEO::KernelInfo dst;
-    NEO::populateKernelInfo(dst, src, 4, deviceInfoConstants);
+    NEO::populateKernelInfo(dst, src, 4);
     ASSERT_NE(nullptr, dst.crossThreadData);
+    dst.apply(deviceInfoConstants);
     uint32_t expectedPrivateMemorySize = privateSurface.PerThreadPrivateMemorySize * deviceInfoConstants.computeUnitsUsedForScratch * src.tokens.executionEnvironment->LargestCompiledSIMDSize;
     EXPECT_EQ(expectedPrivateMemorySize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + privateMemorySize.Offset));
     EXPECT_EQ(deviceInfoConstants.slmWindowSize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + localMemoryWindowsSize.Offset));
@@ -176,8 +177,9 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenPrivateSurfaceIsNotA
     src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize = &privateMemorySize;
 
     NEO::KernelInfo dst;
-    NEO::populateKernelInfo(dst, src, 4, deviceInfoConstants);
+    NEO::populateKernelInfo(dst, src, 4);
     ASSERT_NE(nullptr, dst.crossThreadData);
+    dst.apply(deviceInfoConstants);
     uint32_t expectedPrivateMemorySize = 0U;
     EXPECT_EQ(expectedPrivateMemorySize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + privateMemorySize.Offset));
 }
@@ -191,7 +193,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGtpinInfoTokenThenKernelInfoIsPro
     kernelTokens.tokens.gtpinInfo = &gtpinInfo;
 
     NEO::KernelInfo kernelInfo = {};
-    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(uintptr_t), {});
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
     EXPECT_NE(nullptr, kernelInfo.igcInfoForGtpin);
 }
 
@@ -208,7 +210,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgThenKernelInfoIsPr
     kernelTokens.tokens.kernelArgs.resize(2);
     kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
     NEO::KernelInfo kernelInfo = {};
-    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(uintptr_t), {});
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
     EXPECT_TRUE(kernelInfo.usesSsh);
     EXPECT_EQ(1U, kernelInfo.argumentsToPatchNum);
     ASSERT_EQ(2U, kernelInfo.kernelArgInfo.size());

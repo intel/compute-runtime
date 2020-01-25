@@ -6,8 +6,10 @@
  */
 
 #pragma once
+#include "core/device/device.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/string.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 
@@ -28,8 +30,6 @@ class MockProgram : public Program {
     using Program::internalOptionsToExtract;
     using Program::isKernelDebugEnabled;
     using Program::linkBinary;
-    using Program::rebuildProgramFromIr;
-    using Program::resolveProgramBinary;
     using Program::separateBlockKernels;
     using Program::updateNonUniformFlag;
 
@@ -40,19 +40,18 @@ class MockProgram : public Program {
     using Program::context;
     using Program::debugData;
     using Program::debugDataSize;
-    using Program::elfBinary;
-    using Program::elfBinarySize;
     using Program::exportedFunctionsSurface;
     using Program::extractInternalOptions;
-    using Program::genBinary;
-    using Program::genBinarySize;
     using Program::getKernelInfo;
     using Program::globalSurface;
     using Program::irBinary;
     using Program::irBinarySize;
-    using Program::isProgramBinaryResolved;
     using Program::isSpirV;
     using Program::linkerInput;
+    using Program::options;
+    using Program::packDeviceBinary;
+    using Program::packedDeviceBinary;
+    using Program::packedDeviceBinarySize;
     using Program::pDevice;
     using Program::programBinaryType;
     using Program::sourceCode;
@@ -60,6 +59,8 @@ class MockProgram : public Program {
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
     using Program::symbols;
+    using Program::unpackedDeviceBinary;
+    using Program::unpackedDeviceBinarySize;
 
     template <typename... T>
     MockProgram(T &&... args) : Program(std::forward<T>(args)...) {
@@ -138,15 +139,16 @@ class MockProgram : public Program {
         return Program::isOptionValueValid(option, value);
     }
 
-    cl_int isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const override {
-        if (skipValidationOfBinary) {
-            return CL_SUCCESS;
-        }
-        return Program::isHandled(decodedProgram);
+    cl_int rebuildProgramFromIr() {
+        this->isCreatedFromBinary = false;
+        this->buildStatus = CL_BUILD_NONE;
+        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
+        std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
+        auto &device = this->pDevice->getDevice();
+        return this->build(&device, this->options.c_str(), false, builtins);
     }
 
     bool contextSet = false;
-    bool skipValidationOfBinary = false;
     int isFlagOptionOverride = -1;
     int isOptionValueValidOverride = -1;
 };

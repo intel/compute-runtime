@@ -83,7 +83,7 @@ struct ValidEmptyProgram : NEO::PatchTokenBinary::ProgramFromPatchtokens {
         headerTok.Version = iOpenCL::CURRENT_ICBE_VERSION;
         headerTok.Device = renderCoreFamily;
         headerTok.GPUPointerSizeInBytes = sizeof(uintptr_t);
-        this->decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+        this->decodeStatus = NEO::DecodeError::Success;
 
         storage.insert(storage.end(), reinterpret_cast<uint8_t *>(&headerTok), reinterpret_cast<uint8_t *>((&headerTok) + 1));
         recalcTokPtr();
@@ -228,7 +228,7 @@ struct ValidEmptyKernel {
         execEnvTokInl.LargestCompiledSIMDSize = 32U;
         execEnvTokInl.CompiledSIMD32 = 1U;
         headerTokInl.PatchListSize = sizeof(execEnvTokInl);
-        ret.decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+        ret.decodeStatus = NEO::DecodeError::Success;
         ret.name = "test_kernel";
         headerTokInl.KernelNameSize = static_cast<uint32_t>(ret.name.size());
 
@@ -253,7 +253,7 @@ struct ValidProgramWithKernel : ValidEmptyProgram {
         this->headerMutable->NumberOfKernels = 1;
         kernOffset = storage.size();
         this->kernels.push_back(ValidEmptyKernel::create(storage));
-        this->kernels[0].decodeStatus = NEO::PatchTokenBinary::DecoderError::Success;
+        this->kernels[0].decodeStatus = NEO::DecodeError::Success;
         kernExecEnvOffset = ptrDiff(this->kernels[0].blobs.patchList.begin(), storage.data());
         recalcTokPtr();
     }

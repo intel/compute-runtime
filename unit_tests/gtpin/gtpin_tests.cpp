@@ -987,8 +987,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 
     PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-    pProgram->genBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
-    pProgram->genBinarySize = programTokens.storage.size();
+    pProgram->unpackedDeviceBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
+    pProgram->unpackedDeviceBinarySize = programTokens.storage.size();
     retVal = pProgram->processGenBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1112,8 +1112,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
     pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
 
-    pProgram->genBinary = makeCopy(&binary[0], binSize);
-    pProgram->genBinarySize = binSize;
+    pProgram->unpackedDeviceBinary = makeCopy(&binary[0], binSize);
+    pProgram->unpackedDeviceBinarySize = binSize;
     retVal = pProgram->processGenBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2039,8 +2039,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         PatchTokensTestData::ValidProgramWithKernel programTokens;
 
-        pProgram->genBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
-        pProgram->genBinarySize = programTokens.storage.size();
+        pProgram->unpackedDeviceBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
+        pProgram->unpackedDeviceBinarySize = programTokens.storage.size();
         retVal = pProgram->processGenBinary();
         if (retVal == CL_OUT_OF_HOST_MEMORY) {
             auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;

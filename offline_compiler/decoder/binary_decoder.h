@@ -6,10 +6,8 @@
  */
 
 #pragma once
-#include "core/elf/types.h"
-
-#include "helper.h"
-#include "iga_wrapper.h"
+#include "offline_compiler/decoder/helper.h"
+#include "offline_compiler/decoder/iga_wrapper.h"
 
 #include <memory>
 #include <string>
@@ -46,20 +44,20 @@ class BinaryDecoder {
   protected:
     bool ignoreIsaPadding = false;
     BinaryHeader programHeader, kernelHeader;
-    CLElfLib::ElfBinaryStorage binary;
+    std::vector<char> binary;
     std::unique_ptr<IgaWrapper> iga;
     PTMap patchTokens;
     std::string binaryFile, pathToPatch, pathToDump;
     MessagePrinter messagePrinter;
 
-    void dumpField(void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
+    void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
-    void *getDevBinary();
+    const void *getDevBinary();
     void parseTokens();
     void printHelp();
-    int processBinary(void *&ptr, std::ostream &ptmFile);
-    void processKernel(void *&ptr, std::ostream &ptmFile);
-    void readPatchTokens(void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);
+    int processBinary(const void *&ptr, std::ostream &ptmFile);
+    void processKernel(const void *&ptr, std::ostream &ptmFile);
+    void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);
     uint32_t readStructFields(const std::vector<std::string> &patchList,
                               const size_t &structPos, std::vector<PTField> &fields);
 };

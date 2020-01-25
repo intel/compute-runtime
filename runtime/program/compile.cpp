@@ -6,7 +6,10 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
-#include "core/elf/writer.h"
+#include "core/device/device.h"
+#include "core/device_binary_format/elf/elf.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/execution_environment/execution_environment.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/validators.h"
@@ -30,9 +33,6 @@ cl_int Program::compile(
     void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
     void *userData) {
     cl_int retVal = CL_SUCCESS;
-    cl_program program;
-    Program *pHeaderProgObj;
-    size_t compileDataSize;
 
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
@@ -89,43 +89,35 @@ cl_int Program::compile(
         }
 
         // create ELF writer to process all sources to be compiled
-        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_SOURCE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
-
-        CLElfLib::SSectionNode sectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "CLMain", sourceCode, static_cast<uint32_t>(sourceCode.size() + 1u));
-
-        // add main program's source
-        elfWriter.addSection(sectionNode);
+        NEO::Elf::ElfEncoder<> elfEncoder(true, true, 1U);
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_SOURCE;
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SOURCE, "CLMain", sourceCode);
 
         for (cl_uint i = 0; i < numInputHeaders; i++) {
-            program = inputHeaders[i];
+            auto program = inputHeaders[i];
             if (program == nullptr) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
-            pHeaderProgObj = castToObject<Program>(program);
+            auto pHeaderProgObj = castToObject<Program>(program);
             if (pHeaderProgObj == nullptr) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
-            sectionNode.name = headerIncludeNames[i];
-            sectionNode.type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_HEADER;
-            sectionNode.flag = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
-            // collect required data from the header
-            retVal = pHeaderProgObj->getSource(sectionNode.data);
+
+            std::string includeHeaderSource;
+            retVal = pHeaderProgObj->getSource(includeHeaderSource);
             if (retVal != CL_SUCCESS) {
                 break;
             }
 
-            sectionNode.dataSize = static_cast<uint32_t>(sectionNode.data.size());
-            elfWriter.addSection(sectionNode);
+            elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_HEADER, ConstStringRef(headerIncludeNames[i], strlen(headerIncludeNames[i])), includeHeaderSource);
         }
         if (retVal != CL_SUCCESS) {
             break;
         }
 
-        compileDataSize = elfWriter.getTotalBinarySize();
-        CLElfLib::ElfBinaryStorage compileData(compileDataSize);
-        elfWriter.resolveBinary(compileData);
+        std::vector<uint8_t> compileData = elfEncoder.encode();
 
         CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
         if (!pCompilerInterface) {
@@ -148,7 +140,7 @@ cl_int Program::compile(
             }
         }
 
-        inputArgs.src = ArrayRef<const char>(compileData.data(), compileDataSize);
+        inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(compileData.data()), compileData.size());
         inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 

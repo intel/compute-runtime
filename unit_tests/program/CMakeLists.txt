@@ -7,7 +7,6 @@
 set(IGDRCL_SRCS_tests_program
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/block_kernel_manager_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/evaluate_unhandled_token_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_OCL2_0.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_tests.cpp

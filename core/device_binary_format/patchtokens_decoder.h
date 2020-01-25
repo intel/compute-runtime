@@ -7,10 +7,12 @@
 
 #pragma once
 
+#include "core/device_binary_format/device_binary_formats.h"
 #include "core/helpers/ptr_math.h"
 #include "core/utilities/arrayref.h"
 #include "core/utilities/stackvec.h"
 
+#include "igfxfmid.h"
 #include "patch_g7.h"
 #include "patch_list.h"
 #include "patch_shared.h"
@@ -19,18 +21,13 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <utility>
 
 namespace NEO {
 
 namespace PatchTokenBinary {
 
 using namespace iOpenCL;
-
-enum class DecoderError {
-    Success = 0,
-    Undefined = 1,
-    InvalidBinary = 2,
-};
 
 enum class ArgObjectType : uint32_t {
     None = 0,
@@ -100,7 +97,7 @@ struct KernelArgFromPatchtokens {
 using StackVecKernelArgs = StackVec<KernelArgFromPatchtokens, 12>;
 
 struct KernelFromPatchtokens {
-    DecoderError decodeStatus = DecoderError::Undefined;
+    DecodeError decodeStatus = DecodeError::Undefined;
 
     const SKernelBinaryHeaderCommon *header = nullptr;
     ArrayRef<const char> name;
@@ -167,7 +164,7 @@ struct KernelFromPatchtokens {
 };
 
 struct ProgramFromPatchtokens {
-    DecoderError decodeStatus = DecoderError::Undefined;
+    DecodeError decodeStatus = DecodeError::Undefined;
 
     const SProgramBinaryHeader *header = nullptr;
     struct {
@@ -195,8 +192,8 @@ struct KernelArgAttributesFromPatchtokens {
     ArrayRef<const char> typeQualifiers;
 };
 
-bool decodeKernelFromPatchtokensBlob(ArrayRef<const uint8_t> blob, KernelFromPatchtokens &out);
-bool decodeProgramFromPatchtokensBlob(ArrayRef<const uint8_t> blob, ProgramFromPatchtokens &out);
+bool decodeKernelFromPatchtokensBlob(ArrayRef<const uint8_t> kernelBlob, KernelFromPatchtokens &out);
+bool decodeProgramFromPatchtokensBlob(ArrayRef<const uint8_t> programBlob, ProgramFromPatchtokens &out);
 uint32_t calcKernelChecksum(const ArrayRef<const uint8_t> kernelBlob);
 bool hasInvalidChecksum(const KernelFromPatchtokens &decodedKernel);
 
@@ -213,6 +210,12 @@ inline const uint8_t *getInlineData(const SPatchString *ptr) {
 }
 
 const KernelArgAttributesFromPatchtokens getInlineData(const SPatchKernelArgumentInfo *ptr);
+
+const iOpenCL::SProgramBinaryHeader *decodeProgramHeader(const ArrayRef<const uint8_t> programBlob);
+
+inline bool isValidPatchTokenBinary(const ArrayRef<const uint8_t> programBlob) {
+    return nullptr != decodeProgramHeader(programBlob);
+}
 
 } // namespace PatchTokenBinary
 

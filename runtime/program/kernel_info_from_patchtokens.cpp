@@ -141,8 +141,7 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
     dstKernelInfoArg.offsetObjectId = getOffset(src.objectId);
 }
 
-void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes,
-                        const DeviceInfoKernelPayloadConstants &constants) {
+void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
     dst.heapInfo.pKernelHeader = src.header;
     dst.name = std::string(src.name.begin(), src.name.end()).c_str();
@@ -220,31 +219,6 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
         uint32_t crossThreadDataSize = dst.patchInfo.dataParameterStream->DataParameterStreamSize;
         dst.crossThreadData = new char[crossThreadDataSize];
         memset(dst.crossThreadData, 0x00, crossThreadDataSize);
-
-        uint32_t privateMemoryStatelessSizeOffset = dst.workloadInfo.privateMemoryStatelessSizeOffset;
-        uint32_t localMemoryStatelessWindowSizeOffset = dst.workloadInfo.localMemoryStatelessWindowSizeOffset;
-        uint32_t localMemoryStatelessWindowStartAddressOffset = dst.workloadInfo.localMemoryStatelessWindowStartAddressOffset;
-
-        if (localMemoryStatelessWindowStartAddressOffset != WorkloadInfo::undefinedOffset) {
-            *(uintptr_t *)&(dst.crossThreadData[localMemoryStatelessWindowStartAddressOffset]) = reinterpret_cast<uintptr_t>(constants.slmWindow);
-        }
-
-        if (localMemoryStatelessWindowSizeOffset != WorkloadInfo::undefinedOffset) {
-            *(uint32_t *)&(dst.crossThreadData[localMemoryStatelessWindowSizeOffset]) = constants.slmWindowSize;
-        }
-
-        uint32_t privateMemorySize = 0U;
-        if (dst.patchInfo.pAllocateStatelessPrivateSurface) {
-            privateMemorySize = dst.patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize * constants.computeUnitsUsedForScratch * dst.getMaxSimdSize();
-        }
-
-        if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {
-            *(uint32_t *)&(dst.crossThreadData[privateMemoryStatelessSizeOffset]) = privateMemorySize;
-        }
-
-        if (dst.workloadInfo.maxWorkGroupSizeOffset != WorkloadInfo::undefinedOffset) {
-            *(uint32_t *)&(dst.crossThreadData[dst.workloadInfo.maxWorkGroupSizeOffset]) = constants.maxWorkGroupSize;
-        }
     }
 }
 

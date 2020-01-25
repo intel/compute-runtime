@@ -7,7 +7,8 @@
 
 #include "binary_encoder.h"
 
-#include "core/elf/writer.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
@@ -74,17 +75,14 @@ bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostr
 }
 
 int BinaryEncoder::createElf() {
-    CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> ElfEncoder;
+    ElfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
 
     //Build Options
     if (fileExists(pathToDump + "build.bin")) {
         auto binary = readBinaryFile(pathToDump + "build.bin");
-        std::string data(binary.begin(), binary.end());
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS,
-                                                    CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
-                                                    "BuildOptions",
-                                                    data,
-                                                    static_cast<uint32_t>(data.size())));
+        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, "BuildOptions",
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         messagePrinter.printf("Warning! Missing build section.\n");
     }
@@ -92,20 +90,13 @@ int BinaryEncoder::createElf() {
     //LLVM or SPIRV
     if (fileExists(pathToDump + "llvm.bin")) {
         auto binary = readBinaryFile(pathToDump + "llvm.bin");
-        std::string data(binary.begin(), binary.end());
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY,
-                                                    CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
-                                                    "Intel(R) OpenCL LLVM Object",
-                                                    data,
-                                                    static_cast<uint32_t>(data.size())));
+        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, "Intel(R) OpenCL LLVM Object",
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else if (fileExists(pathToDump + "spirv.bin")) {
         auto binary = readBinaryFile(pathToDump + "spirv.bin");
         std::string data(binary.begin(), binary.end());
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV,
-                                                    CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
-                                                    "SPIRV Object",
-                                                    data,
-                                                    static_cast<uint32_t>(data.size())));
+        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, "SPIRV Object",
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         messagePrinter.printf("Warning! Missing llvm/spirv section.\n");
     }
@@ -113,20 +104,15 @@ int BinaryEncoder::createElf() {
     //Device Binary
     if (fileExists(pathToDump + "device_binary.bin")) {
         auto binary = readBinaryFile(pathToDump + "device_binary.bin");
-        std::string data(binary.begin(), binary.end());
-        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY,
-                                                    CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
-                                                    "Intel(R) OpenCL Device Binary",
-                                                    data,
-                                                    static_cast<uint32_t>(data.size())));
+        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         messagePrinter.printf("Missing device_binary.bin\n");
         return -1;
     }
 
     //Resolve Elf Binary
-    std::vector<char> elfBinary;
-    elfWriter.resolveBinary(elfBinary);
+    auto elfBinary = ElfEncoder.encode();
 
     std::ofstream elfFile(elfName, std::ios::binary);
     if (!elfFile.good()) {
@@ -134,7 +120,7 @@ int BinaryEncoder::createElf() {
         return -1;
     }
 
-    elfFile.write(elfBinary.data(), elfBinary.size());
+    elfFile.write(reinterpret_cast<const char *>(elfBinary.data()), elfBinary.size());
     return 0;
 }
 

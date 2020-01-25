@@ -8,7 +8,7 @@
 #pragma once
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/linker.h"
-#include "core/elf/writer.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
 #include "core/program/program_info.h"
 #include "core/utilities/const_stringref.h"
 #include "runtime/api/cl_types.h"
@@ -132,7 +132,6 @@ class Program : public BaseObject<_cl_program> {
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
     MOCKABLE_VIRTUAL cl_int processGenBinary();
-    MOCKABLE_VIRTUAL cl_int processPatchTokensBinary(ArrayRef<const uint8_t> src, ProgramInfo &dst);
     MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
 
     cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
@@ -181,7 +180,6 @@ class Program : public BaseObject<_cl_program> {
 
     void setDevice(Device *device);
 
-    MOCKABLE_VIRTUAL cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion);
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
     cl_int getSource(std::string &binary) const;
@@ -238,8 +236,6 @@ class Program : public BaseObject<_cl_program> {
         kernelDebugEnabled = true;
     }
 
-    static bool isValidLlvmBinary(const void *pBinary, size_t binarySize);
-    static bool isValidSpirvBinary(const void *pBinary, size_t binarySize);
     bool isKernelDebugEnabled() {
         return kernelDebugEnabled;
     }
@@ -260,23 +256,16 @@ class Program : public BaseObject<_cl_program> {
         return this->linkerInput.get();
     }
 
-    MOCKABLE_VIRTUAL bool isSafeToSkipUnhandledToken(unsigned int token) const;
+    MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize);
 
   protected:
     Program(ExecutionEnvironment &executionEnvironment);
 
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize);
 
-    cl_int resolveProgramBinary();
+    cl_int packDeviceBinary();
 
     MOCKABLE_VIRTUAL cl_int linkBinary();
-
-    MOCKABLE_VIRTUAL cl_int isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const;
-
-    MOCKABLE_VIRTUAL cl_int rebuildProgramFromIr();
-
-    bool validateGenBinaryDevice(GFXCORE_FAMILY device) const;
-    bool validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenBinaryHeader) const;
 
     void separateBlockKernels();
 
@@ -293,19 +282,20 @@ class Program : public BaseObject<_cl_program> {
 
     static const std::string clOptNameClVer;
 
-    cl_program_binary_type programBinaryType;
+    cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     bool isSpirV = false;
-    CLElfLib::ElfBinaryStorage elfBinary;
-    size_t elfBinarySize;
-
-    std::unique_ptr<char[]> genBinary;
-    size_t genBinarySize;
 
     std::unique_ptr<char[]> irBinary;
-    size_t irBinarySize;
+    size_t irBinarySize = 0U;
+
+    std::unique_ptr<char[]> unpackedDeviceBinary;
+    size_t unpackedDeviceBinarySize = 0U;
+
+    std::unique_ptr<char[]> packedDeviceBinary;
+    size_t packedDeviceBinarySize = 0U;
 
     std::unique_ptr<char[]> debugData;
-    size_t debugDataSize;
+    size_t debugDataSize = 0U;
 
     CreatedFrom createdFrom = CreatedFrom::UNKNOWN;
 
@@ -313,23 +303,22 @@ class Program : public BaseObject<_cl_program> {
     std::vector<KernelInfo *> parentKernelInfoArray;
     std::vector<KernelInfo *> subgroupKernelInfoArray;
 
-    GraphicsAllocation *constantSurface;
-    GraphicsAllocation *globalSurface;
+    GraphicsAllocation *constantSurface = nullptr;
+    GraphicsAllocation *globalSurface = nullptr;
     GraphicsAllocation *exportedFunctionsSurface = nullptr;
 
-    size_t globalVarTotalSize;
+    size_t globalVarTotalSize = 0U;
 
-    cl_build_status buildStatus;
-    bool isCreatedFromBinary;
-    bool isProgramBinaryResolved;
+    cl_build_status buildStatus = CL_BUILD_NONE;
+    bool isCreatedFromBinary = false;
 
     std::string sourceCode;
     std::string options;
     std::string internalOptions;
     static const std::vector<ConstStringRef> internalOptionsToExtract;
 
-    uint32_t programOptionVersion;
-    bool allowNonUniform;
+    uint32_t programOptionVersion = 12U;
+    bool allowNonUniform = false;
 
     std::unique_ptr<LinkerInput> linkerInput;
     Linker::RelocatedSymbolsMap symbols;
@@ -341,13 +330,13 @@ class Program : public BaseObject<_cl_program> {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsValues;
 
-    BlockKernelManager *blockKernelManager;
+    BlockKernelManager *blockKernelManager = nullptr;
     ExecutionEnvironment &executionEnvironment;
-    Context *context;
-    ClDevice *pDevice;
-    cl_uint numDevices;
+    Context *context = nullptr;
+    ClDevice *pDevice = nullptr;
+    cl_uint numDevices = 0U;
 
-    bool isBuiltIn;
+    bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
 };
 

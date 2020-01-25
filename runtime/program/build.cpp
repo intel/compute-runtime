@@ -7,6 +7,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
+#include "core/device_binary_format/device_binary_formats.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/utilities/time_measure_wrapper.h"
 #include "runtime/device/cl_device.h"
@@ -125,8 +126,7 @@ cl_int Program::build(
                 this->irBinarySize = compilerOuput.intermediateRepresentation.size;
                 this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
             }
-            this->genBinary = std::move(compilerOuput.deviceBinary.mem);
-            this->genBinarySize = compilerOuput.deviceBinary.size;
+            this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size);
             this->debugData = std::move(compilerOuput.debugData.mem);
             this->debugDataSize = compilerOuput.debugData.size;
         }

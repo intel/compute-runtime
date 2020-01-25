@@ -5,27 +5,21 @@
  *
  */
 
-#include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/device_binary_format/patchtokens_dumper.h"
-#include "core/device_binary_format/patchtokens_validator.inl"
+#include "core/device_binary_format/device_binary_formats.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/program/program_info.h"
-#include "core/program/program_info_from_patchtokens.h"
 #include "core/program/program_initialization.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/kernel_info.h"
-#include "runtime/program/kernel_info_from_patchtokens.h"
 #include "runtime/program/program.h"
 
-#include "patch_list.h"
-#include "patch_shared.h"
 #include "program_debug_data.h"
 
 #include <algorithm>
@@ -54,26 +48,6 @@ size_t Program::getNumKernels() const {
 const KernelInfo *Program::getKernelInfo(size_t ordinal) const {
     DEBUG_BREAK_IF(ordinal >= kernelInfoArray.size());
     return kernelInfoArray[ordinal];
-}
-
-cl_int Program::isHandled(const PatchTokenBinary::ProgramFromPatchtokens &decodedProgram) const {
-    std::string validatorErrMessage;
-    std::string validatorWarnings;
-    auto availableSlm = this->pDevice ? static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize) : 0U;
-    auto validatorErr = PatchTokenBinary::validate(decodedProgram, availableSlm, *this, validatorErrMessage, validatorWarnings);
-    if (validatorWarnings.empty() == false) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", validatorWarnings.c_str());
-    }
-    if (validatorErr != PatchTokenBinary::ValidatorError::Success) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", validatorErrMessage.c_str());
-        switch (validatorErr) {
-        default:
-            return CL_INVALID_BINARY;
-        case PatchTokenBinary::ValidatorError::NotEnoughSlm:
-            return CL_OUT_OF_RESOURCES;
-        }
-    }
-    return CL_SUCCESS;
 }
 
 cl_int Program::linkBinary() {
@@ -146,6 +120,10 @@ cl_int Program::linkBinary() {
 }
 
 cl_int Program::processGenBinary() {
+    if (nullptr == this->unpackedDeviceBinary) {
+        return CL_INVALID_BINARY;
+    }
+
     cleanCurrentKernelInfo();
     if (this->constantSurface || this->globalSurface) {
         pDevice->getMemoryManager()->freeGraphicsMemory(this->constantSurface);
@@ -154,41 +132,45 @@ cl_int Program::processGenBinary() {
         this->globalSurface = nullptr;
     }
 
-    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(genBinary.get()), genBinarySize);
     ProgramInfo programInfo;
-    auto ret = this->processPatchTokensBinary(blob, programInfo);
-    if (CL_SUCCESS != ret) {
-        return ret;
+    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
+    SingleDeviceBinary binary = {};
+    binary.deviceBinary = blob;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+
+    DecodeError decodeError;
+    DeviceBinaryFormat singleDeviceBinaryFormat;
+    std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings);
+    if (decodeWarnings.empty() == false) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+    }
+
+    if (DecodeError::Success != decodeError) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        return CL_INVALID_BINARY;
     }
 
     return this->processProgramInfo(programInfo);
 }
 
-cl_int Program::processPatchTokensBinary(ArrayRef<const uint8_t> src, ProgramInfo &dst) {
-    NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram = {};
-    NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(src, decodedProgram);
-    DBG_LOG(LogPatchTokens, NEO::PatchTokenBinary::asString(decodedProgram).c_str());
-    cl_int retVal = this->isHandled(decodedProgram);
-    if (CL_SUCCESS != retVal) {
-        return retVal;
-    }
-
+cl_int Program::processProgramInfo(ProgramInfo &src) {
+    size_t slmNeeded = getMaxInlineSlmNeeded(src);
+    size_t slmAvailable = 0U;
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
     if (this->pDevice) {
+        slmAvailable = static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize);
         deviceInfoConstants.maxWorkGroupSize = (uint32_t)this->pDevice->getDeviceInfo().maxWorkGroupSize;
         deviceInfoConstants.computeUnitsUsedForScratch = this->pDevice->getDeviceInfo().computeUnitsUsedForScratch;
         deviceInfoConstants.slmWindowSize = (uint32_t)this->pDevice->getDeviceInfo().localMemSize;
-        if (requiresLocalMemoryWindowVA(decodedProgram)) {
+        if (requiresLocalMemoryWindowVA(src)) {
             deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
         }
     }
+    if (slmNeeded > slmAvailable) {
+        return CL_OUT_OF_RESOURCES;
+    }
 
-    NEO::populateProgramInfo(dst, decodedProgram, deviceInfoConstants);
-
-    return CL_SUCCESS;
-}
-
-cl_int Program::processProgramInfo(ProgramInfo &src) {
     this->linkerInput = std::move(src.linkerInput);
     this->kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
@@ -221,21 +203,11 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
         if (kernelInfo->requiresSubgroupIndependentForwardProgress()) {
             subgroupKernelInfoArray.push_back(kernelInfo);
         }
+
+        kernelInfo->apply(deviceInfoConstants);
     }
 
     return linkBinary();
-}
-
-bool Program::validateGenBinaryDevice(GFXCORE_FAMILY device) const {
-    bool isValid = familyEnabled[device];
-
-    return isValid;
-}
-
-bool Program::validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenBinaryHeader) const {
-    return pGenBinaryHeader->Magic == MAGIC_CL &&
-           pGenBinaryHeader->Version == CURRENT_ICBE_VERSION &&
-           validateGenBinaryDevice(static_cast<GFXCORE_FAMILY>(pGenBinaryHeader->Device));
 }
 
 void Program::processDebugData() {

@@ -6,10 +6,13 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/compiler_interface/intermediate_representations.h"
 #include "core/device/device.h"
+#include "core/device_binary_format/elf/elf.h"
+#include "core/device_binary_format/elf/elf_encoder.h"
+#include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/file_io.h"
 #include "runtime/context/context.h"
-#include "unit_tests/elflib/elf_binary_simulator.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 
@@ -98,8 +101,12 @@ TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCall
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
 
-    CLElfLib::ElfBinaryStorage elfBinary;
-    MockElfBinary(elfBinary);
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_LIBRARY;
+    const uint8_t data[4] = {};
+    elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, NEO::Elf::SectionNamesOpenCl::buildOptions, data);
+    elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(NEO::spirvMagic.begin(), NEO::spirvMagic.size()));
+    auto elfBinary = elfEncoder.encode();
 
     const size_t binarySize = elfBinary.size();
     const unsigned char *elfBinaryTemp = reinterpret_cast<unsigned char *>(elfBinary.data());

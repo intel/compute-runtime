@@ -217,7 +217,7 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
     PTptr->fields.push_back(PTField{4, "First"});
     PTptr->fields.push_back(PTField{4, "Second"});
     decoder.patchTokens.insert(std::pair<uint8_t, std::unique_ptr<PatchToken>>(4, std::move(PTptr)));
-    void *ptr = reinterpret_cast<void *>(binary.data());
+    const void *ptr = reinterpret_cast<void *>(binary.data());
     decoder.readPatchTokens(ptr, 28, out);
     std::string s = "Example patchtoken:\n\t4 Token 4\n\t4 Size 16\n\t4 First 1234\n\t4 Second 5678\nUnidentified PatchToken:\n\t4 Token 2\n\t4 Size 12\n\tHex ff ff ff ff\n";
     EXPECT_EQ(s, out.str());
@@ -242,7 +242,7 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 
     std::string binaryString = binarySS.str();
     std::vector<unsigned char> binary(binaryString.begin(), binaryString.end());
-    auto ptr = reinterpret_cast<void *>(binary.data());
+    const void *ptr = reinterpret_cast<void *>(binary.data());
     int retVal = decoder.processBinary(ptr, ptmFile);
     EXPECT_EQ(0, retVal);
 
@@ -291,7 +291,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
-    auto ptr = reinterpret_cast<void *>(binary.data());
+    const void *ptr = reinterpret_cast<void *>(binary.data());
     int retVal = decoder.processBinary(ptr, ptmFile);
     EXPECT_EQ(0, retVal);
 
