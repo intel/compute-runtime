@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct HwInfoConfigTestLinuxLkf : HwInfoConfigTestLinux {
     }
 };
 
-TEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
+LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -42,7 +42,7 @@ TEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
-TEST_F(HwInfoConfigTestLinuxLkf, negative) {
+LKFTEST_F(HwInfoConfigTestLinuxLkf, negative) {
     auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
 
     drm->StoredRetValForDeviceID = -1;

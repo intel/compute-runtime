@@ -22,6 +22,9 @@ constexpr uint32_t hwConfigTestMidBatchBit = 1 << 10;
 template <>
 int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     FeatureTable *featureTable = &hwInfo->featureTable;
+    featureTable->ftrGpGpuMidThreadLevelPreempt = 0;
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = 0;
+    featureTable->ftrGpGpuMidBatchPreempt = 0;
 
     if (hwInfo->platform.usDeviceID == 30) {
         GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
