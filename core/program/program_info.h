@@ -20,6 +20,8 @@ struct ProgramInfo {
     ProgramInfo() = default;
     ProgramInfo(ProgramInfo &&) = default;
     ProgramInfo &operator=(ProgramInfo &&) = default;
+    ProgramInfo(const ProgramInfo &) = delete;
+    ProgramInfo &operator=(const ProgramInfo &) = delete;
     ~ProgramInfo();
 
     struct GlobalSurfaceInfo {

@@ -132,17 +132,21 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresMixedGlobalVarA
 
 TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithSpecificPointerSizeThenLinkerIsUpdatedToUseRequiredPointerSize) {
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers programFromTokens;
-    programFromTokens.headerMutable->GPUPointerSizeInBytes = 8;
-    NEO::ProgramInfo programInfo;
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
-    ASSERT_NE(nullptr, programInfo.linkerInput);
-    EXPECT_EQ(NEO::LinkerInput::Traits::Ptr64bit, programInfo.linkerInput->getTraits().pointerSize);
+    {
+        programFromTokens.headerMutable->GPUPointerSizeInBytes = 8;
+        NEO::ProgramInfo programInfo;
+        NEO::populateProgramInfo(programInfo, programFromTokens, {});
+        ASSERT_NE(nullptr, programInfo.linkerInput);
+        EXPECT_EQ(NEO::LinkerInput::Traits::Ptr64bit, programInfo.linkerInput->getTraits().pointerSize);
+    }
 
-    programFromTokens.headerMutable->GPUPointerSizeInBytes = 4;
-    programInfo = {};
-    NEO::populateProgramInfo(programInfo, programFromTokens, {});
-    ASSERT_NE(nullptr, programInfo.linkerInput);
-    EXPECT_EQ(NEO::LinkerInput::Traits::Ptr32bit, programInfo.linkerInput->getTraits().pointerSize);
+    {
+        programFromTokens.headerMutable->GPUPointerSizeInBytes = 4;
+        NEO::ProgramInfo programInfo;
+        NEO::populateProgramInfo(programInfo, programFromTokens, {});
+        ASSERT_NE(nullptr, programInfo.linkerInput);
+        EXPECT_EQ(NEO::LinkerInput::Traits::Ptr32bit, programInfo.linkerInput->getTraits().pointerSize);
+    }
 }
 
 TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithProgramSymbolTableThenLinkerDecodesAllSymbolsCorrectly) {
