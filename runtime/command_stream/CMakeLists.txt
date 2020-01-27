@@ -37,8 +37,6 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_base.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_base.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.h

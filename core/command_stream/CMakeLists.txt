@@ -6,6 +6,7 @@
 
 set(NEO_CORE_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_status.h
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_definitions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
@@ -15,6 +16,8 @@ set(NEO_CORE_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
 )
 

@@ -11,7 +11,6 @@
 #include "core/memory_manager/residency_container.h"
 #include "core/utilities/idlist.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/helpers/properties_helper.h"
 
 #include <vector>
 namespace NEO {

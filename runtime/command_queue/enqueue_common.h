@@ -502,8 +502,10 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
     }
 
     if (!queueBlocked) {
+        CsrDependencies csrDeps;
+        eventsRequest.fillCsrDependencies(csrDeps, *getBcsCommandStreamReceiver(), CsrDependencies::DependenciesType::All);
         BlitProperties::setupDependenciesForAuxTranslation(blitPropertiesContainer, timestampPacketDependencies,
-                                                           *this->timestampPacketContainer, eventsRequest,
+                                                           *this->timestampPacketContainer, csrDeps,
                                                            getGpgpuCommandStreamReceiver(), *getBcsCommandStreamReceiver());
     }
 }

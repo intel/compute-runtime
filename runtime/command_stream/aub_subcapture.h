@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/command_stream/aub_subcapture_status.h"
+
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -15,11 +17,6 @@ namespace NEO {
 
 struct MultiDispatchInfo;
 class SettingsReader;
-
-struct AubSubCaptureStatus {
-    bool isActive;
-    bool wasActiveInPreviousEnqueue;
-};
 
 class AubSubCaptureCommon {
   public:

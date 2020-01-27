@@ -674,8 +674,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
 }
 
 template <typename GfxFamily>
-cl_int AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                                           size_t length, uint32_t compareOperation) {
+int32_t AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                                            size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
     auto streamLocked = getAubStream()->lockStream();

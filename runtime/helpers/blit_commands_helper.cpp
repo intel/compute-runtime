@@ -182,7 +182,7 @@ BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t com
 }
 
 void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,
-                                                        TimestampPacketContainer &kernelTimestamps, const EventsRequest &eventsRequest,
+                                                        TimestampPacketContainer &kernelTimestamps, const CsrDependencies &depsFromEvents,
                                                         CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr) {
     auto numObjects = blitPropertiesContainer.size() / 2;
 
@@ -197,8 +197,10 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
 
     // wait for barrier and events before AuxToNonAux
     blitPropertiesContainer[0].csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
-    eventsRequest.fillCsrDependencies(blitPropertiesContainer[0].csrDependencies, bcsCsr,
-                                      CsrDependencies::DependenciesType::All);
+
+    for (auto dep : depsFromEvents) {
+        blitPropertiesContainer[0].csrDependencies.push_back(dep);
+    }
 
     // wait for NDR before NonAuxToAux
     blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);

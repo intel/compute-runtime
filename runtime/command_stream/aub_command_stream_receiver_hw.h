@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool writeMemory(GraphicsAllocation &gfxAllocation) override;
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
-    cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
+    int32_t expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
     AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
     void addAubComment(const char *message) override;

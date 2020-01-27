@@ -21,7 +21,6 @@
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/device/device.h"
-#include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/timestamp_packet.h"
@@ -442,8 +441,8 @@ TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketA
     return timestampPacketAllocator.get();
 }
 
-cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                           size_t length, uint32_t compareOperation) {
+int32_t CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                            size_t length, uint32_t compareOperation) {
     auto isMemoryEqual = (memcmp(gfxAddress, srcAddress, length) == 0);
     auto isEqualMemoryExpected = (compareOperation == AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
 

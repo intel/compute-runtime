@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "core/helpers/aux_translation.h"
 #include "core/helpers/hw_cmds.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/gen_common/aub_mapper.h"

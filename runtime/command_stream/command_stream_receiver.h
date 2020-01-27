@@ -6,16 +6,16 @@
  */
 
 #pragma once
+#include "core/command_stream/aub_subcapture_status.h"
 #include "core/command_stream/csr_definitions.h"
 #include "core/command_stream/linear_stream.h"
+#include "core/command_stream/submissions_aggregator.h"
 #include "core/command_stream/thread_arbitration_policy.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/completion_stamp.h"
 #include "core/helpers/options.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/kernel/grf_config.h"
-#include "runtime/command_stream/aub_subcapture.h"
-#include "runtime/command_stream/submissions_aggregator.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 
@@ -25,7 +25,6 @@
 namespace NEO {
 class AllocationsList;
 class Device;
-class EventBuilder;
 class ExecutionEnvironment;
 class ExperimentalCommandBuffer;
 class GmmPageTableMngr;
@@ -170,7 +169,7 @@ class CommandStreamReceiver {
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator(const uint32_t tagSize);
     TagAllocator<TimestampPacketStorage> *getTimestampPacketAllocator();
 
-    virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
+    virtual int32_t expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
     virtual bool isMultiOsContextCapable() const = 0;
 

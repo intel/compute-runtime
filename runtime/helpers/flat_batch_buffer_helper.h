@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/command_stream/submissions_aggregator.h"
 #include "core/helpers/address_patch.h"
-#include "runtime/command_stream/submissions_aggregator.h"
 
 #include <map>
 #include <vector>

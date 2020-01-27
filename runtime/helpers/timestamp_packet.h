@@ -9,6 +9,7 @@
 
 #include "core/command_container/command_encoder.h"
 #include "core/command_stream/csr_deps.h"
+#include "core/helpers/aux_translation.h"
 #include "core/helpers/non_copyable_or_moveable.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/utilities/tag_allocator.h"

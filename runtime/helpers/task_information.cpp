@@ -196,8 +196,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         auto &bcsCsr = *commandQueue.getBcsCommandStreamReceiver();
+        CsrDependencies csrDeps;
+        eventsRequest.fillCsrDependencies(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
+
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
-                                                           *currentTimestampPacketNodes, eventsRequest,
+                                                           *currentTimestampPacketNodes, csrDeps,
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
 
         auto bcsTaskCount = bcsCsr.blitBuffer(kernelOperation->blitPropertiesContainer, false);
