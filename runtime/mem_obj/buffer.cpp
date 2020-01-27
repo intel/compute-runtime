@@ -21,7 +21,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj_helper.h"

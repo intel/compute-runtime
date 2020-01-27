@@ -10,7 +10,7 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"

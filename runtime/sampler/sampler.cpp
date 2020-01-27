@@ -10,7 +10,7 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 
 #include "patch_list.h"
 

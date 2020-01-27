@@ -26,7 +26,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/context/driver_diagnostics.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"

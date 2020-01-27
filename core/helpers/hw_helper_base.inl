@@ -19,6 +19,8 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 
+#include "instrumentation.h"
+
 namespace NEO {
 
 template <typename Family>

@@ -1,11 +1,13 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_SRCS_DEVICE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_device.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_caps.cpp

@@ -30,6 +30,8 @@
 
 #include "gmm_memory.h"
 
+#include <dxgi.h>
+
 std::wstring getIgdrclPath() {
     std::wstring returnValue;
     WCHAR path[255];

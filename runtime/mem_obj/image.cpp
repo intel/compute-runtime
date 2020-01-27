@@ -21,7 +21,7 @@
 #include "core/helpers/string.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/surface_formats.h"

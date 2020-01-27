@@ -17,7 +17,7 @@
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/program/program_initialization.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/kernel_info.h"

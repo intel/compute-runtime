@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/scheduler/scheduler_kernel.h"
 
 #include "core/helpers/hw_helper.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 
 #include <cinttypes>
 

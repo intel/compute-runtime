@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_context.h"

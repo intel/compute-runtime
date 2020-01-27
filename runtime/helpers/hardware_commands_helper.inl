@@ -15,6 +15,7 @@
 #include "core/helpers/string.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "runtime/command_queue/local_id_gen.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/block_kernel_manager.h"

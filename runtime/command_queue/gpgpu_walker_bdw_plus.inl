@@ -8,6 +8,7 @@
 #pragma once
 #include "core/helpers/simd_helper.h"
 #include "runtime/command_queue/gpgpu_walker_base.inl"
+#include "runtime/device/cl_device.h"
 
 namespace NEO {
 

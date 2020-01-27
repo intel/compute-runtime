@@ -8,6 +8,7 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/context/context.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/kernel/kernel.h"

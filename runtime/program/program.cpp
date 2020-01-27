@@ -16,7 +16,7 @@
 #include "core/os_interface/os_context.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/block_kernel_manager.h"

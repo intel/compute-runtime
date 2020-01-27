@@ -22,7 +22,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"

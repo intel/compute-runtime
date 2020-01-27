@@ -10,7 +10,7 @@
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/validators.h"

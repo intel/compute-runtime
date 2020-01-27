@@ -8,7 +8,7 @@
 #include "core/helpers/get_info.h"
 
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/program/kernel_info.h"

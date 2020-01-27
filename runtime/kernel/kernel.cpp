@@ -25,6 +25,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/gtpin/gtpin_notify.h"

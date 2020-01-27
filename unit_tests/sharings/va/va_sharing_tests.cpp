@@ -10,7 +10,7 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/va/cl_va_api.h"
 #include "runtime/sharings/va/va_sharing.h"

@@ -10,7 +10,7 @@
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "runtime/sharings/va/va_surface.h"

@@ -8,6 +8,7 @@
 #include "core/helpers/array_count.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
+#include "runtime/helpers/base_object.h"
 
 namespace NEO {
 

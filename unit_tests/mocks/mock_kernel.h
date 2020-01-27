@@ -9,6 +9,7 @@
 
 #include "core/helpers/string.h"
 #include "core/kernel/grf_config.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device/device.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"

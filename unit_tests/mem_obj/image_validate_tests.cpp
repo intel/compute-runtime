@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"

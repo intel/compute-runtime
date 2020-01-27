@@ -14,6 +14,7 @@
 #include "runtime/built_ins/built_ins.inl"
 #include "runtime/built_ins/sip.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/dispatch_info_builder.h"

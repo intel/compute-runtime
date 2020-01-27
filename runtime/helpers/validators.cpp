@@ -9,7 +9,7 @@
 
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/kernel/kernel.h"

@@ -12,7 +12,7 @@
 #include "runtime/api/dispatch.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/d3d/d3d_buffer.h"

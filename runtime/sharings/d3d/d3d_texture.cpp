@@ -13,7 +13,7 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 

@@ -9,6 +9,7 @@
 
 #include "core/helpers/get_info.h"
 #include "core/os_interface/os_time.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/device/device_vector.h"

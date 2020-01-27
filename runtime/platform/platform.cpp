@@ -19,6 +19,7 @@
 #include "core/os_interface/os_interface.h"
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/device/cl_device.h"
 #include "runtime/device/root_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/execution_environment/execution_environment.h"
