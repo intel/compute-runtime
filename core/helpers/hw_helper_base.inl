@@ -278,6 +278,11 @@ bool HwHelperHw<GfxFamily>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo
 }
 
 template <typename GfxFamily>
+inline uint32_t HwHelperHw<GfxFamily>::getMinimalSIMDSize() {
+    return 8u;
+}
+
+template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
     return HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
 }

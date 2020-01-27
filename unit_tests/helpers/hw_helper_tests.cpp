@@ -806,3 +806,8 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequir
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
 }
+
+HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8IsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(8u, helper.getMinimalSIMDSize());
+}

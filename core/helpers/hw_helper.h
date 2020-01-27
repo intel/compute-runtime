@@ -72,6 +72,7 @@ class HwHelper {
                                                    uint32_t threadsPerEu) = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
+    virtual uint32_t getMinimalSIMDSize() = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
@@ -192,6 +193,8 @@ class HwHelperHw : public HwHelper {
     static bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
 
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) override;
+
+    uint32_t getMinimalSIMDSize() override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;
