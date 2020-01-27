@@ -39,5 +39,17 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const PipelineSelectArgs &pipelineSelectArgs,
                                        const HardwareInfo &hwInfo) {}
 
+bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
+    return (hwInfo.platform.usRevId < REVISION_B);
+}
+
+bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
+    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId < REVISION_B));
+}
+
+bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
+    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId < REVISION_B));
+}
+
 } // namespace Gen12LPHelpers
 } // namespace NEO

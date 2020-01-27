@@ -31,5 +31,9 @@ void adjustAubGTTData(const CommandStreamReceiver &commandStreamReceiver, AubGTT
 void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const PipelineSelectArgs &pipelineSelectArgs,
                                        const HardwareInfo &hwInfo);
+bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
+bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
+bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo);
+
 } // namespace Gen12LPHelpers
 } // namespace NEO

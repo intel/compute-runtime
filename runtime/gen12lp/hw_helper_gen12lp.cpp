@@ -17,17 +17,17 @@ typedef TGLLPFamily Family;
 
 template <>
 bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
-    return (hwInfo.platform.usRevId < REVISION_B);
+    return Gen12LPHelpers::isOffsetToSkipSetFFIDGPWARequired(hwInfo);
 }
 
 template <>
 bool HwHelperHw<Family>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId < REVISION_B));
+    return Gen12LPHelpers::isForceDefaultRCSEngineWARequired(hwInfo);
 }
 
 template <>
 bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId < REVISION_B));
+    return Gen12LPHelpers::isForceEmuInt32DivRemSPWARequired(hwInfo);
 }
 
 template <>
