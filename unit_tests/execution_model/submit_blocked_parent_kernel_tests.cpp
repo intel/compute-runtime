@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/utilities/tag_allocator.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_device_queue.h"

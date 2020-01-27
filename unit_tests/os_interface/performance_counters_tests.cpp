@@ -10,7 +10,7 @@
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_time.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/utilities/tag_allocator.h"
+#include "core/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"

@@ -13,6 +13,7 @@
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/os_context.h"
+#include "core/utilities/tag_allocator.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
@@ -24,7 +25,6 @@
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/utilities/tag_allocator.h"
 
 #include <algorithm>
 #include <cmath>

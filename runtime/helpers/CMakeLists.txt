@@ -6,7 +6,6 @@
 
 set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
@@ -51,8 +50,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information.h
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information.inl

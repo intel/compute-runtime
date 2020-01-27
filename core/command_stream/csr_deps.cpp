@@ -7,7 +7,7 @@
 
 #include "core/command_stream/csr_deps.h"
 
-#include "runtime/helpers/timestamp_packet.h"
+#include "core/helpers/timestamp_packet.h"
 
 namespace NEO {
 

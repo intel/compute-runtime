@@ -8,8 +8,8 @@
 #include "runtime/sharings/gl/gl_sharing.h"
 
 #include "core/helpers/string.h"
+#include "core/helpers/timestamp_packet.h"
 #include "runtime/context/context.inl"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/sharings/gl/gl_context_guard.h"
 #include "runtime/sharings/sharing_factory.h"
 

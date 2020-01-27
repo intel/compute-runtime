@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/scratch_space_controller.h"
+#include "core/command_stream/scratch_space_controller.h"
 
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"

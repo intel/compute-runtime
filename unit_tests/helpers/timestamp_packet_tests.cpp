@@ -6,14 +6,14 @@
  */
 
 #include "core/helpers/options.h"
+#include "core/helpers/timestamp_packet.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "core/utilities/tag_allocator.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"

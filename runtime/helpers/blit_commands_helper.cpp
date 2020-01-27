@@ -7,9 +7,9 @@
 
 #include "runtime/helpers/blit_commands_helper.h"
 
+#include "core/helpers/timestamp_packet.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/surface.h"
 
 #include "CL/cl.h"

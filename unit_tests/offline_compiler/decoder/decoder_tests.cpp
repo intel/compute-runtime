@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/array_count.h"
+#include "core/helpers/array_count.h"
 #include "unit_tests/test_files/patch_list.h"
 
 #include "gmock/gmock.h"

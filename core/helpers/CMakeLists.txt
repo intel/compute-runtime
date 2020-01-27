@@ -9,6 +9,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
   ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
@@ -62,6 +63,8 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_format_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
 )
 

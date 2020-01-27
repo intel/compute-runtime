@@ -9,9 +9,11 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/get_info.h"
+#include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/utilities/range.h"
 #include "core/utilities/stackvec.h"
+#include "core/utilities/tag_allocator.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_queue/command_queue.h"
@@ -21,10 +23,8 @@
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_tracker.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
-#include "runtime/utilities/tag_allocator.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)
 

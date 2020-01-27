@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/helpers/array_count.h"
 #include "offline_compiler/decoder/binary_decoder.h"
-#include "runtime/helpers/array_count.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "gmock/gmock.h"

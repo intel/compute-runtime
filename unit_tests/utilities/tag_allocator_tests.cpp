@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/timestamp_packet.h"
-#include "runtime/utilities/tag_allocator.h"
+#include "core/helpers/timestamp_packet.h"
+#include "core/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 

@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/helpers/timestamp_packet.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/utilities/tag_allocator.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 

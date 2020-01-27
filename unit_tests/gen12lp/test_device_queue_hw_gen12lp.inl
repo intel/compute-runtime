@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/utilities/tag_allocator.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/context/context.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"

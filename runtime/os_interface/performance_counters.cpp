@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/performance_counters.h"
 
-#include "runtime/utilities/tag_allocator.h"
+#include "core/utilities/tag_allocator.h"
 
 using namespace MetricsLibraryApi;
 

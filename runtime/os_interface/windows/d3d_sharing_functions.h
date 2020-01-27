@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/helpers/array_count.h"
 #include "core/helpers/debug_helpers.h"
 #include "runtime/api/dispatch.h"
-#include "runtime/helpers/array_count.h"
 #include "runtime/sharings/sharing.h"
 
 #include "DXGI1_2.h"

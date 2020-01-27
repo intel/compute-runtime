@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/helpers/array_count.h"
 #include "core/helpers/file_io.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/array_count.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/program.h"
 #include "unit_tests/fixtures/device_fixture.h"

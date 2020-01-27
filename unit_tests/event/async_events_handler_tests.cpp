@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/helpers/timestamp_packet.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"

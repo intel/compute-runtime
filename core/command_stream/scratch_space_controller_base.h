@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_stream/scratch_space_controller.h"
+#include "core/command_stream/scratch_space_controller.h"
 
 namespace NEO {
 

@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen12lp/hw_cmds.h"
+#include "core/helpers/array_count.h"
 #include "core/memory_manager/memory_pool.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
-#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/base_object.h"
 
 namespace NEO {

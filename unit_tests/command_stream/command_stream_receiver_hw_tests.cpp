@@ -7,6 +7,8 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/command_stream/scratch_space_controller.h"
+#include "core/command_stream/scratch_space_controller_base.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/cache_policy.h"
@@ -22,8 +24,6 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/scratch_space_controller.h"
-#include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"

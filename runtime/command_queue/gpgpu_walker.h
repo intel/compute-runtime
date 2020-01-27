@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,10 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/helpers/register_offsets.h"
+#include "core/helpers/timestamp_packet.h"
 #include "core/helpers/vec.h"
 #include "core/indirect_heap/indirect_heap.h"
+#include "core/utilities/tag_allocator.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
@@ -21,10 +23,8 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/kernel_info.h"
-#include "runtime/utilities/tag_allocator.h"
 
 namespace NEO {
 
