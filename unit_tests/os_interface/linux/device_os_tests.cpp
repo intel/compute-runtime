@@ -41,7 +41,7 @@ TEST(DeviceOsTest, GivenDefaultDeviceWhenCheckingForOsSpecificExtensionsThenCorr
 TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
     auto hwInfo = *platformDevices;
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
-    auto pClDevice = new ClDevice{*pDevice};
+    auto pClDevice = new ClDevice{*pDevice, platform()};
 
     std::string extensionString(pClDevice->getDeviceInfo().deviceExtensions);
 

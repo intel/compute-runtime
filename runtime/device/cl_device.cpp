@@ -13,15 +13,15 @@
 
 namespace NEO {
 
-ClDevice::ClDevice(Device &device) : device(device), platformId(platform()) {
+ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platformId(platform) {
     device.incRefInternal();
     initializeCaps();
 
     auto numAvailableDevices = device.getNumAvailableDevices();
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
-            subDevices.push_back(std::make_unique<ClDevice>(*device.getDeviceById(i)));
-            platform()->clDeviceMap.emplace(device.getDeviceById(i), subDevices[i].get());
+            subDevices.push_back(std::make_unique<ClDevice>(*device.getDeviceById(i), platform));
+            platform->clDeviceMap.emplace(device.getDeviceById(i), subDevices[i].get());
         }
     }
 }

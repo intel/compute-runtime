@@ -129,7 +129,7 @@ INSTANTIATE_TEST_CASE_P(
 struct GetDeviceInfoForImage : public GetDeviceInfoSize {};
 
 TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
-    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     if (!device->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
@@ -147,7 +147,7 @@ TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
 }
 
 TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClInvalidValueIsReturned) {
-    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     if (device->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
@@ -161,7 +161,7 @@ TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClInvalidValueIsReturn
 }
 
 TEST_P(GetDeviceInfoForImage, givenInfoImageParamsWhenCallGetDeviceInfoForImageThenSizeIsValidAndTrueReturned) {
-    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     size_t srcSize = 0;
     size_t retSize = 0;
     const void *src = nullptr;
@@ -177,7 +177,7 @@ TEST_P(GetDeviceInfoForImage, givenInfoImageParamsWhenCallGetDeviceInfoForImageT
 }
 
 TEST(GetDeviceInfoForImage, givenNotImageParamWhenCallGetDeviceInfoForImageThenSizeIsNotValidAndFalseReturned) {
-    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     size_t srcSize = 0;
     size_t retSize = 0;
     const void *src = nullptr;

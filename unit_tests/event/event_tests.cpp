@@ -395,7 +395,7 @@ struct UpdateEventTest : public ::testing::Test {
         memoryManager = new MockMemoryManager(*executionEnvironment);
         hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(new ClDevice{*Device::create<RootDevice>(executionEnvironment, 0u)});
+        device.reset(new ClDevice{*Device::create<RootDevice>(executionEnvironment, 0u), platform()});
         context = std::make_unique<MockContext>(device.get());
         cl_int retVal = CL_OUT_OF_RESOURCES;
         commandQueue.reset(CommandQueue::create(context.get(), device.get(), nullptr, retVal));

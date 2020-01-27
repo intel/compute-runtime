@@ -14,7 +14,7 @@ namespace NEO {
 void DeviceInstrumentationFixture::SetUp(bool instrumentation) {
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.instrumentationEnabled = instrumentation;
-    device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0));
+    device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0), platform());
 }
 
 } // namespace NEO

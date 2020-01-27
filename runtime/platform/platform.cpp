@@ -160,7 +160,7 @@ bool Platform::initialize() {
         DEBUG_BREAK_IF(!pDevice);
         ClDevice *pClDevice = nullptr;
         if (pDevice) {
-            pClDevice = new ClDevice{*pDevice};
+            pClDevice = new ClDevice{*pDevice, this};
         }
         DEBUG_BREAK_IF(!pClDevice);
         if (pClDevice) {

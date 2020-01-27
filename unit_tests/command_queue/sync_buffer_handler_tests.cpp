@@ -171,7 +171,7 @@ TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledT
 TEST(SyncBufferHandlerDeviceTest, GivenSubDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
     const size_t testUsedBufferSize = 100;
     MockClDevice rootDevice{new MockDevice};
-    ClDevice subDevice{*rootDevice.createSubDevice(0)};
+    ClDevice subDevice{*rootDevice.createSubDevice(0), platform()};
     subDevice.allocateSyncBufferHandler();
     auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice.syncBufferHandler.get());
 

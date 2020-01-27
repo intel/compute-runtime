@@ -41,7 +41,7 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     executionEnvironment->initializeMemoryManager();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto device = Device::create<RootDevice>(executionEnvironment, 0u);
-    auto clDevice = std::make_unique<ClDevice>(*device);
+    auto clDevice = std::make_unique<ClDevice>(*device, platform());
     const DeviceInfo &devInfo = device->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();

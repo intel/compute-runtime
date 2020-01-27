@@ -29,6 +29,7 @@ struct EngineControl;
 struct HardwareCapabilities;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
+class Platform;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -42,7 +43,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     ClDevice &operator=(const ClDevice &) = delete;
     ClDevice(const ClDevice &) = delete;
 
-    explicit ClDevice(Device &device);
+    explicit ClDevice(Device &device, Platform *platformId);
     ~ClDevice() override;
 
     unsigned int getEnabledClVersion() const; //CL
