@@ -509,7 +509,7 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
                                   kernel->getKernelInfo().patchInfo.pAllocateSystemThreadSurface->Offset);
     void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
     size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
-    Buffer::setSurfaceState(device, surfaceState, sizeToPatch, addressToPatch, debugSurface);
+    Buffer::setSurfaceState(device, surfaceState, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
     return true;
 }
 

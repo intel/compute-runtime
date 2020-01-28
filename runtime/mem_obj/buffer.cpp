@@ -533,6 +533,7 @@ Buffer *Buffer::createBufferHwFromDevice(const ClDevice *device,
                                          void *memoryStorage,
                                          void *hostPtr,
                                          GraphicsAllocation *gfxAllocation,
+                                         size_t offset,
                                          bool zeroCopy,
                                          bool isHostPtrSVM,
                                          bool isImageRedescribed) {
@@ -544,6 +545,7 @@ Buffer *Buffer::createBufferHwFromDevice(const ClDevice *device,
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
     auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
+    pBuffer->offset = offset;
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
     return pBuffer;
 }
@@ -576,10 +578,11 @@ void Buffer::setSurfaceState(const ClDevice *device,
                              void *surfaceState,
                              size_t svmSize,
                              void *svmPtr,
+                             size_t offset,
                              GraphicsAllocation *gfxAlloc,
                              cl_mem_flags flags,
                              cl_mem_flags_intel flagsIntel) {
-    auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, true, false, false);
+    auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, offset, true, false, false);
     buffer->setArgStateful(surfaceState, false, false, false, false);
     buffer->graphicsAllocation = nullptr;
     delete buffer;

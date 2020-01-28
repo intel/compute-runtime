@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1024,6 +1024,30 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCom
 
     EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
     EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
+}
+
+TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptWhenOfflineCompilerIsInitializedThenCompilerOptionGreaterThan4gbBuffersRequiredIsNotApplied) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    ASSERT_TRUE(fileExists("test_files/stateful_copy_buffer_ocloc_options.txt"));
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/stateful_copy_buffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    mockOfflineCompiler->build();
+
+    auto &internalOptions = mockOfflineCompiler->getInternalOptions();
+    size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired);
+    EXPECT_EQ(std::string::npos, found);
 }
 
 TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadOptionsFromFileReturnsFalse) {

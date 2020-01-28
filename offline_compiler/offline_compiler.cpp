@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,12 +242,30 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
-    parseDebugSettings();
-
     if (options.empty()) {
         // try to read options from file if not provided by commandline
         size_t ext_start = inputFile.find(".cl");
         if (ext_start != std::string::npos) {
+            std::string oclocOptionsFileName = inputFile.substr(0, ext_start);
+            oclocOptionsFileName.append("_ocloc_options.txt");
+
+            std::string oclocOptionsFromFile;
+            bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName);
+            if (oclocOptionsRead && !isQuiet()) {
+                printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+            }
+
+            if (oclocOptionsRead) {
+                std::istringstream iss(allArgs[0] + " " + oclocOptionsFromFile);
+                std::vector<std::string> tokens{
+                    std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
+
+                retVal = parseCommandLine(tokens.size(), tokens);
+                if (retVal != CL_SUCCESS) {
+                    return retVal;
+                }
+            }
+
             std::string optionsFileName = inputFile.substr(0, ext_start);
             optionsFileName.append("_options.txt");
 
@@ -267,6 +285,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             CompilerOptions::concatenateAppend(internalOptions, internalOptionsFromFile);
         }
     }
+
+    parseDebugSettings();
 
     // set up the device inside the program
     sourceFromFile = loadDataFromFile(inputFile.c_str(), sourceFromFileSize);
@@ -452,6 +472,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             argIndex++;
         } else if ("-options_name" == currArg) {
             useOptionsSuffix = true;
+        } else if ("-force_stos_opt" == currArg) {
+            forceStatelessToStatefulOptimization = true;
         } else if (("-out_dir" == currArg) && hasMoreArgs) {
             outputDirectory = argv[argIndex + 1];
             argIndex++;
@@ -667,6 +689,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 It does not affect '--output' parameter and can
                                 be used along with it ('--output' parameter
                                 defines the base name - i.e. prefix).
+
+  -force_stos_opt               Will forcibly enable stateless to stateful optimization,
+                                i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
 
   -q                            Will silence most of output messages.
 

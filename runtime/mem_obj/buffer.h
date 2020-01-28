@@ -94,6 +94,7 @@ class Buffer : public MemObj {
                                             void *memoryStorage,
                                             void *hostPtr,
                                             GraphicsAllocation *gfxAllocation,
+                                            size_t offset,
                                             bool zeroCopy,
                                             bool isHostPtrSVM,
                                             bool isImageRedescribed);
@@ -107,9 +108,10 @@ class Buffer : public MemObj {
                                 void *surfaceState,
                                 size_t svmSize,
                                 void *svmPtr,
-                                GraphicsAllocation *gfxAlloc = nullptr,
-                                cl_mem_flags flags = 0,
-                                cl_mem_flags_intel flagsIntel = 0);
+                                size_t offset,
+                                GraphicsAllocation *gfxAlloc,
+                                cl_mem_flags flags,
+                                cl_mem_flags_intel flagsIntel);
 
     static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
                                        Context *context,

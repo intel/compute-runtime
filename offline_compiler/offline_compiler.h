@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,6 +96,7 @@ class OfflineCompiler {
     bool inputFileLlvm = false;
     bool inputFileSpirV = false;
     bool outputNoSuffix = false;
+    bool forceStatelessToStatefulOptimization = false;
 
     CLElfLib::ElfBinaryStorage elfBinary;
     size_t elfBinarySize = 0;
