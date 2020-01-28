@@ -44,6 +44,7 @@ TEST_F(DeviceGetCapsTest, validate) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     const auto &sysInfo = platformDevices[0]->gtSystemInfo;
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -139,7 +140,7 @@ TEST_F(DeviceGetCapsTest, validate) {
         EXPECT_FALSE(caps.independentForwardProgress != 0);
     }
 
-    EXPECT_EQ(caps.maxWorkGroupSize / 8, caps.maxNumOfSubGroups);
+    EXPECT_EQ(caps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), caps.maxNumOfSubGroups);
 
     EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
     EXPECT_EQ(1u, caps.maxOnDeviceQueues);
@@ -887,14 +888,15 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
     HardwareInfo myHwInfo = *platformDevices[0];
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
+    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.ThreadCount = 32 * 8; // 128 threads per subslice, in simd 8 gives 1024
+    mySysInfo.ThreadCount = 32 * hwHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->getDeviceInfo().maxWorkGroupSize);
-    EXPECT_EQ(device->getDeviceInfo().maxWorkGroupSize / 8, device->getDeviceInfo().maxNumOfSubGroups);
+    EXPECT_EQ(device->getDeviceInfo().maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 class DriverInfoMock : public DriverInfo {
