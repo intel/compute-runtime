@@ -181,4 +181,15 @@ struct EncodeAtomic {
                                 DATA_SIZE dataSize);
 };
 
+template <typename GfxFamily>
+struct EncodeBatchBufferStartOrEnd {
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+    static void programBatchBufferStart(LinearStream *commandStream,
+                                        uint64_t address,
+                                        bool secondLevel);
+    static void programBatchBufferEnd(CommandContainer &container);
+};
+
 } // namespace NEO

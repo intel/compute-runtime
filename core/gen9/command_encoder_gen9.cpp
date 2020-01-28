@@ -28,4 +28,5 @@ template struct EncodeStoreMMIO<Family>;
 template struct EncodeSurfaceState<Family>;
 template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
+template struct EncodeBatchBufferStartOrEnd<Family>;
 } // namespace NEO

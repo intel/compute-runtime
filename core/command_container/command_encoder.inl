@@ -314,4 +314,25 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddr
     atomic->setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
 }
 
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream,
+                                                                  uint64_t address,
+                                                                  bool secondLevel) {
+    MI_BATCH_BUFFER_START cmd = Family::cmdInitBatchBufferStart;
+    if (secondLevel) {
+        cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+    }
+    cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    cmd.setBatchBufferStartAddressGraphicsaddress472(address);
+    auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
+    *reinterpret_cast<MI_BATCH_BUFFER_START *>(buffer) = cmd;
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer &container) {
+    MI_BATCH_BUFFER_END cmd = Family::cmdInitBatchBufferEnd;
+    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
+    *reinterpret_cast<MI_BATCH_BUFFER_END *>(buffer) = cmd;
+}
+
 } // namespace NEO
