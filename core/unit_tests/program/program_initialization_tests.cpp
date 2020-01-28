@@ -159,7 +159,7 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     MockSVMAllocsManager mockSvmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
     LinkerInput *linkerInput;
-    SVMAllocsManager *svmAllocsManager = &mockSvmAllocsManager;
+    SVMAllocsManager *svmAllocsManager = nullptr;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
     bool constant = true;
