@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,10 @@ int main(int numArgs, const char *argv[]) {
                         printf("Build succeeded.\n");
                 } else {
                     printf("Build failed with error code: %d\n", retVal);
+                    printf("Command was:");
+                    for (auto i = 0; i < numArgs; ++i)
+                        printf(" %s", argv[i]);
+                    printf("\n");
                 }
             }
             delete pCompiler;
