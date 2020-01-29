@@ -408,13 +408,12 @@ TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelArgsHasProperQualifie
     EXPECT_TRUE(warning.empty());
 }
 
-TEST(PatchtokensValidator, GivenProgramWithKernelWhenKernelsArgDoesntHaveKernelArgInfoThenValidationFails) {
+TEST(PatchtokensValidator, GivenProgramWithKernelAndArgThenKernelArgInfoIsOptional) {
     PatchTokensTestData::ValidProgramWithKernelAndArg prog;
     std::string error, warning;
     prog.kernels[0].tokens.kernelArgs[0].argInfo = nullptr;
-    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::InvalidBinary, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
-    auto expectedError = "Missing kernelArgInfo";
-    EXPECT_STREQ(expectedError, error.c_str());
+    EXPECT_EQ(NEO::PatchTokenBinary::ValidatorError::Success, NEO::PatchTokenBinary::validate(prog, 0U, UknownTokenValidator(true), error, warning));
+    EXPECT_TRUE(error.empty());
     EXPECT_TRUE(warning.empty());
 }
 

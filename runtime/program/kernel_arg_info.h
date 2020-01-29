@@ -188,7 +188,9 @@ struct KernelArgPatchInfo {
 };
 
 struct KernelArgInfo {
-    KernelArgInfo() = default;
+    KernelArgInfo() {
+        this->metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
+    }
     ~KernelArgInfo() = default;
     KernelArgInfo(const KernelArgInfo &rhs) = delete;
     KernelArgInfo &operator=(const KernelArgInfo &) = delete;

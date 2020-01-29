@@ -141,8 +141,7 @@ inline ValidatorError validate(const ProgramFromPatchtokens &decodedProgram,
 
         for (auto &kernelArg : decodedKernel.tokens.kernelArgs) {
             if (kernelArg.argInfo == nullptr) {
-                outErrReason = "Missing kernelArgInfo";
-                return ValidatorError::InvalidBinary;
+                continue;
             }
             auto argInfoInlineData = getInlineData(kernelArg.argInfo);
             auto accessQualifier = KernelArgMetadata::parseAccessQualifier(parseLimitedString(argInfoInlineData.accessQualifier.begin(), argInfoInlineData.accessQualifier.size()));

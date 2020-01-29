@@ -255,6 +255,11 @@ void KernelInfo::storeKernelArgument(
 
     kernelArgInfo[argNum].isTransformable = pImageMemObjKernelArg->Transformable != 0;
     patchInfo.imageMemObjKernelArgs.push_back(pImageMemObjKernelArg);
+    if (NEO::KernelArgMetadata::AccessQualifier::Unknown == kernelArgInfo[argNum].metadata.accessQualifier) {
+        auto accessQual = pImageMemObjKernelArg->Writeable ? NEO::KernelArgMetadata::AccessQualifier::ReadWrite
+                                                           : NEO::KernelArgMetadata::AccessQualifier::ReadOnly;
+        kernelArgInfo[argNum].metadata.accessQualifier = accessQual;
+    }
 }
 
 void KernelInfo::storeKernelArgument(

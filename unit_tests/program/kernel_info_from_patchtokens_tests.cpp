@@ -57,6 +57,29 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgThenArgAccessQualifi
     EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
 }
 
+TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissingThenArgAccessQualifierIsPopulatedBasedOnImageArgWriteableFlag) {
+    PatchTokensTestData::ValidProgramWithKernelAndArg src;
+    iOpenCL::SPatchImageMemoryObjectKernelArgument imageArg = {};
+    imageArg.Token = iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    src.kernels[0].tokens.kernelArgs[0].objectArg = &imageArg;
+    src.kernels[0].tokens.kernelArgs[0].argInfo = nullptr;
+    {
+        imageArg.Writeable = false;
+        NEO::KernelInfo dst = {};
+        NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+        ASSERT_EQ(1U, dst.kernelArgInfo.size());
+        EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadOnly, dst.kernelArgInfo[0].metadata.accessQualifier);
+    }
+
+    {
+        imageArg.Writeable = true;
+        NEO::KernelInfo dst = {};
+        NEO::populateKernelInfo(dst, src.kernels[0], 4, {});
+        ASSERT_EQ(1U, dst.kernelArgInfo.size());
+        EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
+    }
+}
+
 TEST(KernelInfoFromPatchTokens, GivenValidKernelWithNonDelimitedArgTypeThenUsesArgTypeAsIs) {
     PatchTokensTestData::ValidProgramWithKernelAndArg src;
     src.arg0TypeMutable[4] = '*';
