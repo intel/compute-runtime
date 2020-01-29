@@ -1308,3 +1308,20 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
 HWTEST_F(CommandQueueHwTest, givenEmptyDispatchGlobalsArgsWhenEnqueueInitDispatchGlobalsCalledThenErrorIsReturned) {
     EXPECT_EQ(CL_INVALID_VALUE, pCmdQ->enqueueInitDispatchGlobals(nullptr, 0, nullptr, nullptr));
 }
+
+HWTEST_F(CommandQueueHwTest, WhenForcePerDssBackedBufferProgrammingSetThenDispatchFlagsAreSetAccordingly) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForcePerDssBackedBufferProgramming = true;
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    size_t offset = 0;
+    size_t gws = 64;
+    size_t lws = 16;
+
+    cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(csr.recordedDispatchFlags.usePerDssBackedBuffer);
+}

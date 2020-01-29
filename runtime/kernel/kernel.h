@@ -408,6 +408,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         const bool kernelUsesLocalIds,
         const bool isCssUsed) const;
 
+    bool requiresPerDssBackedBuffer() const;
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;

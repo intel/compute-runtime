@@ -2993,6 +2993,23 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
 
+TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsSetThenKernelRequiresPerDssBackedBuffer) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForcePerDssBackedBufferProgramming.set(true);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+
+    EXPECT_TRUE(kernel.mockKernel->requiresPerDssBackedBuffer());
+}
+
+TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsNotSetThenKernelDoesntRequirePerDssBackedBuffer) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+
+    EXPECT_FALSE(kernel.mockKernel->requiresPerDssBackedBuffer());
+}
+
 namespace NEO {
 
 template <typename GfxFamily>

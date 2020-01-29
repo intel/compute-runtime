@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/debug_settings/debug_settings_manager.h"
 #include "runtime/kernel/kernel.h"
 
 namespace NEO {
@@ -26,4 +27,9 @@ int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
     }
     return CL_SUCCESS;
 }
+
+bool Kernel::requiresPerDssBackedBuffer() const {
+    return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
+}
+
 } // namespace NEO

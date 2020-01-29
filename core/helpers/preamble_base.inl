@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
         programKernelDebugging(pCommandStream);
     }
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
-    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
+    if (perDssBackedBuffer != nullptr) {
         programPerDssBackedBuffer(pCommandStream, device.getHardwareInfo(), perDssBackedBuffer);
     }
 }

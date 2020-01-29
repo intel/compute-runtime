@@ -242,7 +242,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
     }
 
-    if (DebugManager.flags.ForcePerDssBackedBufferProgramming.get()) {
+    if (dispatchFlags.usePerDssBackedBuffer) {
         if (!perDssBackedBuffer) {
             createPerDssBackedBuffer(device);
         }
@@ -730,7 +730,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation, this->perDssBackedBuffer);
+        GraphicsAllocation *perDssBackedBufferToUse = dispatchFlags.usePerDssBackedBuffer ? this->perDssBackedBuffer : nullptr;
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionAllocation, perDssBackedBufferToUse);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;

@@ -673,6 +673,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
+    bool usePerDssBackedBuffer = false;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -688,6 +689,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
+        }
+
+        if (kernel->requiresPerDssBackedBuffer()) {
+            usePerDssBackedBuffer = true;
         }
     }
 
@@ -747,7 +752,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         (QueuePriority::LOW == priority),                                                           //lowPriority
         implicitFlush,                                                                              //implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        false                                                                                       //epilogueRequired
+        false,                                                                                      //epilogueRequired
+        usePerDssBackedBuffer                                                                       //usePerDssBackedBuffer
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
@@ -942,7 +948,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         false,                                                               //lowPriority
         (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
         getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
-        false                                                                //epilogueRequired
+        false,                                                               //epilogueRequired
+        false                                                                //usePerDssBackedBuffer
     );
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

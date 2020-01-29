@@ -32,7 +32,8 @@ struct DispatchFlagsHelper {
             false,                               //lowPriority
             false,                               //implicitFlush
             false,                               //outOfOrderExecutionAllowed
-            false                                //epilogueRequired
+            false,                               //epilogueRequired
+            false                                //usePerDssBackedBuffer
         );
     }
 };
