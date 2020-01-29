@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,37 +204,6 @@ void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     }
 };
 
-const HardwareInfo ICLLP_1x1x8::hwInfo = {
-    &ICLLP::platform,
-    &ICLLP::featureTable,
-    &ICLLP::workaroundTable,
-    &ICLLP_1x1x8::gtSystemInfo,
-    ICLLP::capabilityTable,
-};
-GT_SYSTEM_INFO ICLLP_1x1x8::gtSystemInfo = {0};
-void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->L3CacheSizeInKb = 2304;
-    gtSysInfo->L3BankCount = 6;
-    gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 364;
-    gtSysInfo->TotalHsThreads = 224;
-    gtSysInfo->TotalDsThreads = 364;
-    gtSysInfo->TotalGsThreads = 224;
-    gtSysInfo->TotalPsThreadsWindowerRange = 128;
-    gtSysInfo->CsrSizeInMb = 5;
-    gtSysInfo->MaxEuPerSubSlice = ICLLP::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = ICLLP::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
-};
-
 const HardwareInfo ICLLP::hwInfo = ICLLP_1x8x8::hwInfo;
 const std::string ICLLP::defaultHardwareInfoConfig = "1x8x8";
 
@@ -245,8 +214,6 @@ void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
         ICLLP_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "1x6x8") {
         ICLLP_1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == "1x1x8") {
-        ICLLP_1x1x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "default") {
         // Default config
         ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);

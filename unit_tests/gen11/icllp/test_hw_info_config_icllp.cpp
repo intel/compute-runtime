@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,7 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
     std::string strConfig[] = {
         "1x8x8",
         "1x4x8",
-        "1x6x8",
-        "1x1x8"};
+        "1x6x8"};
     bool boolValue[]{
         true, false};
 

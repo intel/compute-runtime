@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, negative) {
 
 template <typename T>
 class IcllpHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8, ICLLP_1x1x8> icllpTestTypes;
+typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
 TYPED_TEST(IcllpHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
