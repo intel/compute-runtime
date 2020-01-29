@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,13 +22,11 @@ GEN12LPTEST_F(HwInfoConfigTestWindowsGen12lp, givenE2ECSetByKmdWhenConfiguringHw
 
     localFeatureTable.ftrE2ECompression = true;
     hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
-    bool expectedValue = SpecialUltHelperGen12lp::shouldCompressionBeEnabledAfterConfigureHardwareCustom(outHwInfo);
-    EXPECT_EQ(expectedValue, outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
-    EXPECT_EQ(expectedValue, outHwInfo.capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 
     localFeatureTable.ftrE2ECompression = false;
     hwInfoConfig->configureHardwareCustom(&outHwInfo, nullptr);
-    expectedValue = SpecialUltHelperGen12lp::shouldCompressionBeEnabledAfterConfigureHardwareCustom(outHwInfo);
-    EXPECT_EQ(expectedValue, outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
-    EXPECT_EQ(expectedValue, outHwInfo.capabilityTable.ftrRenderCompressedImages);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
