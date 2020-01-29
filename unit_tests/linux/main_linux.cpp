@@ -7,6 +7,7 @@
 
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/os_library.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"
 
@@ -41,8 +42,8 @@ int main(int argc, char **argv) {
 
 class DrmWrap : Drm {
   public:
-    static Drm *createDrm(int32_t deviceOrdinal) {
-        return Drm::create(deviceOrdinal);
+    static Drm *createDrm(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
+        return Drm::create(deviceOrdinal, rootDeviceEnvironment);
     }
     static void closeDeviceDrm(int32_t deviceOrdinal) {
         closeDevice(deviceOrdinal);
@@ -55,7 +56,9 @@ TEST(Drm, getReturnsNull) {
 }
 
 TEST(Drm, createReturnsNull) {
-    auto ptr = DrmWrap::createDrm(0);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    auto ptr = DrmWrap::createDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(ptr, nullptr);
 }
 

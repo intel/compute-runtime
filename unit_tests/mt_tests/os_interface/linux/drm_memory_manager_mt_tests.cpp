@@ -24,7 +24,7 @@ using namespace std;
 TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
     class MockDrm : public Drm {
       public:
-        MockDrm(int fd) : Drm(fd) {}
+        MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(fd, rootDeviceEnvironment) {}
 
         int ioctl(unsigned long request, void *arg) override {
             if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
@@ -36,7 +36,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     };
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto mock = make_unique<MockDrm>(0);
+    auto mock = make_unique<MockDrm>(0, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
     auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
@@ -71,7 +71,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
     class MockDrm : public Drm {
       public:
-        MockDrm(int fd) : Drm(fd) {
+        MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(fd, rootDeviceEnvironment) {
             primeFdHandle = 1;
             closeHandle = 1;
         }
@@ -101,7 +101,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto mock = make_unique<MockDrm>(0);
+    auto mock = make_unique<MockDrm>(0, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
     auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
 

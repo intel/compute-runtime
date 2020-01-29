@@ -29,6 +29,7 @@ namespace NEO {
 
 class DeviceFactory;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
     unsigned short deviceId;
@@ -102,13 +103,14 @@ class Drm {
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
-    Drm(int fd) : fd(fd) {}
+    RootDeviceEnvironment &rootDeviceEnvironment;
+    Drm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : fd(fd), rootDeviceEnvironment(rootDeviceEnvironment) {}
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
 
     static int getDeviceFd(const int devType);
     static int openDevice();
-    static Drm *create(int32_t deviceOrdinal);
+    static Drm *create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment);
     static void closeDevice(int32_t deviceOrdinal);
 
     std::string getSysFsPciPath(int deviceID);

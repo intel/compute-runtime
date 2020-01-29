@@ -15,7 +15,7 @@ Drm *Drm::get(int32_t deviceOrdinal) {
     return nullptr;
 }
 
-Drm *Drm::create(int32_t deviceOrdinal) {
+Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
     return nullptr;
 }
 

@@ -41,7 +41,7 @@ class DrmNullDevice : public Drm {
     }
 
   protected:
-    DrmNullDevice(int fd) : Drm(fd), gpuTimestamp(0){};
+    DrmNullDevice(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(fd, rootDeviceEnvironment), gpuTimestamp(0){};
 
     uint64_t gpuTimestamp;
 };

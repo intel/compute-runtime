@@ -120,7 +120,7 @@ int Drm::openDevice() {
     return fd;
 }
 
-Drm *Drm::create(int32_t deviceOrdinal) {
+Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
     // right now we support only one device
     if (deviceOrdinal != 0)
         return nullptr;
@@ -137,9 +137,9 @@ Drm *Drm::create(int32_t deviceOrdinal) {
 
     std::unique_ptr<Drm> drmObject;
     if (DebugManager.flags.EnableNullHardware.get() == true) {
-        drmObject.reset(new DrmNullDevice(fd));
+        drmObject.reset(new DrmNullDevice(fd, rootDeviceEnvironment));
     } else {
-        drmObject.reset(new Drm(fd));
+        drmObject.reset(new Drm(fd, rootDeviceEnvironment));
     }
 
     // Get HW version (I915_drm.h)

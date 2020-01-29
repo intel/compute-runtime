@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/options.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "test.h"
@@ -20,7 +21,7 @@ static std::vector<Drm *> drmMockStack;
 
 class DrmMockDefault : public DrmMock {
   public:
-    DrmMockDefault() : DrmMock() {
+    DrmMockDefault(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
         StoredRetVal = 0;
         StoredRetValForDeviceID = 0;
         StoredRetValForEUVal = 0;
@@ -32,8 +33,11 @@ class DrmMockDefault : public DrmMock {
     }
 };
 
-struct static_init : public DrmMockDefault {
-    static_init() : DrmMockDefault() { drmMockStack.push_back(this); }
+struct static_init {
+    static_init() : rootDeviceEnvironment(executionEnvironment), drmMockDefault(rootDeviceEnvironment) { drmMockStack.push_back(&drmMockDefault); }
+    ExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment;
+    DrmMockDefault drmMockDefault;
 };
 
 static static_init s;
@@ -51,7 +55,7 @@ Drm *Drm::get(int32_t deviceOrdinal) {
     return drmMockStack[drmMockStack.size() - 1];
 }
 
-Drm *Drm::create(int32_t deviceOrdinal) {
+Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
     // We silently skip deviceOrdinal
     EXPECT_EQ(deviceOrdinal, 0);
 

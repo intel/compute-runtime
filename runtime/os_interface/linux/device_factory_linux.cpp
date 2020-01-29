@@ -31,7 +31,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        Drm *drm = Drm::create(devNum);
+        Drm *drm = Drm::create(devNum, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
         if (!drm) {
             return false;
         }
