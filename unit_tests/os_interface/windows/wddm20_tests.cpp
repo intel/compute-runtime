@@ -1057,7 +1057,7 @@ TEST_F(WddmGfxPartitionTest, initGfxPartition) {
         ASSERT_FALSE(gfxPartition.heapInitialized(heap));
     }
 
-    wddm->initGfxPartition(gfxPartition);
+    wddm->initGfxPartition(gfxPartition, 0, 1);
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {
@@ -1066,6 +1066,26 @@ TEST_F(WddmGfxPartitionTest, initGfxPartition) {
             EXPECT_TRUE(gfxPartition.heapInitialized(heap));
         }
     }
+}
+
+TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
+    struct MockWddm : public Wddm {
+        using Wddm::gfxPartition;
+
+        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(rootDeviceEnvironment) {}
+    };
+
+    MockWddm wddm(*executionEnvironment->rootDeviceEnvironments[0].get());
+
+    uint32_t rootDeviceIndex = 3;
+    size_t numRootDevices = 5;
+
+    MockGfxPartition gfxPartition;
+    wddm.initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices);
+
+    auto heapStandard64KBSize = alignDown(wddm.gfxPartition.Standard64KB.Limit - wddm.gfxPartition.Standard64KB.Base + 1, GfxPartition::heapGranularity);
+    EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(wddm.gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
 
 TEST_F(Wddm20Tests, givenWddmWhenOpenAdapterAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTrue) {

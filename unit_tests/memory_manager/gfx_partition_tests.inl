@@ -86,7 +86,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVM) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0);
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1);
 
     uint64_t gfxTop = maxNBitValue(48) + 1;
     uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
@@ -96,7 +96,7 @@ TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVM) {
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVM) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0);
+    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
     uint64_t gfxTop = is32bit ? maxNBitValue(47) + 1 : gfxBase + gfxPartition.getReservedCpuAddressRangeSize();
@@ -107,7 +107,7 @@ TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVM) {
 
 TEST(GfxPartitionTest, testGfxPartitionLimitedRange) {
     MockGfxPartition gfxPartition;
-    gfxPartition.init(maxNBitValue(47 - 1), reservedCpuAddressRangeSize, 0);
+    gfxPartition.init(maxNBitValue(47 - 1), reservedCpuAddressRangeSize, 0, 1);
 
     uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : 0ull;
     uint64_t gfxTop = maxNBitValue(47 - 1) + 1;
@@ -122,5 +122,39 @@ TEST(GfxPartitionTest, testGfxPartitionUnsupportedRange) {
     }
 
     MockGfxPartition gfxPartition;
-    EXPECT_THROW(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0), std::exception);
+    EXPECT_THROW(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1), std::exception);
+}
+
+TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVMHeap64KBSplit) {
+    uint32_t rootDeviceIndex = 3;
+    size_t numRootDevices = 5;
+
+    MockGfxPartition gfxPartition;
+    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices);
+
+    uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : maxNBitValue(48 - 1) + 1;
+    uint64_t gfxTop = maxNBitValue(48) + 1;
+
+    auto heapStandardSize = (gfxTop - gfxBase - 4 * sizeHeap32) / 2;
+    auto heapStandard64KBSize = alignDown(heapStandardSize / numRootDevices, GfxPartition::heapGranularity);
+
+    EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + heapStandardSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+}
+
+TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVMHeap64KBSplit) {
+    uint32_t rootDeviceIndex = 3;
+    size_t numRootDevices = 5;
+
+    MockGfxPartition gfxPartition;
+    gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices);
+
+    uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : (uint64_t)gfxPartition.getReservedCpuAddressRange();
+    uint64_t gfxTop = is32bit ? maxNBitValue(47) + 1 : gfxBase + gfxPartition.getReservedCpuAddressRangeSize();
+
+    auto heapStandardSize = ((gfxTop - gfxBase) - 4 * sizeHeap32) / 2;
+    auto heapStandard64KBSize = alignDown(heapStandardSize / numRootDevices, GfxPartition::heapGranularity);
+
+    EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(gfxBase + 4 * sizeHeap32 + heapStandardSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }

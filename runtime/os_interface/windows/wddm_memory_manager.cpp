@@ -44,7 +44,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     mallocRestrictions.minAddress = 0u;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
-        getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex));
+        getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex), rootDeviceIndex, gfxPartitions.size());
         mallocRestrictions.minAddress = std::max(mallocRestrictions.minAddress, getWddm(rootDeviceIndex).getWddmMinAddress());
     }
 }

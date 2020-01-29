@@ -33,7 +33,7 @@ class GfxPartition {
     GfxPartition();
     MOCKABLE_VIRTUAL ~GfxPartition();
 
-    void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex);
+    void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices);
 
     void heapInit(HeapIndex heapIndex, uint64_t base, uint64_t size) {
         getHeap(heapIndex).init(base, size);
@@ -69,7 +69,7 @@ class GfxPartition {
     static const std::array<HeapIndex, 7> heapNonSvmNames;
 
   protected:
-    void initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex);
+    void initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices);
 
     class Heap {
       public:

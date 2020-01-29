@@ -34,7 +34,7 @@ OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnviron
     size_t reservedCpuAddressRangeSize = is64bit ? (4 * 4 + 2 * (aubUsage ? 32 : 4)) * GB : 0;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
-        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex);
+        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size());
     }
 }
 

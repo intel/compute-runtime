@@ -3271,7 +3271,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
 
 TEST_F(DrmMemoryManagerTest, DISABLED_givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThenGpuAddressIsDecanonized) {
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
-    mockGfxPartition->init(maxNBitValue(48), 0, 0);
+    mockGfxPartition->init(maxNBitValue(48), 0, 0, 1);
     auto size = 2 * MemoryConstants::megaByte;
     auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);
     auto gpuAddressCanonized = GmmHelper::canonize(gpuAddress);

@@ -106,7 +106,7 @@ class Wddm {
         return gfxPartition;
     }
 
-    void initGfxPartition(GfxPartition &outGfxPartition) const;
+    void initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices) const;
 
     const std::string &getDeviceRegistryPath() const {
         return deviceRegistryPath;

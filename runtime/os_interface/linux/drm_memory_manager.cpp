@@ -39,7 +39,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
     auto gpuAddressSpace = executionEnvironment.getHardwareInfo()->capabilityTable.gpuAddressSpace;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
-        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex);
+        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size());
     }
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
