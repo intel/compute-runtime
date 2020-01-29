@@ -36,6 +36,8 @@ set(RUNTIME_SRCS_DLL_BASE
   ${EXPORTS_FILENAME}
 )
 
+append_sources_from_properties(RUNTIME_SRCS_DLL_BASE NEO_CORE_SRCS_LINK)
+
 set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/allocator_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/create_drm_memory_manager.cpp

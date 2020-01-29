@@ -35,7 +35,7 @@ if(UNIX)
   )
 endif()
 
-target_link_libraries(neo_page_fault_manager_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(neo_page_fault_manager_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(neo_page_fault_manager_tests PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}

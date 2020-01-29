@@ -148,7 +148,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_subdirectory(dll)
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_CORE_LIB} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}

@@ -24,7 +24,7 @@ target_include_directories(igdrcl_mt_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectories()
 
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
-target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 

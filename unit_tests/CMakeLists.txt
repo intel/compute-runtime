@@ -142,7 +142,7 @@ if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
-target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" OFF)

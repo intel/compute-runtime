@@ -17,12 +17,6 @@ set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
 )
 
-set(CORE_SRCS_GENX_H_BASE
-  hw_cmds.h
-  hw_info.h
-  hw_cmds_base.h
-)
-
 set(RUNTIME_SRCS_GENX_CPP_BASE
   aub_command_stream_receiver
   aub_mem_dump
@@ -39,12 +33,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   sampler
   state_base_address
   tbx_command_stream_receiver
-)
-
-set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
-  command_encoder
-  preamble
-  preemption
 )
 
 macro(macro_for_each_platform)
@@ -71,23 +59,16 @@ endmacro()
 
 macro(macro_for_each_gen)
   set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER})
-  set(CORE_GENX_PREFIX "${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}")
-  set(GENERATED_GENX_PREFIX "${NEO_SOURCE_DIR}/core/generated/${GEN_TYPE_LOWER}")
   # Add default GEN files
   foreach(SRC_IT ${RUNTIME_SRCS_GENX_H_BASE})
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})
   endforeach()
-  foreach(SRC_IT ${CORE_SRCS_GENX_H_BASE})
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${CORE_GENX_PREFIX}/${SRC_IT})
-  endforeach()
+
   foreach(SRC_IT "state_compute_mode_helper_${GEN_TYPE_LOWER}.cpp")
     if(EXISTS ${GENX_PREFIX}/${SRC_IT})
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${SRC_IT})
     endif()
   endforeach()
-
-  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENERATED_GENX_PREFIX}/hw_cmds_generated_${GEN_TYPE_LOWER}.inl")
-  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${CORE_GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
 
   if(EXISTS "${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
     include("${GENX_PREFIX}/additional_files_${GEN_TYPE_LOWER}.cmake")
@@ -105,9 +86,6 @@ macro(macro_for_each_gen)
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
     endforeach()
   endforeach()
-  foreach(SRC_IT ${CORE_RUNTIME_SRCS_GENX_CPP_BASE})
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${CORE_GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
-  endforeach()
 
   apply_macro_for_each_platform()
   
@@ -115,9 +93,6 @@ macro(macro_for_each_gen)
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${GEN_TYPE_LOWER}.cpp)
   
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp)
-  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp)
-  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp)
-  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${CORE_GENX_PREFIX}/enable_${GEN_TYPE_LOWER}.cpp)
 
   list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_H_BASE})
   list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE})
