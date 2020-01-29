@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,6 @@
 #ifdef WIN32
 #include "core/os_interface/windows/windows_wrapper.h"
 
-#include <d3d9types.h>
-
-#include "d3dumddi.h"
-#include <d3dkmthk.h>
 #else
 #ifndef C_ASSERT
 #define C_ASSERT(e) static_assert(e, #e)
