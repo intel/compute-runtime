@@ -19,11 +19,13 @@ class ExecutionEnvironment;
 class GmmPageTableMngr;
 class MemoryOperationsHandler;
 class OSInterface;
+struct HardwareInfo;
 
 struct RootDeviceEnvironment {
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
     RootDeviceEnvironment(RootDeviceEnvironment &) = delete;
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
+    const HardwareInfo *getHardwareInfo() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 

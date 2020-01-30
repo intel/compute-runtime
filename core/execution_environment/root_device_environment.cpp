@@ -23,4 +23,7 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
         aubCenter.reset(new AubCenter(executionEnvironment.getHardwareInfo(), localMemoryEnabled, aubFileName, csrType));
     }
 }
+const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {
+    return executionEnvironment.getHardwareInfo();
+}
 } // namespace NEO

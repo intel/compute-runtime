@@ -404,3 +404,20 @@ int main(int argc, char **argv) {
 
     return retVal;
 }
+
+TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
+    auto oldHwInfo = executionEnvironment.getMutableHardwareInfo();
+    *oldHwInfo = {};
+    auto drm = DrmWrap::createDrm(0, *rootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+    auto currentHwInfo = executionEnvironment.getHardwareInfo();
+    EXPECT_NE(IGFX_UNKNOWN, currentHwInfo->platform.eProductFamily);
+    EXPECT_NE(IGFX_UNKNOWN_CORE, currentHwInfo->platform.eRenderCoreFamily);
+    EXPECT_LT(0u, currentHwInfo->gtSystemInfo.EUCount);
+    EXPECT_LT(0u, currentHwInfo->gtSystemInfo.SubSliceCount);
+
+    DrmWrap::closeDevice(0);
+
+    drm = DrmWrap::get(0);
+    EXPECT_EQ(drm, nullptr);
+}

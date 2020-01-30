@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,11 +67,11 @@ int drmGetParam(drm_i915_getparam_t *param) {
         ret = failOnDeviceId;
         break;
     case I915_PARAM_EU_TOTAL:
-        *param->value = 0;
+        *param->value = 3;
         ret = failOnEuTotal;
         break;
     case I915_PARAM_SUBSLICE_TOTAL:
-        *param->value = 0;
+        *param->value = 1;
         ret = failOnSubsliceTotal;
         break;
     case I915_PARAM_REVISION:

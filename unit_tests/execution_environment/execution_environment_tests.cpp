@@ -234,3 +234,10 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     auto expectedOsContextCount = numRootDevices * osContextCount * subDevicesCount + hasRootCsr;
     EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
 }
+TEST(RootDeviceEnvironment, whenGetHardwareInfoIsCalledThenHardwareInfoIsTakenFromExecutionEnvironment) {
+    ExecutionEnvironment executionEnvironment;
+    HardwareInfo hwInfo = {};
+    executionEnvironment.setHwInfo(&hwInfo);
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    EXPECT_EQ(rootDeviceEnvironment.getHardwareInfo(), executionEnvironment.getHardwareInfo());
+}
