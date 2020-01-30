@@ -13,6 +13,7 @@
 #include "core/memory_manager/memory_constants.h"
 #include "core/memory_manager/memory_pool.h"
 #include "core/utilities/idlist.h"
+#include "core/utilities/stackvec.h"
 
 #include "engine_limits.h"
 #include "storage_info.h"
@@ -280,7 +281,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;
 
-    std::vector<UsageInfo> usageInfos;
+    StackVec<UsageInfo, 32> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
     std::array<Gmm *, EngineLimits::maxHandleCount> gmms{};
 };
