@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "core/helpers/options.h"
 #include "core/os_interface/windows/os_inc.h"
 #include "core/os_interface/windows/os_library_win.h"
 #include "core/os_interface/windows/thk_wrapper.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
-#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"

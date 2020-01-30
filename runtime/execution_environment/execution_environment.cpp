@@ -18,7 +18,7 @@
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
-    hwInfo = std::make_unique<HardwareInfo>(*platformDevices[0]);
+    hwInfo = std::make_unique<HardwareInfo>();
 };
 
 ExecutionEnvironment::~ExecutionEnvironment() {

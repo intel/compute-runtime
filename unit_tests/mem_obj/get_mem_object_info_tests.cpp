@@ -7,7 +7,6 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/aligned_memory.h"
-#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/buffer_fixture.h"

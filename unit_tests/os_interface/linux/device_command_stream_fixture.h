@@ -8,8 +8,8 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/linux/drm_neo.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/gtest_helpers.h"

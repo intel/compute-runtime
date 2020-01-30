@@ -6,7 +6,7 @@
  */
 
 #include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/options.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"

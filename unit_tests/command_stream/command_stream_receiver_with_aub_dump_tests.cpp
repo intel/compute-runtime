@@ -278,7 +278,7 @@ HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenAskingForTagPoolSizeThen
 using SimulatedCsrTest = ::testing::Test;
 HWTEST_F(SimulatedCsrTest, givenHwWithAubDumpCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitialized) {
     uint32_t expectedRootDeviceIndex = 10;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
     executionEnvironment.initializeMemoryManager();
 
@@ -294,7 +294,7 @@ HWTEST_F(SimulatedCsrTest, givenHwWithAubDumpCsrTypeWhenCreateCommandStreamRecei
 }
 HWTEST_F(SimulatedCsrTest, givenTbxWithAubDumpCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitialized) {
     uint32_t expectedRootDeviceIndex = 10;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
 

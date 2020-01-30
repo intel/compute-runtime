@@ -605,7 +605,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenOpenIsCalle
 using SimulatedCsrTest = ::testing::Test;
 HWTEST_F(SimulatedCsrTest, givenTbxCsrTypeWhenCreateCommandStreamReceiverThenProperAubCenterIsInitalized) {
     uint32_t expectedRootDeviceIndex = 10;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     executionEnvironment.prepareRootDeviceEnvironments(expectedRootDeviceIndex + 2);
 

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "unit_tests/os_interface/linux/mock_performance_counters_linux.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 

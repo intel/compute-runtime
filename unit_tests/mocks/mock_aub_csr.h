@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"

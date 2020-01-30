@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 

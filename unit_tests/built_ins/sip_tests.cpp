@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
 #include "test.h"

@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
@@ -20,6 +19,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include <memory>
 
@@ -279,7 +279,7 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
 
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(3);
     executionEnvironment.incRefInternal();
     executionEnvironment.initializeMemoryManager();

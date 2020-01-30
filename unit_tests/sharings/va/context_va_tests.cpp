@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "unit_tests/fixtures/platform_fixture.h"

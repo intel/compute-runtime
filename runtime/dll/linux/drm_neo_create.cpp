@@ -11,7 +11,6 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/drm_null_device.h"
 #include "runtime/execution_environment/execution_environment.h"

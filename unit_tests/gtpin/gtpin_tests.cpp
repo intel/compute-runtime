@@ -9,7 +9,6 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/file_io.h"
 #include "core/helpers/hash.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "runtime/api/api.h"

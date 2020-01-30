@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/helpers/hw_helper.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device/root_device.h"
 #include "runtime/device/sub_device.h"

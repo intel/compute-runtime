@@ -8,9 +8,9 @@
 #include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 
 #include <cstring>
 

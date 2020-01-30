@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/file_io.h"
-#include "core/helpers/options.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "unit_tests/elflib/elf_binary_simulator.h"

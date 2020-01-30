@@ -9,7 +9,6 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/os_library.h"
 #include "core/os_interface/os_time.h"
 #include "core/os_interface/windows/os_context_win.h"

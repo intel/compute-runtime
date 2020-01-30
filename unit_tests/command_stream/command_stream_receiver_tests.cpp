@@ -244,7 +244,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment, 0);
@@ -308,7 +308,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCsrWhenDownloadAllocationCalledVerifyCallOccurs) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment, 0);
@@ -378,7 +378,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment, 0);
@@ -639,7 +639,7 @@ HWTEST_P(CommandStreamReceiverWithAubSubCaptureTest, givenCommandStreamReceiverW
     bool wasActiveInPreviousEnqueue = status.first;
     bool isActive = status.second;
 
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MyMockCsr mockCsr(executionEnvironment, 0);
@@ -674,7 +674,7 @@ struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> 
 };
 
 HWTEST_F(SimulatedCommandStreamReceiverTest, givenCsrWithOsContextWhenGetDeviceIndexThenGetHighestEnabledBitInDeviceBitfield) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);
@@ -685,7 +685,7 @@ HWTEST_F(SimulatedCommandStreamReceiverTest, givenCsrWithOsContextWhenGetDeviceI
 }
 
 HWTEST_F(SimulatedCommandStreamReceiverTest, givenOsContextWithNoDeviceBitfieldWhenGettingDeviceIndexThenZeroIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);

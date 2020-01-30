@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/get_info.h"
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/device/device.h"

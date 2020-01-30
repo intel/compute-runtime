@@ -6,7 +6,6 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/options.h"
 #include "runtime/device/device.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

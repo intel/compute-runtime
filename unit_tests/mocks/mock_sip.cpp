@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"

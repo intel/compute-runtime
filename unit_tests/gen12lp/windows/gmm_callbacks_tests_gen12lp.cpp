@@ -9,6 +9,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"

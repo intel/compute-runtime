@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 

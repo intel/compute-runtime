@@ -13,6 +13,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "driver_version.h"
 #include "gtest/gtest.h"
@@ -988,7 +989,7 @@ TEST_F(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
 
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     auto &capabilityTable = executionEnvironment.getMutableHardwareInfo()->capabilityTable;
     std::unique_ptr<MemoryManager> memoryManager;

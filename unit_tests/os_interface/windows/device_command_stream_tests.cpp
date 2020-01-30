@@ -9,7 +9,6 @@
 #include "core/command_stream/preemption.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_cmds.h"
-#include "core/helpers/options.h"
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/windows/os_context_win.h"

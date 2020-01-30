@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/event/user_event.h"
 #include "test.h"

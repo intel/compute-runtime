@@ -14,7 +14,6 @@
 #include "core/helpers/cache_policy.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/helpers/preamble.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/state_base_address.h"

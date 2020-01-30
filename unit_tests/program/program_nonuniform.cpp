@@ -148,7 +148,6 @@ TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
     EXPECT_TRUE(pm.getAllowNonUniform());
 }
 
-#include "core/helpers/options.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"

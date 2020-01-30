@@ -7,7 +7,6 @@
 
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/command_stream/command_stream_receiver.h"

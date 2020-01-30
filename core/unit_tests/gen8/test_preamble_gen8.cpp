@@ -6,7 +6,6 @@
  */
 
 #include "core/command_stream/thread_arbitration_policy.h"
-#include "core/helpers/options.h"
 #include "core/helpers/preamble.h"
 #include "core/unit_tests/preamble/preamble_fixture.h"
 #include "runtime/gen8/reg_configs.h"

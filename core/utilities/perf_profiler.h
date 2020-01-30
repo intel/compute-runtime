@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "core/helpers/options.h"
 #include "core/utilities/timer_util.h"
 
 #include <atomic>

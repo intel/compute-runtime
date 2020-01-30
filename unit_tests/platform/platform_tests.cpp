@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/device/device.h"

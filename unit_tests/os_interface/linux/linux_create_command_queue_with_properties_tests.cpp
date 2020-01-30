@@ -19,7 +19,7 @@ using namespace NEO;
 struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
     void SetUp() override {
         UltCommandStreamReceiverTest::SetUp();
-        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         auto osInterface = new OSInterface();
         osInterface->get()->setDrm(drm.get());

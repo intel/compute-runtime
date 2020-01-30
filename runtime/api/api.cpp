@@ -13,7 +13,6 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/kernel_helpers.h"
-#include "core/helpers/options.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "core/utilities/api_intercept.h"

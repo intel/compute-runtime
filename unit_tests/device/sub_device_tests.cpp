@@ -78,7 +78,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedTh
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(10);
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
     executionEnvironment.memoryManager.reset(new FailMemoryManager(10, executionEnvironment));

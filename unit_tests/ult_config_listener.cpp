@@ -7,7 +7,7 @@
 
 #include "unit_tests/ult_config_listener.h"
 
-#include "core/helpers/options.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/memory_manager.h"

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/user_event.h"
 #include "runtime/platform/platform.h"

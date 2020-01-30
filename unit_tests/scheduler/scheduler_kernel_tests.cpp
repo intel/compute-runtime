@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/scheduler/scheduler_kernel.h"

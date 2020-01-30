@@ -179,7 +179,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
 };
 
 TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThenDoNotRegisterTrimCallback) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     auto gdi = new MockGdi();
     auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment.rootDeviceEnvironments[0].get()))};
@@ -199,7 +199,7 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThe
 }
 
 TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackThenCallbackIsSetUpProperly) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     auto gdi = new MockGdi();
     auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment.rootDeviceEnvironments[0].get()))};

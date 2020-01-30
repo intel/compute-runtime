@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"

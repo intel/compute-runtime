@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/buffer.h"

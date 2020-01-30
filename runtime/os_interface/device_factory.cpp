@@ -8,7 +8,6 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/aub_memory_operations_handler.h"
 #include "core/os_interface/hw_info_config.h"
 #include "runtime/aub/aub_center.h"
@@ -24,7 +23,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
-    auto hwInfoConst = *platformDevices;
+    const HardwareInfo *hwInfoConst = &DEFAULT_PLATFORM::hwInfo;
     getHwInfoForPlatformString(productFamily, hwInfoConst);
     numDevices = 0;
     std::string hwInfoConfigStr;

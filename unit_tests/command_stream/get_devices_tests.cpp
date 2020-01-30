@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
@@ -178,7 +177,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
             }
             EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
             ASSERT_NE(nullptr, hardwarePrefix[i]);
-            HardwareInfo defaultHwInfo = **platformDevices;
+            HardwareInfo defaultHwInfo = DEFAULT_PLATFORM::hwInfo;
             defaultHwInfo.featureTable = {};
             defaultHwInfo.workaroundTable = {};
             defaultHwInfo.gtSystemInfo = {};

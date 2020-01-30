@@ -9,7 +9,6 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/gmm_types_converter.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"

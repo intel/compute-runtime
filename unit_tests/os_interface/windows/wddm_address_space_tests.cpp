@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/options.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"

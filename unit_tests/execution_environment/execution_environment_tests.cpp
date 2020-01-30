@@ -9,7 +9,6 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/destructor_counted.h"
@@ -221,7 +220,7 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
 
 TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasProperValue) {
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     uint32_t numRootDevices = 17u;
     auto &hwHelper = HwHelper::get(executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
     auto osContextCount = hwHelper.getGpgpuEngineInstances().size();

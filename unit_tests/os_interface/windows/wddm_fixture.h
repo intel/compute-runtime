@@ -14,6 +14,7 @@
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"

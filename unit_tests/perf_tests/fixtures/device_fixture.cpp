@@ -7,7 +7,6 @@
 
 #include "device_fixture.h"
 
-#include "core/helpers/options.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 
 #include "gtest/gtest.h"

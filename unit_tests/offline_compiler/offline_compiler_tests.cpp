@@ -9,8 +9,8 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/file_io.h"
+#include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_compilers.h"
 
@@ -759,7 +759,7 @@ TEST(OfflineCompilerTest, generateElfBinary) {
     memset(&binHeader, 0, sizeof(binHeader));
     binHeader.Magic = iOpenCL::MAGIC_CL;
     binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = platformDevices[0]->platform.eRenderCoreFamily;
+    binHeader.Device = DEFAULT_PLATFORM::hwInfo.platform.eRenderCoreFamily;
     binHeader.GPUPointerSizeInBytes = 8;
     binHeader.NumberOfKernels = 0;
     binHeader.SteppingId = 0;

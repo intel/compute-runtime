@@ -8,7 +8,6 @@
 #pragma once
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/os_context.h"

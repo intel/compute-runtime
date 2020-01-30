@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/kmd_notify_properties.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/windows/sys_calls.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 

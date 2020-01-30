@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "core/helpers/options.h"
 #include "core/utilities/arrayref.h"
 #include "runtime/api/api.h"
 #include "runtime/mem_obj/image.h"

@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/basic_math.h"
-#include "core/helpers/options.h"
 #include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"

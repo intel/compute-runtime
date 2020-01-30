@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
 
 #include <string>

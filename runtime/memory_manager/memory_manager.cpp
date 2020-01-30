@@ -17,7 +17,6 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/helpers/string.h"
 #include "core/helpers/surface_format_info.h"
 #include "core/memory_manager/deferrable_allocation_deletion.h"

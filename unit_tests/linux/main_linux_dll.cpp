@@ -10,6 +10,7 @@
 #include "core/os_interface/linux/allocator_helper.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/default_hw_info.inl"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/memory_manager.h"

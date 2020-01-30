@@ -6,7 +6,6 @@
  */
 
 #include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_time.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"

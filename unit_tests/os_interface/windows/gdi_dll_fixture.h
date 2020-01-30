@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/os_library.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 
 using namespace NEO;

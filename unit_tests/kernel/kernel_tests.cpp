@@ -9,7 +9,6 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
@@ -468,6 +467,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
+        executionEnvironment.setHwInfo(platformDevices[0]);
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
     }

@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/file_io.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/device_factory.h"

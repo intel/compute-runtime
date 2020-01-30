@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_library.h"

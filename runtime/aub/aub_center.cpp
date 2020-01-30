@@ -10,7 +10,6 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "runtime/aub/aub_helper.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"

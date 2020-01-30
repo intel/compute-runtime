@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"

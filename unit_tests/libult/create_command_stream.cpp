@@ -7,7 +7,7 @@
 
 #include "unit_tests/libult/create_command_stream.h"
 
-#include "core/helpers/options.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -36,6 +36,10 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
 }
 
 bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
+    auto currentHwInfo = executionEnvironment.getHardwareInfo();
+    if (currentHwInfo->platform.eProductFamily == IGFX_UNKNOWN && currentHwInfo->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE) {
+        executionEnvironment.setHwInfo(platformDevices[0]);
+    }
     if (ultHwConfig.useMockedGetDevicesFunc) {
         numDevicesReturned = numPlatformDevices;
         executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numDevicesReturned));

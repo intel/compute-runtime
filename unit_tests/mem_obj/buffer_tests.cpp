@@ -10,7 +10,6 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/array_count.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"

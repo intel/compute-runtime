@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 
@@ -38,7 +37,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
     ~MockExecutionEnvironment() override = default;
-    MockExecutionEnvironment() : MockExecutionEnvironment(nullptr) {}
+    MockExecutionEnvironment() : MockExecutionEnvironment(platformDevices[0]) {}
     MockExecutionEnvironment(const HardwareInfo *hwInfo) : MockExecutionEnvironment(hwInfo, true, 1u) {
     }
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices) {
@@ -51,6 +50,8 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
 
         if (hwInfo) {
             setHwInfo(hwInfo);
+        } else {
+            setHwInfo(platformDevices[0]);
         }
         calculateMaxOsContextCount();
     }

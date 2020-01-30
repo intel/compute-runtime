@@ -14,7 +14,6 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_helper.h"
-#include "core/helpers/options.h"
 #include "core/helpers/string.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/api/api.h"

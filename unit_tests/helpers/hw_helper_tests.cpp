@@ -11,7 +11,6 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
-#include "core/helpers/options.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/hw_info_config.h"

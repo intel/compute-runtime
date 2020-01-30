@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/default_hw_info.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 

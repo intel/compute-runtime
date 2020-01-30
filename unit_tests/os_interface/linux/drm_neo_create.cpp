@@ -6,7 +6,6 @@
  */
 
 #include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/options.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "test.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"

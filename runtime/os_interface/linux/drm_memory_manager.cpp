@@ -12,7 +12,6 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/residency.h"

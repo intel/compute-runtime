@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include "core/helpers/options.h"
 #include "runtime/device/device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/device_factory.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_device_factory.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
@@ -37,5 +36,5 @@ struct DeviceFactoryLinuxTest : public ::testing::Test {
     }
 
     DrmMock *pDrm;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
 };
