@@ -96,7 +96,7 @@ cl_int Program::build(
                 }
             }
 
-            auto compilerExtensionsOptions = platform()->peekCompilerExtensions();
+            auto compilerExtensionsOptions = this->pDevice->peekCompilerExtensions();
             if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
                 CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
             }

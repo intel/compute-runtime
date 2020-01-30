@@ -747,7 +747,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     //    EXPECT_EQ(0, retVal);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->peekCompilerExtensions())) << pProgram->getInternalOptions();
+    EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->getClDevice(0)->peekCompilerExtensions())) << pProgram->getInternalOptions();
 
     // get build log
     size_t param_value_size_ret = 0u;
@@ -1039,6 +1039,7 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << cip->buildInternalOptions;
 
     // Ask to build created program with NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
     cip->buildOptions.clear();
@@ -1053,6 +1054,7 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::finiteMathOnly)) << cip->buildOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << cip->buildInternalOptions;
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {

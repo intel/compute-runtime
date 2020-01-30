@@ -47,8 +47,6 @@ class Platform : public BaseObject<_cl_platform_id> {
                    void *paramValue,
                    size_t *paramValueSizeRet);
 
-    const std::string &peekCompilerExtensions() const;
-
     bool initialize();
     bool isInitialized();
 
@@ -77,7 +75,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     MOCKABLE_VIRTUAL RootDevice *createRootDevice(uint32_t rootDeviceIndex) const;
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
-    std::string compilerExtensions;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
     ExecutionEnvironment *executionEnvironment = nullptr;
 };

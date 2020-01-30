@@ -108,11 +108,8 @@ TEST_F(PlatformTest, givenDebugFlagSetWhenInitializingPlatformThenOverrideGpuAdd
 }
 
 TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
-    std::string compilerExtensions = pPlatform->peekCompilerExtensions();
-    EXPECT_EQ(std::string(""), compilerExtensions);
-
     pPlatform->initialize();
-    compilerExtensions = pPlatform->peekCompilerExtensions();
+    auto compilerExtensions = pPlatform->getClDevice(0)->peekCompilerExtensions();
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {

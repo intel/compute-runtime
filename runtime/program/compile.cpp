@@ -136,10 +136,8 @@ cl_int Program::compile(
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
-        auto compilerExtensionsOptions = platform()->peekCompilerExtensions();
-        if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
-            CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
-        }
+        auto compilerExtensionsOptions = this->pDevice->peekCompilerExtensions();
+        CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
 
         if (isKernelDebugEnabled()) {
             std::string filename;

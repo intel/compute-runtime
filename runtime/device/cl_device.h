@@ -102,6 +102,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Device &getDevice() const noexcept { return device; }
     ClDevice *getDeviceById(uint32_t deviceId);
     void initializeCaps();
+    const std::string &peekCompilerExtensions() const;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
 
   protected:
@@ -111,6 +112,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     std::vector<unsigned int> simultaneousInterops = {0};
     void appendOSExtensions(std::string &deviceExtensions);
+    std::string compilerExtensions;
 };
 
 template <cl_device_info Param>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ class CompilerInterfaceTest : public DeviceFixture,
         ASSERT_NE(nullptr, pSource);
 
         inputArgs.src = ArrayRef<char>(pSource.get(), sourceSize);
+        inputArgs.internalOptions = ArrayRef<const char>(pClDevice->peekCompilerExtensions().c_str(), pClDevice->peekCompilerExtensions().size());
     }
 
     void TearDown() override {
@@ -155,7 +156,7 @@ TEST_F(CompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsI
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->peekCompilerExtensions()));
+    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(pClDevice->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }
 
@@ -245,7 +246,7 @@ TEST_F(CompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtension
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->peekCompilerExtensions()));
+    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(pClDevice->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }
 

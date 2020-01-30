@@ -120,10 +120,6 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     return retVal;
 }
 
-const std::string &Platform::peekCompilerExtensions() const {
-    return compilerExtensions;
-}
-
 bool Platform::initialize() {
     size_t numDevicesReturned = 0;
 
@@ -180,8 +176,6 @@ bool Platform::initialize() {
                 this->platformInfo->version = "OpenCL 1.2 ";
                 break;
             }
-
-            compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pDevice->getDeviceInfo().deviceExtensions);
         } else {
             return false;
         }

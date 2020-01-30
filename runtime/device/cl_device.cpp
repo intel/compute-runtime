@@ -9,6 +9,7 @@
 
 #include "core/program/sync_buffer_handler.h"
 #include "runtime/device/device.h"
+#include "runtime/platform/extensions.h"
 #include "runtime/platform/platform.h"
 
 namespace NEO {
@@ -16,6 +17,7 @@ namespace NEO {
 ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platformId(platform) {
     device.incRefInternal();
     initializeCaps();
+    compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(getDeviceInfo().deviceExtensions);
 
     auto numAvailableDevices = device.getNumAvailableDevices();
     if (numAvailableDevices > 1) {
@@ -107,6 +109,9 @@ void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
         devIDs[i] = it;
         i++;
     }
+}
+const std::string &ClDevice::peekCompilerExtensions() const {
+    return compilerExtensions;
 }
 
 } // namespace NEO
