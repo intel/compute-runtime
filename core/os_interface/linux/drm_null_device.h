@@ -16,8 +16,6 @@
 namespace NEO {
 
 class DrmNullDevice : public Drm {
-    friend Drm;
-    friend DeviceFactory;
 
   public:
     int ioctl(unsigned long request, void *arg) override {
@@ -40,9 +38,9 @@ class DrmNullDevice : public Drm {
         }
     }
 
-  protected:
     DrmNullDevice(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(fd, rootDeviceEnvironment), gpuTimestamp(0){};
 
+  protected:
     uint64_t gpuTimestamp;
 };
 } // namespace NEO
