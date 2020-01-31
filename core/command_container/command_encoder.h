@@ -87,16 +87,6 @@ struct EncodeIndirectParams {
 };
 
 template <typename GfxFamily>
-struct EncodeFlush {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    static void encode(CommandContainer &container);
-
-    static void encodeWithQwordWrite(CommandContainer &container, uint64_t gpuAddress,
-                                     uint64_t value, bool dcFlushEnable);
-};
-
-template <typename GfxFamily>
 struct EncodeSetMMIO {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;

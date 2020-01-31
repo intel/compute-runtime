@@ -160,32 +160,6 @@ void EncodeIndirectParams<Family>::setGroupSizeIndirect(CommandContainer &contai
 }
 
 template <typename Family>
-void EncodeFlush<Family>::encode(CommandContainer &container) {
-    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    cmd.setDcFlushEnable(true);
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(PIPE_CONTROL *)buffer = cmd;
-}
-
-template <typename Family>
-void EncodeFlush<Family>::encodeWithQwordWrite(CommandContainer &container, uint64_t gpuAddress,
-                                               uint64_t value, bool dcFlushEnable) {
-    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    cmd.setPostSyncOperation(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    cmd.setImmediateData(value);
-    cmd.setCommandStreamerStallEnable(true);
-    if (dcFlushEnable) {
-        cmd.setDcFlushEnable(true);
-    }
-    cmd.setAddressHigh(gpuAddress >> 32u);
-    cmd.setAddress(uint32_t(gpuAddress));
-
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(PIPE_CONTROL *)buffer = cmd;
-}
-
-template <typename Family>
 void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data) {
     MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
     cmd.setRegisterOffset(offset);

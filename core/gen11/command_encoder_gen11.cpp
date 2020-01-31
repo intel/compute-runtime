@@ -18,7 +18,6 @@ template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMathMMIO<Family>;
 template struct EncodeIndirectParams<Family>;
-template struct EncodeFlush<Family>;
 template struct EncodeSetMMIO<Family>;
 template struct EncodeL3State<Family>;
 template struct EncodeMediaInterfaceDescriptorLoad<Family>;

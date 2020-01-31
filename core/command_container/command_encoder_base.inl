@@ -144,7 +144,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     bool flush = container.slmSize != slmSizeNew || container.isAnyHeapDirty();
 
     if (flush) {
-        EncodeFlush<Family>::encode(container);
+        PipeControlHelper<Family>::addPipeControl(*container.getCommandStream(), true);
 
         if (container.slmSize != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
