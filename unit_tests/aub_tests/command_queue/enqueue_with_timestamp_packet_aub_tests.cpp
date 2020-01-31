@@ -29,7 +29,7 @@ struct TimestampPacketAubTests : public CommandEnqueueAUBFixture, public ::testi
 };
 
 HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolvedThenDecrementCounterOnGpu) {
-    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
     pCommandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     const size_t bufferSize = 1024;
@@ -70,7 +70,7 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
 }
 
 HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAllTimestamps) {
-    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
     const size_t bufferSize = 70;
     const size_t writeSize = bufferSize - 2;
     uint8_t writeData[writeSize] = {};

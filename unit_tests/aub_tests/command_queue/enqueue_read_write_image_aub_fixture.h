@@ -32,7 +32,7 @@ struct AUBImageUnaligned
 
     template <typename FamilyType>
     void testReadImageUnaligned(size_t offset, size_t size, size_t pixelSize) {
-        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
         char srcMemory[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuwxyz";
         const auto bufferSize = sizeof(srcMemory) - 1;
@@ -128,7 +128,7 @@ struct AUBImageUnaligned
     void testWriteImageUnaligned(size_t offset, size_t size, size_t pixelSize) {
         DebugManagerStateRestore restorer;
         DebugManager.flags.ForceLinearImages.set(true);
-        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnoprstuwxyz";
         const auto bufferSize = sizeof(srcMemory);

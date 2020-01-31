@@ -52,7 +52,6 @@ Platform *constructPlatform() {
 
 Platform::Platform() {
     clDevices.reserve(4);
-    clDeviceMap.reserve(20);
     setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(new AsyncEventsHandler()));
     executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->incRefInternal();
@@ -161,7 +160,7 @@ bool Platform::initialize() {
         DEBUG_BREAK_IF(!pClDevice);
         if (pClDevice) {
             this->clDevices[deviceOrdinal] = pClDevice;
-            this->clDeviceMap.emplace(pDevice, pClDevice);
+            pDevice->setSpecializedDevice(pClDevice);
 
             this->platformInfo->extensions = pDevice->getDeviceInfo().deviceExtensions;
 

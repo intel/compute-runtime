@@ -33,7 +33,7 @@ struct WriteBufferHw
 typedef WriteBufferHw AUBWriteBuffer;
 
 HWTEST_P(AUBWriteBuffer, simple) {
-    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
+    MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     cl_float *srcMemory = new float[1024];
     cl_float *destMemory = new float[1024];
@@ -124,7 +124,7 @@ struct AUBWriteBufferUnaligned
 
     template <typename FamilyType>
     void testWriteBufferUnaligned(size_t offset, size_t size) {
-        MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+        MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
         char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const auto bufferSize = sizeof(srcMemory);

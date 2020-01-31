@@ -26,7 +26,7 @@ struct AUBMapBuffer
 };
 
 HWTEST_F(AUBMapBuffer, MapUpdateUnmapVerify) {
-    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
+    MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
     auto retVal = CL_INVALID_VALUE;
     size_t bufferSize = 10;
 

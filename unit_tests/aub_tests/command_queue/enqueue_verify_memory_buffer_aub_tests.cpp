@@ -76,7 +76,7 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
         invalidContent2.get()[offset + itemOffset] = pTestItemWrong2[itemOffset];
     }
 
-    MockContext context(platform()->clDeviceMap[&this->pCmdQ->getDevice()]);
+    MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
     cl_int retVal = CL_INVALID_VALUE;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(

@@ -61,6 +61,14 @@ class Device : public ReferenceTrackedObject<Device> {
     bool areSharedSystemAllocationsAllowed() const {
         return this->deviceInfo.sharedSystemMemCapabilities != 0u;
     }
+    template <typename SpecializedDeviceT>
+    void setSpecializedDevice(SpecializedDeviceT *specializedDevice) {
+        this->specializedDevice = reinterpret_cast<uintptr_t>(specializedDevice);
+    }
+    template <typename SpecializedDeviceT>
+    SpecializedDeviceT *getSpecializedDevice() const {
+        return reinterpret_cast<SpecializedDeviceT *>(specializedDevice);
+    }
 
     virtual uint32_t getRootDeviceIndex() const = 0;
     virtual uint32_t getNumAvailableDevices() const = 0;
@@ -106,6 +114,8 @@ class Device : public ReferenceTrackedObject<Device> {
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;
+
+    uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 };
 
 inline EngineControl &Device::getDefaultEngine() {

@@ -2279,7 +2279,7 @@ void Kernel::patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, 
                                       patchInfo.pAllocateSyncBuffer->SurfaceStateHeapOffset);
         auto addressToPatch = gfxAllocation->getUnderlyingBuffer();
         auto sizeToPatch = gfxAllocation->getUnderlyingBufferSize();
-        Buffer::setSurfaceState(platform()->clDeviceMap[&device], surfaceState, sizeToPatch, addressToPatch, 0, gfxAllocation, 0, 0);
+        Buffer::setSurfaceState(device.getSpecializedDevice<ClDevice>(), surfaceState, sizeToPatch, addressToPatch, 0, gfxAllocation, 0, 0);
     }
 }
 

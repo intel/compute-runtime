@@ -26,7 +26,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-        context.reset(new MockContext(platform()->clDeviceMap[&pCmdQ->getDevice()]));
+        context.reset(new MockContext(pCmdQ->getDevice().getSpecializedDevice<ClDevice>()));
         BufferDefaults::context = context.get();
 
         //For 3D

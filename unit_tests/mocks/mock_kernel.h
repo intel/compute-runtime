@@ -117,7 +117,7 @@ class MockKernel : public Kernel {
     static KernelType *create(Device &device, Program *program, uint32_t grfNumber) {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
-        auto pClDevice = platform()->clDeviceMap[&device];
+        auto pClDevice = device.getSpecializedDevice<ClDevice>();
 
         SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
         header->DynamicStateHeapSize = 0;

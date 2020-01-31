@@ -287,7 +287,7 @@ bool Program::isValidLlvmBinary(
 }
 
 void Program::setDevice(Device *device) {
-    this->pDevice = platform()->clDeviceMap[device];
+    this->pDevice = device->getSpecializedDevice<ClDevice>();
 }
 
 cl_int Program::getSource(std::string &binary) const {

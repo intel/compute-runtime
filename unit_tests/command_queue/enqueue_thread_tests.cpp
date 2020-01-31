@@ -33,7 +33,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     size_t expectedToFreeCount = (size_t)-1;
     CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex()) {
         this->pDevice = pDevice;
-        this->pClDevice = platform()->clDeviceMap[pDevice];
+        this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
     }
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {

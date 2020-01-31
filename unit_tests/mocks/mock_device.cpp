@@ -28,9 +28,9 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
       executionEnvironment(pMockDevice->executionEnvironment),
       subdevices(pMockDevice->subdevices), mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
 
-    platform()->clDeviceMap.emplace(pMockDevice, this);
+    pMockDevice->setSpecializedDevice(static_cast<ClDevice *>(this));
     for (uint32_t i = 0; i < getNumAvailableDevices(); i++) {
-        platform()->clDeviceMap.emplace(pMockDevice->getDeviceById(i), this->getDeviceById(i));
+        pMockDevice->getDeviceById(i)->setSpecializedDevice(this->getDeviceById(i));
     }
 }
 
@@ -43,15 +43,6 @@ MockDevice::MockDevice()
     this->engines.resize(1);
     this->engines[0] = {commandStreamReceiver, nullptr};
     initializeCaps();
-}
-
-MockClDevice::~MockClDevice() {
-    if (platform()) {
-        platform()->clDeviceMap.erase(&device);
-        for (uint32_t i = 0; i < getNumAvailableDevices(); i++) {
-            platform()->clDeviceMap.erase(device.getDeviceById(i));
-        }
-    }
 }
 
 const char *MockDevice::getProductAbbrev() const {

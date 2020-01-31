@@ -32,7 +32,7 @@ struct CopyBufferHw
 typedef CopyBufferHw AUBCopyBuffer;
 
 HWTEST_P(AUBCopyBuffer, simple) {
-    MockContext context(platform()->clDeviceMap[&pCmdQ->getDevice()]);
+    MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};

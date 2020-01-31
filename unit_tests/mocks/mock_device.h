@@ -126,7 +126,6 @@ class MockClDevice : public ClDevice {
     using ClDevice::simultaneousInterops;
 
     explicit MockClDevice(MockDevice *pMockDevice);
-    ~MockClDevice();
 
     bool createEngines() { return device.createEngines(); }
     void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }

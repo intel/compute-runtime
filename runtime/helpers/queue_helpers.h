@@ -8,8 +8,9 @@
 #pragma once
 #include "core/helpers/get_info.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/device/cl_device.h"
+#include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/platform/platform.h"
 
 namespace NEO {
 
@@ -61,9 +62,11 @@ cl_int getQueueInfo(QueueType *queue,
     case CL_QUEUE_CONTEXT:
         getInfoHelper.set<cl_context>(&queue->getContext());
         break;
-    case CL_QUEUE_DEVICE:
-        getInfoHelper.set<cl_device_id>(platform()->clDeviceMap[&queue->getDevice()]);
+    case CL_QUEUE_DEVICE: {
+        Device &device = queue->getDevice();
+        getInfoHelper.set<cl_device_id>(device.getSpecializedDevice<ClDevice>());
         break;
+    }
     case CL_QUEUE_REFERENCE_COUNT:
         getInfoHelper.set<cl_int>(queue->getReference());
         break;

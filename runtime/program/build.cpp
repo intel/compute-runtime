@@ -8,6 +8,7 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/utilities/time_measure_wrapper.h"
 #include "runtime/device/cl_device.h"
+#include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/validators.h"
@@ -186,7 +187,7 @@ void Program::notifyDebuggerWithSourceCode(std::string &filename) {
 
 cl_int Program::build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                       std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
-    cl_device_id deviceId = platform()->clDeviceMap[pDevice];
+    cl_device_id deviceId = pDevice->getSpecializedDevice<ClDevice>();
     auto ret = this->build(1, &deviceId, buildOptions, nullptr, nullptr, enableCaching);
     if (ret != CL_SUCCESS) {
         return ret;

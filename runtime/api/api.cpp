@@ -5352,7 +5352,8 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
             retVal = CL_INVALID_KERNEL;
             return retVal;
         }
-        platform()->clDeviceMap[&pCommandQueue->getDevice()]->allocateSyncBufferHandler();
+
+        pCommandQueue->getDevice().getSpecializedDevice<ClDevice>()->allocateSyncBufferHandler();
     }
 
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());

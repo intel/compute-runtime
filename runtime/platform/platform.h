@@ -54,7 +54,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     Device *getDevice(size_t deviceOrdinal);
     ClDevice **getClDevices();
     ClDevice *getClDevice(size_t deviceOrdinal);
-    std::unordered_map<const Device *, ClDevice *> clDeviceMap;
 
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();

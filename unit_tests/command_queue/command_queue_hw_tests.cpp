@@ -291,7 +291,7 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPre
         bool finishWasCalled;
     };
 
-    MockCmdQ cmdQ(context, platform()->clDeviceMap[&pCmdQ->getDevice()]);
+    MockCmdQ cmdQ(context, pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
     auto b2 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);

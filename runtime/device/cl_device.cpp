@@ -23,7 +23,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
             subDevices.push_back(std::make_unique<ClDevice>(*device.getDeviceById(i), platform));
-            platform->clDeviceMap.emplace(device.getDeviceById(i), subDevices[i].get());
+            device.getDeviceById(i)->setSpecializedDevice(subDevices[i].get());
         }
     }
 }
