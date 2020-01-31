@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "core/helpers/hw_info.h"
-#include "public/cl_ext_private.h"
+#include "core/unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
 
@@ -28,11 +28,11 @@ class HwInfoConfig {
     int configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
-    virtual cl_unified_shared_memory_capabilities_intel getHostMemCapabilities() = 0;
-    virtual cl_unified_shared_memory_capabilities_intel getDeviceMemCapabilities() = 0;
-    virtual cl_unified_shared_memory_capabilities_intel getSingleDeviceSharedMemCapabilities() = 0;
-    virtual cl_unified_shared_memory_capabilities_intel getCrossDeviceSharedMemCapabilities() = 0;
-    virtual cl_unified_shared_memory_capabilities_intel getSharedSystemMemCapabilities() = 0;
+    virtual uint64_t getHostMemCapabilities() = 0;
+    virtual uint64_t getDeviceMemCapabilities() = 0;
+    virtual uint64_t getSingleDeviceSharedMemCapabilities() = 0;
+    virtual uint64_t getCrossDeviceSharedMemCapabilities() = 0;
+    virtual uint64_t getSharedSystemMemCapabilities() = 0;
     uint32_t threadsPerEu;
 };
 
@@ -45,11 +45,11 @@ class HwInfoConfigHw : public HwInfoConfig {
     }
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
-    cl_unified_shared_memory_capabilities_intel getHostMemCapabilities() override;
-    cl_unified_shared_memory_capabilities_intel getDeviceMemCapabilities() override;
-    cl_unified_shared_memory_capabilities_intel getSingleDeviceSharedMemCapabilities() override;
-    cl_unified_shared_memory_capabilities_intel getCrossDeviceSharedMemCapabilities() override;
-    cl_unified_shared_memory_capabilities_intel getSharedSystemMemCapabilities() override;
+    uint64_t getHostMemCapabilities() override;
+    uint64_t getDeviceMemCapabilities() override;
+    uint64_t getSingleDeviceSharedMemCapabilities() override;
+    uint64_t getCrossDeviceSharedMemCapabilities() override;
+    uint64_t getSharedSystemMemCapabilities() override;
 
   protected:
     HwInfoConfigHw() {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,27 +9,27 @@
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
-cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<gfxProduct>::getHostMemCapabilities() {
-    return (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL);
+uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities() {
+    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<gfxProduct>::getDeviceMemCapabilities() {
-    return (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL);
+uint64_t HwInfoConfigHw<gfxProduct>::getDeviceMemCapabilities() {
+    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
-    return (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL);
+uint64_t HwInfoConfigHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() {
+    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
+uint64_t HwInfoConfigHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() {
     return 0;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities() {
+uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities() {
     return 0;
 }
 
