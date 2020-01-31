@@ -7,7 +7,7 @@
 
 #pragma once
 #include "runtime/api/cl_types.h"
-#include "runtime/device/device_vector.h"
+#include "runtime/device/cl_device_vector.h"
 #include "runtime/helpers/base_object.h"
 
 #include "platform_info.h"
