@@ -25,7 +25,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/blit_commands_helper.h"
+#include "runtime/helpers/cl_blit_properties.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -811,7 +811,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         builtinOpParams.srcMemObj = subBuffer1.get();
         builtinOpParams.size.x = 1;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer, csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer, csr, builtinOpParams);
 
         auto offset = csr.commandStream.getUsed();
         blitBuffer(&csr, blitProperties, true);
@@ -909,8 +909,8 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         builtinOpParams.size.x = 1;
         builtinOpParams.transferAllocation = mapAllocation;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                    csr, builtinOpParams);
         EXPECT_EQ(mapAllocation, blitProperties.srcAllocation);
     }
     {
@@ -921,8 +921,8 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         builtinOpParams.size.x = 1;
         builtinOpParams.transferAllocation = mapAllocation;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                    csr, builtinOpParams);
         EXPECT_EQ(mapAllocation, blitProperties.dstAllocation);
     }
 
@@ -950,8 +950,8 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
         builtinOpParams.size.x = 1;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                    csr, builtinOpParams);
         EXPECT_EQ(svmData->cpuAllocation, blitProperties.srcAllocation);
         EXPECT_EQ(svmData->gpuAllocation, blitProperties.dstAllocation);
     }
@@ -963,8 +963,8 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
         builtinOpParams.size.x = 1;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                    csr, builtinOpParams);
         EXPECT_EQ(svmData->cpuAllocation, blitProperties.dstAllocation);
         EXPECT_EQ(svmData->gpuAllocation, blitProperties.srcAllocation);
     }
@@ -997,8 +997,8 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + dstOffset);
         builtinOpParams.size.x = 1;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                    csr, builtinOpParams);
         EXPECT_EQ(svmData->gpuAllocation, blitProperties.srcAllocation);
         EXPECT_EQ(svmData->cpuAllocation, blitProperties.dstAllocation);
 
@@ -1021,8 +1021,8 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->gpuAllocation + srcOffset);
         builtinOpParams.size.x = 1;
 
-        auto blitProperties = BlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
-                                                                  csr, builtinOpParams);
+        auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                    csr, builtinOpParams);
 
         auto offset = csr.commandStream.getUsed();
         blitBuffer(&csr, blitProperties, true);

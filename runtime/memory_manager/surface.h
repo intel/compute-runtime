@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "runtime/mem_obj/mem_obj.h"
 
 namespace NEO {
-class CommandQueue;
+
 class Surface {
   public:
     Surface(bool isCoherent = false) : IsCoherent(isCoherent) {}

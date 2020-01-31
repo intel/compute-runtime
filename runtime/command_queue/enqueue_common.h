@@ -24,6 +24,7 @@
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/cl_blit_properties.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/hardware_commands_helper.h"
@@ -451,12 +452,12 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
                                                                         TimestampPacketDependencies &timestampPacketDependencies,
                                                                         const EventsRequest &eventsRequest, LinearStream &commandStream,
                                                                         uint32_t commandType, bool queueBlocked) {
-    auto blitDirection = BlitProperties::obtainBlitDirection(commandType);
+    auto blitDirection = ClBlitProperties::obtainBlitDirection(commandType);
 
     auto blitCommandStreamReceiver = getBcsCommandStreamReceiver();
 
-    auto blitProperties = BlitProperties::constructProperties(blitDirection, *blitCommandStreamReceiver,
-                                                              multiDispatchInfo.peekBuiltinOpParams());
+    auto blitProperties = ClBlitProperties::constructProperties(blitDirection, *blitCommandStreamReceiver,
+                                                                multiDispatchInfo.peekBuiltinOpParams());
     if (!queueBlocked) {
         eventsRequest.fillCsrDependencies(blitProperties.csrDependencies, *blitCommandStreamReceiver,
                                           CsrDependencies::DependenciesType::All);

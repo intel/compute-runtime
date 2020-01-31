@@ -14,8 +14,6 @@
 #include <cstdint>
 
 namespace NEO {
-struct BuiltinOpParams;
-class Context;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 class LinearStream;
@@ -36,10 +34,6 @@ struct BlitProperties {
                                                                 void *hostPtr, uint64_t memObjGpuVa,
                                                                 uint64_t hostAllocGpuVa, size_t hostPtrOffset,
                                                                 size_t copyOffset, uint64_t copySize);
-
-    static BlitProperties constructProperties(BlitterConstants::BlitDirection blitDirection,
-                                              CommandStreamReceiver &commandStreamReceiver,
-                                              const BuiltinOpParams &builtinOpParams);
 
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                            size_t dstOffset, size_t srcOffset, uint64_t copySize);
