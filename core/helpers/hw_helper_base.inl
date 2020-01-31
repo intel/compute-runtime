@@ -197,6 +197,11 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
 }
 
 template <typename GfxFamily>
+inline size_t PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization() {
+    return 0u;
+}
+
+template <typename GfxFamily>
 typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeControl(LinearStream &commandStream, bool dcFlush) {
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
     *pCmd = GfxFamily::cmdInitPipeControl;
@@ -233,7 +238,7 @@ size_t PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl() {
 template <typename GfxFamily>
 size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
     const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
-    return pipeControlCount * getSizeForSinglePipeControl();
+    return pipeControlCount * getSizeForSinglePipeControl() + getSizeForAdditonalSynchronization();
 }
 
 template <typename GfxFamily>

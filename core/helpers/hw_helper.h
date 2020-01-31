@@ -243,6 +243,7 @@ struct PipeControlHelper {
     static size_t getSizeForSinglePipeControl();
 
   protected:
+    static size_t getSizeForAdditonalSynchronization();
     static PIPE_CONTROL *obtainPipeControl(LinearStream &commandStream, bool dcFlush);
 };
 
