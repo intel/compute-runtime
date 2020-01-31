@@ -92,6 +92,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEngineModeCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
 
+    void programEnginePrologue(LinearStream &csr, const DispatchFlags &dispatchFlags);
+    size_t getCmdSizeForPrologue(const DispatchFlags &dispatchFlags) const;
+
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
     PIPE_CONTROL *addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);

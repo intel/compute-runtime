@@ -262,6 +262,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager.get() && !pageTableManagerInitialized) {
         pageTableManagerInitialized = executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters(this);
     }
+    programEnginePrologue(commandStreamCSR, dispatchFlags);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -642,6 +643,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
     size += getCmdSizeForEpilogue(dispatchFlags);
+    size += getCmdSizeForPrologue(dispatchFlags);
 
     if (executionEnvironment.getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
@@ -881,4 +883,13 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
     }
     return 0u;
 }
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr, const DispatchFlags &dispatchFlags) {
+}
+
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue(const DispatchFlags &dispatchFlags) const {
+    return 0u;
+}
+
 } // namespace NEO
