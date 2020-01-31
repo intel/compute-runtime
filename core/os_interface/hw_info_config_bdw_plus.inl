@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/hw_info_config.h"
+#include "core/os_interface/hw_info_config.h"
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>

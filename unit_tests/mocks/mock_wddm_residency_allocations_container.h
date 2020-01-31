@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/memory_manager/memory_operations_status.h"
-#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
+#include "core/os_interface/windows/wddm_residency_allocations_container.h"
 #include "unit_tests/mocks/wddm_mock_helpers.h"
 
 namespace NEO {

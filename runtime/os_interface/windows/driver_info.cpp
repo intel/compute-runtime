@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "runtime/device/driver_info.h"
 
 #include "core/os_interface/windows/debug_registry_reader.h"
+#include "core/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/driver_info.h"
-#include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 

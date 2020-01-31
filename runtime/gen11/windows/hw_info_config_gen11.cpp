@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/hw_info.h"
-#include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/hw_info_config.inl"
-#include "runtime/os_interface/hw_info_config_bdw_plus.inl"
+#include "core/os_interface/hw_info_config.h"
+#include "core/os_interface/hw_info_config.inl"
+#include "core/os_interface/hw_info_config_bdw_plus.inl"
 
 namespace NEO {
 

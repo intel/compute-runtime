@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"

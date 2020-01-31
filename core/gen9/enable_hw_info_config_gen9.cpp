@@ -6,7 +6,7 @@
  */
 
 #include "core/gen9/hw_cmds.h"
-#include "runtime/os_interface/hw_info_config.h"
+#include "core/os_interface/hw_info_config.h"
 
 namespace NEO {
 

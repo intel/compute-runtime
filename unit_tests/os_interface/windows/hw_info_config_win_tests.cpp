@@ -10,9 +10,9 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
+#include "core/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 

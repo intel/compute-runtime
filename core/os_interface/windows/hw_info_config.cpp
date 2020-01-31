@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/hw_info_config.h"
+#include "core/os_interface/hw_info_config.h"
 
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"

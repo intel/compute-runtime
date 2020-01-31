@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "performance_counters_win.h"
 
 #include "core/helpers/hw_helper.h"
+#include "core/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/os_time_win.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/os_time_win.h"
 
 namespace NEO {
 /////////////////////////////////////////////////////

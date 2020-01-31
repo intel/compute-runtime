@@ -6,8 +6,8 @@
  */
 
 #include "core/memory_manager/internal_allocation_storage.h"
+#include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
@@ -15,18 +15,18 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/interlocked_max.h"
 #include "core/helpers/windows/gmm_callbacks.h"
+#include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "core/os_interface/windows/gdi_interface.h"
 #include "core/os_interface/windows/kmdaf_listener.h"
+#include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/sys_calls.h"
+#include "core/os_interface/windows/wddm/wddm_interface.h"
 #include "core/os_interface/windows/wddm_allocation.h"
 #include "core/os_interface/windows/wddm_engine_mapper.h"
+#include "core/os_interface/windows/wddm_residency_allocations_container.h"
 #include "core/sku_info/operations/windows/sku_info_receiver.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/windows/os_context_win.h"
-#include "runtime/os_interface/windows/wddm/wddm_interface.h"
-#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 
 #include "gmm_memory.h"
 

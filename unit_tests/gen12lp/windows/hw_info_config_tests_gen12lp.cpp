@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/os_interface.h"
 #include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
 

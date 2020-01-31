@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/os_interface/os_context.h"
-#include "runtime/os_interface/windows/wddm_residency_controller.h"
+#include "core/os_interface/windows/wddm_residency_controller.h"
 
 namespace NEO {
 

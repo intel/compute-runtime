@@ -16,15 +16,15 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/windows/gmm_callbacks.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 #include "runtime/device/device.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
 #include "core/os_interface/windows/gdi_interface.h"
-#include "runtime/os_interface/windows/os_context_win.h"
-#include "runtime/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/os_context_win.h"
+#include "core/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {

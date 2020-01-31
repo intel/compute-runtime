@@ -6,9 +6,9 @@
  */
 
 #include "core/helpers/hw_info.h"
+#include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/hw_info_config.h"
 
 namespace NEO {
 

@@ -8,6 +8,9 @@ set(NEO_CORE_OS_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h

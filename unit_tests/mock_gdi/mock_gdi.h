@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "core/gmm_helper/gmm_lib.h"
-#include "runtime/os_interface/windows/os_time_win.h"
+#include "core/os_interface/windows/os_time_win.h"
 
 #include <d3d10_1.h>
 #include <d3d9types.h>

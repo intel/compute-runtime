@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/deferrable_deletion_win.h"
+#include "core/os_interface/windows/deferrable_deletion_win.h"
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 

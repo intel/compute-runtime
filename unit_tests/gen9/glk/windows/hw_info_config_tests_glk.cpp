@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/os_interface.h"
 #include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;

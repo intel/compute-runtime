@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/execution_environment/root_device_environment.h"
-#include "runtime/os_interface/windows/deferrable_deletion_win.h"
+#include "core/os_interface/windows/deferrable_deletion_win.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"
 

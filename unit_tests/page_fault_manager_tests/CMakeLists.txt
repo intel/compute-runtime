@@ -25,7 +25,7 @@ target_sources(neo_page_fault_manager_tests PRIVATE ${CPU_PAGE_FAULT_MANAGER_TES
 if(WIN32)
   target_sources(neo_page_fault_manager_tests PRIVATE
   ${CPU_PAGE_FAULT_MANAGER_WINDOWS_TESTS}
-  ${NEO_SOURCE_DIR}/runtime/os_interface/windows/wddm/wddm_create.cpp
+  ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_create.cpp
 )
 endif()
 

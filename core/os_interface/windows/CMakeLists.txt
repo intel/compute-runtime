@@ -14,6 +14,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
@@ -25,6 +27,13 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
@@ -35,6 +44,18 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_allocations_container.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_allocations_container.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.cpp
 )
 
 if(WIN32)

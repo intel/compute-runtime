@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/windows/wddm/wddm_interface.h"
+#include "core/os_interface/windows/wddm/wddm_interface.h"
 
 namespace NEO {
 class WddmMockInterface20 : public WddmInterface20 {

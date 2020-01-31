@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
+#include "core/os_interface/windows/wddm/wddm.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 

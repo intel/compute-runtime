@@ -9,12 +9,12 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/os_interface/windows/os_interface.h"
+#include "core/os_interface/windows/wddm/wddm.h"
+#include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/device_factory.h"
-#include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 
 namespace NEO {
 
