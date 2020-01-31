@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -297,7 +297,13 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
-    return getCommandLengthHwSpecific(cmd);
+
+    auto commandLengthHwSpecific = getCommandLengthHwSpecific(cmd);
+
+    if (commandLengthHwSpecific != 0) {
+        return commandLengthHwSpecific;
+    }
+    return getAdditionalCommandLength(cmd);
 }
 
 template <class T>
@@ -327,5 +333,20 @@ const char *CmdParse<T>::getCommandName(void *cmd) {
 
 #undef RETURN_NAME_IF
 
-    return getCommandNameHwSpecific(cmd);
+    auto commandNameHwSpecific = getCommandNameHwSpecific(cmd);
+    if (strcmp(commandNameHwSpecific, "UNKNOWN") != 0) {
+        return commandNameHwSpecific;
+    }
+
+    return getAdditionalCommandName(cmd);
+}
+
+template <class T>
+size_t CmdParse<T>::getAdditionalCommandLength(void *cmd) {
+    return 0;
+}
+
+template <class T>
+const char *CmdParse<T>::getAdditionalCommandName(void *cmd) {
+    return "UNKNOWN";
 }

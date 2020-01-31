@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,6 +90,7 @@ template <class T>
 struct CmdParse : public T {
     static size_t getCommandLength(void *cmd);
     static size_t getCommandLengthHwSpecific(void *cmd);
+    static size_t getAdditionalCommandLength(void *cmd);
 
     static bool parseCommandBuffer(GenCmdList &_cmds, void *_buffer, size_t _length);
 
@@ -98,4 +99,5 @@ struct CmdParse : public T {
 
     static const char *getCommandName(void *cmd);
     static const char *getCommandNameHwSpecific(void *cmd);
+    static const char *getAdditionalCommandName(void *cmd);
 };
