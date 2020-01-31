@@ -24,6 +24,34 @@ const char *Drm::sysFsDefaultGpuPath = "/drm/card0";
 const char *Drm::maxGpuFrequencyFile = "/gt_max_freq_mhz";
 const char *Drm::configFileName = "/config";
 
+namespace IoctlHelper {
+constexpr const char *getIoctlParamString(int param) {
+    switch (param) {
+    case I915_PARAM_CHIPSET_ID:
+        return "I915_PARAM_CHIPSET_ID";
+    case I915_PARAM_REVISION:
+        return "I915_PARAM_REVISION";
+    case I915_PARAM_HAS_EXEC_SOFTPIN:
+        return "I915_PARAM_HAS_EXEC_SOFTPIN";
+    case I915_PARAM_HAS_POOLED_EU:
+        return "I915_PARAM_HAS_POOLED_EU";
+    case I915_PARAM_HAS_SCHEDULER:
+        return "I915_PARAM_HAS_SCHEDULER";
+    case I915_PARAM_EU_TOTAL:
+        return "I915_PARAM_EU_TOTAL";
+    case I915_PARAM_SUBSLICE_TOTAL:
+        return "I915_PARAM_SUBSLICE_TOTAL";
+    case I915_PARAM_MIN_EU_IN_POOL:
+        return "I915_PARAM_MIN_EU_IN_POOL";
+    default:
+        break;
+    }
+
+    return "UNKNOWN";
+}
+
+} // namespace IoctlHelper
+
 int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     SYSTEM_ENTER();
@@ -39,7 +67,13 @@ int Drm::getParamIoctl(int param, int *dstValue) {
     getParam.param = param;
     getParam.value = dstValue;
 
-    return ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+    int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                     "\nDRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode: %d\n",
+                     IoctlHelper::getIoctlParamString(param), *getParam.value, retVal);
+
+    return retVal;
 }
 
 int Drm::getDeviceID(int &devId) {

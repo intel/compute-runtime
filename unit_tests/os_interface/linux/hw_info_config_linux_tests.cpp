@@ -10,6 +10,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/options.h"
 #include "core/os_interface/linux/os_interface.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 
 #include <cstring>
 
@@ -303,6 +304,35 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn)
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_TRUE(drm->isPreemptionSupported());
+}
+
+TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPrintGetParamIoctlsOutput) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    testing::internal::CaptureStdout(); // start capturing
+    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+
+    std::string euCount = std::to_string(outHwInfo.gtSystemInfo.EUCount);
+    std::string subSliceCount = std::to_string(outHwInfo.gtSystemInfo.SubSliceCount);
+
+    std::array<std::string, 6> expectedStrings = {{"DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
+                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_REVISION, output value: 0, retCode: 0",
+                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_EU_TOTAL, output value: " + euCount + ", retCode: 0",
+                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_SUBSLICE_TOTAL, output value: " + subSliceCount + ", retCode: 0",
+                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
+                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: 7, retCode: 0"
+
+    }};
+
+    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+
+    for (const auto &expectedString : expectedStrings) {
+        EXPECT_NE(std::string::npos, output.find(expectedString));
+    }
+
+    EXPECT_EQ(std::string::npos, output.find("UNKNOWN"));
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidBatchOn) {
