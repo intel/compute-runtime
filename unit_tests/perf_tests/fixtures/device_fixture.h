@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct DeviceDefaults {
 };
 
 template <typename DeviceTraits = DeviceDefaults>
-struct DeviceHelper {
+struct ClDeviceHelper {
     static NEO::Device *create(const NEO::HardwareInfo *hardwareInfo = nullptr) {
         auto device = NEO::Device::create(hardwareInfo);
         assert(device != nullptr);

@@ -13,7 +13,7 @@
 #include "runtime/device/cl_device_vector.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info_map.h"
-#include "runtime/helpers/device_helpers.h"
+#include "runtime/helpers/cl_device_helpers.h"
 #include "runtime/platform/platform.h"
 
 using DeviceInfoTable::Map;
@@ -193,7 +193,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         if (device.getDeviceInfo().imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
             break;
         }
-        DeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
+        ClDeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);

@@ -11,9 +11,8 @@
 #include <cstdint>
 namespace NEO {
 class ClDevice;
-struct HardwareInfo;
 
-namespace DeviceHelper {
+namespace ClDeviceHelper {
 void getExtraDeviceInfo(const ClDevice &clDevice, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
-}; // namespace DeviceHelper
+}; // namespace ClDeviceHelper
 } // namespace NEO

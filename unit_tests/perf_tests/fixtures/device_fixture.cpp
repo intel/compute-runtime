@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ using NEO::HardwareInfo;
 using NEO::platformDevices;
 
 void DeviceFixture::SetUp() {
-    pDevice = DeviceHelper<>::create();
+    pDevice = ClDeviceHelper<>::create();
     ASSERT_NE(nullptr, pDevice);
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
