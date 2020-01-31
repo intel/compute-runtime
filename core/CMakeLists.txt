@@ -38,12 +38,15 @@ function(generate_core_lib LIB_NAME MOCKABLE)
     if(WIN32)
       target_include_directories(${LIB_NAME} PUBLIC
         ${WDK_INCLUDE_PATHS}
+        ${NEO_SOURCE_DIR}/core/os_interface/windows
       )
     else()
       target_include_directories(${LIB_NAME} PUBLIC
         ${I915_INCLUDES_DIR}
+        ${NEO_SOURCE_DIR}/core/os_interface/linux
       )
     endif()
+
     create_project_source_tree(${LIB_NAME})
 endfunction()
 
@@ -51,9 +54,16 @@ add_subdirectories()
 
 set(CORE_SOURCES ${CORE_SRCS_GENX_ALL_BASE})
 
-append_sources_from_properties(CORE_SOURCES 
-  NEO_CORE_COMMAND_CONTAINER 
-  NEO_CORE_EXECUTION_ENVIRONMENT)
+append_sources_from_properties(CORE_SOURCES
+    NEO_CORE_COMMAND_CONTAINER
+    NEO_CORE_DEBUG_SETTINGS
+    NEO_CORE_EXECUTION_ENVIRONMENT
+    NEO_CORE_HELPERS
+    NEO_CORE_INDIRECT_HEAP
+    NEO_CORE_SKU_INFO_BASE
+    NEO_CORE_UTILITIES
+    NEO_UNIFIED_MEMORY
+)
 
 if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")
