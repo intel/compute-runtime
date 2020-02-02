@@ -43,8 +43,9 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     }
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get())) {
+    const HardwareInfo *pCurrDevice = platformDevices[devNum];
+    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->platform.eProductFamily);
+    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.rootDeviceEnvironments[0]->osInterface.get())) {
         return false;
     }
     executionEnvironment.calculateMaxOsContextCount();

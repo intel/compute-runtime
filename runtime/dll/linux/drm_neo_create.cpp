@@ -6,7 +6,6 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_helper.h"
@@ -14,7 +13,6 @@
 #include "core/helpers/options.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/drm_null_device.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 #include "drm/i915_drm.h"
 
@@ -168,7 +166,7 @@ Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnviron
         }
     }
     if (device) {
-        rootDeviceEnvironment.executionEnvironment.setHwInfo(device->pHwInfo);
+        platformDevices[0] = device->pHwInfo;
         ret = drmObject->setupHardwareInfo(const_cast<DeviceDescriptor *>(device), true);
         if (ret != 0) {
             return nullptr;
