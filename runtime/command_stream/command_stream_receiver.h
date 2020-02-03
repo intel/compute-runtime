@@ -253,6 +253,7 @@ class CommandStreamReceiver {
 
     bool isPreambleSent = false;
     bool isStateSipSent = false;
+    bool isEnginePrologueSent = false;
     bool GSBAFor32BitProgrammed = false;
     bool bindingTableBaseAddressRequired = false;
     bool mediaVfeStateDirty = true;

@@ -27,11 +27,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
   public:
     using BaseClass::dshState;
+    using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::perDssBackedBuffer;
+    using BaseClass::programEnginePrologue;
     using BaseClass::programPreamble;
     using BaseClass::programStateSip;
     using BaseClass::requiresInstructionCacheFlush;
@@ -46,6 +48,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::GSBAFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
+    using BaseClass::CommandStreamReceiver::isEnginePrologueSent;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
     using BaseClass::CommandStreamReceiver::isStateSipSent;
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;

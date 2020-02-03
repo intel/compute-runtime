@@ -368,8 +368,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (blocking) {
         if (blockQueue) {
-            while (isQueueBlocked())
-                ;
+            while (isQueueBlocked()) {
+            }
             waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
         } else {
             waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
