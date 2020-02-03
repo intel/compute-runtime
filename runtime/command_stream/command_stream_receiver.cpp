@@ -153,6 +153,10 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
     return commandStream;
 }
 
+OSInterface *CommandStreamReceiver::getOSInterface() const {
+    return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
+}
+
 void CommandStreamReceiver::cleanupResources() {
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);

@@ -92,7 +92,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
-    OSInterface *getOSInterface() const { return osInterface; };
+    OSInterface *getOSInterface() const;
     ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; };
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
@@ -219,7 +219,6 @@ class CommandStreamReceiver {
     GraphicsAllocation *preemptionAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
     GraphicsAllocation *perDssBackedBuffer = nullptr;
-    OSInterface *osInterface = nullptr;
 
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
 

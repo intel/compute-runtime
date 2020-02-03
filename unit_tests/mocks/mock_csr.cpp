@@ -7,8 +7,6 @@
 
 #include "unit_tests/mocks/mock_csr.h"
 
-#include "core/os_interface/os_interface.h"
-
 bool MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return true;
 }
@@ -25,8 +23,4 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     ++taskCount;
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;
-}
-
-void MockCommandStreamReceiver::setOSInterface(OSInterface *osInterface) {
-    this->osInterface = osInterface;
 }

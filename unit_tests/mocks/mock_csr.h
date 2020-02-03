@@ -292,8 +292,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) override { return taskCount; };
 
-    void setOSInterface(OSInterface *osInterface);
-
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_HW;
     }

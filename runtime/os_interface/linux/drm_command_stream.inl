@@ -39,7 +39,6 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     execObjectsStorage.reserve(512);
 
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(this->drm);
-    CommandStreamReceiver::osInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
 }
 
 template <typename GfxFamily>

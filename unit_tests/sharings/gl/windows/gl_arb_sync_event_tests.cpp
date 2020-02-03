@@ -78,7 +78,6 @@ struct GlArbSyncEventTest : public ::testing::Test {
         sharing->pfnGlArbSyncObjectSignal = glArbSyncObjectSignalMockDoNothing;
         sharing->pfnGlArbSyncObjectWaitServer = glArbSyncObjectWaitServerMock<false>;
         osInterface = new OSInterface;
-        mockCsr->setOSInterface(osInterface);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     }
 

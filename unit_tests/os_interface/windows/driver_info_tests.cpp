@@ -57,7 +57,6 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
     }
 
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get());
-    csr->setOSInterface(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get());
     return csr;
 }
 
