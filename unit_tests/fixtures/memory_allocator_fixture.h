@@ -12,7 +12,6 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 

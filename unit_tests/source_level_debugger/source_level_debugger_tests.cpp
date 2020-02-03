@@ -6,6 +6,7 @@
  */
 
 #include "core/os_interface/os_interface.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/device/device.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
@@ -13,7 +14,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/source_level_debugger_library.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
@@ -488,7 +488,8 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         DebuggerLibrary::setDebuggerActive(true);
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-        VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useHwCsr = true;
 
         HardwareInfo *hwInfo = nullptr;
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);

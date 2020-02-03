@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -29,7 +30,8 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 
     CommandStreamReceiverType csrType = GetParam();
 
-    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0));
 

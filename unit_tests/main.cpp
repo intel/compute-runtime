@@ -12,6 +12,7 @@
 #include "core/helpers/options.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/unit_tests/helpers/memory_leak_listener.h"
+#include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "core/utilities/debug_settings_reader.h"
 #include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/custom_event_listener.h"

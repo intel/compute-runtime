@@ -36,7 +36,6 @@
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"

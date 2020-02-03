@@ -24,7 +24,6 @@
 #include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "runtime/sharings/sharing.h"
 #include "test.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
@@ -50,7 +49,6 @@ class glSharingTests : public ::testing::Test {
         mockGlSharing->m_bufferInfoOutput.globalShareHandle = bufferId;
         mockGlSharing->m_bufferInfoOutput.bufferSize = 4096u;
         mockGlSharing->uploadDataToBufferInfo();
-        ASSERT_FALSE(overrideCommandStreamReceiverCreation);
     }
 
     MockContext context;

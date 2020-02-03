@@ -6,18 +6,13 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "cl_api_tests.h"
 
 using namespace NEO;
-
-namespace NEO {
-extern bool overrideDeviceWithDefaultHardwareInfo;
-extern bool overrideCommandStreamReceiverCreation;
-
-} // namespace NEO
 
 using clGetDeviceIDsTests = api_tests;
 
@@ -104,7 +99,8 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeCpuWhenGettingDeviceIdsThenDeviceNotF
 
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevicesAreReturned) {
     constexpr auto numRootDevices = 3u;
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedGetDevicesFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     cl_uint numDevices = 0;
@@ -119,7 +115,8 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevi
 }
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIsLowerThanNumDevicesThenSubsetOfRootDevicesIsReturned) {
     constexpr auto numRootDevices = 3u;
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedGetDevicesFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     cl_uint maxNumDevices;
@@ -148,7 +145,8 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
 
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevicesWhenGetDeviceIdsThenLimitedNumberOfRootDevicesIsReturned) {
     constexpr auto numRootDevices = 3u;
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedGetDevicesFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.LimitAmountOfReturnedDevices.set(numRootDevices - 1);

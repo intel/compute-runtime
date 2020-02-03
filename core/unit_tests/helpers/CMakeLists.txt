@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Intel Corporation
+# Copyright (C) 2019-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,8 @@ set(NEO_CORE_HELPERS_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.inl
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_TESTS ${NEO_CORE_HELPERS_TESTS})

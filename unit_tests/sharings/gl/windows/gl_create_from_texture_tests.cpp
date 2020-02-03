@@ -10,7 +10,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "test.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -47,7 +46,6 @@ class CreateFromGlTexture : public ::testing::Test {
         imgDesc = {};
         imgInfo = {};
         clContext.setSharingFunctions(glSharing->sharingFunctions.release());
-        ASSERT_FALSE(overrideCommandStreamReceiverCreation);
         clContext.memoryManager = &tempMM;
     }
 

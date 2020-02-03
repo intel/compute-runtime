@@ -19,6 +19,7 @@
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/event/event.h"
@@ -45,7 +46,6 @@
 #include <memory>
 
 namespace NEO {
-extern bool overrideDeviceWithDefaultHardwareInfo;
 
 AllocationProperties createAllocationProperties(size_t size, bool forcePin) {
     MockAllocationProperties properties(size);
@@ -3349,7 +3349,8 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
 TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrmIsFromCorrectRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(4);
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.useMockedGetDevicesFunc = false;
     platform()->initialize();
 
     TestedDrmMemoryManager drmMemoryManager(*platformImpl->peekExecutionEnvironment());

@@ -10,11 +10,11 @@
 #include "core/helpers/options.h"
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "core/os_interface/windows/os_interface.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
@@ -63,7 +63,8 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateDriverInfo) {
-    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_TRUE(device->hasDriverInfo());
@@ -71,7 +72,8 @@ TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateD
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDontCreateDriverInfo) {
-    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, false);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = false;
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_FALSE(device->hasDriverInfo());

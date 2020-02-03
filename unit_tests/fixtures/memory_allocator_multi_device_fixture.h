@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,11 @@
 #pragma once
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 using namespace NEO;
@@ -25,8 +25,9 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
 
         isOsAgnosticMemoryManager = GetParam();
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-        VariableBackup<bool> overrideDeviceWithDefaultHardwareInfoBackup(&overrideDeviceWithDefaultHardwareInfo, false);
-        VariableBackup<bool> overrideMemoryManagerCreationBackup(&overrideMemoryManagerCreation, isOsAgnosticMemoryManager);
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useMockedGetDevicesFunc = false;
+        ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
 
         platform()->initialize();
         executionEnvironment = platform()->peekExecutionEnvironment();

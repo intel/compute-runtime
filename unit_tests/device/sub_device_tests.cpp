@@ -6,13 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/device/sub_device.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-namespace NEO {
-extern bool overrideDeviceWithDefaultHardwareInfo;
-}
 using namespace NEO;
 
 TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSubDevices) {
@@ -92,7 +90,9 @@ TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCre
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(2);
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.useMockedGetDevicesFunc = false;
     platform()->initialize();
     EXPECT_EQ(0u, platform()->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1u, platform()->getDevice(1)->getRootDeviceIndex());

@@ -7,6 +7,7 @@
 
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/os_library.h"
+#include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "runtime/execution_environment/execution_environment.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"

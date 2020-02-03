@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
+#pragma once
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
-extern bool overrideCommandStreamReceiverCreation;
-extern bool overrideDeviceWithDefaultHardwareInfo;
-extern bool overrideMemoryManagerCreation;
+class CommandStreamReceiver;
+class ExecutionEnvironment;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 extern bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);

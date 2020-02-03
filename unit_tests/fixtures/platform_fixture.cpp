@@ -9,7 +9,6 @@
 
 #include "runtime/device/cl_device.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/libult/create_command_stream.h"
 
 #include "gtest/gtest.h"
 

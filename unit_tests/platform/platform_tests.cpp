@@ -8,13 +8,13 @@
 #include "core/helpers/hw_info.h"
 #include "core/helpers/options.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/device/device.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -195,7 +195,8 @@ TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCente
 TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsCalled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetCommandStreamReceiver.set(1);
-    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
     MockPlatformWithMockExecutionEnvironment platform;
     bool ret = platform.initialize();
     EXPECT_TRUE(ret);
@@ -226,6 +227,9 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
 
 class PlatformFailingTest : public PlatformTest {
   public:
+    PlatformFailingTest() {
+        ultHwConfig.useHwCsr = true;
+    }
     void SetUp() override {
         PlatformTest::SetUp();
         hwInfo = platformDevices[0];
@@ -238,7 +242,7 @@ class PlatformFailingTest : public PlatformTest {
         PlatformTest::TearDown();
     }
 
-    VariableBackup<bool> backup{&overrideCommandStreamReceiverCreation, true};
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
     CommandStreamReceiverCreateFunc commandStreamReceiverCreateFunc;
     const HardwareInfo *hwInfo;
 };

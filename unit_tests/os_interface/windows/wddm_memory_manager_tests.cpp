@@ -15,6 +15,7 @@
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/wddm_residency_controller.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
@@ -32,10 +33,6 @@
 
 using namespace NEO;
 using namespace ::testing;
-
-namespace NEO {
-extern bool overrideDeviceWithDefaultHardwareInfo;
-}
 
 void WddmMemoryManagerFixture::SetUp() {
     GdiDllFixture::SetUp();
@@ -1807,7 +1804,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
 TEST(WddmMemoryManager, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddmIsFromCorrectRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(4);
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.useMockedGetDevicesFunc = false;
     platform()->initialize();
 
     MockWddmMemoryManager wddmMemoryManager(*platformImpl->peekExecutionEnvironment());
@@ -1821,7 +1819,8 @@ TEST(WddmMemoryManager, givenMultipleRootDeviceWhenCreateMemoryManagerThenTakeMa
     uint32_t numRootDevices = 4u;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    VariableBackup<bool> backup(&overrideDeviceWithDefaultHardwareInfo, false);
+    VariableBackup<UltHwConfig> backup{&ultHwConfig};
+    ultHwConfig.useMockedGetDevicesFunc = false;
     platform()->initialize();
     for (auto i = 0u; i < numRootDevices; i++) {
         auto wddm = static_cast<WddmMock *>(platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getWddm());

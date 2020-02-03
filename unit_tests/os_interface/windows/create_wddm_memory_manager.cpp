@@ -7,16 +7,15 @@
 
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/windows/os_interface.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
-#include "unit_tests/libult/create_command_stream.h"
 
 namespace NEO {
-bool overrideMemoryManagerCreation = true;
 
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
-    if (overrideMemoryManagerCreation) {
+    if (ultHwConfig.forceOsAgnosticMemoryManager) {
         return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
     return std::make_unique<WddmMemoryManager>(executionEnvironment);
