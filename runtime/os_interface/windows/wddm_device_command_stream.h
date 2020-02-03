@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     virtual ~WddmCommandStreamReceiver();
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void processResidency(const ResidencyContainer &allocationsForResidency) override;
+    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void processEviction() override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 

@@ -200,7 +200,7 @@ TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenAllocationIsPushedToMemo
 }
 
 TEST_F(CommandStreamReceiverTest, GivenNoParamatersWhenMakingResidentThenResidencyDoesNotOccur) {
-    commandStreamReceiver->processResidency(commandStreamReceiver->getResidencyAllocations());
+    commandStreamReceiver->processResidency(commandStreamReceiver->getResidencyAllocations(), 0u);
     auto &residencyAllocations = commandStreamReceiver->getResidencyAllocations();
     EXPECT_EQ(0u, residencyAllocations.size());
 }

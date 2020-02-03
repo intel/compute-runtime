@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
                              gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void processResidency(const ResidencyContainer &allocationsForResidency) override;
+    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
@@ -50,7 +50,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     }
 
   protected:
-    void makeResidentBufferObjects(const DrmAllocation *drmAllocation);
+    void makeResidentBufferObjects(const DrmAllocation *drmAllocation, uint32_t handleId);
     void makeResident(BufferObject *bo);
     void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     void exec(const BatchBuffer &batchBuffer, uint32_t drmContextId);
@@ -59,6 +59,5 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     std::vector<drm_i915_gem_exec_object2> execObjectsStorage;
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
-    uint32_t handleIndex = 0u;
 };
 } // namespace NEO

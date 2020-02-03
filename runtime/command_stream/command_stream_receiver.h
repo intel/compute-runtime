@@ -74,7 +74,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
-    virtual void processResidency(const ResidencyContainer &allocationsForResidency) {}
+    virtual void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {}
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
 

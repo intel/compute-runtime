@@ -565,7 +565,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemCloseWorkerInactiveMode
     csr->makeResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     csr->makeNonResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
@@ -585,7 +585,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingS
     EXPECT_TRUE(allocation->isResident(osContextId));
     EXPECT_TRUE(allocation2->isResident(osContextId));
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(allocation->isResident(osContextId));
     EXPECT_TRUE(allocation2->isResident(osContextId));
@@ -840,7 +840,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResident) {
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(isResident<FamilyType>(buffer));
     EXPECT_EQ(1u, buffer->getRefCount());
@@ -861,7 +861,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentOnly) {
 
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(isResident<FamilyType>(buffer1));
     EXPECT_TRUE(isResident<FamilyType>(buffer2));
@@ -881,14 +881,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentTwice) {
     auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, buffer, nullptr, buffer->peekSize(), (osHandle)0u, MemoryPool::MemoryNull);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(isResident<FamilyType>(buffer));
     EXPECT_EQ(1u, buffer->getRefCount());
 
     csr->getResidencyAllocations().clear();
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(isResident<FamilyType>(buffer));
     EXPECT_EQ(1u, buffer->getRefCount());
@@ -910,7 +910,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentTwiceWhenFragmentSt
     csr->makeResident(*allocation);
     csr->makeResident(*allocation);
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
@@ -946,7 +946,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     csr->makeResident(*graphicsAllocation);
     csr->makeResident(*graphicsAllocation2);
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     auto &osContext = csr->getOsContext();
 
@@ -972,7 +972,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     csr->makeResident(*graphicsAllocation);
     csr->makeResident(*graphicsAllocation2);
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
@@ -1005,7 +1005,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationCreatedFromThree
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1036,7 +1036,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1061,7 +1061,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     ASSERT_EQ(1u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1090,7 +1090,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingS
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_EQ(getResidencyVector<FamilyType>().size(), 1u);
 
@@ -1124,7 +1124,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, ClearResidencyWhenFlushNotCalle
     EXPECT_EQ(getResidencyVector<FamilyType>().size(), 0u);
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     EXPECT_TRUE(isResident<FamilyType>(allocation1->getBO()));
     EXPECT_TRUE(isResident<FamilyType>(allocation2->getBO()));
@@ -1266,7 +1266,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, MakeResidentClearResidencyAlloc
     csr->makeResident(*allocation2);
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
 
@@ -1284,7 +1284,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMultipleMakeResidentWhenMa
 
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(csr->getResidencyAllocations());
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
@@ -1349,7 +1349,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, BufferResidency) {
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
         csr->makeResident(*buffer->getGraphicsAllocation());
-        csr->processResidency(csr->getResidencyAllocations());
+        csr->processResidency(csr->getResidencyAllocations(), 0u);
         EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(osContextId));
         EXPECT_EQ(buffer->getGraphicsAllocation()->getResidencyTaskCount(osContextId), csr->peekTaskCount() + 1);
     }

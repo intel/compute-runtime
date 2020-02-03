@@ -319,7 +319,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
 
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
 
-    processResidency(allocationsForResidency);
+    processResidency(allocationsForResidency, 0u);
 
     if (!this->standalone || DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         allocationsForResidency.pop_back();
@@ -700,7 +700,7 @@ int32_t AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddre
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency) {
+void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             return;

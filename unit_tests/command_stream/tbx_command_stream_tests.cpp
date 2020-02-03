@@ -276,7 +276,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_FALSE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    tbxCsr->processResidency(allocationsForResidency);
+    tbxCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
     EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
@@ -295,7 +295,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_FALSE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    tbxCsr->processResidency(allocationsForResidency);
+    tbxCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
     EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
@@ -522,7 +522,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
-    tbxCsr.processResidency(allocationsForResidency);
+    tbxCsr.processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
 }
@@ -788,7 +788,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenProcessResidencyIsCalledWithDumpT
     tbxCsr->dumpTbxNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxAllocation};
-    tbxCsr->processResidency(allocationsForResidency);
+    tbxCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(tbxCsr->isTbxWritable(*gfxAllocation));
     EXPECT_FALSE(tbxCsr->dumpTbxNonWritable);
@@ -808,7 +808,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenProcessResidencyIsCalledWithoutDu
     EXPECT_FALSE(tbxCsr->dumpTbxNonWritable);
 
     ResidencyContainer allocationsForResidency = {gfxAllocation};
-    tbxCsr->processResidency(allocationsForResidency);
+    tbxCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAllocation));
     EXPECT_FALSE(tbxCsr->dumpTbxNonWritable);

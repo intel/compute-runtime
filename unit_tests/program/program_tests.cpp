@@ -660,8 +660,8 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     csr0.makeResident(*kernelAllocation);
     csr1.makeResident(*kernelAllocation);
 
-    csr0.processResidency(csr0.getResidencyAllocations());
-    csr1.processResidency(csr1.getResidencyAllocations());
+    csr0.processResidency(csr0.getResidencyAllocations(), 0u);
+    csr1.processResidency(csr1.getResidencyAllocations(), 0u);
 
     csr0.makeNonResident(*kernelAllocation);
     csr1.makeNonResident(*kernelAllocation);

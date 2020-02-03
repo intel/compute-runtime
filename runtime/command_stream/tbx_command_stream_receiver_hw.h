@@ -45,7 +45,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void downloadAllocation(GraphicsAllocation &gfxAllocation) override;
 
     void processEviction() override;
-    void processResidency(const ResidencyContainer &allocationsForResidency) override;
+    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation) override;
 

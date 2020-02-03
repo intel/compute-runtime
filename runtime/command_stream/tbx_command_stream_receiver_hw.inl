@@ -216,7 +216,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, Resi
     batchBuffer.commandBufferAllocation->updateTaskCount(submissionTaskCount, osContext->getContextId());
 
     // Write allocations for residency
-    processResidency(allocationsForResidency);
+    processResidency(allocationsForResidency, 0u);
 
     if (subCaptureManager) {
         if (aubManager) {
@@ -454,7 +454,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency) {
+void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     for (auto &gfxAllocation : allocationsForResidency) {
         if (dumpTbxNonWritable) {
             this->setTbxWritable(true, *gfxAllocation);

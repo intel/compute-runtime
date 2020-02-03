@@ -40,7 +40,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         flushParametrization.receivedBatchBuffer = &batchBuffer;
         flushParametrization.receivedEngine = osContext->getEngineType();
         flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
-        processResidency(allocationsForResidency);
+        processResidency(allocationsForResidency, 0u);
         flushStamp->setStamp(flushParametrization.flushStampToReturn);
         return true;
     }
@@ -51,7 +51,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         gfxAllocation.updateResidencyTaskCount(1, osContext->getContextId());
     }
 
-    void processResidency(const ResidencyContainer &allocationsForResidency) override {
+    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
         processResidencyParameterization.wasCalled = true;
         processResidencyParameterization.receivedAllocationsForResidency = &allocationsForResidency;
     }

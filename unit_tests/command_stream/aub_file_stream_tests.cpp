@@ -543,7 +543,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr->writeMemoryCalled);
 }
@@ -619,7 +619,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr.processResidency(allocationsForResidency);
+    aubCsr.processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
 }

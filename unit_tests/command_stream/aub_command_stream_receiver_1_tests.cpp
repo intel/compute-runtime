@@ -299,7 +299,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_FALSE(aubCsr->writeMemoryCalled);
 }
@@ -322,7 +322,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0);
     ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_FALSE(aubCsr->writeMemoryCalled);
 }
@@ -708,7 +708,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr->isAubWritable(*gfxDefaultAllocation));
 
@@ -760,7 +760,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_FALSE(aubCsr->isAubWritable(*gfxBufferAllocation));
     EXPECT_FALSE(aubCsr->isAubWritable(*gfxImageAllocation));
@@ -785,7 +785,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->dumpAubNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr->isAubWritable(*gfxBufferAllocation));
     EXPECT_TRUE(aubCsr->isAubWritable(*gfxImageAllocation));
@@ -810,7 +810,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->dumpAubNonWritable = false;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_FALSE(aubCsr->isAubWritable(*gfxBufferAllocation));
     EXPECT_FALSE(aubCsr->isAubWritable(*gfxImageAllocation));

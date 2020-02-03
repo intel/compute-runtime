@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -624,7 +624,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(addr, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
@@ -639,7 +639,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->processResidency(allocationsForResidency, 0u);
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.first);

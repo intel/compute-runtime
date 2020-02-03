@@ -122,7 +122,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
 
     template <typename GfxFamily>
     void makeResidentBufferObjects(const DrmAllocation *drmAllocation) {
-        static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->makeResidentBufferObjects(drmAllocation);
+        static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->makeResidentBufferObjects(drmAllocation, 0u);
     }
 
     template <typename GfxFamily>

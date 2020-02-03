@@ -105,7 +105,7 @@ TEST_F(AUBcommandstreamTests, makeResident) {
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    commandStreamReceiver.processResidency(allocationsForResidency);
+    commandStreamReceiver.processResidency(allocationsForResidency, 0u);
 }
 
 HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
@@ -113,7 +113,7 @@ HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
     size_t size = sizeof(buffer);
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    pCommandStreamReceiver->processResidency(allocationsForResidency);
+    pCommandStreamReceiver->processResidency(allocationsForResidency, 0u);
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(&buffer, &buffer, size);
 }
@@ -128,7 +128,7 @@ HWTEST_F(AUBcommandstreamTests, expectMemoryLarge) {
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    pCommandStreamReceiver->processResidency(allocationsForResidency);
+    pCommandStreamReceiver->processResidency(allocationsForResidency, 0u);
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(buffer, buffer, sizeBuffer);
     delete[] buffer;
