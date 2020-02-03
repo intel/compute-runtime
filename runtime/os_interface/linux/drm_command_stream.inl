@@ -14,6 +14,7 @@
 #include "core/memory_manager/residency.h"
 #include "core/os_interface/linux/drm_engine_mapper.h"
 #include "core/os_interface/linux/drm_neo.h"
+#include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/mem_obj/buffer.h"
@@ -21,7 +22,6 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
-#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/platform/platform.h"
 
 #include <cstdlib>
