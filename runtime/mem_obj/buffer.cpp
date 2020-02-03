@@ -281,8 +281,8 @@ Buffer *Buffer::create(Context *context,
     }
 
     printDebugString(DebugManager.flags.LogMemoryObject.get(), stdout,
-                     "\nCreated Buffer: Handle %p, hostPtr %p, size %llu, memoryStorage %p, GPU address %#llx\n",
-                     pBuffer, hostPtr, size, memory->getUnderlyingBuffer(), memory->getGpuAddress());
+                     "\nCreated Buffer: Handle %p, hostPtr %p, size %llu, memoryStorage %p, GPU address %#llx, memoryPool:%du\n",
+                     pBuffer, hostPtr, size, memory->getUnderlyingBuffer(), memory->getGpuAddress(), memory->getMemoryPool());
 
     if (memoryProperties.flags.useHostPtr) {
         if (!zeroCopyAllowed && !isHostPtrSVM) {
