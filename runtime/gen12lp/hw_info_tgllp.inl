@@ -98,6 +98,9 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->ftrAstcHdr2D = true;
     featureTable->ftrAstcLdr2D = true;
 
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+
     workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
     workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->waUntypedBufferCompression = true;
