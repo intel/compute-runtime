@@ -56,6 +56,7 @@ DECLARE_DEBUG_VARIABLE(bool, LoopAtPlatformInitialize, false, "Adds endless loop
 DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "When set to true driver is not registering trim callback.")
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set to true driver chooses engine 0 if no engine is found.")
 DECLARE_DEBUG_VARIABLE(bool, DisableAuxTranslation, false, "Disable aux translation when required by Kernel.")
+DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + dont reuse old nodes")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDebugSettings, false, "Enables dumping debug variables settings to text file")

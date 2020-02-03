@@ -295,6 +295,19 @@ HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferre
     EXPECT_EQ(512u, csr.getPreferredTagPoolSize());
 }
 
+HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
+
+    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0);
+    EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
+
+    auto tag = csr.getTimestampPacketAllocator()->getTag();
+    memset(tag->tagForCpuAccess->packets, 0, sizeof(TimestampPacketStorage::Packet) * TimestampPacketSizeControl::preferredPacketCount);
+    EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
+    EXPECT_FALSE(tag->canBeReleased());
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));

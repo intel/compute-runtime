@@ -432,13 +432,22 @@ TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(c
 TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
         // dont release nodes in aub/tbx mode, to avoid removing semaphores optimization or reusing returned tags
-        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW);
+        bool doNotReleaseNodes = (getType() > CommandStreamReceiverType::CSR_HW) ||
+                                 DebugManager.flags.DisableTimestampPacketOptimizations.get();
 
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(
             rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
             sizeof(TimestampPacketStorage), doNotReleaseNodes);
     }
     return timestampPacketAllocator.get();
+}
+
+size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
+    if (DebugManager.flags.DisableTimestampPacketOptimizations.get()) {
+        return 1;
+    }
+
+    return 512;
 }
 
 int32_t CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
