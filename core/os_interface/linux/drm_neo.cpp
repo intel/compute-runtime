@@ -229,8 +229,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     contextParam.ctx_id = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
-    UNRECOVERABLE_IF(retVal != 0);
+    ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
 uint32_t Drm::createDrmContext() {
