@@ -453,7 +453,7 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
 using AubCommandStreamReceiverNoHostPtrTests = ::testing::Test;
 HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto engineInstance = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
@@ -486,7 +486,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 }
 
 HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnLockedResourceThenResourceShouldNotBeUnlocked) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
 

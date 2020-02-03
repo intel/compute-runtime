@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ TYPED_TEST_CASE(SurfaceTest, SurfaceTypes);
 HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehavesCorrectly) {
     int32_t execStamp;
 
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0);
     auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];

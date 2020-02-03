@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct MockAubCenterFixture {
     MockAubCenterFixture(CommandStreamReceiverType commandStreamReceiverType) : commandStreamReceiverType(commandStreamReceiverType){};
 
     void SetUp() {
-        setMockAubCenter(*platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[0], commandStreamReceiverType);
+        setMockAubCenter(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0], commandStreamReceiverType);
     }
     void TearDown() {
     }

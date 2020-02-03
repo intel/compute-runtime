@@ -61,6 +61,6 @@ TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatform
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 
-    platformImpl.reset(nullptr);
+    platformsImpl.clear();
 }
 } // namespace ULT

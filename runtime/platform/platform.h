@@ -78,7 +78,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
-extern std::unique_ptr<Platform> platformImpl;
+extern std::vector<std::unique_ptr<Platform>> platformsImpl;
 Platform *platform();
 Platform *constructPlatform();
 } // namespace NEO

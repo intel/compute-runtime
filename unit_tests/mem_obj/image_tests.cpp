@@ -525,7 +525,7 @@ struct CreateImageHostPtr
     void TearDown() override {
         delete image;
         BaseClass::TearDown();
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 
@@ -1175,7 +1175,7 @@ TEST(ImageTest, givenClMemForceLinearStorageSetWhenCreateImageThenDisallowTiling
 }
 
 TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteImage) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))

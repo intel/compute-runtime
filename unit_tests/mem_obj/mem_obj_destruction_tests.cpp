@@ -31,7 +31,7 @@ void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));

@@ -53,7 +53,7 @@ struct clCreateCommandQueueWithPropertiesApi : public ApiFixture,
     }
 
     void SetUp() override {
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::SetUp();
         ApiFixture::SetUp();
     }

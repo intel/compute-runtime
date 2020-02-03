@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class MockDeviceWithDebuggerActive : public MockDevice {
 };
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
     executionEnvironment->sourceLevelDebugger.reset(gmock);
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
@@ -46,7 +46,7 @@ TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhen
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
 

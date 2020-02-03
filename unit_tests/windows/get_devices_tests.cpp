@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,8 @@ HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
 }
 
 HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
-    platformImpl.reset(new Platform());
+    platformsImpl.clear();
+    platformsImpl.push_back(std::make_unique<Platform>());
     size_t numDevicesReturned = 0;
     auto hwInfo = platform()->peekExecutionEnvironment()->getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;

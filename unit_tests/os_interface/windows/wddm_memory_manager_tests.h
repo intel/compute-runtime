@@ -45,7 +45,7 @@ typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 class MockWddmMemoryManagerFixture {
   public:
     void SetUp() {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         gdi = new MockGdi();
 
         wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
@@ -84,7 +84,7 @@ typedef ::Test<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
 class ExecutionEnvironmentFixture : public ::testing::Test {
   public:
     ExecutionEnvironmentFixture() {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
     }
 
     ExecutionEnvironment *executionEnvironment;

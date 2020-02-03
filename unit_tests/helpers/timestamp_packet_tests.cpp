@@ -48,7 +48,7 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
 
 struct TimestampPacketTests : public TimestampPacketSimpleTests {
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = new MockContext(device.get());

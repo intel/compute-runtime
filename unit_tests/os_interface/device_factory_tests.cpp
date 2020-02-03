@@ -28,7 +28,7 @@ struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo *hwInfo = platformDevices[0];
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         mockGdiDll = setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
     }
 

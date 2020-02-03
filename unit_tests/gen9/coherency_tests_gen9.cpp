@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 typedef ::testing::Test Gen9CoherencyRequirements;
 
 GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
     CommandStreamReceiverHw<SKLFamily> csr(*executionEnvironment, 0);
     LinearStream stream;

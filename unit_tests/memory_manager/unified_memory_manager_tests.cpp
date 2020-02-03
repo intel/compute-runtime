@@ -554,7 +554,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
 
 struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         bool svmSupported = executionEnvironment->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();

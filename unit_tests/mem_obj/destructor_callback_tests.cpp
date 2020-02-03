@@ -26,7 +26,7 @@ class DestructorCallbackFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         delete BufferDefaults::context;
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 

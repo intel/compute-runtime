@@ -49,7 +49,7 @@ class GlSharingTextureTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         imgDesc = {};
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
         imgDesc.image_width = 10;

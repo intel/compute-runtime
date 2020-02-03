@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class UnifiedMemoryAubFixture : public AUBFixture {
 
     void SetUp() override {
         AUBFixture::SetUp(nullptr);
-        if (!platformImpl->peekExecutionEnvironment()->memoryManager->getPageFaultManager()) {
+        if (!platform()->peekExecutionEnvironment()->memoryManager->getPageFaultManager()) {
             skipped = true;
             GTEST_SKIP();
         }

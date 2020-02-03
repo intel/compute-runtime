@@ -39,7 +39,7 @@ class WddmWithKmDafMock : public Wddm {
 class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get()));
         wddmWithKmDafMock->gdi.reset(new MockGdi());
         auto hwInfo = *platformDevices[0];

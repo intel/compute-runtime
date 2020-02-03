@@ -3353,9 +3353,9 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
     ultHwConfig.useMockedGetDevicesFunc = false;
     platform()->initialize();
 
-    TestedDrmMemoryManager drmMemoryManager(*platformImpl->peekExecutionEnvironment());
-    for (auto i = 0u; i < platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {
-        auto drmFromRootDevice = platformImpl->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getDrm();
+    TestedDrmMemoryManager drmMemoryManager(*platform()->peekExecutionEnvironment());
+    for (auto i = 0u; i < platform()->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {
+        auto drmFromRootDevice = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getDrm();
         EXPECT_EQ(drmFromRootDevice, &drmMemoryManager.getDrm(i));
     }
 }

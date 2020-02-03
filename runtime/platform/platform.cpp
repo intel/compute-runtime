@@ -35,19 +35,24 @@
 
 namespace NEO {
 
-std::unique_ptr<Platform> platformImpl;
+std::vector<std::unique_ptr<Platform>> platformsImpl;
 
 bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 
-Platform *platform() { return platformImpl.get(); }
+Platform *platform() {
+    if (platformsImpl.empty()) {
+        return nullptr;
+    }
+    return platformsImpl[0].get();
+}
 
 Platform *constructPlatform() {
     static std::mutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
-    if (!platformImpl) {
-        platformImpl.reset(new Platform());
+    if (platformsImpl.empty()) {
+        platformsImpl.push_back(std::make_unique<Platform>());
     }
-    return platformImpl.get();
+    return platformsImpl[0].get();
 }
 
 Platform::Platform() {

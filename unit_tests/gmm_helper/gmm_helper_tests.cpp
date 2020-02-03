@@ -39,7 +39,7 @@ extern bool copyInputArgs;
 
 struct GmmTests : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
     }
     ExecutionEnvironment *executionEnvironment;
 };
@@ -779,7 +779,7 @@ TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThe
 
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->incRefInternal();
-    platformImpl.reset();
+    platformsImpl.clear();
     EXPECT_EQ(nullptr, platform());
 
     EXPECT_NO_THROW(delete gmmResourceInfo);

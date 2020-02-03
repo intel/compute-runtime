@@ -111,7 +111,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 
 struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerTest {
     void SetUp() {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
 
         wddm = new ::testing::NiceMock<GmockWddm>(*executionEnvironment->rootDeviceEnvironments[0].get());
         wddm->gdi = std::make_unique<MockGdi>();

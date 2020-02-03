@@ -142,7 +142,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
   public:
     void SetUp() override {
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::SetUp();
         constructPlatform();
         pPlatform = platform();
@@ -174,7 +174,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
     void TearDown() override {
         ContextFixture::TearDown();
-        platformImpl.reset(nullptr);
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
         NEO::isGTPinInitialized = false;
     }

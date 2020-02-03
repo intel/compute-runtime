@@ -35,7 +35,7 @@ class AUBFixture : public CommandQueueHwFixture {
         std::stringstream strfilename;
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->setHwInfo(&hwInfo);
         if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);

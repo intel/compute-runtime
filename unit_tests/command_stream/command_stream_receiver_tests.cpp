@@ -404,7 +404,7 @@ TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThe
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
-    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
 
@@ -441,7 +441,7 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->setHwInfo(&hwInfo);
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);

@@ -2581,14 +2581,14 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
 }
 
 TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
-    platformImpl->initialize();
-    auto device = platformImpl->getClDevice(0);
+    platform()->initialize();
+    auto device = platform()->getClDevice(0);
     MockContext *context = new MockContext(device, false);
     MockProgram *pProgram = new MockProgram(*device->getExecutionEnvironment(), context, false);
     auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     pProgram->setGlobalSurface(globalAllocation);
 
-    platformImpl.reset(nullptr);
+    platformsImpl.clear();
     EXPECT_EQ(1, device->getRefInternalCount());
     EXPECT_EQ(1, pProgram->getRefInternalCount());
     context->decRefInternal();

@@ -62,7 +62,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             }
 
             DebugManager.flags.ProductFamilyOverride.set(productFamily);
-            ExecutionEnvironment *exeEnv = platformImpl->peekExecutionEnvironment();
+            ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
 
             const auto ret = getDevices(numDevices, *exeEnv);
             hwInfo = exeEnv->getHardwareInfo();
@@ -133,7 +133,7 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
     DebugManager.flags.ProductFamilyOverride.set(hwPrefixUpperCase);
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
 
-    ExecutionEnvironment *exeEnv = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
     bool ret = getDevices(numDevices, *exeEnv);
 
     EXPECT_TRUE(ret);
@@ -151,7 +151,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
 
         DebugManager.flags.SetCommandStreamReceiver.set(csrType);
         DebugManager.flags.ProductFamilyOverride.set(productFamily);
-        ExecutionEnvironment *exeEnv = platformImpl->peekExecutionEnvironment();
+        ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
 
         auto ret = getDevices(numDevices, *exeEnv);
         hwInfo = exeEnv->getHardwareInfo();

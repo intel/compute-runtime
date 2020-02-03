@@ -112,7 +112,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnTwoRcsEnginesAnd
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {
   public:
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
         context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;

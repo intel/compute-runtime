@@ -37,7 +37,7 @@ struct DeferredDeleterPublic : DeferredDeleter {
 
 struct DeferrableAllocationDeletionTest : ::testing::Test {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         device.reset(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -159,7 +159,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngine
     DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
 
     device.reset();
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments.clear();
     EXPECT_EQ(0u, memoryManager->registeredEngines.size());
     EXPECT_TRUE(allocation->isUsed());

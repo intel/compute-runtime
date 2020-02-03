@@ -35,7 +35,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         device.reset();
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 

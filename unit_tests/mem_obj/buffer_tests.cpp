@@ -442,7 +442,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
-    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
 
     auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
@@ -468,7 +468,7 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
 }
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         hwInfo = executionEnvironment->getMutableHardwareInfo();
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
@@ -590,7 +590,7 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
 
 struct RenderCompressedBuffersSvmTests : public RenderCompressedBuffersTests {
     void SetUp() override {
-        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         hwInfo = executionEnvironment->getMutableHardwareInfo();
         hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
         RenderCompressedBuffersTests::SetUp();
@@ -611,7 +611,7 @@ TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThen
 struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffersTests {
     void SetUp() override {
         RenderCompressedBuffersTests::SetUp();
-        device->injectMemoryManager(new MockMemoryManager(true, false, *platformImpl->peekExecutionEnvironment()));
+        device->injectMemoryManager(new MockMemoryManager(true, false, *platform()->peekExecutionEnvironment()));
         context->memoryManager = device->getMemoryManager();
         mockCmdQ = new MockCommandQueue();
         context->setSpecialQueue(mockCmdQ);
@@ -1484,7 +1484,7 @@ struct ValidHostPtr
     void TearDown() override {
         delete buffer;
         BaseClass::TearDown();
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 

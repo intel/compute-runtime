@@ -355,26 +355,24 @@ TEST_F(PlatformTest, testRemoveLastSpace) {
     EXPECT_EQ(std::string("x"), xSpaceString);
 }
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
-    platformImpl.reset();
-    ASSERT_EQ(nullptr, platformImpl);
-    auto platform = constructPlatform();
-    EXPECT_EQ(platform, platformImpl.get());
+    platformsImpl.clear();
+    auto platform1 = constructPlatform();
+    EXPECT_EQ(platform1, platform());
     auto platform2 = constructPlatform();
-    EXPECT_EQ(platform2, platform);
-    EXPECT_NE(platform, nullptr);
+    EXPECT_EQ(platform2, platform1);
+    EXPECT_NE(platform1, nullptr);
 }
 
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetThenNewPlatformIsConstructed) {
-    platformImpl.reset();
-    ASSERT_EQ(nullptr, platformImpl);
+    platformsImpl.clear();
     auto platform = constructPlatform();
-    std::unique_ptr<Platform> temporaryOwnership(std::move(platformImpl));
-    EXPECT_EQ(nullptr, platformImpl.get());
+    std::unique_ptr<Platform> temporaryOwnership(std::move(platformsImpl[0]));
+    platformsImpl.clear();
     auto platform2 = constructPlatform();
     EXPECT_NE(platform2, platform);
     EXPECT_NE(platform, nullptr);
     EXPECT_NE(platform2, nullptr);
-    platformImpl.reset(nullptr);
+    platformsImpl.clear();
 }
 
 TEST(PlatformInitLoopTests, givenPlatformWhenInitLoopHelperIsCalledThenItDoesNothing) {

@@ -525,7 +525,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadyse
 struct EnqueueHandlerTestBasic : public ::testing::Test {
     template <typename FamilyType>
     std::unique_ptr<MockCommandQueueHw<FamilyType>> setupFixtureAndCreateMockCommandQueue() {
-        auto executionEnvironment = platformImpl->peekExecutionEnvironment();
+        auto executionEnvironment = platform()->peekExecutionEnvironment();
 
         device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get());

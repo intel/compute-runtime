@@ -68,6 +68,7 @@ extern std::string lastTest;
 bool generateRandomInput = false;
 
 void applyWorkarounds() {
+    platformsImpl.reserve(1);
     {
         std::ofstream f;
         const std::string fileName("_tmp_");

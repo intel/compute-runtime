@@ -51,7 +51,7 @@ struct CommandQueueMemoryDevice
 
     void TearDown() override {
         DeviceFixture::TearDown();
-        platformImpl.reset();
+        platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
 };
