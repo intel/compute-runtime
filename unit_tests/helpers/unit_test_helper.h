@@ -42,5 +42,7 @@ struct UnitTestHelper {
     static const uint32_t smallestTestableSimdSize;
 
     static const AuxTranslationMode requiredAuxTranslationMode;
+
+    static const bool useFullRowForLocalIdsGeneration;
 };
 } // namespace NEO

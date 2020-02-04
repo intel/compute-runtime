@@ -9,8 +9,8 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/local_id_gen.h"
-
-#include "gtest/gtest.h"
+#include "test.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -68,8 +68,31 @@ TEST(LocalID, GivenSimd1WhenGettingPerThreadSizeLocalIdsThenValueIsEqualGrfSize)
 
     EXPECT_EQ(grfSize, getPerThreadSizeLocalIDs(simd, grfSize));
 }
+TEST(LocalID, givenVariadicGrfSizeWhenLocalSizesAreEmittedTheyUseFullRowSize) {
+    auto localIdsPtr = allocateAlignedMemory(3 * 64u, MemoryConstants::cacheLineSize);
 
-struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int, int, int>> {
+    uint16_t *localIdsView = reinterpret_cast<uint16_t *>(localIdsPtr.get());
+    std::array<uint16_t, 3u> localSizes = {2u, 2u, 1u};
+    std::array<uint8_t, 3u> dimensionsOrder = {0u, 1u, 2u};
+
+    generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u);
+    EXPECT_EQ(localIdsView[0], 0u);
+    EXPECT_EQ(localIdsView[1], 1u);
+    EXPECT_EQ(localIdsView[2], 0u);
+    EXPECT_EQ(localIdsView[3], 1u);
+
+    EXPECT_EQ(localIdsView[32], 0u);
+    EXPECT_EQ(localIdsView[33], 0u);
+    EXPECT_EQ(localIdsView[34], 1u);
+    EXPECT_EQ(localIdsView[35], 1u);
+
+    EXPECT_EQ(localIdsView[64], 0u);
+    EXPECT_EQ(localIdsView[65], 0u);
+    EXPECT_EQ(localIdsView[66], 0u);
+    EXPECT_EQ(localIdsView[67], 0u);
+}
+
+struct LocalIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int, int>> {
     void SetUp() override {
         simd = std::get<0>(GetParam());
         grfSize = std::get<1>(GetParam());
@@ -93,11 +116,11 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
         alignedFree(buffer);
     }
 
-    void validateIDWithinLimits(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
+    void validateIDWithinLimits(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ, bool useFullRowSize) {
         auto idsPerThread = simd;
 
         // As per BackEnd HLD, SIMD32 has 32 localIDs per channel.  SIMD8/16 has up to 16 localIDs.
-        auto skipPerThread = simd == 32 ? 32 : 16;
+        auto skipPerThread = (simd == 32 || useFullRowSize) ? 32 : 16;
 
         auto pBufferX = buffer;
         auto pBufferY = pBufferX + skipPerThread;
@@ -122,11 +145,11 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
         }
     }
 
-    void validateAllWorkItemsCovered(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
+    void validateAllWorkItemsCovered(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ, bool useFullRow) {
         auto idsPerThread = simd;
 
         // As per BackEnd HLD, SIMD32 has 32 localIDs per channel.  SIMD8/16 has up to 16 localIDs.
-        auto skipPerThread = simd == 32 ? 32 : 16;
+        auto skipPerThread = (simd == 32 || useFullRow) ? 32 : 16;
 
         auto pBufferX = buffer;
         auto pBufferY = pBufferX + skipPerThread;
@@ -246,39 +269,39 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
     uint16_t *buffer;
 };
 
-TEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
+HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
-    validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
-TEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
+HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize);
-    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
-TEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
+HWTEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize);
-    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
-TEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
+HWTEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize);
-    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
-TEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
+HWTEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
                      dimensionsOrder, false, grfSize);
-    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 

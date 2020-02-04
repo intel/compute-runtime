@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,9 @@ const uint16_t initialLocalID[] = {
     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
 // Lookup table for generating LocalIDs based on the SIMD of the kernel
-void (*LocalIDHelper::generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 8>;
-void (*LocalIDHelper::generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 16>;
-void (*LocalIDHelper::generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 32>;
+void (*LocalIDHelper::generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 8>;
+void (*LocalIDHelper::generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 16>;
+void (*LocalIDHelper::generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 32>;
 
 // Initialize the lookup table based on CPU capabilities
 LocalIDHelper::LocalIDHelper() {
@@ -49,11 +49,11 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
     if (useLayoutForImages) {
         generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);
     } else if (simd == 32) {
-        LocalIDHelper::generateSimd32(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
+        LocalIDHelper::generateSimd32(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, grfSize != 32);
     } else if (simd == 16) {
-        LocalIDHelper::generateSimd16(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
+        LocalIDHelper::generateSimd16(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, grfSize != 32);
     } else if (simd == 8) {
-        LocalIDHelper::generateSimd8(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
+        LocalIDHelper::generateSimd8(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder, grfSize != 32);
     } else {
         generateLocalIDsForSimdOne(buffer, localWorkgroupSize, dimensionsOrder, grfSize);
     }

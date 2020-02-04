@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 
 template <typename Vec, int simd>
 inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
-                                 const std::array<uint8_t, 3> &dimensionsOrder) {
+                                 const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) {
     const int passes = simd / Vec::numChannels;
     int pass = 0;
 
@@ -27,7 +27,7 @@ inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWo
     auto zero = Vec::zero();
     auto one = Vec::one();
 
-    const auto threadSkipSize = (simd == 32 ? 32 : 16) * sizeof(uint16_t);
+    const auto threadSkipSize = ((simd == 32 || chooseMaxRowSize) ? 32 : 16) * sizeof(uint16_t);
     Vec vSimdX(simd);
     Vec vSimdY = zero;
     Vec vSimdZ = zero;

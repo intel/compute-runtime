@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,5 +68,8 @@ const uint32_t UnitTestHelper<GfxFamily>::smallestTestableSimdSize = 8;
 
 template <typename GfxFamily>
 const AuxTranslationMode UnitTestHelper<GfxFamily>::requiredAuxTranslationMode = AuxTranslationMode::Builtin;
+
+template <typename GfxFamily>
+const bool UnitTestHelper<GfxFamily>::useFullRowForLocalIdsGeneration = false;
 
 } // namespace NEO

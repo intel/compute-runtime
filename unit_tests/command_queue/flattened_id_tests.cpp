@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #include "core/helpers/basic_math.h"
 #include "core/helpers/string.h"
-
-#include "gtest/gtest.h"
+#include "test.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 
 #include <algorithm>
 #include <cstdint>
+using namespace NEO;
 
 union GRF {
     float fRegs[8];
@@ -110,7 +111,7 @@ void generateFlattenedIDs(void *buffer, uint32_t simd, uint32_t lwsX, uint32_t l
     memcpy_s(buffer, copySize, pSrc, copySize);
 }
 
-struct FlattenedIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int, int>> {
+struct FlattenedIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int>> {
     void SetUp() override {
         simd = std::get<0>(GetParam());
         localWorkSizeX = std::get<1>(GetParam());
@@ -127,12 +128,12 @@ struct FlattenedIDFixture : public ::testing::TestWithParam<std::tuple<int, int,
         memset(buffer, 0xff, sizeof(buffer));
     }
 
-    void validateIDWithinLimits(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
+    void validateIDWithinLimits(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ, bool useFullRow) {
         auto numWorkItems = lwsX * lwsY * lwsZ;
         auto idsPerThread = simd;
 
         // As per BackEnd HLD, SIMD32 has 32 flattenedIDs per channel.  SIMD8/16 has up to 16 flattenedIDs.
-        auto skipPerThread = simd == 32 ? 32 : 16;
+        auto skipPerThread = (simd == 32 || useFullRow) ? 32 : 16;
 
         auto pBuffer = buffer;
         size_t itemIndex = 0;
@@ -148,12 +149,12 @@ struct FlattenedIDFixture : public ::testing::TestWithParam<std::tuple<int, int,
         }
     }
 
-    void validateAllWorkItemsCovered(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
+    void validateAllWorkItemsCovered(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ, bool useFullRow) {
         auto numWorkItems = lwsX * lwsY * lwsZ;
         auto idsPerThread = simd;
 
         // As per BackEnd HLD, SIMD32 has 32 localIDs per channel.  SIMD8/16 has up to 16 localIDs.
-        auto skipPerThread = simd == 32 ? 32 : 16;
+        auto skipPerThread = (simd == 32 || useFullRow) ? 32 : 16;
 
         // Initialize local ID hit table
         uint32_t localIDHitTable[8];
@@ -204,16 +205,16 @@ struct FlattenedIDFixture : public ::testing::TestWithParam<std::tuple<int, int,
     uint16_t buffer[32 * 16];
 };
 
-TEST_P(FlattenedIDFixture, checkIDWithinLimits) {
+HWTEST_P(FlattenedIDFixture, checkIDWithinLimits) {
     generateFlattenedIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 
-    validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
-TEST_P(FlattenedIDFixture, checkAllWorkItemsCovered) {
+HWTEST_P(FlattenedIDFixture, checkAllWorkItemsCovered) {
     generateFlattenedIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 
-    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
 TEST_P(FlattenedIDFixture, sizeCalculationLocalIDs) {
