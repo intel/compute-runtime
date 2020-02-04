@@ -112,8 +112,19 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
     EncodeSetMMIO<Family>::encodeREG(container, CS_PREDICATE_RESULT, CS_GPR_R0);
 }
 
+/*
+ * encodeAlu() performs operations that leave a state including the result of
+ * an operation such as the carry flag, and the accu flag with subtraction and
+ * addition result.
+ *
+ * Parameter "postOperationStateRegister" is the ALU register with the result
+ * from the operation that the function caller is interested in obtaining.
+ *
+ * Parameter "finalResultRegister" is the final destination register where
+ * data from "postOperationStateRegister" will be copied.
+ */
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t srcA, uint32_t srcB, uint32_t op, uint32_t dest, uint32_t result) {
+void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t srcA, uint32_t srcB, uint32_t op, uint32_t finalResultRegister, uint32_t postOperationStateRegister) {
     pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
     pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCA;
     pAluParam->DW0.BitField.Operand2 = srcA;
@@ -130,19 +141,19 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint3
     pAluParam++;
 
     pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_STORE;
-    pAluParam->DW0.BitField.Operand1 = dest;
-    pAluParam->DW0.BitField.Operand2 = result;
+    pAluParam->DW0.BitField.Operand1 = finalResultRegister;
+    pAluParam->DW0.BitField.Operand2 = postOperationStateRegister;
     pAluParam++;
 }
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB) {
-    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, ALU_REGISTER_R_CF, regA);
+    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, regA, ALU_REGISTER_R_CF);
 }
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB) {
-    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_ADD, ALU_REGISTER_R_ACCU, regA);
+    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_ADD, regA, ALU_REGISTER_R_ACCU);
 }
 
 template <typename Family>

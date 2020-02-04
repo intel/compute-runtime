@@ -39,8 +39,8 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
     EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_ACCU);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_ACCU);
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
@@ -69,8 +69,8 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
     EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_CF);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_CF);
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
