@@ -98,6 +98,8 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->ftrAstcHdr2D = true;
     featureTable->ftrAstcLdr2D = true;
 
+    featureTable->ftr3dMidBatchPreempt = true;
+    featureTable->ftrGpGpuMidBatchPreempt = true;
     featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->ftrPerCtxtPreemptionGranularityControl = true;
 
