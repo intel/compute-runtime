@@ -16,6 +16,7 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/linux/debug_env_reader.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_helper.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -76,7 +77,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
     EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(10);
-    size_t removePatchInfoDataCount = 4 * PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()) / sizeof(PIPE_CONTROL);
+    size_t removePatchInfoDataCount = 4 * UltPipeControlHelper<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
     EXPECT_CALL(*mockHelper, removePatchInfoData(::testing::_)).Times(static_cast<int>(removePatchInfoDataCount));
     EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(4);
     EXPECT_CALL(*mockHelper, registerBatchBufferStartAddress(::testing::_, ::testing::_)).Times(3);

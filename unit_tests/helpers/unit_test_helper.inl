@@ -56,6 +56,16 @@ bool UnitTestHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwIn
 }
 
 template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait) {
+    return false;
+}
+
+template <typename GfxFamily>
 inline uint64_t UnitTestHelper<GfxFamily>::getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
     return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
 }

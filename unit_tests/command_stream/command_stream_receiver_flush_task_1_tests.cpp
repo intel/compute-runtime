@@ -8,6 +8,7 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_helper.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
@@ -924,7 +925,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
-    size_t pipeControlCount = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()) / sizeof(PIPE_CONTROL);
+    size_t pipeControlCount = UltPipeControlHelper<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
 
     auto &commandStreamTask = commandQueue.getCS(1024);
 
@@ -955,8 +956,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
         if (pipeControlCount > 1) {
             // Search taskCS for PC to analyze
-            auto pipeControlTask = genCmdCast<typename FamilyType::PIPE_CONTROL *>(
-                ptrOffset(commandStreamTask.getCpuBase(), 24));
+            itorPC = find<PIPE_CONTROL *>(++itorPC, cmdList.end());
+            auto pipeControlTask = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPC);
             ASSERT_NE(nullptr, pipeControlTask);
 
             // Verify that the dcFlushEnabled bit is not set in PC

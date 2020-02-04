@@ -19,6 +19,7 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -1414,6 +1415,9 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+            itorPipeCtrl++;
+        }
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
         ASSERT_NE(nullptr, pipeControl);
 
@@ -1424,6 +1428,9 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         itorPipeCtrl++;
         itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
         if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+            itorPipeCtrl++;
+        }
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
         ASSERT_NE(cmdList.end(), itorPipeCtrl);

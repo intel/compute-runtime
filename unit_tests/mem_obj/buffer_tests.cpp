@@ -919,6 +919,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
     uint32_t miAtomicsCount = 0;
     for (auto &cmd : hwParser.cmdList) {
         if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
+            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
+                continue;
+            }
             semaphoresCount++;
             auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
@@ -961,6 +964,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
     uint32_t miAtomicsCount = 0;
     for (auto &cmd : hwParser.cmdList) {
         if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
+            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*semaphoreCmd)) {
+                continue;
+            }
             semaphoresCount++;
             auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
