@@ -25,7 +25,7 @@ class GmmHelper {
     MOCKABLE_VIRTUAL ~GmmHelper();
 
     const HardwareInfo *getHardwareInfo();
-    uint32_t getMOCS(uint32_t type);
+    uint32_t getMOCS(uint32_t type) const;
 
     static constexpr uint64_t maxPossiblePitch = 2147483648;
 

@@ -29,7 +29,7 @@ const HardwareInfo *GmmHelper::getHardwareInfo() {
     return hwInfo;
 }
 
-uint32_t GmmHelper::getMOCS(uint32_t type) {
+uint32_t GmmHelper::getMOCS(uint32_t type) const {
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);

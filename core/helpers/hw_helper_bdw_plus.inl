@@ -54,7 +54,7 @@ std::string HwHelperHw<GfxFamily>::getExtensions() const {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+uint32_t HwHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     }
