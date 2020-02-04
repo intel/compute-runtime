@@ -69,23 +69,23 @@ struct ContextTest : public PlatformFixture,
     cl_context_properties *properties = nullptr;
 };
 
-TEST_F(ContextTest, TestCtor) {
+TEST_F(ContextTest, WhenCreatingContextThenDevicesAllDevicesExist) {
     EXPECT_EQ(numPlatformDevices, context->getNumDevices());
     for (size_t deviceOrdinal = 0; deviceOrdinal < context->getNumDevices(); ++deviceOrdinal) {
         EXPECT_NE(nullptr, context->getDevice(deviceOrdinal));
     }
 }
 
-TEST_F(ContextTest, MemoryManager) {
+TEST_F(ContextTest, WhenCreatingContextThenMemoryManagerForContextIsSet) {
     EXPECT_NE(nullptr, context->getMM());
 }
 
-TEST_F(ContextTest, propertiesShouldBeCopied) {
+TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreCopied) {
     auto contextProperties = context->getProperties();
     EXPECT_NE(properties, contextProperties);
 }
 
-TEST_F(ContextTest, propertiesShouldBeValid) {
+TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreValid) {
     auto contextProperties = context->getProperties();
     ASSERT_NE(nullptr, contextProperties);
     EXPECT_EQ(3u, context->getNumProperties());
@@ -103,12 +103,12 @@ TEST_F(ContextTest, propertiesShouldBeValid) {
     }
 }
 
-TEST_F(ContextTest, specialQueue) {
+TEST_F(ContextTest, WhenCreatingContextThenSpecialQueueIsAvailable) {
     auto specialQ = context->getSpecialQueue();
     EXPECT_NE(specialQ, nullptr);
 }
 
-TEST_F(ContextTest, setSpecialQueue) {
+TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     MockContext context((ClDevice *)devices[0], true);
 
     auto specialQ = context.getSpecialQueue();
@@ -120,7 +120,7 @@ TEST_F(ContextTest, setSpecialQueue) {
     EXPECT_NE(specialQ, nullptr);
 }
 
-TEST_F(ContextTest, defaultQueue) {
+TEST_F(ContextTest, WhenSettingDefaultQueueThenQueueIsAvailable) {
     EXPECT_EQ(nullptr, context->getDefaultDeviceQueue());
     auto dq = new DeviceQueue();
     context->setDefaultDeviceQueue(dq);
