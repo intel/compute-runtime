@@ -150,7 +150,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
             container.slmSize = slmSizeNew;
 
-            if (container.nextIddInBlock != container.numIddsPerBlock) {
+            if (container.nextIddInBlock != container.getNumIddPerBlock()) {
                 EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
             }
         }
@@ -213,7 +213,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
 
     MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = Family::cmdInitMediaInterfaceDescriptorLoad;
     cmd.setInterfaceDescriptorDataStartAddress(static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heap->getCpuBase())));
-    cmd.setInterfaceDescriptorTotalLength(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.numIddsPerBlock);
+    cmd.setInterfaceDescriptorTotalLength(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock());
 
     auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
     *(decltype(cmd) *)buffer = cmd;

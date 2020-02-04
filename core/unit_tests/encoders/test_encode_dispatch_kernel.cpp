@@ -15,6 +15,20 @@ using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
+TEST_F(CommandEncodeStatesTest, givenDefaultCommandConatinerGetNumIddsInBlock) {
+    auto numIdds = cmdContainer->getNumIddPerBlock();
+    EXPECT_EQ(64u, numIdds);
+}
+
+TEST_F(CommandEncodeStatesTest, givenCommandConatinerCreatedWithMaxNumAggregateIddThenVerifyGetNumIddsInBlockIsCorrect) {
+    auto cmdContainer = new CommandContainer(1);
+    auto numIdds = cmdContainer->getNumIddPerBlock();
+
+    EXPECT_EQ(1u, numIdds);
+
+    delete cmdContainer;
+}
+
 HWTEST_F(CommandEncodeStatesTest, givenenDispatchInterfaceWhenDispatchKernelThenWalkerCommandProgrammed) {
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -295,7 +309,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeorWhenD
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE)->align(HardwareCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
-    cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->numIddsPerBlock));
+    cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock()));
     cmdContainer->nextIddInBlock = 0;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);

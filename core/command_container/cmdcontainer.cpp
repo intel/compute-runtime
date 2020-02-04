@@ -38,8 +38,6 @@ CommandContainer::~CommandContainer() {
             getHeapHelper()->storeHeapAllocation(deallocation);
         }
     }
-    residencyContainer.clear();
-    deallocationContainer.clear();
 }
 
 bool CommandContainer::initialize(Device *device) {
@@ -84,7 +82,7 @@ bool CommandContainer::initialize(Device *device) {
     instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(0);
 
     iddBlock = nullptr;
-    nextIddInBlock = numIddsPerBlock;
+    nextIddInBlock = this->getNumIddPerBlock();
 
     return true;
 }
