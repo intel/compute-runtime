@@ -1,0 +1,11 @@
+FROM docker.io/ubuntu:20.04
+MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
+
+RUN apt-get -y update ; apt-get install -y --allow-unauthenticated --no-install-recommends gpg software-properties-common
+RUN add-apt-repository -y ppa:intel-opencl/intel-opencl
+RUN apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++-9 git pkg-config ninja-build libigc-dev libigdgmm-dev file
+
+ENV CC gcc-9
+ENV CXX g++-9
+
+CMD ["/bin/bash"]
