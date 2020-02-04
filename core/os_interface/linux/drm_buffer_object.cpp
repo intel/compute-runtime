@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/linux/drm_buffer_object.h"
+#include "core/os_interface/linux/drm_buffer_object.h"
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"

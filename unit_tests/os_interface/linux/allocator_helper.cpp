@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/linux/allocator_helper.h"
+#include "core/os_interface/linux/allocator_helper.h"
 
 #include "core/helpers/basic_math.h"
 

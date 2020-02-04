@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/os_interface/linux/drm_allocation.h"
+#include "core/os_interface/linux/drm_allocation.h"
 
-#include "runtime/os_interface/linux/drm_buffer_object.h"
+#include "core/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 
 #include <sstream>
