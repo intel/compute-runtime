@@ -7,11 +7,11 @@
 
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/device_factory.h"
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_library.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/os_interface/device_factory.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 

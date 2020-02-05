@@ -6,8 +6,6 @@
 
 set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ocl_reg_path.h

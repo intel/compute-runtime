@@ -9,12 +9,11 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "core/os_interface/device_factory.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
-#include "runtime/device/cl_device.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/device_factory.h"
 
 namespace NEO {
 
@@ -52,22 +51,6 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
 void DeviceFactory::releaseDevices() {
     DeviceFactory::numDevices = 0;
-}
-
-void ClDevice::initializeCaps() {
-    device.appendOSExtensions("cl_intel_simultaneous_sharing ");
-
-    simultaneousInterops = {CL_GL_CONTEXT_KHR,
-                            CL_WGL_HDC_KHR,
-                            CL_CONTEXT_ADAPTER_D3D9_KHR,
-                            CL_CONTEXT_D3D9_DEVICE_INTEL,
-                            CL_CONTEXT_ADAPTER_D3D9EX_KHR,
-                            CL_CONTEXT_D3D9EX_DEVICE_INTEL,
-                            CL_CONTEXT_ADAPTER_DXVA_KHR,
-                            CL_CONTEXT_DXVA_DEVICE_INTEL,
-                            CL_CONTEXT_D3D10_DEVICE_KHR,
-                            CL_CONTEXT_D3D11_DEVICE_KHR,
-                            0};
 }
 
 } // namespace NEO

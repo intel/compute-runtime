@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/os_interface/device_factory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/device_factory.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/device_factory.h"
+#include "core/os_interface/device_factory.h"
 
 namespace NEO {
 class MockDeviceFactory : public DeviceFactory {

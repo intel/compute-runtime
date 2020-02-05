@@ -8,13 +8,12 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
+#include "core/os_interface/device_factory.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/device/cl_device.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/os_interface/device_factory.h"
 
 #include "drm/i915_drm.h"
 
@@ -62,8 +61,5 @@ void DeviceFactory::releaseDevices() {
         }
     }
     DeviceFactory::numDevices = 0;
-}
-
-void ClDevice::initializeCaps() {
 }
 } // namespace NEO
