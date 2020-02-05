@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/mocks/mock_aub_center.h"

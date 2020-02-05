@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/sip.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/ptr_math.h"
@@ -14,7 +15,6 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/program.h"
 

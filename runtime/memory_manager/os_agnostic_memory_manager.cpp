@@ -7,6 +7,7 @@
 
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -19,7 +20,6 @@
 #include "core/memory_manager/residency.h"
 #include "core/os_interface/os_memory.h"
 #include "runtime/aub/aub_center.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/surface_formats.h"
 
 #include <cassert>

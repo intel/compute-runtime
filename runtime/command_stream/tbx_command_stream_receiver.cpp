@@ -7,8 +7,8 @@
 
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 #include <string>
 

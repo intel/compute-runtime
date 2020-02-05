@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/common_types.h"
 #include "core/helpers/engine_control.h"
 #include "core/helpers/hw_info.h"
 #include "runtime/device/device_info.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/performance_counters.h"
 
 namespace NEO {

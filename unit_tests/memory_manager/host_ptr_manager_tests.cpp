@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"

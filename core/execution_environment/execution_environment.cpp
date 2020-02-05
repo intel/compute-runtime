@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "core/execution_environment/execution_environment.h"
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/compiler_interface/default_cache_config.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
@@ -93,7 +93,7 @@ CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     if (this->compilerInterface.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
         if (this->compilerInterface.get() == nullptr) {
-            auto cache = std::make_unique<CompilerCache>(getDefaultClCompilerCacheConfig());
+            auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
             this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
         }
     }

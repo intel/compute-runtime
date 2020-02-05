@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
 

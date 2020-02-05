@@ -51,7 +51,9 @@ add_subdirectories()
 
 set(CORE_SOURCES ${CORE_SRCS_GENX_ALL_BASE})
 
-append_sources_from_properties(CORE_SOURCES NEO_CORE_COMMAND_CONTAINER)
+append_sources_from_properties(CORE_SOURCES 
+  NEO_CORE_COMMAND_CONTAINER 
+  NEO_CORE_EXECUTION_ENVIRONMENT)
 
 if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")

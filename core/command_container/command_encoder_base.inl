@@ -9,11 +9,11 @@
 #include "core/command_container/command_encoder.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/simd_helper.h"
 #include "core/helpers/state_base_address.h"
 #include "core/kernel/dispatch_kernel_encoder_interface.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 
 #include <algorithm>

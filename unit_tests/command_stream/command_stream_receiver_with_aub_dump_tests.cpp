@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/timestamp_packet.h"
@@ -15,7 +16,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

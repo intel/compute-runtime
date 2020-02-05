@@ -6,6 +6,7 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
@@ -19,7 +20,6 @@
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/memory_manager/memory_banks.h"

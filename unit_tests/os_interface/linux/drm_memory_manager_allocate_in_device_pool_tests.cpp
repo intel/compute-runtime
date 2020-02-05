@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "test.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"

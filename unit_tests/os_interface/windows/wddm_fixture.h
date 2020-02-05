@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/command_stream/preemption.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/windows/gdi_interface.h"
@@ -16,7 +17,6 @@
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"

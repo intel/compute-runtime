@@ -7,11 +7,11 @@
 
 #include "core/execution_environment/root_device_environment.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/memory_manager/memory_operations_handler.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/aub/aub_center.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
 

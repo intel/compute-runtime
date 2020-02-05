@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
 

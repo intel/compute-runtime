@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -17,7 +18,6 @@
 #include "core/os_interface/windows/wddm_allocation.h"
 #include "core/os_interface/windows/wddm_engine_mapper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "unit_tests/helpers/variable_backup.h"

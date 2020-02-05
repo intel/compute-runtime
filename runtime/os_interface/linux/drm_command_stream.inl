@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/aligned_memory.h"
@@ -18,7 +19,6 @@
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"

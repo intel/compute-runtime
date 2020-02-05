@@ -5,6 +5,8 @@
  *
  */
 
+#include "core/os_interface/device_factory.h"
+
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"

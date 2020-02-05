@@ -6,6 +6,7 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
 #include "core/os_interface/device_factory.h"
@@ -13,7 +14,6 @@
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 #include "drm/i915_drm.h"
 

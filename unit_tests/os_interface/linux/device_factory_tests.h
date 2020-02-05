@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/device_factory.h"
 #include "runtime/device/device.h"
 #include "test.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "core/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/program/kernel_arg_info.h"
 #include "runtime/program/kernel_info.h"

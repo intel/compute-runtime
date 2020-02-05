@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"

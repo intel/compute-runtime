@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/options.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 using namespace NEO;
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/execution_environment/execution_environment.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/execution_environment/execution_environment.h"
 
 namespace NEO {
 class ClDevice;

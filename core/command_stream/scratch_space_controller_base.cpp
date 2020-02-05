@@ -7,6 +7,7 @@
 
 #include "core/command_stream/scratch_space_controller_base.h"
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
@@ -14,7 +15,6 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {

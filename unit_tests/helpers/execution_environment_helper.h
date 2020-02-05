@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/execution_environment/execution_environment.h"
+#include "core/execution_environment/execution_environment.h"
 
 #include "CL/cl.h"
 

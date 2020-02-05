@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/execution_environment/execution_environment.h"
+#include "core/execution_environment/execution_environment.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"

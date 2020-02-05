@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/execution_environment/execution_environment.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"
 

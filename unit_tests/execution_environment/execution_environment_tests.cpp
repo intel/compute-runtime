@@ -7,6 +7,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/os_interface.h"
@@ -15,7 +16,6 @@
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"

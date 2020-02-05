@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/os_interface/linux/allocator_helper.h"
@@ -12,7 +13,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/default_hw_info.inl"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"

@@ -8,6 +8,7 @@
 #pragma once
 #include "core/command_container/command_encoder.h"
 #include "core/command_stream/linear_stream.h"
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
 #include "core/helpers/register_offsets.h"
@@ -15,7 +16,6 @@
 #include "core/helpers/string.h"
 #include "core/kernel/dispatch_kernel_encoder_interface.h"
 #include "runtime/device/device.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 
 #include <algorithm>

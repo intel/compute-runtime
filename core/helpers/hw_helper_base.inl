@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
@@ -15,7 +16,6 @@
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 

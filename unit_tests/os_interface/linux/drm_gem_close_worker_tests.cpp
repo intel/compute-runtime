@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/execution_environment/execution_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/os_interface/linux/drm_buffer_object.h"
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "runtime/command_stream/device_command_stream.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
