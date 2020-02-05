@@ -1235,7 +1235,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 struct WddmMemoryManagerWithAsyncDeleterTest : public MockWddmMemoryManagerTest {
     void SetUp() {
         MockWddmMemoryManagerTest::SetUp();
-        wddm->gdi.reset(new MockGdi());
+        wddm->resetGdi(new MockGdi());
         wddm->callBaseDestroyAllocations = false;
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);

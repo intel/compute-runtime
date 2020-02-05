@@ -49,7 +49,7 @@ class MockWddmMemoryManagerFixture {
         gdi = new MockGdi();
 
         wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
-        wddm->gdi.reset(gdi);
+        wddm->resetGdi(gdi);
         constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
         auto hwInfo = *platformDevices[0];

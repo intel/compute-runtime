@@ -24,11 +24,15 @@ using namespace NEO;
 class WddmWithKmDafMock : public Wddm {
   public:
     using Wddm::featureTable;
-    using Wddm::gdi;
     using Wddm::mapGpuVirtualAddress;
 
-    WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(rootDeviceEnvironment) {
+    WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment, Gdi *mockGdi) : Wddm(rootDeviceEnvironment) {
         kmDafListener.reset(new KmDafListenerMock);
+        this->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, std::unique_ptr<Gdi>(mockGdi));
+    }
+
+    bool openAdapter() override {
+        return true;
     }
 
     KmDafListenerMock &getKmDafListenerMock() {
@@ -40,8 +44,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get()));
-        wddmWithKmDafMock->gdi.reset(new MockGdi());
+        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get(), new MockGdi()));
         auto hwInfo = *executionEnvironment->getHardwareInfo();
         wddmWithKmDafMock->init(hwInfo);
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;

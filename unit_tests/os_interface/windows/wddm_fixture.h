@@ -36,7 +36,7 @@ struct WddmFixture : ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         gdi = new MockGdi();
-        wddm->gdi.reset(gdi);
+        wddm->resetGdi(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);

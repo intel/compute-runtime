@@ -118,7 +118,7 @@ class WddmCommandStreamWithMockGdiFixture {
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
         gdi = new MockGdi();
-        wddm->gdi.reset(gdi);
+        wddm->resetGdi(gdi);
         ASSERT_NE(wddm, nullptr);
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         this->csr = new MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0);

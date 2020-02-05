@@ -171,16 +171,16 @@ TEST_F(Wddm23Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceTh
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
-    EXPECT_EQ(nullptr, wddm->gdi->createHwQueue.mFunc);
-    EXPECT_EQ(nullptr, wddm->gdi->destroyHwQueue.mFunc);
-    EXPECT_EQ(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
+    EXPECT_EQ(nullptr, wddm->getGdi()->createHwQueue.mFunc);
+    EXPECT_EQ(nullptr, wddm->getGdi()->destroyHwQueue.mFunc);
+    EXPECT_EQ(nullptr, wddm->getGdi()->submitCommandToHwQueue.mFunc);
 
     init();
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
 
-    EXPECT_NE(nullptr, wddm->gdi->createHwQueue.mFunc);
-    EXPECT_NE(nullptr, wddm->gdi->destroyHwQueue.mFunc);
-    EXPECT_NE(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
+    EXPECT_NE(nullptr, wddm->getGdi()->createHwQueue.mFunc);
+    EXPECT_NE(nullptr, wddm->getGdi()->destroyHwQueue.mFunc);
+    EXPECT_NE(nullptr, wddm->getGdi()->submitCommandToHwQueue.mFunc);
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
@@ -196,7 +196,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHw
         }
     };
     auto myMockGdi = new MyMockGdi();
-    wddm->gdi.reset(myMockGdi);
+    wddm->resetGdi(myMockGdi);
     init();
     EXPECT_FALSE(osContext->isInitialized());
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);

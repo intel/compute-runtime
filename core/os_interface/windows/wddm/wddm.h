@@ -11,6 +11,7 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/gfx_partition.h"
 #include "core/os_interface/os_context.h"
+#include "core/os_interface/windows/hw_device_id.h"
 #include "core/utilities/spinlock.h"
 
 #include "sku_info.h"
@@ -28,6 +29,7 @@ class WddmAllocation;
 class WddmInterface;
 class WddmResidencyController;
 class WddmResidentAllocationsContainer;
+class HwDeviceId;
 
 struct AllocationStorageData;
 struct HardwareInfo;
@@ -117,11 +119,11 @@ class Wddm {
 
     uint64_t getMaxApplicationAddress() const;
 
-    D3DKMT_HANDLE getAdapter() const { return adapter; }
+    inline D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
     D3DKMT_HANDLE getDevice() const { return device; }
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
-    Gdi *getGdi() const { return gdi.get(); }
+    inline Gdi *getGdi() const { return hwDeviceId->getGdi(); }
 
     PFND3DKMT_ESCAPE getEscapeHandle() const;
 
@@ -155,9 +157,10 @@ class Wddm {
 
     WddmVersion getWddmVersion();
 
+    static std::unique_ptr<HwDeviceId> discoverDevices();
+
   protected:
-    std::unique_ptr<Gdi> gdi;
-    D3DKMT_HANDLE adapter = 0;
+    std::unique_ptr<HwDeviceId> hwDeviceId;
     D3DKMT_HANDLE device = 0;
     D3DKMT_HANDLE pagingQueue = 0;
     D3DKMT_HANDLE pagingQueueSyncObject = 0;
@@ -180,7 +183,6 @@ class Wddm {
     RootDeviceEnvironment &rootDeviceEnvironment;
 
     unsigned long hwContextId = 0;
-    LUID adapterLuid;
     uintptr_t maximumApplicationAddress = 0;
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress = 0;
@@ -192,7 +194,6 @@ class Wddm {
     bool createPagingQueue();
     bool destroyPagingQueue();
     bool destroyDevice();
-    bool closeAdapter();
     void getDeviceState();
     void handleCompletion(OsContextWin &osContext);
 

@@ -86,7 +86,7 @@ struct GlArbSyncEventOsTest : public ::testing::Test {
         sharing.GLDeviceHandle = 0x3cU;
         wddm = new WddmMock(*rootDeviceEnvironment);
         gdi = new MockGdi();
-        wddm->gdi.reset(gdi);
+        wddm->resetGdi(gdi);
         osInterface.get()->setWddm(wddm);
     }
     MockExecutionEnvironment executionEnvironment;
@@ -215,7 +215,7 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbS
 
     auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
-    wddm->gdi.reset(gdi);
+    wddm->resetGdi(gdi);
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);
 
@@ -244,7 +244,7 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
 
     auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
-    wddm->gdi.reset(gdi);
+    wddm->resetGdi(gdi);
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);
 
@@ -274,7 +274,7 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
 
     auto wddm = new WddmMock(*rootDeviceEnvironment.get());
     auto gdi = new MockGdi();
-    wddm->gdi.reset(gdi);
+    wddm->resetGdi(gdi);
     auto hwInfo = *platformDevices[0];
     wddm->init(hwInfo);
 

@@ -26,15 +26,14 @@ constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 
 class WddmMock : public Wddm {
   public:
-    using Wddm::adapter;
     using Wddm::adapterBDF;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
     using Wddm::device;
     using Wddm::featureTable;
-    using Wddm::gdi;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
+    using Wddm::hwDeviceId;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
@@ -92,6 +91,8 @@ class WddmMock : public Wddm {
             return configureDeviceAddressSpaceResult.success = Wddm::configureDeviceAddressSpace();
         }
     }
+
+    void resetGdi(Gdi *gdi);
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult makeNonResidentResult;

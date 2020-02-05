@@ -20,6 +20,7 @@ using namespace NEO;
 
 WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(rootDeviceEnvironment) {
     this->temporaryResources = std::make_unique<MockWddmResidentAllocationsContainer>(this);
+    this->hwDeviceId = std::make_unique<HwDeviceId>(0, LUID{}, std::make_unique<Gdi>());
 }
 
 WddmMock::~WddmMock() {
@@ -198,8 +199,14 @@ void WddmMock::setHwContextId(unsigned long hwContextId) {
 }
 
 bool WddmMock::openAdapter() {
-    this->adapter = ADAPTER_HANDLE;
+    if (getAdapter() == 0) {
+        this->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, std::make_unique<Gdi>());
+    }
     return true;
+}
+
+void WddmMock::resetGdi(Gdi *gdi) {
+    this->hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, LUID{}, std::unique_ptr<Gdi>(gdi));
 }
 
 void WddmMock::setHeap32(uint64_t base, uint64_t size) {
