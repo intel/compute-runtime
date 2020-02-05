@@ -93,10 +93,19 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
     EncodeStoreMMIO<Family>::encode(container, CS_GPR_R1, dstAddress);
 }
 
+/*
+ * Compute *firstOperand > secondOperand and store the result in
+ * MI_PREDICATE_RESULT where  firstOperand is an device memory address.
+ *
+ * To calculate the "greater than" operation in the device,
+ * (secondOperand - *firstOperand) is used, and if the carry flag register is
+ * set, then (*firstOperand) is greater than secondOperand.
+ */
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t lhsVal, uint32_t rhsVal) {
-    EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R0, lhsVal);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, rhsVal);
+void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t firstOperand, uint32_t secondOperand) {
+    /* (*firstOperand) will be subtracted from secondOperand */
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R0, secondOperand);
+    EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R1, firstOperand);
 
     size_t size = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
 
@@ -136,6 +145,7 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint3
     pAluParam->DW0.BitField.Operand2 = srcB;
     pAluParam++;
 
+    /* Order of operation: Operand1 <ALUOpcode> Operand2 */
     pAluParam->DW0.BitField.ALUOpcode = op;
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
@@ -149,6 +159,7 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint3
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB, uint32_t finalResultRegister) {
+    /* regB is subtracted from regA */
     encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, finalResultRegister, ALU_REGISTER_R_CF);
 }
 
