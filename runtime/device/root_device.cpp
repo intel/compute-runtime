@@ -105,6 +105,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
 
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeTagAllocation();
+    rootCommandStreamReceiver->createGlobalFenceAllocation();
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
     engines.emplace_back(commandStreamReceivers.back().get(), osContext);
 }

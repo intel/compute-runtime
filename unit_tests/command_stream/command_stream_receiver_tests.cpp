@@ -363,6 +363,19 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenLocalMemoryIsEnabledAndCreateGlobalFenceAllocationIsCalledThenGlobalFenceAllocationIsAllocated) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+
+    MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    EXPECT_EQ(nullptr, csr.globalFenceAllocation);
+
+    EXPECT_TRUE(csr.createGlobalFenceAllocation());
+
+    ASSERT_NE(nullptr, csr.globalFenceAllocation);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);

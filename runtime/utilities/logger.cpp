@@ -315,6 +315,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "SVM_ZERO_COPY";
     case GraphicsAllocation::AllocationType::TAG_BUFFER:
         return "TAG_BUFFER";
+    case GraphicsAllocation::AllocationType::GLOBAL_FENCE:
+        return "GLOBAL_FENCE";
     case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return "TIMESTAMP_PACKET_TAG_BUFFER";
     case GraphicsAllocation::AllocationType::UNKNOWN:

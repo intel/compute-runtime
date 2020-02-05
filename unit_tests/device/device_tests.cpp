@@ -304,6 +304,29 @@ HWTEST_F(DeviceHwTest, givenHwHelperInputWhenInitializingCsrThenCreatePageTableM
     EXPECT_EQ(csr2.needsPageTableManager(defaultEngineType), csr2.createPageTableManagerCalled);
 }
 
+HWTEST_F(DeviceHwTest, givenDeviceCreationWhenCsrFailsToCreateGlobalSyncAllocationThenReturnNull) {
+    class MockUltCsrThatFailsToCreateGlobalFenceAllocation : public UltCommandStreamReceiver<FamilyType> {
+      public:
+        MockUltCsrThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment &executionEnvironment)
+            : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0) {}
+        bool createGlobalFenceAllocation() override {
+            return false;
+        }
+    };
+    class MockDeviceThatFailsToCreateGlobalFenceAllocation : public MockDevice {
+      public:
+        MockDeviceThatFailsToCreateGlobalFenceAllocation(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+            : MockDevice(executionEnvironment, deviceIndex) {}
+        std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
+            return std::make_unique<MockUltCsrThatFailsToCreateGlobalFenceAllocation>(*executionEnvironment);
+        }
+    };
+
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    auto mockDevice(MockDevice::create<MockDeviceThatFailsToCreateGlobalFenceAllocation>(executionEnvironment, 0));
+    EXPECT_EQ(nullptr, mockDevice);
+}
+
 TEST(DeviceGenEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
 

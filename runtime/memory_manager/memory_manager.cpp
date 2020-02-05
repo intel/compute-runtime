@@ -280,6 +280,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::GLOBAL_FENCE:
     case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
         allocationData.flags.useSystemMemory = true;
     default:

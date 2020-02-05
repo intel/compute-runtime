@@ -140,6 +140,11 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
     }
+
+    if (!commandStreamReceiver->createGlobalFenceAllocation()) {
+        return false;
+    }
+
     if (engineType == defaultEngineType && !lowPriority && !internalUsage) {
         defaultEngineIndex = deviceCsrIndex;
     }

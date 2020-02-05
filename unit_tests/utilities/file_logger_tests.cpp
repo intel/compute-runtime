@@ -941,6 +941,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::SVM_GPU, "SVM_GPU"},
     {GraphicsAllocation::AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
     {GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
+    {GraphicsAllocation::AllocationType::GLOBAL_FENCE, "GLOBAL_FENCE"},
     {GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
     {GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
     {GraphicsAllocation::AllocationType::WRITE_COMBINED, "WRITE_COMBINED"}};

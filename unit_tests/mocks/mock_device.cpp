@@ -101,6 +101,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     newCsr->setupContext(*osContext);
     commandStreamReceivers[engineIndex].reset(newCsr);
     commandStreamReceivers[engineIndex]->initializeTagAllocation();
+    commandStreamReceivers[engineIndex]->createGlobalFenceAllocation();
 
     if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
         commandStreamReceivers[engineIndex]->createPreemptionAllocation();

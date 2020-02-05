@@ -178,6 +178,11 @@ void CommandStreamReceiver::cleanupResources() {
         tagAddress = nullptr;
     }
 
+    if (globalFenceAllocation) {
+        getMemoryManager()->freeGraphicsMemory(globalFenceAllocation);
+        globalFenceAllocation = nullptr;
+    }
+
     if (preemptionAllocation) {
         getMemoryManager()->freeGraphicsMemory(preemptionAllocation);
         preemptionAllocation = nullptr;
@@ -377,6 +382,15 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
 
     return true;
+}
+
+bool CommandStreamReceiver::createGlobalFenceAllocation() {
+    if (!localMemoryEnabled) {
+        return true;
+    }
+    DEBUG_BREAK_IF(this->globalFenceAllocation != nullptr);
+    this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::GLOBAL_FENCE});
+    return this->globalFenceAllocation != nullptr;
 }
 
 bool CommandStreamReceiver::createPreemptionAllocation() {

@@ -444,6 +444,25 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, handleTagAndScratchAllocationsResi
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenLocalMemoryIsEnabledAndFlushTaskIsCalledThenGlobalFenceAlocationIsMadeResident) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableLocalMemory.set(true);
+
+    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+
+    auto globalFenceAllocation = commandStreamReceiver->globalFenceAllocation;
+    ASSERT_NE(globalFenceAllocation, nullptr);
+
+    EXPECT_FALSE(commandStreamReceiver->isMadeResident(globalFenceAllocation));
+    EXPECT_FALSE(commandStreamReceiver->isMadeNonResident(globalFenceAllocation));
+
+    flushTask(*commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver->isMadeResident(globalFenceAllocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(globalFenceAllocation));
+}
+
 struct MockScratchController : public ScratchSpaceController {
     using ScratchSpaceController::privateScratchAllocation;
     using ScratchSpaceController::scratchAllocation;

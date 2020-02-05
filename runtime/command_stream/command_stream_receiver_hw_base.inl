@@ -385,8 +385,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->makeResident(*tagAllocation);
 
-    if (preemptionAllocation)
+    if (globalFenceAllocation) {
+        makeResident(*globalFenceAllocation);
+    }
+
+    if (preemptionAllocation) {
         makeResident(*preemptionAllocation);
+    }
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
         makeResident(*SipKernel::getSipKernelAllocation(device));

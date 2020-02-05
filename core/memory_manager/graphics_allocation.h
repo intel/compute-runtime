@@ -79,6 +79,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SVM_GPU,
         SVM_ZERO_COPY,
         TAG_BUFFER,
+        GLOBAL_FENCE,
         TIMESTAMP_PACKET_TAG_BUFFER,
         WRITE_COMBINED
     };
