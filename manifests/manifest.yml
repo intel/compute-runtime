@@ -24,7 +24,7 @@ components:
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: 117d709602a49f4aae6e7965743cec61834a3c35
+    revision: 710b620b08792ba0367bcabd54c479ede7518603
     type: git
   libva:
     dest_dir: libva
@@ -37,5 +37,5 @@ components:
     type: git
     branch: wdk
     revision: 39ec79c0ca347796daa7b07fbb81dd1bf45ccad5-1355
-converter: M-1363
+converter: M-1366
 version: '1'
