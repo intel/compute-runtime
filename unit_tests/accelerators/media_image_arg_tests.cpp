@@ -7,10 +7,10 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/surface.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"

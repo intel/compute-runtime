@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,10 @@
 
 #include "core/helpers/registered_method_dispatcher.h"
 #include "core/helpers/vec.h"
+#include "core/memory_manager/surface.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/surface.h"
 
 #include <algorithm>
 #include <memory>

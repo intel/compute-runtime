@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/timestamp_packet.h"
+#include "core/memory_manager/surface.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/enqueue_properties.h"
-#include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/dispatch_flags_fixture.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"

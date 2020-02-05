@@ -14,7 +14,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/memory_manager/surface.h"
+#include "runtime/memory_manager/mem_obj_surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"

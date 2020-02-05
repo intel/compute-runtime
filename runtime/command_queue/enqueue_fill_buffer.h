@@ -12,8 +12,8 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/mem_obj_surface.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/surface.h"
 
 #include <new>
 

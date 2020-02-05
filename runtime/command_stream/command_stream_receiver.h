@@ -12,11 +12,11 @@
 #include "core/command_stream/submissions_aggregator.h"
 #include "core/command_stream/thread_arbitration_policy.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/blit_commands_helper.h"
 #include "core/helpers/completion_stamp.h"
 #include "core/helpers/options.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/kernel/grf_config.h"
-#include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 
 #include <cstddef>

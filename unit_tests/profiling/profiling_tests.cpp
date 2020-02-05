@@ -15,7 +15,6 @@
 #include "runtime/command_queue/enqueue_marker.h"
 #include "runtime/command_queue/enqueue_migrate_mem_objects.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/event/event_fixture.h"

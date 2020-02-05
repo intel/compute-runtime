@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/blit_commands_helper_base.inl"
+#include "core/helpers/blit_commands_helper_base.inl"
 
 namespace NEO {
 

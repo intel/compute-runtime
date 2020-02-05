@@ -9,7 +9,6 @@
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/mem_obj/mem_obj.h"
 
 namespace NEO {
 
@@ -84,29 +83,6 @@ class HostPtrSurface : public Surface {
     size_t surfaceSize;
     GraphicsAllocation *gfxAllocation;
     bool isPtrCopyAllowed = false;
-};
-
-class MemObjSurface : public Surface {
-  public:
-    MemObjSurface(MemObj *memObj) : Surface(memObj->getGraphicsAllocation()->isCoherent()), memObj(memObj) {
-        memObj->incRefInternal();
-    }
-    ~MemObjSurface() override {
-        memObj->decRefInternal();
-        memObj = nullptr;
-    };
-
-    void makeResident(CommandStreamReceiver &csr) override {
-        DEBUG_BREAK_IF(!memObj);
-        csr.makeResident(*memObj->getGraphicsAllocation());
-    }
-
-    Surface *duplicate() override {
-        return new MemObjSurface(this->memObj);
-    };
-
-  protected:
-    class MemObj *memObj;
 };
 
 class GeneralSurface : public Surface {

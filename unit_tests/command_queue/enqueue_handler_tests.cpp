@@ -8,7 +8,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/event/user_event.h"
-#include "runtime/memory_manager/surface.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/command_stream/thread_arbitration_policy_helper.h"

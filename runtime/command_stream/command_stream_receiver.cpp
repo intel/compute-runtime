@@ -17,6 +17,7 @@
 #include "core/helpers/string.h"
 #include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/internal_allocation_storage.h"
+#include "core/memory_manager/surface.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
 #include "core/utilities/cpuintrinsics.h"
@@ -26,7 +27,6 @@
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/surface.h"
 #include "runtime/platform/platform.h"
 
 namespace NEO {

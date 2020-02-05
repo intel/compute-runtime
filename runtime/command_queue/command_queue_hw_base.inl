@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/helpers/blit_commands_helper.h"
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/command_queue/enqueue_barrier.h"
 #include "runtime/command_queue/enqueue_copy_buffer.h"
@@ -27,7 +28,6 @@
 #include "runtime/command_queue/finish.h"
 #include "runtime/command_queue/flush.h"
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/helpers/blit_commands_helper.h"
 
 namespace NEO {
 template <typename Family>

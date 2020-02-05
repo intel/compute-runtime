@@ -12,6 +12,10 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
   ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h

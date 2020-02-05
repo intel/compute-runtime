@@ -12,7 +12,6 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"

@@ -14,6 +14,7 @@
 #include "core/helpers/engine_node_helper.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/internal_allocation_storage.h"
+#include "core/memory_manager/surface.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/enqueue_common.h"
@@ -24,7 +25,6 @@
 #include "runtime/helpers/enqueue_properties.h"
 #include "runtime/helpers/task_information.inl"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/surface.h"
 
 namespace NEO {
 template void KernelOperation::ResourceCleaner::operator()<LinearStream>(LinearStream *);

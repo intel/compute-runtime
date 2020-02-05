@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/memory_manager/surface.h"
 #include "core/utilities/spinlock.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -16,7 +17,6 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/surface.h"
 #include "runtime/program/program.h"
 
 #include "CL/cl.h"

@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/blit_commands_helper.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/helpers/blit_commands_helper.h"
 
 #include "CL/cl.h"
 

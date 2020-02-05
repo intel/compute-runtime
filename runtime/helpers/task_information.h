@@ -7,12 +7,12 @@
 
 #pragma once
 #include "core/command_stream/linear_stream.h"
+#include "core/helpers/blit_commands_helper.h"
 #include "core/helpers/completion_stamp.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/timestamp_packet.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/utilities/iflist.h"
-#include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/properties_helper.h"
 
 #include <memory>
