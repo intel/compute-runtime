@@ -49,7 +49,8 @@ unsigned int ClDevice::getSupportedClVersion() const { return device.getSupporte
 
 void ClDevice::retainApi() {
     if (device.isReleasable()) {
-        platform()->getClDevice(device.getRootDeviceIndex())->incRefInternal();
+        auto pPlatform = castToObject<Platform>(platformId);
+        pPlatform->getClDevice(device.getRootDeviceIndex())->incRefInternal();
         this->incRefApi();
     }
 };
@@ -57,7 +58,8 @@ unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
     if (!device.isReleasable()) {
         return unique_ptr_if_unused<ClDevice>(this, false);
     }
-    platform()->getClDevice(device.getRootDeviceIndex())->decRefInternal();
+    auto pPlatform = castToObject<Platform>(platformId);
+    pPlatform->getClDevice(device.getRootDeviceIndex())->decRefInternal();
     return this->decRefApi();
 }
 
@@ -113,5 +115,4 @@ void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
 const std::string &ClDevice::peekCompilerExtensions() const {
     return compilerExtensions;
 }
-
 } // namespace NEO
