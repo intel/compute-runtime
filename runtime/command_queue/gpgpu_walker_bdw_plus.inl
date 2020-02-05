@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/simd_helper.h"
 #include "runtime/command_queue/gpgpu_walker_base.inl"
 #include "runtime/device/cl_device.h"
@@ -177,12 +178,12 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     WALKER_TYPE<GfxFamily> *walkerCmd,
     TagNode<TimestampPacketStorage> *timestampPacketNode,
     TimestampPacketStorage::WriteOperationType writeOperationType,
-    const HardwareInfo &hwInfo) {
+    const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
         uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*cmdStream,
-                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, hwInfo);
+                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, *rootDeviceEnvironment.getHardwareInfo());
     }
 }
 

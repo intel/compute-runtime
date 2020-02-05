@@ -28,6 +28,8 @@
 
 namespace NEO {
 
+struct RootDeviceEnvironment;
+
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 template <typename GfxFamily>
@@ -134,7 +136,7 @@ class GpgpuWalkerHelper {
         WALKER_TYPE<GfxFamily> *walkerCmd,
         TagNode<TimestampPacketStorage> *timestampPacketNode,
         TimestampPacketStorage::WriteOperationType writeOperationType,
-        const HardwareInfo &hwInfo);
+        const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchScheduler(
         LinearStream &commandStream,
