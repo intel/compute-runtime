@@ -4,6 +4,15 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(IGDRCL_SRCS_tests_compiler_mocks
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
+)
+
+set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks})
+
 set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_allocation_properties.h
@@ -19,11 +28,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
@@ -75,6 +80,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
   ${NEO_SOURCE_DIR}/core/gmm_helper/page_table_mngr_impl.cpp
+  ${IGDRCL_SRCS_tests_compiler_mocks}
 )
 
 if(WIN32)

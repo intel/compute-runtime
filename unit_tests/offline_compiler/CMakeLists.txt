@@ -42,6 +42,8 @@ else()
   )
 endif()
 
+get_property(IGDRCL_SRCS_tests_compiler_mocks GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks)
+
 set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/decoder/decoder_tests.cpp
@@ -55,12 +57,9 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.cpp
   ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.h
   ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_cif.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_cif.h
-  ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_compilers.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/mocks/mock_compilers.h
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
+  ${IGDRCL_SRCS_tests_compiler_mocks}
   ${CLOC_SRCS_LIB}
   ${CLOC_SRCS_UTILITIES}
 )
