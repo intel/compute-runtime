@@ -51,10 +51,12 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
     MI_MATH_ALU_INST_INLINE aluParam[5];
     uint32_t regA = ALU_REGISTER_R_0;
     uint32_t regB = ALU_REGISTER_R_1;
+    uint32_t finalResultRegister = ALU_REGISTER_R_2;
 
     memset(aluParam, 0, sizeof(MI_MATH_ALU_INST_INLINE) * 5);
 
-    EncodeMathMMIO<FamilyType>::encodeAluSubStoreCarry(aluParam, regA, regB);
+    EncodeMathMMIO<FamilyType>::encodeAluSubStoreCarry(aluParam, regA, regB,
+                                                       finalResultRegister);
 
     EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
     EXPECT_EQ(aluParam[0].DW0.BitField.Operand1, ALU_REGISTER_R_SRCA);
@@ -69,7 +71,7 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
     EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_2);
     EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_CF);
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
@@ -118,7 +120,7 @@ HWTEST_F(CommandEncoderMathTest, appendsAGreaterThanPredicate) {
     ASSERT_NE(itor, commands.end());
 
     auto cmdREG = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), CS_GPR_R2);
     EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), CS_PREDICATE_RESULT);
 
     auto cmdALU = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmdMATH + 3);

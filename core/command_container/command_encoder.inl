@@ -107,9 +107,10 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
     reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
     cmd++;
 
-    encodeAluSubStoreCarry(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd), ALU_REGISTER_R_0, ALU_REGISTER_R_1);
+    /* CS_GPR_R* registers map to ALU_REGISTER_R_* registers */
+    encodeAluSubStoreCarry(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd), ALU_REGISTER_R_0, ALU_REGISTER_R_1, ALU_REGISTER_R_2);
 
-    EncodeSetMMIO<Family>::encodeREG(container, CS_PREDICATE_RESULT, CS_GPR_R0);
+    EncodeSetMMIO<Family>::encodeREG(container, CS_PREDICATE_RESULT, CS_GPR_R2);
 }
 
 /*
@@ -147,8 +148,8 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint3
 }
 
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB) {
-    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, regA, ALU_REGISTER_R_CF);
+void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB, uint32_t finalResultRegister) {
+    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, finalResultRegister, ALU_REGISTER_R_CF);
 }
 
 template <typename Family>
