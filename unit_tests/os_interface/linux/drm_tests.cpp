@@ -388,3 +388,19 @@ TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCou
     EXPECT_EQ(0, drm->getQueueSliceCount(&sseu));
     EXPECT_EQ(drm->getSliceMask(newSliceCount), sseu.slice_mask);
 }
+namespace NEO {
+namespace SysCalls {
+extern uint32_t closeFuncCalled;
+extern int closeFuncArgPassed;
+} // namespace SysCalls
+} // namespace NEO
+
+TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenFileDescriptorIsClosed) {
+    SysCalls::closeFuncCalled = 0;
+    int fileDescriptor = 0x1234;
+    {
+        HwDeviceId hwDeviceId(fileDescriptor);
+    }
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(fileDescriptor, SysCalls::closeFuncArgPassed);
+}

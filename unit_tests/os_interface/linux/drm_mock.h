@@ -32,7 +32,7 @@ class DrmMock : public Drm {
     using Drm::query;
     using Drm::sliceCountChangeSupported;
 
-    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(mockFd, rootDeviceEnvironment) {
+    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
     }
     DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
@@ -69,7 +69,7 @@ class DrmMock : public Drm {
     }
 
     void setFileDescriptor(int fd) {
-        this->fd = fd;
+        hwDeviceId = std::make_unique<HwDeviceId>(fd);
     }
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }

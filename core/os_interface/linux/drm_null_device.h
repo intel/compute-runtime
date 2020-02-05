@@ -38,7 +38,7 @@ class DrmNullDevice : public Drm {
         }
     }
 
-    DrmNullDevice(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(fd, rootDeviceEnvironment), gpuTimestamp(0){};
+    DrmNullDevice(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::move(hwDeviceId), rootDeviceEnvironment), gpuTimestamp(0){};
 
   protected:
     uint64_t gpuTimestamp;

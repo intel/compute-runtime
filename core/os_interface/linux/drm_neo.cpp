@@ -56,7 +56,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     SYSTEM_ENTER();
     do {
-        ret = ::ioctl(fd, request, arg);
+        ret = ::ioctl(getFileDescriptor(), request, arg);
     } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
     SYSTEM_LEAVE(request);
     return ret;

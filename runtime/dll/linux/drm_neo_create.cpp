@@ -34,10 +34,7 @@ const DeviceDescriptor deviceDescriptorTable[] = {
 
 static std::array<Drm *, 1> drms = {{nullptr}};
 
-Drm::~Drm() {
-    close(fd);
-    fd = -1;
-}
+Drm::~Drm() = default;
 
 Drm *Drm::get(int32_t deviceOrdinal) {
     if (static_cast<uint32_t>(deviceOrdinal) >= drms.size())
@@ -138,9 +135,9 @@ Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnviron
 
     std::unique_ptr<Drm> drmObject;
     if (DebugManager.flags.EnableNullHardware.get() == true) {
-        drmObject.reset(new DrmNullDevice(fd, rootDeviceEnvironment));
+        drmObject.reset(new DrmNullDevice(std::make_unique<HwDeviceId>(fd), rootDeviceEnvironment));
     } else {
-        drmObject.reset(new Drm(fd, rootDeviceEnvironment));
+        drmObject.reset(new Drm(std::make_unique<HwDeviceId>(fd), rootDeviceEnvironment));
     }
 
     // Get HW version (I915_drm.h)

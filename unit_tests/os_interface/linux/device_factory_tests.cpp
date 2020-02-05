@@ -73,7 +73,6 @@ TEST_F(DeviceFactoryLinuxTest, ReleaseDevices) {
 
     mockDeviceFactory.releaseDevices();
     EXPECT_TRUE(mockDeviceFactory.getNumDevices() == 0);
-    EXPECT_TRUE(pDrm->getFileDescriptor() == -1);
 }
 
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
@@ -82,5 +81,6 @@ TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAl
     bool success = mockDeviceFactory.getDevices(numDevices, executionEnvironment);
     EXPECT_TRUE(success);
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface);
+    EXPECT_NE(nullptr, pDrm);
     EXPECT_EQ(pDrm, executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
 }

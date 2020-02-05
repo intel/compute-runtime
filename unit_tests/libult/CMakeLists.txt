@@ -111,9 +111,10 @@ set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV_LINUX
+  ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
   ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
+  ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/sys_calls_linux_ult.cpp
 )
 
 if(WIN32)

@@ -47,6 +47,7 @@ set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
+  ${NEO_SOURCE_DIR}/core/os_interface/linux/sys_calls_linux.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS

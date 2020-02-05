@@ -38,6 +38,7 @@ endif(NEO__LIBVA_FOUND)
 
 foreach(target_name linux_tests linux_dll_tests)
   add_executable(igdrcl_${target_name}
+    ${NEO_SOURCE_DIR}/core/os_interface/linux/sys_calls_linux.cpp
     ${IGDRCL_SRCS_${target_name}}
     $<TARGET_OBJECTS:igdrcl_libult>
     $<TARGET_OBJECTS:igdrcl_libult_cs>

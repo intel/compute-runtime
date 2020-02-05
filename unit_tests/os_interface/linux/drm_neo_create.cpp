@@ -45,7 +45,7 @@ void pushDrmMock(Drm *mock) { drmMockStack.push_back(mock); }
 
 void popDrmMock() { drmMockStack.pop_back(); }
 
-Drm::~Drm() { fd = -1; }
+Drm::~Drm() = default;
 
 Drm *Drm::get(int32_t deviceOrdinal) {
     // We silently skip deviceOrdinal
@@ -61,5 +61,5 @@ Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnviron
     return drmMockStack[drmMockStack.size() - 1];
 }
 
-void Drm::closeDevice(int32_t deviceOrdinal) { drmMockStack[drmMockStack.size() - 1]->fd = -1; }
+void Drm::closeDevice(int32_t deviceOrdinal) {}
 } // namespace NEO

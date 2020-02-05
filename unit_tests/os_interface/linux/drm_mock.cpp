@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/os_interface/linux/drm_mock.h"
+
+const int DrmMock::mockFd;
 
 int DrmMock::ioctl(unsigned long request, void *arg) {
     ioctlCallsCount++;
