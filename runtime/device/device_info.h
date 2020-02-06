@@ -56,9 +56,10 @@ struct DeviceInfo {
     const char                   *deviceExtensions;
     size_t                       printfBufferSize;
     cl_device_id                 parentDevice;
-    cl_device_partition_property partitionProperties;
     cl_device_affinity_domain    partitionAffinityDomain;
-    cl_device_partition_property *partitionType;
+    cl_uint                      partitionMaxSubDevices;
+    cl_device_partition_property partitionProperties[2];
+    cl_device_partition_property partitionType[3];
     cl_device_svm_capabilities   svmCapabilities;
     const char                  *ilVersion;
     double                       platformHostTimerResolution;
@@ -114,7 +115,6 @@ struct DeviceInfo {
     cl_uint                      maxOnDeviceQueues;
     cl_uint                      maxOnDeviceEvents;
     cl_bool                      preferredInteropUserSync;
-    cl_uint                      partitionMaxSubDevices;
     cl_uint                      referenceCount;
     cl_uint                      preferredPlatformAtomicAlignment;
     cl_uint                      preferredGlobalAtomicAlignment;

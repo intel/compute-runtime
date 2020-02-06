@@ -26,13 +26,8 @@ decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = 
 
 MockClDevice::MockClDevice(MockDevice *pMockDevice)
     : ClDevice(*pMockDevice, platform()), device(*pMockDevice), deviceInfo(pMockDevice->deviceInfo),
-      executionEnvironment(pMockDevice->executionEnvironment),
-      subdevices(pMockDevice->subdevices), mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
-
-    pMockDevice->setSpecializedDevice(static_cast<ClDevice *>(this));
-    for (uint32_t i = 0; i < getNumAvailableDevices(); i++) {
-        pMockDevice->getDeviceById(i)->setSpecializedDevice(this->getDeviceById(i));
-    }
+      executionEnvironment(pMockDevice->executionEnvironment), subdevices(pMockDevice->subdevices),
+      mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
 }
 
 MockDevice::MockDevice()

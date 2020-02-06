@@ -208,6 +208,12 @@ void Device::initializeCaps() {
     deviceInfo.hostUnifiedMemory = (false == hwHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
+    deviceInfo.parentDevice = nullptr;
+    deviceInfo.partitionMaxSubDevices = HwHelper::getSubDevicesCount(&hwInfo);
+    deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
+    deviceInfo.partitionProperties[1] = 0;
+    deviceInfo.partitionAffinityDomain = CL_DEVICE_AFFINITY_DOMAIN_NUMA | CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
+    deviceInfo.partitionType[0] = 0;
     deviceInfo.preferredVectorWidthChar = 16;
     deviceInfo.preferredVectorWidthShort = 8;
     deviceInfo.preferredVectorWidthInt = 4;

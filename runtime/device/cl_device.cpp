@@ -8,6 +8,7 @@
 #include "runtime/device/cl_device.h"
 
 #include "core/device/device.h"
+#include "core/device/sub_device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/os_interface.h"
 #include "core/program/sync_buffer_handler.h"
@@ -19,14 +20,24 @@ namespace NEO {
 
 ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platformId(platform) {
     device.incRefInternal();
+    device.setSpecializedDevice(this);
     initializeCaps();
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(getDeviceInfo().deviceExtensions);
 
     auto numAvailableDevices = device.getNumAvailableDevices();
     if (numAvailableDevices > 1) {
         for (uint32_t i = 0; i < numAvailableDevices; i++) {
-            subDevices.push_back(std::make_unique<ClDevice>(*device.getDeviceById(i), platform));
-            device.getDeviceById(i)->setSpecializedDevice(subDevices[i].get());
+            auto &coreSubDevice = static_cast<SubDevice &>(*device.getDeviceById(i));
+            auto &deviceInfo = coreSubDevice.getMutableDeviceInfo();
+            deviceInfo.parentDevice = device.getSpecializedDevice<ClDevice>();
+            deviceInfo.partitionMaxSubDevices = 0;
+            deviceInfo.partitionProperties[0] = 0;
+            deviceInfo.partitionAffinityDomain = 0;
+            deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
+            deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
+            deviceInfo.partitionType[2] = 0;
+
+            subDevices.push_back(std::make_unique<ClDevice>(coreSubDevice, platform));
         }
     }
     if (device.getDeviceInfo().debuggerActive) {

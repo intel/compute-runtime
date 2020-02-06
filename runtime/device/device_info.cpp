@@ -37,15 +37,6 @@ inline void ClDevice::getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES>(const void *&src,
 }
 
 template <>
-inline void ClDevice::getCap<CL_DEVICE_PARTITION_PROPERTIES>(const void *&src,
-                                                             size_t &size,
-                                                             size_t &retSize) {
-    static cl_device_partition_property property = 0;
-    src = &property;
-    retSize = size = sizeof(cl_device_partition_property *);
-}
-
-template <>
 inline void ClDevice::getCap<CL_DEVICE_PLATFORM>(const void *&src,
                                                  size_t &size,
                                                  size_t &retSize) {

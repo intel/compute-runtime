@@ -274,10 +274,12 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
     }
     auto subDevicesCount = pInDevice->getNumAvailableDevices();
     if (subDevicesCount <= 1) {
-        return CL_INVALID_DEVICE;
+        return CL_DEVICE_PARTITION_FAILED;
     }
-    if (properties == nullptr || properties[0] != CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN ||
-        properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NUMA || properties[2] != 0) {
+    if ((properties == nullptr) ||
+        (properties[0] != CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN) ||
+        ((properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NUMA) && (properties[1] != CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE)) ||
+        (properties[2] != 0)) {
         return CL_INVALID_VALUE;
     }
 

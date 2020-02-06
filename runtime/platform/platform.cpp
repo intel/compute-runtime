@@ -147,7 +147,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         UNRECOVERABLE_IF(!pDevice);
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices[pDevice->getRootDeviceIndex()] = pClDevice;
-        pDevice->setSpecializedDevice(pClDevice);
 
         this->platformInfo->extensions = pClDevice->getDeviceInfo().deviceExtensions;
 
