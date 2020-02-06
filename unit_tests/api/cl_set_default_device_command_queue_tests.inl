@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/device/device.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "test.h"
 

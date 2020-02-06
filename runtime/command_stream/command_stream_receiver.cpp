@@ -9,6 +9,7 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/scratch_space_controller.h"
+#include "core/device/device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/array_count.h"
 #include "core/helpers/cache_policy.h"
@@ -24,7 +25,6 @@
 #include "core/utilities/tag_allocator.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
-#include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"

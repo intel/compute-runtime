@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "performance_counters_linux.h"
 
+#include "core/device/device.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/device/device.h"
 
 namespace NEO {
 ////////////////////////////////////////////////////

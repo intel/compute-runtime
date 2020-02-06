@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/device/device.h"
+#include "core/device/device.h"
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
@@ -173,6 +173,11 @@ unsigned int Device::getSupportedClVersion() const {
     return getHardwareInfo().capabilityTable.clVersionSupport;
 }
 
+void Device::appendOSExtensions(const std::string &newExtensions) {
+    deviceExtensions += newExtensions;
+    deviceInfo.deviceExtensions = deviceExtensions.c_str();
+}
+
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 
@@ -212,4 +217,21 @@ EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPrio
     }
     UNRECOVERABLE_IF(true);
 }
+
+bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
+    TimeStampData queueTimeStamp;
+    bool retVal = getOSTime()->getCpuGpuTime(&queueTimeStamp);
+    if (retVal) {
+        uint64_t resolution = (uint64_t)getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
+        *deviceTimestamp = queueTimeStamp.GPUTimeStamp * resolution;
+    }
+
+    retVal = getOSTime()->getCpuTime(hostTimestamp);
+    return retVal;
+}
+
+bool Device::getHostTimer(uint64_t *hostTimestamp) const {
+    return getOSTime()->getCpuTime(hostTimestamp);
+}
+
 } // namespace NEO

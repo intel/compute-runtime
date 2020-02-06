@@ -5,13 +5,13 @@
  *
  */
 
-#include "runtime/device/root_device.h"
+#include "core/device/root_device.h"
 
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/sub_device.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/device/sub_device.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {

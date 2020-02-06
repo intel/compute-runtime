@@ -8,12 +8,12 @@
 #ifdef _WIN32
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/device_factory.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
-#include "runtime/device/device.h"
 
 namespace NEO {
 

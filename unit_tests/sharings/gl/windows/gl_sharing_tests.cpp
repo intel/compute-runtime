@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/array_count.h"
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/device/device.h"
 #include "runtime/event/user_event.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"

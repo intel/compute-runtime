@@ -7,6 +7,7 @@
 
 #include "runtime/event/event.h"
 
+#include "core/device/device.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/get_info.h"
 #include "core/helpers/timestamp_packet.h"
@@ -19,7 +20,6 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_tracker.h"
 #include "runtime/helpers/hardware_commands_helper.h"

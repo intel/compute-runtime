@@ -7,8 +7,8 @@
 
 #include "runtime/device/cl_device.h"
 
+#include "core/device/device.h"
 #include "core/program/sync_buffer_handler.h"
-#include "runtime/device/device.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/platform/platform.h"
 

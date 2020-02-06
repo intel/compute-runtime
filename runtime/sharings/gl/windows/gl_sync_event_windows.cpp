@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/helpers/timestamp_packet.h"
 #include "public/cl_gl_private_intel.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/platform/platform.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/device/device.h"
+#include "core/device/device.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 

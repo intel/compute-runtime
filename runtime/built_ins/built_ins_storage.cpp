@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/device.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/device/device.h"
 
 #include "os_inc.h"
 

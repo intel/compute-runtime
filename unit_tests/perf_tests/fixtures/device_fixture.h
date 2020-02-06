@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/device/device.h"
+#include "core/device/device.h"
 
 #include <cassert>
 

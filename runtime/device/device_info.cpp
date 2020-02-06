@@ -7,11 +7,11 @@
 
 #include "runtime/device/device_info.h"
 
+#include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/os_interface/os_time.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device/cl_device_vector.h"
-#include "runtime/device/device.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/helpers/cl_device_helpers.h"
 #include "runtime/platform/platform.h"
@@ -258,22 +258,6 @@ bool ClDevice::getDeviceInfoForImage(cl_device_info paramName,
         return false;
     }
     return true;
-}
-
-bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
-    TimeStampData queueTimeStamp;
-    bool retVal = getOSTime()->getCpuGpuTime(&queueTimeStamp);
-    if (retVal) {
-        uint64_t resolution = (uint64_t)getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
-        *deviceTimestamp = queueTimeStamp.GPUTimeStamp * resolution;
-    }
-
-    retVal = getOSTime()->getCpuTime(hostTimestamp);
-    return retVal;
-}
-
-bool Device::getHostTimer(uint64_t *hostTimestamp) const {
-    return getOSTime()->getCpuTime(hostTimestamp);
 }
 
 } // namespace NEO

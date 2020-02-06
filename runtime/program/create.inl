@@ -6,10 +6,10 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/device.h"
 #include "core/memory_manager/memory_constants.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/device.h"
 #include "runtime/helpers/string_helpers.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"

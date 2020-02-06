@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "unit_tests/fixtures/built_in_fixture.h"
 
+#include "core/device/device.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/device/device.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/device/device.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/device/device_info.h"
 
 #include "cl_api_tests.h"

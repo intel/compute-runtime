@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 
 namespace NEO {

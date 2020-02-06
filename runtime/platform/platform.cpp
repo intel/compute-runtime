@@ -9,6 +9,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/root_device.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -21,7 +22,6 @@
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/root_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"

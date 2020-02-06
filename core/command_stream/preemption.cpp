@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "core/command_stream/preemption.h"
 
+#include "core/device/device.h"
 #include "core/helpers/string.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/device/device.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 

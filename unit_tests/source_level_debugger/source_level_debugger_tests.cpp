@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/device/device.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"

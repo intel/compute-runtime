@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "core/os_interface/windows/windows_wrapper.h"
 #endif
 
-#include "runtime/device/device.h"
+#include "core/device/device.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
 

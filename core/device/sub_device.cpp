@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/device/sub_device.h"
+#include "core/device/sub_device.h"
 
-#include "runtime/device/root_device.h"
+#include "core/device/root_device.h"
 
 namespace NEO {
 

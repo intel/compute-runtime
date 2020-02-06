@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/device/sub_device.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/device/sub_device.h"
 
 namespace NEO {
 struct ImageInfo;

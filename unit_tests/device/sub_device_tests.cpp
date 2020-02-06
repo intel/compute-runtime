@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/device/sub_device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/device/sub_device.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"

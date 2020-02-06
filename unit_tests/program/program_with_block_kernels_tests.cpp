@@ -6,8 +6,8 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/device/device.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/device.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"

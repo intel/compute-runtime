@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "core/device/root_device.h"
+#include "core/device/sub_device.h"
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/root_device.h"
-#include "runtime/device/sub_device.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"

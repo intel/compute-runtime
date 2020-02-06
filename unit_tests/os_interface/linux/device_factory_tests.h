@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "core/device/device.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/device_factory.h"
-#include "runtime/device/device.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/mocks/mock_execution_environment.h"

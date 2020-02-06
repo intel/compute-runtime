@@ -7,8 +7,8 @@
 
 #ifdef _WIN32
 
+#include "core/device/device.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/device.h"
 
 namespace NEO {
 

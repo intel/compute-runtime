@@ -6,10 +6,10 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/device/device.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/utilities/time_measure_wrapper.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"

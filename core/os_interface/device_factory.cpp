@@ -8,12 +8,12 @@
 #include "core/os_interface/device_factory.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/aub_memory_operations_handler.h"
 #include "core/os_interface/hw_info_config.h"
 #include "runtime/aub/aub_center.h"
-#include "runtime/device/device.h"
 
 namespace NEO {
 

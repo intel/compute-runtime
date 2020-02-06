@@ -6,8 +6,8 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/device/device.h"
 #include "core/helpers/file_io.h"
-#include "runtime/device/device.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_kernel.h"

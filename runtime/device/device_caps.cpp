@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/device/device.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/extensions.h"
@@ -387,11 +387,6 @@ void Device::initializeCaps() {
             deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
         }
     }
-}
-
-void Device::appendOSExtensions(const std::string &newExtensions) {
-    deviceExtensions += newExtensions;
-    deviceInfo.deviceExtensions = deviceExtensions.c_str();
 }
 
 } // namespace NEO

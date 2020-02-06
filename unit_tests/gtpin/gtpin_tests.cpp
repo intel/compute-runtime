@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/file_io.h"
@@ -14,7 +15,6 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "runtime/api/api.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_defs.h"
 #include "runtime/gtpin/gtpin_helpers.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"

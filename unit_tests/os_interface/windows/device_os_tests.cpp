@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/device/device.h"
 #include "unit_tests/mocks/mock_device.h"
 
 #include "gmock/gmock.h"

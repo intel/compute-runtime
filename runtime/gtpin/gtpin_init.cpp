@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "gtpin_init.h"
 
-#include "runtime/device/device.h"
+#include "core/device/device.h"
 #include "runtime/device/device_info.h"
 #include "runtime/platform/platform.h"
 
