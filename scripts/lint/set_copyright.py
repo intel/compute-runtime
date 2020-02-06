@@ -93,7 +93,7 @@ def can_be_scanned(path):
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Usage: ./scripts/lint/set_copyright.py <files>')
-    parser.add_argument('-c', '--check', action='store_true', help='Script will fail if it changed file')
+    parser.add_argument('-c', '--check', action='store_true', help='Checks only, not changing files, fails if wrong copyright')
     parser.add_argument('files', nargs='*')
     args = parser.parse_args()
 
@@ -221,32 +221,28 @@ def main(args):
             start_year += '-'
             start_year += str(year)
 
-        # store file mode because we want to preserve this
-        old_mode = os.stat(path)[stat.ST_MODE]
+        written_header = [header.format(start_year)]
 
-        written_header = []
+        if len(curr_comment) > 0 or len(gathered_lines) > 0:
+            written_header.append('\n')
 
-        os.remove(path)
-        with open(path, 'w') as fout:
+        if len(curr_comment) > 0:
+            written_header.append(''.join(curr_comment))
 
-            if first_line:
-                fout.write(first_line)
+        if not args['check']:
+            # store file mode because we want to preserve this
+            old_mode = os.stat(path)[stat.ST_MODE]
+            os.remove(path)
+            with open(path, 'w') as fout:
+                if first_line:
+                    fout.write(first_line)
 
-            written_header.append(header.format(start_year))
+                fout.write(''.join(written_header))
+                contents = ''.join(gathered_lines)
+                fout.write(contents)
 
-            if len(curr_comment) > 0 or len(gathered_lines) > 0:
-                written_header.append('\n')
-
-            if len(curr_comment) > 0:
-                written_header.append(''.join(curr_comment))
-
-            fout.write(''.join(written_header))
-
-            contents = ''.join(gathered_lines)
-            fout.write(contents)
-
-        # chmod to original value
-        os.chmod(path, old_mode)
+                # chmod to original value
+                os.chmod(path, old_mode)
 
         if args['check'] and ''.join(gathered_header) != ''.join(written_header):
             status = 1
