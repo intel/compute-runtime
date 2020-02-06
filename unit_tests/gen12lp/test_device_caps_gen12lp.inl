@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,12 @@ TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
 
     EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
     EXPECT_EQ(0u, caps.doubleFpConfig);
+}
+
+TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported) {
+    const auto &caps = pDevice->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
 }
 
 TGLLPTEST_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {

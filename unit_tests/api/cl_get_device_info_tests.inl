@@ -180,7 +180,8 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_priority_hints ",
         "cl_khr_throttle_hints ",
         "cl_khr_create_command_queue ",
-    };
+        "cl_intel_subgroups_char ",
+        "cl_intel_subgroups_long "};
 
     for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
         auto foundOffset = extensionString.find(supportedExtensions[element]);

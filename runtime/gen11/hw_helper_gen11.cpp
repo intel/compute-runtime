@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,11 @@ typedef ICLFamily Family;
 template <>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
     return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
+}
+
+template <>
+std::string HwHelperHw<Family>::getExtensions() const {
+    return "cl_intel_subgroup_local_block_io ";
 }
 
 template class AubHelperHw<Family>;
