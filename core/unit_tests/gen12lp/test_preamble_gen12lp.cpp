@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, WaOff) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 
@@ -79,9 +79,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePip
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    EXPECT_EQ(aub_stream::ENGINE_CCS, platformDevices[0]->capabilityTable.defaultEngineType);
-
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_CCS);
 
     parseCommands<FamilyType>(cs);
 
@@ -100,10 +98,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePip
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    HardwareInfo hwInfo = const_cast<HardwareInfo &>(pPlatform->getDevice(0)->getHardwareInfo());
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
-
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, hwInfo, 0, 0, 672u);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 

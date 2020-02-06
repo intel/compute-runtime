@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "core/helpers/pipeline_select_helper.h"
 
+#include "engine_node.h"
 #include "igfxfmid.h"
 
 #include <cstddef>
@@ -35,12 +36,13 @@ struct PreambleHelper {
     static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
-    static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo);
+    static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType);
     static uint64_t programVFEState(LinearStream *pCommandStream,
                                     const HardwareInfo &hwInfo,
                                     int scratchSize,
                                     uint64_t scratchAddress,
-                                    uint32_t maxFrontEndThreads);
+                                    uint32_t maxFrontEndThreads,
+                                    aub_stream::EngineType engineType);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer);

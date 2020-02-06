@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,11 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
                                                     const HardwareInfo &hwInfo,
                                                     int scratchSize,
                                                     uint64_t scratchAddress,
-                                                    uint32_t maxFrontEndThreads) {
+                                                    uint32_t maxFrontEndThreads,
+                                                    aub_stream::EngineType engineType) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
-    addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo);
+    addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineType);
 
     auto scratchSpaceAddressOffset = static_cast<uint64_t>(pCommandStream->getUsed() + MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE)));

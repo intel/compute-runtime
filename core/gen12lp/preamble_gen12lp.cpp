@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/csr_definitions.h"
+#include "core/helpers/engine_node_helper.h"
 #include "core/helpers/preamble_bdw_plus.inl"
 #include "runtime/gen12lp/helpers_gen12lp.h"
 #include "runtime/helpers/hardware_commands_helper.h"
@@ -53,12 +54,12 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
+void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     *pipeControl = TGLLPFamily::cmdInitPipeControl;
     pipeControl->setCommandStreamerStallEnable(true);
     if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        if (hwInfo->capabilityTable.defaultEngineType != aub_stream::ENGINE_CCS) {
+        if (!EngineHelpers::isCcs(engineType)) {
             pipeControl->setRenderTargetCacheFlushEnable(true);
             pipeControl->setDepthCacheFlushEnable(true);
         }

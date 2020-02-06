@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,6 +198,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenPreambleHelperWhenMediaVfeStateIs
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto offset = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch, 10u);
+    auto offset = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch, 10u, aub_stream::EngineType::ENGINE_RCS);
     EXPECT_NE(0u, offset);
 }

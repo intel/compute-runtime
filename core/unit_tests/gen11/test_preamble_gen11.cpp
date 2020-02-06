@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOff) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u);
+    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<ICLFamily>(cs);
 
@@ -76,7 +76,7 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOn) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u);
+    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<ICLFamily>(cs);
 
