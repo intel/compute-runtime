@@ -267,17 +267,17 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownDeviceId) {
     EXPECT_EQ(-1, ret);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledThenAreNonPersistentContextsSupportedReturnsTrue) {
+TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledThenIsContextPersistenceChangeSupportedReturnsTrue) {
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_TRUE(drm->areNonPersistentContextsSupported());
+    EXPECT_TRUE(drm->isContextPersistenceChangeSupported());
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledAndPersitentContextIsUnsupportedThenAreNonPersistentContextsSupportedReturnsFalse) {
-    drm->StoredPersistentContextsSupport = 0;
+TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledAndPersitentContextIsUnsupportedThenIsContextPersistenceChangeSupportedReturnsFalse) {
+    drm->StoredRetValForPersistent = -1;
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(drm->areNonPersistentContextsSupported());
+    EXPECT_FALSE(drm->isContextPersistenceChangeSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {

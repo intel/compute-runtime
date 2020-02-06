@@ -24,10 +24,10 @@ using namespace NEO;
 class DrmMock : public Drm {
   public:
     using Drm::checkQueueSliceSupport;
+    using Drm::contextPersistenceChangeSupported;
     using Drm::engineInfo;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
-    using Drm::nonPersistentContextsSupported;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::sliceCountChangeSupported;
@@ -90,7 +90,6 @@ class DrmMock : public Drm {
     int StoredDeviceRevID = 1;
     int StoredHasPooledEU = 1;
     int StoredMinEUinPool = 1;
-    int StoredPersistentContextsSupport = 1;
     int StoredRetVal = 0;
     int StoredRetValForGetGttSize = 0;
     int StoredRetValForGetSSEU = 0;
@@ -101,7 +100,7 @@ class DrmMock : public Drm {
     int StoredRetValForDeviceRevID = 0;
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
-    int StoredRetValForPersistant = 0;
+    int StoredRetValForPersistent = 0;
     int StoredPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
