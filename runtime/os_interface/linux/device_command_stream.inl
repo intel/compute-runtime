@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
-
-#include "drm_command_stream.h"
 
 namespace NEO {
 

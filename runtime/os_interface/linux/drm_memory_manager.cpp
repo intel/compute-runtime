@@ -14,14 +14,13 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
+#include "core/helpers/surface_format_info.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/residency.h"
 #include "core/os_interface/linux/allocator_helper.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/device/device.h"
-#include "runtime/helpers/surface_formats.h"
 
 #include "drm/i915_drm.h"
 

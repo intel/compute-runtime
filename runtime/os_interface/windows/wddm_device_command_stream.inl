@@ -17,8 +17,6 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "core/os_interface/windows/wddm/wddm.h"
-#include "runtime/device/device.h"
-#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
