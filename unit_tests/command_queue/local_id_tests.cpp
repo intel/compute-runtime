@@ -72,8 +72,8 @@ TEST(LocalID, givenVariadicGrfSizeWhenLocalSizesAreEmittedTheyUseFullRowSize) {
     auto localIdsPtr = allocateAlignedMemory(3 * 64u, MemoryConstants::cacheLineSize);
 
     uint16_t *localIdsView = reinterpret_cast<uint16_t *>(localIdsPtr.get());
-    std::array<uint16_t, 3u> localSizes = {2u, 2u, 1u};
-    std::array<uint8_t, 3u> dimensionsOrder = {0u, 1u, 2u};
+    std::array<uint16_t, 3u> localSizes = {{2u, 2u, 1u}};
+    std::array<uint8_t, 3u> dimensionsOrder = {{0u, 1u, 2u}};
 
     generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u);
     EXPECT_EQ(localIdsView[0], 0u);
