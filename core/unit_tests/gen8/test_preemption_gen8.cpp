@@ -5,8 +5,10 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
+#include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
@@ -193,4 +195,121 @@ GEN8TEST_F(Gen8PreemptionTests, givenInterfaceDescriptorDataWhenAnyPreemptionMod
     PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidThread);
     ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
     EXPECT_EQ(0, ret);
+}
+
+struct Gen8PreemptionTestsLinearStream : public Gen8PreemptionTests {
+    void SetUp() override {
+        Gen8PreemptionTests::SetUp();
+        cmdBufferAllocation = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+        cmdBuffer.replaceBuffer(cmdBufferAllocation, MemoryConstants::pageSize);
+    }
+
+    void TearDown() override {
+        alignedFree(cmdBufferAllocation);
+        Gen8PreemptionTests::TearDown();
+    }
+
+    LinearStream cmdBuffer;
+    void *cmdBufferAllocation;
+    HardwareParse cmdBufferParser;
+};
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidBatchPreemptionWhenProgrammingWaCmdsBeginThenExpectNoCmds) {
+    device->setPreemptionMode(PreemptionMode::MidBatch);
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidBatchPreemptionWhenProgrammingWaCmdsEndThenExpectNoCmds) {
+    device->setPreemptionMode(PreemptionMode::MidBatch);
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionNoWaSetWhenProgrammingWaCmdsEndThenExpectNoCmd) {
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionWaSetWhenProgrammingWaCmdsBeginThenExpectMmioCmd) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+
+    cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
+    cmdBufferParser.findHardwareCommands<FamilyType>();
+    GenCmdList::iterator itMmioCmd = cmdBufferParser.lriList.begin();
+    ASSERT_NE(cmdBufferParser.lriList.end(), itMmioCmd);
+    MI_LOAD_REGISTER_IMM *mmioCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itMmioCmd);
+    EXPECT_EQ(0x2600u, mmioCmd->getRegisterOffset());
+    EXPECT_EQ(0xFFFFFFFFu, mmioCmd->getDataDword());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionWaSetWhenProgrammingWaCmdsEndThenExpectMmioCmd) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+
+    cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
+    cmdBufferParser.findHardwareCommands<FamilyType>();
+    GenCmdList::iterator itMmioCmd = cmdBufferParser.lriList.begin();
+    ASSERT_NE(cmdBufferParser.lriList.end(), itMmioCmd);
+    MI_LOAD_REGISTER_IMM *mmioCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itMmioCmd);
+    EXPECT_EQ(0x2600u, mmioCmd->getRegisterOffset());
+    EXPECT_EQ(0x00000000u, mmioCmd->getDataDword());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionNoWaSetWhenProgrammingWaCmdsEndThenExpectNoCmd) {
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    EXPECT_EQ(0u, cmdBuffer.getUsed());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionWaSetWhenProgrammingWaCmdsBeginThenExpectMmioCmd) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+
+    cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
+    cmdBufferParser.findHardwareCommands<FamilyType>();
+    GenCmdList::iterator itMmioCmd = cmdBufferParser.lriList.begin();
+    ASSERT_NE(cmdBufferParser.lriList.end(), itMmioCmd);
+    MI_LOAD_REGISTER_IMM *mmioCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itMmioCmd);
+    EXPECT_EQ(0x2600u, mmioCmd->getRegisterOffset());
+    EXPECT_EQ(0xFFFFFFFFu, mmioCmd->getDataDword());
+}
+
+GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionWaSetWhenProgrammingWaCmdsEndThenExpectMmioCmd) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+
+    cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
+    cmdBufferParser.findHardwareCommands<FamilyType>();
+    GenCmdList::iterator itMmioCmd = cmdBufferParser.lriList.begin();
+    ASSERT_NE(cmdBufferParser.lriList.end(), itMmioCmd);
+    MI_LOAD_REGISTER_IMM *mmioCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itMmioCmd);
+    EXPECT_EQ(0x2600u, mmioCmd->getRegisterOffset());
+    EXPECT_EQ(0x00000000u, mmioCmd->getDataDword());
 }
