@@ -15,7 +15,7 @@ Drm *Drm::get(int32_t deviceOrdinal) {
     return nullptr;
 }
 
-Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
+Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     return nullptr;
 }
 

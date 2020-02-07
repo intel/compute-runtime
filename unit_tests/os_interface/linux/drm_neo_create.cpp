@@ -54,10 +54,7 @@ Drm *Drm::get(int32_t deviceOrdinal) {
     return drmMockStack[drmMockStack.size() - 1];
 }
 
-Drm *Drm::create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
-    // We silently skip deviceOrdinal
-    EXPECT_EQ(deviceOrdinal, 0);
-
+Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     return drmMockStack[drmMockStack.size() - 1];
 }
 

@@ -21,7 +21,6 @@ namespace NEO {
 size_t DeviceFactory::numDevices = 0;
 
 bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    unsigned int devNum = 0;
     size_t numRootDevices = 1;
 
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
@@ -31,7 +30,8 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        Drm *drm = Drm::create(devNum, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+        auto hwDeviceId = Drm::discoverDevices();
+        Drm *drm = Drm::create(std::move(hwDeviceId), *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
         if (!drm) {
             return false;
         }

@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
 
 class DrmWrap : Drm {
   public:
-    static Drm *createDrm(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
-        return Drm::create(deviceOrdinal, rootDeviceEnvironment);
+    static Drm *createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
+        return Drm::create(std::make_unique<HwDeviceId>(0), rootDeviceEnvironment);
     }
     static void closeDeviceDrm(int32_t deviceOrdinal) {
         closeDevice(deviceOrdinal);
@@ -60,7 +60,7 @@ TEST(Drm, getReturnsNull) {
 TEST(Drm, createReturnsNull) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    auto ptr = DrmWrap::createDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
+    auto ptr = DrmWrap::createDrm(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(ptr, nullptr);
 }
 

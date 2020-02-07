@@ -19,5 +19,9 @@ int close(int fileDescriptor) {
     closeFuncArgPassed = fileDescriptor;
     return 0;
 }
+
+int open(const char *file, int flags) {
+    return 0;
+}
 } // namespace SysCalls
 } // namespace NEO

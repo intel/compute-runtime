@@ -12,11 +12,13 @@
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/linux/os_inc.h"
+#include "core/os_interface/linux/sys_calls.h"
 #include "core/utilities/directory.h"
 
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <linux/limits.h>
 
 namespace NEO {
 
@@ -284,6 +286,52 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subsliceTotal);
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     return 0;
+}
+
+std::unique_ptr<HwDeviceId> Drm::discoverDevices() {
+    char fullPath[PATH_MAX];
+    if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+        snprintf(fullPath, PATH_MAX, "/dev/dri/by-path/pci-0000:%s-render", DebugManager.flags.ForceDeviceId.get().c_str());
+        int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
+        if (fileDescriptor >= 0) {
+            if (isi915Version(fileDescriptor)) {
+                return std::make_unique<HwDeviceId>(fileDescriptor);
+            }
+            SysCalls::close(fileDescriptor);
+        }
+    }
+
+    const char *pathPrefix = "/dev/dri/renderD";
+    const unsigned int maxDrmDevices = 64;
+    unsigned int startNum = 128;
+
+    for (unsigned int i = 0; i < maxDrmDevices; i++) {
+        snprintf(fullPath, PATH_MAX, "%s%u", pathPrefix, i + startNum);
+        int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
+        if (fileDescriptor >= 0) {
+            if (isi915Version(fileDescriptor)) {
+                return std::make_unique<HwDeviceId>(fileDescriptor);
+            }
+            SysCalls::close(fileDescriptor);
+        }
+    }
+
+    return nullptr;
+}
+
+bool Drm::isi915Version(int fileDescriptor) {
+    drm_version_t version = {};
+    char name[5] = {};
+    version.name = name;
+    version.name_len = 5;
+
+    int ret = ::ioctl(fileDescriptor, DRM_IOCTL_VERSION, &version);
+    if (ret) {
+        return false;
+    }
+
+    name[4] = '\0';
+    return strcmp(name, "i915") == 0;
 }
 
 } // namespace NEO

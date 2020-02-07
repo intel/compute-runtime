@@ -23,7 +23,7 @@ class DrmNullDeviceTestsFixture {
         DebugManager.flags.EnableNullHardware.set(true);
         executionEnvironment.prepareRootDeviceEnvironments(1);
 
-        DrmWrap::createDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
+        DrmWrap::createDrm(*executionEnvironment.rootDeviceEnvironments[0]);
 
         // Obtain nullDevice drm
         drmNullDevice = DrmWrap::get(0);

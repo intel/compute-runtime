@@ -90,9 +90,9 @@ class Drm {
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
     }
-    static bool (*pIsi915Version)(int fd);
     static bool isi915Version(int fd);
-    static int (*pClose)(int fd);
+
+    static std::unique_ptr<HwDeviceId> discoverDevices();
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
@@ -109,9 +109,7 @@ class Drm {
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
 
-    static int getDeviceFd(const int devType);
-    static int openDevice();
-    static Drm *create(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment);
+    static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void closeDevice(int32_t deviceOrdinal);
 
     std::string getSysFsPciPath(int deviceID);

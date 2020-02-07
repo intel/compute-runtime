@@ -13,8 +13,12 @@
 
 class DrmWrap : public NEO::Drm {
   public:
-    static NEO::Drm *createDrm(int32_t deviceOrdinal, RootDeviceEnvironment &rootDeviceEnvironment) {
-        return NEO::Drm::create(deviceOrdinal, rootDeviceEnvironment);
+    static NEO::Drm *createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto hwDeviceId = Drm::discoverDevices();
+        if (hwDeviceId != nullptr) {
+            return NEO::Drm::create(std::move(hwDeviceId), rootDeviceEnvironment);
+        }
+        return nullptr;
     }
     static void closeDevice(int32_t deviceOrdinal) {
         NEO::Drm::closeDevice(deviceOrdinal);
