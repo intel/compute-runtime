@@ -48,25 +48,10 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
 }
 
 bool getDevicesImpl(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
-    bool result;
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
-    if (csr < 0) {
-        csr = CommandStreamReceiverType::CSR_HW;
-    }
-    switch (csr) {
-    case CSR_HW:
-        result = DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
-        DEBUG_BREAK_IF(!result);
-        return result;
-    case CSR_AUB:
-    case CSR_TBX:
-    case CSR_TBX_WITH_AUB:
-        return DeviceFactory::getDevicesForProductFamilyOverride(numDevicesReturned, executionEnvironment);
-    case CSR_HW_WITH_AUB:
+    if (DeviceFactory::isHwModeSelected()) {
         return DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
-    default:
-        return false;
     }
+    return DeviceFactory::getDevicesForProductFamilyOverride(numDevicesReturned, executionEnvironment);
 }
 
 } // namespace NEO

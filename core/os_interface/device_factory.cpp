@@ -64,4 +64,15 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     return true;
 }
 
+bool DeviceFactory::isHwModeSelected() {
+    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    switch (csr) {
+    case CSR_AUB:
+    case CSR_TBX:
+    case CSR_TBX_WITH_AUB:
+        return false;
+    default:
+        return true;
+    }
+}
 } // namespace NEO

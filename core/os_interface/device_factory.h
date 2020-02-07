@@ -17,6 +17,7 @@ class DeviceFactory {
     static bool getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
     static bool getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
     static void releaseDevices();
+    static bool isHwModeSelected();
 
   protected:
     static size_t numDevices;

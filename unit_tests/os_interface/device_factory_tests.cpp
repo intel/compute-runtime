@@ -227,3 +227,21 @@ TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAlloca
     EXPECT_TRUE(success);
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
 }
+
+TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    constexpr int32_t hwModes[] = {-1, CommandStreamReceiverType::CSR_HW, CommandStreamReceiverType::CSR_HW_WITH_AUB};
+    for (const auto &hwMode : hwModes) {
+        DebugManager.flags.SetCommandStreamReceiver.set(hwMode);
+        EXPECT_TRUE(DeviceFactory::isHwModeSelected());
+    }
+}
+
+TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    constexpr int32_t nonHwModes[] = {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+    for (const auto &nonHwMode : nonHwModes) {
+        DebugManager.flags.SetCommandStreamReceiver.set(nonHwMode);
+        EXPECT_FALSE(DeviceFactory::isHwModeSelected());
+    }
+}
