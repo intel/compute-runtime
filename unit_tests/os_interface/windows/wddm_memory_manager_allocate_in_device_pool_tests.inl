@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "core/os_interface/windows/wddm_memory_manager.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 

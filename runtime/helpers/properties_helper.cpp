@@ -8,11 +8,11 @@
 #include "runtime/helpers/properties_helper.h"
 
 #include "core/helpers/timestamp_packet.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 

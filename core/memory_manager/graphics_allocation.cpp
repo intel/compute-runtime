@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "graphics_allocation.h"
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/utilities/logger.h"
 
 namespace NEO {

@@ -12,11 +12,11 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
+#include "core/memory_manager/memory_manager.h"
 #include "public/cl_gl_private_intel.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 

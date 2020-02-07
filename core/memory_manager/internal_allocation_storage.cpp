@@ -8,9 +8,9 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 
 #include "core/memory_manager/host_ptr_manager.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};

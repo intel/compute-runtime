@@ -6,8 +6,8 @@
  */
 
 #include "core/execution_environment/execution_environment.h"
+#include "core/os_interface/linux/drm_memory_manager.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"

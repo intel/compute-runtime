@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "core/os_interface/linux/drm_memory_manager.h"
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"

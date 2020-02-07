@@ -9,11 +9,11 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
 #include "core/helpers/string.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 template <typename GfxFamily>

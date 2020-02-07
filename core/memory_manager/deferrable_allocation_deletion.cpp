@@ -8,9 +8,9 @@
 #include "core/memory_manager/deferrable_allocation_deletion.h"
 
 #include "core/helpers/engine_control.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 

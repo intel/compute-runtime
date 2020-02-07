@@ -6,7 +6,7 @@
  */
 
 #include "core/gmm_helper/gmm_helper.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"

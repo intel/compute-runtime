@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/memory_manager/deferred_deleter.h"
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "core/os_interface/windows/wddm_memory_manager.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 

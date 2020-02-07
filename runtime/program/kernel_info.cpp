@@ -10,12 +10,12 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sampler/sampler.h"
 
 #include <cstdint>

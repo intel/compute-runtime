@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 
 namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {

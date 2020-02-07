@@ -10,8 +10,8 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 #include <cstring>
 #include <type_traits>

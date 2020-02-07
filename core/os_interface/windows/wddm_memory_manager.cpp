@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "core/os_interface/windows/wddm_memory_manager.h"
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"

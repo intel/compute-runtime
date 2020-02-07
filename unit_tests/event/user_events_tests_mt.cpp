@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 

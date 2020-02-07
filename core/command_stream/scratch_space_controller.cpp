@@ -11,7 +11,7 @@
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 
 namespace NEO {
 ScratchSpaceController::ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)

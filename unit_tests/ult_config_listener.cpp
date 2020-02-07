@@ -8,9 +8,9 @@
 #include "unit_tests/ult_config_listener.h"
 
 #include "core/execution_environment/execution_environment.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {

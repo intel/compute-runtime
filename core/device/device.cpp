@@ -10,13 +10,13 @@
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_time.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/device/driver_info.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {

@@ -10,7 +10,7 @@
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 
 namespace NEO {
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sharings/d3d/d3d_sharing.h"
 
 namespace NEO {

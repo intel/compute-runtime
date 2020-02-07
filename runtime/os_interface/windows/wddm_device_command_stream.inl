@@ -23,7 +23,7 @@
 #include "core/os_interface/windows/gdi_interface.h"
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "core/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
 

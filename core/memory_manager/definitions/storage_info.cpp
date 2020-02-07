@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 
 namespace NEO {
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {

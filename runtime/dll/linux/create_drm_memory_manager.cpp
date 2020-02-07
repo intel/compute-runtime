@@ -6,10 +6,10 @@
  */
 
 #include "core/execution_environment/execution_environment.h"
+#include "core/memory_manager/memory_manager.h"
+#include "core/os_interface/linux/drm_memory_manager.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "core/os_interface/os_interface.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
 
 namespace NEO {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {

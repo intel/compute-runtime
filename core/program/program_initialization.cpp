@@ -11,9 +11,9 @@
 #include "core/device/device.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/program/program_info.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 

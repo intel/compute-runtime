@@ -13,8 +13,8 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/heap_helper.h"
 #include "core/indirect_heap/indirect_heap.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 

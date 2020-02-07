@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_manager.h"
 
 #include "common/compiler_support.h"
 #include "core/execution_environment/root_device_environment.h"

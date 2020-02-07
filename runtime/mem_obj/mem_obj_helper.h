@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "common/helpers/bit_helpers.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "public/cl_ext_private.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 #include "CL/cl.h"
 #include "memory_properties_flags.h"

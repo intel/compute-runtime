@@ -8,8 +8,8 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
+#include "core/memory_manager/memory_manager.h"
 #include "core/utilities/idlist.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 #include <atomic>
 #include <cstdint>

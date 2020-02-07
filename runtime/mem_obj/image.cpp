@@ -19,6 +19,7 @@
 #include "core/helpers/hw_info.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
@@ -27,7 +28,6 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/platform/platform.h"
 
 #include "igfxfmid.h"

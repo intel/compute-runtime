@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/device/cl_device.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"

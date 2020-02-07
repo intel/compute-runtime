@@ -9,10 +9,10 @@
 
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/get_info.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sharingFunctions,

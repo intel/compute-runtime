@@ -8,11 +8,11 @@
 #include "runtime/mem_obj/pipe.h"
 
 #include "core/helpers/get_info.h"
+#include "core/memory_manager/memory_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
 

@@ -6,7 +6,7 @@
  */
 
 #include "core/helpers/basic_math.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "core/os_interface/linux/drm_memory_manager.h"
 
 namespace NEO {
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
