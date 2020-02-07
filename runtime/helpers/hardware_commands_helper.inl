@@ -490,4 +490,8 @@ void HardwareCommandsHelper<GfxFamily>::programMiFlushDw(LinearStream &commandSt
     miFlushDwCmd->setImmediateData(immediateData);
     appendMiFlushDw(miFlushDwCmd);
 }
+
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::programGlobalFence(LinearStream &commandStream) {
+}
 } // namespace NEO

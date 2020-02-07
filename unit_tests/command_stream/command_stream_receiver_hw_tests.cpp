@@ -612,6 +612,50 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     EXPECT_EQ(5u, csr.makeResidentAllocations.size());
 }
 
+HWTEST_F(BcsTests, givenLocalMemoryEnabledWhenBlitDispatchedThenMakeAllAllocationsResident) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+
+    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
+    bcsCsr->setupContext(*bcsOsContext);
+    bcsCsr->initializeTagAllocation();
+    bcsCsr->createGlobalFenceAllocation();
+    bcsCsr->storeMakeResidentAllocations = true;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer1 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto buffer2 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr1 = reinterpret_cast<void *>(0x12340000);
+    void *hostPtr2 = reinterpret_cast<void *>(0x43210000);
+
+    EXPECT_EQ(0u, bcsCsr->makeSurfacePackNonResidentCalled);
+
+    auto blitProperties1 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                 *bcsCsr, buffer1->getGraphicsAllocation(), nullptr, hostPtr1,
+                                                                                 buffer1->getGraphicsAllocation()->getGpuAddress(), 0,
+                                                                                 0, 0, 1);
+
+    auto blitProperties2 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                 *bcsCsr, buffer2->getGraphicsAllocation(), nullptr, hostPtr2,
+                                                                                 buffer2->getGraphicsAllocation()->getGpuAddress(), 0,
+                                                                                 0, 0, 1);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties1);
+    blitPropertiesContainer.push_back(blitProperties2);
+
+    bcsCsr->blitBuffer(blitPropertiesContainer, false);
+
+    EXPECT_TRUE(bcsCsr->isMadeResident(buffer1->getGraphicsAllocation()));
+    EXPECT_TRUE(bcsCsr->isMadeResident(buffer2->getGraphicsAllocation()));
+    EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->getTagAllocation()));
+    EXPECT_TRUE(bcsCsr->isMadeResident(bcsCsr->globalFenceAllocation));
+    EXPECT_EQ(1u, bcsCsr->makeSurfacePackNonResidentCalled);
+
+    EXPECT_EQ(6u, bcsCsr->makeResidentAllocations.size());
+}
+
 HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.recordFlusheBatchBuffer = true;

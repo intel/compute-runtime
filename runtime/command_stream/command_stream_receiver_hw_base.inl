@@ -261,7 +261,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager.get() && !pageTableManagerInitialized) {
         pageTableManagerInitialized = executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters(this);
     }
-    programEnginePrologue(commandStreamCSR, dispatchFlags);
+    programEnginePrologue(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -821,6 +821,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
 
+    programEnginePrologue(commandStream);
+
     for (auto &blitProperties : blitPropertiesContainer) {
         TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
@@ -838,6 +840,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         makeResident(*blitProperties.dstAllocation);
     }
 
+    HardwareCommandsHelper<GfxFamily>::programGlobalFence(commandStream);
+
     HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
@@ -846,6 +850,9 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     alignToCacheLine(commandStream);
 
     makeResident(*tagAllocation);
+    if (globalFenceAllocation) {
+        makeResident(*globalFenceAllocation);
+    }
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStream.getUsed(), &commandStream};
@@ -888,7 +895,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const Di
     return 0u;
 }
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr, const DispatchFlags &dispatchFlags) {
+inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStream &csr) {
 }
 
 template <typename GfxFamily>
