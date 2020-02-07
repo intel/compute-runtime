@@ -13,7 +13,7 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "runtime/program/kernel_info.h"
 
-#include "RelocationInfo.h"
+#include "visa/RelocationInfo.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

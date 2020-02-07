@@ -7,7 +7,7 @@
 
 #include "core/helpers/ptr_math.h"
 
-#include "RelocationInfo.h"
+#include "visa/RelocationInfo.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "linker_mock.h"

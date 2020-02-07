@@ -11,7 +11,7 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 
-#include "RelocationInfo.h"
+#include "visa/RelocationInfo.h"
 
 #include <sstream>
 
