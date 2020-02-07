@@ -5,6 +5,8 @@
  *
  */
 
+#include "unit_tests/mocks/mock_platform.h"
+
 #include "cl_api_tests.h"
 
 using namespace NEO;
@@ -73,7 +75,7 @@ TEST_F(clCreateContextFromTypeTests, GivenInvalidContextCreationPropertiesWhenCr
 }
 
 TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPropertiesWhenCreatingContextFromTypeThenSuccessIsReturned) {
-    auto nonDefaultPlatform = std::make_unique<Platform>();
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initialize();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
     cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};
@@ -84,7 +86,7 @@ TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPro
 }
 
 TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
-    auto nonDefaultPlatform = std::make_unique<Platform>();
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initialize();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
     nonDefaultPlatformCl->dispatch.icdDispatch = reinterpret_cast<SDispatchTable *>(nonDefaultPlatform.get());

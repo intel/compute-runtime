@@ -19,6 +19,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
 #include "gmock/gmock.h"
@@ -37,7 +38,7 @@ struct PlatformTest : public ::testing::Test {
     void SetUp() override {
         MockSipData::calledType = SipKernelType::COUNT;
         MockSipData::called = false;
-        pPlatform.reset(new Platform());
+        pPlatform.reset(new MockPlatform());
     }
     void TearDown() override {
         MockSipData::calledType = SipKernelType::COUNT;
@@ -48,14 +49,9 @@ struct PlatformTest : public ::testing::Test {
 };
 
 struct MockPlatformWithMockExecutionEnvironment : public Platform {
-    MockExecutionEnvironment *mockExecutionEnvironment = nullptr;
 
-    MockPlatformWithMockExecutionEnvironment() {
-        this->executionEnvironment->decRefInternal();
-        mockExecutionEnvironment = new MockExecutionEnvironment(nullptr, false, 1);
-        executionEnvironment = mockExecutionEnvironment;
-        MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
-        executionEnvironment->incRefInternal();
+    MockPlatformWithMockExecutionEnvironment() : Platform(*(new MockExecutionEnvironment(nullptr, false, 1))) {
+        MockAubCenterFixture::setMockAubCenter(*executionEnvironment.rootDeviceEnvironments[0]);
     }
 };
 
@@ -187,7 +183,7 @@ TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCente
     MockPlatformWithMockExecutionEnvironment platform;
     bool ret = platform.initialize();
     EXPECT_TRUE(ret);
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.mockExecutionEnvironment->rootDeviceEnvironments[0].get());
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
 }
 
@@ -199,14 +195,14 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
     MockPlatformWithMockExecutionEnvironment platform;
     bool ret = platform.initialize();
     EXPECT_TRUE(ret);
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.mockExecutionEnvironment->rootDeviceEnvironments[0].get());
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
 }
 
 TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {
-    Platform *platform = new Platform;
+    Platform *platform = new MockPlatform();
 
-    MockHandler *mockAsyncHandler = new MockHandler;
+    MockHandler *mockAsyncHandler = new MockHandler();
 
     auto oldHandler = platform->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(mockAsyncHandler));
     EXPECT_EQ(mockAsyncHandler, platform->getAsyncEventsHandler());
@@ -247,7 +243,7 @@ class PlatformFailingTest : public PlatformTest {
 };
 
 TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenInitializationFails) {
-    Platform *platform = new Platform;
+    Platform *platform = new MockPlatform();
     bool ret = platform->initialize();
     EXPECT_FALSE(ret);
     EXPECT_FALSE(platform->isInitialized());
@@ -375,10 +371,7 @@ TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetT
 }
 
 TEST(PlatformInitLoopTests, givenPlatformWhenInitLoopHelperIsCalledThenItDoesNothing) {
-    struct mockPlatform : public Platform {
-        using Platform::initializationLoopHelper;
-    };
-    mockPlatform platform;
+    MockPlatform platform;
     platform.initializationLoopHelper();
 }
 
@@ -386,7 +379,7 @@ TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItE
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.LoopAtPlatformInitialize.set(true);
     bool called = false;
-    struct mockPlatform : public Platform {
+    struct mockPlatform : public MockPlatform {
         mockPlatform(bool &called) : called(called){};
         void initializationLoopHelper() override {
             DebugManager.flags.LoopAtPlatformInitialize.set(false);

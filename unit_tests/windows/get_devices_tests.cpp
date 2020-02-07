@@ -25,12 +25,13 @@ HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
 
 HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
     platformsImpl.clear();
-    platformsImpl.push_back(std::make_unique<Platform>());
+    auto executionEnvironment = new ExecutionEnvironment();
+    platformsImpl.push_back(std::make_unique<Platform>(*executionEnvironment));
     size_t numDevicesReturned = 0;
-    auto hwInfo = platform()->peekExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = executionEnvironment->getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
     hwInfo->platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
 
-    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, *platform()->peekExecutionEnvironment());
+    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);
     EXPECT_TRUE(returnValue);
 }

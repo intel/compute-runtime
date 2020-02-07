@@ -9,12 +9,13 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 using namespace NEO;
 
 struct PlatformNegativeTest : public ::testing::Test {
     void SetUp() override {
-        pPlatform.reset(new Platform());
+        pPlatform.reset(new MockPlatform());
     }
 
     std::unique_ptr<Platform> pPlatform;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/error_mappers.h"
 #include "runtime/helpers/validators.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -161,7 +161,7 @@ TEST(Platform, givenNullPlatformThenReturnInvalidPlatform) {
 }
 
 TEST(Platform, givenPlatformThenReturnSUCCESS) {
-    Platform platform;
+    MockPlatform platform;
     cl_platform_id clPlatformId = &platform;
     EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
 }

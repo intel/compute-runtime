@@ -36,7 +36,7 @@ class Platform : public BaseObject<_cl_platform_id> {
   public:
     static const cl_ulong objectMagic = 0x8873ACDEF2342133LL;
 
-    Platform();
+    Platform(ExecutionEnvironment &executionEnvironment);
     ~Platform() override;
 
     Platform(const Platform &) = delete;
@@ -58,7 +58,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();
     std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
-    ExecutionEnvironment *peekExecutionEnvironment() const { return executionEnvironment; }
+    ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
     GmmHelper *peekGmmHelper() const;
     GmmClientContext *peekGmmClientContext() const;
 
@@ -75,7 +75,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
-    ExecutionEnvironment *executionEnvironment = nullptr;
+    ExecutionEnvironment &executionEnvironment;
 };
 
 extern std::vector<std::unique_ptr<Platform>> platformsImpl;

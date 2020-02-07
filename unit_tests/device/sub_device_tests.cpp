@@ -11,6 +11,8 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_platform.h"
+
 using namespace NEO;
 
 TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSubDevices) {
@@ -54,7 +56,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedTh
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     constructPlatform()->initialize();
-    auto nonDefaultPlatform = std::make_unique<Platform>();
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>();
     nonDefaultPlatform->initialize();
     auto device = nonDefaultPlatform->getClDevice(0);
     auto defaultDevice = platform()->getClDevice(0);

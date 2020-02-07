@@ -47,11 +47,11 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
     if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
-
-        Platform platform;
+        auto executionEnvironment = new ExecutionEnvironment();
+        Platform platform(*executionEnvironment);
         platform.initialize();
 
-        EXPECT_NE(nullptr, platform.peekExecutionEnvironment()->sourceLevelDebugger);
+        EXPECT_NE(nullptr, executionEnvironment->sourceLevelDebugger);
     }
 }
 

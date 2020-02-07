@@ -21,6 +21,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gmock/gmock.h"
 
@@ -91,7 +92,7 @@ class MockObject<Program> : public MockObjectBase<Program> {
 };
 
 typedef ::testing::Types<
-    Platform,
+    MockPlatform,
     IntelAccelerator,
     //Context,
     //Program,
@@ -103,7 +104,7 @@ typedef ::testing::Types<
     BaseObjectTypes;
 
 typedef ::testing::Types<
-    Platform,
+    MockPlatform,
     IntelAccelerator,
     Context,
     Program,

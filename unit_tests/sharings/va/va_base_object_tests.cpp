@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -26,7 +26,7 @@ struct VABaseObjectTests : public ::testing::Test {
 };
 
 typedef ::testing::Types<
-    Platform,
+    MockPlatform,
     IntelAccelerator,
     //Context,
     //Program,

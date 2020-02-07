@@ -436,7 +436,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
 }
 
 MockIgcOclDeviceCtx::MockIgcOclDeviceCtx() {
-    platform = new MockPlatform;
+    platform = new MockCIFPlatform;
     gtSystemInfo = new MockGTSystemInfo;
     igcFeWa = new MockIgcFeaturesAndWorkarounds;
 }

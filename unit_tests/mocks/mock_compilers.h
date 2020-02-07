@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ void clearIgcDebugVars();
 MockCompilerDebugVars getFclDebugVars();
 MockCompilerDebugVars getIgcDebugVars();
 
-struct MockPlatform : MockCIF<IGC::PlatformTagOCL> {
+struct MockCIFPlatform : MockCIF<IGC::PlatformTagOCL> {
     IGC::TypeErasedEnum GetProductFamily() const override {
         return productFamily;
     }
@@ -212,7 +212,7 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
         this->debugVars = debugVars;
     }
 
-    MockPlatform *platform = nullptr;
+    MockCIFPlatform *platform = nullptr;
     MockGTSystemInfo *gtSystemInfo = nullptr;
     MockIgcFeaturesAndWorkarounds *igcFeWa = nullptr;
     MockCompilerDebugVars debugVars;

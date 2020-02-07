@@ -34,14 +34,17 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
 }
 
 TEST(ExecutionEnvironment, givenPlatformWhenItIsConstructedThenItCretesExecutionEnvironmentWithOneRefCountInternal) {
-    std::unique_ptr<Platform> platform(new Platform);
-    ASSERT_NE(nullptr, platform->peekExecutionEnvironment());
-    EXPECT_EQ(1, platform->peekExecutionEnvironment()->getRefInternalCount());
+    auto executionEnvironment = new ExecutionEnvironment();
+    EXPECT_EQ(0, executionEnvironment->getRefInternalCount());
+
+    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
+    EXPECT_EQ(executionEnvironment, platform->peekExecutionEnvironment());
+    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
 }
 
 TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhenPlatformIsDestroyedThenExecutionEnvironmentIsNotDeleted) {
-    std::unique_ptr<Platform> platform(new Platform);
-    auto executionEnvironment = platform->peekExecutionEnvironment();
+    auto executionEnvironment = new ExecutionEnvironment();
+    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
     executionEnvironment->incRefInternal();
     platform.reset();
     EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
@@ -49,8 +52,8 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
 }
 
 TEST(ExecutionEnvironment, givenPlatformWhenItIsInitializedAndCreatesDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
-    std::unique_ptr<Platform> platform(new Platform);
-    auto executionEnvironment = platform->peekExecutionEnvironment();
+    auto executionEnvironment = new ExecutionEnvironment();
+    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
 
     auto expectedRefCounts = executionEnvironment->getRefInternalCount();
     platform->initialize();
@@ -65,8 +68,8 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsInitializedAndCreatesDevicesThen
 TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(1);
-    std::unique_ptr<Platform> platform(new Platform);
-    auto executionEnvironment = platform->peekExecutionEnvironment();
+    auto executionEnvironment = new ExecutionEnvironment();
+    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
     platform->initialize();
     auto device = platform->getClDevice(0);
     EXPECT_EQ(1, device->getRefInternalCount());
@@ -79,8 +82,8 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
 }
 
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
-    Platform platform;
-    auto executionEnvironment = platform.peekExecutionEnvironment();
+    auto executionEnvironment = new ExecutionEnvironment();
+    Platform platform(*executionEnvironment);
     platform.initialize();
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }

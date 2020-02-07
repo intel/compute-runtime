@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "core/helpers/string.h"
 #include "runtime/api/dispatch.h"
-#include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -61,23 +61,16 @@ class PlatformTestedSharingBuilderFactory : public SharingBuilderFactory {
     }
 };
 
-class MockPlatform : public Platform {
-  public:
-    void wrapFillGlobalDispatchTable() {
-        Platform::fillGlobalDispatchTable();
-    }
-};
-
 TEST(PlatformIcdTest, WhenPlatformSetupThenDispatchTableInitialization) {
     IcdRestore icdRestore;
     icdGlobalDispatchTable.clCreateFromGLBuffer = nullptr;
     EXPECT_EQ(nullptr, icdGlobalDispatchTable.clCreateFromGLBuffer);
 
     MockPlatform myPlatform;
-    myPlatform.wrapFillGlobalDispatchTable();
+    myPlatform.fillGlobalDispatchTable();
     EXPECT_EQ(nullptr, icdGlobalDispatchTable.clCreateFromGLBuffer);
 
     icdRestore.registerSharing<PlatformTestedSharingBuilderFactory>(SharingType::CLGL_SHARING);
-    myPlatform.wrapFillGlobalDispatchTable();
+    myPlatform.fillGlobalDispatchTable();
     EXPECT_NE(nullptr, icdGlobalDispatchTable.clCreateFromGLBuffer);
 }
