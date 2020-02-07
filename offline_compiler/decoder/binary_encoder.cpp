@@ -56,16 +56,8 @@ void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
 }
 
 bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength) {
-    std::ifstream ifs(srcFileName, std::ios::binary);
-    if (!ifs.good()) {
-        messagePrinter.printf("Cannot open %s.\n", srcFileName.c_str());
-        return false;
-    }
-    ifs.seekg(0, ifs.end);
-    auto length = static_cast<size_t>(ifs.tellg());
-    ifs.seekg(0, ifs.beg);
-    std::vector<char> binary(length);
-    ifs.read(binary.data(), length);
+    auto binary = argHelper->readBinaryFile(srcFileName);
+    auto length = binary.size();
     outBinary.write(binary.data(), length);
 
     if (binaryLength) {
@@ -75,27 +67,24 @@ bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostr
     return true;
 }
 
-int BinaryEncoder::createElf() {
+int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> ElfEncoder;
     ElfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
-
     //Build Options
-    if (fileExists(pathToDump + "build.bin")) {
-        auto binary = readBinaryFile(pathToDump + "build.bin");
+    if (argHelper->fileExists(pathToDump + "build.bin")) {
+        auto binary = argHelper->readBinaryFile(pathToDump + "build.bin");
         ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, "BuildOptions",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
         messagePrinter.printf("Warning! Missing build section.\n");
     }
-
     //LLVM or SPIRV
-    if (fileExists(pathToDump + "llvm.bin")) {
-        auto binary = readBinaryFile(pathToDump + "llvm.bin");
+    if (argHelper->fileExists(pathToDump + "llvm.bin")) {
+        auto binary = argHelper->readBinaryFile(pathToDump + "llvm.bin");
         ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, "Intel(R) OpenCL LLVM Object",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
-    } else if (fileExists(pathToDump + "spirv.bin")) {
-        auto binary = readBinaryFile(pathToDump + "spirv.bin");
-        std::string data(binary.begin(), binary.end());
+    } else if (argHelper->fileExists(pathToDump + "spirv.bin")) {
+        auto binary = argHelper->readBinaryFile(pathToDump + "spirv.bin");
         ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, "SPIRV Object",
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
     } else {
@@ -103,25 +92,15 @@ int BinaryEncoder::createElf() {
     }
 
     //Device Binary
-    if (fileExists(pathToDump + "device_binary.bin")) {
-        auto binary = readBinaryFile(pathToDump + "device_binary.bin");
-        ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
-                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
-    } else {
-        messagePrinter.printf("Missing device_binary.bin\n");
-        return -1;
-    }
+    auto deviceBinaryStr = deviceBinary.str();
+    std::vector<char> binary(deviceBinaryStr.begin(), deviceBinaryStr.end());
+    ElfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
+                             ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
 
     //Resolve Elf Binary
     auto elfBinary = ElfEncoder.encode();
+    argHelper->saveOutput(elfName, elfBinary.data(), elfBinary.size());
 
-    std::ofstream elfFile(elfName, std::ios::binary);
-    if (!elfFile.good()) {
-        messagePrinter.printf("Couldn't create %s.\n", elfName.c_str());
-        return -1;
-    }
-
-    elfFile.write(reinterpret_cast<const char *>(elfBinary.data()), elfBinary.size());
     return 0;
 }
 
@@ -160,21 +139,23 @@ Examples:
 
 int BinaryEncoder::encode() {
     std::vector<std::string> ptmFile;
-    readFileToVectorOfStrings(ptmFile, pathToDump + "PTM.txt");
-    calculatePatchListSizes(ptmFile);
-
-    std::ofstream deviceBinary(pathToDump + "device_binary.bin", std::ios::binary);
-    if (!deviceBinary.good()) {
-        messagePrinter.printf("Error! Couldn't create device_binary.bin.\n");
+    if (!argHelper->fileExists(pathToDump + "PTM.txt")) {
+        messagePrinter.printf("Error! Couldn't find PTM.txt");
         return -1;
     }
+    argHelper->readFileToVectorOfStrings(pathToDump + "PTM.txt", ptmFile);
+
+    calculatePatchListSizes(ptmFile);
+
+    std::stringstream deviceBinary; //(pathToDump + "device_binary.bin", std::ios::binary);
     int retVal = processBinary(ptmFile, deviceBinary);
-    deviceBinary.close();
+    argHelper->saveOutput(pathToDump + "device_binary.bin", deviceBinary.str().c_str(), deviceBinary.str().length());
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
 
-    return createElf();
+    retVal = createElf(deviceBinary);
+    return retVal;
 }
 
 int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFileLines, std::ostream &deviceBinary) {
@@ -252,8 +233,8 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
     bool heapsCopiedSuccesfully = true;
 
     // Use .asm if available, fallback to .dat
-    if (fileExists(pathToDump + kernelName + "_KernelHeap.asm")) {
-        auto kernelAsAsm = readBinaryFile(pathToDump + kernelName + "_KernelHeap.asm");
+    if (argHelper->fileExists(pathToDump + kernelName + "_KernelHeap.asm")) {
+        auto kernelAsAsm = argHelper->readBinaryFile(pathToDump + kernelName + "_KernelHeap.asm");
         std::string kernelAsBinary;
         messagePrinter.printf("Trying to assemble %s.asm\n", kernelName.c_str());
         if (false == iga->tryAssembleGenISA(std::string(kernelAsAsm.begin(), kernelAsAsm.end()), kernelAsBinary)) {
@@ -278,7 +259,7 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
     }
 
     // Write GeneralStateHeap, DynamicStateHeap, SurfaceStateHeap
-    if (fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
+    if (argHelper->fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
         heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", kernelBlob);
     }
     heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", kernelBlob);
@@ -324,40 +305,39 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
     return 0;
 }
 
-int BinaryEncoder::validateInput(uint32_t argc, const char **argv) {
-    if (!strcmp(argv[argc - 1], "--help")) {
+int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
+    if ("-help" == args[args.size() - 1]) {
         printHelp();
         return -1;
     }
 
-    for (uint32_t i = 2; i < argc; ++i) {
-        if (i < argc - 1) {
-            if (!strcmp(argv[i], "-dump")) {
-                pathToDump = std::string(argv[++i]);
-                addSlash(pathToDump);
-            } else if (!strcmp(argv[i], "-device")) {
-                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
-            } else if (!strcmp(argv[i], "-out")) {
-                elfName = std::string(argv[++i]);
-            } else {
-                messagePrinter.printf("Unknown argument %s\n", argv[i]);
-                printHelp();
-                return -1;
-            }
+    for (size_t argIndex = 2; argIndex < args.size(); ++argIndex) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
+        if ("-dump" == currArg && hasMoreArgs) {
+            pathToDump = args[++argIndex];
+            addSlash(pathToDump);
+        } else if ("-device" == currArg && hasMoreArgs) {
+            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+        } else if ("-out" == currArg && hasMoreArgs) {
+            elfName = args[++argIndex];
+        } else if ("-ignore_isa_padding" == currArg) {
+            ignoreIsaPadding = true;
+        } else if ("-q" == currArg) {
+            this->messagePrinter = MessagePrinter{true};
+            iga->setMessagePrinter(this->messagePrinter);
         } else {
-            if (!strcmp(argv[i], "-ignore_isa_padding")) {
-                ignoreIsaPadding = true;
-            } else {
-                messagePrinter.printf("Unknown argument %s\n", argv[i]);
-                printHelp();
-                return -1;
-            }
+            messagePrinter.printf("Unknown argument %s\n", currArg.c_str());
+            printHelp();
+            return -1;
         }
     }
     if (pathToDump.empty()) {
-        messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
-        pathToDump = "dump";
-        addSlash(pathToDump);
+        if (!argHelper->outputEnabled()) {
+            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            pathToDump = "dump";
+            addSlash(pathToDump);
+        }
     }
     if (elfName.find(".bin") == std::string::npos) {
         messagePrinter.printf(".bin extension is expected for binary file.\n");
@@ -427,12 +407,4 @@ int BinaryEncoder::writeDeviceBinary(const std::string &line, std::ostream &devi
         }
     }
     return 0;
-}
-
-bool BinaryEncoder::fileExists(const std::string &path) const {
-    return ::fileExists(path);
-}
-
-std::vector<char> BinaryEncoder::readBinaryFile(const std::string &path) const {
-    return ::readBinaryFile(path);
 }

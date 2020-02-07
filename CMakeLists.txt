@@ -821,7 +821,7 @@ if(MSVC)
 endif()
 
 add_subdirectory_unique(offline_compiler ${NEO_BUILD_DIR}/offline_compiler)
-target_compile_definitions(ocloc PRIVATE MOCKABLE_VIRTUAL=)
+target_compile_definitions(ocloc_lib PRIVATE MOCKABLE_VIRTUAL=)
 
 if(DONT_CARE_OF_VIRTUALS)
     set(NEO_CORE_RELEASE_LIB_NAME "neo_core")

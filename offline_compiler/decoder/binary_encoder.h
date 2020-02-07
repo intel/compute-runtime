@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "offline_compiler/ocloc_arg_helper.h"
+
 #include "helper.h"
 #include "iga_wrapper.h"
 
@@ -17,15 +19,20 @@ class BinaryEncoder {
   public:
     BinaryEncoder() : iga(new IgaWrapper) {
         iga->setMessagePrinter(messagePrinter);
+        argHelper = std::make_unique<OclocArgHelper>();
     }
     BinaryEncoder(const std::string &dump, const std::string &elf)
         : pathToDump(dump), elfName(elf){};
+    BinaryEncoder(std::unique_ptr<OclocArgHelper> helper) : argHelper(std::move(helper)), iga(new IgaWrapper) {
+        iga->setMessagePrinter(messagePrinter);
+    }
     int encode();
-    int validateInput(uint32_t argc, const char **argv);
+    int validateInput(const std::vector<std::string> &args);
 
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
+    std::unique_ptr<OclocArgHelper> argHelper = nullptr;
     bool ignoreIsaPadding = false;
     std::string pathToDump, elfName;
     MessagePrinter messagePrinter;
@@ -35,7 +42,7 @@ class BinaryEncoder {
     bool copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary) {
         return copyBinaryToBinary(srcFileName, outBinary, nullptr);
     }
-    int createElf();
+    int createElf(std::stringstream &deviceBinary);
     void printHelp();
     int processBinary(const std::vector<std::string> &ptmFile, std::ostream &deviceBinary);
     int processKernel(size_t &i, const std::vector<std::string> &ptmFileLines, std::ostream &deviceBinary);
@@ -43,6 +50,4 @@ class BinaryEncoder {
     void write(std::stringstream &in, std::ostream &deviceBinary);
     int writeDeviceBinary(const std::string &line, std::ostream &deviceBinary);
     void addPadding(std::ostream &out, size_t numBytes);
-    MOCKABLE_VIRTUAL bool fileExists(const std::string &path) const;
-    MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &path) const;
 };

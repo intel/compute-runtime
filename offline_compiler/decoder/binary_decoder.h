@@ -8,6 +8,7 @@
 #pragma once
 #include "offline_compiler/decoder/helper.h"
 #include "offline_compiler/decoder/iga_wrapper.h"
+#include "offline_compiler/ocloc_arg_helper.h"
 
 #include <memory>
 #include <string>
@@ -33,15 +34,21 @@ class BinaryDecoder {
   public:
     BinaryDecoder() : iga(new IgaWrapper) {
         iga->setMessagePrinter(messagePrinter);
+        if (nullptr == argHelper) {
+            argHelper = std::make_unique<OclocArgHelper>();
+        }
     }
     BinaryDecoder(const std::string &file, const std::string &patch, const std::string &dump)
         : binaryFile(file), pathToPatch(patch), pathToDump(dump){};
+    BinaryDecoder(std::unique_ptr<OclocArgHelper> helper) : argHelper(std::move(helper)), iga(new IgaWrapper) {
+        iga->setMessagePrinter(messagePrinter);
+    };
     int decode();
-    int validateInput(uint32_t argc, const char **argv);
-
+    int validateInput(const std::vector<std::string> &args);
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
+    std::unique_ptr<OclocArgHelper> argHelper = nullptr;
     bool ignoreIsaPadding = false;
     BinaryHeader programHeader, kernelHeader;
     std::vector<char> binary;
@@ -53,6 +60,7 @@ class BinaryDecoder {
     void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
     const void *getDevBinary();
+    std::vector<std::string> loadPatchList();
     void parseTokens();
     void printHelp();
     int processBinary(const void *&ptr, std::ostream &ptmFile);

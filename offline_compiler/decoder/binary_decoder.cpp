@@ -45,7 +45,7 @@ T readUnaligned(const void *ptr) {
 
 int BinaryDecoder::decode() {
     parseTokens();
-    std::ofstream ptmFile(pathToDump + "PTM.txt");
+    std::stringstream ptmFile;
     auto devBinPtr = getDevBinary();
     if (devBinPtr == nullptr) {
         messagePrinter.printf("Error! Device Binary section was not found.\n");
@@ -85,7 +85,7 @@ void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std:
 }
 
 const void *BinaryDecoder::getDevBinary() {
-    binary = readBinaryFile(binaryFile);
+    binary = argHelper->readBinaryFile(binaryFile);
     const void *data = nullptr;
     std::string decoderErrors;
     std::string decoderWarnings;
@@ -95,18 +95,15 @@ const void *BinaryDecoder::getDevBinary() {
         auto sectionData = ArrayRef<const char>(reinterpret_cast<const char *>(sectionHeader.data.begin()), sectionHeader.data.size());
         switch (sectionHeader.header->type) {
         case NEO::Elf::SHT_OPENCL_LLVM_BINARY: {
-            std::ofstream ofs(pathToDump + "llvm.bin", std::ios::binary);
-            ofs.write(sectionData.begin(), sectionData.size());
+            argHelper->saveOutput(pathToDump + "llvm.bin", sectionData.begin(), sectionData.size());
             break;
         }
         case NEO::Elf::SHT_OPENCL_SPIRV: {
-            std::ofstream ofs(pathToDump + "spirv.bin", std::ios::binary);
-            ofs.write(sectionData.begin(), sectionData.size());
+            argHelper->saveOutput(pathToDump + "spirv.bin", sectionData.begin(), sectionData.size());
             break;
         }
         case NEO::Elf::SHT_OPENCL_OPTIONS: {
-            std::ofstream ofs(pathToDump + "build.bin", std::ios::binary);
-            ofs.write(sectionData.begin(), sectionData.size());
+            argHelper->saveOutput(pathToDump + "build.bin", sectionData.begin(), sectionData.size());
             break;
         }
         case NEO::Elf::SHT_OPENCL_DEV_BINARY: {
@@ -135,70 +132,78 @@ uint8_t BinaryDecoder::getSize(const std::string &typeStr) {
     }
 }
 
+std::vector<std::string> BinaryDecoder::loadPatchList() {
+    if (argHelper->hasHeaders()) {
+        return argHelper->headersToVectorOfStrings();
+    } else {
+        std::vector<std::string> patchList;
+        if (pathToPatch.empty()) {
+            messagePrinter.printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
+            patchList = {
+                "struct SProgramBinaryHeader",
+                "{",
+                "    uint32_t   Magic;",
+                "    uint32_t   Version;",
+                "    uint32_t   Device;",
+                "    uint32_t   GPUPointerSizeInBytes;",
+                "    uint32_t   NumberOfKernels;",
+                "    uint32_t   SteppingId;",
+                "    uint32_t   PatchListSize;",
+                "};",
+                "",
+                "struct SKernelBinaryHeader",
+                "{",
+                "    uint32_t   CheckSum;",
+                "    uint64_t   ShaderHashCode;",
+                "    uint32_t   KernelNameSize;",
+                "    uint32_t   PatchListSize;",
+                "};",
+                "",
+                "struct SKernelBinaryHeaderCommon :",
+                "       SKernelBinaryHeader",
+                "{",
+                "    uint32_t   KernelHeapSize;",
+                "    uint32_t   GeneralStateHeapSize;",
+                "    uint32_t   DynamicStateHeapSize;",
+                "    uint32_t   SurfaceStateHeapSize;",
+                "    uint32_t   KernelUnpaddedSize;",
+                "};",
+                "",
+                "enum PATCH_TOKEN",
+                "{",
+                "    PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO,             // 41 @SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo@",
+                "    PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO,           // 42 @SPatchAllocateConstantMemorySurfaceProgramBinaryInfo@",
+                "};",
+                "struct SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo :",
+                "    SPatchItemHeader",
+                "{",
+                "    uint32_t   Type;",
+                "    uint32_t   GlobalBufferIndex;",
+                "    uint32_t   InlineDataSize;",
+                "};",
+                "struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :",
+                "    SPatchItemHeader",
+                "{",
+                "    uint32_t   ConstantBufferIndex;",
+                "    uint32_t   InlineDataSize;",
+                "};",
+
+            };
+        } else {
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_list.h", true);
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_shared.h", true);
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_g7.h", true);
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_g8.h", true);
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_g9.h", true);
+            readFileToVectorOfStrings(patchList, pathToPatch + "patch_g10.h", true);
+        }
+        return patchList;
+    }
+}
+
 void BinaryDecoder::parseTokens() {
     //Creating patchlist definitions
-    std::vector<std::string> patchList;
-
-    if (pathToPatch.empty()) {
-        messagePrinter.printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
-        patchList = {
-            "struct SProgramBinaryHeader",
-            "{",
-            "    uint32_t   Magic;",
-            "    uint32_t   Version;",
-            "    uint32_t   Device;",
-            "    uint32_t   GPUPointerSizeInBytes;",
-            "    uint32_t   NumberOfKernels;",
-            "    uint32_t   SteppingId;",
-            "    uint32_t   PatchListSize;",
-            "};",
-            "",
-            "struct SKernelBinaryHeader",
-            "{",
-            "    uint32_t   CheckSum;",
-            "    uint64_t   ShaderHashCode;",
-            "    uint32_t   KernelNameSize;",
-            "    uint32_t   PatchListSize;",
-            "};",
-            "",
-            "struct SKernelBinaryHeaderCommon :",
-            "       SKernelBinaryHeader",
-            "{",
-            "    uint32_t   KernelHeapSize;",
-            "    uint32_t   GeneralStateHeapSize;",
-            "    uint32_t   DynamicStateHeapSize;",
-            "    uint32_t   SurfaceStateHeapSize;",
-            "    uint32_t   KernelUnpaddedSize;",
-            "};",
-            "",
-            "enum PATCH_TOKEN",
-            "{",
-            "    PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_PROGRAM_BINARY_INFO,             // 41 @SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo@",
-            "    PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO,           // 42 @SPatchAllocateConstantMemorySurfaceProgramBinaryInfo@",
-            "};",
-            "struct SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo :",
-            "    SPatchItemHeader",
-            "{",
-            "    uint32_t   Type;",
-            "    uint32_t   GlobalBufferIndex;",
-            "    uint32_t   InlineDataSize;",
-            "};",
-            "struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :",
-            "    SPatchItemHeader",
-            "{",
-            "    uint32_t   ConstantBufferIndex;",
-            "    uint32_t   InlineDataSize;",
-            "};",
-
-        };
-    } else {
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_list.h", true);
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_shared.h", true);
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g7.h", true);
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g8.h", true);
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g9.h", true);
-        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g10.h", true);
-    }
+    auto patchList = loadPatchList();
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
     if (pos == patchList.size()) {
@@ -354,6 +359,8 @@ int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
         ptmFile << "Kernel #" << i << '\n';
         processKernel(ptr, ptmFile);
     }
+
+    argHelper->saveOutput(pathToDump + "PTM.txt", ptmFile);
     return 0;
 }
 
@@ -394,12 +401,12 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     messagePrinter.printf("Trying to disassemble %s.krn\n", kernelName.c_str());
     std::string disassembledKernel;
     if (iga->tryDisassembleGenISA(ptr, KernelHeapUnpaddedSize, disassembledKernel)) {
-        writeDataToFile((fileName + ".asm").c_str(), disassembledKernel.data(), disassembledKernel.size());
+        argHelper->saveOutput(fileName + ".asm", disassembledKernel.data(), disassembledKernel.size());
     } else {
         if (ignoreIsaPadding) {
-            writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapUnpaddedSize);
+            argHelper->saveOutput(fileName + ".dat", ptr, KernelHeapUnpaddedSize);
         } else {
-            writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapSize);
+            argHelper->saveOutput(fileName + ".dat", ptr, KernelHeapSize);
         }
     }
     ptr = ptrOffset(ptr, KernelHeapSize);
@@ -407,16 +414,16 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     if (GeneralStateHeapSize != 0) {
         messagePrinter.printf("Warning! GeneralStateHeapSize wasn't 0.\n");
         fileName = pathToDump + kernelName + "_GeneralStateHeap.bin";
-        writeDataToFile(fileName.c_str(), ptr, DynamicStateHeapSize);
+        argHelper->saveOutput(fileName, ptr, DynamicStateHeapSize);
         ptr = ptrOffset(ptr, GeneralStateHeapSize);
     }
 
     fileName = pathToDump + kernelName + "_DynamicStateHeap.bin";
-    writeDataToFile(fileName.c_str(), ptr, DynamicStateHeapSize);
+    argHelper->saveOutput(fileName, ptr, DynamicStateHeapSize);
     ptr = ptrOffset(ptr, DynamicStateHeapSize);
 
     fileName = pathToDump + kernelName + "_SurfaceStateHeap.bin";
-    writeDataToFile(fileName.c_str(), ptr, SurfaceStateHeapSize);
+    argHelper->saveOutput(fileName, ptr, SurfaceStateHeapSize);
     ptr = ptrOffset(ptr, SurfaceStateHeapSize);
 
     if (KernelPatchListSize == 0) {
@@ -501,33 +508,34 @@ uint32_t BinaryDecoder::readStructFields(const std::vector<std::string> &patchLi
     return fullSize;
 }
 
-int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
-    if (!strcmp(argv[argc - 1], "--help")) {
+int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
+    if (args[args.size() - 1] == "-help") {
         printHelp();
         return -1;
     }
 
-    for (uint32_t i = 2; i < argc; ++i) {
-        if (i < argc - 1) {
-            if (!strcmp(argv[i], "-file")) {
-                binaryFile = std::string(argv[++i]);
-            } else if (!strcmp(argv[i], "-device")) {
-                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
-            } else if (!strcmp(argv[i], "-patch")) {
-                pathToPatch = std::string(argv[++i]);
-                addSlash(pathToPatch);
-            } else if (!strcmp(argv[i], "-dump")) {
-                pathToDump = std::string(argv[++i]);
-                addSlash(pathToDump);
-            }
+    for (size_t argIndex = 2; argIndex < args.size(); ++argIndex) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
+        if ("-file" == currArg && hasMoreArgs) {
+            binaryFile = args[++argIndex];
+        } else if ("-device" == currArg && hasMoreArgs) {
+            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+        } else if ("-patch" == currArg && hasMoreArgs) {
+            pathToPatch = args[++argIndex];
+            addSlash(pathToPatch);
+        } else if ("-dump" == currArg && hasMoreArgs) {
+            pathToDump = args[++argIndex];
+            addSlash(pathToDump);
+        } else if ("-ignore_isa_padding" == currArg) {
+            ignoreIsaPadding = true;
+        } else if ("-q" == currArg) {
+            this->messagePrinter = MessagePrinter{true};
+            iga->setMessagePrinter(this->messagePrinter);
         } else {
-            if (!strcmp(argv[i], "-ignore_isa_padding")) {
-                ignoreIsaPadding = true;
-            } else {
-                messagePrinter.printf("Unknown argument %s\n", argv[i]);
-                printHelp();
-                return -1;
-            }
+            messagePrinter.printf("Unknown argument %s\n", currArg.c_str());
+            printHelp();
+            return -1;
         }
     }
     if (binaryFile.find(".bin") == std::string::npos) {
@@ -535,15 +543,15 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
         printHelp();
         return -1;
     }
-    if (pathToDump.empty()) {
-        messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
-        pathToDump = std::string("dump/");
-    }
-
     if (false == iga->isKnownPlatform()) {
         messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
     }
-
-    MakeDirectory(pathToDump.c_str());
+    if (!argHelper->outputEnabled()) {
+        if (pathToDump.empty()) {
+            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            pathToDump = std::string("dump/");
+        }
+        MakeDirectory(pathToDump.c_str());
+    }
     return 0;
 }

@@ -1051,7 +1051,8 @@ TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadO
     std::string file("non_existing_file");
     ASSERT_FALSE(fileExists(file.c_str()));
 
-    bool result = OfflineCompiler::readOptionsFromFile(options, file);
+    auto helper = std::make_unique<OclocArgHelper>();
+    bool result = OfflineCompiler::readOptionsFromFile(options, file, helper);
 
     EXPECT_FALSE(result);
 }

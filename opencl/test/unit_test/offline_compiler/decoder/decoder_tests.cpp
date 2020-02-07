@@ -29,7 +29,7 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 
 namespace NEO {
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
-    const char *argv[] = {
+    std::vector<std::string> args = {
         "ocloc",
         "decoder",
         "-file",
@@ -40,22 +40,22 @@ TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
         "test_files/created"};
 
     MockDecoder decoder;
-    EXPECT_EQ(0, decoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_EQ(0, decoder.validateInput(args));
 }
 
 TEST(DecoderTests, WhenMissingParametersThenValidateInputReturnsErrorCode) {
-    const char *argv[] = {
+    std::vector<std::string> args = {
         "ocloc",
         "decoder",
         "-patch",
         "test_files"};
 
     MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_NE(0, decoder.validateInput(args));
 }
 
 TEST(DecoderTests, GivenWrongParametersWhenParsingParametersThenValidateInputReturnsErrorCode) {
-    const char *argv[] = {
+    std::vector<std::string> args = {
         "cloc",
         "decoder",
         "-file",
@@ -66,7 +66,7 @@ TEST(DecoderTests, GivenWrongParametersWhenParsingParametersThenValidateInputRet
         "test_files/created"};
 
     MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_NE(0, decoder.validateInput(args));
 }
 
 TEST(DecoderTests, GivenValidSizeStringWhenGettingSizeThenProperOutcomeIsExpectedAndExceptionIsNotThrown) {

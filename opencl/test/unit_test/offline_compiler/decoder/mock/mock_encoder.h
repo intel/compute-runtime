@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hash.h"
 
 #include "offline_compiler/decoder/binary_encoder.h"
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
 #include "mock_iga_wrapper.h"
 
@@ -21,7 +22,10 @@ struct MockEncoder : public BinaryEncoder {
         : BinaryEncoder(dump, elf) {
         this->iga.reset(new MockIgaWrapper);
         setMessagePrinter(MessagePrinter{true});
+        this->argHelper.reset(new MockOclocArgHelper(filesMap));
     };
+
+    std::map<std::string, std::string> filesMap;
 
     bool copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength) override {
         auto it = filesMap.find(srcFileName);
@@ -34,16 +38,6 @@ struct MockEncoder : public BinaryEncoder {
         }
         return true;
     }
-
-    bool fileExists(const std::string &path) const override {
-        return filesMap.count(path) || BinaryEncoder::fileExists(path);
-    }
-
-    std::vector<char> readBinaryFile(const std::string &path) const override {
-        return filesMap.count(path) ? std::vector<char>(filesMap.at(path).c_str(), filesMap.at(path).c_str() + filesMap.at(path).size())
-                                    : BinaryEncoder::readBinaryFile(path);
-    }
-
     using BinaryEncoder::addPadding;
     using BinaryEncoder::calculatePatchListSizes;
     using BinaryEncoder::copyBinaryToBinary;
@@ -60,6 +54,4 @@ struct MockEncoder : public BinaryEncoder {
     MockIgaWrapper *getMockIga() const {
         return static_cast<MockIgaWrapper *>(iga.get());
     }
-
-    std::map<std::string, std::string> filesMap;
 };

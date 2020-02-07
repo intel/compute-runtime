@@ -31,6 +31,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler() : OfflineCompiler() {
+        argHelper.reset(new OclocArgHelper(
+            0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr));
     }
 
     int initialize(size_t numArgs, const std::vector<std::string> &argv) {

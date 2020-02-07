@@ -17,6 +17,7 @@ struct MockDecoder : public BinaryDecoder {
         : BinaryDecoder(file, patch, dump) {
         this->iga.reset(new MockIgaWrapper);
         setMessagePrinter(MessagePrinter{true});
+        argHelper = std::make_unique<OclocArgHelper>();
     };
     using BinaryDecoder::binaryFile;
     using BinaryDecoder::decode;

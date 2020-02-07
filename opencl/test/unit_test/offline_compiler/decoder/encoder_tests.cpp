@@ -17,7 +17,7 @@
 
 namespace NEO {
 TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
-    const char *argv[] = {
+    std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-dump",
@@ -26,11 +26,11 @@ TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
         "test_files/binary_gen.bin"};
 
     MockEncoder encoder;
-    EXPECT_EQ(0, encoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_EQ(0, encoder.validateInput(args));
 }
 
 TEST(EncoderTests, WhenMissingParametersThenErrorCodeIsReturned) {
-    const char *argv[] = {
+    std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-dump",
@@ -38,11 +38,11 @@ TEST(EncoderTests, WhenMissingParametersThenErrorCodeIsReturned) {
         "-out"};
 
     MockEncoder encoder;
-    EXPECT_NE(0, encoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_NE(0, encoder.validateInput(args));
 }
 
-TEST(EncoderTests, GivenWrongParametersWhenParsingParametersThenErrorCodeIsReturne) {
-    const char *argv[] = {
+TEST(EncoderTests, GivenWrongParametersWhenParsingParametersThenErrorCodeIsReturned) {
+    std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-dump",
@@ -51,7 +51,7 @@ TEST(EncoderTests, GivenWrongParametersWhenParsingParametersThenErrorCodeIsRetur
         "rasputin"};
 
     MockEncoder encoder;
-    EXPECT_NE(0, encoder.validateInput(static_cast<uint32_t>(arrayCount<const char *>(argv)), argv));
+    EXPECT_NE(0, encoder.validateInput(args));
 }
 
 TEST(EncoderTests, WhenTryingToCopyNonExistingFileThenErrorCodeIsReturned) {

@@ -11,6 +11,8 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
+#include "offline_compiler/ocloc_arg_helper.h"
+
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
@@ -38,6 +40,7 @@ std::string getDevicesTypes();
 class OfflineCompiler {
   public:
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal);
+    static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, std::unique_ptr<OclocArgHelper> helper);
     int build();
     std::string &getBuildLog();
     void printUsage();
@@ -51,7 +54,9 @@ class OfflineCompiler {
     }
 
     std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName);
-    static bool readOptionsFromFile(std::string &optionsOut, const std::string &file);
+
+    static bool readOptionsFromFile(std::string &optionsOut, const std::string &file, std::unique_ptr<OclocArgHelper> &helper);
+
     ArrayRef<const uint8_t> getPackedDeviceBinaryOutput() {
         return this->elfBinary;
     }
@@ -126,5 +131,7 @@ class OfflineCompiler {
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
     CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx = nullptr;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
+
+    std::unique_ptr<OclocArgHelper> argHelper = nullptr;
 };
 } // namespace NEO

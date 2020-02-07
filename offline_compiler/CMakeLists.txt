@@ -4,9 +4,9 @@
 # SPDX-License-Identifier: MIT
 #
 
-project(ocloc)
+project(ocloc_lib)
 
-set(CLOC_SRCS_LIB
+set(CLOC_LIB_SRCS_LIB
   ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar.h
   ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_decoder.h
   ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
@@ -30,6 +30,10 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/helper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/translate_platform_base.h
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_api.cpp
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_api.h
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_arg_helper.h
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_arg_helper.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.h
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_helper.cpp
@@ -47,24 +51,24 @@ set(CLOC_SRCS_LIB
 )
 
 if(${IGA_HEADERS_AVAILABLE})
-  set(CLOC_SRCS_LIB ${CLOC_SRCS_LIB}
+  set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}
     ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.cpp
     ${NEO_SOURCE_DIR}/offline_compiler/decoder${BRANCH_DIR_SUFFIX}/translate_platform.cpp
   )
 else()
-  set(CLOC_SRCS_LIB ${CLOC_SRCS_LIB}
+  set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}
     ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_stubs.cpp
   )
 endif()
 
 if(WIN32)
-  list(APPEND CLOC_SRCS_LIB
+  list(APPEND CLOC_LIB_SRCS_LIB
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
     ${NEO_SOURCE_DIR}/opencl/source/dll/windows/options_windows.cpp
   )
 else()
-  list(APPEND CLOC_SRCS_LIB
+  list(APPEND CLOC_LIB_SRCS_LIB
     ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
     ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
@@ -73,7 +77,7 @@ endif()
 
 string(REPLACE ";" "," ALL_SUPPORTED_PRODUCT_FAMILIES "${ALL_SUPPORTED_PRODUCT_FAMILY}")
 
-set(CLOC_LIB_FLAGS_DEFINITIONS
+set(CLOC_LIB_LIB_FLAGS_DEFINITIONS
   -DCIF_HEADERS_ONLY_BUILD
   -DALL_SUPPORTED_PRODUCT_FAMILIES=${ALL_SUPPORTED_PRODUCT_FAMILIES}
 )
@@ -83,43 +87,34 @@ set(RUNTIME_GENX_CPP_FILES
 )
 
 macro(macro_for_each_platform)
-  list(APPEND CLOC_SRCS_LIB ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl)
+  list(APPEND CLOC_LIB_SRCS_LIB ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl)
 endmacro()
 
 macro(macro_for_each_gen)
   foreach(SRC_IT ${RUNTIME_GENX_CPP_FILES})
     set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/${SRC_IT})
     if(EXISTS ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
-      list(APPEND CLOC_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
+      list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
     endif()
   endforeach()
   apply_macro_for_each_platform()
   
-  list(APPEND CLOC_SRCS_LIB ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND CLOC_LIB_SRCS_LIB ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")
 
-set(CLOC_SRCS
-  ${CLOC_SRCS_LIB}
-  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+set(CLOC_LIB_SRCS
+  ${CLOC_LIB_SRCS_LIB}
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
-add_executable(ocloc ${CLOC_SRCS})
-
-if(UNIX)
-  install(FILES $<TARGET_FILE:ocloc>
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-    COMPONENT ocloc)
-  set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST "ocloc")
-endif()
+add_library(ocloc_lib SHARED ${CLOC_LIB_SRCS})
 
 add_subdirectories()
 
-create_project_source_tree(ocloc)
+create_project_source_tree(ocloc_lib)
 
-set(CLOC_INCLUDES
+set(CLOC_LIB_INCLUDES
   ${ENGINE_NODE_DIR}
   ${IGC_OCL_ADAPTOR_DIR}
   ${CIF_BASE_DIR}
@@ -128,22 +123,75 @@ set(CLOC_INCLUDES
   ${NEO__IGC_INCLUDE_DIR}
 )
 
-target_include_directories(ocloc BEFORE PRIVATE ${CLOC_INCLUDES})
-target_include_directories(ocloc BEFORE PRIVATE ${IGA_INCLUDE_DIR})
+target_include_directories(ocloc_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
+target_include_directories(ocloc_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
-target_compile_definitions(ocloc PUBLIC ${CLOC_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} 
+target_compile_definitions(ocloc_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} 
                                         IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-target_compile_definitions(ocloc PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
+target_compile_definitions(ocloc_lib PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(MSVC)
-  target_link_libraries(ocloc dbghelp)
+  target_link_libraries(ocloc_lib dbghelp)
 endif()
 
 if(UNIX)
-  target_link_libraries(ocloc dl pthread)
+  target_link_libraries(ocloc_lib dl pthread)
 endif()
 
+set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB} PARENT_SCOPE)
+
+set(CLOC_SRCS
+   ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
+   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.h
+   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.cpp
+   ${NEO_SOURCE_DIR}/offline_compiler/utilities/get_path.h
+)
+if(WIN32)
+  list(APPEND CLOC_SRCS
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_path.cpp
+
+  )
+else()
+  list(APPEND CLOC_SRCS
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_path.cpp
+  )
+endif()
+
+add_executable(ocloc ${CLOC_SRCS} ${NEO_SOURCE_DIR}/offline_compiler/main.cpp)
+add_dependencies(ocloc ocloc_lib)
+target_link_libraries(ocloc ocloc_lib)
+
+set(OCLOC_LIB_NAME "ocloc")
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(OCLOC_BITNESS_SUFFIX 32)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(OCLOC_BITNESS_SUFFIX 64)
+endif()
+
+if(UNIX)
+  install(FILES $<TARGET_FILE:ocloc_lib>
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/intel-opencl
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  install(FILES $<TARGET_FILE:ocloc>
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    COMPONENT ocloc)
+  set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST "ocloc")
+  set_target_properties(ocloc_lib PROPERTIES OUTPUT_NAME ${OCLOC_LIB_NAME})
+  add_definitions(-DOCLOC_LIB_NAME="lib${OCLOC_LIB_NAME}.so")
+else()
+	set_target_properties(ocloc_lib PROPERTIES OUTPUT_NAME "${OCLOC_LIB_NAME}${OCLOC_BITNESS_SUFFIX}")
+	add_definitions(-DOCLOC_LIB_NAME="${OCLOC_LIB_NAME}${OCLOC_BITNESS_SUFFIX}.dll")
+endif()
+
+create_project_source_tree(ocloc)
 set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
+set_target_properties(ocloc_lib PROPERTIES FOLDER "offline_compiler")
+
 
 add_custom_target(copy_compiler_files DEPENDS ${NEO__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
@@ -153,10 +201,11 @@ if(WIN32)
     add_custom_command(
       TARGET copy_compiler_files
       PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:ocloc_lib>
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc_lib>
       COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:ocloc>
       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc>
     )
   endforeach()
 endif()
 
-set(CLOC_SRCS_LIB ${CLOC_SRCS_LIB} PARENT_SCOPE)

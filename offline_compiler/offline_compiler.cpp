@@ -78,6 +78,24 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
+        pOffCompiler->argHelper = std::make_unique<OclocArgHelper>();
+        retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
+    }
+
+    if (retVal != CL_SUCCESS) {
+        delete pOffCompiler;
+        pOffCompiler = nullptr;
+    }
+
+    return pOffCompiler;
+}
+
+OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, std::unique_ptr<OclocArgHelper> helper) {
+    retVal = CL_SUCCESS;
+    auto pOffCompiler = new OfflineCompiler();
+
+    if (pOffCompiler) {
+        pOffCompiler->argHelper = std::move(helper);
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
@@ -256,7 +274,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             oclocOptionsFileName.append("_ocloc_options.txt");
 
             std::string oclocOptionsFromFile;
-            bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName);
+            bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName, argHelper);
             if (oclocOptionsRead && !isQuiet()) {
                 printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
             }
@@ -275,7 +293,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             std::string optionsFileName = inputFile.substr(0, ext_start);
             optionsFileName.append("_options.txt");
 
-            bool optionsRead = readOptionsFromFile(options, optionsFileName);
+            bool optionsRead = readOptionsFromFile(options, optionsFileName, argHelper);
             if (optionsRead && !isQuiet()) {
                 printf("Building with options:\n%s\n", options.c_str());
             }
@@ -284,7 +302,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             internalOptionsFileName.append("_internal_options.txt");
 
             std::string internalOptionsFromFile;
-            bool internalOptionsRead = readOptionsFromFile(internalOptionsFromFile, internalOptionsFileName);
+            bool internalOptionsRead = readOptionsFromFile(internalOptionsFromFile, internalOptionsFileName, argHelper);
             if (internalOptionsRead && !isQuiet()) {
                 printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
             }
@@ -295,7 +313,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     parseDebugSettings();
 
     // set up the device inside the program
-    sourceFromFile = loadDataFromFile(inputFile.c_str(), sourceFromFileSize);
+    sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
     if (sourceFromFileSize == 0) {
         retVal = INVALID_FILE;
         return retVal;
@@ -507,7 +525,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (deviceName.empty()) {
             printf("Error: Device name missing.\n");
             retVal = INVALID_COMMAND_LINE;
-        } else if (!fileExists(inputFile)) {
+        } else if (!argHelper->fileExists(inputFile)) {
             printf("Error: Input file %s missing.\n", inputFile.c_str());
             retVal = INVALID_FILE;
         } else {
@@ -828,24 +846,18 @@ void OfflineCompiler::writeOutAllFiles() {
     if (irBinary) {
         std::string irOutputFileName = generateFilePathForIr(fileBase) + generateOptsSuffix();
 
-        writeDataToFile(
-            irOutputFileName.c_str(),
-            irBinary,
-            irBinarySize);
+        argHelper->saveOutput(irOutputFileName, irBinary, irBinarySize);
     }
 
     if (genBinary) {
         std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
 
-        writeDataToFile(
-            genOutputFile.c_str(),
-            genBinary,
-            genBinarySize);
+        argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
 
         if (useCppFile) {
             std::string cppOutputFile = generateFilePath(outputDirectory, fileBase, ".cpp");
             std::string cpp = parseBinAsCharArray((uint8_t *)genBinary, genBinarySize, fileTrunk);
-            writeDataToFile(cppOutputFile.c_str(), cpp.c_str(), cpp.size());
+            argHelper->saveOutput(cppOutputFile, cpp.c_str(), cpp.size());
         }
     }
 
@@ -856,8 +868,8 @@ void OfflineCompiler::writeOutAllFiles() {
         } else {
             elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
         }
-        writeDataToFile(
-            elfOutputFile.c_str(),
+        argHelper->saveOutput(
+            elfOutputFile,
             elfBinary.data(),
             elfBinary.size());
     }
@@ -865,19 +877,19 @@ void OfflineCompiler::writeOutAllFiles() {
     if (debugDataBinary) {
         std::string debugOutputFile = generateFilePath(outputDirectory, fileBase, ".dbg") + generateOptsSuffix();
 
-        writeDataToFile(
-            debugOutputFile.c_str(),
+        argHelper->saveOutput(
+            debugOutputFile,
             debugDataBinary,
             debugDataBinarySize);
     }
 }
 
-bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file) {
-    if (!fileExists(file)) {
+bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, std::unique_ptr<OclocArgHelper> &helper) {
+    if (!helper->fileExists(file)) {
         return false;
     }
     size_t optionsSize = 0U;
-    auto optionsFromFile = loadDataFromFile(file.c_str(), optionsSize);
+    auto optionsFromFile = helper->loadDataFromFile(file, optionsSize);
     if (optionsSize > 0) {
         // Remove comment containing copyright header
         options = optionsFromFile.get();
