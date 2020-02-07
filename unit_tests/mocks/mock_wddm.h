@@ -69,7 +69,6 @@ class WddmMock : public Wddm {
     bool isKmDafEnabled() const override;
     void setKmDafEnabled(bool state);
     void setHwContextId(unsigned long hwContextId);
-    bool openAdapter() override;
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) override;

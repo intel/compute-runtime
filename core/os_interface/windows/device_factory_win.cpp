@@ -33,7 +33,11 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        std::unique_ptr<Wddm> wddm(Wddm::createWddm(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()));
+        auto hwDeviceId = Wddm::discoverDevices();
+        if (!hwDeviceId) {
+            return false;
+        }
+        std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()));
         if (!wddm->init(*hardwareInfo)) {
             return false;
         }

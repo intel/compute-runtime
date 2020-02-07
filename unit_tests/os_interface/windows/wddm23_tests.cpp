@@ -26,7 +26,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         GdiDllFixture::SetUp();
 
         executionEnvironment = platform()->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
         osInterface = std::make_unique<OSInterface>();
         osInterface->get()->setWddm(wddm);
 

@@ -126,7 +126,7 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriver
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(Wddm::createWddm(rootDeviceEnvironment));
+    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
     EXPECT_NE(nullptr, osInterface->get()->getWddm());
 
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));

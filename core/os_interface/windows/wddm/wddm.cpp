@@ -61,7 +61,8 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm(RootDeviceEnvironment &rootDeviceEnvironment) : rootDeviceEnvironment(rootDeviceEnvironment) {
+Wddm::Wddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+    UNRECOVERABLE_IF(!hwDeviceId);
     featureTable.reset(new FeatureTable());
     workaroundTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
@@ -80,19 +81,7 @@ Wddm::~Wddm() {
     UNRECOVERABLE_IF(temporaryResources.get())
 }
 
-bool Wddm::openAdapter() {
-    hwDeviceId = discoverDevices();
-    if (!hwDeviceId) {
-        return false;
-    }
-    return true;
-}
-
 bool Wddm::init(HardwareInfo &outHardwareInfo) {
-    if (!openAdapter()) {
-        return false;
-    }
-
     if (!queryAdapterInfo()) {
         return false;
     }

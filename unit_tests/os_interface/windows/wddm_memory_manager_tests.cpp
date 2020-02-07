@@ -38,7 +38,7 @@ void WddmMemoryManagerFixture::SetUp() {
     GdiDllFixture::SetUp();
 
     executionEnvironment = platform()->peekExecutionEnvironment();
-    wddm = static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get()));
+    wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
     if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         executionEnvironment->rootDeviceEnvironments[0]->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks));
@@ -109,7 +109,7 @@ TEST(WddmAllocationTest, givenMemoryPoolWhenPassedToWddmAllocationConstructorThe
 TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
-    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[0].get())));
+    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get())));
     uint64_t base = 0x56000;
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);
@@ -838,7 +838,7 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
 TEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
-        auto mockWddm = Wddm::createWddm(*executionEnvironment->rootDeviceEnvironments[i].get());
+        auto mockWddm = Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get());
         auto hwInfo = *platformDevices[0];
         mockWddm->init(hwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
