@@ -13,6 +13,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
+bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
+
+template <typename GfxFamily>
 typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,

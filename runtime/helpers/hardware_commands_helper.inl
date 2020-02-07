@@ -26,9 +26,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
-
-template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
     return false;
 }

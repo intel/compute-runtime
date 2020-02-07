@@ -67,4 +67,17 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
     return threadsPerEu * euCount;
 }
 
+template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+}
+
+template <typename GfxFamily>
+inline size_t PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
+    return 0u;
+}
+
+template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
+}
+
 } // namespace NEO

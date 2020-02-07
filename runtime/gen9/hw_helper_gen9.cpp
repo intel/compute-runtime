@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 }
 
 template <>
-void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo) {
+void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     auto pCmd = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
     *pCmd = Family::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);

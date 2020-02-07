@@ -106,7 +106,7 @@ const std::vector<aub_stream::EngineType> HwHelperHw<Family>::getGpgpuEngineInst
 };
 
 template <>
-void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo) {
+void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {
         auto stepping = hwInfo.platform.usRevId;
         if (stepping == 0) {

@@ -183,7 +183,7 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
                                                                                                        uint64_t immediateData,
                                                                                                        bool dcFlush,
                                                                                                        const HardwareInfo &hwInfo) {
-    addPipeControlWA(commandStream, hwInfo);
+    addPipeControlWA(commandStream, gpuAddress, hwInfo);
 
     auto pipeControl = obtainPipeControl(commandStream, dcFlush);
     pipeControl->setPostSyncOperation(operation);
@@ -193,12 +193,10 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
     if (operation == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
         pipeControl->setImmediateData(immediateData);
     }
-    return pipeControl;
-}
 
-template <typename GfxFamily>
-inline size_t PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization() {
-    return 0u;
+    setExtraPipeControlProperties(*pipeControl, hwInfo);
+
+    return pipeControl;
 }
 
 template <typename GfxFamily>
@@ -222,10 +220,6 @@ typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeContro
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo) {
-}
-
-template <typename GfxFamily>
 typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
     return PipeControlHelper<GfxFamily>::obtainPipeControl(commandStream, dcFlush);
 }
@@ -238,7 +232,7 @@ size_t PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl() {
 template <typename GfxFamily>
 size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
     const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
-    return pipeControlCount * getSizeForSinglePipeControl() + getSizeForAdditonalSynchronization();
+    return pipeControlCount * getSizeForSinglePipeControl() + getSizeForAdditonalSynchronization(hwInfo);
 }
 
 template <typename GfxFamily>

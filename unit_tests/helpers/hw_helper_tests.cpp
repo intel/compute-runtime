@@ -203,7 +203,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     HardwareInfo hardwareInfo = *platformDevices[0];
 
     auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
-    auto additionalPcSize = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(hardwareInfo) ? sizeof(PIPE_CONTROL) : 0u;
+    auto additionalPcSize = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), additionalPcSize));
@@ -227,7 +227,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     HardwareInfo hardwareInfo = *platformDevices[0];
 
     auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
-    auto additionalPcSize = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(hardwareInfo) ? sizeof(PIPE_CONTROL) : 0u;
+    auto additionalPcSize = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), additionalPcSize));
