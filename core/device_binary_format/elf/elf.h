@@ -5,7 +5,6 @@
  *
  */
 
-// Abstract: Defines the types used for ELF headers/sections.
 #pragma once
 
 #include "core/utilities/const_stringref.h"
