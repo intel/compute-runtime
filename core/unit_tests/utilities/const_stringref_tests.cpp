@@ -98,3 +98,17 @@ TEST(ConstStringRef, WhenCopyAsignedThenIdenticalAsOrigin) {
     b = a;
     EXPECT_EQ(a, b);
 }
+
+TEST(ConstStringRef, WhenCheckingForInclusionThenDoesNotReadOutOfBounds) {
+    static constexpr ConstStringRef str1("Text", 2);
+    ConstStringRef substr1("Tex");
+    EXPECT_FALSE(str1.contains(substr1));
+
+    static constexpr ConstStringRef str2("AabAac");
+    ConstStringRef substr2("Aac");
+    EXPECT_TRUE(str2.contains(substr2));
+
+    static constexpr ConstStringRef str3("AabAac");
+    ConstStringRef substr3("Aacd");
+    EXPECT_FALSE(str3.contains(substr3));
+}

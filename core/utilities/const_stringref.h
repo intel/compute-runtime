@@ -79,6 +79,24 @@ class ConstStringRef {
         return ptr + len;
     }
 
+    constexpr bool contains(const char *subString) const noexcept {
+        const char *findBeg = ptr;
+        const char *findEnd = ptr + len;
+        while (findBeg != findEnd) {
+            const char *lhs = findBeg;
+            const char *rhs = subString;
+            while ((lhs < findEnd) && (*lhs == *rhs) && ('\0' != *rhs)) {
+                ++lhs;
+                ++rhs;
+            }
+            if ('\0' == *rhs) {
+                return true;
+            }
+            ++findBeg;
+        }
+        return false;
+    }
+
   protected:
     const char *ptr = nullptr;
     size_t len = 0U;

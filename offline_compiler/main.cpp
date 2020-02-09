@@ -7,6 +7,7 @@
 
 #include "core/os_interface/os_library.h"
 #include "offline_compiler/multi_command.h"
+#include "offline_compiler/ocloc_fatbinary.h"
 #include "offline_compiler/offline_compiler.h"
 
 #include "decoder/binary_decoder.h"
@@ -84,13 +85,17 @@ int main(int numArgs, const char *argv[]) {
             auto pMulti = std::unique_ptr<MultiCommand>(MultiCommand::create(allArgs, retValue));
             return retValue;
         } else {
+            if (requestedFatBinary(numArgs, argv)) {
+                return buildFatbinary(numArgs, argv);
+            }
+
             int retVal = CL_SUCCESS;
             std::vector<std::string> allArgs;
             if (numArgs > 1) {
                 allArgs.assign(argv, argv + numArgs);
             }
 
-            OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, retVal);
+            OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal);
 
             if (retVal == CL_SUCCESS) {
                 retVal = buildWithSafetyGuard(pCompiler);

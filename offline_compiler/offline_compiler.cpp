@@ -72,12 +72,12 @@ OfflineCompiler::~OfflineCompiler() {
     delete[] genBinary;
 }
 
-OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, int &retVal) {
+OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal) {
     retVal = CL_SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
-        retVal = pOffCompiler->initialize(numArgs, allArgs);
+        retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
     if (retVal != CL_SUCCESS) {
@@ -177,7 +177,9 @@ int OfflineCompiler::build() {
 
     if (retVal == CL_SUCCESS) {
         generateElfBinary();
-        writeOutAllFiles();
+        if (dumpFiles) {
+            writeOutAllFiles();
+        }
     }
 
     return retVal;
@@ -233,7 +235,8 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
     return dst;
 }
 
-int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs) {
+int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles) {
+    this->dumpFiles = dumpFiles;
     int retVal = CL_SUCCESS;
     const char *source = nullptr;
     std::unique_ptr<char[]> sourceFromFile;
@@ -597,7 +600,6 @@ std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
         extPos = filePath.size();
     }
 
-    std::string fileName;
     std::string fileTrunk = filePath.substr(slashPos, (extPos - slashPos));
 
     return fileTrunk;

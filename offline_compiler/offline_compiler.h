@@ -6,6 +6,11 @@
  */
 
 #pragma once
+
+#include "core/os_interface/os_library.h"
+#include "core/utilities/arrayref.h"
+#include "core/utilities/const_stringref.h"
+
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
@@ -32,7 +37,7 @@ std::string getDevicesTypes();
 
 class OfflineCompiler {
   public:
-    static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, int &retVal);
+    static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal);
     int build();
     std::string &getBuildLog();
     void printUsage();
@@ -47,14 +52,21 @@ class OfflineCompiler {
 
     std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName);
     static bool readOptionsFromFile(std::string &optionsOut, const std::string &file);
+    ArrayRef<const uint8_t> getPackedDeviceBinaryOutput() {
+        return this->elfBinary;
+    }
+
+    static std::string getFileNameTrunk(std::string &filePath);
+    const HardwareInfo &getHardwareInfo() const {
+        return *hwInfo;
+    }
 
   protected:
     OfflineCompiler();
 
     int getHardwareInfo(const char *pDeviceName);
-    std::string getFileNameTrunk(std::string &filePath);
     std::string getStringWithinDelimiters(const std::string &src);
-    int initialize(size_t numArgs, const std::vector<std::string> &allArgs);
+    int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
     void setStatelessToStatefullBufferOffsetFlag();
     void resolveExtraSettings();
@@ -85,6 +97,7 @@ class OfflineCompiler {
     std::string internalOptions;
     std::string sourceCode;
     std::string buildLog;
+    bool dumpFiles = true;
 
     bool useLlvmText = false;
     bool useLlvmBc = false;

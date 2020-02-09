@@ -232,7 +232,7 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -261,7 +261,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -289,7 +289,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
         gEnvironment->devicePrefix.c_str(),
         "-llvm_text"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -327,7 +327,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
     // clang-format off
     uint8_t binary[] = {
         0x02, 0x23, 0x3, 0x40, 0x56, 0x7, 0x80, 0x90, 0x1, 0x03,
@@ -374,7 +374,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
         gEnvironment->devicePrefix.c_str(),
         "-cpp_file"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -398,7 +398,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
         "-out_dir",
         "offline_compiler_test"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -417,7 +417,7 @@ TEST_F(OfflineCompilerTests, PrintUsage) {
         "--help"};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STRNE("", output.c_str());
@@ -435,7 +435,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -453,7 +453,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -469,7 +469,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     };
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA, true, retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 
@@ -484,7 +484,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
         "test_files/ImANaughtyFile.cl",
         "-device"};
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB, true, retVal);
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -502,7 +502,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErro
         "foobar"};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device foobar.\n");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -517,7 +517,7 @@ TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);

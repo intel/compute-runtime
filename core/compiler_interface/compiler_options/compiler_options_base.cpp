@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,16 +30,16 @@ bool contains(const std::string &options, ConstStringRef optionToFind) {
     return contains(options.c_str(), optionToFind);
 }
 
-TokenizedString tokenize(ConstStringRef src) {
+TokenizedString tokenize(ConstStringRef src, char sperator) {
     TokenizedString ret;
     const char *it = src.begin();
     while (it < src.end()) {
         const char *beg = it;
-        while ((beg < src.end()) && (*beg == ' ')) {
+        while ((beg < src.end()) && (*beg == sperator)) {
             ++beg;
         }
         const char *end = beg;
-        while ((end < src.end()) && (*end != ' ')) {
+        while ((end < src.end()) && (*end != sperator)) {
             ++end;
         }
         it = end;

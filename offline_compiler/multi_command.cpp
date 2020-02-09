@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@ namespace NEO {
 int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &allArgs) {
     int retVal = CL_SUCCESS;
     std::string buildLog;
-    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, retVal);
+    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal);
     if (retVal == CL_SUCCESS) {
         retVal = buildWithSafetyGuard(pCompiler);
 

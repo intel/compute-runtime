@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,6 +142,6 @@ bool contains(const char *options, ConstStringRef optionToFind);
 bool contains(const std::string &options, ConstStringRef optionToFind);
 
 using TokenizedString = StackVec<ConstStringRef, 32>;
-TokenizedString tokenize(ConstStringRef src);
+TokenizedString tokenize(ConstStringRef src, char sperator = ' ');
 } // namespace CompilerOptions
 } // namespace NEO

@@ -7,6 +7,11 @@
 project(ocloc)
 
 set(CLOC_SRCS_LIB
+  ${NEO_SOURCE_DIR}/core/device_binary_format/ar/ar.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/ar/ar_decoder.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/ar/ar_decoder.cpp
+  ${NEO_SOURCE_DIR}/core/device_binary_format/ar/ar_encoder.h
+  ${NEO_SOURCE_DIR}/core/device_binary_format/ar/ar_encoder.cpp
   ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf.h
   ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_decoder.h
   ${NEO_SOURCE_DIR}/core/device_binary_format/elf/elf_decoder.cpp
@@ -25,6 +30,8 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/helper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.h
   ${NEO_SOURCE_DIR}/offline_compiler/decoder/translate_platform_base.h
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.cpp
+  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.h
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_helper.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.h
@@ -32,6 +39,7 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/offline_compiler/multi_command.h
   ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_options.cpp
   ${NEO_SOURCE_DIR}/offline_compiler/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
+  ${NEO_SOURCE_DIR}/core/compiler_interface/compiler_options/compiler_options_base.cpp
   ${NEO_SOURCE_DIR}/core/compiler_interface/create_main.cpp
   ${NEO_SOURCE_DIR}/core/helpers/hw_info.cpp
   ${NEO_SOURCE_DIR}/runtime/platform/extensions.cpp

@@ -34,7 +34,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     }
 
     int initialize(size_t numArgs, const std::vector<std::string> &argv) {
-        return OfflineCompiler::initialize(numArgs, argv);
+        return OfflineCompiler::initialize(numArgs, argv, true);
     }
 
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
