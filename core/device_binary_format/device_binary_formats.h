@@ -24,7 +24,8 @@ enum class DeviceBinaryFormat : uint8_t {
     OclElf,
     OclLibrary,
     OclCompiledObject,
-    Patchtokens
+    Patchtokens,
+    Archive
 };
 
 enum class DecodeError : uint8_t {
@@ -73,6 +74,8 @@ template <>
 bool isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t>);
 template <>
 bool isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t>);
+template <>
+bool isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(const ArrayRef<const uint8_t>);
 
 inline bool isAnyDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) {
     if (isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(binary)) {
@@ -81,19 +84,24 @@ inline bool isAnyDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) {
     if (isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(binary)) {
         return true;
     }
+    if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(binary)) {
+        return true;
+    }
     return false;
 }
 
 template <DeviceBinaryFormat Format>
-SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                             std::string &outErrReason, std::string &outWarning);
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice, std::string &, std::string &);
+SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice, std::string &, std::string &);
+SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
+template <>
+SingleDeviceBinary unpackSingleDeviceBinary<DeviceBinaryFormat::Archive>(const ArrayRef<const uint8_t>, const ConstStringRef, const TargetDevice &, std::string &, std::string &);
 
-inline SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice requestedTargetDevice,
+inline SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                    std::string &outErrReason, std::string &outWarning) {
     SingleDeviceBinary ret = {};
     ret.format = DeviceBinaryFormat::Unknown;
@@ -101,6 +109,8 @@ inline SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t>
         return unpackSingleDeviceBinary<DeviceBinaryFormat::OclElf>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(archive)) {
         return unpackSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
+    } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(archive)) {
+        return unpackSingleDeviceBinary<DeviceBinaryFormat::Archive>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
     } else {
         outErrReason = "Unknown format";
     }
@@ -119,6 +129,9 @@ inline bool isAnyPackedDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) 
     if (isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(binary)) {
         return true;
     }
+    if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(binary)) {
+        return true;
+    }
     return false;
 }
 
@@ -133,6 +146,8 @@ template <>
 DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
 template <>
 DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+template <>
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
 
 inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
     std::pair<DecodeError, DeviceBinaryFormat> ret;
@@ -144,6 +159,9 @@ inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(Progr
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Patchtokens;
         ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(dst, src, outErrReason, outWarning);
+    } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(src.deviceBinary)) {
+        ret.second = DeviceBinaryFormat::Archive;
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(dst, src, outErrReason, outWarning);
     } else {
         outErrReason = "Unknown format";
     }

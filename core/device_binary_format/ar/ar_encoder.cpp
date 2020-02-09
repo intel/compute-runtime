@@ -22,14 +22,30 @@ ArFileEntryHeader *ArEncoder::appendFileEntry(const ConstStringRef fileName, con
     if (fileName.empty()) {
         return nullptr;
     }
+
+    auto alignedFileSize = fileData.size() + (fileData.size() & 1U);
     ArFileEntryHeader header = {};
+
+    if (padTo8Bytes && (0 != ((fileEntries.size() + sizeof(ArFileEntryHeader)) % 8))) {
+        ArFileEntryHeader paddingHeader = {};
+        auto paddingName = "pad_" + std::to_string(paddingEntry++);
+        UNRECOVERABLE_IF(paddingName.length() > sizeof(paddingHeader.identifier));
+        memcpy_s(paddingHeader.identifier, sizeof(paddingHeader.identifier), paddingName.c_str(), paddingName.size());
+        paddingHeader.identifier[paddingName.size()] = SpecialFileNames::fileNameTerminator;
+        size_t paddingSize = 8U - ((fileEntries.size() + 2 * sizeof(ArFileEntryHeader)) % 8);
+        auto padSizeString = std::to_string(paddingSize);
+        memcpy_s(paddingHeader.fileSizeInBytes, sizeof(paddingHeader.fileSizeInBytes), padSizeString.c_str(), padSizeString.size());
+        this->fileEntries.reserve(this->fileEntries.size() + sizeof(paddingHeader) + paddingSize + sizeof(header) + alignedFileSize);
+        this->fileEntries.insert(this->fileEntries.end(), reinterpret_cast<uint8_t *>(&paddingHeader), reinterpret_cast<uint8_t *>(&paddingHeader + 1));
+        this->fileEntries.resize(this->fileEntries.size() + paddingSize, ' ');
+    }
+
     memcpy_s(header.identifier, sizeof(header.identifier), fileName.begin(), fileName.size());
     header.identifier[fileName.size()] = SpecialFileNames::fileNameTerminator;
     auto sizeString = std::to_string(fileData.size());
     UNRECOVERABLE_IF(sizeString.length() > sizeof(header.fileSizeInBytes));
     memcpy_s(header.fileSizeInBytes, sizeof(header.fileSizeInBytes), sizeString.c_str(), sizeString.size());
-    auto alignedFileSize = fileData.size() + (fileData.size() & 1U);
-    this->fileEntries.reserve(sizeof(header) + alignedFileSize);
+    this->fileEntries.reserve(this->fileEntries.size() + sizeof(header) + alignedFileSize);
     auto newFileHeaderOffset = this->fileEntries.size();
     this->fileEntries.insert(this->fileEntries.end(), reinterpret_cast<uint8_t *>(&header), reinterpret_cast<uint8_t *>(&header + 1));
     this->fileEntries.insert(this->fileEntries.end(), fileData.begin(), fileData.end());

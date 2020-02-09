@@ -7,6 +7,7 @@
 
 #include "core/compiler_interface/intermediate_representations.h"
 #include "core/device_binary_format/ar/ar_encoder.h"
+#include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "test.h"
 
@@ -101,4 +102,47 @@ TEST(ArEncoder, GivenValidTwoFileEntriesWith2byteUnalignedDataThenPaddingIsImpli
     EXPECT_EQ(0, memcmp(file0Data, data0, sizeof(data0)));
     EXPECT_EQ(0, memcmp(file1, &expectedSection1, sizeof(expectedSection1)));
     EXPECT_EQ(0, memcmp(file1Data, data1, sizeof(data1)));
+}
+
+TEST(ArEncoder, GivenValidTwoFileEntriesWhen8BytePaddingIsRequestedThenPaddingFileEntriesAreAddedWhenNeeded) {
+    std::string fileName0 = "a";
+    std::string fileName1 = "b";
+    std::string fileName2 = "c";
+    const uint8_t data0[4] = "123";      // will require padding before
+    const uint8_t data1[8] = "9ABCDEF";  // won't require padding before
+    const uint8_t data2[16] = "9ABCDEF"; // will require padding before
+    ArEncoder encoder(true);
+
+    encoder.appendFileEntry(fileName0, data0);
+    encoder.appendFileEntry(fileName1, data1);
+    encoder.appendFileEntry(fileName2, data2);
+
+    auto arData = encoder.encode();
+    EXPECT_TRUE(NEO::hasSameMagic(arMagic, arData));
+    ASSERT_EQ(arData.size(), arMagic.size() + sizeof(data0) + sizeof(data1) + sizeof(data2) + 5 * sizeof(ArFileEntryHeader) + 16);
+
+    auto files = arData.data() + arMagic.size();
+
+    ArFileEntryHeader *pad0 = reinterpret_cast<ArFileEntryHeader *>(files);
+    auto pad0Data = reinterpret_cast<uint8_t *>(pad0) + sizeof(ArFileEntryHeader);
+
+    ArFileEntryHeader *file0 = reinterpret_cast<ArFileEntryHeader *>(pad0Data + 8);
+    auto file0Data = reinterpret_cast<uint8_t *>(file0) + sizeof(ArFileEntryHeader);
+
+    ArFileEntryHeader *file1 = reinterpret_cast<ArFileEntryHeader *>(file0Data + sizeof(data0));
+    auto file1Data = reinterpret_cast<uint8_t *>(file1) + sizeof(ArFileEntryHeader);
+
+    ArFileEntryHeader *pad1 = reinterpret_cast<ArFileEntryHeader *>(file1Data + sizeof(data1));
+    auto pad1Data = reinterpret_cast<uint8_t *>(pad1) + sizeof(ArFileEntryHeader);
+
+    ArFileEntryHeader *file2 = reinterpret_cast<ArFileEntryHeader *>(pad1Data + 8);
+    auto file2Data = reinterpret_cast<uint8_t *>(file2) + sizeof(ArFileEntryHeader);
+
+    EXPECT_EQ(0U, ptrDiff(file0Data, arData.data()) % 8);
+    EXPECT_EQ(0U, ptrDiff(file1Data, arData.data()) % 8);
+    EXPECT_EQ(0U, ptrDiff(file2Data, arData.data()) % 8);
+
+    EXPECT_EQ(0, memcmp(file0Data, data0, sizeof(data0)));
+    EXPECT_EQ(0, memcmp(file1Data, data1, sizeof(data1)));
+    EXPECT_EQ(0, memcmp(file2Data, data2, sizeof(data2)));
 }

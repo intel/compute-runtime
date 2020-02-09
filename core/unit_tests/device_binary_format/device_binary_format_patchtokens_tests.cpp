@@ -10,12 +10,12 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
-TEST(IsDeviceBinaryFormatPatchtokens, GiveValidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryReturnTrue) {
     PatchTokensTestData::ValidProgramWithKernel programTokens;
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage));
 }
 
-TEST(IsDeviceBinaryFormatPatchtokens, GiveInvalidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryReturnTrue) {
     const uint8_t binary[] = "not_patchtokens";
     EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(binary));
 }

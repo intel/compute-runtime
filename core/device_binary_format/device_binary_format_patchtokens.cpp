@@ -21,7 +21,7 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(const ArrayRef<c
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                                   std::string &outErrReason, std::string &outWarning) {
     auto programHeader = NEO::PatchTokenBinary::decodeProgramHeader(archive);
     if (nullptr == programHeader) {

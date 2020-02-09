@@ -36,7 +36,7 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const 
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                              std::string &outErrReason, std::string &outWarning) {
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
