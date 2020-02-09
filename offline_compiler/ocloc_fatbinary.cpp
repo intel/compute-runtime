@@ -226,7 +226,6 @@ int buildFatbinary(int argc, const char *argv[]) {
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             deviceArgIndex = argIndex + 1;
             ++argIndex;
-            break;
         } else if ((CompilerOptions::arch32bit == currArg) || (ConstStringRef("-32") == currArg)) {
             pointerSizeInBits = "32";
         } else if ((CompilerOptions::arch64bit == currArg) || (ConstStringRef("-64") == currArg)) {

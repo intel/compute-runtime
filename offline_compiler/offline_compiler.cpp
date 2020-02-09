@@ -636,6 +636,29 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 
   -device <device_type>         Target device.
                                 <device_type> can be: %s
+                                If multiple target devices are provided, ocloc
+                                will compile for each of these targets and will
+                                create a fatbinary archive that contains all of
+                                device binaries produced this way.
+                                Supported -device patterns examples :
+                                -device skl        ; will compile 1 target
+                                -device skl,icllp  ; will compile 2 targets
+                                -device skl-icllp  ; will compile all targets
+                                                     in range (inclusive)
+                                -device skl-       ; will compile all targets
+                                                     newer/same as provided
+                                -device -skl       ; will compile all targets
+                                                     older/same as provided
+                                -device gen9       ; will compile all targets
+                                                     matching the same gen
+                                -device gen9-gen11 ; will compile all targets
+                                                     in range (inclusive)
+                                -device gen9-      ; will compile all targets
+                                                     newer/same as provided
+                                -device -gen9      ; will compile all targets
+                                                     older/same as provided
+                                -device *          ; will compile all targets
+                                                     known to ocloc
 
   -output <filename>            Optional output file base name.
                                 Default is input file's base name.
