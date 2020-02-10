@@ -14,7 +14,7 @@ class HwDeviceId : NonCopyableClass {
   public:
     HwDeviceId(int fileDescriptorIn) : fileDescriptor(fileDescriptorIn) {}
     ~HwDeviceId();
-    constexpr int getFileDescriptor() const { return fileDescriptor; }
+    int getFileDescriptor() const { return fileDescriptor; }
 
   protected:
     const int fileDescriptor;
