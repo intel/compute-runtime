@@ -214,6 +214,28 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
     EXPECT_TRUE(buffer->getGraphicsAllocation()->isTbxWritable(GraphicsAllocation::defaultBank));
 }
 
+HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThanFlagsChange) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    ASSERT_NE(nullptr, buffer);
+    buffer->getGraphicsAllocation()->setAubWritable(false, GraphicsAllocation::defaultBank);
+    buffer->getGraphicsAllocation()->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isTbxWritable(GraphicsAllocation::defaultBank));
+
+    auto ptr = allocateAlignedMemory(buffer->getSize(), MemoryConstants::cacheLineSize);
+
+    retVal = pCmdQ->enqueueWriteBuffer(buffer.get(), true, 0u, buffer->getSize(), ptr.get(), nullptr, 0u, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0, memcmp(ptr.get(), buffer->getGraphicsAllocation()->getUnderlyingBuffer(), buffer->getSize()));
+
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isTbxWritable(GraphicsAllocation::defaultBank));
+}
+
 HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBeforeEnqueueWrite) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableZeroCopyForBuffers.set(true);

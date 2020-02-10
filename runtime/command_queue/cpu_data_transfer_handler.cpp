@@ -85,6 +85,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     // read/write buffers are always blocking
     if (!blockQueue || transferProperties.blocking) {
         err.set(Event::waitForEvents(eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList));
+        bool modifySimulationFlags = false;
 
         if (outEventObj) {
             outEventObj->setSubmitTimeStamp();
@@ -123,9 +124,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                 eventCompleted = true;
             }
             if (!unmapInfo.readOnly) {
-                auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation();
-                graphicsAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
-                graphicsAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+                modifySimulationFlags = true;
             }
             break;
         case CL_COMMAND_READ_BUFFER:
@@ -135,6 +134,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         case CL_COMMAND_WRITE_BUFFER:
             memcpy_s(transferProperties.getCpuPtrForReadWrite(), transferProperties.size[0], transferProperties.ptr, transferProperties.size[0]);
             eventCompleted = true;
+            modifySimulationFlags = true;
             break;
         case CL_COMMAND_MARKER:
             break;
@@ -151,6 +151,11 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             } else {
                 outEventObj->updateExecutionStatus();
             }
+        }
+        if (modifySimulationFlags) {
+            auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation();
+            graphicsAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+            graphicsAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
         }
     }
 
