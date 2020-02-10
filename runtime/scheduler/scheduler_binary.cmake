@@ -42,6 +42,7 @@ function(compile_kernel target gen_type platform_type kernel)
   endif()
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   list(APPEND __cloc__options__ "-cl-std=CL2.0")
+  list(APPEND __cloc__options__ "-cl-intel-disable-a64WA")
   add_custom_command(
     OUTPUT ${OUTPUTPATH}
     COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >"
