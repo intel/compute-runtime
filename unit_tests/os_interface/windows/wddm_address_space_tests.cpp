@@ -62,8 +62,7 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddr
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
 
     wddm->returnGood = 1;
 
@@ -81,8 +80,7 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
     uintptr_t expectedReserve = 0;
     auto ret = wddm->reserveValidAddressRange(size, reserve);
     EXPECT_FALSE(ret);
@@ -96,8 +94,7 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenRetu
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
 
     wddm->returnInvalidCount = 1;
 
@@ -115,8 +112,7 @@ TEST(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenRetu
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
 
     wddm->returnInvalidCount = 2;
 
@@ -134,8 +130,7 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSeco
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
 
     wddm->returnInvalidCount = 2;
     wddm->returnNullCount = 1;

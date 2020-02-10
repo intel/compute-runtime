@@ -56,8 +56,7 @@ GEN12LPTEST_F(Gen12LpWddmTest, whenConfigureDeviceAddressSpaceThenObtainMinAddre
         .Times(1)
         .WillRepeatedly(::testing::Return(minAddress));
 
-    auto hwInfoMock = *platformDevices[0];
-    wddm->init(hwInfoMock);
+    wddm->init();
 
     EXPECT_EQ(minAddress, wddm->getWddmMinAddress());
 }

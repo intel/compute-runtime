@@ -52,8 +52,7 @@ class MockWddmMemoryManagerFixture {
         wddm->resetGdi(gdi);
         constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        auto hwInfo = *platformDevices[0];
-        wddm->init(hwInfo);
+        wddm->init();
 
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
@@ -101,8 +100,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        auto hwInfo = *platformDevices[0];
-        wddm->init(hwInfo);
+        wddm->init();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();

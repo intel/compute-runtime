@@ -51,8 +51,7 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
     if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
-        auto hwInfo = *executionEnvironment.getHardwareInfo();
-        wddm->init(hwInfo);
+        wddm->init();
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
     }
 

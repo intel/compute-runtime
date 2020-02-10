@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,15 +25,14 @@ TEST_F(MockOSTimeWinTest, DynamicResolution) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock(rootDeviceEnvironment));
-    auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    auto hwInfo = mDev->getHardwareInfo();
-    wddmMock->init(hwInfo);
+    wddmMock->init();
 
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));
 
     double res = 0.0;
-    res = timeWin->getDynamicDeviceTimerResolution(mDev->getHardwareInfo());
+    res = timeWin->getDynamicDeviceTimerResolution(device->getHardwareInfo());
     EXPECT_EQ(res, 1e+09);
 }
 

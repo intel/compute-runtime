@@ -81,7 +81,7 @@ Wddm::~Wddm() {
     UNRECOVERABLE_IF(temporaryResources.get())
 }
 
-bool Wddm::init(HardwareInfo &outHardwareInfo) {
+bool Wddm::init() {
     if (!queryAdapterInfo()) {
         return false;
     }
@@ -90,27 +90,27 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
+    auto hardwareInfo = std::make_unique<HardwareInfo>();
+    hardwareInfo->platform = *gfxPlatform;
+    hardwareInfo->featureTable = *featureTable;
+    hardwareInfo->workaroundTable = *workaroundTable;
+    hardwareInfo->gtSystemInfo = *gtSystemInfo;
 
-    outHardwareInfo.platform = *gfxPlatform;
-    outHardwareInfo.featureTable = *featureTable;
-    outHardwareInfo.workaroundTable = *workaroundTable;
-    outHardwareInfo.gtSystemInfo = *gtSystemInfo;
-
-    outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
-    outHardwareInfo.capabilityTable.maxRenderFrequency = maxRenderFrequency;
-    outHardwareInfo.capabilityTable.instrumentationEnabled =
-        (outHardwareInfo.capabilityTable.instrumentationEnabled && instrumentationEnabled);
+    hardwareInfo->capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
+    hardwareInfo->capabilityTable.maxRenderFrequency = maxRenderFrequency;
+    hardwareInfo->capabilityTable.instrumentationEnabled =
+        (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
 
-    hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
-    if (hwConfig->configureHwInfo(&outHardwareInfo, &outHardwareInfo, nullptr)) {
+    hwConfig->adjustPlatformForProductFamily(hardwareInfo.get());
+    if (hwConfig->configureHwInfo(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
         return false;
     }
 
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
+    rootDeviceEnvironment.executionEnvironment.setHwInfo(hardwareInfo.get());
     rootDeviceEnvironment.executionEnvironment.initGmm();
-
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(outHardwareInfo);
 
     if (WddmVersion::WDDM_2_3 == getWddmVersion()) {
         wddmInterface = std::make_unique<WddmInterface23>(*this);

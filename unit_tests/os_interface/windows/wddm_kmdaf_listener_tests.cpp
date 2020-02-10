@@ -40,8 +40,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
         wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get(), new MockGdi()));
-        auto hwInfo = *executionEnvironment->getHardwareInfo();
-        wddmWithKmDafMock->init(hwInfo);
+        wddmWithKmDafMock->init();
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;
     }
     void TearDown() {

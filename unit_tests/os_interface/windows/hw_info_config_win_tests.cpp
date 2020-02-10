@@ -67,7 +67,8 @@ void HwInfoConfigTestWindows::SetUp() {
     osInterface.reset(new OSInterface());
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    wddm->init(outHwInfo);
+    wddm->init();
+    outHwInfo = *executionEnvironment->getHardwareInfo();
 }
 
 void HwInfoConfigTestWindows::TearDown() {

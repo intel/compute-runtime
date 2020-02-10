@@ -73,8 +73,7 @@ TEST_F(Wddm20Tests, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAd
 
 TEST_F(Wddm20Tests, doubleCreation) {
     EXPECT_EQ(1u, wddm->createContextResult.called);
-    auto hwInfo = *platformDevices[0];
-    wddm->init(hwInfo);
+    wddm->init();
     EXPECT_EQ(1u, wddm->createContextResult.called);
 }
 
@@ -141,7 +140,6 @@ TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathConta
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
-    HardwareInfo outHwInfo;
 
     const HardwareInfo *hwInfo = platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
@@ -151,25 +149,25 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    bool success = wddm->init(outHwInfo);
+    bool success = wddm->init();
 
     EXPECT_TRUE(success);
 
-    EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+    EXPECT_EQ(executionEnvironment.getHardwareInfo()->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
-    HardwareInfo outHwInfo = {};
-
     const HardwareInfo *hwInfo = platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
-    MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    bool success = wddm->init(outHwInfo);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+    bool success = wddm->init();
+    HardwareInfo outHwInfo = *executionEnvironment.getHardwareInfo();
     EXPECT_TRUE(success);
 
     EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
@@ -183,8 +181,6 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
 }
 
 TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {
-    HardwareInfo outHwInfo = {};
-
     HardwareInfo hwInfo = *platformDevices[0];
     hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
@@ -194,7 +190,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
-    auto ret = wddm->init(outHwInfo);
+    auto ret = wddm->init();
     EXPECT_FALSE(ret);
 
     // reset mock gdi
@@ -503,8 +499,7 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
                                                      FtrL3IACoherency))
         .Times(1)
         .WillRepeatedly(::testing::Return(true));
-    auto hwInfoMock = *platformDevices[0];
-    wddm->init(hwInfoMock);
+    wddm->init();
 }
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
@@ -791,8 +786,7 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
 }
 
 TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {
-    auto hwInfo = *platformDevices[0];
-    auto result = wddm->init(hwInfo);
+    auto result = wddm->init();
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, wddm->applyAdditionalContextFlagsResult.called);
 }
@@ -1053,9 +1047,10 @@ TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
     size_t numRootDevices = 5;
 
     MockGfxPartition gfxPartition;
+    wddm.init();
     wddm.initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices);
 
-    auto heapStandard64KBSize = alignDown(wddm.gfxPartition.Standard64KB.Limit - wddm.gfxPartition.Standard64KB.Base + 1, GfxPartition::heapGranularity);
+    auto heapStandard64KBSize = alignDown((wddm.gfxPartition.Standard64KB.Limit - wddm.gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
     EXPECT_EQ(wddm.gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
@@ -1130,8 +1125,7 @@ long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfx
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksArePassedToGmmMemory) {
     GMM_DEVICE_CALLBACKS_INT expectedDeviceCb{};
-    auto hwInfoMock = *platformDevices[0];
-    wddm->init(hwInfoMock);
+    wddm->init();
     auto gdi = wddm->getGdi();
     auto gmmMemory = static_cast<MockGmmMemory *>(wddm->getGmmMemory());
 
@@ -1175,8 +1169,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigure
 
     wddm->gmmMemory.reset(gmockGmmMemory);
 
-    auto hwInfoMock = *platformDevices[0];
-    wddm->init(hwInfoMock);
+    wddm->init();
 }
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAddressSpaceThenDontObtainMinAddress) {
@@ -1196,8 +1189,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAd
                 getInternalGpuVaRangeLimit())
         .Times(0);
 
-    auto hwInfoMock = *platformDevices[0];
-    wddm->init(hwInfoMock);
+    wddm->init();
 
     EXPECT_EQ(NEO::windowsMinAddress, wddm->getWddmMinAddress());
 }

@@ -31,14 +31,13 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
     executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
-    auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         auto hwDeviceId = Wddm::discoverDevices();
         if (!hwDeviceId) {
             return false;
         }
         std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()));
-        if (!wddm->init(*hardwareInfo)) {
+        if (!wddm->init()) {
             return false;
         }
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
