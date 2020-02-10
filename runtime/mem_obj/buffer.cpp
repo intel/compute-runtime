@@ -403,6 +403,7 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
     if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, context, preferCompression)) {
         return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
+
     return GraphicsAllocation::AllocationType::BUFFER;
 }
 

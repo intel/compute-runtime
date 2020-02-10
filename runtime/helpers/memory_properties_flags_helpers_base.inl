@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,10 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(c
 
     if (isValueSet(allocflags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {
         memoryPropertiesFlags.allocFlags.allocWriteCombined = true;
+    }
+
+    if (isValueSet(flagsIntel, CL_MEM_48BIT_RESOURCE_INTEL)) {
+        memoryPropertiesFlags.flags.resource48Bit = true;
     }
 
     addExtraMemoryPropertiesFlags(memoryPropertiesFlags, flags, flagsIntel);

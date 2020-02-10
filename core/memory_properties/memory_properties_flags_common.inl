@@ -25,6 +25,7 @@ struct MemoryFlags {
     uint32_t allowUnrestrictedSize : 1;
     uint32_t forceSharedPhysicalMemory : 1;
     uint32_t shareable : 1;
+    uint32_t resource48Bit : 1;
 };
 
 struct MemoryAllocFlags {

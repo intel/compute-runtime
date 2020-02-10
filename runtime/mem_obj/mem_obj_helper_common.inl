@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,8 @@ const uint64_t MemObjHelper::commonFlags = extraFlags | CL_MEM_READ_WRITE | CL_M
                                            CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR |
                                            CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
-const uint64_t MemObjHelper::commonFlagsIntel = extraFlagsIntel | CL_MEM_LOCALLY_UNCACHED_RESOURCE | CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
+const uint64_t MemObjHelper::commonFlagsIntel = extraFlagsIntel | CL_MEM_LOCALLY_UNCACHED_RESOURCE |
+                                                CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_48BIT_RESOURCE_INTEL;
 
 const uint64_t MemObjHelper::validFlagsForBuffer = commonFlags | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,9 @@ TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsT
 
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL);
     EXPECT_TRUE(properties.allocFlags.allocWriteCombined);
+
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, CL_MEM_48BIT_RESOURCE_INTEL, 0);
+    EXPECT_TRUE(properties.flags.resource48Bit);
 }
 
 TEST(MemoryPropertiesFlags, givenClMemForceLinearStorageFlagWhenCreateMemoryPropertiesFlagsThenReturnProperValue) {

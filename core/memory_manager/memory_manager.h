@@ -180,7 +180,8 @@ class MemoryManager {
                 uint32_t multiOsContextCapable : 1;
                 uint32_t requiresCpuAccess : 1;
                 uint32_t shareable : 1;
-                uint32_t reserved : 21;
+                uint32_t resource48Bit : 1;
+                uint32_t reserved : 20;
             } flags;
             uint32_t allFlags = 0;
         };

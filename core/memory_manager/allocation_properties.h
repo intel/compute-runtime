@@ -22,7 +22,8 @@ struct AllocationProperties {
             uint32_t multiOsContextCapable : 1;
             uint32_t readOnlyMultiStorage : 1;
             uint32_t shareable : 1;
-            uint32_t reserved : 24;
+            uint32_t resource48Bit : 1;
+            uint32_t reserved : 23;
         } flags;
         uint32_t allFlags = 0;
     };

@@ -319,6 +319,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
+    allocationData.flags.resource48Bit = properties.flags.resource48Bit;
 
     return true;
 }
