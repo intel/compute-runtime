@@ -50,7 +50,7 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
 
 template <>
 size_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
-    return getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
+    return getKernelDebuggingCommandsSize(device.isDebuggerActive());
 }
 
 template struct PreambleHelper<BDWFamily>;

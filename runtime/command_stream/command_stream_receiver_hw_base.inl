@@ -296,7 +296,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     //Reprogram state base address if required
-    if (isStateBaseAddressDirty || device.isSourceLevelDebuggerActive()) {
+    if (isStateBaseAddressDirty || device.isDebuggerActive()) {
         addPipeControlBeforeStateBaseAddress(commandStreamCSR);
 
         uint64_t newGSHbase = 0;
@@ -393,7 +393,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*preemptionAllocation);
     }
 
-    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
+    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isDebuggerActive()) {
         makeResident(*SipKernel::getSipKernelAllocation(device));
         if (debugSurface) {
             makeResident(*debugSurface);
@@ -635,7 +635,7 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
     size += getRequiredStateBaseAddressSize();
-    if (!this->isStateSipSent || device.isSourceLevelDebuggerActive()) {
+    if (!this->isStateSipSent || device.isDebuggerActive()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
     }
     size += PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl();
@@ -727,7 +727,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const 
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
-    if (!this->isStateSipSent || device.isSourceLevelDebuggerActive()) {
+    if (!this->isStateSipSent || device.isDebuggerActive()) {
         PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device);
         this->isStateSipSent = true;
     }

@@ -370,8 +370,8 @@ void Device::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.sourceLevelDebuggerActive = (executionEnvironment->sourceLevelDebugger) ? executionEnvironment->sourceLevelDebugger->isDebuggerActive() : false;
-    if (deviceInfo.sourceLevelDebuggerActive) {
+    deviceInfo.debuggerActive = (executionEnvironment->debugger) ? executionEnvironment->debugger->isDebuggerActive() : false;
+    if (deviceInfo.debuggerActive) {
         this->preemptionMode = PreemptionMode::Disabled;
     }
 

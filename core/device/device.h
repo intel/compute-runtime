@@ -51,8 +51,8 @@ class Device : public ReferenceTrackedObject<Device> {
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
-    SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
+    MOCKABLE_VIRTUAL bool isDebuggerActive() const;
+    Debugger *getDebugger() { return executionEnvironment->debugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }

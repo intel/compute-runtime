@@ -9,12 +9,12 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/default_cache_config.h"
+#include "core/debugger/debugger.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
@@ -22,7 +22,7 @@ ExecutionEnvironment::ExecutionEnvironment() {
 };
 
 ExecutionEnvironment::~ExecutionEnvironment() {
-    sourceLevelDebugger.reset();
+    debugger.reset();
     compilerInterface.reset();
     builtins.reset();
     rootDeviceEnvironments.clear();
@@ -63,14 +63,8 @@ void ExecutionEnvironment::initializeMemoryManager() {
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 
-void ExecutionEnvironment::initSourceLevelDebugger() {
-    if (hwInfo->capabilityTable.sourceLevelDebuggerSupported) {
-        sourceLevelDebugger.reset(SourceLevelDebugger::create());
-    }
-    if (sourceLevelDebugger) {
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, true));
-        sourceLevelDebugger->initialize(localMemorySipAvailable);
-    }
+void ExecutionEnvironment::initDebugger() {
+    debugger = Debugger::create(hwInfo.get());
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {

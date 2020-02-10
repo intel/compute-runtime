@@ -172,8 +172,8 @@ cl_int Program::build(
 bool Program::appendKernelDebugOptions() {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::debugKernelEnable);
     CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
-    auto sourceLevelDebugger = pDevice->getSourceLevelDebugger();
-    if (sourceLevelDebugger && sourceLevelDebugger->isOptimizationDisabled()) {
+    auto debugger = pDevice->getSourceLevelDebugger();
+    if (debugger && debugger->isOptimizationDisabled()) {
         CompilerOptions::concatenateAppend(options, CompilerOptions::optDisable);
     }
     return true;

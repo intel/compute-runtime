@@ -133,7 +133,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDeb
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithoutSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
-    pDevice->setSourceLevelDebuggerActive(true);
+    pDevice->setDebuggerActive(true);
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 

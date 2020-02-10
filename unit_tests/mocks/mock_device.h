@@ -86,8 +86,8 @@ class MockDevice : public RootDevice {
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);
 
-    void setSourceLevelDebuggerActive(bool active) {
-        this->deviceInfo.sourceLevelDebuggerActive = active;
+    void setDebuggerActive(bool active) {
+        this->deviceInfo.debuggerActive = active;
     }
 
     template <typename T>
@@ -145,7 +145,7 @@ class MockClDevice : public ClDevice {
     CommandStreamReceiver &getGpgpuCommandStreamReceiver() const { return device.getGpgpuCommandStreamReceiver(); }
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr) { device.resetCommandStreamReceiver(newCsr); }
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) { device.resetCommandStreamReceiver(newCsr, engineIndex); }
-    void setSourceLevelDebuggerActive(bool active) { device.setSourceLevelDebuggerActive(active); }
+    void setSourceLevelDebuggerActive(bool active) { device.setDebuggerActive(active); }
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);

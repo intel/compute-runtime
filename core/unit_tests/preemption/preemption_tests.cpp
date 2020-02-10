@@ -496,7 +496,7 @@ HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDev
       public:
         MockDeviceReturnedDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
             : MockDevice(executionEnvironment, deviceIndex) {}
-        bool isSourceLevelDebuggerActive() const override {
+        bool isDebuggerActive() const override {
             return true;
         }
         std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {

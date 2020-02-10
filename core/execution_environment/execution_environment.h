@@ -18,7 +18,7 @@ class CompilerInterface;
 class GmmClientContext;
 class GmmHelper;
 class MemoryManager;
-class SourceLevelDebugger;
+class Debugger;
 struct RootDeviceEnvironment;
 struct HardwareInfo;
 
@@ -37,7 +37,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     void initGmm();
     void initializeMemoryManager();
-    void initSourceLevelDebugger();
+    void initDebugger();
     void calculateMaxOsContextCount();
     void setHwInfo(const HardwareInfo *hwInfo);
     const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
@@ -54,6 +54,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
-    std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
+    std::unique_ptr<Debugger> debugger;
 };
 } // namespace NEO

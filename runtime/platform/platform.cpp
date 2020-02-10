@@ -185,9 +185,9 @@ bool Platform::initialize() {
 
     auto hwInfo = executionEnvironment.getHardwareInfo();
 
-    const bool sourceLevelDebuggerActive = executionEnvironment.sourceLevelDebugger && executionEnvironment.sourceLevelDebugger->isDebuggerActive();
-    if (clDevices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
-        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, clDevices[0]->isSourceLevelDebuggerActive());
+    const bool debuggerActive = executionEnvironment.debugger && executionEnvironment.debugger->isDebuggerActive();
+    if (clDevices[0]->getPreemptionMode() == PreemptionMode::MidThread || debuggerActive) {
+        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, clDevices[0]->isDebuggerActive());
         initSipKernel(sipType, *clDevices[0]);
     }
 

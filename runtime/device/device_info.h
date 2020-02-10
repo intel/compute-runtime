@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ struct DeviceInfo {
     bool                         vmeExtension;
     bool                         platformLP;
     bool                         packedYuvExtension;
-    bool                         sourceLevelDebuggerActive;
+    bool                         debuggerActive;
     /*Unified Shared Memory Capabilites*/
     cl_unified_shared_memory_capabilities_intel hostMemCapabilities;
     cl_unified_shared_memory_capabilities_intel deviceMemCapabilities;

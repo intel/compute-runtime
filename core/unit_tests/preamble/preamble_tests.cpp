@@ -136,7 +136,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    mockDevice->setSourceLevelDebuggerActive(false);
+    mockDevice->setDebuggerActive(false);
 
     StackVec<char, 8192> preambleBuffer(8192);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
@@ -150,7 +150,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
 
     auto miLoadRegImmCountWithoutDebugging = cmdList.size();
 
-    mockDevice->setSourceLevelDebuggerActive(true);
+    mockDevice->setDebuggerActive(true);
     auto preemptionAllocation = mockDevice->getGpgpuCommandStreamReceiver().getPreemptionAllocation();
 
     StackVec<char, 8192> preambleBuffer2(8192);
@@ -170,9 +170,9 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
 
-    mockDevice->setSourceLevelDebuggerActive(false);
+    mockDevice->setDebuggerActive(false);
     size_t withoutDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    mockDevice->setSourceLevelDebuggerActive(true);
+    mockDevice->setDebuggerActive(true);
     size_t withDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
     EXPECT_LT(withoutDebugging, withDebugging);
 

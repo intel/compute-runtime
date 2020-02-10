@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/debugger/debugger.h"
 #include "core/os_interface/os_library.h"
 
 #include <memory>
@@ -14,15 +15,15 @@
 namespace NEO {
 struct KernelInfo;
 
-class SourceLevelDebugger {
+class SourceLevelDebugger : public Debugger {
   public:
     SourceLevelDebugger(OsLibrary *library);
-    virtual ~SourceLevelDebugger();
+    ~SourceLevelDebugger() override;
     SourceLevelDebugger(const SourceLevelDebugger &ref) = delete;
     SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
     static SourceLevelDebugger *create();
 
-    MOCKABLE_VIRTUAL bool isDebuggerActive();
+    bool isDebuggerActive() override;
     MOCKABLE_VIRTUAL bool notifyNewDevice(uint32_t deviceHandle);
     MOCKABLE_VIRTUAL bool notifyDeviceDestruction();
     MOCKABLE_VIRTUAL bool notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const;

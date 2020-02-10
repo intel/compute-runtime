@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
     commandStreamReceiver.isPreambleSent = false;
 
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
-    pDevice->setSourceLevelDebuggerActive(true);
+    pDevice->setDebuggerActive(true);
     uint32_t newL3Config;
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 

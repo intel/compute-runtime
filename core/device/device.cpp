@@ -32,8 +32,8 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    if (!getSourceLevelDebugger()) {
-        this->executionEnvironment->initSourceLevelDebugger();
+    if (!getDebugger()) {
+        this->executionEnvironment->initDebugger();
     }
     this->executionEnvironment->incRefInternal();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -50,9 +50,6 @@ Device::~Device() {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
 
-    if (deviceInfo.sourceLevelDebuggerActive && executionEnvironment->sourceLevelDebugger) {
-        executionEnvironment->sourceLevelDebugger->notifyDeviceDestruction();
-    }
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
     executionEnvironment->decRefInternal();
@@ -80,15 +77,6 @@ bool Device::createDeviceImpl() {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
         }
-    }
-
-    uint32_t deviceHandle = 0;
-    if (osInterface) {
-        deviceHandle = osInterface->getDeviceHandle();
-    }
-
-    if (deviceInfo.sourceLevelDebuggerActive) {
-        executionEnvironment->sourceLevelDebugger->notifyNewDevice(deviceHandle);
     }
 
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
@@ -149,7 +137,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
         defaultEngineIndex = deviceCsrIndex;
     }
 
-    if ((preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
+    if ((preemptionMode == PreemptionMode::MidThread || isDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
         return false;
     }
 
@@ -201,8 +189,8 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
     return this->getHardwareInfo().platform.eRenderCoreFamily;
 }
 
-bool Device::isSourceLevelDebuggerActive() const {
-    return deviceInfo.sourceLevelDebuggerActive;
+bool Device::isDebuggerActive() const {
+    return deviceInfo.debuggerActive;
 }
 
 EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority) {

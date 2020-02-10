@@ -32,10 +32,10 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
     void SetUp() override {
         ProgramSimpleFixture::SetUp();
         device = pClDevice;
-        pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
+        pDevice->executionEnvironment->debugger.reset(new SourceLevelDebugger(nullptr));
 
         if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            pDevice->deviceInfo.sourceLevelDebuggerActive = true;
+            pDevice->deviceInfo.debuggerActive = true;
             std::string filename;
             std::string kernelOption(CompilerOptions::debugKernelEnable);
             KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
@@ -88,7 +88,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
 };
 
 HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCorrectlySet) {
-    if (pDevice->isSourceLevelDebuggerActive()) {
+    if (pDevice->isDebuggerActive()) {
         using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));

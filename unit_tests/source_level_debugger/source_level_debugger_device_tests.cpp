@@ -32,22 +32,24 @@ class MockDeviceWithDebuggerActive : public MockDevice {
     MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
     void initializeCaps() override {
         MockDevice::initializeCaps();
-        this->setSourceLevelDebuggerActive(true);
+        this->setDebuggerActive(true);
     }
 };
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
-    executionEnvironment->sourceLevelDebugger.reset(gmock);
+    executionEnvironment->debugger.reset(gmock);
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
+    std::unique_ptr<MockClDevice> pClDevice(new MockClDevice{device.get()});
 
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
+    device.release();
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
+    executionEnvironment->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
 
     EXPECT_EQ(PreemptionMode::Disabled, device->getPreemptionMode());

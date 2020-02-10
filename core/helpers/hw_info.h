@@ -47,7 +47,7 @@ struct RuntimeCapabilityTable {
     bool instrumentationEnabled;
     bool forceStatelessCompilationFor32Bit;
     const char *platformType;
-    bool sourceLevelDebuggerSupported;
+    bool debuggerSupported;
     bool supportsVme;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;

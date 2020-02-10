@@ -77,7 +77,7 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         }
 
-        kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
+        kernelDebugEnabled = pDevice->isDebuggerActive();
 
         auto enableStatelessToStatefullWithOffset = pDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
         if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {

@@ -8,9 +8,12 @@
 #include "runtime/device/cl_device.h"
 
 #include "core/device/device.h"
+#include "core/execution_environment/root_device_environment.h"
+#include "core/os_interface/os_interface.h"
 #include "core/program/sync_buffer_handler.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/platform/platform.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
 
@@ -26,9 +29,18 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
             device.getDeviceById(i)->setSpecializedDevice(subDevices[i].get());
         }
     }
+    if (device.getDeviceInfo().debuggerActive) {
+        auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
+        getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
+    }
 }
 
 ClDevice::~ClDevice() {
+
+    if (device.getDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
+        getSourceLevelDebugger()->notifyDeviceDestruction();
+    }
+
     syncBufferHandler.reset();
     for (auto &subDevice : subDevices) {
         subDevice.reset();
@@ -86,8 +98,8 @@ bool ClDevice::isSimulation() const { return device.isSimulation(); }
 GFXCORE_FAMILY ClDevice::getRenderCoreFamily() const { return device.getRenderCoreFamily(); }
 PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerformanceCounters(); }
 PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemptionMode(); }
-bool ClDevice::isSourceLevelDebuggerActive() const { return device.isSourceLevelDebuggerActive(); }
-SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return device.getSourceLevelDebugger(); }
+bool ClDevice::isDebuggerActive() const { return device.isDebuggerActive(); }
+SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return reinterpret_cast<SourceLevelDebugger *>(device.getDebugger()); }
 ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
 const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
 const HardwareCapabilities &ClDevice::getHardwareCapabilities() const { return device.getHardwareCapabilities(); }

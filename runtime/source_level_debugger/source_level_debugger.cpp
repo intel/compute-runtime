@@ -7,6 +7,7 @@
 
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
+#include "core/debugger/debugger.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/program/kernel_info.h"
@@ -17,6 +18,7 @@
 #define IGFXDBG_CURRENT_VERSION 4
 
 namespace NEO {
+
 const char *SourceLevelDebugger::notifyNewDeviceSymbol = "notifyNewDevice";
 const char *SourceLevelDebugger::notifySourceCodeSymbol = "notifySourceCode";
 const char *SourceLevelDebugger::getDebuggerOptionSymbol = "getDebuggerOption";

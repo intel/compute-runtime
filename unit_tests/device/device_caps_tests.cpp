@@ -1058,8 +1058,8 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreIniti
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
     const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
-    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
+    EXPECT_EQ(nullptr, device->getDebugger());
+    EXPECT_FALSE(caps.debuggerActive);
 }
 
 TEST(Device_UseCaps, givenCapabilityTableWhenDeviceInitializeCapsThenVmeVersionsAreSetProperly) {
@@ -1097,11 +1097,11 @@ typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
-    hardwareInfo.capabilityTable.sourceLevelDebuggerSupported = false;
+    hardwareInfo.capabilityTable.debuggerSupported = false;
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
 
     const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
-    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
+    EXPECT_EQ(nullptr, device->getDebugger());
+    EXPECT_FALSE(caps.debuggerActive);
 }

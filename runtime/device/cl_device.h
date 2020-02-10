@@ -68,7 +68,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void allocateSyncBufferHandler();
     PerformanceCounters *getPerformanceCounters();
     PreemptionMode getPreemptionMode() const;
-    bool isSourceLevelDebuggerActive() const;
+    bool isDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger();
     ExecutionEnvironment *getExecutionEnvironment() const;
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;

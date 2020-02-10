@@ -29,7 +29,7 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
         environment.setCsrType<MockCsrHw2<FamilyType>>();
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
-        hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
+        hwInfo->capabilityTable.debuggerSupported = true;
 
         auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(mockMemoryManager);

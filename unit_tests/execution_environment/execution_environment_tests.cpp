@@ -194,7 +194,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
-    executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
+    executionEnvironment->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
     EXPECT_EQ(8u, destructorId);
