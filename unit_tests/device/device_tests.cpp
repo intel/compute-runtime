@@ -337,3 +337,11 @@ TEST(DeviceGenEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsa
     auto internalEngineIndex = HwHelper::internalUsageEngineIndex;
     EXPECT_EQ(internalEngineIndex, internalEngine.osContext->getContextId());
 }
+
+TEST(DeviceGenEngineTest, whenCreateDeviceThenInternalEngineHasDefaultType) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+
+    auto internalEngineType = device->getInternalEngine().osContext->getEngineType();
+    auto defaultEngineType = getChosenEngineType(device->getHardwareInfo());
+    EXPECT_EQ(defaultEngineType, internalEngineType);
+}

@@ -115,12 +115,17 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     if (!commandStreamReceiver) {
         return false;
     }
+
+    bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
+    if (internalUsage) {
+        engineType = defaultEngineType;
+    }
+
     if (commandStreamReceiver->needsPageTableManager(engineType)) {
         commandStreamReceiver->createPageTableManager();
     }
 
     bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
-    bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineType,
                                                                                      getDeviceBitfield(), preemptionMode, lowPriority);
     commandStreamReceiver->setupContext(*osContext);
