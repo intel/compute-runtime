@@ -197,7 +197,7 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 }
 
-TEST(DrmTest, givenDrmAndNegativeCheckContextPersistenceChangeSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
+TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
 
     DrmMock drmMock;
     uint32_t drmContextId1 = 123;
@@ -205,43 +205,20 @@ TEST(DrmTest, givenDrmAndNegativeCheckContextPersistenceChangeSupportWhenOsConte
     auto expectedCount = 0u;
 
     {
-        drmMock.StoredRetValForPersistent = -1;
-        drmMock.checkContextPersistenceChangeSupport();
+        drmMock.StoredRetValForPersistant = -1;
+        drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
     {
-        drmMock.StoredRetValForPersistent = 0;
-        drmMock.checkContextPersistenceChangeSupport();
+        drmMock.StoredRetValForPersistant = 0;
+        drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
         ++expectedCount;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
-}
-
-TEST(DrmTest, givenUnsupportedPlatformWhenOsContextIsCreatedAndThenIsContextPersistenceChangeSupportedReturnsFalse) {
-
-    DrmMock drmMock;
-    uint32_t drmContextId1 = 123;
-    drmMock.StoredCtxId = drmContextId1;
-    auto expectedCount = 0u;
-    auto unsupportedPlatformErrorCode = ENODEV;
-
-    drmMock.StoredRetValForPersistent = 0;
-    drmMock.checkContextPersistenceChangeSupport();
-    ++expectedCount;
-
-    {
-        EXPECT_TRUE(drmMock.isContextPersistenceChangeSupported());
-        drmMock.StoredRetValForPersistent = unsupportedPlatformErrorCode;
-        OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
-        ++expectedCount;
-        EXPECT_FALSE(drmMock.isContextPersistenceChangeSupported());
-    }
-
-    EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
 }
 
 TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
@@ -377,14 +354,14 @@ TEST(DrmTest, givenPlatformWhereGetSseuRetFailureWhenCallSetQueueSliceCountThenS
     EXPECT_NE(drm->getSliceMask(newSliceCount), drm->storedParamSseu);
 }
 
-TEST(DrmTest, whenCheckContextPersistenceChangeSupportIsCalledThenIsContextPersistenceChangeSupportedReturnsCorrectValues) {
+TEST(DrmTest, whenCheckNonPeristentSupportIsCalledThenAreNonPersistentContextsSupportedReturnsCorrectValues) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
-    drm->StoredRetValForPersistent = -1;
-    drm->checkContextPersistenceChangeSupport();
-    EXPECT_FALSE(drm->isContextPersistenceChangeSupported());
-    drm->StoredRetValForPersistent = 0;
-    drm->checkContextPersistenceChangeSupport();
-    EXPECT_TRUE(drm->isContextPersistenceChangeSupported());
+    drm->StoredRetValForPersistant = -1;
+    drm->checkNonPersistentContextsSupport();
+    EXPECT_FALSE(drm->areNonPersistentContextsSupported());
+    drm->StoredRetValForPersistant = 0;
+    drm->checkNonPersistentContextsSupport();
+    EXPECT_TRUE(drm->areNonPersistentContextsSupported());
 }
 
 TEST(DrmTest, givenPlatformWhereSetSseuRetFailureWhenCallSetQueueSliceCountThenReturnFalse) {

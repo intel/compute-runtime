@@ -83,8 +83,8 @@ class Drm {
     bool queryMemoryInfo();
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
-    bool isContextPersistenceChangeSupported() const { return contextPersistenceChangeSupported; }
-    void checkContextPersistenceChangeSupport();
+    bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
+    void checkNonPersistentContextsSupport();
     void setNonPersistentContext(uint32_t drmContextId);
 
     MemoryInfo *getMemoryInfo() const {
@@ -99,8 +99,8 @@ class Drm {
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
+    bool nonPersistentContextsSupported = false;
     std::unique_ptr<HwDeviceId> hwDeviceId;
-    bool contextPersistenceChangeSupported = false;
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;

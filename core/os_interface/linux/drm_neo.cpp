@@ -214,10 +214,16 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
     return false;
 }
 
-void Drm::checkContextPersistenceChangeSupport() {
+void Drm::checkNonPersistentContextsSupport() {
     drm_i915_gem_context_param contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
-    contextPersistenceChangeSupported = (ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam) == 0);
+
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    if (retVal == 0 && contextParam.value == 1) {
+        nonPersistentContextsSupported = true;
+    } else {
+        nonPersistentContextsSupported = false;
+    }
 }
 
 void Drm::setNonPersistentContext(uint32_t drmContextId) {
@@ -225,12 +231,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     contextParam.ctx_id = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
-    if (retVal == ENODEV) {
-        contextPersistenceChangeSupported = false;
-    } else {
-        UNRECOVERABLE_IF(retVal != 0);
-    }
+    ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
 uint32_t Drm::createDrmContext() {
