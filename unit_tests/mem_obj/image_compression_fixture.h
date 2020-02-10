@@ -40,7 +40,7 @@ class ImageCompressionTests : public ::testing::Test {
     MyMemoryManager *myMemoryManager = nullptr;
 
     cl_image_desc imageDesc = {};
-    cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_format imageFormat{CL_R, CL_UNSIGNED_INT8};
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     cl_int retVal = CL_SUCCESS;
 };

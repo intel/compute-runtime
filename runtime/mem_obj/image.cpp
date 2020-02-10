@@ -194,6 +194,7 @@ Image *Image::create(Context *context,
                                                         memoryProperties.flags.forceLinearStorage);
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        *context, true);
+        imgInfo.preferRenderCompression &= !Image::isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
         if (!context->getDevice(0)->getDeviceInfo().imageSupport && !imgInfo.linearStorage) {
             errcodeRet = CL_INVALID_OPERATION;
@@ -916,16 +917,28 @@ Image *Image::redescribeFillImage() {
     return image;
 }
 
+static const uint32_t redescribeTableBytes[] = {
+    17, // {CL_R, CL_UNSIGNED_INT8}        1 byte
+    18, // {CL_R, CL_UNSIGNED_INT16}       2 byte
+    19, // {CL_R, CL_UNSIGNED_INT32}       4 byte
+    29, // {CL_RG, CL_UNSIGNED_INT32}      8 byte
+    7   // {CL_RGBA, CL_UNSIGNED_INT32}    16 byte
+};
+
+bool Image::isFormatRedescribable(cl_image_format format) {
+    const ArrayRef<const ClSurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+    for (auto indexInRedescribeTable = 0u; indexInRedescribeTable < sizeof(redescribeTableBytes) / sizeof(uint32_t); indexInRedescribeTable++) {
+        const uint32_t formatIndex = redescribeTableBytes[indexInRedescribeTable];
+        const cl_image_format nonRedescribableFormat = readWriteSurfaceFormats[formatIndex].OCLImageFormat;
+        if (nonRedescribableFormat.image_channel_data_type == format.image_channel_data_type &&
+            nonRedescribableFormat.image_channel_order == format.image_channel_order) {
+            return false;
+        }
+    }
+    return true;
+}
+
 Image *Image::redescribe() {
-
-    const uint32_t redescribeTableBytes[] = {
-        17, // {CL_R, CL_UNSIGNED_INT8}        1 byte
-        18, // {CL_R, CL_UNSIGNED_INT16}       2 byte
-        19, // {CL_R, CL_UNSIGNED_INT32}       4 byte
-        29, // {CL_RG, CL_UNSIGNED_INT32}      8 byte
-        7   // {CL_RGBA, CL_UNSIGNED_INT32}    16 byte
-    };
-
     const uint32_t bytesPerPixel = this->surfaceFormatInfo.surfaceFormat.NumChannels * surfaceFormatInfo.surfaceFormat.PerChannelSizeInBytes;
     const uint32_t exponent = Math::log2(bytesPerPixel);
     DEBUG_BREAK_IF(exponent >= 5u);

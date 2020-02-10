@@ -461,6 +461,26 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     alignedFree(hostPtr);
 }
 
+TEST(TestRedescribableFormatCheck, givenVariousOclFormatsWhenCheckingIfRedescribableThenReturnCorrectResults) {
+    static const cl_image_format redescribeFormats[] = {
+        {CL_R, CL_UNSIGNED_INT8},
+        {CL_R, CL_UNSIGNED_INT16},
+        {CL_R, CL_UNSIGNED_INT32},
+        {CL_RG, CL_UNSIGNED_INT32},
+        {CL_RGBA, CL_UNSIGNED_INT32},
+    };
+
+    const ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::readWrite();
+    for (const auto &format : formats) {
+        const cl_image_format oclFormat = format.OCLImageFormat;
+        bool expectedResult = true;
+        for (const auto &nonRedescribableFormat : redescribeFormats) {
+            expectedResult &= (memcmp(&oclFormat, &nonRedescribableFormat, sizeof(cl_image_format)) != 0);
+        }
+        EXPECT_EQ(expectedResult, Image::isFormatRedescribable(oclFormat));
+    }
+}
+
 TEST_P(CreateImageNoHostPtr, getImageDesc) {
     auto image = createImageWithFlags(flags);
 
