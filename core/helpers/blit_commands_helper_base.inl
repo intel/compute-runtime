@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/blit_commands_helper.h"
+#include "core/helpers/hw_helper.h"
 #include "core/helpers/timestamp_packet.h"
 
 namespace NEO {
@@ -37,12 +38,13 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
                                                                         blitProperties.outputTimestampPacket != nullptr);
     }
+    size += PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
     size += sizeof(typename GfxFamily::MI_FLUSH_DW) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     return alignUp(size, MemoryConstants::cacheLineSize);

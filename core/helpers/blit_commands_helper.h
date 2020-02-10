@@ -23,6 +23,7 @@ template <typename TagType>
 struct TagNode;
 
 struct BlitProperties;
+struct HardwareInfo;
 struct TimestampPacketDependencies;
 using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
 
@@ -64,7 +65,7 @@ struct BlitProperties {
 template <typename GfxFamily>
 struct BlitCommandsHelper {
     static size_t estimateBlitCommandsSize(uint64_t copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket);
-    static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer);
+    static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo);
     static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream);
     static void appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
 };

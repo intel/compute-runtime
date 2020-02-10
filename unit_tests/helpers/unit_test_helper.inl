@@ -51,6 +51,11 @@ bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedS
 }
 
 template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isSynchronizationWArequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
     return false;
 }

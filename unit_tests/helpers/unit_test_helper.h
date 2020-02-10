@@ -33,6 +33,8 @@ struct UnitTestHelper {
 
     static bool evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress);
 
+    static bool isSynchronizationWArequired(const HardwareInfo &hwInfo);
+
     static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
 
     static bool isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo);

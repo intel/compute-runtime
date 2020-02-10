@@ -68,6 +68,10 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
 }
 
 template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::addSynchronizationWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+}
+
+template <typename GfxFamily>
 void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 

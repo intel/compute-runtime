@@ -238,18 +238,19 @@ struct PipeControlHelper {
                                                                       uint64_t gpuAddress,
                                                                       uint64_t immediateData,
                                                                       bool dcFlush, const HardwareInfo &hwInfo);
+    static void addSynchronizationWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo);
     static PIPE_CONTROL *addPipeControl(LinearStream &commandStream, bool dcFlush);
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
+    static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
 
     static PIPE_CONTROL *addFullCacheFlush(LinearStream &commandStream);
     static size_t getSizeForFullCacheFlush();
     static void setExtraCacheFlushFields(PIPE_CONTROL *pipeControl);
 
   protected:
-    static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static PIPE_CONTROL *obtainPipeControl(LinearStream &commandStream, bool dcFlush);
 };
 

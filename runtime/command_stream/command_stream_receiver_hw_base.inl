@@ -816,7 +816,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     auto lock = obtainUniqueOwnership();
 
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer));
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo()));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -840,7 +840,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         makeResident(*blitProperties.dstAllocation);
     }
 
-    HardwareCommandsHelper<GfxFamily>::programGlobalFence(commandStream);
+    PipeControlHelper<GfxFamily>::addSynchronizationWA(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
     HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
 

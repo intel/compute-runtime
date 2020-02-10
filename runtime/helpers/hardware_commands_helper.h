@@ -149,7 +149,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
                                        uint64_t compareAddress,
                                        uint32_t compareData,
                                        COMPARE_OPERATION compareMode);
-    static void programGlobalFence(LinearStream &commandStream);
     static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData);
     static void appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);

@@ -359,7 +359,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
     auto baseSize = sizeof(typename FamilyType::MI_FLUSH_DW) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedBlitInstructionsSize = sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts;
 
-    auto expectedAlignedSize = baseSize;
+    auto expectedAlignedSize = baseSize + PipeControlHelper<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
@@ -372,7 +372,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -410,6 +410,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
 
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -460,6 +461,12 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
     }
 
+    if (UnitTestHelper<FamilyType>::isSynchronizationWArequired(pDevice->getHardwareInfo())) {
+        auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, miSemaphoreWaitCmd);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
+    }
+
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
     EXPECT_NE(nullptr, miFlushCmd);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushCmd->getPostSyncOperation());
@@ -508,6 +515,9 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
         }
         auto miSemaphore = genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*cmdIterator);
         if (miSemaphore) {
+            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphore)) {
+                continue;
+            }
             dependenciesFound = true;
             EXPECT_FALSE(xyCopyBltCmdFound);
             auto miAtomic = genCmdCast<typename FamilyType::MI_ATOMIC *>(*(++cmdIterator));
@@ -568,6 +578,9 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
         }
         auto miSemaphore = genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*cmdIterator);
         if (miSemaphore) {
+            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphore)) {
+                continue;
+            }
             dependenciesFound++;
             EXPECT_EQ(xyCopyBltCmdFound, dependenciesFound - 1);
         }

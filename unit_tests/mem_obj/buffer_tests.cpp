@@ -1026,7 +1026,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     bcsHwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
 
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
-    EXPECT_EQ(1u, semaphores.size());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isSynchronizationWArequired(device->getHardwareInfo()) ? 2u : 1u, semaphores.size());
     EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
 }
 
@@ -1104,7 +1104,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlocked
     bcsHwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
 
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
-    EXPECT_EQ(1u, semaphores.size());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isSynchronizationWArequired(device->getHardwareInfo()) ? 2u : 1u, semaphores.size());
 
     cmdQ->isQueueBlocked();
 }
