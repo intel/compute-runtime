@@ -18,6 +18,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class LinearStream;
 struct TimestampPacketStorage;
+struct RootDeviceEnvironment;
 
 template <typename TagType>
 struct TagNode;
@@ -66,7 +67,7 @@ template <typename GfxFamily>
 struct BlitCommandsHelper {
     static size_t estimateBlitCommandsSize(uint64_t copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo);
-    static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream);
-    static void appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
+    static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 } // namespace NEO

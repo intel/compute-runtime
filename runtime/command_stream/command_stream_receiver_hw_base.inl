@@ -826,7 +826,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     for (auto &blitProperties : blitPropertiesContainer) {
         TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
-        BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream);
+        BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
 
         if (blitProperties.outputTimestampPacket) {
             auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);

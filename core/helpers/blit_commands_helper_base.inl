@@ -51,7 +51,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     uint64_t sizeToBlit = blitProperties.copySize;
     uint64_t width = 1;
     uint64_t height = 1;
@@ -80,7 +80,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
         bltCmd->setDestinationBaseAddress(blitProperties.dstGpuAddress + blitProperties.dstOffset + offset);
         bltCmd->setSourceBaseAddress(blitProperties.srcGpuAddress + blitProperties.srcOffset + offset);
 
-        appendBlitCommandsForBuffer(blitProperties, *bltCmd);
+        appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
         auto blitSize = width * height;
         sizeToBlit -= blitSize;
