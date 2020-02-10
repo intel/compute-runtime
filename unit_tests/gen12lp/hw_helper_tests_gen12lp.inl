@@ -166,3 +166,13 @@ GEN12LPTEST_F(LriHelperTestsGen12Lp, whenProgrammingLriCommandThenExpectMmioRema
     EXPECT_EQ(lri, stream.getCpuBase());
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
+
+using PipeControlHelperTests = ::testing::Test;
+
+GEN12LPTEST_F(PipeControlHelperTests, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
+
+    PipeControlHelper<FamilyType>::setExtraCacheFlushFields(&pipeControl);
+    EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
+}

@@ -122,6 +122,11 @@ std::string HwHelperHw<Family>::getExtensions() const {
     return "cl_intel_subgroup_local_block_io ";
 }
 
+template <>
+void PipeControlHelper<Family>::setExtraCacheFlushFields(Family::PIPE_CONTROL *pipeControl) {
+    pipeControl->setHdcPipelineFlush(true);
+}
+
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

@@ -80,4 +80,8 @@ template <typename GfxFamily>
 void PipeControlHelper<GfxFamily>::setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
 }
 
+template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL *pipeControl) {
+}
+
 } // namespace NEO

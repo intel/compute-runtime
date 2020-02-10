@@ -244,6 +244,10 @@ struct PipeControlHelper {
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
 
+    static PIPE_CONTROL *addFullCacheFlush(LinearStream &commandStream);
+    static size_t getSizeForFullCacheFlush();
+    static void setExtraCacheFlushFields(PIPE_CONTROL *pipeControl);
+
   protected:
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static PIPE_CONTROL *obtainPipeControl(LinearStream &commandStream, bool dcFlush);

@@ -287,4 +287,26 @@ template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
     return HwHelper::getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
 }
+
+template <typename GfxFamily>
+size_t PipeControlHelper<GfxFamily>::getSizeForFullCacheFlush() {
+    return sizeof(typename GfxFamily::PIPE_CONTROL);
+}
+
+template <typename GfxFamily>
+typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addFullCacheFlush(LinearStream &commandStream) {
+    auto pipeControl = PipeControlHelper<GfxFamily>::obtainPipeControl(commandStream, true);
+
+    pipeControl->setRenderTargetCacheFlushEnable(true);
+    pipeControl->setInstructionCacheInvalidateEnable(true);
+    pipeControl->setTextureCacheInvalidationEnable(true);
+    pipeControl->setPipeControlFlushEnable(true);
+    pipeControl->setConstantCacheInvalidationEnable(true);
+    pipeControl->setStateCacheInvalidationEnable(true);
+
+    PipeControlHelper<GfxFamily>::setExtraCacheFlushFields(pipeControl);
+
+    return pipeControl;
+}
+
 } // namespace NEO

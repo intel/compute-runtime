@@ -810,3 +810,27 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
+
+HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForCacheFlushThenReturnCorrectValue) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    size_t actualSize = PipeControlHelper<FamilyType>::getSizeForFullCacheFlush();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), actualSize);
+}
+
+HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+
+    PIPE_CONTROL *pipeControl = PipeControlHelper<FamilyType>::addFullCacheFlush(stream);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+
+    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+    EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+}
