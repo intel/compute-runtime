@@ -30,6 +30,7 @@ class AubHelper : public NonCopyableOrMovableClass {
         case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
+        case GraphicsAllocation::AllocationType::SVM_GPU:
             return true;
         default:
             return false;

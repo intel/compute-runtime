@@ -195,6 +195,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
             return CL_SUCCESS;
         }
 
+        svmData->gpuAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+        svmData->gpuAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+
         MultiDispatchInfo dispatchInfo;
         auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                                                             this->getContext(), this->getDevice());

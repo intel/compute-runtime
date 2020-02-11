@@ -1168,6 +1168,58 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
     clReleaseEvent(event);
 }
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenNonReadOnlyMapWhenUnmappingThenSetAubTbxWritableBeforeUnmapEnqueue) {
+    class MyQueue : public MockCommandQueueHw<FamilyType> {
+      public:
+        using MockCommandQueueHw<FamilyType>::MockCommandQueueHw;
+
+        void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
+            waitUntilCompleteCalled++;
+            if (allocationToVerify) {
+                EXPECT_TRUE(allocationToVerify->isAubWritable(GraphicsAllocation::defaultBank));
+                EXPECT_TRUE(allocationToVerify->isTbxWritable(GraphicsAllocation::defaultBank));
+            }
+        }
+
+        uint32_t waitUntilCompleteCalled = 0;
+        GraphicsAllocation *allocationToVerify = nullptr;
+    };
+
+    MyQueue myQueue(context.get(), pClDevice, nullptr);
+
+    retVal = myQueue.enqueueSVMMap(CL_TRUE, CL_MAP_WRITE, svmPtr, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocation;
+    myQueue.allocationToVerify = gpuAllocation;
+
+    gpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
+    gpuAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    EXPECT_EQ(1u, myQueue.waitUntilCompleteCalled);
+    retVal = myQueue.enqueueSVMUnmap(svmPtr, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, myQueue.waitUntilCompleteCalled);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenReadOnlyMapWhenUnmappingThenDontResetAubTbxWritable) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+
+    retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_READ, svmPtr, size, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocation;
+
+    gpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
+    gpuAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    retVal = queue.enqueueSVMUnmap(svmPtr, 0, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(gpuAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_FALSE(gpuAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenExpectMapAndUnmapCopyKernel) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
