@@ -36,13 +36,7 @@ bool requestedFatBinary(int argc, const char *argv[]) {
 }
 
 std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms() {
-    std::vector<PRODUCT_FAMILY> ret;
-    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
-        if (nullptr != hardwarePrefix[productId]) {
-            ret.push_back(static_cast<PRODUCT_FAMILY>(productId));
-        }
-    }
-    return ret;
+    return std::vector<PRODUCT_FAMILY>{ALL_SUPPORTED_PRODUCT_FAMILIES};
 }
 
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds) {
