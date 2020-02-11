@@ -146,7 +146,7 @@ TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
     EXPECT_EQ(param.second, sizeReturned);
 }
 
-TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClInvalidValueIsReturned) {
+TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClSuccessAndSizeofCluintIsReturned) {
     auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     if (device->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -157,7 +157,8 @@ TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClInvalidValueIsReturn
         0,
         nullptr,
         &sizeReturned);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_uint), sizeReturned);
 }
 
 TEST_P(GetDeviceInfoForImage, givenInfoImageParamsWhenCallGetDeviceInfoForImageThenSizeIsValidAndTrueReturned) {

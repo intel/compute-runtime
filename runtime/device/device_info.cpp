@@ -190,7 +190,10 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     default:
-        if (device.getDeviceInfo().imageSupport && getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
+        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !device.getDeviceInfo().imageSupport) {
+            param = 0u;
+            src = &param;
+            srcSize = retSize = sizeof(param);
             break;
         }
         ClDeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
@@ -209,6 +212,7 @@ bool ClDevice::getDeviceInfoForImage(cl_device_info paramName,
                                      const void *&src,
                                      size_t &srcSize,
                                      size_t &retSize) {
+    bool retVal = true;
     switch (paramName) {
     case CL_DEVICE_MAX_READ_IMAGE_ARGS:
         getCap<CL_DEVICE_MAX_READ_IMAGE_ARGS>(src, srcSize, retSize);
@@ -247,17 +251,23 @@ bool ClDevice::getDeviceInfoForImage(cl_device_info paramName,
         getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(src, srcSize, retSize);
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
-        if (getDeviceInfo().nv12Extension)
+        if (getDeviceInfo().nv12Extension) {
             getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(src, srcSize, retSize);
+            break;
+        }
+        retVal = false;
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
-        if (getDeviceInfo().nv12Extension)
+        if (getDeviceInfo().nv12Extension) {
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
+            break;
+        }
+        retVal = false;
         break;
     default:
-        return false;
+        retVal = false;
     }
-    return true;
+    return retVal;
 }
 
 } // namespace NEO

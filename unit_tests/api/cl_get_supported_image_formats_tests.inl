@@ -49,7 +49,7 @@ TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportIma
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSupportImageFormatsThenClInvalidValueIsReturned) {
+TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSupportImageFormatsThenCLSuccessReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsImages = false;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -67,7 +67,28 @@ TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSu
         nullptr,
         &numImageFormats);
 
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
+TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageAndNullPointerToNumFormatsWhenGettingSupportImageFormatsThenCLSuccessReturned) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsImages = false;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id clDevice = device.get();
+    cl_int retVal;
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clGetSupportedImageFormats(
+        context.get(),
+        CL_MEM_READ_WRITE,
+        CL_MEM_OBJECT_IMAGE2D,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clGetSupportedImageFormatsTest, givenPlatformWithoutDevicesWhenClGetSupportedImageFormatIsCalledThenDeviceIsTakenFromContext) {

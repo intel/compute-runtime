@@ -1016,7 +1016,10 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
             retVal = pContext->getSupportedImageFormats(&pClDevice->getDevice(), flags, imageType, numEntries,
                                                         imageFormats, numImageFormats);
         } else {
-            retVal = CL_INVALID_VALUE;
+            if (numImageFormats) {
+                *numImageFormats = 0u;
+            }
+            retVal = CL_SUCCESS;
         }
     } else {
         retVal = CL_INVALID_CONTEXT;
