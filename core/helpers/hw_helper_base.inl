@@ -196,6 +196,8 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
 
     setExtraPipeControlProperties(*pipeControl, hwInfo);
 
+    PipeControlHelper<Family>::addAdditionalSynchronization(commandStream, gpuAddress, hwInfo);
+
     return pipeControl;
 }
 

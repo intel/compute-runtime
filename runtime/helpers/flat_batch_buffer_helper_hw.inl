@@ -180,9 +180,9 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
     return buffer.release();
 }
 template <typename GfxFamily>
-void FlatBatchBufferHelperHw<GfxFamily>::removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) {
+void FlatBatchBufferHelperHw<GfxFamily>::removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping, const HardwareInfo &hwInfo) {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    size_t numPipeControls = pipeControlLocationSize / sizeof(PIPE_CONTROL);
+    size_t numPipeControls = (pipeControlLocationSize - PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo)) / (sizeof(PIPE_CONTROL));
     for (size_t i = 0; i < numPipeControls; i++) {
         PIPE_CONTROL *erasedPipeControl = reinterpret_cast<PIPE_CONTROL *>(pipeControlForNooping);
         removePatchInfoData(reinterpret_cast<uint64_t>(erasedPipeControl) + (i + 1) * sizeof(PIPE_CONTROL) - 2 * sizeof(uint64_t));

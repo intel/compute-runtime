@@ -117,6 +117,10 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
 
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+        it++;
+    }
+
     //MI_SEMAPHORE_WAIT
     it++;
     ASSERT_NE(end, it);
@@ -151,6 +155,10 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
+
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+        it++;
+    }
 
     //BB_END
     it++;
@@ -258,6 +266,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
     expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
     it++;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+        it++;
+    }
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);

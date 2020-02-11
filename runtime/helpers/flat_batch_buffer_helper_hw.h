@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
     using FlatBatchBufferHelper::FlatBatchBufferHelper;
     GraphicsAllocation *flattenBatchBuffer(uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
     char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) override;
-    void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;
+    void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping, const HardwareInfo &hwInfo) override;
     void collectScratchSpacePatchInfo(uint64_t scratchAddress, uint64_t commandOffset, const LinearStream &csr) override;
 };
 

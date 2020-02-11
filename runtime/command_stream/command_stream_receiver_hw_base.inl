@@ -569,7 +569,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 //noop pipe control
                 if (currentPipeControlForNooping) {
                     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-                        flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping);
+                        flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping, peekHwInfo());
                     }
                     memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
                 }
@@ -840,9 +840,11 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         makeResident(*blitProperties.dstAllocation);
     }
 
-    PipeControlHelper<GfxFamily>::addSynchronizationWA(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
+    PipeControlHelper<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
     HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
+
+    PipeControlHelper<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
     *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;

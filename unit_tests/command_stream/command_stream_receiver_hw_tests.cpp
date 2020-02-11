@@ -473,6 +473,12 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     EXPECT_EQ(csr.getTagAllocation()->getGpuAddress(), miFlushCmd->getDestinationAddress());
     EXPECT_EQ(newTaskCount, miFlushCmd->getImmediateData());
 
+    if (UnitTestHelper<FamilyType>::isSynchronizationWArequired(pDevice->getHardwareInfo())) {
+        auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, miSemaphoreWaitCmd);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
+    }
+
     EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_BATCH_BUFFER_END *>(*(cmdIterator++)));
 
     // padding
