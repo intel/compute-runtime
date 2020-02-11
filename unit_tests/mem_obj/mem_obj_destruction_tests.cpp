@@ -6,7 +6,9 @@
  */
 
 #include "core/memory_manager/allocations_list.h"
+#include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
+#include "runtime/api/api.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
@@ -314,3 +316,76 @@ INSTANTIATE_TEST_CASE_P(
     MemObjTests,
     MemObjSyncDestructionTest,
     testing::Bool());
+
+using UsmDestructionTests = ::testing::Test;
+
+HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledThenWaitForCompletionIsCalled) {
+    MockDevice mockDevice;
+    mockDevice.incRefInternal();
+    MockClDevice mockClDevice(&mockDevice);
+    MockContext mockContext(&mockClDevice, false);
+
+    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+        GTEST_SKIP();
+    }
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment);
+    auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver, aub_stream::ENGINE_RCS, {}, PreemptionMode::Disabled, false);
+    mockDevice.engines[0].osContext = osContext;
+
+    mockDevice.resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 5u;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
+
+    auto svmAllocationsManager = mockContext.getSVMAllocsManager();
+    auto sharedMemory = svmAllocationsManager->createUnifiedAllocationWithDeviceStorage(0u, 4096u, {}, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, sharedMemory);
+
+    auto svmEntry = svmAllocationsManager->getSVMAlloc(sharedMemory);
+
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    svmEntry->gpuAllocation->updateTaskCount(6u, 0u);
+    svmEntry->cpuAllocation->updateTaskCount(6u, 0u);
+    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
+        .Times(2);
+
+    svmAllocationsManager->freeSVMAlloc(sharedMemory, true);
+}
+
+HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWaitForCompletionIsCalled) {
+    MockDevice mockDevice;
+    mockDevice.incRefInternal();
+    MockClDevice mockClDevice(&mockDevice);
+    MockContext mockContext(&mockClDevice, false);
+
+    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+        GTEST_SKIP();
+    }
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*mockDevice.executionEnvironment);
+    auto osContext = mockDevice.executionEnvironment->memoryManager->createAndRegisterOsContext(mockDevice.engines[0].commandStreamReceiver, aub_stream::ENGINE_RCS, {}, PreemptionMode::Disabled, false);
+    mockDevice.engines[0].osContext = osContext;
+
+    mockDevice.resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 5u;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+
+    auto svmAllocationsManager = mockContext.getSVMAllocsManager();
+    auto hostMemory = svmAllocationsManager->createUnifiedMemoryAllocation(0u, 4096u, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, hostMemory);
+
+    auto svmEntry = svmAllocationsManager->getSVMAlloc(hostMemory);
+
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    svmEntry->gpuAllocation->updateTaskCount(6u, 0u);
+    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
+        .Times(1);
+
+    svmAllocationsManager->freeSVMAlloc(hostMemory, true);
+}

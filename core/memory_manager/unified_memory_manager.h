@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,8 @@ class SVMAllocsManager {
     void *createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &svmProperties);
     void *createSharedUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &svmProperties, void *cmdQ);
     SvmAllocationData *getSVMAlloc(const void *ptr);
-    bool freeSVMAlloc(void *ptr);
+    bool freeSVMAlloc(void *ptr, bool blocking);
+    bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
     MapBasedAllocationTracker *getSVMAllocs() { return &SVMAllocs; }
 

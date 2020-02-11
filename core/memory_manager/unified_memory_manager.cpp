@@ -161,9 +161,16 @@ SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
     return SVMAllocs.get(ptr);
 }
 
-bool SVMAllocsManager::freeSVMAlloc(void *ptr) {
+bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
+        if (blocking) {
+            if (svmData->cpuAllocation) {
+                this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
+            }
+            this->memoryManager->waitForEnginesCompletion(*svmData->gpuAllocation);
+        }
+
         auto pageFaultManager = this->memoryManager->getPageFaultManager();
         if (pageFaultManager) {
             pageFaultManager->removeAllocation(ptr);
