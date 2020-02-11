@@ -159,6 +159,13 @@ struct EncodeSempahore {
                                        uint64_t compareAddress,
                                        uint32_t compareData,
                                        COMPARE_OPERATION compareMode);
+
+    static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                          uint64_t compareAddress,
+                                          uint32_t compareData,
+                                          COMPARE_OPERATION compareMode);
+
+    static size_t getSizeMiSemaphoreWait();
 };
 
 template <typename GfxFamily>

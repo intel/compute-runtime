@@ -301,6 +301,23 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
 }
 
 template <typename Family>
+void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                                        uint64_t compareAddress,
+                                                        uint32_t compareData,
+                                                        COMPARE_OPERATION compareMode) {
+    auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    programMiSemaphoreWait(semaphoreCommand,
+                           compareAddress,
+                           compareData,
+                           compareMode);
+}
+
+template <typename Family>
+size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
+    return sizeof(MI_SEMAPHORE_WAIT);
+}
+
+template <typename Family>
 void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
                                            ATOMIC_OPCODES opcode,
                                            DATA_SIZE dataSize) {

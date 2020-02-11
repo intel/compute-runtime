@@ -5,9 +5,10 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/fixtures/command_container_fixture.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/helpers/hw_parse.h"
 
 using namespace NEO;
 
@@ -26,4 +27,37 @@ HWTEST_F(CommandEncodeSemaphore, programMiSemaphoreWait) {
     EXPECT_EQ(4u, miSemaphore.getSemaphoreDataDword());
     EXPECT_EQ(0x123400u, miSemaphore.getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore.getWaitMode());
+}
+
+HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFieldsAreSetCorrectly) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    using WAIT_MODE = typename FamilyType::MI_SEMAPHORE_WAIT::WAIT_MODE;
+
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    LinearStream stream(buffer.get(), 128);
+    COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD;
+
+    EncodeSempahore<FamilyType>::addMiSemaphoreWaitCommand(stream,
+                                                           0xFF00FF000u,
+                                                           5u,
+                                                           compareMode);
+
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), stream.getUsed());
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(stream);
+    MI_SEMAPHORE_WAIT *miSemaphore = hwParse.getCommand<MI_SEMAPHORE_WAIT>();
+
+    EXPECT_EQ(compareMode, miSemaphore->getCompareOperation());
+    EXPECT_EQ(5u, miSemaphore->getSemaphoreDataDword());
+    EXPECT_EQ(0xFF00FF000u, miSemaphore->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore->getWaitMode());
+}
+
+HWTEST_F(CommandEncodeSemaphore, whenGettingMiSemaphoreCommandSizeThenExpectSingleMiSemaphoreCommandSize) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    size_t expectedSize = sizeof(MI_SEMAPHORE_WAIT);
+    size_t actualSize = EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    EXPECT_EQ(expectedSize, actualSize);
 }
