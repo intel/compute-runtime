@@ -55,7 +55,7 @@ target_sources(igdrcl_aub_tests PRIVATE
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
     ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
-    ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+    ${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
   )
 else()

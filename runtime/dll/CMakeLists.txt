@@ -56,7 +56,7 @@ set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/options_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/sys_calls.cpp
-  ${NEO_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+  ${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_calls.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_create.cpp
 )

@@ -25,5 +25,12 @@ set(NEO_CORE_GMM_HELPER
   ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
 )
 
+set(NEO_CORE_GMM_HELPER_WINDOWS
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory${BRANCH_DIR_SUFFIX}/gmm_memory.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_memory_base.cpp
+)
+
 set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER ${NEO_CORE_GMM_HELPER})
+set_property(GLOBAL PROPERTY NEO_CORE_GMM_HELPER_WINDOWS ${NEO_CORE_GMM_HELPER_WINDOWS})
 add_subdirectories()

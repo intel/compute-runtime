@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/gmm_helper/gmm_memory_base.h"
+#include "core/gmm_helper/windows/gmm_memory_base.h"
 
 #include "core/helpers/debug_helpers.h"
 #include "core/os_interface/windows/windows_defs.h"
