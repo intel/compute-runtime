@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_container/command_encoder.h"
 #include "core/command_stream/csr_definitions.h"
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
@@ -299,37 +300,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
                                                                    kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
 
     // Copy our sampler state if it exists
-    size_t samplerStateOffset = 0;
+    uint32_t samplerStateOffset = 0;
     uint32_t samplerCount = 0;
     if (patchInfo.samplerStateArray) {
-        size_t borderColorOffset = 0;
         samplerCount = patchInfo.samplerStateArray->Count;
-        auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
-        auto borderColorSize = patchInfo.samplerStateArray->Offset - patchInfo.samplerStateArray->BorderColorOffset;
-
-        dsh.align(alignIndirectStatePointer);
-        borderColorOffset = dsh.getUsed();
-
-        auto borderColor = dsh.getSpace(borderColorSize);
-
-        memcpy_s(borderColor, borderColorSize,
-                 ptrOffset(kernel.getDynamicStateHeap(), patchInfo.samplerStateArray->BorderColorOffset),
-                 borderColorSize);
-
-        dsh.align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
-        samplerStateOffset = dsh.getUsed();
-
-        auto samplerState = dsh.getSpace(sizeSamplerState);
-
-        memcpy_s(samplerState, sizeSamplerState,
-                 ptrOffset(kernel.getDynamicStateHeap(), patchInfo.samplerStateArray->Offset),
-                 sizeSamplerState);
-
-        auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(samplerState);
-        for (uint32_t i = 0; i < samplerCount; i++) {
-            pSmplr->setIndirectStatePointer((uint32_t)borderColorOffset);
-            pSmplr++;
-        }
+        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, patchInfo.samplerStateArray->Offset, samplerCount, patchInfo.samplerStateArray->BorderColorOffset, kernel.getDynamicStateHeap());
     }
 
     auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
