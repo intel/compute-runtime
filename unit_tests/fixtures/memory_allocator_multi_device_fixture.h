@@ -14,6 +14,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -29,7 +30,7 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
         ultHwConfig.useMockedGetDevicesFunc = false;
         ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
 
-        platform()->initialize();
+        initPlatform();
         executionEnvironment = platform()->peekExecutionEnvironment();
         memoryManager = executionEnvironment->memoryManager.get();
     }

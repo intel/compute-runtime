@@ -36,6 +36,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_with_source.h"
@@ -2443,7 +2444,7 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
 }
 
 TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
-    platform()->initialize();
+    initPlatform();
     auto device = platform()->getClDevice(0);
     MockContext *context = new MockContext(device, false);
     MockProgram *pProgram = new MockProgram(*device->getExecutionEnvironment(), context, false);

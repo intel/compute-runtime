@@ -49,7 +49,9 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
         DebuggerLibrary::setDebuggerActive(true);
         auto executionEnvironment = new ExecutionEnvironment();
         Platform platform(*executionEnvironment);
-        platform.initialize();
+        size_t numRootDevices;
+        getDevices(numRootDevices, *executionEnvironment);
+        platform.initialize(1, 0);
 
         EXPECT_NE(nullptr, executionEnvironment->debugger);
     }

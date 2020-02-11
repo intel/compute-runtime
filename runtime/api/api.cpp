@@ -78,23 +78,31 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             break;
         }
 
-        while (platforms != nullptr) {
-            auto pPlatform = constructPlatform();
-            bool ret = pPlatform->initialize();
-            DEBUG_BREAK_IF(ret != true);
-            if (!ret) {
+        static std::mutex mutex;
+        std::unique_lock<std::mutex> lock(mutex);
+        if (platformsImpl.empty()) {
+            auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+            size_t numRootDevices = 0u;
+            bool status = getDevices(numRootDevices, *executionEnvironment);
+            if (!status) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
-
+            auto pPlatform = Platform::createFunc(*executionEnvironment.release());
+            if (!pPlatform->initialize(numRootDevices, 0u)) {
+                retVal = CL_OUT_OF_HOST_MEMORY;
+                break;
+            }
+            platformsImpl.push_back(std::move(pPlatform));
+        }
+        if (platforms) {
             // we only have one platform so we can program that directly
-            platforms[0] = pPlatform;
-            break;
+            platforms[0] = platformsImpl[0].get();
         }
 
         // we only have a single platform at this time, so return 1 if num_platforms
         // is non-nullptr
-        if (numPlatforms && retVal == CL_SUCCESS) {
+        if (numPlatforms) {
             *numPlatforms = 1;
         }
     } while (false);
@@ -178,10 +186,13 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                 break;
             }
         } else {
-            pPlatform = constructPlatform();
-            bool ret = pPlatform->initialize();
-            DEBUG_BREAK_IF(ret != true);
-            UNUSED_VARIABLE(ret);
+            cl_uint numPlatforms = 0u;
+            retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+            if (numPlatforms == 0u) {
+                retVal = CL_DEVICE_NOT_FOUND;
+                break;
+            }
+            pPlatform = platformsImpl[0].get();
         }
 
         DEBUG_BREAK_IF(pPlatform->isInitialized() != true);

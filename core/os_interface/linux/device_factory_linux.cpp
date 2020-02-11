@@ -20,17 +20,25 @@
 namespace NEO {
 size_t DeviceFactory::numDevices = 0;
 
-bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    size_t numRootDevices = 1;
+bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
 
+    HwDeviceIds hwDeviceIds;
+
+    size_t numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
+    for (size_t i = 0; i < numRootDevices; i++) {
+        auto hwDeviceId = Drm::discoverDevices();
+        hwDeviceIds.push_back(std::move(hwDeviceId));
+    }
+    totalNumRootDevices = numRootDevices;
 
     executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
 
-    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        auto hwDeviceId = Drm::discoverDevices();
+    uint32_t rootDeviceIndex = 0u;
+
+    for (auto &hwDeviceId : hwDeviceIds) {
         Drm *drm = Drm::create(std::move(hwDeviceId), *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
         if (!drm) {
             return false;
@@ -39,6 +47,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(new OSInterface());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(drm);
+        rootDeviceIndex++;
     }
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
@@ -47,9 +56,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         return false;
     }
     executionEnvironment.calculateMaxOsContextCount();
-
-    numDevices = numRootDevices;
-    DeviceFactory::numDevices = numDevices;
+    DeviceFactory::numDevices = numRootDevices;
 
     return true;
 }

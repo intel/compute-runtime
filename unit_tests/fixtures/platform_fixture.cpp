@@ -8,7 +8,7 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 
 #include "runtime/device/cl_device.h"
-#include "runtime/platform/platform.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -23,7 +23,7 @@ void PlatformFixture::SetUp() {
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 
     // setup platform / context
-    bool isInitialized = pPlatform->initialize();
+    bool isInitialized = initPlatform();
     ASSERT_EQ(true, isInitialized);
 
     num_devices = static_cast<cl_uint>(pPlatform->getNumDevices());

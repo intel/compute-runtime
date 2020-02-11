@@ -1794,11 +1794,13 @@ TEST(WddmMemoryManager, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddm
     DebugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedGetDevicesFunc = false;
-    platform()->initialize();
+    size_t numRootDevices;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    getDevices(numRootDevices, *executionEnvironment);
 
-    MockWddmMemoryManager wddmMemoryManager(*platform()->peekExecutionEnvironment());
-    for (auto i = 0u; i < platform()->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {
-        auto wddmFromRootDevice = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getWddm();
+    MockWddmMemoryManager wddmMemoryManager(*executionEnvironment);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        auto wddmFromRootDevice = executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->getWddm();
         EXPECT_EQ(wddmFromRootDevice, &wddmMemoryManager.getWddm(i));
     }
 }
@@ -1809,13 +1811,16 @@ TEST(WddmMemoryManager, givenMultipleRootDeviceWhenCreateMemoryManagerThenTakeMa
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedGetDevicesFunc = false;
-    platform()->initialize();
+    size_t numRootDevicesReturned;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    getDevices(numRootDevicesReturned, *executionEnvironment);
+    EXPECT_EQ(static_cast<uint32_t>(numRootDevicesReturned), numRootDevices);
     for (auto i = 0u; i < numRootDevices; i++) {
-        auto wddm = static_cast<WddmMock *>(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getWddm());
+        auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->getWddm());
         wddm->minAddress = i * (numRootDevices - i);
     }
 
-    MockWddmMemoryManager wddmMemoryManager(*platform()->peekExecutionEnvironment());
+    MockWddmMemoryManager wddmMemoryManager(*executionEnvironment);
 
     EXPECT_EQ(4u, wddmMemoryManager.getAlignedMallocRestrictions()->minAddress);
 }

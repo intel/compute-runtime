@@ -36,8 +36,6 @@ namespace NEO {
 
 std::vector<std::unique_ptr<Platform>> platformsImpl;
 
-bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-
 Platform *platform() {
     if (platformsImpl.empty()) {
         return nullptr;
@@ -122,8 +120,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     return retVal;
 }
 
-bool Platform::initialize() {
-    size_t numDevicesReturned = 0;
+bool Platform::initialize(size_t numDevices, uint32_t firstRootDeviceIndex) {
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
 
@@ -136,11 +133,7 @@ bool Platform::initialize() {
             this->initializationLoopHelper();
     }
 
-    state = NEO::getDevices(numDevicesReturned, executionEnvironment) ? StateIniting : StateNone;
-
-    if (state == StateNone) {
-        return false;
-    }
+    state = StateIniting;
 
     if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
         executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
@@ -152,8 +145,8 @@ bool Platform::initialize() {
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
 
-    this->clDevices.resize(numDevicesReturned);
-    for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
+    this->clDevices.resize(numDevices);
+    for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevices; ++deviceOrdinal) {
         auto pDevice = createRootDevice(deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         ClDevice *pClDevice = nullptr;
@@ -284,5 +277,9 @@ GmmHelper *Platform::peekGmmHelper() const {
 GmmClientContext *Platform::peekGmmClientContext() const {
     return peekGmmHelper()->getClientContext();
 }
+
+std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
+    return std::make_unique<Platform>(executionEnvironment);
+};
 
 } // namespace NEO

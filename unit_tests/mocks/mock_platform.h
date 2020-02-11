@@ -14,7 +14,9 @@ class MockPlatform : public Platform {
   public:
     using Platform::fillGlobalDispatchTable;
     using Platform::initializationLoopHelper;
-    MockPlatform() : Platform(*(new ExecutionEnvironment())) {}
+    MockPlatform() : MockPlatform(*(new ExecutionEnvironment())) {}
+    MockPlatform(ExecutionEnvironment &executionEnvironment) : Platform(executionEnvironment) {}
 };
 
+bool initPlatform();
 } // namespace NEO

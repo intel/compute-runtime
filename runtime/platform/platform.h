@@ -47,7 +47,7 @@ class Platform : public BaseObject<_cl_platform_id> {
                    void *paramValue,
                    size_t *paramValueSizeRet);
 
-    bool initialize();
+    bool initialize(size_t numDevices, uint32_t firstRootDeviceIndex);
     bool isInitialized();
 
     size_t getNumDevices() const;
@@ -61,6 +61,8 @@ class Platform : public BaseObject<_cl_platform_id> {
     ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
     GmmHelper *peekGmmHelper() const;
     GmmClientContext *peekGmmClientContext() const;
+
+    static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
 
   protected:
     enum {

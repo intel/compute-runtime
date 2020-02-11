@@ -98,6 +98,7 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeCpuWhenGettingDeviceIdsThenDeviceNotF
 }
 
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevicesAreReturned) {
+    platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedGetDevicesFunc = false;
@@ -114,6 +115,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevi
     }
 }
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIsLowerThanNumDevicesThenSubsetOfRootDevicesIsReturned) {
+    platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedGetDevicesFunc = false;
@@ -144,6 +146,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
 }
 
 TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevicesWhenGetDeviceIdsThenLimitedNumberOfRootDevicesIsReturned) {
+    platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedGetDevicesFunc = false;
@@ -167,5 +170,25 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
         EXPECT_EQ(devices[i], platform()->getClDevice(i));
     }
     EXPECT_EQ(devices[numDevices], dummyDevice);
+}
+TEST(clGetDeviceIDsNegativeTests, whenFailToCreateDeviceThenclGetDeviceIDsReturnsNoDeviceError) {
+    struct FailingPlatform : Platform {
+        using Platform::Platform;
+        RootDevice *createRootDevice(uint32_t rootDeviceIndex) const override { return nullptr; }
+    };
+    VariableBackup<decltype(Platform::createFunc)> createFuncBackup{&Platform::createFunc};
+    Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
+        return std::make_unique<FailingPlatform>(executionEnvironment);
+    };
+    platformsImpl.clear();
+
+    constexpr auto numRootDevices = 3u;
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
+
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
+    EXPECT_EQ(numDevices, 0u);
 }
 } // namespace ULT

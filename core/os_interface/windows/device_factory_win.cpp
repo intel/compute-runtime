@@ -19,23 +19,30 @@ namespace NEO {
 
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
-size_t DeviceFactory::numDevices = 0;
+bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
+    HwDeviceIds hwDeviceIds;
+    totalNumRootDevices = 0;
 
-bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    numDevices = 0;
-
-    auto numRootDevices = 1u;
+    size_t numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
-
-    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
-
-    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+    for (size_t i = 0; i < numRootDevices; i++) {
         auto hwDeviceId = Wddm::discoverDevices();
-        if (!hwDeviceId) {
-            return false;
+        if (hwDeviceId) {
+            hwDeviceIds.push_back(std::move(hwDeviceId));
         }
+    }
+    if (hwDeviceIds.empty()) {
+        return false;
+    }
+    totalNumRootDevices = numRootDevices;
+
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(totalNumRootDevices));
+
+    uint32_t rootDeviceIndex = 0u;
+
+    for (auto &hwDeviceId : hwDeviceIds) {
         std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()));
         if (!wddm->init()) {
             return false;
@@ -43,19 +50,15 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm.release());
+        rootDeviceIndex++;
     }
+
     executionEnvironment.calculateMaxOsContextCount();
-
-    numDevices = numRootDevices;
-    DeviceFactory::numDevices = numDevices;
-
     return true;
 }
 
 void DeviceFactory::releaseDevices() {
-    DeviceFactory::numDevices = 0;
 }
-
 } // namespace NEO
 
 #endif

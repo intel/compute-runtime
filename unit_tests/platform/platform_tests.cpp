@@ -39,6 +39,8 @@ struct PlatformTest : public ::testing::Test {
         MockSipData::calledType = SipKernelType::COUNT;
         MockSipData::called = false;
         pPlatform.reset(new MockPlatform());
+        size_t numRootDevices;
+        getDevices(numRootDevices, *pPlatform->peekExecutionEnvironment());
     }
     void TearDown() override {
         MockSipData::calledType = SipKernelType::COUNT;
@@ -58,14 +60,15 @@ struct MockPlatformWithMockExecutionEnvironment : public Platform {
 TEST_F(PlatformTest, GivenUninitializedPlatformWhenInitializeIsCalledThenPlatformIsInitialized) {
     EXPECT_FALSE(pPlatform->isInitialized());
 
-    EXPECT_TRUE(pPlatform->initialize());
+    pPlatform->initialize(1, 0);
+
     EXPECT_TRUE(pPlatform->isInitialized());
 }
 
 TEST_F(PlatformTest, WhenGetNumDevicesIsCalledThenExpectedValuesAreReturned) {
     EXPECT_EQ(0u, pPlatform->getNumDevices());
 
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
 
     EXPECT_GT(pPlatform->getNumDevices(), 0u);
 }
@@ -74,7 +77,7 @@ TEST_F(PlatformTest, WhenGetDeviceIsCalledThenExpectedValuesAreReturned) {
     EXPECT_EQ(nullptr, pPlatform->getDevice(0));
     EXPECT_EQ(nullptr, pPlatform->getClDevice(0));
 
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
 
     EXPECT_NE(nullptr, pPlatform->getDevice(0));
     EXPECT_NE(nullptr, pPlatform->getClDevice(0));
@@ -87,7 +90,7 @@ TEST_F(PlatformTest, WhenGetDeviceIsCalledThenExpectedValuesAreReturned) {
 TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
     EXPECT_EQ(nullptr, pPlatform->getClDevices());
 
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
 
     EXPECT_NE(nullptr, pPlatform->getClDevices());
 }
@@ -96,14 +99,14 @@ TEST_F(PlatformTest, givenDebugFlagSetWhenInitializingPlatformThenOverrideGpuAdd
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideGpuAddressSpace.set(12);
 
-    bool status = pPlatform->initialize();
+    bool status = pPlatform->initialize(1, 0);
     EXPECT_TRUE(status);
 
     EXPECT_EQ(maxNBitValue(12), pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.gpuAddressSpace);
 }
 
 TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
     auto compilerExtensions = pPlatform->getClDevice(0)->peekCompilerExtensions();
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
@@ -125,7 +128,7 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
     EXPECT_EQ(SipKernelType::Csr, MockSipData::calledType);
     EXPECT_TRUE(MockSipData::called);
 }
@@ -139,7 +142,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
 }
@@ -156,7 +159,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionInactiveSourceLevelDebuggerWhenIniti
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
 }
@@ -171,7 +174,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionActiveSourceLevelDebuggerWhenInitial
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
-    pPlatform->initialize();
+    pPlatform->initialize(1, 0);
     EXPECT_TRUE(MockSipData::called);
     EXPECT_LE(SipKernelType::DbgCsr, MockSipData::calledType);
     EXPECT_GE(SipKernelType::DbgCsrLocal, MockSipData::calledType);
@@ -181,7 +184,10 @@ TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCente
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetCommandStreamReceiver.set(0);
     MockPlatformWithMockExecutionEnvironment platform;
-    bool ret = platform.initialize();
+
+    size_t numRootDevices;
+    getDevices(numRootDevices, *platform.peekExecutionEnvironment());
+    bool ret = platform.initialize(1, 0);
     EXPECT_TRUE(ret);
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);
@@ -193,7 +199,9 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
     MockPlatformWithMockExecutionEnvironment platform;
-    bool ret = platform.initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *platform.peekExecutionEnvironment());
+    bool ret = platform.initialize(1, 0);
     EXPECT_TRUE(ret);
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
@@ -244,7 +252,9 @@ class PlatformFailingTest : public PlatformTest {
 
 TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenInitializationFails) {
     Platform *platform = new MockPlatform();
-    bool ret = platform->initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *platform->peekExecutionEnvironment());
+    bool ret = platform->initialize(1, 0);
     EXPECT_FALSE(ret);
     EXPECT_FALSE(platform->isInitialized());
     delete platform;
@@ -388,6 +398,8 @@ TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItE
         bool &called;
     };
     mockPlatform platform(called);
-    platform.initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *platform.peekExecutionEnvironment());
+    platform.initialize(1, 0);
     EXPECT_TRUE(called);
 }

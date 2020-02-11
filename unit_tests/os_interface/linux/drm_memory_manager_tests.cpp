@@ -37,6 +37,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gfx_partition.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
@@ -3356,7 +3357,7 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
     DebugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedGetDevicesFunc = false;
-    platform()->initialize();
+    initPlatform();
 
     TestedDrmMemoryManager drmMemoryManager(*platform()->peekExecutionEnvironment());
     for (auto i = 0u; i < platform()->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {

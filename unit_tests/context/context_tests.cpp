@@ -17,6 +17,7 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -335,7 +336,7 @@ TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumb
     VariableBackup<size_t> numDevicesBackup(&numPlatformDevices);
     numDevicesBackup = numDevices;
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    platform()->initialize();
+    initPlatform();
     auto device0 = platform()->getClDevice(0);
     auto device1 = platform()->getClDevice(1);
     cl_device_id clDevices[2]{device0, device1};

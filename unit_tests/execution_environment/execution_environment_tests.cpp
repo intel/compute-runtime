@@ -56,7 +56,9 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsInitializedAndCreatesDevicesThen
     std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
 
     auto expectedRefCounts = executionEnvironment->getRefInternalCount();
-    platform->initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *executionEnvironment);
+    platform->initialize(1, 0);
     EXPECT_LT(0u, platform->getDevice(0)->getNumAvailableDevices());
     if (platform->getDevice(0)->getNumAvailableDevices() > 1) {
         expectedRefCounts++;
@@ -70,7 +72,9 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
     DebugManager.flags.CreateMultipleSubDevices.set(1);
     auto executionEnvironment = new ExecutionEnvironment();
     std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
-    platform->initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *executionEnvironment);
+    platform->initialize(1, 0);
     auto device = platform->getClDevice(0);
     EXPECT_EQ(1, device->getRefInternalCount());
     device->incRefInternal();
@@ -84,7 +88,9 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
     auto executionEnvironment = new ExecutionEnvironment();
     Platform platform(*executionEnvironment);
-    platform.initialize();
+    size_t numRootDevices;
+    getDevices(numRootDevices, *executionEnvironment);
+    platform.initialize(1, 0);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
 

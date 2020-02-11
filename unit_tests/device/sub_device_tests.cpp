@@ -55,9 +55,9 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedTh
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
-    constructPlatform()->initialize();
-    auto nonDefaultPlatform = std::make_unique<MockPlatform>();
-    nonDefaultPlatform->initialize();
+    initPlatform();
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
+    nonDefaultPlatform->initialize(platform()->getNumDevices(), 0);
     auto device = nonDefaultPlatform->getClDevice(0);
     auto defaultDevice = platform()->getClDevice(0);
 
@@ -104,7 +104,7 @@ TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCre
 
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedGetDevicesFunc = false;
-    platform()->initialize();
+    initPlatform();
     EXPECT_EQ(0u, platform()->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1u, platform()->getDevice(1)->getRootDeviceIndex());
 }
