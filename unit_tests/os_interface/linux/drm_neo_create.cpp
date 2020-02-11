@@ -5,18 +5,11 @@
  *
  */
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/linux/drm_neo.h"
-#include "test.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 
 #include "drm/i915_drm.h"
 
-#include <vector>
-
 namespace NEO {
-
-static std::vector<Drm *> drmMockStack;
 
 class DrmMockDefault : public DrmMock {
   public:
@@ -32,31 +25,14 @@ class DrmMockDefault : public DrmMock {
     }
 };
 
-struct static_init {
-    static_init() : rootDeviceEnvironment(executionEnvironment), drmMockDefault(rootDeviceEnvironment) { drmMockStack.push_back(&drmMockDefault); }
-    ExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment;
-    DrmMockDefault drmMockDefault;
-};
-
-static static_init s;
-
-void pushDrmMock(Drm *mock) { drmMockStack.push_back(mock); }
-
-void popDrmMock() { drmMockStack.pop_back(); }
-
 Drm::~Drm() = default;
 
-Drm *Drm::get(int32_t deviceOrdinal) {
-    // We silently skip deviceOrdinal
-    EXPECT_EQ(deviceOrdinal, 0);
-
-    return drmMockStack[drmMockStack.size() - 1];
-}
+Drm **pDrmToReturnFromCreateFunc = nullptr;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    return drmMockStack[drmMockStack.size() - 1];
+    if (pDrmToReturnFromCreateFunc) {
+        return *pDrmToReturnFromCreateFunc;
+    }
+    return new DrmMockDefault(rootDeviceEnvironment);
 }
-
-void Drm::closeDevice(int32_t deviceOrdinal) {}
 } // namespace NEO

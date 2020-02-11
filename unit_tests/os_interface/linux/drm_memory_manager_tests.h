@@ -25,7 +25,7 @@ class DrmMemoryManagerBasic : public ::testing::Test {
     DrmMemoryManagerBasic() : executionEnvironment(*platformDevices){};
     void SetUp() override {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(Drm::get(0));
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
     }
 
@@ -34,17 +34,17 @@ class DrmMemoryManagerBasic : public ::testing::Test {
 
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
-    std::unique_ptr<DrmMockCustom> mock;
+    DrmMockCustom *mock;
     TestedDrmMemoryManager *memoryManager = nullptr;
     MockClDevice *device = nullptr;
 
     void SetUp() override {
+        MemoryManagementFixture::SetUp();
         SetUp(new DrmMockCustom, false);
     }
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
-        MemoryManagementFixture::SetUp();
-        this->mock = std::unique_ptr<DrmMockCustom>(mock);
+        this->mock = mock;
         executionEnvironment = new MockExecutionEnvironment(*platformDevices);
         executionEnvironment->incRefInternal();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -62,9 +62,8 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     void TearDown() override {
         delete device;
         delete memoryManager;
-        executionEnvironment->decRefInternal();
-
         this->mock->testIoctls();
+        executionEnvironment->decRefInternal();
 
         MemoryManagementFixture::TearDown();
     }
@@ -78,6 +77,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
   public:
     void SetUp() override {
+        MemoryManagementFixture::SetUp();
         DrmMemoryManagerFixture::SetUp(new DrmMockCustom, true);
     }
     void TearDown() override {
@@ -88,15 +88,15 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
 class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
   public:
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
-    std::unique_ptr<DrmMockCustom> mock;
+    DrmMockCustom *mock;
 
     void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->setHwInfo(*platformDevices);
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        mock = std::make_unique<DrmMockCustom>();
+        mock = new DrmMockCustom();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
         memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);

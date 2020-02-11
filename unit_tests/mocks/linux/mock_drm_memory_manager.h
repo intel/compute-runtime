@@ -95,5 +95,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
+    ~TestedDrmMemoryManager() {
+        DrmMemoryManager::commonCleanup();
+    }
 };
 } // namespace NEO

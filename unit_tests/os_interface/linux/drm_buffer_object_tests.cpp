@@ -38,14 +38,14 @@ class TestedBufferObject : public BufferObject {
 
 class DrmBufferObjectFixture {
   public:
-    DrmMockCustom *mock;
+    std::unique_ptr<DrmMockCustom> mock;
     TestedBufferObject *bo;
     drm_i915_gem_exec_object2 execObjectsStorage[256];
 
     void SetUp() {
-        this->mock = new DrmMockCustom;
+        this->mock = std::make_unique<DrmMockCustom>();
         ASSERT_NE(nullptr, this->mock);
-        bo = new TestedBufferObject(this->mock);
+        bo = new TestedBufferObject(this->mock.get());
         ASSERT_NE(nullptr, bo);
     }
 
@@ -54,9 +54,6 @@ class DrmBufferObjectFixture {
         if (this->mock->ioctl_expected.total >= 0) {
             EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
         }
-
-        delete this->mock;
-        this->mock = nullptr;
     }
 };
 
@@ -129,7 +126,7 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     mock->ioctl_res = -1;
     this->mock->errnoValue = EINVAL;
 
-    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock));
+    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock.get()));
     ASSERT_NE(nullptr, boToPin.get());
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));

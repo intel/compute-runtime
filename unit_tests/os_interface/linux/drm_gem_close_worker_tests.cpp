@@ -85,8 +85,6 @@ class DrmGemCloseWorkerFixture {
         }
 
         delete this->mm;
-        delete this->drmMock;
-        this->drmMock = nullptr;
     }
 
   protected:

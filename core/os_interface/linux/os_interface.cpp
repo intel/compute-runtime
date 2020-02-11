@@ -7,9 +7,17 @@
 
 #include "core/os_interface/linux/os_interface.h"
 
+#include "core/os_interface/linux/drm_neo.h"
+
 namespace NEO {
 
 bool OSInterface::osEnabled64kbPages = false;
+
+OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;
+OSInterface::OSInterfaceImpl::~OSInterfaceImpl() = default;
+void OSInterface::OSInterfaceImpl::setDrm(Drm *drm) {
+    this->drm.reset(drm);
+}
 
 OSInterface::OSInterface() {
     osInterfaceImpl = new OSInterfaceImpl();

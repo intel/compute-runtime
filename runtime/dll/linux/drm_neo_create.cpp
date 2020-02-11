@@ -29,31 +29,9 @@ const DeviceDescriptor deviceDescriptorTable[] = {
 #undef DEVICE
     {0, nullptr, nullptr, GTTYPE_UNDEFINED}};
 
-static std::array<Drm *, 1> drms = {{nullptr}};
-
 Drm::~Drm() = default;
 
-Drm *Drm::get(int32_t deviceOrdinal) {
-    if (static_cast<uint32_t>(deviceOrdinal) >= drms.size())
-        return nullptr;
-    return drms[deviceOrdinal % drms.size()];
-}
-
-void Drm::closeDevice(int32_t deviceOrdinal) {
-    if (static_cast<uint32_t>(deviceOrdinal) >= drms.size())
-        return;
-    if (drms[deviceOrdinal % drms.size()] != nullptr) {
-        delete drms[deviceOrdinal % drms.size()];
-        drms[deviceOrdinal % drms.size()] = nullptr;
-    }
-}
-
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    int32_t deviceOrdinal = 0;
-
-    if (drms[deviceOrdinal % drms.size()] != nullptr)
-        return drms[deviceOrdinal % drms.size()];
-
     std::unique_ptr<Drm> drmObject;
     if (DebugManager.flags.EnableNullHardware.get() == true) {
         drmObject.reset(new DrmNullDevice(std::move(hwDeviceId), rootDeviceEnvironment));
@@ -127,7 +105,6 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         }
     }
 
-    drms[deviceOrdinal % drms.size()] = drmObject.release();
-    return drms[deviceOrdinal % drms.size()];
+    return drmObject.release();
 }
 } // namespace NEO

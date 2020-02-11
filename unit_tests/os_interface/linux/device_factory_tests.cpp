@@ -35,16 +35,6 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     DeviceFactory::releaseDevices();
 }
 
-TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailed) {
-    size_t numDevices = 0;
-
-    pushDrmMock(nullptr);
-    bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
-    EXPECT_FALSE(success);
-
-    popDrmMock();
-}
-
 TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailedConfigureHwInfo) {
     size_t numDevices = 0;
 
@@ -56,25 +46,6 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailedConfigureHwInfo) {
     pDrm->StoredRetValForDeviceID = 0;
 }
 
-TEST_F(DeviceFactoryLinuxTest, ReleaseDevices) {
-    MockDeviceFactory mockDeviceFactory;
-    size_t numDevices = 0;
-
-    pDrm->StoredDeviceID = 0x5A84;
-    pDrm->StoredDeviceRevID = 0x0B;
-    pDrm->StoredEUVal = 18;
-    pDrm->StoredSSVal = 3;
-    pDrm->StoredHasPooledEU = 1;
-    pDrm->StoredMinEUinPool = 9;
-    pDrm->StoredRetVal = -1;
-
-    bool success = mockDeviceFactory.getDevices(numDevices, executionEnvironment);
-    EXPECT_TRUE(success);
-
-    mockDeviceFactory.releaseDevices();
-    EXPECT_TRUE(mockDeviceFactory.getNumDevices() == 0);
-}
-
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
     MockDeviceFactory mockDeviceFactory;
     size_t numDevices = 0;
@@ -83,4 +54,13 @@ TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAl
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface);
     EXPECT_NE(nullptr, pDrm);
     EXPECT_EQ(pDrm, executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getDrm());
+}
+
+TEST_F(DeviceFactoryLinuxTest, whenDrmIsNotCretedThenGetDevicesFails) {
+    delete pDrm;
+    pDrm = nullptr;
+    size_t numDevices = 0;
+
+    bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
+    EXPECT_FALSE(success);
 }

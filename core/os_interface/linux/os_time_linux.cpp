@@ -22,8 +22,6 @@ OSTimeLinux::OSTimeLinux(OSInterface *osInterface) {
     getTimeFunc = &clock_gettime;
     if (osInterface) {
         pDrm = osInterface->get()->getDrm();
-    } else {
-        pDrm = Drm::get(0);
     }
     timestampTypeDetect();
 }

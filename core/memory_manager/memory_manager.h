@@ -163,6 +163,7 @@ class MemoryManager {
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
 
     static uint32_t maxOsContextCount;
+    virtual void commonCleanup(){};
 
   protected:
     struct AllocationData {

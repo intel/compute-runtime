@@ -42,6 +42,7 @@ class DrmMemoryManager : public MemoryManager {
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
+    void commonCleanup() override;
 
     // drm/i915 ioctl wrappers
     MOCKABLE_VIRTUAL uint32_t unreference(BufferObject *bo, bool synchronousDestroy);

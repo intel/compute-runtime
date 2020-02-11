@@ -45,8 +45,6 @@ class Drm {
     friend DeviceFactory;
 
   public:
-    static Drm *get(int32_t deviceOrdinal);
-
     virtual ~Drm();
 
     virtual int ioctl(unsigned long request, void *arg);
@@ -94,6 +92,8 @@ class Drm {
 
     static std::unique_ptr<HwDeviceId> discoverDevices();
 
+    static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
     bool sliceCountChangeSupported = false;
@@ -108,9 +108,6 @@ class Drm {
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {}
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
-
-    static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void closeDevice(int32_t deviceOrdinal);
 
     std::string getSysFsPciPath(int deviceID);
     void *query(uint32_t queryId);

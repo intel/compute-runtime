@@ -8,22 +8,21 @@
 #pragma once
 #include "core/os_interface/os_interface.h"
 
+#include <memory>
+
 namespace NEO {
 class Drm;
 
 class OSInterface::OSInterfaceImpl {
   public:
-    OSInterfaceImpl() {
-        drm = nullptr;
-    }
+    OSInterfaceImpl();
+    ~OSInterfaceImpl();
     Drm *getDrm() const {
-        return drm;
+        return drm.get();
     }
-    void setDrm(Drm *drm) {
-        this->drm = drm;
-    }
+    void setDrm(Drm *drm);
 
   protected:
-    Drm *drm;
+    std::unique_ptr<Drm> drm;
 };
 } // namespace NEO

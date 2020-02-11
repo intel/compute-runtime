@@ -82,7 +82,6 @@ TEST_F(DrmTimeTest, GetGpuTime) {
     error = osTime->getGpuTimeSplitted(&time);
     EXPECT_TRUE(error);
     EXPECT_NE(0ULL, time);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, GetGpuTimeFails) {
@@ -95,7 +94,6 @@ TEST_F(DrmTimeTest, GetGpuTimeFails) {
     EXPECT_FALSE(error);
     error = osTime->getGpuTimeSplitted(&time);
     EXPECT_FALSE(error);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, GetCpuGpuTime) {
@@ -113,7 +111,6 @@ TEST_F(DrmTimeTest, GetCpuGpuTime) {
     EXPECT_NE(0ULL, CPUGPUTime02.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, GIVENDrmWHENGetCpuGpuTimeTHENPassed) {
@@ -131,7 +128,6 @@ TEST_F(DrmTimeTest, GIVENDrmWHENGetCpuGpuTimeTHENPassed) {
     EXPECT_NE(0ULL, CPUGPUTime02.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
     EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
@@ -146,7 +142,6 @@ TEST_F(DrmTimeTest, GetCpuGpuTimeFails) {
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_FALSE(error);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, GetCpuGpuTimeCpuFails) {
@@ -156,7 +151,6 @@ TEST_F(DrmTimeTest, GetCpuGpuTimeCpuFails) {
     osTime->updateDrm(pDrm);
     auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_FALSE(error);
-    delete pDrm;
 }
 
 TEST_F(DrmTimeTest, detect) {
@@ -185,14 +179,13 @@ TEST_F(DrmTimeTest, detect) {
         EXPECT_EQ(p, &OSTimeLinux::getGpuTimeSplitted);
         drm->ioctl_res_ext = &drm->NONE;
     }
-    delete drm;
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
     auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
 
-    auto drm = std::make_unique<DrmMockCustom>();
-    osTime->updateDrm(drm.get());
+    auto drm = new DrmMockCustom();
+    osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
     drm->ioctl_res = -1;
@@ -211,8 +204,8 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResoluti
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectResolutionIsReturned) {
-    auto drm = std::make_unique<DrmMockCustom>();
-    osTime->updateDrm(drm.get());
+    auto drm = new DrmMockCustom();
+    osTime->updateDrm(drm);
 
     // 19200000 is frequency yelding 52.083ns resolution
     drm->getParamRetValue = 19200000;

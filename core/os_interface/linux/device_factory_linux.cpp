@@ -55,11 +55,5 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 }
 
 void DeviceFactory::releaseDevices() {
-    if (DeviceFactory::numDevices > 0) {
-        for (unsigned int i = 0; i < DeviceFactory::numDevices; ++i) {
-            Drm::closeDevice(i);
-        }
-    }
-    DeviceFactory::numDevices = 0;
 }
 } // namespace NEO

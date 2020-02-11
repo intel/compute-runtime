@@ -11,15 +11,7 @@ namespace NEO {
 
 Drm::~Drm() = default;
 
-Drm *Drm::get(int32_t deviceOrdinal) {
-    return nullptr;
-}
-
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     return nullptr;
-}
-
-void Drm::closeDevice(int32_t deviceOrdinal) {
-    return;
 }
 } // namespace NEO

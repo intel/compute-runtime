@@ -20,7 +20,4 @@ class DrmWrap : public NEO::Drm {
         }
         return nullptr;
     }
-    static void closeDevice(int32_t deviceOrdinal) {
-        NEO::Drm::closeDevice(deviceOrdinal);
-    };
 };

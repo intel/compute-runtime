@@ -101,7 +101,6 @@ void HwInfoConfigTestLinux::SetUp() {
 void HwInfoConfigTestLinux::TearDown() {
     CpuInfo::cpuidexFunc = rt_cpuidex_func;
 
-    delete drm;
     delete osInterface;
 
     HwInfoConfigTest::TearDown();

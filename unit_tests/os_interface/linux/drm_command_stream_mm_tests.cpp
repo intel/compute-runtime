@@ -25,13 +25,11 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableForcePin.set(true);
 
-    DrmMockCustom mock;
+    auto drm = new DrmMockCustom();
     MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.setHwInfo(*platformDevices);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(&mock);
-    executionEnvironment.prepareRootDeviceEnvironments(1u);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
@@ -49,12 +47,12 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableForcePin.set(false);
 
-    DrmMockCustom mock;
+    auto drm = new DrmMockCustom();
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.setHwInfo(*platformDevices);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(&mock);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
 

@@ -35,7 +35,7 @@ class OSTimeLinux : public OSTime {
   protected:
     typedef int (*resolutionFunc_t)(clockid_t, struct timespec *);
     typedef int (*getTimeFunc_t)(clockid_t, struct timespec *);
-    Drm *pDrm;
+    Drm *pDrm = nullptr;
     unsigned timestampSizeInBits;
     resolutionFunc_t resolutionFunc;
     getTimeFunc_t getTimeFunc;

@@ -28,12 +28,12 @@ class DrmCommandStreamTest : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = std::make_unique<::testing::NiceMock<DrmMockImpl>>(mockFd);
+        mock = new ::testing::NiceMock<DrmMockImpl>(mockFd);
 
         executionEnvironment.setHwInfo(*platformDevices);
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
+        executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
 
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
@@ -50,7 +50,7 @@ class DrmCommandStreamTest : public ::testing::Test {
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
-        ::testing::Mock::VerifyAndClearExpectations(mock.get());
+        ::testing::Mock::VerifyAndClearExpectations(mock);
 
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
@@ -61,7 +61,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
         delete csr;
-        ::testing::Mock::VerifyAndClearExpectations(mock.get());
+        ::testing::Mock::VerifyAndClearExpectations(mock);
         // Memory manager closes pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(::testing::AtLeast(1));
@@ -69,7 +69,7 @@ class DrmCommandStreamTest : public ::testing::Test {
 
     CommandStreamReceiver *csr = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
-    std::unique_ptr<::testing::NiceMock<DrmMockImpl>> mock;
+    ::testing::NiceMock<DrmMockImpl> *mock;
     const int mockFd = 33;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore dbgState;
@@ -81,7 +81,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
   public:
     std::unique_ptr<DebugManagerStateRestore> dbgState;
     ExecutionEnvironment *executionEnvironment;
-    std::unique_ptr<DrmMockCustom> mock;
+    DrmMockCustom *mock;
     CommandStreamReceiver *csr = nullptr;
 
     DrmMemoryManager *mm = nullptr;
@@ -98,9 +98,9 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = std::make_unique<DrmMockCustom>();
+        mock = new DrmMockCustom();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock.get());
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment);
         ASSERT_NE(nullptr, csr);
@@ -147,6 +147,6 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
     };
 
     MockBufferObject *createBO(size_t size) {
-        return new MockBufferObject(this->mock.get(), size);
+        return new MockBufferObject(this->mock, size);
     }
 };

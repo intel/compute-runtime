@@ -60,15 +60,17 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 }
 
 DrmMemoryManager::~DrmMemoryManager() {
+    if (memoryForPinBB) {
+        MemoryManager::alignedFreeWrapper(memoryForPinBB);
+    }
+}
+
+void DrmMemoryManager::commonCleanup() {
     if (gemCloseWorker) {
         gemCloseWorker->close(false);
     }
     if (pinBB) {
         DrmMemoryManager::unreference(pinBB, true);
-        pinBB = nullptr;
-    }
-    if (memoryForPinBB) {
-        MemoryManager::alignedFreeWrapper(memoryForPinBB);
     }
 }
 

@@ -25,6 +25,9 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     debugger.reset();
     compilerInterface.reset();
     builtins.reset();
+    if (memoryManager) {
+        memoryManager->commonCleanup();
+    }
     rootDeviceEnvironments.clear();
 }
 

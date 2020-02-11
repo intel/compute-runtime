@@ -52,7 +52,7 @@ class BufferObject {
     uint32_t peekRootDeviceIndex() { return rootDeviceIndex; }
 
   protected:
-    Drm *drm;
+    Drm *drm = nullptr;
 
     std::atomic<uint32_t> refCount;
 

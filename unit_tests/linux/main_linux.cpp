@@ -47,25 +47,11 @@ class DrmWrap : Drm {
     static Drm *createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
         return Drm::create(std::make_unique<HwDeviceId>(0), rootDeviceEnvironment);
     }
-    static void closeDeviceDrm(int32_t deviceOrdinal) {
-        closeDevice(deviceOrdinal);
-    }
 };
-
-TEST(Drm, getReturnsNull) {
-    auto ptr = Drm::get(0);
-    EXPECT_EQ(ptr, nullptr);
-}
 
 TEST(Drm, createReturnsNull) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     auto ptr = DrmWrap::createDrm(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(ptr, nullptr);
-}
-
-TEST(Drm, closeDeviceReturnsNone) {
-    auto retNone = true;
-    DrmWrap::closeDeviceDrm(0);
-    EXPECT_EQ(retNone, true);
 }
