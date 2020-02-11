@@ -90,7 +90,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setDirtyStateForAllHeaps(bool dirty) { dirtyHeaps = dirty ? std::numeric_limits<uint32_t>::max() : 0; }
     void setIddBlock(void *iddBlock) { this->iddBlock = iddBlock; }
     void *getIddBlock() { return iddBlock; }
-    uint32_t getNumIddPerBlock() { return numIddsPerBlock; }
+    uint32_t getNumIddPerBlock() const { return numIddsPerBlock; }
 
   protected:
     void *iddBlock = nullptr;
