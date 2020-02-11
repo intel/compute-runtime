@@ -29,15 +29,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment)
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
-    auto &hwInfo = getHardwareInfo();
-    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-
-    if (!getDebugger()) {
-        this->executionEnvironment->initDebugger();
-    }
     this->executionEnvironment->incRefInternal();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
 }
 
 Device::~Device() {
@@ -56,6 +48,15 @@ Device::~Device() {
 }
 
 bool Device::createDeviceImpl() {
+    auto &hwInfo = getHardwareInfo();
+    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
+
+    if (!getDebugger()) {
+        this->executionEnvironment->initDebugger();
+    }
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
+
     executionEnvironment->initGmm();
 
     if (!createEngines()) {
@@ -72,7 +73,6 @@ bool Device::createDeviceImpl() {
 
     initializeCaps();
 
-    auto &hwInfo = getHardwareInfo();
     if (osTime->getOSInterface()) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
