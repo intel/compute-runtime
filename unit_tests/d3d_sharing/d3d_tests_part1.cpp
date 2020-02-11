@@ -27,7 +27,7 @@
 namespace NEO {
 TYPED_TEST_CASE_P(D3DTests);
 
-TYPED_TEST_P(D3DTests, getDeviceIDsFromD3DWithSpecificDeviceSet) {
+TYPED_TEST_P(D3DTests, GivenSpecificDeviceSetWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned) {
     cl_device_id expectedDevice = *this->devices;
     cl_device_id device = 0;
     cl_uint numDevices = 0;
@@ -59,7 +59,7 @@ TYPED_TEST_P(D3DTests, getDeviceIDsFromD3DWithSpecificDeviceSet) {
     EXPECT_EQ(0u, numDevices);
 }
 
-TYPED_TEST_P(D3DTests, getDeviceIDsFromD3DWithSpecificDeviceSource) {
+TYPED_TEST_P(D3DTests, GivenSpecificDeviceSourceWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned) {
     cl_device_id expectedDevice = *this->devices;
     cl_device_id device = 0;
     cl_uint numDevices = 0;
@@ -116,7 +116,7 @@ TYPED_TEST_P(D3DTests, givenNonIntelVendorWhenGetDeviceIdIsCalledThenReturnError
     EXPECT_EQ(1u, this->mockSharingFcns->getDxgiDescCalled);
 }
 
-TYPED_TEST_P(D3DTests, createFromD3DBufferKHRApi) {
+TYPED_TEST_P(D3DTests, WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned) {
     cl_int retVal;
     EXPECT_CALL(*this->mockSharingFcns, getSharedHandle(_, _))
         .Times(1);
@@ -229,7 +229,7 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 }
 
-TYPED_TEST_P(D3DTests, createFromD3D2dTextureKHRApi) {
+TYPED_TEST_P(D3DTests, WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturned) {
     cl_int retVal;
     EXPECT_CALL(*this->mockSharingFcns, createQuery(_))
         .Times(1);
@@ -261,7 +261,7 @@ TYPED_TEST_P(D3DTests, createFromD3D2dTextureKHRApi) {
     clReleaseMemObject(memObj);
 }
 
-TYPED_TEST_P(D3DTests, createFromD3D3dTextureKHRApi) {
+TYPED_TEST_P(D3DTests, WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturned) {
     cl_int retVal;
     EXPECT_CALL(*this->mockSharingFcns, getSharedHandle(_, _))
         .Times(1);
@@ -465,7 +465,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenAc
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TYPED_TEST_P(D3DTests, getPreferD3DSharedResources) {
+TYPED_TEST_P(D3DTests, WhenGettingPreferD3DSharedResourcesThenCorrectValueIsReturned) {
     auto ctx = std::unique_ptr<MockContext>(new MockContext());
     cl_bool retBool = 0;
     size_t size = 0;
@@ -484,7 +484,7 @@ TYPED_TEST_P(D3DTests, getPreferD3DSharedResources) {
     EXPECT_EQ(0u, retBool);
 }
 
-TYPED_TEST_P(D3DTests, getD3DResourceInfoFromMemObj) {
+TYPED_TEST_P(D3DTests, WhenGettingD3DResourceInfoFromMemObjThenCorrectInfoIsReturned) {
     auto memObj = this->createFromD3DBufferApi(this->context, CL_MEM_READ_WRITE, (D3DBufferObj *)&this->dummyD3DBuffer, nullptr);
     ASSERT_NE(nullptr, memObj);
     auto param = this->pickParam(CL_MEM_D3D10_RESOURCE_KHR, CL_MEM_D3D11_RESOURCE_KHR);
@@ -498,7 +498,7 @@ TYPED_TEST_P(D3DTests, getD3DResourceInfoFromMemObj) {
     clReleaseMemObject(memObj);
 }
 
-TYPED_TEST_P(D3DTests, getD3DSubresourceInfoFromMemObj) {
+TYPED_TEST_P(D3DTests, WhenGettingD3DSubresourceInfoFromMemObjThenCorrectInfoIsReturned) {
     cl_int retVal;
     cl_uint subresource = 1u;
     auto param = this->pickParam(CL_IMAGE_D3D10_SUBRESOURCE_KHR, CL_IMAGE_D3D11_SUBRESOURCE_KHR);
@@ -666,21 +666,22 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
         }
     }
 }
+
 REGISTER_TYPED_TEST_CASE_P(D3DTests,
-                           getDeviceIDsFromD3DWithSpecificDeviceSet,
-                           getDeviceIDsFromD3DWithSpecificDeviceSource,
+                           GivenSpecificDeviceSetWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
+                           GivenSpecificDeviceSourceWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
                            givenNonIntelVendorWhenGetDeviceIdIsCalledThenReturnError,
-                           createFromD3DBufferKHRApi,
-                           createFromD3D2dTextureKHRApi,
-                           createFromD3D3dTextureKHRApi,
+                           WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned,
+                           WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturned,
+                           WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturned,
                            givenSharedResourceFlagWhenCreateBufferThenStagingBufferEqualsPassedBuffer,
                            givenNonSharedResourceFlagWhenCreateBufferThenCreateNewStagingBuffer,
                            givenNonSharedResourceBufferWhenAcquiredThenCopySubregion,
                            givenSharedResourceBufferWhenAcquiredThenDontCopySubregion,
                            givenSharedResourceBufferAndInteropUserSyncDisabledWhenAcquiredThenFlushOnAcquire,
-                           getPreferD3DSharedResources,
-                           getD3DResourceInfoFromMemObj,
-                           getD3DSubresourceInfoFromMemObj,
+                           WhenGettingPreferD3DSharedResourcesThenCorrectValueIsReturned,
+                           WhenGettingD3DResourceInfoFromMemObjThenCorrectInfoIsReturned,
+                           WhenGettingD3DSubresourceInfoFromMemObjThenCorrectInfoIsReturned,
                            givenTheSameD3DBufferWhenNextCreateIsCalledThenFail,
                            givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCalledThenFail,
                            givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFail,

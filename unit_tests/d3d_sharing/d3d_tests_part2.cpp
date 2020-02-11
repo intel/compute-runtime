@@ -23,6 +23,7 @@
 
 namespace NEO {
 TYPED_TEST_CASE_P(D3DTests);
+
 TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish) {
     this->context->setInteropUserSyncEnabled(true);
     this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
@@ -279,7 +280,7 @@ TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues
     EXPECT_NE(nullptr, ctx->getSharing<D3DSharingFunctions<TypeParam>>());
 }
 
-TYPED_TEST_P(D3DTests, givenSharedNTHandleFlagWhenCreate2dTextureThenGetNtHandle) {
+TYPED_TEST_P(D3DTests, givenSharedNtHandleFlagWhenCreate2dTextureThenGetNtHandle) {
     this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
     EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
@@ -299,7 +300,7 @@ TYPED_TEST_P(D3DTests, givenSharedNTHandleFlagWhenCreate2dTextureThenGetNtHandle
     ASSERT_NE(nullptr, d3dTexture);
 }
 
-TYPED_TEST_P(D3DTests, givenSharedNTHandleFlagWhenCreate3dTextureThenGetNtHandle) {
+TYPED_TEST_P(D3DTests, givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
     EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
@@ -319,7 +320,7 @@ TYPED_TEST_P(D3DTests, givenSharedNTHandleFlagWhenCreate3dTextureThenGetNtHandle
     ASSERT_NE(nullptr, d3dTexture);
 }
 
-TYPED_TEST_P(D3DTests, fillBufferDesc) {
+TYPED_TEST_P(D3DTests, WhenFillingBufferDescThenBufferContentIsCorrect) {
     D3DBufferDesc requestedDesc = {};
     D3DBufferDesc expectedDesc = {};
     expectedDesc.ByteWidth = 10;
@@ -329,7 +330,7 @@ TYPED_TEST_P(D3DTests, fillBufferDesc) {
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3DBufferDesc)) == 0);
 }
 
-TYPED_TEST_P(D3DTests, fillTexture2dDesc) {
+TYPED_TEST_P(D3DTests, WhenFillingTexture2dDescThenImageContentIsCorrect) {
     D3DTexture2dDesc requestedDesc = {};
     D3DTexture2dDesc expectedDesc = {};
     D3DTexture2dDesc srcDesc = {};
@@ -362,7 +363,7 @@ TYPED_TEST_P(D3DTests, fillTexture2dDesc) {
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3DTexture2dDesc)) == 0);
 }
 
-TYPED_TEST_P(D3DTests, fillTexture3dDesc) {
+TYPED_TEST_P(D3DTests, WhenFillingTexture3dDescThenImageContentIsCorrect) {
     D3DTexture3dDesc requestedDesc = {};
     D3DTexture3dDesc expectedDesc = {};
     D3DTexture3dDesc srcDesc = {};
@@ -421,7 +422,7 @@ TYPED_TEST_P(D3DTests, givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgForma
     }
 }
 
-TYPED_TEST_P(D3DTests, inForced32BitAddressingBufferCreatedHas32BitAllocation) {
+TYPED_TEST_P(D3DTests, GivenForced32BitAddressingWhenCreatingBufferThenBufferHas32BitAllocation) {
 
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, (D3DBufferObj *)&this->dummyD3DBuffer, CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
@@ -470,13 +471,13 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenSharedResourceFlagWhenCreate3dTextureThenStagingTextureEqualsPassedTexture,
                            givenNonSharedResourceFlagWhenCreate3dTextureThenCreateStagingTexture,
                            givenD3DDeviceParamWhenContextCreationThenSetProperValues,
-                           givenSharedNTHandleFlagWhenCreate2dTextureThenGetNtHandle,
-                           givenSharedNTHandleFlagWhenCreate3dTextureThenGetNtHandle,
-                           fillBufferDesc,
-                           fillTexture2dDesc,
-                           fillTexture3dDesc,
+                           givenSharedNtHandleFlagWhenCreate2dTextureThenGetNtHandle,
+                           givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle,
+                           WhenFillingBufferDescThenBufferContentIsCorrect,
+                           WhenFillingTexture2dDescThenImageContentIsCorrect,
+                           WhenFillingTexture3dDescThenImageContentIsCorrect,
                            givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat,
-                           inForced32BitAddressingBufferCreatedHas32BitAllocation,
+                           GivenForced32BitAddressingWhenCreatingBufferThenBufferHas32BitAllocation,
                            givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
                            givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet);
 
@@ -497,6 +498,7 @@ TEST_F(D3D10Test, givenIncompatibleD3DAdapterWhenGettingDeviceIdsThenNoDevicesAr
     EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
     EXPECT_EQ(0, numDevices);
 }
+
 using D3D11Test = D3DTests<D3DTypesHelper::D3D11>;
 
 TEST_F(D3D11Test, givenIncompatibleD3DAdapterWhenGettingDeviceIdsThenNoDevicesAreReturned) {
