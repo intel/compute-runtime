@@ -103,7 +103,7 @@ class MemoryManager {
 
     bool isLimitedRange(uint32_t rootDeviceIndex) { return getGfxPartition(rootDeviceIndex)->isLimitedRange(); }
 
-    bool peek64kbPagesEnabled() const { return enable64kbpages; }
+    bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue) { force32bitAllocations = newValue; }
 
@@ -123,7 +123,7 @@ class MemoryManager {
     void cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion);
 
     bool isAsyncDeleterEnabled() const;
-    bool isLocalMemorySupported() const;
+    bool isLocalMemorySupported(uint32_t rootDeviceIndex) const;
     virtual bool isMemoryBudgetExhausted() const;
 
     virtual AlignedMallocRestrictions *getAlignedMallocRestrictions() {
@@ -237,8 +237,8 @@ class MemoryManager {
     bool virtualPaddingAvailable = false;
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
-    bool enable64kbpages = false;
-    bool localMemorySupported = false;
+    std::vector<bool> enable64kbpages;
+    std::vector<bool> localMemorySupported;
     bool supportsMultiStorageResources = true;
     ExecutionEnvironment &executionEnvironment;
     EngineControlContainer registeredEngines;

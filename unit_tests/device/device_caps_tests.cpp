@@ -1024,30 +1024,30 @@ TEST_F(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue
     capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = false;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = true;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = false;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = true;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 
     DebugManager.flags.Enable64kbpages.set(0); // force false
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
     DebugManager.flags.Enable64kbpages.set(1); // force true
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
-    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 }
 
 TEST_F(DeviceGetCapsTest, givenUnifiedMemoryShardeSystemFlagWhenDeviceIsCreatedItContainsProperSystemMemorySetting) {

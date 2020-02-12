@@ -36,18 +36,23 @@ uint32_t MemoryManager::maxOsContextCount = 0u;
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
     auto hwInfo = executionEnvironment.getHardwareInfo();
-    this->localMemorySupported = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-    this->enable64kbpages = OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages;
-    if (DebugManager.flags.Enable64kbpages.get() > -1) {
-        this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
-    }
     localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
 
+    bool anyLocalMemorySupported = false;
+
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); ++rootDeviceIndex) {
+        this->localMemorySupported.push_back(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
+        this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages);
+        if (DebugManager.flags.Enable64kbpages.get() > -1) {
+            this->enable64kbpages[rootDeviceIndex] = DebugManager.flags.Enable64kbpages.get() != 0;
+        }
+
         gfxPartitions.push_back(std::make_unique<GfxPartition>());
+
+        anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
     }
 
-    if (this->localMemorySupported) {
+    if (anyLocalMemorySupported) {
         pageFaultManager = PageFaultManager::create();
     }
 }
@@ -181,8 +186,12 @@ bool MemoryManager::isAsyncDeleterEnabled() const {
     return asyncDeleterEnabled;
 }
 
-bool MemoryManager::isLocalMemorySupported() const {
-    return localMemorySupported;
+bool MemoryManager::isLocalMemorySupported(uint32_t rootDeviceIndex) const {
+    return localMemorySupported[rootDeviceIndex];
+}
+
+bool MemoryManager::peek64kbPagesEnabled(uint32_t rootDeviceIndex) const {
+    return enable64kbpages[rootDeviceIndex];
 }
 
 bool MemoryManager::isMemoryBudgetExhausted() const {
@@ -361,7 +370,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
-    if (peek64kbPagesEnabled() && allocationData.flags.allow64kbPages) {
+    if (peek64kbPagesEnabled(allocationData.rootDeviceIndex) && allocationData.flags.allow64kbPages) {
         return allocateGraphicsMemory64kb(allocationData);
     }
     return allocateGraphicsMemoryWithAlignment(allocationData);

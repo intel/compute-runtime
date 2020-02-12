@@ -149,6 +149,7 @@ Buffer *Buffer::create(Context *context,
     bool alignementSatisfied = true;
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
 
@@ -156,7 +157,7 @@ Buffer *Buffer::create(Context *context,
         memoryProperties,
         *context,
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
-        memoryManager->isLocalMemorySupported(),
+        memoryManager->isLocalMemorySupported(rootDeviceIndex),
         HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), size));
 
     checkMemory(memoryProperties, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
@@ -225,7 +226,6 @@ Buffer *Buffer::create(Context *context,
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
     }
 
-    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     if (!memory) {
         AllocationProperties allocProperties = MemoryPropertiesParser::getAllocationProperties(rootDeviceIndex, memoryProperties, allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred());
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);

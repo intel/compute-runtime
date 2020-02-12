@@ -80,7 +80,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (allocation) {
         allocationInDevicePoolCreated = true;
-        if (localMemorySupported) {
+        if (localMemorySupported[allocation->getRootDeviceIndex()]) {
             static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::LocalMemory);
         }
     }

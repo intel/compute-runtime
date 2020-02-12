@@ -237,7 +237,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemCacheSize = systemInfo.L3BankCount * 128 * KB;
     deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
-    deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported()
+    deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
                                    ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex())
                                    : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
     deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, (cl_ulong)(getMemoryManager()->getMaxApplicationAddress() + 1));

@@ -85,7 +85,7 @@ void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, co
         return nullptr;
 
     std::unique_lock<SpinLock> lock(mtx);
-    if (!memoryManager->isLocalMemorySupported()) {
+    if (!memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
         return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties);
     } else {
         return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties, {});
@@ -132,7 +132,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, 
 }
 
 void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &memoryProperties, void *cmdQ) {
-    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported();
+    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(rootDeviceIndex);
 
     if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
         supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();

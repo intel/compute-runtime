@@ -504,7 +504,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
                            memoryProperties, *context,
                            HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size)) &&
                        !is32bit && !context->isSharedContext &&
-                       (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported()) &&
+                       (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceSharedPhysicalMemory;
 
         buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), memoryProperties, CL_MEM_READ_WRITE, 0, size, static_cast<void *>(NULL), retVal));

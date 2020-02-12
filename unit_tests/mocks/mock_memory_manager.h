@@ -23,8 +23,8 @@ class MemoryManagerCreate : public T {
 
     template <class... U>
     MemoryManagerCreate(bool enable64kbPages, bool enableLocalMemory, U &&... args) : T(std::forward<U>(args)...) {
-        this->enable64kbpages = enable64kbPages;
-        this->localMemorySupported = enableLocalMemory;
+        std::fill(this->enable64kbpages.begin(), this->enable64kbpages.end(), enable64kbPages);
+        std::fill(this->localMemorySupported.begin(), this->localMemorySupported.end(), enableLocalMemory);
     }
 };
 
