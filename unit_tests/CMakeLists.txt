@@ -470,8 +470,14 @@ macro(macro_for_each_gen)
       set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       set(PLATFORM_VME_LOWER ${DEFAULT_SUPPORTED_VME_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
 
+      set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
+      foreach(KERNEL_TO_REMOVE ${${GEN_TYPE}_TEST_KERNELS_BLACKLIST})
+        set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
+        list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
+      endforeach()
+
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-        neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
+        neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${PLATFORM_TEST_KERNELS})
         neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
         # Temporarily disabled debug kernel generation on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
