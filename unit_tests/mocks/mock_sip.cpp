@@ -56,7 +56,7 @@ std::vector<char> MockSipKernel::getDummyGenBinary() {
 }
 std::vector<char> MockSipKernel::getBinary() {
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".gen");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".gen");
 
     size_t binarySize = 0;
     auto binary = loadDataFromFile(testFile.c_str(), binarySize);

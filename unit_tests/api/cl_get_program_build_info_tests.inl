@@ -30,10 +30,10 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     size_t sourceSize = 0;
     std::string testFile;
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd8");
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
 
     testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd8.cl");
+    testFile.append("CopyBuffer_simd16.cl");
 
     pSource = loadDataFromFile(
         testFile.c_str(),

@@ -55,7 +55,7 @@ class ProgramDataTestBase : public testing::Test,
         CreateProgramWithSource(
             pContext,
             &device,
-            "CopyBuffer_simd8.cl");
+            "CopyBuffer_simd16.cl");
     }
 
     void TearDown() override {
@@ -413,7 +413,7 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
     cl_device_id device = pPlatform->getClDevice(0);
-    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd8.cl");
+    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd16.cl");
     ASSERT_NE(nullptr, pProgram);
 
     MockProgram *prog = pProgram;
@@ -450,7 +450,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
     cl_device_id device = pPlatform->getClDevice(0);
-    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd8.cl");
+    CreateProgramWithSource(pContext, &device, "CopyBuffer_simd16.cl");
     ASSERT_NE(nullptr, pProgram);
 
     MockProgram *prog = pProgram;

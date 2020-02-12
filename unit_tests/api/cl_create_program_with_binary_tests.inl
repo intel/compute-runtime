@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
     ASSERT_EQ(true, fileExists(testFile));
 

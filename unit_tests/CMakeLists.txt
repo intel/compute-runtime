@@ -366,7 +366,7 @@ function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix fil
   set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-set(TEST_KERNEL test_files/CopyBuffer_simd8.cl)
+set(TEST_KERNEL test_files/CopyBuffer_simd16.cl)
 
 set(TEST_KERNEL_options
   "-cl-fast-relaxed-math"

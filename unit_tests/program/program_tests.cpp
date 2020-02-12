@@ -72,11 +72,11 @@ std::vector<const char *> BinaryFileNames{
 };
 
 std::vector<const char *> SourceFileNames{
-    "CopyBuffer_simd8.cl",
+    "CopyBuffer_simd16.cl",
 };
 
 std::vector<const char *> BinaryForSourceFileNames{
-    "CopyBuffer_simd8",
+    "CopyBuffer_simd16",
 };
 
 std::vector<const char *> KernelNames{
@@ -734,7 +734,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     std::string testFile;
     size_t sourceSize;
     testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd8.cl"); // source file
+    testFile.append("CopyBuffer_simd16.cl"); // source file
     auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSourceBuffer);
@@ -961,7 +961,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     size_t sourceSize;
     Program *p3; // header Program object
     testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd8.cl"); // header source file
+    testFile.append("CopyBuffer_simd16.cl"); // header source file
     auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSourceBuffer);
@@ -1065,7 +1065,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
 
     Program *p;
     testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd8.cl");
+    testFile.append("CopyBuffer_simd16.cl");
     auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
     const char *sources[1] = {pSourceBuffer.get()};
     EXPECT_NE(nullptr, pSourceBuffer);
@@ -1906,7 +1906,7 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
 
     // Load a binary program file
     std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
     EXPECT_NE(0u, binarySize);
@@ -1919,7 +1919,6 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
     retVal = program->rebuildProgramFromIr();
     EXPECT_NE(CL_SUCCESS, retVal);
 }
-
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
@@ -1962,7 +1961,7 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
 
     // Load a binary program file
     std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
     EXPECT_NE(0u, binarySize);

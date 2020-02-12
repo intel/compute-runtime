@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct clCreateKernelsInProgramTests : public api_tests {
     void SetUp() override {
         api_tests::SetUp();
         std::string testFile;
-        retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+        retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
         size_t binarySize = 0;
         auto pBinary = loadDataFromFile(

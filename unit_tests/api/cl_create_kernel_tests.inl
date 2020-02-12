@@ -25,7 +25,7 @@ TEST_F(clCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
     cl_int binaryStatus = CL_SUCCESS;
     size_t binarySize = 0;
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
     auto pBinary = loadDataFromFile(
         testFile.c_str(),
@@ -79,7 +79,7 @@ TEST_F(clCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInval
     cl_int binaryStatus = CL_SUCCESS;
     size_t binarySize = 0;
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
     auto pBinary = loadDataFromFile(
         testFile.c_str(),

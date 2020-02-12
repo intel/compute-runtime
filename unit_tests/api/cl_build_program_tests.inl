@@ -29,9 +29,9 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     size_t sourceSize = 0;
     std::string testFile;
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd8", false);
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
     testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd8.cl");
+    testFile.append("CopyBuffer_simd16.cl");
 
     pSource = loadDataFromFile(
         testFile.c_str(),
@@ -80,7 +80,7 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
     std::unique_ptr<char[]> pBinary = nullptr;
     size_t binarySize = 0;
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
     pBinary = loadDataFromFile(
         testFile.c_str(),
@@ -123,7 +123,7 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     cl_int binaryStatus = CL_SUCCESS;
     size_t binarySize = 0;
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
     auto pBinary = loadDataFromFile(
         testFile.c_str(),

@@ -50,7 +50,7 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
 
 TEST_F(ProcessElfBinaryTests, ValidBinary) {
     std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
@@ -124,7 +124,7 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
 
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
     std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
@@ -186,7 +186,7 @@ INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
 
 TEST_F(ProcessElfBinaryTests, BackToBack) {
     std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
 
     size_t binarySize = 0;
     auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);

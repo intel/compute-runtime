@@ -27,9 +27,9 @@ struct clGetKernelWorkGroupInfoTests : public ApiFixture,
         size_t sourceSize = 0;
         std::string testFile;
 
-        kbHelper = new KernelBinaryHelper("CopyBuffer_simd8", false);
+        kbHelper = new KernelBinaryHelper("CopyBuffer_simd16", false);
         testFile.append(clFiles);
-        testFile.append("CopyBuffer_simd8.cl");
+        testFile.append("CopyBuffer_simd16.cl");
         ASSERT_EQ(true, fileExists(testFile));
 
         pSource = loadDataFromFile(
