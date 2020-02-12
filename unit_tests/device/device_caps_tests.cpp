@@ -41,7 +41,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 };
 
-TEST_F(DeviceGetCapsTest, validate) {
+TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     const auto &sysInfo = platformDevices[0]->gtSystemInfo;
@@ -160,12 +160,10 @@ TEST_F(DeviceGetCapsTest, validate) {
     EXPECT_EQ(2048u, caps.imageMaxArraySize);
     if (device->getHardwareInfo().capabilityTable.clVersionSupport == 12 && is64bit) {
         EXPECT_TRUE(caps.force32BitAddressess);
-    } else {
-        //EXPECT_FALSE(caps.force32BitAddressess);
     }
 }
 
-TEST_F(DeviceGetCapsTest, validateImage3DDimensions) {
+TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAreCorrect) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
@@ -289,7 +287,7 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
     }
 }
 
-TEST_F(DeviceGetCapsTest, alignGlobalMemSizeDownToPageSize) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
@@ -298,7 +296,7 @@ TEST_F(DeviceGetCapsTest, alignGlobalMemSizeDownToPageSize) {
     EXPECT_EQ(caps.globalMemSize, expectedSize);
 }
 
-TEST_F(DeviceGetCapsTest, checkGlobalMemSize) {
+TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     auto pMemManager = device->getMemoryManager();
@@ -353,18 +351,12 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjus
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
-TEST_F(DeviceGetCapsTest, extensionsStringEndsWithSpace) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     auto len = strlen(caps.deviceExtensions);
     ASSERT_LT(0U, len);
     EXPECT_EQ(' ', caps.deviceExtensions[len - 1]);
-}
-
-TEST_F(DeviceGetCapsTest, DISABLED_givenDeviceWhenCapsAreCreateThenClGLSharingIsReported) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_gl_sharing ")));
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipleSubDevicesWhenDeviceCapsAreCreatedThenSharingFormatQueryIsReported) {
@@ -673,26 +665,26 @@ TEST_F(DeviceGetCapsTest, givenEnableAdvancedVmeSetToFalseAndDeviceSupportsVmeWh
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
 }
 
-TEST_F(DeviceGetCapsTest, byDefaultVmeIsTurnedOn) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenVmeIsEnabled) {
     DebugSettingsManager<DebugFunctionalityLevel::RegKeys> freshDebugSettingsManager("");
     EXPECT_TRUE(freshDebugSettingsManager.flags.EnableIntelVme.get());
 }
 
-TEST_F(DeviceGetCapsTest, deviceReportsPriorityHintsExtension) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenPriorityHintsExtensionIsReported) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_priority_hints")));
 }
 
-TEST_F(DeviceGetCapsTest, deviceReportsCreateCommandQueueExtension) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenCreateCommandQueueExtensionIsReported) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_create_command_queue")));
 }
 
-TEST_F(DeviceGetCapsTest, deviceReportsThrottleHintsExtension) {
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenThrottleHintsExtensionIsReported) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
