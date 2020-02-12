@@ -39,7 +39,6 @@ void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState
 
     if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
         isImageArray = true;
-        imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
         renderTargetViewExtent = 1;
         minimumArrayElement = cubeFaceIndex;
     }
@@ -85,5 +84,28 @@ void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState
     }
 
     surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->GenxSurfaceFormat));
+}
+
+template <typename GfxFamily>
+void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, uint32_t cubeFaceIndex, typename GfxFamily::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType) {
+    auto imageCount = std::max(imageInfo.imgDesc.imageDepth, imageInfo.imgDesc.imageArraySize);
+    if (imageCount == 0) {
+        imageCount = 1;
+    }
+
+    auto imageHeight = imageInfo.imgDesc.imageHeight;
+    if (imageHeight == 0) {
+        imageHeight = 1;
+    }
+
+    if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
+        imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
+    }
+
+    surfaceState->setWidth(static_cast<uint32_t>(imageInfo.imgDesc.imageWidth));
+    surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
+    surfaceState->setDepth(static_cast<uint32_t>(imageCount));
+    surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
+    surfaceState->setSurfaceType(surfaceType);
 }
 } // namespace NEO

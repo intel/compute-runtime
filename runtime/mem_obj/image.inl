@@ -42,20 +42,6 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
-    auto imageHeight = getImageDesc().image_height;
-    if (imageHeight == 0) {
-        imageHeight = 1;
-    }
-
-    auto imageCount = std::max(getImageDesc().image_depth, getImageDesc().image_array_size);
-    if (imageCount == 0) {
-        imageCount = 1;
-    }
-
-    if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
-        imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
-    }
-
     setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, getGraphicsAllocation()->getDefaultGmm(), *gmmHelper, cubeFaceIndex, getGraphicsAllocation()->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
@@ -70,16 +56,11 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
+        setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType);
         if (setAsMediaBlockImage) {
             uint32_t elSize = static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
             surfaceState->setWidth(static_cast<uint32_t>((getImageDesc().image_width * elSize) / sizeof(uint32_t)));
-        } else {
-            surfaceState->setWidth(static_cast<uint32_t>(getImageDesc().image_width));
         }
-        surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
-        surfaceState->setDepth(static_cast<uint32_t>(imageCount));
-        surfaceState->setSurfacePitch(static_cast<uint32_t>(getImageDesc().image_row_pitch));
-        surfaceState->setSurfaceType(surfaceType);
     }
 
     surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);

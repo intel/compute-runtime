@@ -115,4 +115,16 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfacePitch(), 1u);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceQpitch(), 0u);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceBaseAddress(), 0u);
+
+    surfaceState = std::make_unique<char[]>(size);
+    castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
+    typename FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D;
+
+    setImageSurfaceStateDimensions<FamilyType>(castSurfaceState, imageInfo, cubeFaceIndex, surfaceType);
+
+    EXPECT_EQ(castSurfaceState->getWidth(), static_cast<uint32_t>(imageInfo.imgDesc.imageWidth));
+    EXPECT_EQ(castSurfaceState->getHeight(), static_cast<uint32_t>(imageInfo.imgDesc.imageHeight));
+    EXPECT_EQ(castSurfaceState->getDepth(), __GMM_MAX_CUBE_FACE - cubeFaceIndex);
+    EXPECT_EQ(castSurfaceState->getSurfacePitch(), static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
+    EXPECT_EQ(castSurfaceState->getSurfaceType(), surfaceType);
 }
