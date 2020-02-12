@@ -349,4 +349,17 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
     *reinterpret_cast<MI_BATCH_BUFFER_END *>(buffer) = cmd;
 }
 
+template <typename Family>
+void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &offset) {
+    auto sshAlignmentMask =
+        getSurfaceBaseAddressAlignmentMask();
+    uintptr_t alignedPtr = ptr & sshAlignmentMask;
+
+    offset = 0;
+    if (ptr != alignedPtr) {
+        offset = ptrDiff(ptr, alignedPtr);
+        ptr = alignedPtr;
+    }
+}
+
 } // namespace NEO

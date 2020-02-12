@@ -145,3 +145,19 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
     EXPECT_NE(dsh->getHeapGpuBase(), cmd->getDynamicStateBaseAddress());
     EXPECT_NE(ssh->getHeapGpuBase(), cmd->getSurfaceStateBaseAddress());
 }
+
+HWTEST_F(CommandEncodeStatesTest, givenAnAlignedDstPtrThenNoAlignmentNorOffsetNeeded) {
+    uintptr_t ptr = NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() << 1;
+    size_t offset = 0;
+    NEO::EncodeSurfaceState<FamilyType>::getSshAlignedPointer(ptr, offset);
+    EXPECT_TRUE((ptr & (NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)) == 0x0u);
+    EXPECT_EQ(0u, offset);
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenAnUnalignedDstPtrThenCorrectAlignedPtrAndOffsetAreCalculated) {
+    uintptr_t ptr = NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() >> 1;
+    size_t offset = 0;
+    NEO::EncodeSurfaceState<FamilyType>::getSshAlignedPointer(ptr, offset);
+    EXPECT_TRUE((ptr & (NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment() - 1)) == 0x0u);
+    EXPECT_NE(0u, offset);
+}

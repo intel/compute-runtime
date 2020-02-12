@@ -141,6 +141,8 @@ struct EncodeSurfaceState {
     }
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignment() { return 4; }
+
+    static void getSshAlignedPointer(uintptr_t &ptr, size_t &offset);
 };
 
 template <typename GfxFamily>
