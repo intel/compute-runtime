@@ -72,9 +72,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         if (gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
-        auto hwInfo = device->getExecutionEnvironment()->getHardwareInfo();
-        if (hwInfo->capabilityTable.blitterOperationsSupported) {
-            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(*hwInfo), false);
+        auto hwInfo = device->getHardwareInfo();
+        if (hwInfo.capabilityTable.blitterOperationsSupported) {
+            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo), false);
         }
     }
 
@@ -563,7 +563,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    bool blitAllowed = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported;
+    bool blitAllowed = device->getHardwareInfo().capabilityTable.blitterOperationsSupported;
 
     if (DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() != -1) {
         blitAllowed &= !!DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();

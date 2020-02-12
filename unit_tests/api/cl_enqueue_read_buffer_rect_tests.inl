@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,7 +234,7 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
     clReleaseMemObject(buffer);
 }
 
-class EnqueueReadBufferRectFlagsTest : public ApiFixture,
+class EnqueueReadBufferRectFlagsTest : public ApiFixture<>,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueReadBufferRectFlagsTest() {

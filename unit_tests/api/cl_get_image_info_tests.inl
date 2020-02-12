@@ -16,7 +16,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clGetImageInfoTests : public ApiFixture,
+struct clGetImageInfoTests : public ApiFixture<>,
                              public ::testing::Test {
 
     void SetUp() override {

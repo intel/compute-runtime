@@ -20,7 +20,7 @@ RootDeviceEnvironment::~RootDeviceEnvironment() = default;
 
 void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
-        aubCenter.reset(new AubCenter(executionEnvironment.getHardwareInfo(), localMemoryEnabled, aubFileName, csrType));
+        aubCenter.reset(new AubCenter(getHardwareInfo(), localMemoryEnabled, aubFileName, csrType));
     }
 }
 const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {

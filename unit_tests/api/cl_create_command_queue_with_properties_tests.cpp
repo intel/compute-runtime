@@ -24,7 +24,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct CommandQueueWithPropertiesTest : public ApiFixture,
+struct CommandQueueWithPropertiesTest : public ApiFixture<>,
                                         public ::testing::WithParamInterface<std::tuple<uint64_t, uint32_t, uint32_t, uint32_t>>,
                                         public ::testing::Test {
     CommandQueueWithPropertiesTest()
@@ -46,7 +46,7 @@ struct CommandQueueWithPropertiesTest : public ApiFixture,
     cl_queue_throttle_khr queueThrottle;
 };
 
-struct clCreateCommandQueueWithPropertiesApi : public ApiFixture,
+struct clCreateCommandQueueWithPropertiesApi : public ApiFixture<>,
                                                public MemoryManagementFixture,
                                                public ::testing::Test {
     clCreateCommandQueueWithPropertiesApi() {

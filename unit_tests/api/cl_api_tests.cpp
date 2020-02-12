@@ -7,46 +7,10 @@
 
 #include "cl_api_tests.h"
 
-#include "runtime/command_queue/command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace NEO {
-constexpr uint32_t ApiFixture::numRootDevices;
-constexpr uint32_t ApiFixture::testedRootDeviceIndex;
-ApiFixture::ApiFixture() = default;
-ApiFixture::~ApiFixture() = default;
-void ApiFixture::SetUp() {
-    numDevicesBackup = numRootDevices;
-    PlatformFixture::SetUp();
-
-    EXPECT_LT(0u, testedRootDeviceIndex);
-    rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
-    auto pDevice = pPlatform->getClDevice(testedRootDeviceIndex);
-    ASSERT_NE(nullptr, pDevice);
-
-    testedClDevice = pDevice;
-    pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    pCommandQueue = new CommandQueue(pContext, pDevice, nullptr);
-
-    pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
-
-    pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
-    ASSERT_NE(nullptr, pKernel);
-}
-
-void ApiFixture::TearDown() {
-    pKernel->release();
-    pCommandQueue->release();
-    pContext->release();
-    pProgram->release();
-    rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
-    PlatformFixture::TearDown();
-}
 
 void api_fixture_using_aligned_memory_manager::SetUp() {
     retVal = CL_SUCCESS;

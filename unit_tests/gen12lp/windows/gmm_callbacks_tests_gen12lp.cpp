@@ -78,6 +78,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
     HardwareInfo localHwInfo = **platformDevices;
     localHwInfo.featureTable.ftrCCSNode = true;
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);
@@ -105,6 +106,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetR
     HardwareInfo localHwInfo = **platformDevices;
     localHwInfo.featureTable.ftrCCSNode = false;
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
     executionEnvironment.setHwInfo(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0);

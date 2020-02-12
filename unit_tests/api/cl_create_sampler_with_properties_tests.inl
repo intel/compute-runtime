@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct SamplerWithPropertiesTest : public ApiFixture,
+struct SamplerWithPropertiesTest : public ApiFixture<>,
                                    public ::testing::WithParamInterface<std::tuple<uint64_t /*cl_sampler_properties*/, uint64_t /*cl_sampler_properties*/, uint64_t /*cl_sampler_properties*/>>,
                                    public ::testing::Test {
     SamplerWithPropertiesTest() {

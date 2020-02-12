@@ -17,7 +17,7 @@ typedef api_tests clSVMAllocTests;
 
 namespace ULT {
 
-class clSVMAllocTemplateTests : public ApiFixture,
+class clSVMAllocTemplateTests : public ApiFixture<>,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {

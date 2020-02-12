@@ -396,7 +396,7 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 }
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     AllocationProperties properties{rootDeviceIndex, true, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, false};
     properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
     properties.alignment = 256 * MemoryConstants::kiloByte;
@@ -479,7 +479,7 @@ int32_t CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *
 }
 
 bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineType) const {
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
     if (engineType != defaultEngineType) {
         return false;

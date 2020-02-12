@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 
 namespace ULT {
 
-struct clEnqueueMapImageTests : public ApiFixture,
+struct clEnqueueMapImageTests : public ApiFixture<>,
                                 public ::testing::Test {
 
     void SetUp() override {
@@ -80,7 +80,7 @@ TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-struct clEnqueueMapImageYUVTests : public ApiFixture,
+struct clEnqueueMapImageYUVTests : public ApiFixture<>,
                                    public ::testing::Test {
 
     void SetUp() override {

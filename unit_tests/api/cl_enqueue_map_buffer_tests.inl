@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPoin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class EnqueueMapBufferFlagsTest : public ApiFixture,
+class EnqueueMapBufferFlagsTest : public ApiFixture<>,
                                   public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     EnqueueMapBufferFlagsTest() {

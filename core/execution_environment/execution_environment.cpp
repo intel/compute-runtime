@@ -71,13 +71,14 @@ void ExecutionEnvironment::initDebugger() {
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {
-    auto &hwHelper = HwHelper::get(this->hwInfo->platform.eRenderCoreFamily);
-    auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
-    auto subDevicesCount = HwHelper::getSubDevicesCount(this->getHardwareInfo());
-    auto rootDevicesCount = this->rootDeviceEnvironments.size();
-    bool hasRootCsr = subDevicesCount > 1;
+    for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
+        auto &hwHelper = HwHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eRenderCoreFamily);
+        auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
+        auto subDevicesCount = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        bool hasRootCsr = subDevicesCount > 1;
 
-    MemoryManager::maxOsContextCount = static_cast<uint32_t>(rootDevicesCount * (osContextCount * subDevicesCount + hasRootCsr));
+        MemoryManager::maxOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
+    }
 }
 
 GmmHelper *ExecutionEnvironment::getGmmHelper() const {

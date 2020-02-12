@@ -60,7 +60,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, WaOff) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 
@@ -79,7 +79,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePip
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_CCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_CCS);
 
     parseCommands<FamilyType>(cs);
 
@@ -98,7 +98,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePip
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, *pPlatform->peekExecutionEnvironment()->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 

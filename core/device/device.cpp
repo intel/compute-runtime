@@ -152,7 +152,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     return true;
 }
 
-const HardwareInfo &Device::getHardwareInfo() const { return *executionEnvironment->getHardwareInfo(); }
+const HardwareInfo &Device::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
 
 const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;

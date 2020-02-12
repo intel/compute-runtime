@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ typedef api_tests clRetainReleaseContextTests;
 namespace ULT {
 
 TEST_F(clRetainReleaseContextTests, GivenValidContextWhenRetainingAndReleasingThenContextReferenceCountIsUpdatedCorrectly) {
-    cl_context context = clCreateContext(nullptr, 1, devices, nullptr, nullptr, &retVal);
+    cl_context context = clCreateContext(nullptr, 1, &testedClDevice, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
 

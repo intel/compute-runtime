@@ -106,7 +106,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenHostQueu
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenIncorrectDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
-    auto context2 = clCreateContext(nullptr, num_devices, devices, nullptr, nullptr, &retVal);
+    auto context2 = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES,
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,

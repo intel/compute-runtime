@@ -13,16 +13,16 @@
 
 using namespace NEO;
 
-class KernelExecInfoFixture : public ApiFixture {
+class KernelExecInfoFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getClDevice(0));
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getClDevice(testedRootDeviceIndex));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
-        svmCapabilities = pPlatform->getDevice(0)->getDeviceInfo().svmCapabilities;
+        svmCapabilities = pPlatform->getDevice(testedRootDeviceIndex)->getDeviceInfo().svmCapabilities;
         if (svmCapabilities != 0) {
             ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
             EXPECT_NE(nullptr, ptrSvm);

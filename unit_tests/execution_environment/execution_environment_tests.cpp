@@ -224,18 +224,19 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
 }
 
 TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasProperValue) {
-    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
-    MockExecutionEnvironment executionEnvironment;
+    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount, 0);
     uint32_t numRootDevices = 17u;
-    auto &hwHelper = HwHelper::get(executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
-    auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
-    auto subDevicesCount = HwHelper::getSubDevicesCount(executionEnvironment.getHardwareInfo());
-    bool hasRootCsr = subDevicesCount > 1;
+    MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
 
-    executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
-    executionEnvironment.calculateMaxOsContextCount();
+    auto expectedOsContextCount = 0u;
+    for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
+        auto &hwHelper = HwHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eRenderCoreFamily);
+        auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
+        auto subDevicesCount = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        bool hasRootCsr = subDevicesCount > 1;
+        expectedOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
+    }
 
-    auto expectedOsContextCount = numRootDevices * osContextCount * subDevicesCount + hasRootCsr;
     EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
 }
 TEST(RootDeviceEnvironment, whenGetHardwareInfoIsCalledThenHardwareInfoIsTakenFromExecutionEnvironment) {

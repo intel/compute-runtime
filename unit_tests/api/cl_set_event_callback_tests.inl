@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-class clSetEventCallbackTests : public ApiFixture,
+class clSetEventCallbackTests : public ApiFixture<>,
                                 public ::testing::Test {
 
     void SetUp() override {

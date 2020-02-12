@@ -27,7 +27,7 @@ IGIL_CommandQueue getExpectedInitIgilCmdQueue(DeviceQueue *deviceQueue);
 IGIL_CommandQueue getExpectedgilCmdQueueAfterReset(DeviceQueue *deviceQueue);
 
 template <typename T>
-class DeviceHostQueueFixture : public ApiFixture,
+class DeviceHostQueueFixture : public ApiFixture<>,
                                public ::testing::Test {
   public:
     void SetUp() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 namespace ULT {
 
 template <typename T>
-struct clGetImageParams : public ApiFixture,
+struct clGetImageParams : public ApiFixture<>,
                           public T {
 
     void SetUp() override {

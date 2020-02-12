@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace NEO;
 
 namespace ClReleaseEventTests {
 template <typename T>
-class EventFixture : public ApiFixture, public T {
+class EventFixture : public ApiFixture<>, public T {
   public:
     void SetUp() override {
         ApiFixture::SetUp();

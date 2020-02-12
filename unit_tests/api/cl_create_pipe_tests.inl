@@ -18,7 +18,7 @@ typedef api_tests clCreatePipeTests;
 
 namespace ClCreatePipeTests {
 
-class clCreatePipeWithParamTests : public ApiFixture, public testing::TestWithParam<uint64_t> {
+class clCreatePipeWithParamTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
         ApiFixture::SetUp();
     }
@@ -27,7 +27,7 @@ class clCreatePipeWithParamTests : public ApiFixture, public testing::TestWithPa
     }
 };
 
-class clCreatePipeWithParamNegativeTests : public ApiFixture, public testing::TestWithParam<uint64_t> {
+class clCreatePipeWithParamNegativeTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
     void SetUp() override {
         ApiFixture::SetUp();
     }

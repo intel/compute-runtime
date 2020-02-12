@@ -22,7 +22,7 @@ void CL_CALLBACK eventCallBack(const char *, const void *,
 
 TEST_F(clCreateContextTests, returnsSuccess) {
     auto context =
-        clCreateContext(nullptr, num_devices, devices, nullptr, nullptr, &retVal);
+        clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, &retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, context);
@@ -35,7 +35,7 @@ TEST_F(clCreateContextTests, returnsSuccess) {
 
 TEST_F(clCreateContextTests, noRet) {
     auto context =
-        clCreateContext(nullptr, num_devices, devices, nullptr, nullptr, nullptr);
+        clCreateContext(nullptr, 1u, &testedClDevice, nullptr, nullptr, nullptr);
 
     ASSERT_NE(nullptr, context);
     EXPECT_NE(nullptr, context->dispatch.icdDispatch);
@@ -47,12 +47,12 @@ TEST_F(clCreateContextTests, noRet) {
 
 TEST_F(clCreateContextTests, returnsFail) {
     auto context =
-        clCreateContext(nullptr, 0, devices, nullptr, nullptr, &retVal);
+        clCreateContext(nullptr, 0, &testedClDevice, nullptr, nullptr, &retVal);
     ASSERT_EQ(nullptr, context);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 
     cl_int someData = 25;
-    context = clCreateContext(nullptr, num_devices, devices, nullptr, &someData, &retVal);
+    context = clCreateContext(nullptr, 1u, &testedClDevice, nullptr, &someData, &retVal);
     ASSERT_EQ(nullptr, context);
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -74,7 +74,7 @@ TEST_F(clCreateContextTests, nullDevices) {
 }
 
 TEST_F(clCreateContextTests, nullUserData) {
-    auto context = clCreateContext(nullptr, num_devices, devices, eventCallBack, nullptr, &retVal);
+    auto context = clCreateContext(nullptr, 1u, &testedClDevice, eventCallBack, nullptr, &retVal);
     ASSERT_NE(nullptr, context);
 
     retVal = clReleaseContext(context);
@@ -83,7 +83,7 @@ TEST_F(clCreateContextTests, nullUserData) {
 
 TEST_F(clCreateContextTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
-    auto context = clCreateContext(invalidProperties, num_devices, devices, nullptr, nullptr, &retVal);
+    auto context = clCreateContext(invalidProperties, 1u, &testedClDevice, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
     EXPECT_EQ(nullptr, context);
 }

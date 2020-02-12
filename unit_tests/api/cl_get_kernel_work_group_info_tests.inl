@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-struct clGetKernelWorkGroupInfoTests : public ApiFixture,
+struct clGetKernelWorkGroupInfoTests : public ApiFixture<>,
                                        public ::testing::TestWithParam<uint32_t /*cl_kernel_work_group_info*/> {
     typedef ApiFixture BaseClass;
 

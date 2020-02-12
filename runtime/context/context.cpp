@@ -169,16 +169,19 @@ bool Context::createImpl(const cl_context_properties *properties,
     if (devices.size() > 0) {
         auto device = this->getDevice(0);
         this->memoryManager = device->getMemoryManager();
-        if (device->getHardwareInfo().capabilityTable.ftrSvm) {
-            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
-        }
         if (memoryManager->isAsyncDeleterEnabled()) {
             memoryManager->getDeferredDeleter()->addClient();
         }
-    }
 
-    for (auto &device : devices) {
-        device->incRefInternal();
+        bool anySvmSupport = false;
+        for (auto &device : devices) {
+            device->incRefInternal();
+            anySvmSupport |= device->getHardwareInfo().capabilityTable.ftrSvm;
+        }
+
+        if (anySvmSupport) {
+            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
+        }
     }
 
     auto commandQueue = CommandQueue::create(this, devices[0], nullptr, true, errcodeRet);

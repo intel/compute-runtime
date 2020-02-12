@@ -43,13 +43,13 @@ TEST_F(clGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParam
 }
 
 TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsAllDevices) {
-    auto devicesReturned = new cl_device_id[this->num_devices];
-    cl_uint numDevices = this->num_devices;
+    auto devicesReturned = new cl_device_id[this->num_devices - 1];
+    cl_uint numDevices = this->num_devices - 1;
 
     auto context = clCreateContext(
         nullptr,
-        this->num_devices,
-        this->devices,
+        this->num_devices - 1,
+        this->devices + 1,
         nullptr,
         nullptr,
         &retVal);
@@ -64,8 +64,8 @@ TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesPa
         nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
-    for (size_t deviceOrdinal = 0; deviceOrdinal < this->num_devices; ++deviceOrdinal) {
-        EXPECT_EQ(this->devices[deviceOrdinal], devicesReturned[deviceOrdinal]);
+    for (size_t deviceOrdinal = 0; deviceOrdinal < this->num_devices - 1; ++deviceOrdinal) {
+        EXPECT_EQ(this->devices[deviceOrdinal + 1], devicesReturned[deviceOrdinal]);
     }
 
     clReleaseContext(context);

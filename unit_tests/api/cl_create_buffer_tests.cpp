@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ typedef api_tests clCreateBufferTests;
 
 namespace ClCreateBufferTests {
 
-class clCreateBufferTemplateTests : public ApiFixture,
+class clCreateBufferTemplateTests : public ApiFixture<>,
                                     public testing::TestWithParam<uint64_t> {
     void SetUp() override {
         ApiFixture::SetUp();

@@ -8,6 +8,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 
 #include "core/execution_environment/execution_environment.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
@@ -50,7 +51,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
 }
 
 CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
     if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
         filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());

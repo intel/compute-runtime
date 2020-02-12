@@ -17,7 +17,7 @@ using namespace NEO;
 namespace ClCreateImageTests {
 
 template <typename T>
-struct clCreateImageTests : public ApiFixture,
+struct clCreateImageTests : public ApiFixture<>,
                             public T {
 
     void SetUp() override {

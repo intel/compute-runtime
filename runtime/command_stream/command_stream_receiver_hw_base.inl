@@ -341,7 +341,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
-    if (executionEnvironment.getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+    if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             auto pCmd = addPipeControlCmd(commandStreamCSR);
             pCmd->setTextureCacheInvalidationEnable(true);
@@ -649,7 +649,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdSizeForPrologue(dispatchFlags);
 
-    if (executionEnvironment.getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+    if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
@@ -712,6 +712,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
+}
+
+template <typename GfxFamily>
+inline const HardwareInfo &CommandStreamReceiverHw<GfxFamily>::peekHwInfo() const {
+    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 }
 
 template <typename GfxFamily>

@@ -11,7 +11,15 @@
 
 using namespace NEO;
 
-typedef api_tests clCreateContextFromTypeTests;
+struct clCreateContextFromTypeTests : public ApiFixture<0u>,
+                                      public ::testing::Test {
+    void SetUp() override {
+        ApiFixture::SetUp();
+    }
+    void TearDown() override {
+        ApiFixture::TearDown();
+    }
+};
 
 namespace ULT {
 void CL_CALLBACK contextCallBack(const char *, const void *,

@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture : public ApiFixture, public DeviceFixture {
+class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
   public:
     KernelArgSvmFixture()
         : pCrossThreadData{0} {

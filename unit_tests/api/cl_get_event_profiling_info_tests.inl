@@ -18,7 +18,7 @@
 using namespace NEO;
 
 template <typename T>
-class EventFixture : public ApiFixture, public T {
+class EventFixture : public ApiFixture<>, public T {
   public:
     void SetUp() override {
         ApiFixture::SetUp();

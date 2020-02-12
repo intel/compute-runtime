@@ -6,12 +6,15 @@
  */
 
 #pragma once
+#include "core/execution_environment/root_device_environment.h"
 #include "runtime/api/api.h"
+#include "runtime/command_queue/command_queue.h"
 #include "runtime/tracing/tracing_api.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/ult_limits.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
 
@@ -19,20 +22,51 @@
 
 namespace NEO {
 
-class CommandQueue;
 class Context;
 class MockClDevice;
-class MockKernel;
-class MockProgram;
 struct RootDeviceEnvironment;
 extern size_t numPlatformDevices;
 
+template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture : PlatformFixture {
-    ApiFixture();
-    ~ApiFixture();
+    ApiFixture() = default;
+    ~ApiFixture() = default;
 
-    virtual void SetUp();
-    virtual void TearDown();
+    virtual void SetUp() {
+        numDevicesBackup = numRootDevices;
+        PlatformFixture::SetUp();
+
+        if (rootDeviceIndex != 0u) {
+            rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+        }
+
+        auto pDevice = pPlatform->getClDevice(testedRootDeviceIndex);
+        ASSERT_NE(nullptr, pDevice);
+
+        testedClDevice = pDevice;
+        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+
+        pCommandQueue = new CommandQueue(pContext, pDevice, nullptr);
+
+        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
+
+        pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
+        ASSERT_NE(nullptr, pKernel);
+    }
+
+    virtual void TearDown() {
+        pKernel->release();
+        pCommandQueue->release();
+        pContext->release();
+        pProgram->release();
+
+        if (rootDeviceIndex != 0u) {
+            rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+        }
+
+        PlatformFixture::TearDown();
+    }
 
     cl_int retVal = CL_SUCCESS;
     size_t retSize = 0;
@@ -42,13 +76,13 @@ struct ApiFixture : PlatformFixture {
     MockKernel *pKernel = nullptr;
     MockProgram *pProgram = nullptr;
     constexpr static uint32_t numRootDevices = maxRootDeviceCount;
-    constexpr static uint32_t testedRootDeviceIndex = 1u;
+    constexpr static uint32_t testedRootDeviceIndex = rootDeviceIndex;
     VariableBackup<size_t> numDevicesBackup{&numPlatformDevices};
     cl_device_id testedClDevice = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };
 
-struct api_tests : public ApiFixture,
+struct api_tests : public ApiFixture<>,
                    public ::testing::Test {
     virtual void SetUp() override {
         ApiFixture::SetUp();
