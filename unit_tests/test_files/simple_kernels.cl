@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,7 +89,7 @@ __kernel void simple_kernel_6(__global uint *dst, __constant uint2 *src, uint sc
 
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
-__attribute__((intel_reqd_sub_group_size(8)))   // force SIMD to 8
+__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
 __kernel void
 simple_kernel_7(__global int *resIdx, global TYPE *src, global TYPE *dst) {
     size_t lid = get_local_id(0);
