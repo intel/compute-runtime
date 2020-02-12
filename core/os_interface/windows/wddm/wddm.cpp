@@ -254,7 +254,8 @@ std::unique_ptr<HwDeviceId> Wddm::discoverDevices() {
             // Check for adapters that include either "Intel" or "Citrix" (which may
             // be virtualizing one of our adapters) in the description
             if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
-                (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0)) {
+                (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0) ||
+                (wcsstr(OpenAdapterDesc.Description, L"Virtual Render") != 0)) {
                 char deviceId[16];
                 sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
                 bool choosenDevice = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);

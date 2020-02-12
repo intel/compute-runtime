@@ -139,6 +139,14 @@ TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathConta
     EXPECT_NE(nullptr, hwDeviceId.get());
 }
 
+TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
+    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
+    descriptionBackup = L"Virtual Render";
+
+    auto hwDeviceId = Wddm::discoverDevices();
+    EXPECT_NE(nullptr, hwDeviceId.get());
+}
+
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
 
     const HardwareInfo *hwInfo = platformDevices[0];
