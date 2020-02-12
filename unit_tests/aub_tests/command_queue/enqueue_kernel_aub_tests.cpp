@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,11 +122,16 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
 
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
+        if (KernelFixture::simd < HwHelper::get(NEO::platformDevices[0]->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+            GTEST_SKIP();
+        }
         ParentClass::SetUp();
     }
 
     void TearDown() override {
-        ParentClass::TearDown();
+        if (!IsSkipped()) {
+            ParentClass::TearDown();
+        }
     }
 
     template <typename FamilyType>
@@ -303,12 +308,17 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
     typedef SimpleArgFixture<AUBSimpleArgFixtureFactory> ParentClass;
 
     void SetUp() override {
-        ParentClass::SetUp();
         std::tie(simd, param) = GetParam();
+        if (simd < HwHelper::get(NEO::platformDevices[0]->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+            GTEST_SKIP();
+        }
+        ParentClass::SetUp();
     }
 
     void TearDown() override {
-        ParentClass::TearDown();
+        if (!IsSkipped()) {
+            ParentClass::TearDown();
+        }
     }
     cl_uint simd;
     TestParam param;
