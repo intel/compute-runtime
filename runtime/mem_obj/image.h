@@ -17,13 +17,6 @@ class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;
 
-struct SurfaceOffsets {
-    uint64_t offset;
-    uint32_t xOffset;
-    uint32_t yOffset;
-    uint32_t yOffsetForUVplane;
-};
-
 typedef Image *(*ImageCreatFunc)(Context *context,
                                  const MemoryPropertiesFlags &memoryProperties,
                                  uint64_t flags,

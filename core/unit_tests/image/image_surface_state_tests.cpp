@@ -57,17 +57,23 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     imageInfo.imgDesc.numMipLevels = 8u;
     imageInfo.imgDesc.numSamples = 9u;
     imageInfo.imgDesc.imageType = ImageType::Image2DArray;
+    SurfaceFormatInfo surfaceFormatInfo;
+    surfaceFormatInfo.GenxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    imageInfo.surfaceFormat = &surfaceFormatInfo;
+    SurfaceOffsets surfaceOffsets;
+    surfaceOffsets.offset = 0u;
+    surfaceOffsets.xOffset = 11u;
+    surfaceOffsets.yOffset = 12u;
+    surfaceOffsets.yOffsetForUVplane = 13u;
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, &mockGmm, *gmmHelper, cubeFaceIndex);
+    const uint64_t gpuAddress = 0x000001a78a8a8000;
+
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, &mockGmm, *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfacePitch(), 1u);
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceQpitch(), 0u);
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceBaseAddress(), 0u);
     EXPECT_EQ(castSurfaceState->getRenderTargetViewExtent(), 1u);
     EXPECT_EQ(castSurfaceState->getMinimumArrayElement(), cubeFaceIndex);
     EXPECT_EQ(castSurfaceState->getSurfaceQpitch(), imageInfo.qPitch >> RENDER_SURFACE_STATE::tagSURFACEQPITCH::SURFACEQPITCH_BIT_SHIFT);
@@ -79,11 +85,34 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     EXPECT_EQ(castSurfaceState->getCoherencyType(), RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
     EXPECT_EQ(castSurfaceState->getMultisampledSurfaceStorageFormat(), RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 
+    EXPECT_EQ(castSurfaceState->getSurfaceBaseAddress(), gpuAddress + surfaceOffsets.offset);
+
+    uint32_t xOffset = surfaceOffsets.xOffset >> RENDER_SURFACE_STATE::tagXOFFSET::XOFFSET_BIT_SHIFT;
+    uint32_t yOffset = surfaceOffsets.yOffset >> RENDER_SURFACE_STATE::tagYOFFSET::YOFFSET_BIT_SHIFT;
+
+    EXPECT_EQ(castSurfaceState->getXOffset(), xOffset << RENDER_SURFACE_STATE::tagXOFFSET::XOFFSET_BIT_SHIFT);
+    EXPECT_EQ(castSurfaceState->getYOffset(), yOffset << RENDER_SURFACE_STATE::tagYOFFSET::YOFFSET_BIT_SHIFT);
+
+    EXPECT_EQ(castSurfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
+    EXPECT_EQ(castSurfaceState->getYOffsetForUOrUvPlane(), surfaceOffsets.yOffsetForUVplane);
+    EXPECT_EQ(castSurfaceState->getXOffsetForUOrUvPlane(), surfaceOffsets.xOffset);
+
+    EXPECT_EQ(castSurfaceState->getSurfaceFormat(), static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->GenxSurfaceFormat));
+
     surfaceState = std::make_unique<char[]>(size);
     castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, nullptr, *gmmHelper, cubeFaceIndex);
+    setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, nullptr, *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, false);
 
     EXPECT_EQ(castSurfaceState->getSurfaceHorizontalAlignment(), RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
     EXPECT_EQ(castSurfaceState->getSurfaceVerticalAlignment(), RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
+
+    EXPECT_EQ(castSurfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
+    EXPECT_EQ(castSurfaceState->getYOffsetForUOrUvPlane(), 0u);
+    EXPECT_EQ(castSurfaceState->getXOffsetForUOrUvPlane(), 0u);
+
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfacePitch(), 1u);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceQpitch(), 0u);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceBaseAddress(), 0u);
 }

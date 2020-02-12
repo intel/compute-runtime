@@ -40,6 +40,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     ImageInfo imgInfo;
     imgInfo.imgDesc = imageDescriptor;
     imgInfo.qPitch = qPitch;
+    imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
     auto imageHeight = getImageDesc().image_height;
     if (imageHeight == 0) {
@@ -55,7 +56,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
     }
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, getGraphicsAllocation()->getDefaultGmm(), *gmmHelper, cubeFaceIndex);
+    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, getGraphicsAllocation()->getDefaultGmm(), *gmmHelper, cubeFaceIndex, getGraphicsAllocation()->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
@@ -81,13 +82,9 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setSurfaceType(surfaceType);
     }
 
-    surfaceState->setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
-
     surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
     surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
     setMipTailStartLod(surfaceState);
-
-    surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(getSurfaceFormatInfo().surfaceFormat.GenxSurfaceFormat));
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().OCLImageFormat.image_channel_order;
     int shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, imgChannelOrder);
@@ -101,23 +98,6 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setShaderChannelSelectGreen(static_cast<typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(shaderChannelValue));
         shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, imgChannelOrder);
         surfaceState->setShaderChannelSelectBlue(static_cast<typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(shaderChannelValue));
-    }
-
-    if (IsNV12Image(&this->getImageFormat())) {
-        surfaceState->setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
-    } else {
-        surfaceState->setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
-    }
-
-    surfaceState->setXOffset(this->surfaceOffsets.xOffset);
-    surfaceState->setYOffset(this->surfaceOffsets.yOffset);
-
-    if (IsNV12Image(&this->getImageFormat())) {
-        surfaceState->setYOffsetForUOrUvPlane(this->surfaceOffsets.yOffsetForUVplane);
-        surfaceState->setXOffsetForUOrUvPlane(this->surfaceOffsets.xOffset);
-    } else {
-        surfaceState->setYOffsetForUOrUvPlane(0);
-        surfaceState->setXOffsetForUOrUvPlane(0);
     }
 
     surfaceState->setNumberOfMultisamples((typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES)mcsSurfaceInfo.multisampleCount);

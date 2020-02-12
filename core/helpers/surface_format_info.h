@@ -244,4 +244,11 @@ struct McsSurfaceInfo {
     uint32_t multisampleCount;
 };
 
+struct SurfaceOffsets {
+    uint64_t offset;
+    uint32_t xOffset;
+    uint32_t yOffset;
+    uint32_t yOffsetForUVplane;
+};
+
 } // namespace NEO
