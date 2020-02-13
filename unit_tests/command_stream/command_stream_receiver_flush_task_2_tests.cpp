@@ -17,12 +17,14 @@
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
+#include "unit_tests/helpers/raii_hw_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_hw_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
@@ -444,9 +446,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, handleTagAndScratchAllocationsResi
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenLocalMemoryIsEnabledAndFlushTaskIsCalledThenGlobalFenceAlocationIsMadeResident) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableLocalMemory.set(true);
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndFlushTaskIsCalledThenFenceAlocationIsMadeResident) {
+    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);

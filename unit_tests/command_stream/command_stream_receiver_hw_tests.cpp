@@ -35,6 +35,7 @@
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/raii_hw_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -42,6 +43,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_hw_helper.h"
 #include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -631,9 +633,8 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     EXPECT_EQ(5u, csr.makeResidentAllocations.size());
 }
 
-HWTEST_F(BcsTests, givenLocalMemoryEnabledWhenBlitDispatchedThenMakeAllAllocationsResident) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAllocationsResident) {
+    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
     auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());

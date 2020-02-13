@@ -385,9 +385,11 @@ bool CommandStreamReceiver::initializeTagAllocation() {
 }
 
 bool CommandStreamReceiver::createGlobalFenceAllocation() {
-    if (!localMemoryEnabled) {
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    if (!HwHelper::get(hwInfo->platform.eRenderCoreFamily).isFenceAllocationRequired(*hwInfo)) {
         return true;
     }
+
     DEBUG_BREAK_IF(this->globalFenceAllocation != nullptr);
     this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::GLOBAL_FENCE});
     return this->globalFenceAllocation != nullptr;

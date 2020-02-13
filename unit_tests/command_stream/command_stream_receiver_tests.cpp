@@ -25,6 +25,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
+#include "unit_tests/helpers/raii_hw_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
@@ -32,6 +33,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_hw_helper.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
@@ -363,9 +365,8 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenLocalMemoryIsEnabledAndCreateGlobalFenceAllocationIsCalledThenGlobalFenceAllocationIsAllocated) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndCreateGlobalFenceAllocationIsCalledThenFenceAllocationIsAllocated) {
+    RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     EXPECT_EQ(nullptr, csr.globalFenceAllocation);

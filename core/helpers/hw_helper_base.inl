@@ -77,6 +77,11 @@ bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo)
     return false;
 }
 
+template <typename Family>
+bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) {
     return true;
