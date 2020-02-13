@@ -53,7 +53,7 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgProvidedButDoesnNotContainFa
 
 TEST(OclocFatBinaryGetAllSupportedTargetPlatforms, WhenRequestedThenReturnsAllPlatformsWithNonNullHardwarePrefixes) {
     auto platforms = NEO::getAllSupportedTargetPlatforms();
-    std::unordered_set<PRODUCT_FAMILY> platformsSet(platforms.begin(), platforms.end());
+    std::unordered_set<uint32_t> platformsSet(platforms.begin(), platforms.end());
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
         if (nullptr != NEO::hardwarePrefix[productId]) {
             EXPECT_EQ(1U, platformsSet.count(static_cast<PRODUCT_FAMILY>(productId))) << productId;
@@ -112,7 +112,7 @@ TEST(OclocFatBinaryAppendPlatformsForGfxCore, GivenCoreIdThenAppendsEnabledProdu
     auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
     std::vector<PRODUCT_FAMILY> appendedPlatforms;
     NEO::appendPlatformsForGfxCore(gfxCore0, allEnabledPlatforms, appendedPlatforms);
-    std::unordered_set<PRODUCT_FAMILY> appendedPlatformsSet(appendedPlatforms.begin(), appendedPlatforms.end());
+    std::unordered_set<uint32_t> appendedPlatformsSet(appendedPlatforms.begin(), appendedPlatforms.end());
     EXPECT_EQ(1U, appendedPlatformsSet.count(platform0));
     for (auto platformId : allEnabledPlatforms) {
         if (gfxCore0 == NEO::hardwareInfoTable[platformId]->platform.eRenderCoreFamily) {
