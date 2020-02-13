@@ -30,6 +30,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/queue_helpers.h"
@@ -1868,20 +1869,20 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     //  a nullptr value is returned."
     case CL_EVENT_COMMAND_QUEUE: {
         if (neoEvent->isUserEvent()) {
-            retVal = info.set<cl_command_queue>(nullptr);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_queue>(nullptr));
             TRACING_EXIT(clGetEventInfo, &retVal);
             return retVal;
         }
-        retVal = info.set<cl_command_queue>(neoEvent->getCommandQueue());
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_queue>(neoEvent->getCommandQueue()));
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     }
     case CL_EVENT_CONTEXT:
-        retVal = info.set<cl_context>(neoEvent->getContext());
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_context>(neoEvent->getContext()));
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_TYPE:
-        retVal = info.set<cl_command_type>(neoEvent->getCommandType());
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_type>(neoEvent->getCommandType()));
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
@@ -1895,16 +1896,16 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
             if (executionStatus == CL_QUEUED) {
                 executionStatus = CL_SUBMITTED;
             }
-            retVal = info.set<cl_int>(executionStatus);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(executionStatus));
             TRACING_EXIT(clGetEventInfo, &retVal);
             return retVal;
         }
 
-        retVal = info.set<cl_int>(neoEvent->updateEventAndReturnCurrentStatus());
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(neoEvent->updateEventAndReturnCurrentStatus()));
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_REFERENCE_COUNT:
-        retVal = info.set<cl_uint>(neoEvent->getReference());
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_uint>(neoEvent->getReference()));
         TRACING_EXIT(clGetEventInfo, &retVal);
         return retVal;
     }
@@ -3617,34 +3618,34 @@ cl_int clGetMemAllocInfoINTEL(
     switch (paramName) {
     case CL_MEM_ALLOC_TYPE_INTEL: {
         if (!unifiedMemoryAllocation) {
-            retVal = info.set<cl_int>(CL_MEM_TYPE_UNKNOWN_INTEL);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_UNKNOWN_INTEL));
             return retVal;
         } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
-            retVal = info.set<cl_int>(CL_MEM_TYPE_HOST_INTEL);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_HOST_INTEL));
             return retVal;
         } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
-            retVal = info.set<cl_int>(CL_MEM_TYPE_DEVICE_INTEL);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_DEVICE_INTEL));
             return retVal;
         } else {
-            retVal = info.set<cl_int>(CL_MEM_TYPE_SHARED_INTEL);
+            retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_SHARED_INTEL));
             return retVal;
         }
         break;
     }
     case CL_MEM_ALLOC_BASE_PTR_INTEL: {
-        retVal = info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress());
+        retVal = changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress()));
         return retVal;
     }
     case CL_MEM_ALLOC_SIZE_INTEL: {
-        retVal = info.set<size_t>(unifiedMemoryAllocation->size);
+        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(unifiedMemoryAllocation->size));
         return retVal;
     }
     case CL_MEM_ALLOC_FLAGS_INTEL: {
-        retVal = info.set<cl_mem_alloc_flags_intel>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags);
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_mem_alloc_flags_intel>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags));
         return retVal;
     }
     case CL_MEM_ALLOC_DEVICE_INTEL: {
-        retVal = info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device));
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device)));
         return retVal;
     }
 

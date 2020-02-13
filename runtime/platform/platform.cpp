@@ -25,6 +25,7 @@
 #include "runtime/event/async_events_handler.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/built_ins_helper.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -85,7 +86,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     case CL_PLATFORM_HOST_TIMER_RESOLUTION:
         pVal = static_cast<uint64_t>(this->clDevices[0]->getPlatformHostTimerResolution());
         paramSize = sizeof(uint64_t);
-        retVal = ::getInfo(paramValue, paramValueSize, &pVal, paramSize);
+        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &pVal, paramSize));
         break;
     case CL_PLATFORM_PROFILE:
         param = &platformInfo->profile;
@@ -112,7 +113,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     // Case for string parameters
     if (param) {
         paramSize = param->length() + 1;
-        retVal = ::getInfo(paramValue, paramValueSize, param->c_str(), paramSize);
+        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, param->c_str(), paramSize));
     }
 
     if (paramValueSizeRet) {

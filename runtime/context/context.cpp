@@ -21,6 +21,7 @@
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
@@ -241,7 +242,7 @@ cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
     }
 
     if (callGetinfo) {
-        retVal = ::getInfo(paramValue, paramValueSize, pValue, valueSize);
+        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pValue, valueSize));
     } else {
         retVal = CL_SUCCESS;
     }

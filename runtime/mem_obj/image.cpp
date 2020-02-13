@@ -23,6 +23,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/surface_formats.h"
@@ -864,7 +865,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, srcParam, srcParamSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, srcParam, srcParamSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcParamSize;

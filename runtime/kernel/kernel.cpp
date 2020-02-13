@@ -31,6 +31,7 @@
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/helpers/surface_formats.h"
@@ -498,7 +499,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcSize;
@@ -557,7 +558,7 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcSize;
@@ -589,7 +590,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
             auto divisionSize = 32 / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
             maxWorkgroupSize /= divisionSize;
         }
-        retVal = info.set<size_t>(maxWorkgroupSize);
+        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(maxWorkgroupSize));
         break;
 
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
@@ -597,29 +598,29 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
         requiredWorkGroupSize.val[0] = patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
         requiredWorkGroupSize.val[1] = patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
         requiredWorkGroupSize.val[2] = patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;
-        retVal = info.set<size_t3>(requiredWorkGroupSize);
+        retVal = changeGetInfoStatusToCLResultType(info.set<size_t3>(requiredWorkGroupSize));
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
         localMemorySize = patchInfo.localsurface
                               ? patchInfo.localsurface->TotalInlineLocalMemorySize
                               : 0;
-        retVal = info.set<cl_ulong>(localMemorySize);
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(localMemorySize));
         break;
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
         DEBUG_BREAK_IF(!patchInfo.executionEnvironment);
         preferredWorkGroupSizeMultiple = patchInfo.executionEnvironment->LargestCompiledSIMDSize;
-        retVal = info.set<size_t>(preferredWorkGroupSizeMultiple);
+        retVal = changeGetInfoStatusToCLResultType((info.set<size_t>(preferredWorkGroupSizeMultiple)));
         break;
 
     case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
         scratchSize = kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
-        retVal = info.set<cl_ulong>(scratchSize);
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(scratchSize));
         break;
     case CL_KERNEL_PRIVATE_MEM_SIZE:
         privateMemSize = kernelInfo.patchInfo.pAllocateStatelessPrivateSurface ? kernelInfo.patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize : 0;
-        retVal = info.set<cl_ulong>(privateMemSize);
+        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(privateMemSize));
         break;
     default:
         retVal = CL_INVALID_VALUE;
@@ -683,14 +684,14 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         for (size_t i = 0; i < numDimensions; i++) {
             WGS *= ((size_t *)inputValue)[i];
         }
-        return info.set<size_t>(std::min(WGS, maxSimdSize));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(std::min(WGS, maxSimdSize)));
     }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR: {
         for (size_t i = 0; i < numDimensions; i++) {
             WGS *= ((size_t *)inputValue)[i];
         }
-        return info.set<size_t>((WGS / maxSimdSize) +
-                                std::min(static_cast<size_t>(1), WGS % maxSimdSize)); // add 1 if WGS % maxSimdSize != 0
+        return changeGetInfoStatusToCLResultType(
+            info.set<size_t>((WGS / maxSimdSize) + std::min(static_cast<size_t>(1), WGS % maxSimdSize))); // add 1 if WGS % maxSimdSize != 0
     }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT: {
         auto subGroupsNum = *(size_t *)inputValue;
@@ -702,14 +703,14 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         // If no work group size can accommodate the requested number of subgroups, return 0 in each element of the returned array.
         switch (numDimensions) {
         case 1:
-            return info.set<size_t>(workGroupSize);
+            return changeGetInfoStatusToCLResultType(info.set<size_t>(workGroupSize));
         case 2:
             struct size_t2 {
                 size_t val[2];
             } workGroupSize2;
             workGroupSize2.val[0] = workGroupSize;
             workGroupSize2.val[1] = (workGroupSize > 0) ? 1 : 0;
-            return info.set<size_t2>(workGroupSize2);
+            return changeGetInfoStatusToCLResultType(info.set<size_t2>(workGroupSize2));
         case 3:
         default:
             struct size_t3 {
@@ -718,18 +719,18 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
             workGroupSize3.val[0] = workGroupSize;
             workGroupSize3.val[1] = (workGroupSize > 0) ? 1 : 0;
             workGroupSize3.val[2] = (workGroupSize > 0) ? 1 : 0;
-            return info.set<size_t3>(workGroupSize3);
+            return changeGetInfoStatusToCLResultType(info.set<size_t3>(workGroupSize3));
         }
     }
     case CL_KERNEL_MAX_NUM_SUB_GROUPS: {
         // round-up maximum number of subgroups
-        return info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize)));
     }
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS: {
-        return info.set<size_t>(static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber)));
     }
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL: {
-        return info.set<size_t>(getKernelInfo().requiredSubGroupSize);
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(getKernelInfo().requiredSubGroupSize));
     }
     default:
         return CL_INVALID_VALUE;

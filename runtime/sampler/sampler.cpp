@@ -11,6 +11,7 @@
 #include "core/helpers/hw_info.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 
 #include "patch_list.h"
 
@@ -211,7 +212,7 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, pValue, valueSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pValue, valueSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = valueSize;

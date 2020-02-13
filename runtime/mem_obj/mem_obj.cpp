@@ -20,6 +20,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 
 #include <algorithm>
 
@@ -188,7 +189,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, srcParam, srcParamSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, srcParam, srcParamSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcParamSize;

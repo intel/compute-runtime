@@ -11,6 +11,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 
 namespace NEO {
 
@@ -54,32 +55,32 @@ cl_int getQueueInfo(QueueType *queue,
                     size_t paramValueSize,
                     void *paramValue,
                     size_t *paramValueSizeRet) {
-    cl_int retVal = CL_SUCCESS;
 
-    GetInfoHelper getInfoHelper(paramValue, paramValueSize, paramValueSizeRet, &retVal);
+    cl_int retVal = CL_SUCCESS;
+    GetInfoHelper getInfoHelper(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
     case CL_QUEUE_CONTEXT:
-        getInfoHelper.set<cl_context>(&queue->getContext());
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_context>(&queue->getContext()));
         break;
     case CL_QUEUE_DEVICE: {
         Device &device = queue->getDevice();
-        getInfoHelper.set<cl_device_id>(device.getSpecializedDevice<ClDevice>());
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_device_id>(device.getSpecializedDevice<ClDevice>()));
         break;
     }
     case CL_QUEUE_REFERENCE_COUNT:
-        getInfoHelper.set<cl_int>(queue->getReference());
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_int>(queue->getReference()));
         break;
     case CL_QUEUE_PROPERTIES:
-        getInfoHelper.set<cl_command_queue_properties>(queue->getCommandQueueProperties());
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue_properties>(queue->getCommandQueueProperties()));
         break;
     case CL_QUEUE_DEVICE_DEFAULT:
-        getInfoHelper.set<cl_command_queue>(queue->getContext().getDefaultDeviceQueue());
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue>(queue->getContext().getDefaultDeviceQueue()));
         break;
     case CL_QUEUE_SIZE:
         if (std::is_same<QueueType, class DeviceQueue>::value) {
             auto devQ = reinterpret_cast<DeviceQueue *>(queue);
-            getInfoHelper.set<cl_uint>(devQ->getQueueSize());
+            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(devQ->getQueueSize()));
             break;
         }
         retVal = CL_INVALID_VALUE;

@@ -11,6 +11,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/program/kernel_info.h"
 
@@ -141,7 +142,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     }
 
     retVal = (retVal == CL_SUCCESS)
-                 ? ::getInfo(paramValue, paramValueSize, pSrc, srcSize)
+                 ? changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize))
                  : retVal;
     if (paramValueSizeRet) {
         *paramValueSizeRet = retSize;
@@ -202,7 +203,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     }
 
     retVal = (retVal == CL_SUCCESS)
-                 ? ::getInfo(paramValue, paramValueSize, pSrc, srcSize)
+                 ? changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize))
                  : retVal;
 
     if (paramValueSizeRet) {

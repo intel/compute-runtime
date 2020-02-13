@@ -6,28 +6,28 @@
  */
 
 #pragma once
-#include "CL/cl.h"
+#include "get_info_status.h"
 
 #include <cstring>
 
 // Need for linux compatibility with memcpy_s
 #include "core/helpers/string.h"
 
-inline cl_int getInfo(void *destParamValue, size_t destParamValueSize,
-                      const void *srcParamValue, size_t srcParamValueSize) {
-    auto retVal = CL_INVALID_VALUE;
+inline GetInfoStatus getInfo(void *destParamValue, size_t destParamValueSize,
+                             const void *srcParamValue, size_t srcParamValueSize) {
+    auto retVal = GetInfoStatus::INVALID_VALUE;
     if (srcParamValue && srcParamValueSize) {
         if (!destParamValue && !destParamValueSize) {
             // Report ok if they're looking for size.
-            retVal = CL_SUCCESS;
+            retVal = GetInfoStatus::SUCCESS;
         } else if (destParamValue && destParamValueSize >= srcParamValueSize) {
             // Report ok if we can copy safely
-            retVal = CL_SUCCESS;
+            retVal = GetInfoStatus::SUCCESS;
 
             memcpy_s(destParamValue, destParamValueSize, srcParamValue, srcParamValueSize);
         } else if (!destParamValue) {
             // Report ok if destParamValue == nullptr and destParamValueSize > 0
-            retVal = CL_SUCCESS;
+            retVal = GetInfoStatus::SUCCESS;
         }
     }
 
@@ -35,13 +35,13 @@ inline cl_int getInfo(void *destParamValue, size_t destParamValueSize,
 }
 
 struct GetInfoHelper {
-    GetInfoHelper(void *dst, size_t dstSize, size_t *retSize, cl_int *retVal = nullptr)
+    GetInfoHelper(void *dst, size_t dstSize, size_t *retSize, GetInfoStatus *retVal = nullptr)
         : dst(dst), dstSize(dstSize), retSize(retSize), retVal(retVal) {
     }
 
     template <typename DataType>
-    cl_int set(const DataType &val) {
-        cl_int errCode = CL_SUCCESS;
+    GetInfoStatus set(const DataType &val) {
+        auto errCode = GetInfoStatus::SUCCESS;
         if (retSize != nullptr) {
             *retSize = sizeof(val);
         }
@@ -49,7 +49,7 @@ struct GetInfoHelper {
             if (dstSize >= sizeof(val)) {
                 *reinterpret_cast<DataType *>(dst) = val;
             } else {
-                errCode = CL_INVALID_VALUE;
+                errCode = GetInfoStatus::INVALID_VALUE;
             }
         }
         if (retVal)
@@ -67,24 +67,24 @@ struct GetInfoHelper {
     void *dst;
     size_t dstSize;
     size_t *retSize;
-    cl_int *retVal;
+    GetInfoStatus *retVal;
 };
 
 struct ErrorCodeHelper {
-    ErrorCodeHelper(cl_int *errcodeRet, cl_int defaultCode)
+    ErrorCodeHelper(int *errcodeRet, int defaultCode)
         : errcodeRet(errcodeRet) {
         set(defaultCode);
     }
 
-    void set(cl_int code) {
+    void set(int code) {
         if (errcodeRet != nullptr) {
             *errcodeRet = code;
         }
         localErrcode = code;
     }
 
-    cl_int *errcodeRet;
-    cl_int localErrcode;
+    int *errcodeRet;
+    int localErrcode;
 };
 
 template <typename T>

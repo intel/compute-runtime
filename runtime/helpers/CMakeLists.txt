@@ -20,6 +20,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl

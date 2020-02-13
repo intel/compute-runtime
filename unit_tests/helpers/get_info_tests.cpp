@@ -14,7 +14,7 @@ TEST(getInfo, valid_params_returnsSuccess) {
     float src = 1.0f;
 
     auto retVal = getInfo(&dest, sizeof(dest), &src, sizeof(src));
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_EQ(src, dest);
 }
 
@@ -23,7 +23,7 @@ TEST(getInfo, null_param_and_param_size_too_small_returnsSuccess) {
     float src = 1.0f;
 
     auto retVal = getInfo(nullptr, 0, &src, sizeof(src));
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -32,7 +32,7 @@ TEST(getInfo, GivenNullPtrAsValueAndNonZeroSizeWhenAskedForGetInfoThenSuccessIsR
     float src = 1.0f;
 
     auto retVal = getInfo(nullptr, sizeof(dest), &src, sizeof(src));
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -41,7 +41,7 @@ TEST(getInfo, param_size_too_small_returnsError) {
     float src = 1.0f;
 
     auto retVal = getInfo(&dest, 0, &src, sizeof(src));
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -50,7 +50,7 @@ TEST(getInfo, null_src_param_returnsError) {
     float src = 1.0f;
 
     auto retVal = getInfo(&dest, sizeof(dest), nullptr, sizeof(src));
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -59,8 +59,16 @@ TEST(getInfo, zero_src_param_size_returnsError) {
     float src = 1.0f;
 
     auto retVal = getInfo(&dest, sizeof(dest), &src, 0);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
+}
+
+TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsSuccessIsReturned) {
+    GetInfoStatus retVal;
+    GetInfoHelper info(nullptr, 0, nullptr, &retVal);
+
+    info.set(1);
+    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
 }
 
 TEST(getInfoHelper, staticSetter) {
@@ -79,12 +87,12 @@ TEST(getInfoHelper, staticSetter) {
 }
 
 TEST(errorCodeHelper, localVariable) {
-    cl_int errCode = CL_SUCCESS;
-    ErrorCodeHelper err(&errCode, CL_INVALID_VALUE);
-    EXPECT_EQ(CL_INVALID_VALUE, errCode);
-    EXPECT_EQ(CL_INVALID_VALUE, err.localErrcode);
+    int errCode = 0;
+    ErrorCodeHelper err(&errCode, 1);
+    EXPECT_EQ(1, errCode);
+    EXPECT_EQ(1, err.localErrcode);
 
-    err.set(CL_INVALID_CONTEXT);
-    EXPECT_EQ(CL_INVALID_CONTEXT, errCode);
-    EXPECT_EQ(CL_INVALID_CONTEXT, err.localErrcode);
+    err.set(2);
+    EXPECT_EQ(2, errCode);
+    EXPECT_EQ(2, err.localErrcode);
 }

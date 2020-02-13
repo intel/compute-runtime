@@ -11,6 +11,7 @@
 #include "core/memory_manager/memory_manager.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 
@@ -104,7 +105,7 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
         break;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, srcParam, srcParamSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, srcParam, srcParamSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcParamSize;

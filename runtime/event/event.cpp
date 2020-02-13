@@ -22,6 +22,7 @@
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_tracker.h"
 #include "runtime/extensions/public/cl_ext_private.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
@@ -209,7 +210,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         return CL_INVALID_VALUE;
     }
 
-    retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, src, srcSize));
 
     if (paramValueSizeRet) {
         *paramValueSizeRet = srcSize;

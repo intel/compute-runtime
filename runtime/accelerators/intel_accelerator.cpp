@@ -10,6 +10,7 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/string.h"
 #include "runtime/context/context.h"
+#include "runtime/helpers/get_info_status_mapper.h"
 
 namespace NEO {
 
@@ -23,7 +24,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     switch (paramName) {
     case CL_ACCELERATOR_DESCRIPTOR_INTEL: {
         ret = getDescriptorSize();
-        result = ::getInfo(paramValue, paramValueSize, getDescriptor(), ret);
+        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, getDescriptor(), ret));
     }
 
     break;
@@ -32,7 +33,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
         auto v = getReference();
 
         ret = sizeof(cl_uint);
-        result = ::getInfo(paramValue, paramValueSize, &v, ret);
+        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &v, ret));
     }
 
     break;
@@ -40,7 +41,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     case CL_ACCELERATOR_CONTEXT_INTEL: {
         ret = sizeof(cl_context);
         cl_context ctx = static_cast<cl_context>(pContext);
-        result = ::getInfo(paramValue, paramValueSize, &ctx, ret);
+        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &ctx, ret));
     }
 
     break;
@@ -48,7 +49,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     case CL_ACCELERATOR_TYPE_INTEL: {
         auto v = getTypeId();
         ret = sizeof(cl_accelerator_type_intel);
-        result = ::getInfo(paramValue, paramValueSize, &v, ret);
+        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &v, ret));
     }
 
     break;
