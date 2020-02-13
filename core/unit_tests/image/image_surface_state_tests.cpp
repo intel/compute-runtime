@@ -5,41 +5,7 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/basic_math.h"
-#include "core/image/image_surface_state.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/surface.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/image.h"
-#include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-
-#include <memory>
-
-class ImageSurfaceStateTests : public DeviceFixture,
-                               public testing::Test {
-  public:
-    void SetUp() override {
-        DeviceFixture::SetUp();
-        gmmHelper = pDevice->getGmmHelper();
-    }
-
-    void TearDown() override {
-        DeviceFixture::TearDown();
-    }
-
-    MockGmm mockGmm;
-    GmmHelper *gmmHelper = nullptr;
-    NEO::ImageInfo imageInfo;
-};
+#include "core/unit_tests/image/image_surface_state_fixture.h"
 
 HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet) {
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
@@ -127,4 +93,13 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     EXPECT_EQ(castSurfaceState->getDepth(), __GMM_MAX_CUBE_FACE - cubeFaceIndex);
     EXPECT_EQ(castSurfaceState->getSurfacePitch(), static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
     EXPECT_EQ(castSurfaceState->getSurfaceType(), surfaceType);
+}
+
+HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetAuxParamsForCCSThenAuxiliarySurfaceModeIsSet) {
+    auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
+    auto surfaceState = std::make_unique<char[]>(size);
+    auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
+    setAuxParamsForCCS<FamilyType>(castSurfaceState, &mockGmm);
+
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }

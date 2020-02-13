@@ -5,15 +5,18 @@
  *
  */
 
+#pragma once
+
 #include "core/execution_environment/execution_environment.h"
 #include "core/gmm_helper/gmm.h"
+#include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/surface_format_info.h"
 #include "core/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 template <typename GfxFamily>
-void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const NEO::ImageInfo &imageInfo, NEO::Gmm *gmm, NEO::GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const NEO::SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
+inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const NEO::ImageInfo &imageInfo, NEO::Gmm *gmm, NEO::GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const NEO::SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -87,7 +90,7 @@ void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState
 }
 
 template <typename GfxFamily>
-void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, uint32_t cubeFaceIndex, typename GfxFamily::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType) {
+inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, uint32_t cubeFaceIndex, typename GfxFamily::RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType) {
     auto imageCount = std::max(imageInfo.imgDesc.imageDepth, imageInfo.imgDesc.imageArraySize);
     if (imageCount == 0) {
         imageCount = 1;
@@ -107,5 +110,29 @@ void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_STATE *su
     surfaceState->setDepth(static_cast<uint32_t>(imageCount));
     surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
     surfaceState->setSurfaceType(surfaceType);
+}
+
+template <typename GfxFamily>
+inline void setUnifiedAuxBaseAddress(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
+    uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
+                           gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
+    surfaceState->setAuxiliarySurfaceBaseAddress(baseAddress);
+}
+
+template <typename GfxFamily>
+void setFlagsForMediaCompression(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+
+template <typename GfxFamily>
+void setClearColorParams(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
+
+template <typename GfxFamily>
+inline void setAuxParamsForCCS(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    using AUXILIARY_SURFACE_MODE = typename GfxFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    setFlagsForMediaCompression<GfxFamily>(surfaceState, gmm);
+
+    setClearColorParams<GfxFamily>(surfaceState, gmm);
+    setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, gmm);
 }
 } // namespace NEO

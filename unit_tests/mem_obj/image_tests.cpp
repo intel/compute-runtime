@@ -7,6 +7,7 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/image/image_surface_state.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/built_ins.h"
@@ -1375,7 +1376,6 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     auto gmm = std::unique_ptr<Gmm>(new Gmm(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false));
     uint64_t surfBsaseAddress = 0xABCDEF1000;
     surfaceState.setSurfaceBaseAddress(surfBsaseAddress);
@@ -1384,7 +1384,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 
-    imageHw->setUnifiedAuxBaseAddress(&surfaceState, gmm.get());
+    setUnifiedAuxBaseAddress<FamilyType>(&surfaceState, gmm.get());
     uint64_t offset = gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
 
     EXPECT_EQ(surfBsaseAddress + offset, surfaceState.getAuxiliarySurfaceBaseAddress());
@@ -1396,52 +1396,13 @@ class MockImageHw : public ImageHw<FamilyName> {
     MockImageHw(Context *context, const cl_image_format &format, const cl_image_desc &desc, ClSurfaceFormatInfo &surfaceFormatInfo, GraphicsAllocation *graphicsAllocation) : ImageHw<FamilyName>(context, {}, 0, 0, 0, nullptr, format, desc, false, graphicsAllocation, false, 0, 0, surfaceFormatInfo) {
     }
 
-    void setClearColorParams(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) override;
     void setAuxParamsForMCSCCS(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) override;
-    bool setClearColorParamsCalled = false;
     bool setAuxParamsForMCSCCSCalled = false;
 };
 
 template <typename FamilyName>
-void MockImageHw<FamilyName>::setClearColorParams(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
-    this->setClearColorParamsCalled = true;
-}
-template <typename FamilyName>
 void MockImageHw<FamilyName>::setAuxParamsForMCSCCS(typename FamilyName::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
     this->setAuxParamsForMCSCCSCalled = true;
-}
-
-using HwImageTest = ::testing::Test;
-HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsCalled) {
-
-    MockContext context;
-    OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_height = 4;
-    imgDesc.image_width = 4;
-    imgDesc.image_depth = 1;
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-
-    cl_image_format format = {};
-    format.image_channel_data_type = CL_UNORM_INT8;
-    format.image_channel_order = CL_RGBA;
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(0, imgInfo, true, {});
-
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
-
-    ClSurfaceFormatInfo formatInfo = {};
-    std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));
-
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-
-    EXPECT_FALSE(mockImage->setClearColorParamsCalled);
-    mockImage->setAuxParamsForCCS(&surfaceState, graphicsAllocation->getDefaultGmm());
-    EXPECT_TRUE(mockImage->setClearColorParamsCalled);
 }
 
 using HwImageTest = ::testing::Test;

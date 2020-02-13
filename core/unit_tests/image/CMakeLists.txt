@@ -6,6 +6,7 @@
 
 set(NEO_CORE_IMAGE_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests.cpp
 )
 

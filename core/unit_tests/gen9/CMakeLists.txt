@@ -6,6 +6,7 @@
 
 set(NEO_CORE_TESTS_GEN9
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen9.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests_gen9.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_gen9.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder_gen9.cpp

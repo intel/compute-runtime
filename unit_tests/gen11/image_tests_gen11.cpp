@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/image/image_surface_state.h"
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
@@ -84,7 +85,7 @@ GEN11TEST_F(gen11ImageTests, givenImageForGen11WhenClearColorParametersAreSetThe
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 
-    imageHw->setClearColorParams(&surfaceStateAfter, imageHw->getGraphicsAllocation()->getDefaultGmm());
+    setClearColorParams<FamilyType>(&surfaceStateAfter, imageHw->getGraphicsAllocation()->getDefaultGmm());
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }

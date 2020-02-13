@@ -11,7 +11,6 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_cmds.h"
-#include "core/image/image_surface_state.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 
@@ -86,7 +85,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (imageDesc.num_samples > 1) {
         setAuxParamsForMultisamples(surfaceState);
     } else if (gmm && gmm->isRenderCompressed) {
-        setAuxParamsForCCS(surfaceState, gmm);
+        setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
     }
     appendSurfaceStateParams(surfaceState);
     appendSurfaceStateExt(surfaceState);
@@ -103,10 +102,10 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
             setAuxParamsForMCSCCS(surfaceState, mcsGmm);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
-            setClearColorParams(surfaceState, mcsGmm);
-            setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
+            setClearColorParams<GfxFamily>(surfaceState, mcsGmm);
+            setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
-            setAuxParamsForCCS(surfaceState, mcsGmm);
+            setAuxParamsForCCS<GfxFamily>(surfaceState, mcsGmm);
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);
@@ -119,31 +118,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    setFlagsForMediaCompression(surfaceState, gmm);
-
-    setClearColorParams(surfaceState, gmm);
-    setUnifiedAuxBaseAddress(surfaceState, gmm);
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
-    uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
-                           gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
-    surfaceState->setAuxiliarySurfaceBaseAddress(baseAddress);
-}
-
-template <typename GfxFamily>
 void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setFlagsForMediaCompression(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    if (gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-    }
 }
 
 template <typename GfxFamily>
@@ -209,10 +184,6 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     surfaceState->setSurfaceArray(true);
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
 }
 
 template <typename GfxFamily>

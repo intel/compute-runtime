@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/helpers/string.h"
+#include "core/image/image_surface_state.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/buffer.h"
@@ -284,16 +285,12 @@ class ImageHw : public Image {
 
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
-    void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
-    void setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
-    MOCKABLE_VIRTUAL void setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
     MOCKABLE_VIRTUAL void setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void setMediaImageArg(void *memory) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
     void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
     void appendSurfaceStateExt(void *memory);
-    void setFlagsForMediaCompression(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,

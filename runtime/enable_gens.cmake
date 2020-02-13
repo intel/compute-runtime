@@ -88,7 +88,9 @@ macro(macro_for_each_gen)
   endforeach()
 
   apply_macro_for_each_platform()
-  
+
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/image_${GEN_TYPE_LOWER}.cpp)
+
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${GEN_TYPE_LOWER}.cpp)
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${GEN_TYPE_LOWER}.cpp)
   
@@ -96,6 +98,7 @@ macro(macro_for_each_gen)
 
   list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_H_BASE})
   list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE})
+
   list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
   list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS})
   list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX})
