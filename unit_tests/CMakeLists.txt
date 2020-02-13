@@ -63,8 +63,6 @@ if(UNIX)
   add_custom_command(
     TARGET run_unit_tests
     POST_BUILD
-    COMMAND echo running linux specific tests for static library in ${TargetDir}
-    COMMAND igdrcl_linux_tests ${IGDRCL_TESTS_LISTENER_OPTION}
     COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
     COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
     COMMAND WORKING_DIRECTORY ${TargetDir}

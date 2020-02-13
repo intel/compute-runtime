@@ -27,11 +27,10 @@ if(WIN32)
   ${CPU_PAGE_FAULT_MANAGER_WINDOWS_TESTS}
   ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_create.cpp
 )
-endif()
-
-if(UNIX)
+else()
   target_sources(neo_page_fault_manager_tests PRIVATE
   ${CPU_PAGE_FAULT_MANAGER_LINUX_TESTS}
+  ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 

@@ -11,6 +11,7 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_constants.h"
+#include "core/os_interface/linux/hw_device_id.h"
 #include "core/os_interface/linux/os_inc.h"
 #include "core/os_interface/linux/sys_calls.h"
 #include "core/utilities/directory.h"
@@ -334,5 +335,7 @@ bool Drm::isi915Version(int fileDescriptor) {
     name[4] = '\0';
     return strcmp(name, "i915") == 0;
 }
+
+Drm::~Drm() = default;
 
 } // namespace NEO

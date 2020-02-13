@@ -25,8 +25,6 @@ class DrmMockDefault : public DrmMock {
     }
 };
 
-Drm::~Drm() = default;
-
 Drm **pDrmToReturnFromCreateFunc = nullptr;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {

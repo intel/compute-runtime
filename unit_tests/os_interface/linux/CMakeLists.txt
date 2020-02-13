@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,8 +23,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_allocate_in_device_pool_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp

@@ -29,8 +29,6 @@ const DeviceDescriptor deviceDescriptorTable[] = {
 #undef DEVICE
     {0, nullptr, nullptr, GTTYPE_UNDEFINED}};
 
-Drm::~Drm() = default;
-
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     std::unique_ptr<Drm> drmObject;
     if (DebugManager.flags.EnableNullHardware.get() == true) {

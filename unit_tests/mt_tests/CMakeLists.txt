@@ -32,6 +32,10 @@ if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
     ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
   )
+else()
+  target_sources(igdrcl_mt_tests PRIVATE
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_neo_create.cpp
+  )
 endif()
 
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)

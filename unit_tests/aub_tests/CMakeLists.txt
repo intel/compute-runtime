@@ -61,6 +61,7 @@ if(WIN32)
 else()
   target_sources(igdrcl_aub_tests PRIVATE
     ${NEO_SOURCE_DIR}/core/os_interface/linux/gmm_interface_linux.cpp
+    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 
