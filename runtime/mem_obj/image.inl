@@ -87,6 +87,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     } else if (gmm && gmm->isRenderCompressed) {
         setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
     }
+    appendSurfaceStateDepthParams(surfaceState);
     appendSurfaceStateParams(surfaceState);
     appendSurfaceStateExt(surfaceState);
 }
@@ -119,6 +120,10 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
+}
+
+template <typename GfxFamily>
+inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState) {
 }
 
 template <typename GfxFamily>

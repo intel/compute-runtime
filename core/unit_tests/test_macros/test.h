@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,6 +199,94 @@ extern GFXCORE_FAMILY renderCoreFamily;
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>(), emptyFcn, emptyFcn)
 
+// Macros to provide template based testing.
+// Test can use productFamily, gfxCoreFamily and FamilyType in the test
+#define HWTEST2_TEST_(test_suite_name, test_name, parent_class, parent_id, test_matcher)           \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {               \
+                                                                                                   \
+      public:                                                                                      \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                         \
+        () {}                                                                                      \
+                                                                                                   \
+      private:                                                                                     \
+        using ContainerType = SupportedProductFamilies;                                            \
+        using MatcherType = test_matcher;                                                          \
+                                                                                                   \
+        template <PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCoreFamily, typename FamilyType> \
+        void matchBody();                                                                          \
+                                                                                                   \
+        template <PRODUCT_FAMILY productFamily>                                                    \
+        void matched() {                                                                           \
+            const GFXCORE_FAMILY gfxCoreFamily =                                                   \
+                static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily);              \
+            using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;            \
+            matchBody<productFamily, gfxCoreFamily, FamilyType>();                                 \
+        }                                                                                          \
+                                                                                                   \
+        struct MatcherFalse {                                                                      \
+            template <PRODUCT_FAMILY productFamily>                                                \
+            static void matched() {}                                                               \
+        };                                                                                         \
+                                                                                                   \
+        template <unsigned int matcherOrdinal>                                                     \
+        void checkForMatch(PRODUCT_FAMILY matchProduct);                                           \
+                                                                                                   \
+        void TestBody() override {                                                                 \
+            checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                   \
+        }                                                                                          \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                      \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name));       \
+    };                                                                                             \
+                                                                                                   \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =    \
+        ::testing::internal::MakeAndRegisterTestInfo(                                              \
+            #test_suite_name, #test_name, nullptr, nullptr,                                        \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__), (parent_id),                    \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetSetUpCaseOrSuite(),            \
+            ::testing::internal::SuiteApiResolver<parent_class>::GetTearDownCaseOrSuite(),         \
+            new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(test_suite_name,       \
+                                                                            test_name)>);          \
+                                                                                                   \
+    template <unsigned int matcherOrdinal>                                                         \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                   \
+                                test_name)::checkForMatch(PRODUCT_FAMILY matchProduct) {           \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;     \
+                                                                                                   \
+        if (matchProduct == productFamily) {                                                       \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                        \
+            using Matcher =                                                                        \
+                typename std::conditional<isMatched,                                               \
+                                          GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),      \
+                                          MatcherFalse>::type;                                     \
+            Matcher::template matched<productFamily>();                                            \
+        } else {                                                                                   \
+            checkForMatch<matcherOrdinal - 1u>(matchProduct);                                      \
+        }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                   \
+                                test_name)::checkForMatch<0u>(PRODUCT_FAMILY matchProduct) {       \
+        const int matcherOrdinal = 0u;                                                             \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;     \
+                                                                                                   \
+        if (matchProduct == productFamily) {                                                       \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                        \
+            using Matcher =                                                                        \
+                typename std::conditional<isMatched,                                               \
+                                          GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),      \
+                                          MatcherFalse>::type;                                     \
+            Matcher::template matched<productFamily>();                                            \
+        }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    template <PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCoreFamily, typename FamilyType>     \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
+
+#define HWTEST2_F(test_fixture, test_name, test_matcher)                  \
+    HWTEST2_TEST_(test_fixture, test_name##_##test_matcher, test_fixture, \
+                  ::testing::internal::GetTypeId<test_fixture>(), test_matcher)
+
 #define HWTEST_TEMPLATED_F(test_fixture, test_name)     \
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>(), SetUpT, TearDownT)
@@ -328,6 +416,13 @@ extern GFXCORE_FAMILY renderCoreFamily;
         }                                                                                 \
     };                                                                                    \
                                                                                           \
+    struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {              \
+        test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {               \
+            PLATFORM_EXCLUDES_CLASS_NAME(test_suite_name, test_name)::addExclude(family); \
+        }                                                                                 \
+    } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
+
+#define HWCMDTEST_EXCLUDE_ADDITIONAL_FAMILY(test_suite_name, test_name, family)           \
     struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {              \
         test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {               \
             PLATFORM_EXCLUDES_CLASS_NAME(test_suite_name, test_name)::addExclude(family); \
@@ -470,6 +565,94 @@ extern GFXCORE_FAMILY renderCoreFamily;
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                                                              \
     template <typename FamilyType>                                                                                                                        \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
+
+// Macros to provide template based testing.
+// Test can use productFamily, gfxCoreFamily and FamilyType in the test
+#define HWTEST2_P(test_suite_name, test_name, test_matcher)                                                       \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                           \
+                                                                                                                  \
+      public:                                                                                                     \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                        \
+        () {}                                                                                                     \
+                                                                                                                  \
+        template <PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCoreFamily, typename FamilyType>                \
+        void matchBody();                                                                                         \
+                                                                                                                  \
+      private:                                                                                                    \
+        using ContainerType = SupportedProductFamilies;                                                           \
+        using MatcherType = test_matcher;                                                                         \
+                                                                                                                  \
+        template <PRODUCT_FAMILY productFamily>                                                                   \
+        void matched() {                                                                                          \
+            const GFXCORE_FAMILY gfxCoreFamily =                                                                  \
+                static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily);                             \
+            using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;                           \
+            matchBody<productFamily, gfxCoreFamily, FamilyType>();                                                \
+        }                                                                                                         \
+                                                                                                                  \
+        struct MatcherFalse {                                                                                     \
+            template <PRODUCT_FAMILY productFamily>                                                               \
+            static void matched() {}                                                                              \
+        };                                                                                                        \
+                                                                                                                  \
+        template <unsigned int matcherOrdinal>                                                                    \
+        void checkForMatch(PRODUCT_FAMILY matchProduct);                                                          \
+                                                                                                                  \
+        virtual void TestBody() {                                                                                 \
+            checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                                  \
+        }                                                                                                         \
+                                                                                                                  \
+        static int AddToRegistry() {                                                                              \
+            ::testing::UnitTest::GetInstance()                                                                    \
+                ->parameterized_test_registry()                                                                   \
+                .GetTestCasePatternHolder<test_suite_name>(#test_suite_name,                                      \
+                                                           ::testing::internal::CodeLocation(__FILE__, __LINE__)) \
+                ->AddTestPattern(#test_suite_name, #test_name,                                                    \
+                                 new ::testing::internal::TestMetaFactory<GTEST_TEST_CLASS_NAME_(                 \
+                                     test_suite_name, test_name)>());                                             \
+            return 0;                                                                                             \
+        }                                                                                                         \
+        static int gtest_registering_dummy_;                                                                      \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name));                      \
+    };                                                                                                            \
+                                                                                                                  \
+    template <unsigned int matcherOrdinal>                                                                        \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                  \
+                                test_name)::checkForMatch(PRODUCT_FAMILY matchProduct) {                          \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;                    \
+                                                                                                                  \
+        if (matchProduct == productFamily) {                                                                      \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                                       \
+            using Matcher =                                                                                       \
+                typename std::conditional<isMatched,                                                              \
+                                          GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),                     \
+                                          MatcherFalse>::type;                                                    \
+            Matcher::template matched<productFamily>();                                                           \
+        } else {                                                                                                  \
+            checkForMatch<matcherOrdinal - 1u>(matchProduct);                                                     \
+        }                                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    template <>                                                                                                   \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                  \
+                                test_name)::checkForMatch<0u>(PRODUCT_FAMILY matchProduct) {                      \
+        const int matcherOrdinal = 0u;                                                                            \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;                    \
+                                                                                                                  \
+        if (matchProduct == productFamily) {                                                                      \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                                       \
+            using Matcher =                                                                                       \
+                typename std::conditional<isMatched,                                                              \
+                                          GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),                     \
+                                          MatcherFalse>::type;                                                    \
+            Matcher::template matched<productFamily>();                                                           \
+        }                                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    int GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::gtest_registering_dummy_ =                            \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::AddToRegistry();                                      \
+    template <PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCoreFamily, typename FamilyType>                    \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::matchBody()
 
 #define FAMILYTEST_TEST_P(test_suite_name, test_name, match_core, match_product)                                                                          \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
@@ -674,3 +857,94 @@ struct Test
         Fixture::TearDown();
     }
 };
+
+template <PRODUCT_FAMILY... args>
+struct SupportedProductFamilyContainer {
+    using BaseClass = SupportedProductFamilyContainer<args...>;
+    static const PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
+};
+
+template <PRODUCT_FAMILY p, PRODUCT_FAMILY... args>
+struct SupportedProductFamilyContainer<p, args...> : SupportedProductFamilyContainer<args...> {
+    using BaseClass = SupportedProductFamilyContainer<args...>;
+
+    static const PRODUCT_FAMILY productFamily = p;
+    static const std::size_t size = sizeof...(args) + 1;
+};
+
+using SupportedProductFamilies =
+    SupportedProductFamilyContainer<SUPPORTED_TEST_PRODUCT_FAMILIES>;
+
+// Static container accessor
+template <typename Container, int index>
+struct At {
+    static const PRODUCT_FAMILY productFamily =
+        At<typename Container::BaseClass, index - 1>::productFamily;
+};
+
+template <typename Container>
+struct At<Container, 0> {
+    static const PRODUCT_FAMILY productFamily = Container::productFamily;
+};
+
+// HWTEST2_F matchers
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() == gfxCoreFamily;
+    }
+};
+
+template <PRODUCT_FAMILY product>
+struct IsProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily == product;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMax>
+struct IsAtMostProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily <= productFamilyMax;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMin>
+struct IsAtLeastProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= productFamilyMin;
+    }
+};
+
+template <PRODUCT_FAMILY productFamilyMin, PRODUCT_FAMILY productFamilyMax>
+struct IsWithinProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= productFamilyMin && productFamily <= productFamilyMax;
+    }
+};
+
+struct MatchAny {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() { return true; }
+};
+
+// Common matchers
+using IsGen9 = IsGfxCore<IGFX_GEN9_CORE>;
+using IsGen11HP = IsGfxCore<IGFX_GEN11_CORE>;
+using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
+using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
+
+using IsBXT = IsProduct<IGFX_BROXTON>;
+using IsCFL = IsProduct<IGFX_COFFEELAKE>;
+using IsEHL = IsProduct<IGFX_ELKHARTLAKE>;
+using IsGLK = IsProduct<IGFX_GEMINILAKE>;
+using IsICLLP = IsProduct<IGFX_ICELAKE_LP>;
+using IsKBL = IsProduct<IGFX_KABYLAKE>;
+using IsLKF = IsProduct<IGFX_LAKEFIELD>;
+using IsSKL = IsProduct<IGFX_SKYLAKE>;
+using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;

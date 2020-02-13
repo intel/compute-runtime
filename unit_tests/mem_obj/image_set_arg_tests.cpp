@@ -1148,3 +1148,18 @@ HWTEST_F(ImageSetArgTest, givenMediaCompressedResourceSurfaceModeIsNone) {
 
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
+
+using TgllpPlusMatcher = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
+HWTEST2_F(ImageSetArgTest, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, TgllpPlusMatcher) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState{};
+    auto &gpuFlags = srcImage->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;
+
+    gpuFlags.Depth = 0;
+    srcImage->setImageArg(&surfaceState, false, 0);
+    EXPECT_FALSE(surfaceState.getDepthStencilResource());
+
+    gpuFlags.Depth = 1;
+    srcImage->setImageArg(&surfaceState, false, 0);
+    EXPECT_TRUE(surfaceState.getDepthStencilResource());
+}
