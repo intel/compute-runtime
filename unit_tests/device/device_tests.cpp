@@ -27,21 +27,17 @@ using namespace NEO;
 
 typedef Test<DeviceFixture> DeviceTest;
 
-TEST_F(DeviceTest, Create) {
-    EXPECT_NE(nullptr, pDevice);
-}
-
 TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
     const auto productAbbrev = pDevice->getProductAbbrev();
     const auto hwPrefix = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
     EXPECT_EQ(hwPrefix, productAbbrev);
 }
 
-TEST_F(DeviceTest, getCommandStreamReceiver) {
+TEST_F(DeviceTest, WhenDeviceIsCreatedThenCommandStreamReceiverIsNotNull) {
     EXPECT_NE(nullptr, &pDevice->getGpgpuCommandStreamReceiver());
 }
 
-TEST_F(DeviceTest, getSupportedClVersion) {
+TEST_F(DeviceTest, WhenDeviceIsCreatedThenSupportedClVersionMatchesHardwareInfo) {
     auto version = pDevice->getSupportedClVersion();
     auto version2 = pDevice->getHardwareInfo().capabilityTable.clVersionSupport;
 
@@ -77,7 +73,7 @@ TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngi
     EXPECT_EQ(&notExistingEngine, &deviceEngine);
 }
 
-TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
+TEST_F(DeviceTest, WhenDeviceIsCreatedThenOsTimeIsNotNull) {
     auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     OSTime *osTime = pDevice->getOSTime();
@@ -97,7 +93,7 @@ TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedT
     DebugManager.flags.Force32bitAddressing.set(false);
 }
 
-TEST_F(DeviceTest, retainAndRelease) {
+TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
     ASSERT_NE(nullptr, pClDevice);
 
     pClDevice->retainApi();
@@ -119,7 +115,7 @@ TEST_F(DeviceTest, WhenAppendingOsExtensionsThenDeviceInfoIsProperlyUpdated) {
     EXPECT_STREQ(expectedExtensions.c_str(), pDevice->deviceInfo.deviceExtensions);
 }
 
-TEST_F(DeviceTest, getEngineTypeDefault) {
+TEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
     auto actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType();
