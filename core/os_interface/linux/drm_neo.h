@@ -90,8 +90,6 @@ class Drm {
     }
     static bool isi915Version(int fd);
 
-    static std::unique_ptr<HwDeviceId> discoverDevices();
-
     static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
 
   protected:

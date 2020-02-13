@@ -13,7 +13,10 @@
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/aub_memory_operations_handler.h"
 #include "core/os_interface/hw_info_config.h"
+#include "core/os_interface/os_interface.h"
 #include "runtime/aub/aub_center.h"
+
+#include "hw_device_id.h"
 
 namespace NEO {
 
@@ -74,4 +77,41 @@ bool DeviceFactory::isHwModeSelected() {
         return true;
     }
 }
+
+bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
+    using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
+
+    HwDeviceIds hwDeviceIds;
+
+    size_t numRootDevices = 1u;
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
+    }
+    for (size_t i = 0; i < numRootDevices; i++) {
+        auto hwDeviceId = OSInterface::discoverDevices();
+        if (hwDeviceId) {
+            hwDeviceIds.push_back(std::move(hwDeviceId));
+        }
+    }
+    if (hwDeviceIds.empty()) {
+        return false;
+    }
+    totalNumRootDevices = numRootDevices;
+
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
+
+    uint32_t rootDeviceIndex = 0u;
+
+    for (auto &hwDeviceId : hwDeviceIds) {
+        if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId))) {
+            return false;
+        }
+
+        rootDeviceIndex++;
+    }
+
+    executionEnvironment.calculateMaxOsContextCount();
+    return true;
+}
+
 } // namespace NEO

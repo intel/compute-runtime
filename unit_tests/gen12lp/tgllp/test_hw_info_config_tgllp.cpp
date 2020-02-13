@@ -89,7 +89,6 @@ TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisa
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFamilyWhenGetDevicesForProductFamilyOverrideIsCalledThenAubCenterIsInitializedCorrectly) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetCommandStreamReceiver.set(1);
     DebugManager.flags.ProductFamilyOverride.set("tgllp");
@@ -107,7 +106,6 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenGetDevicesForProductFamilyOverrideIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);

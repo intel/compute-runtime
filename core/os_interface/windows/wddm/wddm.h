@@ -156,8 +156,7 @@ class Wddm {
     void setGmmInputArg(void *args);
 
     WddmVersion getWddmVersion();
-
-    static std::unique_ptr<HwDeviceId> discoverDevices();
+    static CreateDXGIFactoryFcn createDxgiFactory;
 
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;
@@ -196,7 +195,6 @@ class Wddm {
     void getDeviceState();
     void handleCompletion(OsContextWin &osContext);
 
-    static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;
     static VirtualFreeFcn virtualFreeFnc;
     static VirtualAllocFcn virtualAllocFnc;

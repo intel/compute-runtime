@@ -16,6 +16,7 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
+#include "hw_device_id.h"
 
 #include <set>
 
@@ -41,7 +42,6 @@ struct DeviceFactoryTest : public ::testing::Test {
 };
 
 TEST_F(DeviceFactoryTest, GetDevices_Expect_True_If_Returned) {
-    DeviceFactoryCleaner cleaner;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
 
@@ -49,14 +49,12 @@ TEST_F(DeviceFactoryTest, GetDevices_Expect_True_If_Returned) {
 }
 
 TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Null) {
-    DeviceFactoryCleaner cleaner;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     EXPECT_TRUE((numDevices > 0) ? success : !success);
 }
 
 TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
-    DeviceFactoryCleaner cleaner;
     const HardwareInfo *refHwinfo = *platformDevices;
     size_t numDevices = 0;
 
@@ -72,7 +70,6 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
 }
 
 TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
 
     size_t numDevices = 0;
@@ -86,7 +83,6 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     auto refDelayQuickKmdSleepMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
     auto refEnableQuickKmdSleepForSporadicWaits = hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits;
     auto refDelayQuickKmdSleepForSporadicWaitsMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds;
-    DeviceFactory::releaseDevices();
 
     DebugManager.flags.OverrideEnableKmdNotify.set(!refEnableKmdNotify);
     DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(static_cast<int32_t>(refDelayKmdNotifyMicroseconds) + 10);
@@ -114,7 +110,6 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 }
 
 TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore dbgRestorer;
     int32_t debugEngineType = 2;
     DebugManager.flags.NodeOrdinal.set(debugEngineType);
@@ -130,7 +125,6 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
 }
 
 TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSurfaceSizeIsSettedProperly) {
-    DeviceFactoryCleaner cleaner;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
@@ -140,7 +134,6 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
 }
 
 TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
@@ -154,7 +147,6 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesI
 }
 
 TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesForProductFamilyOverrideIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
@@ -167,7 +159,6 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesF
 }
 
 TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
@@ -197,7 +188,6 @@ TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMemb
 }
 
 TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringGetDevicesForProductFamilyOverrideReturnsFalse) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x3");
 
@@ -209,7 +199,6 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringGetDevicesForProductFamilyOv
 }
 
 TEST_F(DeviceFactoryTest, givenValidHwConfigStringGetDevicesForProductFamilyOverrideReturnsTrue) {
-    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x1x1");
 
@@ -220,8 +209,6 @@ TEST_F(DeviceFactoryTest, givenValidHwConfigStringGetDevicesForProductFamilyOver
 }
 
 TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {
-    DeviceFactoryCleaner cleaner;
-
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     EXPECT_TRUE(success);
@@ -244,4 +231,21 @@ TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseI
         DebugManager.flags.SetCommandStreamReceiver.set(nonHwMode);
         EXPECT_FALSE(DeviceFactory::isHwModeSelected());
     }
+}
+
+TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnNullptr) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("invalid");
+    auto hwDeviceId = OSInterface::discoverDevices();
+    EXPECT_EQ(nullptr, hwDeviceId);
+}
+
+TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenGetDevicesReturnsFalse) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ForceDeviceId.set("invalid");
+    size_t numDevices = 0u;
+    ExecutionEnvironment executionEnviornment;
+
+    auto result = DeviceFactory::getDevices(numDevices, executionEnviornment);
+    EXPECT_FALSE(result);
 }

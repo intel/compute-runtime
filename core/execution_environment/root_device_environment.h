@@ -20,6 +20,7 @@ class GmmPageTableMngr;
 class MemoryOperationsHandler;
 class OSInterface;
 struct HardwareInfo;
+class HwDeviceId;
 
 struct RootDeviceEnvironment {
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
@@ -28,6 +29,7 @@ struct RootDeviceEnvironment {
     const HardwareInfo *getHardwareInfo() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+    bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;

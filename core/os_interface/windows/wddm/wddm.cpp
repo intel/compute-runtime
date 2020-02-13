@@ -20,6 +20,7 @@
 #include "core/os_interface/windows/gdi_interface.h"
 #include "core/os_interface/windows/kmdaf_listener.h"
 #include "core/os_interface/windows/os_context_win.h"
+#include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/sys_calls.h"
 #include "core/os_interface/windows/wddm/wddm_interface.h"
 #include "core/os_interface/windows/wddm_allocation.h"
@@ -224,7 +225,7 @@ bool Wddm::destroyDevice() {
     return true;
 }
 
-std::unique_ptr<HwDeviceId> Wddm::discoverDevices() {
+std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
     auto gdi = std::make_unique<Gdi>();
     D3DKMT_HANDLE adapter = 0;
     LUID adapterLuid{};

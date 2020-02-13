@@ -12,7 +12,6 @@
 #include "core/os_interface/device_factory.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 

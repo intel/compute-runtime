@@ -7,8 +7,10 @@
 
 #pragma once
 #include <cstdint>
+#include <memory>
 
 namespace NEO {
+class HwDeviceId;
 
 class OSInterface {
 
@@ -27,6 +29,7 @@ class OSInterface {
     static bool are64kbPagesEnabled();
     uint32_t getDeviceHandle() const;
     void setGmmInputArgs(void *args);
+    static std::unique_ptr<HwDeviceId> discoverDevices();
 
   protected:
     OSInterfaceImpl *osInterfaceImpl = nullptr;

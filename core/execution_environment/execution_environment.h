@@ -25,7 +25,6 @@ struct HardwareInfo;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
     std::mutex mtx;
-    DeviceFactoryCleaner cleaner;
 
   protected:
     std::unique_ptr<GmmHelper> gmmHelper;

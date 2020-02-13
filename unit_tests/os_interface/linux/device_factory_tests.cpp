@@ -31,8 +31,6 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
 
     //temporararily return GT2.
     EXPECT_EQ(1u, hwInfo->featureTable.ftrGT2);
-
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailedConfigureHwInfo) {
@@ -47,9 +45,8 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailedConfigureHwInfo) {
 }
 
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
-    MockDeviceFactory mockDeviceFactory;
     size_t numDevices = 0;
-    bool success = mockDeviceFactory.getDevices(numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
     EXPECT_TRUE(success);
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->osInterface);
     EXPECT_NE(nullptr, pDrm);

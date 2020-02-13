@@ -5,10 +5,12 @@
  *
  */
 
-#include "os_interface.h"
+#include "core/os_interface/windows/os_interface.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/windows/sys_calls.h"
 #include "core/os_interface/windows/wddm/wddm.h"
+#include "core/os_interface/windows/wddm_memory_operations_handler.h"
 
 namespace NEO {
 
@@ -70,5 +72,15 @@ HANDLE OSInterface::OSInterfaceImpl::createEvent(LPSECURITY_ATTRIBUTES lpEventAt
 
 BOOL OSInterface::OSInterfaceImpl::closeHandle(HANDLE hObject) {
     return SysCalls::closeHandle(hObject);
+}
+bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), *this));
+    if (!wddm->init()) {
+        return false;
+    }
+    memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
+    osInterface = std::make_unique<OSInterface>();
+    osInterface->get()->setWddm(wddm.release());
+    return true;
 }
 } // namespace NEO

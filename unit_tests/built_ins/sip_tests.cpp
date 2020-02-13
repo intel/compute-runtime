@@ -11,7 +11,6 @@
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"

@@ -72,7 +72,6 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 EXPECT_EQ(expectedDevices, numDevices);
-                DeviceFactory::releaseDevices();
                 break;
             case CSR_AUB:
             case CSR_TBX:
@@ -102,7 +101,6 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                 EXPECT_EQ(0, memcmp(&hwInfoFromTable.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
 
                 EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
-                DeviceFactory::releaseDevices();
                 break;
             }
             default:
@@ -138,8 +136,6 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(productFamily, exeEnv->getHardwareInfo()->platform.eProductFamily);
-
-    DeviceFactory::releaseDevices();
 }
 
 HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
@@ -161,7 +157,6 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         case CSR_HW_WITH_AUB:
             EXPECT_TRUE(ret);
             EXPECT_EQ(expectedDevices, numDevices);
-            DeviceFactory::releaseDevices();
             break;
         case CSR_AUB:
         case CSR_TBX:
@@ -188,7 +183,6 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
             hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
             EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
             EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-            DeviceFactory::releaseDevices();
 
             break;
         }

@@ -7,6 +7,7 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
+#include "core/os_interface/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
@@ -19,7 +20,7 @@ using namespace NEO;
 TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    auto hwDeviceId = Wddm::discoverDevices();
+    auto hwDeviceId = OSInterface::discoverDevices();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), rootDeviceEnvironment));
     EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm));
 }
