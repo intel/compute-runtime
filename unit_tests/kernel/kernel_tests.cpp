@@ -2101,6 +2101,7 @@ struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernelInfo = std::make_unique<KernelInfo>();
+        executionEnvironment.CompiledSIMD32 = 1;
         pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
 
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
@@ -2241,6 +2242,7 @@ struct KernelCrossThreadTests : Test<DeviceFixture> {
         pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
         pKernelInfo->patchInfo.dataParameterStream = &patchDataParameterStream;
+        executionEnvironment.CompiledSIMD32 = 1;
         pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
     }
 
@@ -2367,7 +2369,7 @@ TEST_F(KernelCrossThreadTests, dataParameterSimdSize) {
     pKernelInfo->workloadInfo.simdSizeOffset = 16;
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     executionEnvironment.CompiledSIMD32 = false;
-    executionEnvironment.CompiledSIMD16 = false;
+    executionEnvironment.CompiledSIMD16 = true;
     executionEnvironment.CompiledSIMD8 = true;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 

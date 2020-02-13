@@ -720,8 +720,8 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 }
 
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
-
     auto pDevice = castToObject<ClDevice>(devices[0]);
+    static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
     auto size = zeroSized ? 0 : 1024;
     MockKernelWithInternals mockKernel(*pDevice, context);
     SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;

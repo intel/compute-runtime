@@ -141,6 +141,7 @@ class MockKernel : public Kernel {
         memset(executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
         executionEnvironment->HasDeviceEnqueue = 0;
         executionEnvironment->NumGRFRequired = grfNumber;
+        executionEnvironment->CompiledSIMD32 = 1;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         info->crossThreadData = new char[crossThreadSize];
@@ -271,6 +272,7 @@ class MockKernelWithInternals {
         memset(&mediaVfeStateSlot1, 0, sizeof(SPatchMediaVFEState));
         executionEnvironment.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         executionEnvironmentBlock.NumGRFRequired = GrfConfig::DefaultGrfNumber;
+        executionEnvironment.CompiledSIMD32 = 1;
         kernelHeader.SurfaceStateHeapSize = sizeof(sshLocal);
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
@@ -394,6 +396,7 @@ class MockParentKernel : public Kernel {
         *executionEnvironment = {};
         executionEnvironment->HasDeviceEnqueue = 1;
         executionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
+        executionEnvironment->CompiledSIMD32 = 1;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueue = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
@@ -522,6 +525,7 @@ class MockParentKernel : public Kernel {
         SPatchExecutionEnvironment *executionEnvironmentBlock = new SPatchExecutionEnvironment;
         executionEnvironmentBlock->HasDeviceEnqueue = 1;
         executionEnvironmentBlock->NumGRFRequired = GrfConfig::DefaultGrfNumber;
+        executionEnvironmentBlock->CompiledSIMD32 = 1;
         infoBlock->patchInfo.executionEnvironment = executionEnvironmentBlock;
 
         SPatchDataParameterStream *streamBlock = new SPatchDataParameterStream;
