@@ -238,6 +238,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
     SvmAllocationData allocData;
     allocData.gpuAllocation = allocationGpu;
     allocData.cpuAllocation = allocationCpu;
+    allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
 
     this->SVMAllocs.insert(allocData);

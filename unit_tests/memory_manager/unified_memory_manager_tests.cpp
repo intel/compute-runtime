@@ -250,6 +250,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
+
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
@@ -267,11 +268,13 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSetThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
     MockCommandQueue cmdQ;
+    MockContext mockContext;
     DebugManagerStateRestore restore;
     DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.device = mockContext.getDevice(0u);
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
@@ -280,6 +283,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_NE(nullptr, allocation->gpuAllocation);
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
+    EXPECT_EQ(mockContext.getDevice(0u), allocation->device);
 
     EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());

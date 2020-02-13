@@ -3525,7 +3525,7 @@ void *clSharedMemAllocINTEL(
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-    auto retVal = validateObjects(WithCastToInternal(context, &neoContext), WithCastToInternal(device, &neoDevice));
+    auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
 
     if (retVal != CL_SUCCESS) {
         err.set(retVal);
@@ -3547,8 +3547,13 @@ void *clSharedMemAllocINTEL(
     }
 
     unifiedMemoryProperties.device = device;
-    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
+    if (!device) {
+        return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties);
+    }
 
+    validateObjects(WithCastToInternal(device, &neoDevice));
+
+    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
     return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
 }
 
@@ -3626,7 +3631,7 @@ cl_int clGetMemAllocInfoINTEL(
         return retVal;
     }
     case CL_MEM_ALLOC_FLAGS_INTEL: {
-        retVal = info.set<uint32_t>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags);
+        retVal = info.set<cl_mem_alloc_flags_intel>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags);
         return retVal;
     }
     case CL_MEM_ALLOC_DEVICE_INTEL: {

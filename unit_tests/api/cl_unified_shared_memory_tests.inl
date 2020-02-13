@@ -437,6 +437,24 @@ TEST(clUnifiedSharedMemoryTests, givenSharedAllocationWhenItIsQueriedForDeviceTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQueriedForDeviceThenNullIsReturned) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSizeRet = 0;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, nullptr, nullptr, 4, 0, &retVal);
+
+    cl_device_id returnedDevice;
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_DEVICE_INTEL, sizeof(returnedDevice), &returnedDevice, &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(paramValueSizeRet, sizeof(returnedDevice));
+    EXPECT_EQ(returnedDevice, nullptr);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(clUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
