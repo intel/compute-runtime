@@ -195,6 +195,13 @@ cl_int Kernel::initialize() {
         const auto &patchInfo = kernelInfo.patchInfo;
 
         reconfigureKernel();
+        auto &hwInfo = device.getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto maxSimdSize = getKernelInfo().getMaxSimdSize();
+
+        if (maxSimdSize != 1 && maxSimdSize < hwHelper.getMinimalSIMDSize()) {
+            return CL_INVALID_KERNEL;
+        }
 
         crossThreadDataSize = patchInfo.dataParameterStream
                                   ? patchInfo.dataParameterStream->DataParameterStreamSize
@@ -242,8 +249,8 @@ cl_int Kernel::initialize() {
             preferredWkgMultipleOffset = workloadInfo.preferredWkgMultipleOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.preferredWkgMultipleOffset) : preferredWkgMultipleOffset;
 
             *maxWorkGroupSizeForCrossThreadData = maxKernelWorkGroupSize;
-            *dataParameterSimdSize = getKernelInfo().getMaxSimdSize();
-            *preferredWkgMultipleOffset = getKernelInfo().getMaxSimdSize();
+            *dataParameterSimdSize = maxSimdSize;
+            *preferredWkgMultipleOffset = maxSimdSize;
             *parentEventOffset = WorkloadInfo::invalidParentEvent;
         }
 
@@ -359,7 +366,7 @@ cl_int Kernel::initialize() {
                 usingBuffers = true;
                 allBufferArgsStateful &= static_cast<uint32_t>(argInfo.pureStatefulBufferAccess);
                 this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
-                                                HwHelper::renderCompressedBuffersSupported(getDevice().getHardwareInfo());
+                                                HwHelper::renderCompressedBuffersSupported(hwInfo);
             } else if (argInfo.isDeviceQueue) {
                 kernelArgHandlers[i] = &Kernel::setArgDevQueue;
                 kernelArguments[i].type = DEVICE_QUEUE_OBJ;
@@ -368,7 +375,7 @@ cl_int Kernel::initialize() {
             }
         }
 
-        auxTranslationRequired &= HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves();
+        auxTranslationRequired &= hwHelper.requiresAuxResolves();
 
         if (DebugManager.flags.DisableAuxTranslation.get()) {
             auxTranslationRequired = false;

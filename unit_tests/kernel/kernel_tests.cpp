@@ -2732,6 +2732,36 @@ TEST(KernelTest, whenNullAllocationThenAssignNullPointerToCacheFlushVector) {
     EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
+TEST(KernelTest, givenKernelCompiledWithSimdSizeLowerThanExpectedWhenInitializingThenReturnError) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto minSimd = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).getMinimalSIMDSize();
+    MockKernelWithInternals kernel(*device);
+    kernel.executionEnvironment.CompiledSIMD32 = 0;
+    kernel.executionEnvironment.CompiledSIMD16 = 0;
+    kernel.executionEnvironment.CompiledSIMD8 = 1;
+
+    cl_int retVal = kernel.mockKernel->initialize();
+
+    if (minSimd > 8) {
+        EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    } else {
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
+TEST(KernelTest, givenKernelCompiledWithSimdOneWhenInitializingThenReturnError) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+    kernel.executionEnvironment.CompiledSIMD32 = 0;
+    kernel.executionEnvironment.CompiledSIMD16 = 0;
+    kernel.executionEnvironment.CompiledSIMD8 = 0;
+    kernel.executionEnvironment.LargestCompiledSIMDSize = 1;
+
+    cl_int retVal = kernel.mockKernel->initialize();
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToCacheFlushVector) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
