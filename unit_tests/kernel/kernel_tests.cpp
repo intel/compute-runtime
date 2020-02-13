@@ -3138,3 +3138,8 @@ TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
     auto ret = Kernel::create<MockKernel>(&mockProgram, info, nullptr);
     EXPECT_EQ(nullptr, ret);
 }
+
+TEST(ArgTypeMetadata, GivenDefaultInitializedArgTypeMetadataThenAddressSpaceIsGlobal) {
+    ArgTypeMetadata metadata;
+    EXPECT_EQ(NEO::KernelArgMetadata::AddressSpaceQualifier::Global, metadata.addressQualifier);
+}

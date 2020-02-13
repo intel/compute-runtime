@@ -168,7 +168,7 @@ inline std::string parseLimitedString(const char *str, size_t maxSize) {
 struct ArgTypeMetadata {
     uint32_t argByValSize = 0U;
     KernelArgMetadata::AccessQualifier accessQualifier = {};
-    KernelArgMetadata::AddressSpaceQualifier addressQualifier = {};
+    KernelArgMetadata::AddressSpaceQualifier addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Global;
     KernelArgMetadata::TypeQualifiers typeQualifiers = {};
 };
 static_assert(sizeof(ArgTypeMetadata) <= 8, "");
