@@ -178,6 +178,7 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_khr_image2d_from_buffer ";
         deviceExtensions += "cl_khr_depth_images ";
         deviceExtensions += "cl_intel_media_block_io ";
+        deviceExtensions += "cl_khr_3d_image_writes ";
     }
 
     auto sharingAllowed = (HwHelper::getSubDevicesCount(&hwInfo) == 1u);

@@ -13,8 +13,7 @@
 
 namespace NEO {
 
-const char *deviceExtensionsList = "cl_khr_3d_image_writes "
-                                   "cl_khr_byte_addressable_store "
+const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_fp16 "
                                    "cl_khr_global_int32_base_atomics "
                                    "cl_khr_global_int32_extended_atomics "
@@ -61,6 +60,10 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
         allExtensionsList += "cl_khr_int64_extended_atomics ";
     }
 
+    if (hwInfo.capabilityTable.supportsImages) {
+        allExtensionsList += "cl_khr_3d_image_writes ";
+    }
+
     if (hwInfo.capabilityTable.supportsVme) {
         allExtensionsList += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
     }
@@ -85,7 +88,8 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     while ((pos = extensionsList.find(" ", pos)) != std::string::npos) {
         extensionsList.replace(pos, 1, ",+");
     }
-    extensionsList = " -cl-ext=-all,+" + extensionsList + " ";
+    extensionsList = " -cl-ext=-all,+" + extensionsList + ",+cl_khr_3d_image_writes ";
+
     return extensionsList;
 }
 

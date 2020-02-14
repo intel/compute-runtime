@@ -49,7 +49,6 @@ TEST_P(GetDeviceGlInfoStr, StringType) {
         std::string extensionString(paramValue);
         size_t currentOffset = 0u;
         std::string supportedExtensions[] = {
-            "cl_khr_3d_image_writes ",
             "cl_khr_byte_addressable_store ",
             "cl_khr_fp16 ",
             "cl_khr_global_int32_base_atomics ",

@@ -246,7 +246,6 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     const HardwareInfo *hwInfo;
     hwInfo = platformDevices[0];
     std::string extensionsList = getExtensionsList(*hwInfo);
-    EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
@@ -273,6 +272,9 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_fp64")));
     }
 
+    if (hwInfo->capabilityTable.supportsImages) {
+        EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+    }
     EXPECT_THAT(compilerExtensions, ::testing::EndsWith(std::string(" ")));
 }
 
@@ -282,7 +284,9 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
     TesthwInfo.capabilityTable.clVersionSupport = 10;
 
     std::string extensionsList = getExtensionsList(TesthwInfo);
-    EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+    if (TesthwInfo.capabilityTable.supportsImages) {
+        EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+    }
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
