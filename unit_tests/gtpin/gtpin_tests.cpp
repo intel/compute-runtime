@@ -34,6 +34,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/program/program_tests.h"
 
 #include "gtest/gtest.h"
@@ -150,7 +151,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         memoryManager = new MockMemoryManagerWithFailures(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        pPlatform->initialize(1, 0);
+        initPlatform();
         pDevice = pPlatform->getClDevice(0);
         cl_device_id device = (cl_device_id)pDevice;
         ContextFixture::SetUp(1, &device);

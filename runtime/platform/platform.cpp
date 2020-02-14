@@ -120,10 +120,12 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     return retVal;
 }
 
-bool Platform::initialize(size_t numDevices, uint32_t firstRootDeviceIndex) {
+bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
-
+    if (devices.empty()) {
+        return false;
+    }
     if (state == StateInited) {
         return true;
     }
@@ -138,34 +140,27 @@ bool Platform::initialize(size_t numDevices, uint32_t firstRootDeviceIndex) {
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
 
-    this->clDevices.resize(numDevices);
-    for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevices; ++deviceOrdinal) {
-        auto pDevice = createRootDevice(deviceOrdinal);
-        DEBUG_BREAK_IF(!pDevice);
+    this->clDevices.resize(devices.size());
+    for (auto &inputDevice : devices) {
         ClDevice *pClDevice = nullptr;
-        if (pDevice) {
-            pClDevice = new ClDevice{*pDevice, this};
-        }
-        DEBUG_BREAK_IF(!pClDevice);
-        if (pClDevice) {
-            this->clDevices[deviceOrdinal] = pClDevice;
-            pDevice->setSpecializedDevice(pClDevice);
+        auto pDevice = inputDevice.release();
+        UNRECOVERABLE_IF(!pDevice);
+        pClDevice = new ClDevice{*pDevice, this};
+        this->clDevices[pDevice->getRootDeviceIndex()] = pClDevice;
+        pDevice->setSpecializedDevice(pClDevice);
 
-            this->platformInfo->extensions = pDevice->getDeviceInfo().deviceExtensions;
+        this->platformInfo->extensions = pClDevice->getDeviceInfo().deviceExtensions;
 
-            switch (pDevice->getEnabledClVersion()) {
-            case 21:
-                this->platformInfo->version = "OpenCL 2.1 ";
-                break;
-            case 20:
-                this->platformInfo->version = "OpenCL 2.0 ";
-                break;
-            default:
-                this->platformInfo->version = "OpenCL 1.2 ";
-                break;
-            }
-        } else {
-            return false;
+        switch (pClDevice->getEnabledClVersion()) {
+        case 21:
+            this->platformInfo->version = "OpenCL 2.1 ";
+            break;
+        case 20:
+            this->platformInfo->version = "OpenCL 2.0 ";
+            break;
+        default:
+            this->platformInfo->version = "OpenCL 1.2 ";
+            break;
         }
     }
 
@@ -251,10 +246,6 @@ AsyncEventsHandler *Platform::getAsyncEventsHandler() {
 std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler) {
     asyncEventsHandler.swap(handler);
     return handler;
-}
-
-RootDevice *Platform::createRootDevice(uint32_t rootDeviceIndex) const {
-    return Device::create<RootDevice>(&executionEnvironment, rootDeviceIndex);
 }
 
 GmmHelper *Platform::peekGmmHelper() const {

@@ -76,9 +76,7 @@ TEST_F(clCreateContextFromTypeTests, GivenInvalidContextCreationPropertiesWhenCr
 
 TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPropertiesWhenCreatingContextFromTypeThenSuccessIsReturned) {
     auto nonDefaultPlatform = std::make_unique<MockPlatform>();
-    size_t numRootDevices;
-    getDevices(numRootDevices, *nonDefaultPlatform->peekExecutionEnvironment());
-    nonDefaultPlatform->initialize(numRootDevices, 0);
+    nonDefaultPlatform->initializeWithNewDevices();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
     cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};
     auto clContext = clCreateContextFromType(properties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
@@ -89,9 +87,7 @@ TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformInContextCreationPro
 
 TEST_F(clCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispatchInContextCreationPropertiesWhenCreatingContextFromTypeThenInvalidPlatformErrorIsReturned) {
     auto nonDefaultPlatform = std::make_unique<MockPlatform>();
-    size_t numRootDevices;
-    getDevices(numRootDevices, *nonDefaultPlatform->peekExecutionEnvironment());
-    nonDefaultPlatform->initialize(numRootDevices, 0);
+    nonDefaultPlatform->initializeWithNewDevices();
     cl_platform_id nonDefaultPlatformCl = nonDefaultPlatform.get();
     nonDefaultPlatformCl->dispatch.icdDispatch = reinterpret_cast<SDispatchTable *>(nonDefaultPlatform.get());
     cl_context_properties properties[3] = {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(nonDefaultPlatformCl), 0};

@@ -9,6 +9,7 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
+#include "core/device/root_device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/aub_memory_operations_handler.h"
@@ -128,4 +129,23 @@ bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment
     return true;
 }
 
+std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {
+    std::vector<std::unique_ptr<Device>> devices;
+    size_t numDevices;
+    auto status = NEO::getDevices(numDevices, executionEnvironment);
+    if (!status) {
+        return devices;
+    }
+    for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        auto device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
+        if (device) {
+            devices.push_back(std::move(device));
+        }
+    }
+    return devices;
+}
+
+std::unique_ptr<Device> (*DeviceFactory::createRootDeviceFunc)(ExecutionEnvironment &, uint32_t) = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+    return std::unique_ptr<Device>(Device::create<RootDevice>(&executionEnvironment, rootDeviceIndex));
+};
 } // namespace NEO

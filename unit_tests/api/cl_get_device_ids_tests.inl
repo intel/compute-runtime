@@ -172,13 +172,9 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
     EXPECT_EQ(devices[numDevices], dummyDevice);
 }
 TEST(clGetDeviceIDsNegativeTests, whenFailToCreateDeviceThenclGetDeviceIDsReturnsNoDeviceError) {
-    struct FailingPlatform : Platform {
-        using Platform::Platform;
-        RootDevice *createRootDevice(uint32_t rootDeviceIndex) const override { return nullptr; }
-    };
-    VariableBackup<decltype(Platform::createFunc)> createFuncBackup{&Platform::createFunc};
-    Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
-        return std::make_unique<FailingPlatform>(executionEnvironment);
+    VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+        return nullptr;
     };
     platformsImpl.clear();
 

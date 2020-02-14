@@ -38,6 +38,7 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
 #include "gmock/gmock.h"
@@ -1840,9 +1841,7 @@ TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCr
     DebugManagerStateRestore restorer;
     DebugManager.flags.MakeAllBuffersResident.set(true);
 
-    size_t numRootDevices = 0u;
-    getDevices(numRootDevices, *platform()->peekExecutionEnvironment());
-    platform()->initialize(1u, 0u);
+    initPlatform();
     auto device = platform()->getClDevice(0u);
 
     MockContext context(device, false);

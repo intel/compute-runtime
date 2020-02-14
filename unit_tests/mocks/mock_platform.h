@@ -8,6 +8,7 @@
 #pragma once
 #include "core/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
+
 namespace NEO {
 
 class MockPlatform : public Platform {
@@ -16,6 +17,7 @@ class MockPlatform : public Platform {
     using Platform::initializationLoopHelper;
     MockPlatform() : MockPlatform(*(new ExecutionEnvironment())) {}
     MockPlatform(ExecutionEnvironment &executionEnvironment) : Platform(executionEnvironment) {}
+    bool initializeWithNewDevices();
 };
 
 bool initPlatform();

@@ -82,14 +82,13 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         std::unique_lock<std::mutex> lock(mutex);
         if (platformsImpl.empty()) {
             auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-            size_t numRootDevices = 0u;
-            bool status = getDevices(numRootDevices, *executionEnvironment);
-            if (!status) {
+            auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            if (allDevices.empty()) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
             auto pPlatform = Platform::createFunc(*executionEnvironment.release());
-            if (!pPlatform->initialize(numRootDevices, 0u)) {
+            if (!pPlatform || !pPlatform->initialize(std::move(allDevices))) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }

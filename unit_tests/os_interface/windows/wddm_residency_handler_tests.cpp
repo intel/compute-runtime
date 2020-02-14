@@ -14,6 +14,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
@@ -96,9 +97,7 @@ TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItI
     DebugManagerStateRestore restorer;
     DebugManager.flags.MakeAllBuffersResident.set(true);
 
-    size_t numRootDevices = 0u;
-    getDevices(numRootDevices, *platform()->peekExecutionEnvironment());
-    platform()->initialize(1u, 0u);
+    initPlatform();
     auto device = platform()->getClDevice(0u);
 
     MockContext context(device, false);

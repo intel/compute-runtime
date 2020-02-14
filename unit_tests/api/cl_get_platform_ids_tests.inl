@@ -64,11 +64,52 @@ TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatform
     platformsImpl.clear();
 }
 TEST(clGetPlatformIDsNegativeTests, whenFailToCreateDeviceThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
-    struct FailingPlatform : Platform {
-        using Platform::Platform;
-        RootDevice *createRootDevice(uint32_t rootDeviceIndex) const override { return nullptr; }
+    VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
+    DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
+        return nullptr;
     };
+    platformsImpl.clear();
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(0u, numPlatforms);
+    EXPECT_EQ(nullptr, platformRet);
+
+    platformsImpl.clear();
+}
+TEST(clGetPlatformIDsNegativeTests, whenFailToCreatePlatformThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
     VariableBackup<decltype(Platform::createFunc)> createFuncBackup{&Platform::createFunc};
+    Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
+        return nullptr;
+    };
+    platformsImpl.clear();
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(0u, numPlatforms);
+    EXPECT_EQ(nullptr, platformRet);
+
+    platformsImpl.clear();
+}
+
+TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfomsIdsReturnsOutOfHostMemoryError) {
+    VariableBackup<decltype(Platform::createFunc)> createFuncBackup{&Platform::createFunc};
+    struct FailingPlatform : public Platform {
+        using Platform::Platform;
+        bool initialize(std::vector<std::unique_ptr<Device>> devices) override {
+            return false;
+        }
+    };
     Platform::createFunc = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
         return std::make_unique<FailingPlatform>(executionEnvironment);
     };

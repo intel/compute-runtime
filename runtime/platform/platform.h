@@ -47,7 +47,7 @@ class Platform : public BaseObject<_cl_platform_id> {
                    void *paramValue,
                    size_t *paramValueSizeRet);
 
-    bool initialize(size_t numDevices, uint32_t firstRootDeviceIndex);
+    MOCKABLE_VIRTUAL bool initialize(std::vector<std::unique_ptr<Device>> devices);
     bool isInitialized();
 
     size_t getNumDevices() const;
@@ -73,7 +73,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     cl_uint state = StateNone;
     void fillGlobalDispatchTable();
     MOCKABLE_VIRTUAL void initializationLoopHelper(){};
-    MOCKABLE_VIRTUAL RootDevice *createRootDevice(uint32_t rootDeviceIndex) const;
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;

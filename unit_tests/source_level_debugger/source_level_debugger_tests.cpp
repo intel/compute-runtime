@@ -15,6 +15,7 @@
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/source_level_debugger_library.h"
+#include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
 #include <gtest/gtest.h>
@@ -48,10 +49,8 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
         auto executionEnvironment = new ExecutionEnvironment();
-        Platform platform(*executionEnvironment);
-        size_t numRootDevices;
-        getDevices(numRootDevices, *executionEnvironment);
-        platform.initialize(1, 0);
+        MockPlatform platform(*executionEnvironment);
+        platform.initializeWithNewDevices();
 
         EXPECT_NE(nullptr, executionEnvironment->debugger);
     }
