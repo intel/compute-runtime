@@ -44,6 +44,7 @@ bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvir
         numDevicesReturned = numPlatformDevices;
         executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numDevicesReturned));
         executionEnvironment.calculateMaxOsContextCount();
+        executionEnvironment.initializeMemoryManager();
         return ultHwConfig.mockedGetDevicesFuncResult;
     }
 

@@ -63,6 +63,13 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
             executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
         }
     }
+
+    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
+            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+
+    executionEnvironment.initializeMemoryManager();
     return true;
 }
 
@@ -111,6 +118,13 @@ bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment
     }
 
     executionEnvironment.calculateMaxOsContextCount();
+
+    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
+            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+
+    executionEnvironment.initializeMemoryManager();
     return true;
 }
 

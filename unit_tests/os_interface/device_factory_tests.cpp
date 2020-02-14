@@ -158,6 +158,28 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesF
     EXPECT_EQ(requiredDeviceCount, numDevices);
 }
 
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesIsCalledThenOverrideGpuAddressSpace) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideGpuAddressSpace.set(12);
+
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesForProductFamilyOverrideIsCalledThenOverrideGpuAddressSpace) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideGpuAddressSpace.set(12);
+
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, *executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
 TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;

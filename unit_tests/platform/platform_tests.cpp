@@ -95,16 +95,6 @@ TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
     EXPECT_NE(nullptr, pPlatform->getClDevices());
 }
 
-TEST_F(PlatformTest, givenDebugFlagSetWhenInitializingPlatformThenOverrideGpuAddressSpace) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.OverrideGpuAddressSpace.set(12);
-
-    bool status = pPlatform->initialize(1, 0);
-    EXPECT_TRUE(status);
-
-    EXPECT_EQ(maxNBitValue(12), pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.gpuAddressSpace);
-}
-
 TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     pPlatform->initialize(1, 0);
     auto compilerExtensions = pPlatform->getClDevice(0)->peekCompilerExtensions();

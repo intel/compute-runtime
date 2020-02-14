@@ -135,13 +135,6 @@ bool Platform::initialize(size_t numDevices, uint32_t firstRootDeviceIndex) {
 
     state = StateIniting;
 
-    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-        executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
-    }
-
-    executionEnvironment.initializeMemoryManager();
-
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
 
