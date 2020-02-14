@@ -32,8 +32,12 @@ bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool c
     for (auto i = 0u; i < count; i++) {
         makeResidentResult.handlePack.push_back(handles[i]);
     }
-
-    return makeResidentResult.success = Wddm::makeResident(handles, count, cantTrimFurther, numberOfBytesToTrim);
+    if (callBaseMakeResident) {
+        return makeResidentResult.success = Wddm::makeResident(handles, count, cantTrimFurther, numberOfBytesToTrim);
+    } else {
+        makeResidentResult.success = makeResidentStatus;
+        return makeResidentStatus;
+    }
 }
 
 bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) {
@@ -155,7 +159,9 @@ bool WddmMock::queryAdapterInfo() {
 bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) {
     submitResult.called++;
     submitResult.commandBufferSubmitted = commandBuffer;
+    submitResult.size = size;
     submitResult.commandHeaderSubmitted = commandHeader;
+    submitResult.submitArgs = submitArguments;
     return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader, submitArguments);
 }
 
@@ -264,6 +270,11 @@ uint64_t *WddmMock::getPagingFenceAddress() {
     getPagingFenceAddressResult.called++;
     mockPagingFence++;
     return &mockPagingFence;
+}
+
+void WddmMock::waitOnPagingFenceFromCpu() {
+    waitOnPagingFenceFromCpuResult.called++;
+    Wddm::waitOnPagingFenceFromCpu();
 }
 
 void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {

@@ -80,6 +80,7 @@ class WddmMock : public Wddm {
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
     uint64_t *getPagingFenceAddress() override;
+    void waitOnPagingFenceFromCpu() override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -101,7 +102,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult destroyAllocationResult;
     WddmMockHelpers::CallResult destroyContextResult;
     WddmMockHelpers::CallResult queryAdapterInfoResult;
-    WddmMockHelpers::CallResult submitResult;
+    WddmMockHelpers::SubmitResult submitResult;
     WddmMockHelpers::CallResult waitOnGPUResult;
     WddmMockHelpers::CallResult configureDeviceAddressSpaceResult;
     WddmMockHelpers::CallResult createContextResult;
@@ -115,6 +116,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
+    WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
 
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
     bool mapGpuVaStatus = true;
@@ -125,6 +127,8 @@ class WddmMock : public Wddm {
     uintptr_t virtualAllocAddress = NEO::windowsMinAddress;
     bool kmDafEnabled = false;
     uint64_t mockPagingFence = 0u;
+    bool makeResidentStatus = true;
+    bool callBaseMakeResident = true;
 };
 
 struct GmockWddm : WddmMock {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/memory_manager/eviction_status.h"
+#include "core/os_interface/windows/wddm/wddm_defs.h"
 #include "core/os_interface/windows/windows_defs.h"
 
 #include <vector>
@@ -19,8 +20,6 @@ struct CallResult {
     uint32_t called = 0;
     uint64_t uint64ParamPassed = -1;
     bool success = false;
-    uint64_t commandBufferSubmitted = 0u;
-    void *commandHeaderSubmitted = nullptr;
     void *cpuPtrPassed = nullptr;
 };
 struct MakeResidentCall : CallResult {
@@ -39,6 +38,14 @@ struct FreeGpuVirtualAddressCall : CallResult {
 struct MemoryOperationResult : CallResult {
     MemoryOperationsStatus operationSuccess = MemoryOperationsStatus::UNSUPPORTED;
 };
+
+struct SubmitResult : CallResult {
+    uint64_t commandBufferSubmitted = 0ull;
+    void *commandHeaderSubmitted = nullptr;
+    size_t size = 0u;
+    WddmSubmitArguments submitArgs = {0};
+};
+
 } // namespace WddmMockHelpers
 
 } // namespace NEO

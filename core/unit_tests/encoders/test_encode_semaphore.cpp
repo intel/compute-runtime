@@ -48,6 +48,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(stream);
     MI_SEMAPHORE_WAIT *miSemaphore = hwParse.getCommand<MI_SEMAPHORE_WAIT>();
+    ASSERT_NE(nullptr, miSemaphore);
 
     EXPECT_EQ(compareMode, miSemaphore->getCompareOperation());
     EXPECT_EQ(5u, miSemaphore->getSemaphoreDataDword());

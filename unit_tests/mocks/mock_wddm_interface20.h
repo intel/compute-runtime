@@ -20,6 +20,16 @@ class WddmMockInterface20 : public WddmInterface20 {
         WddmInterface20::destroyMonitorFence(monitorFence);
     }
 
+    bool createMonitoredFence(MonitoredFence &monitorFence) override {
+        createMonitoredFenceCalled++;
+        if (createMonitoredFenceCalledFail) {
+            return false;
+        }
+        return WddmInterface::createMonitoredFence(monitorFence);
+    }
+
     uint32_t destroyMonitorFenceCalled = 0;
+    uint32_t createMonitoredFenceCalled = 0;
+    bool createMonitoredFenceCalledFail = false;
 };
 } // namespace NEO

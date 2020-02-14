@@ -12,6 +12,7 @@
 #include "core/memory_manager/gfx_partition.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/windows/hw_device_id.h"
+#include "core/os_interface/windows/wddm/wddm_defs.h"
 #include "core/utilities/spinlock.h"
 
 #include "sku_info.h"
@@ -39,17 +40,6 @@ struct MonitoredFence;
 struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
-
-struct WddmSubmitArguments {
-    MonitoredFence *monitorFence;
-    D3DKMT_HANDLE contextHandle;
-    D3DKMT_HANDLE hwQueueHandle;
-};
-
-enum class WddmVersion : uint32_t {
-    WDDM_2_0 = 0,
-    WDDM_2_3
-};
 
 class Wddm {
   public:
@@ -151,7 +141,7 @@ class Wddm {
     GmmMemory *getGmmMemory() const {
         return gmmMemory.get();
     }
-    void waitOnPagingFenceFromCpu();
+    MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu();
 
     void setGmmInputArg(void *args);
 
