@@ -177,12 +177,6 @@ bool Platform::initialize(size_t numDevices, uint32_t firstRootDeviceIndex) {
         initSipKernel(sipType, *clDevices[0]);
     }
 
-    CommandStreamReceiverType csrType = this->clDevices[0]->getDefaultEngine().commandStreamReceiver->getType();
-    if (csrType != CommandStreamReceiverType::CSR_HW) {
-        auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-        executionEnvironment.rootDeviceEnvironments[0]->initAubCenter(enableLocalMemory, "aubfile", csrType);
-    }
-
     this->fillGlobalDispatchTable();
     DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleRootDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
