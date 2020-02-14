@@ -110,6 +110,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memo
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessBuffers, false, "Force compiler to use bindless buffer addressing instead of stateful one")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessImages, false, "Force compiler to use bindless image addressing instead of stateful one")
+DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableIntelAdvancedVme, -1, "-1: default, 0: disabled, 1: Enables cl_intel_advanced_motion_estimation extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsSupport, -1, "-1: default, 0: disable, 1: enable")

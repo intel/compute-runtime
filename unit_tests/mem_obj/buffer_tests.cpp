@@ -11,9 +11,11 @@
 #include "core/helpers/array_count.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/allocations_list.h"
+#include "core/memory_manager/memory_operations_handler.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "public/cl_ext_private.h"
 #include "runtime/command_queue/command_queue_hw.h"
@@ -29,6 +31,7 @@
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -1829,6 +1832,24 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(handler, buffer->peekSharingHandler());
     buffer->release();
+}
+
+TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedGetDevicesFunc = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeAllBuffersResident.set(true);
+
+    size_t numRootDevices = 0u;
+    getDevices(numRootDevices, *platform()->peekExecutionEnvironment());
+    platform()->initialize(1u, 0u);
+    auto device = platform()->getClDevice(0u);
+
+    MockContext context(device, false);
+    auto retValue = CL_SUCCESS;
+    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    ASSERT_EQ(retValue, CL_SUCCESS);
+    clReleaseMemObject(clBuffer);
 }
 
 class BufferTests : public ::testing::Test {

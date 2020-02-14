@@ -6,9 +6,14 @@
  */
 
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/utilities/stackvec.h"
+#include "runtime/device/cl_device.h"
 #include "test.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
@@ -83,4 +88,30 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenEvictingResid
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
     EXPECT_EQ(wddmMemoryOperationsHandler->evict(wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+}
+
+TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItIsMadeResidentUponCreation) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedGetDevicesFunc = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeAllBuffersResident.set(true);
+
+    size_t numRootDevices = 0u;
+    getDevices(numRootDevices, *platform()->peekExecutionEnvironment());
+    platform()->initialize(1u, 0u);
+    auto device = platform()->getClDevice(0u);
+
+    MockContext context(device, false);
+    auto retValue = CL_SUCCESS;
+    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    ASSERT_EQ(retValue, CL_SUCCESS);
+
+    auto memoryOperationsHandler = context.getDevice(0)->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto neoBuffer = castToObject<MemObj>(clBuffer);
+    auto bufferAllocation = neoBuffer->getGraphicsAllocation();
+    auto status = memoryOperationsHandler->isResident(*bufferAllocation);
+
+    EXPECT_EQ(status, MemoryOperationsStatus::SUCCESS);
+
+    clReleaseMemObject(clBuffer);
 }

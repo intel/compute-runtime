@@ -8,6 +8,7 @@
 #include "runtime/mem_obj/buffer.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
@@ -18,6 +19,7 @@
 #include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/memory_manager.h"
+#include "core/memory_manager/memory_operations_handler.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -318,6 +320,11 @@ Buffer *Buffer::create(Context *context,
     if (errcodeRet != CL_SUCCESS) {
         pBuffer->release();
         return nullptr;
+    }
+
+    if (DebugManager.flags.MakeAllBuffersResident.get()) {
+        auto graphicsAllocation = pBuffer->getGraphicsAllocation();
+        context->getDevice(0u)->getRootDeviceEnvironment().memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
     }
 
     return pBuffer;
