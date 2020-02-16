@@ -64,7 +64,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
 
     surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
     surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
-    setMipTailStartLod(surfaceState);
+    setMipTailStartLod<GfxFamily>(surfaceState, gmm);
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().OCLImageFormat.image_channel_order;
     int shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, imgChannelOrder);
@@ -188,14 +188,5 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setMipTailStartLod(RENDER_SURFACE_STATE *surfaceState) {
-    surfaceState->setMipTailStartLod(0);
-
-    if (auto gmm = getGraphicsAllocation()->getDefaultGmm()) {
-        surfaceState->setMipTailStartLod(gmm->gmmResourceInfo->getMipTailStartLodSurfaceState());
-    }
 }
 } // namespace NEO

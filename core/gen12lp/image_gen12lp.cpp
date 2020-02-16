@@ -14,5 +14,6 @@ using Family = TGLLPFamily;
 
 // clang-format off
 #include "core/image/image_tgllp_plus.inl"
+#include "core/image/image_skl_plus.inl"
 // clang-format on
 } // namespace NEO

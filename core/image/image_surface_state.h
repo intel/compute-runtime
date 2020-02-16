@@ -126,6 +126,9 @@ template <typename GfxFamily>
 void setClearColorParams(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
 
 template <typename GfxFamily>
+void setMipTailStartLod(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+
+template <typename GfxFamily>
 inline void setAuxParamsForCCS(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
     using AUXILIARY_SURFACE_MODE = typename GfxFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios

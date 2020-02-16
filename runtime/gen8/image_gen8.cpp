@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,6 @@ void ImageHw<Family>::setMediaSurfaceRotation(void *) {}
 
 template <>
 void ImageHw<Family>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
-
-template <>
-void ImageHw<Family>::setMipTailStartLod(RENDER_SURFACE_STATE *surfaceState) {}
 
 #include "runtime/mem_obj/image_factory_init.inl"
 } // namespace NEO

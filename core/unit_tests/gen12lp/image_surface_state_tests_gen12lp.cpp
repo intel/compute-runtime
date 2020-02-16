@@ -34,3 +34,17 @@ GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWhenSetClearColorParamsThen
     setClearColorParams<TGLLPFamily>(castSurfaceState, &mockGmm);
     EXPECT_EQ(castSurfaceState->getClearValueAddressEnable(), true);
 }
+
+GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWithMediaCompressedWhenSetMipTailStartLodThenMipTailStartLodIsSet) {
+    auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
+    auto surfaceState = std::make_unique<char[]>(size);
+    auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
+
+    setMipTailStartLod<FamilyType>(castSurfaceState, nullptr);
+
+    EXPECT_EQ(castSurfaceState->getMipTailStartLod(), 0u);
+
+    setMipTailStartLod<FamilyType>(castSurfaceState, &mockGmm);
+
+    EXPECT_EQ(castSurfaceState->getMipTailStartLod(), mockGmm.gmmResourceInfo->getMipTailStartLodSurfaceState());
+}

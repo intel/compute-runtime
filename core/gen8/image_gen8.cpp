@@ -12,6 +12,9 @@ namespace NEO {
 
 typedef BDWFamily Family;
 
+template <>
+void setMipTailStartLod<Family>(Family::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {}
+
 // clang-format off
 #include "core/image/image_bdw_plus.inl"
 // clang-format on

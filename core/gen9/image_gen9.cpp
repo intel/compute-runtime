@@ -14,5 +14,6 @@ typedef SKLFamily Family;
 
 // clang-format off
 #include "core/image/image_bdw_plus.inl"
+#include "core/image/image_skl_plus.inl"
 // clang-format on
 } // namespace NEO
