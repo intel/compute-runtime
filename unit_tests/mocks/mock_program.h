@@ -38,6 +38,7 @@ class MockProgram : public Program {
     using Program::blockKernelManager;
     using Program::constantSurface;
     using Program::context;
+    using Program::createdFrom;
     using Program::debugData;
     using Program::debugDataSize;
     using Program::exportedFunctionsSurface;
@@ -142,7 +143,6 @@ class MockProgram : public Program {
     cl_int rebuildProgramFromIr() {
         this->isCreatedFromBinary = false;
         this->buildStatus = CL_BUILD_NONE;
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
         auto &device = this->pDevice->getDevice();
         return this->build(&device, this->options.c_str(), false, builtins);

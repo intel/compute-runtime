@@ -740,6 +740,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSourceBuffer);
     p3->sourceCode = pSourceBuffer.get();
+    p3->createdFrom = Program::CreatedFrom::SOURCE;
     retVal = p3->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p3.reset(nullptr);
@@ -790,6 +791,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
 
     // fail build - code to be build does not exist
     pMockProgram->sourceCode = ""; // set source code as non-existent (invalid)
+    pMockProgram->createdFrom = Program::CreatedFrom::SOURCE;
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
     pMockProgram->SetCreatedFromBinary(false);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
@@ -1929,6 +1931,7 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     ClDevice *pDevice = castToObject<ClDevice>(deviceId);
     program->setDevice(pDevice);
     program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::SOURCE;
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
     cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);

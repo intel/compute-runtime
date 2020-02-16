@@ -76,7 +76,7 @@ cl_int Program::build(
             }
 
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-            if ((createdFrom == CreatedFrom::IL) || (this->programBinaryType == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
+            if (createdFrom != CreatedFrom::SOURCE) {
                 inputArgs.srcType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
                 inputArgs.src = ArrayRef<const char>(irBinary.get(), irBinarySize);
             } else {

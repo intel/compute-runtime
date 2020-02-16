@@ -97,6 +97,7 @@ T *Program::create(
     if (retVal == CL_SUCCESS) {
         program = new T(*device.getExecutionEnvironment());
         program->sourceCode = nullTerminatedString;
+        program->createdFrom = CreatedFrom::SOURCE;
         program->context = context;
         program->isBuiltIn = isBuiltIn;
         if (program->context && !program->isBuiltIn) {
