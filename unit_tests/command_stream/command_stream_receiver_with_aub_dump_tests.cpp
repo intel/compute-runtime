@@ -220,6 +220,35 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCrea
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *csrWithAubDump.aubCSR->getTagAddress());
 }
 
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubCsrWithHwWhenAddingCommentThenAddCommentToAubManager) {
+    MockAubCenter *mockAubCenter = new MockAubCenter(*platformDevices, false, "file_name.aub", CommandStreamReceiverType::CSR_HW_WITH_AUB);
+    auto mockAubManager = new MockAubManager();
+    mockAubCenter->aubManager.reset(mockAubManager);
+
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    EXPECT_FALSE(mockAubManager->addCommentCalled);
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0);
+    csrWithAubDump.addAubComment("test");
+    EXPECT_TRUE(mockAubManager->addCommentCalled);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubCsrWithTbxWhenAddingCommentThenDontAddCommentToAubManager) {
+    MockAubCenter *mockAubCenter = new MockAubCenter(*platformDevices, false, "file_name.aub", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    auto mockAubManager = new MockAubManager();
+    mockAubCenter->aubManager.reset(mockAubManager);
+
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0);
+    csrWithAubDump.addAubComment("test");
+    EXPECT_FALSE(mockAubManager->addCommentCalled);
+}
+
 struct CommandStreamReceiverTagTests : public ::testing::Test {
     template <typename FamilyType>
     using AubWithHw = CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>>;

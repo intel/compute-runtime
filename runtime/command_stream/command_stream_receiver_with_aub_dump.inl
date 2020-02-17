@@ -74,4 +74,12 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::waitForTaskCountWithKmdNotifyFal
 
     BaseCSR::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
 }
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::addAubComment(const char *comment) {
+    if (aubCSR) {
+        aubCSR->addAubComment(comment);
+    }
+    BaseCSR::addAubComment(comment);
+}
 } // namespace NEO

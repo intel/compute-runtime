@@ -41,6 +41,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     size_t getPreferredTagPoolSize() const override { return 1; }
 
+    void addAubComment(const char *comment) override;
+
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };
 
