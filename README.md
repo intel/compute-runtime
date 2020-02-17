@@ -68,6 +68,35 @@ Directly linking to the runtime library (igdrcl) is not supported.
 The [Intel(R) GPU Compute Samples repository](https://github.com/intel/compute-samples/blob/master/compute_samples/applications/usm_hello_world/README.md) 
 has sample source code to demonstrate features of Intel(R) Graphics Compute Runtime for OpenCL(TM) Driver.
 
+## Feature double-precision emulation (FP64)
+
+By default NEO driver enables double precision operations only on platforms with supporting hardware. This is signified by exposing the "cl_khr_fp64" extension in the extension string. For other platforms, this support can be emulated by the compiler (IGC).
+
+### How do I enable emulation?
+
+FP64 emulation can only be enabled on Linux. There are two settings that have to be set.
+
+#### Runtime setting:
+
+There are two ways you can enable this feature in NEO:
+
+* Set an environment variable **OverrideDefaultFP64Settings** to **1**:
+`OverrideDefaultFP64Settings=1`
+
+* In **igdrcl.config** configuration file in the same directory as application binary (you may have to create this file) add a line as such:
+`OverrideDefaultFP64Settings = 1`
+
+#### Compiler setting:
+
+IGC reads flags only from environment, so set **IGC_EnableDPEmulation** to **1** as such:
+`IGC_EnableDPEmulation=1`
+
+After both settings have been set you can run the application normally.
+
+### Known issues and limitations
+
+Intel does not claim full specification conformance when using emulated mode. We reserve the right to not fix issues that appear only in emulation mode. Performance degradation is to be expected and has not been measured by Intel.
+
 ## How to provide feedback
 
 By default, please submit an issue using native github.com interface: https://github.com/intel/compute-runtime/issues.

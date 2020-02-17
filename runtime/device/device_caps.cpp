@@ -42,9 +42,16 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_DENORM |
                                                                                        CL_FP_FMA);
 
+bool releaseFP64Override();
+
 void Device::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
-    if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
+
+    if (releaseFP64Override() || DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+        deviceExtensions += "cl_khr_fp64 ";
+        deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
+        deviceInfo.doubleFpConfig = defaultFpFlags;
+    } else if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             deviceExtensions += "cl_khr_fp64 ";
         }
@@ -57,12 +64,6 @@ void Device::setupFp64Flags() {
         deviceInfo.doubleFpConfig = hwInfo.capabilityTable.ftrSupportsFP64
                                         ? defaultFpFlags
                                         : 0;
-    } else {
-        if (DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
-            deviceExtensions += "cl_khr_fp64 ";
-            deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-            deviceInfo.doubleFpConfig = defaultFpFlags;
-        }
     }
 }
 
