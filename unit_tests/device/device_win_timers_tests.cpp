@@ -21,7 +21,7 @@ namespace ULT {
 
 typedef ::testing::Test MockOSTimeWinTest;
 
-TEST_F(MockOSTimeWinTest, DynamicResolution) {
+TEST_F(MockOSTimeWinTest, WhenCreatingTimerThenResolutionIsSetCorrectly) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock(rootDeviceEnvironment));

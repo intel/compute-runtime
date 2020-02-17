@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 namespace ULT {
 
-TEST(MockOSTime, DeviceHostIncreaseCheck) {
+TEST(MockOSTime, WhenSleepingThenDeviceAndHostTimerAreIncreased) {
     cl_ulong deviceTimestamp[2] = {0, 0};
     cl_ulong hostTimestamp[2] = {0, 0};
 
@@ -37,7 +37,7 @@ TEST(MockOSTime, DeviceHostIncreaseCheck) {
     delete mDev;
 }
 
-TEST(MockOSTime, DeviceHostDeltaCheck) {
+TEST(MockOSTime, WhenGettingTimersThenDiffBetweenQueriesWithinAllowedError) {
     cl_ulong deviceTimestamp[2] = {0, 0};
     cl_ulong hostTimestamp[2] = {0, 0};
     cl_ulong hostOnlyTimestamp[2] = {0, 0};
@@ -81,7 +81,7 @@ TEST(MockOSTime, DeviceHostDeltaCheck) {
     EXPECT_TRUE(observedDiff <= allowedDiff);
 }
 
-TEST(MockOSTime, HostIncreaseCheck) {
+TEST(MockOSTime, WhenSleepingThenHostTimerIsIncreased) {
     cl_ulong hostTimestamp[2] = {0, 0};
 
     auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
@@ -100,7 +100,7 @@ TEST(MockOSTime, HostIncreaseCheck) {
     delete mDev;
 }
 
-TEST(MockOSTime, NegativeTest) {
+TEST(MockOSTime, GivenNullWhenSettingOsTimeThenResolutionIsZero) {
     auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(nullptr);
 
