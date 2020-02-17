@@ -201,8 +201,7 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, aub_stream::EngineType engineType,
                                                      DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool lowPriority) {
     auto contextId = ++latestContextId;
-    auto rootDeviceIndex = commandStreamReceiver ? commandStreamReceiver->getRootDeviceIndex() : 0u;
-    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     UNRECOVERABLE_IF(!osContext->isInitialized());
     osContext->incRefInternal();
 

@@ -18,8 +18,10 @@
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/os_interface/windows/wddm_residency_controller.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -119,9 +121,12 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment->initializeMemoryManager();
+
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
 
-        osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
+        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
 
         osContext->incRefInternal();
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
@@ -133,6 +138,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    std::unique_ptr<CommandStreamReceiver> csr;
     ::testing::NiceMock<GmockWddm> *wddm = nullptr;
     OsContext *osContext;
     WddmResidencyController *residencyController;
@@ -151,9 +157,11 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
         osContext->incRefInternal();
@@ -167,6 +175,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
 
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    std::unique_ptr<CommandStreamReceiver> csr;
 
     WddmMock *wddm = nullptr;
     OsContext *osContext = nullptr;

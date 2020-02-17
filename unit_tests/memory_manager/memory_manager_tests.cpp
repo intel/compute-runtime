@@ -1653,11 +1653,13 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                             1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    EXPECT_EQ(1u, memoryManager.getRegisteredEnginesCount());
-    EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
+    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
+    EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
 }
 
 TEST(MemoryManagerRegisteredEnginesTest, givenOsContextWhenItIsUnregisteredFromMemoryManagerThenRefCountDecreases) {
@@ -1676,26 +1678,31 @@ TEST(MemoryManagerRegisteredEnginesTest, givenOsContextWhenItIsUnregisteredFromM
 
 TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValue) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
     DeviceBitfield deviceBitfield = 0b11;
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                             deviceBitfield, preemptionMode, false);
-    EXPECT_EQ(2u, memoryManager.registeredEngines[0].osContext->getNumSupportedDevices());
-    EXPECT_EQ(deviceBitfield, memoryManager.registeredEngines[0].osContext->getDeviceBitfield());
-    EXPECT_EQ(preemptionMode, memoryManager.registeredEngines[0].osContext->getPreemptionMode());
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                                              deviceBitfield, preemptionMode, false);
+    EXPECT_EQ(2u, memoryManager->registeredEngines[0].osContext->getNumSupportedDevices());
+    EXPECT_EQ(deviceBitfield, memoryManager->registeredEngines[0].osContext->getDeviceBitfield());
+    EXPECT_EQ(preemptionMode, memoryManager->registeredEngines[0].osContext->getPreemptionMode());
 }
 
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLowerThenProperSizeIsReturned) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                             1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
-                                             1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    EXPECT_EQ(2u, memoryManager.getRegisteredEnginesCount());
-    EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
-    EXPECT_EQ(1, memoryManager.registeredEngines[1].osContext->getRefInternalCount());
+    MockExecutionEnvironment executionEnvironment(*platformDevices, true, 2u);
+    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u));
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    memoryManager->createAndRegisterOsContext(csr1.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
+    EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
+    EXPECT_EQ(1, memoryManager->registeredEngines[1].osContext->getRefInternalCount());
 }
 
 TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOsContextCountThenValueIsGreaterOrEqual) {

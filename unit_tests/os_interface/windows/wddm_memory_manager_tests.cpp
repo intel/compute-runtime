@@ -341,7 +341,16 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSingleEngineRegister
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForEachEngine) {
-    memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
+    executionEnvironment->prepareRootDeviceEnvironments(2u);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 1u));
+
+    auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+    wddm2->init();
+    executionEnvironment->rootDeviceEnvironments[1]->osInterface.reset(new OSInterface());
+    executionEnvironment->rootDeviceEnvironments[1]->osInterface->get()->setWddm(wddm2);
+    executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
+
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
                                               2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
@@ -351,15 +360,26 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     allocation->getResidencyData().updateCompletionData(152u, 1u);
 
     memoryManager->handleFenceCompletion(allocation);
-    EXPECT_EQ(2u, wddm->waitFromCpuResult.called);
-    EXPECT_EQ(152u, wddm->waitFromCpuResult.uint64ParamPassed);
-    EXPECT_EQ(lastEngineFence, wddm->waitFromCpuResult.monitoredFence);
+    EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(1u, wddm2->waitFromCpuResult.called);
+    EXPECT_EQ(129u, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(152u, wddm2->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(lastEngineFence, wddm2->waitFromCpuResult.monitoredFence);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForTheseEngines) {
-    memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
+    executionEnvironment->prepareRootDeviceEnvironments(2u);
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 1u));
+
+    auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+    wddm2->init();
+    executionEnvironment->rootDeviceEnvironments[1]->osInterface.reset(new OSInterface());
+    executionEnvironment->rootDeviceEnvironments[1]->osInterface->get()->setWddm(wddm2);
+    executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
+
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
                                               2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
@@ -1408,16 +1428,40 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitio
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    executionEnvironment->prepareRootDeviceEnvironments(3u);
+    executionEnvironment->initializeMemoryManager();
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));
+        wddm->init();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset(new OSInterface());
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
+    memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    memoryManager->createAndRegisterOsContext(csr2.get(), aub_stream::ENGINE_RCS, 3, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    executionEnvironment->prepareRootDeviceEnvironments(3u);
+    executionEnvironment->initializeMemoryManager();
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));
+        wddm->init();
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset(new OSInterface());
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 0u));
+    std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
+    memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    memoryManager->createAndRegisterOsContext(csr2.get(), aub_stream::ENGINE_RCS, 3, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     auto osContext = static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[1].osContext);
     osContext->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());

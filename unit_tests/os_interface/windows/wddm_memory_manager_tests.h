@@ -57,9 +57,11 @@ class MockWddmMemoryManagerFixture {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
-        osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
         osContext->incRefInternal();
@@ -72,6 +74,7 @@ class MockWddmMemoryManagerFixture {
 
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    std::unique_ptr<CommandStreamReceiver> csr;
     WddmMock *wddm = nullptr;
     MockWddmResidentAllocationsContainer *mockTemporaryResources;
     OsContext *osContext = nullptr;
@@ -105,9 +108,11 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
+        csr.reset(createCommandStream(*executionEnvironment, 0u));
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
 
         osContext->incRefInternal();
 
@@ -116,10 +121,10 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
 
     void TearDown() override {
         osContext->decRefInternal();
-        delete memoryManager;
     }
 
     NiceMock<GmockWddm> *wddm = nullptr;
+    std::unique_ptr<CommandStreamReceiver> csr;
     OSInterface *osInterface;
     OsContext *osContext;
 };
