@@ -105,8 +105,8 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathDoesntCo
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch.inf";
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_EQ(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntContainDchIThenNoDeviceIsDiscovered) {
@@ -115,8 +115,8 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntCo
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch.inf";
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_EQ(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathContainsDchDThenAdapterIsDiscovered) {
@@ -125,8 +125,9 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathContains
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch_d.inf";
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_NE(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathContainsDchIThenAdapterIsDiscovered) {
@@ -135,16 +136,18 @@ TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathConta
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch_i.inf";
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_NE(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
     VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
     descriptionBackup = L"Virtual Render";
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_NE(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
@@ -1046,7 +1049,7 @@ TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
     struct MockWddm : public Wddm {
         using Wddm::gfxPartition;
 
-        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(OSInterface::discoverDevices(), rootDeviceEnvironment) {}
+        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(OSInterface::discoverDevices()[0]), rootDeviceEnvironment) {}
     };
 
     MockWddm wddm(*executionEnvironment->rootDeviceEnvironments[0].get());
@@ -1066,8 +1069,9 @@ TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_NE(nullptr, hwDeviceId);
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {

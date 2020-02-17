@@ -225,17 +225,25 @@ bool Wddm::destroyDevice() {
     return true;
 }
 
-std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
+std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(Gdi &gdi, LUID adapterLuid) {
+    D3DKMT_OPENADAPTERFROMLUID OpenAdapterData = {{0}};
+    OpenAdapterData.AdapterLuid = adapterLuid;
+    auto status = gdi.openAdapterFromLuid(&OpenAdapterData);
+
+    if (status == STATUS_SUCCESS) {
+        return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, std::make_unique<Gdi>());
+    }
+    return nullptr;
+}
+
+std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices() {
+    std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     auto gdi = std::make_unique<Gdi>();
-    D3DKMT_HANDLE adapter = 0;
-    LUID adapterLuid{};
 
     if (!gdi->isInitialized()) {
-        return nullptr;
+        return hwDeviceIds;
     }
 
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DKMT_OPENADAPTERFROMLUID OpenAdapterData = {{0}};
     DXGI_ADAPTER_DESC1 OpenAdapterDesc = {{0}};
 
     IDXGIFactory1 *pFactory = nullptr;
@@ -246,12 +254,13 @@ std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
 
     HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
     if ((hr != S_OK) || (pFactory == nullptr)) {
-        return nullptr;
+        return hwDeviceIds;
     }
 
     while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
         hr = pAdapter->GetDesc1(&OpenAdapterDesc);
         if (hr == S_OK) {
+            bool createHwDeviceId = false;
             // Check for adapters that include either "Intel" or "Citrix" (which may
             // be virtualizing one of our adapters) in the description
             if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
@@ -263,15 +272,22 @@ std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
                 if (choosenDevice) {
                     if (wcsstr(OpenAdapterDesc.Description, L"DCH-D") != 0) {
                         if (wcsstr(igdrclPath.c_str(), L"_dch_d.inf") != 0) {
-                            break;
+                            createHwDeviceId = true;
                         }
                     } else if (wcsstr(OpenAdapterDesc.Description, L"DCH-I") != 0) {
                         if (wcsstr(igdrclPath.c_str(), L"_dch_i.inf") != 0) {
-                            break;
+                            createHwDeviceId = true;
                         }
                     } else {
-                        break;
+                        createHwDeviceId = true;
                     }
+                }
+            }
+            if (createHwDeviceId) {
+                auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*gdi, OpenAdapterDesc.AdapterLuid);
+                if (hwDeviceId) {
+                    hwDeviceIds.push_back(std::move(hwDeviceId));
+                    break;
                 }
             }
         }
@@ -281,9 +297,6 @@ std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
     }
 
     if (pAdapter != nullptr) {
-        OpenAdapterData.AdapterLuid = OpenAdapterDesc.AdapterLuid;
-        status = gdi->openAdapterFromLuid(&OpenAdapterData);
-        // If an Intel adapter was found, release it here
         pAdapter->Release();
         pAdapter = nullptr;
     }
@@ -291,15 +304,19 @@ std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
         pFactory->Release();
         pFactory = nullptr;
     }
+    size_t numRootDevices = 1u;
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
+    }
+    if (hwDeviceIds.empty()) {
+        return hwDeviceIds;
+    }
 
-    if (status == STATUS_SUCCESS) {
-        adapter = OpenAdapterData.hAdapter;
-        adapterLuid = OpenAdapterDesc.AdapterLuid;
+    while (hwDeviceIds.size() < numRootDevices) {
+        hwDeviceIds.push_back(std::make_unique<HwDeviceId>(hwDeviceIds[0]->getAdapter(), hwDeviceIds[0]->getAdapterLuid(), std::make_unique<Gdi>()));
     }
-    if (status == STATUS_SUCCESS) {
-        return std::make_unique<HwDeviceId>(adapter, adapterLuid, std::move(gdi));
-    }
-    return nullptr;
+
+    return hwDeviceIds;
 }
 
 bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim) {

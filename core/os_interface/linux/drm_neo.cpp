@@ -291,18 +291,26 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     return 0;
 }
 
-std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
+std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices() {
+    std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     char fullPath[PATH_MAX];
+    size_t numRootDevices = 1u;
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
+    }
     if (DebugManager.flags.ForceDeviceId.get() != "unk") {
         snprintf(fullPath, PATH_MAX, "/dev/dri/by-path/pci-0000:%s-render", DebugManager.flags.ForceDeviceId.get().c_str());
         int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
         if (fileDescriptor >= 0) {
             if (Drm::isi915Version(fileDescriptor)) {
-                return std::make_unique<HwDeviceId>(fileDescriptor);
+                while (hwDeviceIds.size() < numRootDevices) {
+                    hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
+                }
+            } else {
+                SysCalls::close(fileDescriptor);
             }
-            SysCalls::close(fileDescriptor);
         }
-        return nullptr;
+        return hwDeviceIds;
     }
 
     const char *pathPrefix = "/dev/dri/renderD";
@@ -314,13 +322,20 @@ std::unique_ptr<HwDeviceId> OSInterface::discoverDevices() {
         int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
         if (fileDescriptor >= 0) {
             if (Drm::isi915Version(fileDescriptor)) {
-                return std::make_unique<HwDeviceId>(fileDescriptor);
+                hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
+                break;
+            } else {
+                SysCalls::close(fileDescriptor);
             }
-            SysCalls::close(fileDescriptor);
         }
     }
-
-    return nullptr;
+    if (hwDeviceIds.empty()) {
+        return hwDeviceIds;
+    }
+    while (hwDeviceIds.size() < numRootDevices) {
+        hwDeviceIds.push_back(std::make_unique<HwDeviceId>(hwDeviceIds[0]->getFileDescriptor()));
+    }
+    return hwDeviceIds;
 }
 
 bool Drm::isi915Version(int fileDescriptor) {

@@ -20,7 +20,7 @@ using namespace NEO;
 TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    auto hwDeviceId = OSInterface::discoverDevices();
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), rootDeviceEnvironment));
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceIds[0]), rootDeviceEnvironment));
     EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm));
 }

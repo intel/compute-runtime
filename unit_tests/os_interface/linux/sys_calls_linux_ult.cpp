@@ -30,7 +30,10 @@ int open(const char *file, int flags) {
     if (strcmp(file, "/dev/dri/by-path/pci-0000:invalid-render") == 0) {
         return 0;
     }
-    return fakeFileDescriptor;
+    if (strcmp(file, "/dev/dri/renderD129") == 0) {
+        return fakeFileDescriptor;
+    }
+    return 0;
 }
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     if (fileDescriptor == fakeFileDescriptor) {

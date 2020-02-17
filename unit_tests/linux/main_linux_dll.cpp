@@ -64,8 +64,8 @@ TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = testOpen;
     openRetVal = -1;
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_EQ(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
@@ -74,8 +74,9 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openRetVal = 1023; // fakeFd
     openFull = testOpen;
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_NE(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
@@ -85,8 +86,8 @@ TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     openFull = testOpen;
     openRetVal = 1024;
 
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_EQ(nullptr, hwDeviceId.get());
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST_F(DrmTests, createReturnsDrm) {

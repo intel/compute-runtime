@@ -89,24 +89,13 @@ bool DeviceFactory::isHwModeSelected() {
 bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
     using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
 
-    HwDeviceIds hwDeviceIds;
-
-    size_t numRootDevices = 1u;
-    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
-    }
-    for (size_t i = 0; i < numRootDevices; i++) {
-        auto hwDeviceId = OSInterface::discoverDevices();
-        if (hwDeviceId) {
-            hwDeviceIds.push_back(std::move(hwDeviceId));
-        }
-    }
-    if (hwDeviceIds.empty()) {
+    HwDeviceIds hwDeviceIds = OSInterface::discoverDevices();
+    totalNumRootDevices = hwDeviceIds.size();
+    if (totalNumRootDevices == 0) {
         return false;
     }
-    totalNumRootDevices = numRootDevices;
 
-    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numRootDevices));
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(totalNumRootDevices));
 
     uint32_t rootDeviceIndex = 0u;
 

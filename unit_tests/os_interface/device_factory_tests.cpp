@@ -258,8 +258,8 @@ TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseI
 TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("invalid");
-    auto hwDeviceId = OSInterface::discoverDevices();
-    EXPECT_EQ(nullptr, hwDeviceId);
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenGetDevicesReturnsFalse) {
