@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,12 +27,12 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 }
 
 template <>
-typename Family::PIPE_CONTROL *PipeControlHelper<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    return PipeControlHelper<Family>::obtainPipeControl(commandStream, true);
+typename Family::PIPE_CONTROL *MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    return MemorySynchronizationCommands<Family>::obtainPipeControl(commandStream, true);
 }
 
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
-template struct PipeControlHelper<Family>;
+template struct MemorySynchronizationCommands<Family>;
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,8 @@ size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize() noexcept {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     // Two P_C for timestamps
-    return 2 * PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(*commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
+    return 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(
+                   *commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
 }
 
 template <typename GfxFamily>
@@ -72,8 +73,9 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
 
     uint64_t timeStampAddress = timestamps->getGpuAddress() + timestampsOffset;
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*currentStream,
-                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false, *commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
+    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+        *currentStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu,
+        false, *commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);

@@ -124,13 +124,13 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
 
     uint64_t criticalSectionAddress = (uint64_t)&igilQueue->m_controls.m_CriticalSection;
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
-                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                               criticalSectionAddress, ExecutionModelCriticalSection::Free, false, device->getHardwareInfo());
+    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+        slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        criticalSectionAddress, ExecutionModelCriticalSection::Free, false, device->getHardwareInfo());
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
-                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                               tagAddress, taskCount, false, device->getHardwareInfo());
+    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+        slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        tagAddress, taskCount, false, device->getHardwareInfo());
 
     addMediaStateClearCmds();
 

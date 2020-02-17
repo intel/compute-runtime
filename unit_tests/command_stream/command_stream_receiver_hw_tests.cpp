@@ -361,7 +361,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
     auto baseSize = sizeof(typename FamilyType::MI_FLUSH_DW) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedBlitInstructionsSize = sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts;
 
-    auto expectedAlignedSize = baseSize + PipeControlHelper<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
+    auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
 
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {

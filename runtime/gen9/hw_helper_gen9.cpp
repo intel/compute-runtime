@@ -21,7 +21,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 }
 
 template <>
-void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     auto pCmd = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
     *pCmd = Family::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);
@@ -35,5 +35,5 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
-template struct PipeControlHelper<Family>;
+template struct MemorySynchronizationCommands<Family>;
 } // namespace NEO

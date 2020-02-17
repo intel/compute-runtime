@@ -25,5 +25,5 @@ std::string HwHelperHw<Family>::getExtensions() const {
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
-template struct PipeControlHelper<Family>;
+template struct MemorySynchronizationCommands<Family>;
 } // namespace NEO

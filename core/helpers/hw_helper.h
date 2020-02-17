@@ -233,7 +233,7 @@ struct LriHelper {
 };
 
 template <typename GfxFamily>
-struct PipeControlHelper {
+struct MemorySynchronizationCommands {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     static PIPE_CONTROL *obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,

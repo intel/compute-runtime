@@ -202,9 +202,10 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     HardwareInfo hardwareInfo = *platformDevices[0];
 
-    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
-    auto additionalPcSize = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
-    auto pipeControlLocationSize = additionalPcSize - PipeControlHelper<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
@@ -227,9 +228,10 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setImmediateData(immediateData);
     HardwareInfo hardwareInfo = *platformDevices[0];
 
-    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
-    auto additionalPcSize = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
-    auto pipeControlLocationSize = additionalPcSize - PipeControlHelper<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
+    auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
+    auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
@@ -815,7 +817,7 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
 
 HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForCacheFlushThenReturnCorrectValue) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    size_t actualSize = PipeControlHelper<FamilyType>::getSizeForFullCacheFlush();
+    size_t actualSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
     EXPECT_EQ(sizeof(PIPE_CONTROL), actualSize);
 }
 
@@ -825,7 +827,7 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
 
     LinearStream stream(buffer.get(), 128);
 
-    PIPE_CONTROL *pipeControl = PipeControlHelper<FamilyType>::addFullCacheFlush(stream);
+    PIPE_CONTROL *pipeControl = MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 

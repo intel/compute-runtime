@@ -78,7 +78,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
     EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(10);
-    size_t removePatchInfoDataCount = 4 * UltPipeControlHelper<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
+    size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
     EXPECT_CALL(*mockHelper, removePatchInfoData(::testing::_)).Times(static_cast<int>(removePatchInfoDataCount));
     EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(4);
     EXPECT_CALL(*mockHelper, registerBatchBufferStartAddress(::testing::_, ::testing::_)).Times(3);

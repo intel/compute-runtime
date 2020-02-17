@@ -12,12 +12,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
-struct UltPipeControlHelper : PipeControlHelper<GfxFamily> {
-    using PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization;
+struct UltMemorySynchronizationCommands : MemorySynchronizationCommands<GfxFamily> {
+    using MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization;
 
     static size_t getExpectedPipeControlCount(const HardwareInfo &hwInfo) {
-        return (PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) -
-                PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo)) /
+        return (MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) -
+                MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo)) /
                sizeof(typename GfxFamily::PIPE_CONTROL);
     }
 };

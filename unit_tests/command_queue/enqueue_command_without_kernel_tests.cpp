@@ -237,7 +237,8 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
     MultiDispatchInfo multiDispatch;
     mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, nullptr);
 
-    auto requiredCmdStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()),
+    auto requiredCmdStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
+                                             pDevice->getHardwareInfo()),
                                          MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(mockCmdQ->getCS(0).getUsed(), requiredCmdStreamSize);

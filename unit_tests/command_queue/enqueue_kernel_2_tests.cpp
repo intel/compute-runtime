@@ -800,7 +800,9 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
 
     auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-    auto additionalPcCount = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()) / sizeof(typename FamilyType::PIPE_CONTROL);
+    auto additionalPcCount = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
+                                 pDevice->getHardwareInfo()) /
+                             sizeof(typename FamilyType::PIPE_CONTROL);
 
     // |AuxToNonAux|NDR|NonAuxToAux|
     ASSERT_EQ(4u + additionalPcCount, pipeControls.size());

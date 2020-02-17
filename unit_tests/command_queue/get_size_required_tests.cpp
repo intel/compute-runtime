@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,8 +71,9 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()),
-                                     +MemoryConstants::cacheLineSize);
+        expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
+                                         pDevice->getHardwareInfo()),
+                                     MemoryConstants::cacheLineSize);
     }
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
     EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
@@ -97,8 +98,9 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNo
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()),
-                                     +MemoryConstants::cacheLineSize);
+        expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
+                                         pDevice->getHardwareInfo()),
+                                     MemoryConstants::cacheLineSize);
     }
 
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);

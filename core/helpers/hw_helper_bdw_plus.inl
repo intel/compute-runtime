@@ -68,29 +68,29 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-inline size_t PipeControlHelper<GfxFamily>::getSizeForSingleSynchronization(const HardwareInfo &hwInfo) {
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleSynchronization(const HardwareInfo &hwInfo) {
     return 0u;
 }
 
 template <typename GfxFamily>
-inline size_t PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
     return 0u;
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL *pipeControl) {
+void MemorySynchronizationCommands<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL *pipeControl) {
 }
 
 } // namespace NEO

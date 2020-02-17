@@ -44,7 +44,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
                                                                         blitProperties.outputTimestampPacket != nullptr);
     }
-    size += PipeControlHelper<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
     size += sizeof(typename GfxFamily::MI_FLUSH_DW) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     return alignUp(size, MemoryConstants::cacheLineSize);

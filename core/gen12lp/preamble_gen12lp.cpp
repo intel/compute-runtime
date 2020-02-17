@@ -37,7 +37,7 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
     using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
 
     if (HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
-        auto pipeControl = PipeControlHelper<TGLLPFamily>::addPipeControl(*pCommandStream, false);
+        auto pipeControl = MemorySynchronizationCommands<TGLLPFamily>::addPipeControl(*pCommandStream, false);
         pipeControl->setRenderTargetCacheFlushEnable(true);
     }
 

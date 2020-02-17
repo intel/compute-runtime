@@ -182,12 +182,8 @@ bool HwHelperHw<Family>::isBlitAuxTranslationRequired(const HardwareInfo &hwInfo
 }
 
 template <typename Family>
-typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
-                                                                                                       POST_SYNC_OPERATION operation,
-                                                                                                       uint64_t gpuAddress,
-                                                                                                       uint64_t immediateData,
-                                                                                                       bool dcFlush,
-                                                                                                       const HardwareInfo &hwInfo) {
+typename Family::PIPE_CONTROL *MemorySynchronizationCommands<Family>::obtainPipeControlAndProgramPostSyncOperation(
+    LinearStream &commandStream, POST_SYNC_OPERATION operation, uint64_t gpuAddress, uint64_t immediateData, bool dcFlush, const HardwareInfo &hwInfo) {
     addPipeControlWA(commandStream, gpuAddress, hwInfo);
 
     auto pipeControl = obtainPipeControl(commandStream, dcFlush);
@@ -201,13 +197,13 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
 
     setExtraPipeControlProperties(*pipeControl, hwInfo);
 
-    PipeControlHelper<Family>::addAdditionalSynchronization(commandStream, gpuAddress, hwInfo);
+    MemorySynchronizationCommands<Family>::addAdditionalSynchronization(commandStream, gpuAddress, hwInfo);
 
     return pipeControl;
 }
 
 template <typename GfxFamily>
-typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeControl(LinearStream &commandStream, bool dcFlush) {
+typename GfxFamily::PIPE_CONTROL *MemorySynchronizationCommands<GfxFamily>::obtainPipeControl(LinearStream &commandStream, bool dcFlush) {
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
     *pCmd = GfxFamily::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);
@@ -227,17 +223,17 @@ typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeContro
 }
 
 template <typename GfxFamily>
-typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    return PipeControlHelper<GfxFamily>::obtainPipeControl(commandStream, dcFlush);
+typename GfxFamily::PIPE_CONTROL *MemorySynchronizationCommands<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    return MemorySynchronizationCommands<GfxFamily>::obtainPipeControl(commandStream, dcFlush);
 }
 
 template <typename GfxFamily>
-size_t PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl() {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
 template <typename GfxFamily>
-size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
     const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
     return pipeControlCount * getSizeForSinglePipeControl() + getSizeForAdditonalSynchronization(hwInfo);
 }
@@ -296,13 +292,13 @@ uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hw
 }
 
 template <typename GfxFamily>
-size_t PipeControlHelper<GfxFamily>::getSizeForFullCacheFlush() {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
 template <typename GfxFamily>
-typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addFullCacheFlush(LinearStream &commandStream) {
-    auto pipeControl = PipeControlHelper<GfxFamily>::obtainPipeControl(commandStream, true);
+typename GfxFamily::PIPE_CONTROL *MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream) {
+    auto pipeControl = MemorySynchronizationCommands<GfxFamily>::obtainPipeControl(commandStream, true);
 
     pipeControl->setRenderTargetCacheFlushEnable(true);
     pipeControl->setInstructionCacheInvalidateEnable(true);
@@ -311,7 +307,7 @@ typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addFullCacheFlus
     pipeControl->setConstantCacheInvalidationEnable(true);
     pipeControl->setStateCacheInvalidationEnable(true);
 
-    PipeControlHelper<GfxFamily>::setExtraCacheFlushFields(pipeControl);
+    MemorySynchronizationCommands<GfxFamily>::setExtraCacheFlushFields(pipeControl);
 
     return pipeControl;
 }

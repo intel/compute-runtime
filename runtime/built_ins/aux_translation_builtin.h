@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,12 +64,12 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
                                                                    DispatchInfo::EstimateCommandsMethodT>;
     template <typename GfxFamily, bool dcFlush>
     static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *) {
-        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, dcFlush);
+        MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, dcFlush);
     }
 
     template <typename GfxFamily>
     static size_t getSizeForSinglePipeControl(const MemObjsForAuxTranslation *) {
-        return PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl();
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
     }
 
     template <typename GfxFamily>

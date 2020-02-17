@@ -173,6 +173,6 @@ GEN12LPTEST_F(PipeControlHelperTests, whenSettingCacheFlushExtraFieldsThenExpect
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
 
-    PipeControlHelper<FamilyType>::setExtraCacheFlushFields(&pipeControl);
+    MemorySynchronizationCommands<FamilyType>::setExtraCacheFlushFields(&pipeControl);
     EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
 }

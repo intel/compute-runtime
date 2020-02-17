@@ -105,7 +105,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
 
     //we do level change that will emit PPC, fill all the space so only BB end fits.
     taskLevel++;
-    auto ppcSize = PipeControlHelper<FamilyType>::getSizeForSinglePipeControl();
+    auto ppcSize = MemorySynchronizationCommands<FamilyType>::getSizeForSinglePipeControl();
     auto fillSize = MemoryConstants::cacheLineSize - ppcSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     csrCommandStream.getSpace(fillSize);
     auto expectedUsedSize = 2 * MemoryConstants::cacheLineSize;
@@ -925,7 +925,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
-    size_t pipeControlCount = UltPipeControlHelper<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
+    size_t pipeControlCount = UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
 
     auto &commandStreamTask = commandQueue.getCS(1024);
 

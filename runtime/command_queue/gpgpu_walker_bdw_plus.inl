@@ -69,7 +69,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     bool dcFlush = false;
-    PipeControlHelper<GfxFamily>::addPipeControl(commandStream, dcFlush);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, dcFlush);
 
     uint32_t interfaceDescriptorIndex = devQueueHw.schedulerIDIndex;
     const size_t offsetInterfaceDescriptorTable = devQueueHw.colorCalcStateSize;
@@ -161,7 +161,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
 
-        PipeControlHelper<GfxFamily>::addPipeControl(commandStream, true);
+        MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, true);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer
         auto *bbStart = static_cast<MI_BATCH_BUFFER_START *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START)));
@@ -182,8 +182,8 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
         uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
-        PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*cmdStream,
-                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, *rootDeviceEnvironment.getHardwareInfo());
+        MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            *cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, *rootDeviceEnvironment.getHardwareInfo());
     }
 }
 
