@@ -10,6 +10,7 @@
 #include "drm/i915_drm.h"
 
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <sys/ioctl.h>
 
@@ -35,7 +36,7 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     if (fileDescriptor == fakeFileDescriptor) {
         if (request == DRM_IOCTL_VERSION) {
             auto pVersion = reinterpret_cast<drm_version_t *>(arg);
-            strcpy(pVersion->name, "i915");
+            snprintf(pVersion->name, pVersion->name_len, "i915");
         }
     }
     return 0;
