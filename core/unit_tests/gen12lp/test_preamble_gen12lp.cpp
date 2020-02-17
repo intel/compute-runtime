@@ -161,7 +161,6 @@ GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgramm
 
 typedef PreambleFixture PreemptionWatermarkGen12LP;
 GEN12LPTEST_F(PreemptionWatermarkGen12LP, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
-    MockDevice mockDevice;
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, pDevice->getHardwareInfo());
 
     parseCommands<FamilyType>(linearStream);
@@ -169,6 +168,12 @@ GEN12LPTEST_F(PreemptionWatermarkGen12LP, givenPreambleThenPreambleWorkAroundsIs
     auto cmd = findMmioCmd<FamilyType>(cmdList.begin(), cmdList.end(), FfSliceCsChknReg2::address);
     ASSERT_EQ(nullptr, cmd);
 
-    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(MockDevice());
-    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(MockDevice()));
+    MockDevice mockDevice;
+    mockDevice.setDebuggerActive(false);
+    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(mockDevice);
+    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
+
+    mockDevice.setDebuggerActive(true);
+    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.isDebuggerActive());
+    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }

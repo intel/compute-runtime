@@ -7,6 +7,7 @@
 
 #include "unit_tests/mocks/mock_device.h"
 
+#include "core/command_stream/preemption.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/device/driver_info.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
@@ -59,6 +60,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     executionEnvironment->setHwInfo(&hwInfo);
     executionEnvironment->initializeMemoryManager();
     initializeCaps();
+    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 }
 
 bool MockDevice::createDeviceImpl() {

@@ -99,9 +99,14 @@ GEN11TEST_F(PreemptionWatermarkGen11, givenPreambleThenPreambleWorkAroundsIsNotP
     auto cmd = findMmioCmd<FamilyType>(cmdList.begin(), cmdList.end(), FfSliceCsChknReg2::address);
     ASSERT_EQ(nullptr, cmd);
 
-    MockDevice device;
-    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(device);
-    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(device));
+    MockDevice mockDevice;
+    mockDevice.setDebuggerActive(false);
+    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(mockDevice);
+    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
+
+    mockDevice.setDebuggerActive(true);
+    expectedSize += PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(mockDevice.isDebuggerActive());
+    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(mockDevice));
 }
 
 typedef PreambleFixture ThreadArbitrationGen11;
