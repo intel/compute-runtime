@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/gen11/reg_configs.h"
+#include "shared/source/gen_common/reg_configs/reg_configs_common.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/utilities/stackvec.h"
