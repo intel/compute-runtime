@@ -253,6 +253,29 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllo
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+
+    GraphicsAllocation *commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs};
+    ResidencyContainer residencyList;
+
+    auto expectedTaskCount = csr.peekTaskCount() + 1;
+    csr.submitBatchBuffer(batchBuffer, residencyList);
+
+    EXPECT_EQ(expectedTaskCount, csr.peekTaskCount());
+    EXPECT_EQ(expectedTaskCount, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(expectedTaskCount, csr.peekLatestSentTaskCount());
+
+    executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
     DebugManagerStateRestore restore;
 
