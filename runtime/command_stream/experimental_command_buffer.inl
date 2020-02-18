@@ -6,6 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
+#include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -64,7 +65,7 @@ size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize() noexcept {
 
     // Two P_C for timestamps
     return 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(
-                   *commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
+                   *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo());
 }
 
 template <typename GfxFamily>
@@ -75,7 +76,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
 
     MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
         *currentStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu,
-        false, *commandStreamReceiver->peekExecutionEnvironment().getHardwareInfo());
+        false, *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo());
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);

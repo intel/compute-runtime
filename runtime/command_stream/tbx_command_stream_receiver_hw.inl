@@ -149,7 +149,7 @@ template <typename GfxFamily>
 CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
-        auto hwInfo = executionEnvironment.getHardwareInfo();
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
         auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);

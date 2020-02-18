@@ -27,12 +27,12 @@
 namespace NEO {
 
 OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
-    auto gpuAddressSpace = executionEnvironment.getHardwareInfo()->capabilityTable.gpuAddressSpace;
 
     // 4 x sizeof(Heap32) + 2 x sizeof(Standard/Standard64k)
     size_t reservedCpuAddressRangeSize = is64bit ? (4 * 4 + 2 * (aubUsage ? 32 : 4)) * GB : 0;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size());
     }
 }

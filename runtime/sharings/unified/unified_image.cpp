@@ -40,7 +40,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
 
     auto &memoryManager = *context->getMemoryManager();
     if (graphicsAllocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        const auto &hwInfo = *memoryManager.peekExecutionEnvironment().getHardwareInfo();
+        const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
         const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         graphicsAllocation->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager.mapAuxGpuVA(graphicsAllocation) : true;
     }

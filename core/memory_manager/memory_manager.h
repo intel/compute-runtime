@@ -138,7 +138,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    MOCKABLE_VIRTUAL bool isHostPointerTrackingEnabled();
+    MOCKABLE_VIRTUAL bool isHostPointerTrackingEnabled(uint32_t rootDeviceIndex);
 
     void setForceNonSvmForExternalHostPtr(bool mode) {
         forceNonSvmForExternalHostPtr = mode;
@@ -203,7 +203,7 @@ class MemoryManager {
     }
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
-    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType) {
+    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
         bool isExternalHostPtrAlloc = (allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
         bool isMapAlloc = (allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION);
 
@@ -211,7 +211,7 @@ class MemoryManager {
             return true;
         }
 
-        bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled()) & !is32bit);
+        bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled(rootDeviceIndex)) & !is32bit);
 
         return isNonSvmPtrCapable && (isExternalHostPtrAlloc || isMapAlloc);
     }

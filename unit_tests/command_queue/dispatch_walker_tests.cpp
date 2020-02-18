@@ -1290,7 +1290,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
     EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
 
     auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
-    bool dcFlushRequired = (executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE);
+    bool dcFlushRequired = (pClDevice->getHardwareInfo().platform.eRenderCoreFamily == IGFX_GEN8_CORE);
     EXPECT_EQ(dcFlushRequired, endPipeControl->getDcFlushEnable());
     EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
 }
@@ -1341,7 +1341,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredTh
 
     ASSERT_EQ(2u, pipeControls.size());
 
-    bool dcFlushRequired = (executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE);
+    bool dcFlushRequired = (pClDevice->getHardwareInfo().platform.eRenderCoreFamily == IGFX_GEN8_CORE);
 
     auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
     EXPECT_TRUE(beginPipeControl->getDcFlushEnable());

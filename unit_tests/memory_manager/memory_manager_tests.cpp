@@ -2142,20 +2142,20 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsSetTo0ThenHostPointerTrackingIsDisabled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableHostPtrTracking.set(0);
-    EXPECT_FALSE(memoryManager->isHostPointerTrackingEnabled());
+    EXPECT_FALSE(memoryManager->isHostPointerTrackingEnabled(0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsNotSetTo1ThenHostPointerTrackingIsEnabled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableHostPtrTracking.set(1);
-    EXPECT_TRUE(memoryManager->isHostPointerTrackingEnabled());
+    EXPECT_TRUE(memoryManager->isHostPointerTrackingEnabled(0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsSetNotSetThenHostPointerTrackingDependsOnCapabilityTable) {
     if (is32bit) {
-        EXPECT_TRUE(memoryManager->isHostPointerTrackingEnabled());
+        EXPECT_TRUE(memoryManager->isHostPointerTrackingEnabled(0u));
     } else {
-        EXPECT_EQ(executionEnvironment->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled, memoryManager->isHostPointerTrackingEnabled());
+        EXPECT_EQ(device->getHardwareInfo().capabilityTable.hostPtrTrackingEnabled, memoryManager->isHostPointerTrackingEnabled(0u));
     }
 }
 
@@ -2190,19 +2190,19 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisab
 
     bool expectedValue = !is32bit;
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u);
     EXPECT_EQ(expectedValue, result);
 
-    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION, 0u);
     EXPECT_EQ(expectedValue, result);
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmHostPtrUsageIsSet) {
     memoryManager->setForceNonSvmForExternalHostPtr(true);
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u);
     EXPECT_EQ(true, result);
-    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, 0u);
     EXPECT_EQ(false, result);
 }
 
@@ -2210,10 +2210,10 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNo
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableHostPtrTracking.set(1);
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u);
     EXPECT_EQ(!executionEnvironment->isFullRangeSvm() && !is32bit, result);
 
-    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION, 0u);
     EXPECT_EQ(!executionEnvironment->isFullRangeSvm() && !is32bit, result);
 }
 

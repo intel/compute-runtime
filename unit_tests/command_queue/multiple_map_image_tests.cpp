@@ -106,7 +106,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 
     template <typename Traits, typename FamilyType>
     std::unique_ptr<MockImage<FamilyType>> createMockImage() {
-        auto eRenderCoreFamily = pDevice->getExecutionEnvironment()->getHardwareInfo()->platform.eRenderCoreFamily;
+        auto eRenderCoreFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
 
         VariableBackup<ImageCreatFunc> backup(&imageFactory[eRenderCoreFamily].createImageFunction);
         imageFactory[eRenderCoreFamily].createImageFunction = MockImage<FamilyType>::createMockImage;

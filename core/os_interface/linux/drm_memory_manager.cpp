@@ -35,8 +35,8 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
-    auto gpuAddressSpace = executionEnvironment.getHardwareInfo()->capabilityTable.gpuAddressSpace;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size());
     }
     MemoryManager::virtualPaddingAvailable = true;

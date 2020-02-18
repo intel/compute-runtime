@@ -661,7 +661,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 }
 
 TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThenContextProvidesProperHint) {
-    if (!pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm) {
+    if (!pPlatform->getDevice(0)->getHardwareInfo().capabilityTable.ftrSvm) {
         GTEST_SKIP();
     }
     void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(0, 256, {});

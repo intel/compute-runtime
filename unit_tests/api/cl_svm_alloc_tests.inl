@@ -22,7 +22,7 @@ class clSVMAllocTemplateTests : public ApiFixture<>,
   public:
     void SetUp() override {
         ApiFixture::SetUp();
-        if (!pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm) {
+        if (!pPlatform->getClDevice(testedRootDeviceIndex)->getHardwareInfo().capabilityTable.ftrSvm) {
             GTEST_SKIP();
         }
     }

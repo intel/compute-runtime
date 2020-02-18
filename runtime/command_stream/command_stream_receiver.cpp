@@ -395,7 +395,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
 }
 
 bool CommandStreamReceiver::createGlobalFenceAllocation() {
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     if (!HwHelper::get(hwInfo->platform.eRenderCoreFamily).isFenceAllocationRequired(*hwInfo)) {
         return true;
     }

@@ -7,6 +7,7 @@
 
 #include "runtime/sharings/d3d/d3d_texture.h"
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_types_converter.h"
 #include "core/gmm_helper/resource_info.h"
@@ -88,7 +89,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
+    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
@@ -148,7 +149,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
+    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)

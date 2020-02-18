@@ -497,7 +497,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
 
-    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
+    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -524,7 +524,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
 
-    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR)) {
+    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -796,7 +796,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonDefaultEngineTypeWhenN
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
     auto engineType = aub_stream::EngineType::ENGINE_BCS;
     EXPECT_NE(defaultEngineType, engineType);
@@ -808,7 +808,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndExist
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
     GmmPageTableMngr *dummyPageTableManager = reinterpret_cast<GmmPageTableMngr *>(0x1234);
@@ -822,7 +822,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenDefaultEngineTypeAndNonEx
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u);
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
     bool supportsPageTableManager = HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->pageTableManager.get());

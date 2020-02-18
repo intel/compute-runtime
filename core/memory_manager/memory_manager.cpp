@@ -36,12 +36,13 @@ uint32_t MemoryManager::maxOsContextCount = 0u;
 
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+
     localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
 
     bool anyLocalMemorySupported = false;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); ++rootDeviceIndex) {
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         this->localMemorySupported.push_back(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
         this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages);
         if (DebugManager.flags.Enable64kbpages.get() > -1) {
@@ -358,7 +359,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.flags.shareable) {
         return allocateShareableMemory(allocationData);
     }
-    if (useNonSvmHostPtrAlloc(allocationData.type)) {
+    if (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex)) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
@@ -503,12 +504,11 @@ void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
     return reservedMemory;
 }
 
-bool MemoryManager::isHostPointerTrackingEnabled() {
-
+bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {
     if (DebugManager.flags.EnableHostPtrTracking.get() != -1) {
         return !!DebugManager.flags.EnableHostPtrTracking.get();
     }
-    return (peekExecutionEnvironment().getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
+    return (peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
 
 bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {

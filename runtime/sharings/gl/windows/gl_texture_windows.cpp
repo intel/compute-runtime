@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/gmm_types_converter.h"
@@ -139,11 +140,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                   : true;
+        alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                  : true;
     }
 
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, &surfaceFormatInfo, imgInfo, cubeFaceIndex,

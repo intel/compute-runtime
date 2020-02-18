@@ -36,9 +36,9 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
@@ -56,12 +56,12 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(*hwInfo), gmm->isRenderCompressed);
+    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isRenderCompressed);
 }
 
 TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
@@ -88,9 +88,9 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
@@ -105,9 +105,9 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
@@ -123,12 +123,12 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(*hwInfo), gmm->isRenderCompressed);
+    EXPECT_EQ(!hwHelper.isPageTableManagerSupported(hwInfo), gmm->isRenderCompressed);
 }
 
 TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
@@ -153,9 +153,9 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto hwInfo = context->getMemoryManager()->peekExecutionEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(*hwInfo) ? 1 : 0;
+    auto hwInfo = context->getDevice(0)->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    uint32_t expectedMapAuxGpuVaCalls = hwHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);

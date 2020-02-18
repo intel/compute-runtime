@@ -163,11 +163,11 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         }
     }
 
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = clDevices[0]->getHardwareInfo();
 
     const bool debuggerActive = executionEnvironment.debugger && executionEnvironment.debugger->isDebuggerActive();
     if (clDevices[0]->getPreemptionMode() == PreemptionMode::MidThread || debuggerActive) {
-        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, clDevices[0]->isDebuggerActive());
+        auto sipType = SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, clDevices[0]->isDebuggerActive());
         initSipKernel(sipType, clDevices[0]->getDevice());
     }
 

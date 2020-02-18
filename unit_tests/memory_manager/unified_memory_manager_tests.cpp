@@ -27,7 +27,7 @@ struct SVMMemoryAllocatorFixture {
     SVMMemoryAllocatorFixture() : executionEnvironment(*platformDevices) {}
 
     virtual void SetUp() {
-        bool svmSupported = executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm;
+        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();
         }
@@ -482,7 +482,7 @@ struct MemoryManagerPropertiesCheck : public MockMemoryManager {
 
 struct UnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     void SetUp() override {
-        bool svmSupported = executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm;
+        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();
         }
@@ -559,7 +559,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
 struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        bool svmSupported = executionEnvironment->getHardwareInfo()->capabilityTable.ftrSvm;
+        bool svmSupported = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();
         }

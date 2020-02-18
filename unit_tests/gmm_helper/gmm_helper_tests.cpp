@@ -709,7 +709,7 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    EXPECT_EQ(device->getExecutionEnvironment()->getHardwareInfo(), device->getGmmHelper()->getHardwareInfo());
+    EXPECT_EQ(&device->getHardwareInfo(), device->getGmmHelper()->getHardwareInfo());
 }
 
 TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {

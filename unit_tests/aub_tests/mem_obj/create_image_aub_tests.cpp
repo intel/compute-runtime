@@ -88,7 +88,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(ImgArrayTypes));
 
 HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
-    auto &hwHelper = HwHelper::get(pDevice->getExecutionEnvironment()->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     imageDesc.image_type = GetParam();
     if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
         imageDesc.image_height = 1;

@@ -138,7 +138,7 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
 
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily;
+    GFXCORE_FAMILY family = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily;
     VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
@@ -552,12 +552,12 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
-    auto hwInfo = pDevice->executionEnvironment->getHardwareInfo();
-    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    auto hwInfo = pDevice->getHardwareInfo();
+    MockOsContext osContext(0, 1, HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                             PreemptionMode::Disabled, false);
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(hwInfo, false, fileName, CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName, CommandStreamReceiverType::CSR_TBX);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
 
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
