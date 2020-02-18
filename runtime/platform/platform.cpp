@@ -259,4 +259,20 @@ std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](E
     return std::make_unique<Platform>(executionEnvironment);
 };
 
+std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
+    std::unordered_map<PRODUCT_FAMILY, size_t> platformsMap;
+    std::vector<DeviceVector> outDevices;
+    for (auto &device : devices) {
+        auto productFamily = device->getHardwareInfo().platform.eProductFamily;
+        auto result = platformsMap.find(productFamily);
+        if (result == platformsMap.end()) {
+            platformsMap.insert({productFamily, platformsMap.size()});
+            outDevices.push_back(DeviceVector{});
+        }
+        auto platformId = platformsMap[productFamily];
+        outDevices[platformId].push_back(std::move(device));
+    }
+    return outDevices;
+}
+
 } // namespace NEO

@@ -87,12 +87,19 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
-            auto pPlatform = Platform::createFunc(*executionEnvironment.release());
-            if (!pPlatform || !pPlatform->initialize(std::move(allDevices))) {
-                retVal = CL_OUT_OF_HOST_MEMORY;
+            auto groupedDevices = Platform::groupDevices(std::move(allDevices));
+            for (auto &deviceVector : groupedDevices) {
+
+                auto pPlatform = Platform::createFunc(*executionEnvironment.release());
+                if (!pPlatform || !pPlatform->initialize(std::move(deviceVector))) {
+                    retVal = CL_OUT_OF_HOST_MEMORY;
+                    break;
+                }
+                platformsImpl.push_back(std::move(pPlatform));
+            }
+            if (retVal != CL_SUCCESS) {
                 break;
             }
-            platformsImpl.push_back(std::move(pPlatform));
         }
         if (platforms) {
             // we only have one platform so we can program that directly

@@ -26,7 +26,7 @@ struct RootDeviceEnvironment {
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
     RootDeviceEnvironment(RootDeviceEnvironment &) = delete;
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
-    const HardwareInfo *getHardwareInfo() const;
+    MOCKABLE_VIRTUAL const HardwareInfo *getHardwareInfo() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);

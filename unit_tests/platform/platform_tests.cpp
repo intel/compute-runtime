@@ -401,3 +401,49 @@ TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItE
     platform.initializeWithNewDevices();
     EXPECT_TRUE(called);
 }
+
+TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {
+    struct MockRootDeviceEnvironment : RootDeviceEnvironment {
+        using RootDeviceEnvironment::RootDeviceEnvironment;
+        const HardwareInfo *getHardwareInfo() const override {
+            return &ownHardwareInfo;
+        }
+        HardwareInfo ownHardwareInfo = *platformDevices[0];
+    };
+    DebugManagerStateRestore restorer;
+    const size_t numRootDevices = 5u;
+
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    auto executionEnvironment = new ExecutionEnvironment();
+
+    for (auto i = 0u; i < numRootDevices; i++) {
+        executionEnvironment->rootDeviceEnvironments.push_back(std::make_unique<MockRootDeviceEnvironment>(*executionEnvironment));
+    }
+    auto inputDevices = DeviceFactory::createDevices(*executionEnvironment);
+    EXPECT_EQ(numRootDevices, inputDevices.size());
+
+    auto skl0Device = inputDevices[0].get();
+    auto skl1Device = inputDevices[1].get();
+    auto skl2Device = inputDevices[2].get();
+    auto kbl0Device = inputDevices[3].get();
+    auto cfl0Device = inputDevices[4].get();
+
+    static_cast<MockRootDeviceEnvironment &>(*executionEnvironment->rootDeviceEnvironments[0]).ownHardwareInfo.platform.eProductFamily = IGFX_SKYLAKE;
+    static_cast<MockRootDeviceEnvironment &>(*executionEnvironment->rootDeviceEnvironments[1]).ownHardwareInfo.platform.eProductFamily = IGFX_SKYLAKE;
+    static_cast<MockRootDeviceEnvironment &>(*executionEnvironment->rootDeviceEnvironments[2]).ownHardwareInfo.platform.eProductFamily = IGFX_SKYLAKE;
+    static_cast<MockRootDeviceEnvironment &>(*executionEnvironment->rootDeviceEnvironments[3]).ownHardwareInfo.platform.eProductFamily = IGFX_KABYLAKE;
+    static_cast<MockRootDeviceEnvironment &>(*executionEnvironment->rootDeviceEnvironments[4]).ownHardwareInfo.platform.eProductFamily = IGFX_COFFEELAKE;
+
+    auto groupedDevices = Platform::groupDevices(std::move(inputDevices));
+
+    EXPECT_EQ(3u, groupedDevices.size());
+    EXPECT_EQ(3u, groupedDevices[0].size());
+    EXPECT_EQ(1u, groupedDevices[1].size());
+    EXPECT_EQ(1u, groupedDevices[2].size());
+
+    EXPECT_EQ(skl0Device, groupedDevices[0][0].get());
+    EXPECT_EQ(skl1Device, groupedDevices[0][1].get());
+    EXPECT_EQ(skl2Device, groupedDevices[0][2].get());
+    EXPECT_EQ(kbl0Device, groupedDevices[1][0].get());
+    EXPECT_EQ(cfl0Device, groupedDevices[2][0].get());
+}

@@ -19,7 +19,6 @@
 namespace NEO {
 
 class CompilerInterface;
-class RootDevice;
 class Device;
 class AsyncEventsHandler;
 class ExecutionEnvironment;
@@ -32,6 +31,7 @@ struct OpenCLObjectMapper<_cl_platform_id> {
     typedef class Platform DerivedType;
 };
 
+using DeviceVector = std::vector<std::unique_ptr<Device>>;
 class Platform : public BaseObject<_cl_platform_id> {
   public:
     static const cl_ulong objectMagic = 0x8873ACDEF2342133LL;
@@ -63,6 +63,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     GmmClientContext *peekGmmClientContext() const;
 
     static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
+    static std::vector<DeviceVector> groupDevices(DeviceVector devices);
 
   protected:
     enum {
