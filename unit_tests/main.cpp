@@ -195,7 +195,6 @@ int main(int argc, char **argv) {
 #endif
 
     ::testing::InitGoogleMock(&argc, argv);
-    auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
     ::productFamily = device.platform.eProductFamily;
 
@@ -217,11 +216,6 @@ int main(int argc, char **argv) {
                 testMode = TestMode::AubTestsWithTbx;
             }
             initialHardwareTag = 0;
-        } else if (!strcmp("--devices", argv[i])) {
-            ++i;
-            if (i < argc) {
-                numDevices = atoi(argv[i]);
-            }
         } else if (!strcmp("--rev_id", argv[i])) {
             ++i;
             if (i < argc) {
@@ -293,10 +287,6 @@ int main(int argc, char **argv) {
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
             DebugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
         }
-    }
-
-    if (numDevices < 1) {
-        return -1;
     }
 
     uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
@@ -378,13 +368,8 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    auto pDevices = new const HardwareInfo *[numDevices];
-    for (decltype(numDevices) i = 0; i < numDevices; ++i) {
-        pDevices[i] = &device;
-    }
-
-    numPlatformDevices = numDevices;
-    platformDevices = pDevices;
+    platformDevices = new const HardwareInfo *[1];
+    platformDevices[0] = &device;
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
@@ -462,7 +447,7 @@ int main(int argc, char **argv) {
 
     cleanTestHelpers();
 
-    delete[] pDevices;
+    delete[] platformDevices;
 
     return retVal;
 }

@@ -41,7 +41,7 @@ bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvir
         executionEnvironment.setHwInfo(platformDevices[0]);
     }
     if (ultHwConfig.useMockedGetDevicesFunc) {
-        numDevicesReturned = numPlatformDevices;
+        numDevicesReturned = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
         executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(numDevicesReturned));
         executionEnvironment.calculateMaxOsContextCount();
         executionEnvironment.initializeMemoryManager();

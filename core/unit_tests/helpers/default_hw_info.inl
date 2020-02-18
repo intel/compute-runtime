@@ -13,6 +13,5 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
     &DEFAULT_TEST_PLATFORM::hwInfo,
 };
 
-size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
 } // namespace NEO

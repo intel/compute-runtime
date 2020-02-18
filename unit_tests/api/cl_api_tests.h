@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/execution_environment/root_device_environment.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/tracing/tracing_api.h"
@@ -25,7 +26,6 @@ namespace NEO {
 class Context;
 class MockClDevice;
 struct RootDeviceEnvironment;
-extern size_t numPlatformDevices;
 
 template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture : PlatformFixture {
@@ -33,7 +33,7 @@ struct ApiFixture : PlatformFixture {
     ~ApiFixture() = default;
 
     virtual void SetUp() {
-        numDevicesBackup = numRootDevices;
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         PlatformFixture::SetUp();
 
         if (rootDeviceIndex != 0u) {
@@ -67,7 +67,7 @@ struct ApiFixture : PlatformFixture {
 
         PlatformFixture::TearDown();
     }
-
+    DebugManagerStateRestore restorer;
     cl_int retVal = CL_SUCCESS;
     size_t retSize = 0;
 
@@ -77,7 +77,6 @@ struct ApiFixture : PlatformFixture {
     MockProgram *pProgram = nullptr;
     constexpr static uint32_t numRootDevices = maxRootDeviceCount;
     constexpr static uint32_t testedRootDeviceIndex = rootDeviceIndex;
-    VariableBackup<size_t> numDevicesBackup{&numPlatformDevices};
     cl_device_id testedClDevice = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };

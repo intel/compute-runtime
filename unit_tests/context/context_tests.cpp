@@ -70,7 +70,6 @@ struct ContextTest : public PlatformFixture,
 };
 
 TEST_F(ContextTest, WhenCreatingContextThenDevicesAllDevicesExist) {
-    EXPECT_EQ(numPlatformDevices, context->getNumDevices());
     for (size_t deviceOrdinal = 0; deviceOrdinal < context->getNumDevices(); ++deviceOrdinal) {
         EXPECT_NE(nullptr, context->getDevice(deviceOrdinal));
     }
@@ -333,8 +332,7 @@ TEST(MultiDeviceContextTest, givenContextWithMultipleDevicesWhenGettingTotalNumb
     DebugManagerStateRestore restorer;
     const uint32_t numDevices = 2u;
     const uint32_t numSubDevices = 3u;
-    VariableBackup<size_t> numDevicesBackup(&numPlatformDevices);
-    numDevicesBackup = numDevices;
+    DebugManager.flags.CreateMultipleRootDevices.set(numDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     initPlatform();
     auto device0 = platform()->getClDevice(0);

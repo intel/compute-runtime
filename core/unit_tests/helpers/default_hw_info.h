@@ -10,7 +10,6 @@
 
 namespace NEO {
 struct HardwareInfo;
-extern size_t numPlatformDevices;
 extern const HardwareInfo **platformDevices;
 
 } // namespace NEO
