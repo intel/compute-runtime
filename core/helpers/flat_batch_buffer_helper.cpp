@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/flat_batch_buffer_helper.h"
+#include "core/helpers/flat_batch_buffer_helper.h"
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/memory_manager/graphics_allocation.h"

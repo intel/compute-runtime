@@ -14,6 +14,7 @@
 #include "core/gmm_helper/page_table_mngr.h"
 #include "core/helpers/blit_commands_helper.h"
 #include "core/helpers/cache_policy.h"
+#include "core/helpers/flat_batch_buffer_helper_hw.h"
 #include "core/helpers/flush_stamp.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/preamble.h"
@@ -28,7 +29,6 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 
 #include "command_stream_receiver_hw_ext.inl"

@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/flat_batch_buffer_helper_hw.inl"
 #include "core/helpers/hw_helper_bdw_plus.inl"
 #include "runtime/aub/aub_helper_bdw_plus.inl"
-#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 
 namespace NEO {
 typedef ICLFamily Family;
