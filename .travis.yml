@@ -26,12 +26,6 @@ matrix:
           env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5 GEN=gen-12
         - os: linux
           compiler: clang
-          env: BUILD_OS=ubuntu-16.04 COMPILER=clang-4
-        - os: linux
-          compiler: clang
-          env: BUILD_OS=ubuntu-16.04 COMPILER=clang-5
-        - os: linux
-          compiler: clang
           env: BUILD_OS=ubuntu-18.04 COMPILER=clang-4
         - os: linux
           compiler: clang
