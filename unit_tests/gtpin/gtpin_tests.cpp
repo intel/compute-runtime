@@ -30,6 +30,7 @@
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -2347,6 +2348,49 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelCreateIsCalledWithN
     auto prevCreateCount = KernelCreateCallbackCount;
     gtpinNotifyKernelCreate(nullptr);
     EXPECT_EQ(prevCreateCount, KernelCreateCallbackCount);
+}
+
+HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushedTaskCountIsNotified) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pContext, pDevice, nullptr);
+
+    auto onKernelSubmitFnc = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) { return; };
+
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = onKernelSubmitFnc;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 128, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 128, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 128, ih3);
+
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+
+    std::vector<Surface *> surfaces;
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    MockKernelWithInternals kernel(*pDevice);
+    kernel.kernelInfo.usesSsh = true;
+    kernelOperation->setHeaps(ih1, ih2, ih3);
+
+    bool flushDC = false;
+    bool slmUsed = false;
+    bool ndRangeKernel = false;
+
+    gtpinNotifyKernelSubmit(kernel, mockCmdQ.get());
+
+    std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
+    CompletionStamp stamp = command->submit(20, false);
+
+    ASSERT_EQ(1u, kernelExecQueue.size());
+
+    EXPECT_TRUE(kernelExecQueue[0].isTaskCountValid);
+    EXPECT_EQ(kernelExecQueue[0].taskCount, stamp.taskCount);
 }
 
 } // namespace ULT

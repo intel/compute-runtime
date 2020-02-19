@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/scratch_space_controller_base.h"
@@ -28,8 +29,6 @@
 #include "core/os_interface/os_context.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/command_stream/experimental_command_buffer.h"
-#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 
 #include "command_stream_receiver_hw_ext.inl"
@@ -514,10 +513,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         flushStamp->peekStamp()};
 
     this->taskLevel += levelClosed ? 1 : 0;
-
-    if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyFlushTask(completionStamp.taskCount);
-    }
 
     return completionStamp;
 }

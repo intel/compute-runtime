@@ -260,6 +260,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyFlushTask(completionStamp.taskCount);
+    }
+
     if (printfHandler) {
         commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
         printfHandler.get()->printEnqueueOutput();

@@ -7,6 +7,7 @@
 
 #include "core/device/device.h"
 
+#include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
@@ -15,7 +16,6 @@
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_time.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 

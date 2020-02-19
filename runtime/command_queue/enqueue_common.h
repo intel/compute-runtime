@@ -794,6 +794,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags,
         getDevice());
 
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyFlushTask(completionStamp.taskCount);
+    }
+
     return completionStamp;
 }
 

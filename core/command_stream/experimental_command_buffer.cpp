@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/experimental_command_buffer.h"
+#include "core/command_stream/experimental_command_buffer.h"
 
 #include "core/command_stream/linear_stream.h"
 #include "core/memory_manager/internal_allocation_storage.h"

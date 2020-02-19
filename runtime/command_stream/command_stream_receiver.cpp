@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 
+#include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/scratch_space_controller.h"
 #include "core/device/device.h"
@@ -25,11 +26,9 @@
 #include "core/utilities/cpuintrinsics.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/experimental_command_buffer.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/platform/platform.h"
 
 namespace NEO {
+
 // Global table of CommandStreamReceiver factories for HW and tests
 CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] = {};
 
@@ -226,9 +225,6 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
         }
     }
     if (*getTagAddress() >= taskCountToWait) {
-        if (gtpinIsGTPinInitialized()) {
-            gtpinNotifyTaskCompletion(taskCountToWait);
-        }
         return true;
     }
     return false;

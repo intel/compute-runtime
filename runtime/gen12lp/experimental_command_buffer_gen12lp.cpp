@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/command_stream/experimental_command_buffer.h"
+#include "core/command_stream/experimental_command_buffer.inl"
 #include "core/helpers/hw_helper.h"
-#include "runtime/command_stream/experimental_command_buffer.h"
-#include "runtime/command_stream/experimental_command_buffer.inl"
 
 namespace NEO {
 typedef TGLLPFamily GfxFamily;
