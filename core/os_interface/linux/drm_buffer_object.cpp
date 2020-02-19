@@ -116,6 +116,10 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.flags = flags;
     execbuf.rsvd1 = drmContextId;
 
+    if (drm->peekDataPortCoherencyPatchActive() && requiresCoherency != drm->peekIsContextDataPortCoherent()) {
+        drm->setContextDataPortCoherent(requiresCoherency);
+    }
+
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret == 0) {
         return 0;

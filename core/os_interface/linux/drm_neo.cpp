@@ -259,6 +259,26 @@ int Drm::getMinEuInPool(int &minEUinPool) {
     return getParamIoctl(I915_PARAM_MIN_EU_IN_POOL, &minEUinPool);
 }
 
+void Drm::obtainDataPortCoherencyPatchState() {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.param = I915_CONTEXT_PARAM_COHERENCY;
+
+    dataPortCoherencyPatchActive = (ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam) == 0);
+    if (dataPortCoherencyPatchActive) {
+        dataPortCoherentContext = !!contextParam.value;
+    }
+}
+
+void Drm::setContextDataPortCoherent(bool coherent) {
+    drm_i915_gem_context_param contextParam = {};
+
+    contextParam.param = I915_CONTEXT_PARAM_COHERENCY;
+    contextParam.value = static_cast<uint64_t>(coherent);
+    auto ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    UNRECOVERABLE_IF(ret != 0);
+    dataPortCoherentContext = coherent;
+}
+
 int Drm::getErrno() {
     return errno;
 }

@@ -87,6 +87,11 @@ class Drm {
     void checkNonPersistentContextsSupport();
     void setNonPersistentContext(uint32_t drmContextId);
 
+    void obtainDataPortCoherencyPatchState();
+    void setContextDataPortCoherent(bool coherent);
+    bool peekDataPortCoherencyPatchActive() const { return dataPortCoherencyPatchActive; }
+    bool peekIsContextDataPortCoherent() const { return dataPortCoherentContext; }
+
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
     }
@@ -104,6 +109,8 @@ class Drm {
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
+    bool dataPortCoherencyPatchActive = false;
+    bool dataPortCoherentContext = true;
     RootDeviceEnvironment &rootDeviceEnvironment;
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {}
     std::unique_ptr<EngineInfo> engineInfo;

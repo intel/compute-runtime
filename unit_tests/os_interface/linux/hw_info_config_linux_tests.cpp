@@ -195,18 +195,18 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigEdramDetection) {
     EXPECT_EQ(1u, outHwInfo.featureTable.ftrEDram);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {
+TEST_F(HwInfoConfigTestLinuxDummy, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
     drm->StoredDeviceID = 21;
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
+TEST_F(HwInfoConfigTestLinuxDummy, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsEnabled) {
     drm->StoredDeviceID = 20;
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownGtType) {

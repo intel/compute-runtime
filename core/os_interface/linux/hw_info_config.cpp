@@ -121,6 +121,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(maxGpuFreq);
+    drm->obtainDataPortCoherencyPatchState();
 
     GTTYPE gtType = drm->getGtType();
     if (gtType == GTTYPE_UNDEFINED) {
@@ -150,7 +151,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.ftrSvm = featureTable->ftrSVM;
 
     HwHelper &hwHelper = HwHelper::get(platform->eRenderCoreFamily);
-    outHwInfo->capabilityTable.ftrSupportsCoherency = false;
+    outHwInfo->capabilityTable.ftrSupportsCoherency = true;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
