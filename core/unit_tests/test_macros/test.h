@@ -231,9 +231,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                     \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                           \
                                                                                                    \
-        void TestBody() override {                                                                 \
-            checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                   \
-        }                                                                                          \
+        void TestBody() override;                                                                  \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                      \
         GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name));       \
     };                                                                                             \
@@ -278,6 +276,10 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                           MatcherFalse>::type;                                     \
             Matcher::template matched<productFamily>();                                            \
         }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                          \
+        checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                       \
     }                                                                                              \
                                                                                                    \
     template <PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCoreFamily, typename FamilyType>     \
@@ -876,6 +878,7 @@ using SupportedProductFamilies =
     SupportedProductFamilyContainer<SUPPORTED_TEST_PRODUCT_FAMILIES>;
 
 // Static container accessor
+
 template <typename Container, int index>
 struct At {
     static const PRODUCT_FAMILY productFamily =
