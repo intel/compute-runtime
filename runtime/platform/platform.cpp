@@ -168,7 +168,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     const bool debuggerActive = executionEnvironment.debugger && executionEnvironment.debugger->isDebuggerActive();
     if (clDevices[0]->getPreemptionMode() == PreemptionMode::MidThread || debuggerActive) {
         auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, clDevices[0]->isDebuggerActive());
-        initSipKernel(sipType, *clDevices[0]);
+        initSipKernel(sipType, clDevices[0]->getDevice());
     }
 
     this->fillGlobalDispatchTable();

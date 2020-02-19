@@ -7,12 +7,12 @@
 
 #include "runtime/helpers/built_ins_helper.h"
 
-#include "runtime/device/cl_device.h"
+#include "core/device/device.h"
 #include "runtime/program/program.h"
 
 namespace NEO {
-const SipKernel &initSipKernel(SipKernelType type, ClDevice &device) {
-    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device.getDevice());
+const SipKernel &initSipKernel(SipKernelType type, Device &device) {
+    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device);
 }
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,

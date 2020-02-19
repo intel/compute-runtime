@@ -10,9 +10,9 @@
 #include "runtime/built_ins/built_ins.h"
 
 namespace NEO {
-class ClDevice;
+class Device;
 
-const SipKernel &initSipKernel(SipKernelType type, ClDevice &device);
+const SipKernel &initSipKernel(SipKernelType type, Device &device);
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,
                              std::vector<char> &binary,
