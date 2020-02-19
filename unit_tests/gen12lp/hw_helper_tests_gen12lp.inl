@@ -5,9 +5,12 @@
  *
  */
 
+#include "core/command_container/command_encoder.h"
 #include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
+#include "unit_tests/helpers/raii_hw_helper.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_hw_helper.h"
 
 #include "engine_node.h"
 
@@ -167,12 +170,42 @@ GEN12LPTEST_F(LriHelperTestsGen12Lp, whenProgrammingLriCommandThenExpectMmioRema
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-using PipeControlHelperTests = ::testing::Test;
+using MemorySynchronizatiopCommandsTests = ::testing::Test;
 
-GEN12LPTEST_F(PipeControlHelperTests, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
+GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
 
     MemorySynchronizationCommands<FamilyType>::setExtraCacheFlushFields(&pipeControl);
     EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
+}
+
+GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, givenLocalMemoryEnabledWhenAddingAdditionalSynchronizationThenSemaphoreWaitIsInjected) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    RAIIHwHelperFactory<MockHwHelperWithLocalMemory<FamilyType>> hwHelperBackup{platformDevices[0]->platform.eRenderCoreFamily};
+    auto hardwareInfo = *platformDevices[0];
+    uint8_t buffer[128] = {};
+    LinearStream commandStream(buffer, 128);
+    uint64_t gpuAddress = 0x12345678;
+
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, hardwareInfo);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    EXPECT_EQ(1u, hwParser.cmdList.size());
+    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
+    ASSERT_NE(nullptr, semaphoreWaitCmd);
+    EXPECT_EQ(gpuAddress, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(static_cast<uint32_t>(-2), semaphoreWaitCmd->getSemaphoreDataDword());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreWaitCmd->getCompareOperation());
+}
+
+GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, givenLocalMemoryEnabledWhenGettingSizeForAdditionalSynchronizationThenCorrrectValueIsReturned) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    RAIIHwHelperFactory<MockHwHelperWithLocalMemory<FamilyType>> hwHelperBackup{platformDevices[0]->platform.eRenderCoreFamily};
+    auto hardwareInfo = *platformDevices[0];
+
+    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
 }
