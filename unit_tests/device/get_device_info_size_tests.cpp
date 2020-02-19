@@ -158,7 +158,7 @@ TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClSuccessAndSizeofClui
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(cl_uint), sizeReturned);
+    EXPECT_EQ(param.second, sizeReturned);
 }
 
 TEST_P(GetDeviceInfoForImage, givenInfoImageParamsWhenCallGetDeviceInfoForImageThenSizeIsValidAndTrueReturned) {

@@ -59,6 +59,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     cl_int retVal = CL_INVALID_VALUE;
     size_t srcSize = 0;
     size_t retSize = 0;
+    size_t value = 0u;
     cl_uint param;
     const void *src = nullptr;
 
@@ -182,9 +183,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     }
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !device.getDeviceInfo().imageSupport) {
-            param = 0u;
-            src = &param;
-            srcSize = retSize = sizeof(param);
+            src = &value;
             break;
         }
         ClDeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
