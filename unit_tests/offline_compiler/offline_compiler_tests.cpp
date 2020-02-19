@@ -351,12 +351,9 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
                                               "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n\n"
                                               "namespace NEO {\n"
                                               "static RegisterEmbeddedResource registerSchedulerBin(\n"
-                                              "    createBuiltinResourceName(\n"
-                                              "        EBuiltInOps::Scheduler,\n"
-                                              "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" +
-                         familyNameWithType + "\", 0)\n"
-                                              "        .c_str(),\n"
-                                              "    (const char *)SchedulerBinary_" +
+                                              "    \"" +
+                         gEnvironment->familyNameWithType + "_0_scheduler.igdrcl_built_in.bin\",\n"
+                                                            "    (const char *)SchedulerBinary_" +
                          familyNameWithType + ",\n"
                                               "    SchedulerBinarySize_" +
                          familyNameWithType + ");\n"

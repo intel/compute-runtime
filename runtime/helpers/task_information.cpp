@@ -166,8 +166,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         devQueue->setupExecutionModelDispatch(*ssh, *dsh, kernel, kernelCount,
                                               commandStreamReceiver.getTagAllocation()->getGpuAddress(), taskCount, timestamp, isCcsUsed);
 
-        BuiltIns &builtIns = *this->kernel->getDevice().getExecutionEnvironment()->getBuiltIns();
-        SchedulerKernel &scheduler = builtIns.getSchedulerKernel(commandQueue.getContext());
+        SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();
 
         scheduler.setArgs(devQueue->getQueueBuffer(),
                           devQueue->getStackBuffer(),

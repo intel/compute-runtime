@@ -180,8 +180,6 @@ class BuiltIns {
         const char *kernelNames,
         int &errcodeRet);
 
-    SchedulerKernel &getSchedulerKernel(Context &context);
-
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
 
     BuiltinsLib &getBuiltinsLib() {
@@ -198,9 +196,6 @@ class BuiltIns {
     }
 
   protected:
-    // scheduler kernel
-    BuiltInKernel schedulerBuiltIn;
-
     // sip builtins
     std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
 

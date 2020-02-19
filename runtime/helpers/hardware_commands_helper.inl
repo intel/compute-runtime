@@ -16,6 +16,7 @@
 #include "core/helpers/string.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "runtime/command_queue/local_id_gen.h"
+#include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
@@ -152,8 +153,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
         maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
     }
 
-    BuiltIns &builtIns = *kernel.getDevice().getExecutionEnvironment()->getBuiltIns();
-    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
+    SchedulerKernel &scheduler = kernel.getContext().getSchedulerKernel();
 
     totalSize += getSizeRequiredSSH(scheduler);
 

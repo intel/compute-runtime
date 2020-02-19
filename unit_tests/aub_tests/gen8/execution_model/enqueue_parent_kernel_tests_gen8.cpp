@@ -31,8 +31,7 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
         properties[0],
         retVal));
 
-    auto &builtIns = *pDevice->getExecutionEnvironment()->getBuiltIns();
-    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(pCmdQ->getContext());
+    SchedulerKernel &scheduler = pCmdQ->getContext().getSchedulerKernel();
     // Aub execution takes huge time for bigger GWS
     scheduler.setGws(24);
 

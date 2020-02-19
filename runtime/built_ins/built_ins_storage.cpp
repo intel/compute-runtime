@@ -60,8 +60,6 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
         return "vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in";
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
         return "vme_block_advanced_motion_estimate_bidirectional_check_intel";
-    case EBuiltInOps::Scheduler:
-        return "scheduler.igdrcl_built_in";
     };
 }
 

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/kernel/kernel.h"
 
 #include <algorithm>
@@ -50,6 +51,7 @@ class SchedulerKernel : public Kernel {
                  GraphicsAllocation *queueStorageBuffer,
                  GraphicsAllocation *ssh,
                  GraphicsAllocation *debugQueue = nullptr);
+    static BuiltinCode loadSchedulerKernel(Device *device);
 
   protected:
     SchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg, true), gws(0) {

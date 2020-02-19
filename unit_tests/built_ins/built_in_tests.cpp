@@ -911,8 +911,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        Context &context = *pContext;
-        SchedulerKernel &schedulerKernel = pBuiltIns->getSchedulerKernel(context);
+        SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
         std::string name = SchedulerKernel::schedulerName;
         EXPECT_EQ(name, schedulerKernel.getKernelInfo().name);
     }
@@ -920,12 +919,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        Context &context = *pContext;
-        SchedulerKernel &schedulerKernel = pBuiltIns->getSchedulerKernel(context);
+        SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
 
         Program *program = schedulerKernel.getProgram();
+        EXPECT_NE(nullptr, program);
 
-        SchedulerKernel &schedulerKernelSecond = pBuiltIns->getSchedulerKernel(context);
+        SchedulerKernel &schedulerKernelSecond = pContext->getSchedulerKernel();
 
         Program *program2 = schedulerKernelSecond.getProgram();
 
@@ -1126,7 +1125,6 @@ TEST_F(VmeBuiltInTests, getBuiltinAsString) {
     EXPECT_EQ(0, strcmp("vme_block_motion_estimate_intel.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::VmeBlockMotionEstimateIntel)));
     EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel)));
     EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_bidirectional_check_intel", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel)));
-    EXPECT_EQ(0, strcmp("scheduler.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::Scheduler)));
     EXPECT_EQ(0, strcmp("unknown", getBuiltinAsString(EBuiltInOps::COUNT)));
 }
 
@@ -1322,10 +1320,6 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Source, *pDevice).size());
-
-    if (pClDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Source, *pDevice).size());
-    }
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
@@ -1351,9 +1345,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    if (this->pClDevice->getEnabledClVersion() >= 20) {
-        EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    }
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *pDevice).size());
 }
 

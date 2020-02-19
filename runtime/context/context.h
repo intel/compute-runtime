@@ -16,6 +16,7 @@
 
 namespace NEO {
 
+struct BuiltInKernel;
 class CommandStreamReceiver;
 class CommandQueue;
 class Device;
@@ -24,6 +25,7 @@ class MemObj;
 class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
+class SchedulerKernel;
 
 enum class BlitOperationResult {
     Unsupported,
@@ -135,6 +137,8 @@ class Context : public BaseObject<_cl_context> {
 
     MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const;
 
+    SchedulerKernel &getSchedulerKernel();
+
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);
@@ -148,6 +152,8 @@ class Context : public BaseObject<_cl_context> {
     size_t numProperties;
     void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *);
     void *userData;
+
+    std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
 
     ClDeviceVector devices;
     MemoryManager *memoryManager;

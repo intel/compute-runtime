@@ -7,6 +7,7 @@
 
 #include "runtime/scheduler/scheduler_kernel.h"
 
+#include "core/device/device.h"
 #include "core/helpers/hw_helper.h"
 #include "runtime/device/cl_device.h"
 
@@ -61,5 +62,15 @@ void SchedulerKernel::computeGws() {
 
     DBG_LOG(PrintEMDebugInformation, "Scheduler GWS: ", gws);
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
+}
+BuiltinCode SchedulerKernel::loadSchedulerKernel(Device *device) {
+    std::string schedulerResourceName = getFamilyNameWithType(device->getHardwareInfo()) + "_0_scheduler.igdrcl_built_in.bin";
+
+    BuiltinCode ret;
+    auto storage = std::make_unique<EmbeddedStorage>("");
+    ret.resource = storage.get()->load(schedulerResourceName);
+    ret.type = BuiltinCode::ECodeType::Binary;
+    ret.targetDevice = device;
+    return ret;
 }
 } // namespace NEO

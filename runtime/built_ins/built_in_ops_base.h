@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,7 @@ constexpr Type FillImage3d{16};
 constexpr Type VmeBlockMotionEstimateIntel{17};
 constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{18};
 constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{19};
-constexpr Type Scheduler{20};
 
-constexpr uint32_t MaxBaseValue{20};
+constexpr uint32_t MaxBaseValue{19};
 } // namespace EBuiltInOps
 } // namespace NEO

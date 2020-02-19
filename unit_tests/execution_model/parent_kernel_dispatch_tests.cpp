@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -211,7 +211,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandStreamFixture, GivenDispatchInfoW
 
         size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
 
-        SchedulerKernel &scheduler = device->getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(*mockParentKernel->getContext());
+        SchedulerKernel &scheduler = pCmdQ->getContext().getSchedulerKernel();
         size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
 
         while (rest >= schedulerSize) {

@@ -24,6 +24,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
+#include "runtime/scheduler/scheduler_kernel.h"
 #include "runtime/sharings/sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 
@@ -46,6 +47,7 @@ Context::Context(
     defaultDeviceQueue = nullptr;
     driverDiagnostics = nullptr;
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
+    schedulerBuiltIn = std::make_unique<BuiltInKernel>();
 }
 
 Context::~Context() {
@@ -66,6 +68,10 @@ Context::~Context() {
     for (auto &device : devices) {
         device->decRefInternal();
     }
+    delete static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
+    delete schedulerBuiltIn->pProgram;
+    schedulerBuiltIn->pKernel = nullptr;
+    schedulerBuiltIn->pProgram = nullptr;
 }
 
 DeviceQueue *Context::getDefaultDeviceQueue() {
@@ -323,6 +329,48 @@ cl_int Context::getSupportedImageFormats(
         *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
     }
     return CL_SUCCESS;
+}
+
+SchedulerKernel &Context::getSchedulerKernel() {
+    if (schedulerBuiltIn->pKernel) {
+        return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
+    }
+
+    auto initializeSchedulerProgramAndKernel = [&] {
+        cl_int retVal = CL_SUCCESS;
+
+        auto src = SchedulerKernel::loadSchedulerKernel(&getDevice(0)->getDevice());
+
+        auto program = Program::createFromGenBinary(*getDevice(0)->getExecutionEnvironment(),
+                                                    this,
+                                                    src.resource.data(),
+                                                    src.resource.size(),
+                                                    true,
+                                                    &retVal);
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+        DEBUG_BREAK_IF(!program);
+
+        retVal = program->processGenBinary();
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+
+        schedulerBuiltIn->pProgram = program;
+
+        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName);
+        DEBUG_BREAK_IF(!kernelInfo);
+
+        schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
+            schedulerBuiltIn->pProgram,
+            *kernelInfo,
+            &retVal);
+
+        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
+
+        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
+    };
+    std::call_once(schedulerBuiltIn->programIsInitialized, initializeSchedulerProgramAndKernel);
+
+    UNRECOVERABLE_IF(schedulerBuiltIn->pKernel == nullptr);
+    return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
 } // namespace NEO

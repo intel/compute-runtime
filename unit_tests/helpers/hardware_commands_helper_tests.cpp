@@ -1200,8 +1200,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredF
 
         totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
 
-        BuiltIns &builtIns = *pDevice->getExecutionEnvironment()->getBuiltIns();
-        auto &scheduler = builtIns.getSchedulerKernel(*pContext);
+        auto &scheduler = pContext->getSchedulerKernel();
         auto schedulerSshSize = scheduler.getSurfaceStateHeapSize();
         totalSize += schedulerSshSize + ((schedulerSshSize != 0) ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0);
 

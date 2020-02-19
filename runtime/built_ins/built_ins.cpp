@@ -33,54 +33,7 @@ BuiltIns::BuiltIns() {
     builtinsLib.reset(new BuiltinsLib());
 }
 
-BuiltIns::~BuiltIns() {
-    delete static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
-    delete schedulerBuiltIn.pProgram;
-    schedulerBuiltIn.pKernel = nullptr;
-    schedulerBuiltIn.pProgram = nullptr;
-}
-
-SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
-    if (schedulerBuiltIn.pKernel) {
-        return *static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
-    }
-
-    auto initializeSchedulerProgramAndKernel = [&] {
-        cl_int retVal = CL_SUCCESS;
-
-        auto src = context.getDevice(0)->getExecutionEnvironment()->getBuiltIns()->builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, context.getDevice(0)->getDevice());
-
-        auto program = Program::createFromGenBinary(*context.getDevice(0)->getExecutionEnvironment(),
-                                                    &context,
-                                                    src.resource.data(),
-                                                    src.resource.size(),
-                                                    true,
-                                                    &retVal);
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-        DEBUG_BREAK_IF(!program);
-
-        retVal = program->processGenBinary();
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-
-        schedulerBuiltIn.pProgram = program;
-
-        auto kernelInfo = schedulerBuiltIn.pProgram->getKernelInfo(SchedulerKernel::schedulerName);
-        DEBUG_BREAK_IF(!kernelInfo);
-
-        schedulerBuiltIn.pKernel = Kernel::create<SchedulerKernel>(
-            schedulerBuiltIn.pProgram,
-            *kernelInfo,
-            &retVal);
-
-        UNRECOVERABLE_IF(schedulerBuiltIn.pKernel->getScratchSize() != 0);
-
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-    };
-    std::call_once(schedulerBuiltIn.programIsInitialized, initializeSchedulerProgramAndKernel);
-
-    UNRECOVERABLE_IF(schedulerBuiltIn.pKernel == nullptr);
-    return *static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
-}
+BuiltIns::~BuiltIns() = default;
 
 const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     uint32_t kernelId = static_cast<uint32_t>(type);

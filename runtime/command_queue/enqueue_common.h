@@ -100,8 +100,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
 
 template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::forceDispatchScheduler(NEO::MultiDispatchInfo &multiDispatchInfo) {
-    BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
-    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
+    SchedulerKernel &scheduler = getContext().getSchedulerKernel();
     DispatchInfo dispatchInfo(&scheduler, 1, Vec3<size_t>(scheduler.getGws(), 1, 1), Vec3<size_t>(scheduler.getLws(), 1, 1), Vec3<size_t>(0, 0, 0));
 
     auto devQueue = this->getContext().getDefaultDeviceQueue();
@@ -546,8 +545,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                                             hwTimeStamps,
                                             isCcsUsed);
 
-    BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
-    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
+    SchedulerKernel &scheduler = getContext().getSchedulerKernel();
 
     scheduler.setArgs(devQueueHw->getQueueBuffer(),
                       devQueueHw->getStackBuffer(),

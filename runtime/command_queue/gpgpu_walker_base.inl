@@ -210,7 +210,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(multiDispatchInfo.getMemObjsForAuxTranslation());
     }
     if (parentKernel) {
-        SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
+        SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
     }
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
