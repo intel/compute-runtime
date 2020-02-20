@@ -206,8 +206,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(multiDispatchInfo.getMemObjsForAuxTranslation());
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(multiDispatchInfo.getMemObjsForAuxTranslation());
+        size_t memObjAuxCount = multiDispatchInfo.getMemObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getMemObjsForAuxTranslation()->size() : 0;
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(memObjAuxCount);
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(memObjAuxCount);
     }
     if (parentKernel) {
         SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();

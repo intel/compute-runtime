@@ -12,7 +12,6 @@
 #include "core/helpers/aux_translation.h"
 #include "core/helpers/non_copyable_or_moveable.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/helpers/properties_helper.h"
 
 #include <atomic>
 #include <cstdint>
@@ -148,8 +147,8 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(const MemObjsForAuxTranslation *memObjsForAuxTranslation) {
-        return memObjsForAuxTranslation->size() * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
+    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count) {
+        return count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
     }
 
     template <typename GfxFamily>

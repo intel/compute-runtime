@@ -26,7 +26,7 @@ class DispatchInfo {
 
   public:
     using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies);
-    using EstimateCommandsMethodT = size_t(const MemObjsForAuxTranslation *);
+    using EstimateCommandsMethodT = size_t(size_t);
 
     DispatchInfo() = default;
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)

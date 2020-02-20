@@ -507,11 +507,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
 
     EXPECT_NE(firstDispatchInfo, lastDispatchInfo); // walker split
 
-    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(&memObjects));
-    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(&memObjects));
+    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(memObjects.size()));
+    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(memObjects.size()));
 
-    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(&memObjects));
-    EXPECT_EQ(dependencySize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(&memObjects));
+    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(memObjects.size()));
+    EXPECT_EQ(dependencySize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(memObjects.size()));
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeBarrier) {

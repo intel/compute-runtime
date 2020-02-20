@@ -68,7 +68,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     }
 
     template <typename GfxFamily>
-    static size_t getSizeForSinglePipeControl(const MemObjsForAuxTranslation *) {
+    static size_t getSizeForSinglePipeControl(size_t) {
         return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
     }
 
