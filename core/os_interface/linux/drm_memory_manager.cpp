@@ -478,11 +478,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         getTiling.handle = boHandle;
         ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
 
-        DEBUG_BREAK_IF(ret != 0);
-        UNUSED_VARIABLE(ret);
-
-        if (getTiling.tiling_mode == I915_TILING_NONE) {
-            properties.imgInfo->linearStorage = true;
+        if (ret == 0) {
+            if (getTiling.tiling_mode == I915_TILING_NONE) {
+                properties.imgInfo->linearStorage = true;
+            }
         }
 
         Gmm *gmm = new Gmm(executionEnvironment.getGmmClientContext(), *properties.imgInfo, createStorageInfoFromProperties(properties));
