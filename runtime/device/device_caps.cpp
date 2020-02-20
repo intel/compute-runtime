@@ -348,9 +348,7 @@ void Device::initializeCaps() {
     deviceInfo.printfBufferSize = 4 * 1024 * 1024;
     deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
 
-    deviceInfo.maxSubGroups[0] = 8;
-    deviceInfo.maxSubGroups[1] = 16;
-    deviceInfo.maxSubGroups[2] = 32;
+    deviceInfo.maxSubGroups = hwHelper.getDeviceSubGroupSizes();
 
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;

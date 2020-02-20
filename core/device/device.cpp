@@ -26,7 +26,6 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 Device::Device(ExecutionEnvironment *executionEnvironment)
     : executionEnvironment(executionEnvironment) {
-    memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
     this->executionEnvironment->incRefInternal();

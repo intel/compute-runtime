@@ -130,10 +130,12 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_EQ(1u, caps.endianLittle);
 
-    // should be hardcoded 8, 16, 32
-    EXPECT_EQ(8u, caps.maxSubGroups[0]);
-    EXPECT_EQ(16u, caps.maxSubGroups[1]);
-    EXPECT_EQ(32u, caps.maxSubGroups[2]);
+    auto expectedDeviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+    EXPECT_EQ(expectedDeviceSubgroups.size(), caps.maxSubGroups.size());
+
+    for (uint32_t i = 0; i < expectedDeviceSubgroups.size(); i++) {
+        EXPECT_EQ(expectedDeviceSubgroups[i], caps.maxSubGroups[i]);
+    }
 
     if (device->getEnabledClVersion() >= 21) {
         EXPECT_TRUE(caps.independentForwardProgress != 0);
@@ -161,6 +163,18 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     if (device->getHardwareInfo().capabilityTable.clVersionSupport == 12 && is64bit) {
         EXPECT_TRUE(caps.force32BitAddressess);
     }
+}
+
+HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+
+    auto deviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+
+    EXPECT_EQ(3u, deviceSubgroups.size());
+    EXPECT_EQ(8u, deviceSubgroups[0]);
+    EXPECT_EQ(16u, deviceSubgroups[1]);
+    EXPECT_EQ(32u, deviceSubgroups[2]);
 }
 
 TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAreCorrect) {

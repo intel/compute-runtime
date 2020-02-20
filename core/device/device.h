@@ -103,7 +103,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::string deviceExtensions;
     std::string exposedBuiltinKernels = "";
 
-    DeviceInfo deviceInfo;
+    DeviceInfo deviceInfo = {};
 
     std::string name;
     HardwareCapabilities hardwareCapabilities = {};

@@ -48,8 +48,8 @@ template <>
 inline void ClDevice::getCap<CL_DEVICE_SUB_GROUP_SIZES_INTEL>(const void *&src,
                                                               size_t &size,
                                                               size_t &retSize) {
-    src = device.getDeviceInfo().maxSubGroups;
-    retSize = size = sizeof(device.getDeviceInfo().maxSubGroups);
+    src = device.getDeviceInfo().maxSubGroups.begin();
+    retSize = size = (device.getDeviceInfo().maxSubGroups.size() * sizeof(size_t));
 }
 
 cl_int ClDevice::getDeviceInfo(cl_device_info paramName,

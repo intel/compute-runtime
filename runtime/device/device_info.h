@@ -7,6 +7,7 @@
 
 #pragma once
 #include "public/cl_ext_private.h"
+#include <core/utilities/stackvec.h>
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
@@ -15,6 +16,7 @@
 
 // clang-format off
 struct DeviceInfo {
+    StackVec<size_t, 3>          maxSubGroups;
     cl_device_type               deviceType;
     size_t                       maxWorkGroupSize;
     size_t                       maxNumEUsPerSubSlice;
@@ -66,7 +68,6 @@ struct DeviceInfo {
     size_t                       planarYuvMaxWidth;
     size_t                       planarYuvMaxHeight;
     size_t                       maxWorkItemSizes[3];
-    size_t                       maxSubGroups[3];
     cl_uint                      vendorId;
     cl_uint                      maxComputUnits;
     cl_uint                      maxWorkItemDimensions;

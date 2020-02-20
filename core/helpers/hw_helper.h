@@ -61,6 +61,7 @@ class HwHelper {
                                                 uint32_t surfaceType,
                                                 bool forceNonAuxMode) = 0;
     virtual const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const = 0;
+    virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
@@ -170,6 +171,8 @@ class HwHelperHw : public HwHelper {
                                         bool forceNonAuxMode) override;
 
     const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const override;
+
+    const StackVec<size_t, 3> getDeviceSubGroupSizes() const override;
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 

@@ -312,4 +312,9 @@ typename GfxFamily::PIPE_CONTROL *MemorySynchronizationCommands<GfxFamily>::addF
     return pipeControl;
 }
 
+template <typename GfxFamily>
+const StackVec<size_t, 3> HwHelperHw<GfxFamily>::getDeviceSubGroupSizes() const {
+    return {8, 16, 32};
+}
+
 } // namespace NEO
