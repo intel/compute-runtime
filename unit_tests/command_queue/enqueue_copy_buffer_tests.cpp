@@ -135,7 +135,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                     pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                     pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -163,7 +163,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless,
-                                                                                                     pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                     pCmdQ->getDevice());
 
     ASSERT_NE(nullptr, &builder);
     BuiltinOpParams dc;
@@ -253,7 +253,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                     pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                     pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -280,7 +280,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                     pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                     pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

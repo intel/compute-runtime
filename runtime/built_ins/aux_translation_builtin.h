@@ -17,7 +17,7 @@ namespace NEO {
 template <>
 class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device);
+    BuiltInOp(BuiltIns &kernelsLib, Device &device);
     template <typename GfxFamily>
     bool buildDispatchInfosForAuxTranslation(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
         size_t kernelInstanceNumber = 0;

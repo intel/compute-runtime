@@ -246,7 +246,6 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
     EBuiltInOps::Type copyBuiltIn = EBuiltInOps::CopyImage3dToBuffer;
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
 
     // substitute original builder with mock builder
@@ -266,7 +265,6 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitc
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_TRUE, origin, region, rowPitch, slicePitch);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(copyBuiltIn,
-                                                                                                              pCmdQ->getContext(),
                                                                                                               pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
     EXPECT_EQ(params->srcRowPitch, slicePitch);
@@ -494,7 +492,6 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     auto image_type = (cl_mem_object_type)GetParam();
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImage3dToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
 
     // substitute original builder with mock builder
@@ -557,7 +554,6 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
-                                                                                                              pCmdQ->getContext(),
                                                                                                               pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 

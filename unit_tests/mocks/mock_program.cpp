@@ -23,7 +23,7 @@ namespace NEO {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
 ExecutionEnvironment GlobalMockSipProgram::executionEnvironment;
 
-ClDevice *MockProgram::getDevicePtr() { return this->pDevice; }
+Device *MockProgram::getDevicePtr() { return this->pDevice; }
 
 std::string MockProgram::getCachedFileName() const {
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
@@ -60,7 +60,8 @@ void GlobalMockSipProgram::initSipProgram() {
                                                                     binary.data(),
                                                                     binary.size(),
                                                                     true,
-                                                                    &retVal);
+                                                                    &retVal,
+                                                                    nullptr);
     DEBUG_BREAK_IF(retVal != 0);
     sipProgram->processGenBinaryOnce();
 }
@@ -106,7 +107,7 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
     NEO::ProgramInfo programInfo;
     NEO::populateProgramInfo(programInfo, programTokens);
 
-    Program *ret = new Program(executionEnvironment, nullptr, false);
+    Program *ret = new Program(executionEnvironment, nullptr, false, nullptr);
     ret->processProgramInfo(programInfo);
     return ret;
 }

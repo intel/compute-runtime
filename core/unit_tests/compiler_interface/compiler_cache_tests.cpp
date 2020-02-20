@@ -314,7 +314,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
 TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
     MockClDevice device{new MockDevice};
     MockContext context(&device, true);
-    MockProgram program(*device.getExecutionEnvironment(), &context, false);
+    MockProgram program(*device.getExecutionEnvironment(), &context, false, nullptr);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "__kernel k() {}";
@@ -347,7 +347,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
 TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
     MockClDevice device{new MockDevice};
     MockContext context(&device, true);
-    MockProgram program(*device.getExecutionEnvironment(), &context, false);
+    MockProgram program(*device.getExecutionEnvironment(), &context, false, nullptr);
     TranslationInput inputArgs{IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
 
     auto src = "#include \"file.h\"\n__kernel k() {}";

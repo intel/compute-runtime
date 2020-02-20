@@ -42,7 +42,7 @@ MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
                                            0u,
                                            MemoryConstants::pageSize,
                                            MemoryPool::System4KBPages);
-    this->program = new MockProgram(this->executionEnvironment, nullptr, false);
+    this->program = new MockProgram(this->executionEnvironment, nullptr, false, nullptr);
 }
 
 MockSipKernel::~MockSipKernel() = default;

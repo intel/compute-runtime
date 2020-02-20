@@ -128,7 +128,9 @@ cl_int Program::compile(
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
-        auto compilerExtensionsOptions = this->pDevice->peekCompilerExtensions();
+        auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+        UNRECOVERABLE_IF(clDevice == nullptr);
+        auto compilerExtensionsOptions = clDevice->peekCompilerExtensions();
         CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
 
         if (isKernelDebugEnabled()) {
@@ -145,7 +147,7 @@ cl_int Program::compile(
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
         TranslationOutput compilerOuput;
-        auto compilerErr = pCompilerInterface->compile(this->pDevice->getDevice(), inputArgs, compilerOuput);
+        auto compilerErr = pCompilerInterface->compile(*this->pDevice, inputArgs, compilerOuput);
         this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
         this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
         retVal = asClError(compilerErr);

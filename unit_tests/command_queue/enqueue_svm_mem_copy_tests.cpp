@@ -66,13 +66,12 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
-
+    pDevice->mockMemoryManager.reset(new MockMemoryManager());
     auto builtIns = new MockBuiltins();
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
     // retrieve original builder
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
@@ -107,7 +106,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // check if original builder is restored correctly
     auto &restoredBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -151,7 +149,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // retrieve original builder
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
@@ -186,7 +183,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // check if original builder is restored correctly
     auto &restoredBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -235,7 +231,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // retrieve original builder
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
@@ -270,7 +265,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // check if original builder is restored correctly
     auto &restoredBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 

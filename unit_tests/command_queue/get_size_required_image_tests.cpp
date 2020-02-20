@@ -68,7 +68,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferCons
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -171,7 +171,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -225,7 +225,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -279,7 +279,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -333,7 +333,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

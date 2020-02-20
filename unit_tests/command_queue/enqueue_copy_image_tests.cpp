@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,7 +205,6 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
     // substitute original builder with mock builder
     auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
@@ -299,7 +298,6 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                              pCmdQ->getContext(),
                                                                                                               pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 

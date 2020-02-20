@@ -182,7 +182,7 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
     return ret;
 }
 
-std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &bc, Context &context, Device &device) {
+std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &bc, Device &device) {
     std::unique_ptr<Program> ret;
     const char *data = bc.resource.data();
     size_t dataLen = bc.resource.size();
@@ -192,10 +192,10 @@ std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &b
         break;
     case BuiltinCode::ECodeType::Source:
     case BuiltinCode::ECodeType::Intermediate:
-        ret.reset(Program::create(data, &context, device, true, &err));
+        ret.reset(Program::create(data, nullptr, device, true, &err));
         break;
     case BuiltinCode::ECodeType::Binary:
-        ret.reset(Program::createFromGenBinary(*device.getExecutionEnvironment(), &context, data, dataLen, true, nullptr));
+        ret.reset(Program::createFromGenBinary(*device.getExecutionEnvironment(), nullptr, data, dataLen, true, nullptr, &device));
         break;
     }
     return ret;

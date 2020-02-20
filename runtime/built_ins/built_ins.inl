@@ -11,8 +11,8 @@
 #include "runtime/mem_obj/buffer.h"
 namespace NEO {
 
-BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
-    BuiltinDispatchInfoBuilder::populate(context, device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
+BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
+    BuiltinDispatchInfoBuilder::populate(device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
 
     resizeKernelInstances(5);
 }

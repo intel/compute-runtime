@@ -1068,7 +1068,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
-                auto pageFaultManager = this->getContext().getMemoryManager()->getPageFaultManager();
+                auto pageFaultManager = device.getMemoryManager()->getPageFaultManager();
                 if (pageFaultManager &&
                     this->isUnifiedMemorySyncRequired) {
                     pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(pSVMAlloc->getGpuAddress()));

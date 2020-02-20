@@ -7,6 +7,7 @@
 
 #include "core/helpers/get_info.h"
 
+#include "core/device/device.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/base_object.h"
@@ -24,7 +25,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     size_t srcSize = 0;
     size_t retSize = 0;
     std::string kernelNamesString;
-    cl_device_id device_id = pDevice;
+    cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
     cl_uint refCount = 0;
     size_t numKernels;
     cl_context clContext = context;
@@ -154,14 +155,9 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     const void *pSrc = nullptr;
     size_t srcSize = 0;
     size_t retSize = 0;
-    cl_device_id device_id = pDevice;
+    cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
 
     if (device != device_id) {
-        return CL_INVALID_DEVICE;
-    }
-
-    retVal = validateObjects(device);
-    if (retVal != CL_SUCCESS) {
         return CL_INVALID_DEVICE;
     }
 
@@ -179,7 +175,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
 
     case CL_PROGRAM_BUILD_LOG: {
-        const char *pBuildLog = getBuildLog(pClDev);
+        const char *pBuildLog = getBuildLog(&pClDev->getDevice());
 
         if (pBuildLog != nullptr) {
             pSrc = pBuildLog;

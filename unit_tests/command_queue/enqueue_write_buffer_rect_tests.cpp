@@ -147,7 +147,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

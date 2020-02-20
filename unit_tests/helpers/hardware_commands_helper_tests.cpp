@@ -65,7 +65,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorData
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getContext(), cmdQ.getDevice());
+                                                                                                     cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -137,7 +137,7 @@ HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getContext(), cmdQ.getDevice());
+                                                                                                     cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -171,7 +171,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     MockContext context;
 
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
     auto kernelInfo = std::make_unique<KernelInfo>();
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
@@ -237,7 +237,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     MockContext context;
 
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
     auto kernelInfo = std::make_unique<KernelInfo>();
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
@@ -285,7 +285,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getContext(), cmdQ.getDevice());
+                                                                                                     cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -503,7 +503,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = cmdQ.getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                             cmdQ.getContext(), cmdQ.getDevice());
+                                                                                                             cmdQ.getDevice());
 
     BuiltinOpParams dc;
     dc.srcMemObj = img.get();
@@ -585,7 +585,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                     cmdQ.getContext(), cmdQ.getDevice());
+                                                                                                     cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -700,7 +700,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
 
     // setup global memory
     char globalBuffer[16];
@@ -833,7 +833,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequi
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
@@ -891,7 +891,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);

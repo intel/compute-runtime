@@ -6,6 +6,7 @@
  */
 
 #include "core/compiler_interface/compiler_interface.h"
+#include "core/device/device.h"
 #include "core/device_binary_format/elf/elf.h"
 #include "core/device_binary_format/elf/elf_encoder.h"
 #include "core/device_binary_format/elf/ocl_elf.h"
@@ -118,7 +119,7 @@ cl_int Program::link(
         if (!isCreateLibrary) {
             inputArgs.outType = IGC::CodeType::oclGenBin;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->link(this->pDevice->getDevice(), inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->link(this->getDevice(), inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);
@@ -138,14 +139,16 @@ cl_int Program::link(
 
             if (isKernelDebugEnabled()) {
                 processDebugData();
+                auto clDevice = this->getDevice().getSpecializedDevice<ClDevice>();
+                UNRECOVERABLE_IF(clDevice == nullptr);
                 for (auto kernelInfo : kernelInfoArray) {
-                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
+                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
                 }
             }
         } else {
             inputArgs.outType = IGC::CodeType::llvmBc;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->createLibrary(this->pDevice->getDevice(), inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->createLibrary(*this->pDevice, inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);

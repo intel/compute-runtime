@@ -55,7 +55,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     }
 
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
-                                                                                                        this->getContext(), this->getDevice());
+                                                                                                        this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 

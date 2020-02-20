@@ -140,7 +140,7 @@ TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidV
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = new KernelInfo();
 
-    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false);
+    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false, nullptr);
     pMockProg->addKernelInfo(pKernelInfo);
 
     kernel = clCreateKernel(
@@ -166,7 +166,7 @@ TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidP
 
 TEST_F(clCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
     cl_kernel kernel = nullptr;
-    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false);
+    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false, nullptr);
     pMockProg->SetBuildStatus(CL_BUILD_ERROR);
 
     kernel = clCreateKernel(

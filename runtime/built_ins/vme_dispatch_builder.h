@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,10 @@
 namespace NEO {
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
-    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
+    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Device &device, EBuiltInOps::Type builtinOp,
                                   const char *kernelName)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(context, device, builtinOp,
+        populate(device, builtinOp,
                  mediaKernelsBuildOptions,
                  kernelName, vmeKernel);
         widthArgNum = vmeKernel->getKernelInfo().getArgNumByName("width");
@@ -240,17 +240,17 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : VmeBuiltinDispatchInfoBuilder(kernelsLib, context, device,
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+        : VmeBuiltinDispatchInfoBuilder(kernelsLib, device,
                                         EBuiltInOps::VmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
     }
 };
 
 class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder {
   public:
-    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
+    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Device &device, EBuiltInOps::Type builtinOp,
                                           const char *kernelName)
-        : VmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, builtinOp,
+        : VmeBuiltinDispatchInfoBuilder(kernelsLib, device, builtinOp,
                                         kernelName) {
         flagsArgNum = this->vmeKernel->getKernelInfo().getArgNumByName("flags");
         intraSrcImgArgNum = this->vmeKernel->getKernelInfo().getArgNumByName("intraSrcImg");
@@ -440,8 +440,8 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
                                                 "block_advanced_motion_estimate_check_intel") {
     }
 
@@ -464,8 +464,8 @@ class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public 
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
                                                 "block_advanced_motion_estimate_bidirectional_check_intel") {
     }
 

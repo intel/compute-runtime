@@ -82,7 +82,7 @@ class MockProgram : public Program {
     void setGlobalSurface(GraphicsAllocation *gfxAllocation) {
         globalSurface = gfxAllocation;
     }
-    void setDevice(ClDevice *device) {
+    void setDevice(Device *device) {
         this->pDevice = device;
     };
     std::vector<KernelInfo *> &getKernelInfoArray() {
@@ -108,7 +108,7 @@ class MockProgram : public Program {
     void SetCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
     void ClearLog() { buildLog.clear(); }
     void SetGlobalVariableTotalSize(size_t globalVarSize) { globalVarTotalSize = globalVarSize; }
-    void SetDevice(ClDevice *pDev) { pDevice = pDev; }
+    void SetDevice(Device *pDev) { pDevice = pDev; }
 
     void SetIrBinary(char *ptr, bool isSpirv) {
         irBinary.reset(ptr);
@@ -124,7 +124,7 @@ class MockProgram : public Program {
         allowNonUniform = allow;
     }
 
-    ClDevice *getDevicePtr();
+    Device *getDevicePtr();
 
     bool isFlagOption(ConstStringRef option) override {
         if (isFlagOptionOverride != -1) {
@@ -144,7 +144,7 @@ class MockProgram : public Program {
         this->isCreatedFromBinary = false;
         this->buildStatus = CL_BUILD_NONE;
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
-        auto &device = this->pDevice->getDevice();
+        auto &device = this->getDevice();
         return this->build(&device, this->options.c_str(), false, builtins);
     }
 

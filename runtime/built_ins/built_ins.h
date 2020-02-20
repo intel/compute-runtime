@@ -140,7 +140,7 @@ class BuiltinsLib {
     BuiltinsLib();
     BuiltinCode getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
 
-    static std::unique_ptr<Program> createProgramFromCode(const BuiltinCode &bc, Context &context, Device &device);
+    static std::unique_ptr<Program> createProgramFromCode(const BuiltinCode &bc, Device &device);
 
   protected:
     BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
@@ -167,15 +167,14 @@ class BuiltIns {
   public:
     std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag> BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::COUNT)];
 
-    BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Context &context, Device &device);
-    BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Context &context, Device &device);
-    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Context &context, Device &device,
+    BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
+    BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
+    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device,
                                                                               std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
     BuiltIns();
     virtual ~BuiltIns();
 
     Program *createBuiltInProgram(
-        Context &context,
         Device &device,
         const char *kernelNames,
         int &errcodeRet);

@@ -541,7 +541,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsBufferNotSet) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
-    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
     auto kernel = clUniquePtr(new MockKernel(program.get(), *kernelInfo, *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -575,7 +575,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsBuffer) {
     cl_mem clObj = buffer;
 
     auto kernelInfo = std::make_unique<KernelInfo>();
-    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
     auto kernel = clUniquePtr(new MockKernel(program.get(), *kernelInfo, *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -614,7 +614,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsSampler) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
-    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
     auto kernel = clUniquePtr(new MockKernel(program.get(), *kernelInfo, *device));
 
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -642,7 +642,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsImageNotSet) {
     auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
-    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
     auto kernel = clUniquePtr(new MockKernel(program.get(), *kernelInfo, *device));
 
     SKernelBinaryHeaderCommon kernelHeader;

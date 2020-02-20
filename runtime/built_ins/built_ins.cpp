@@ -55,7 +55,8 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
                                            nullptr,
                                            sipBinary,
                                            sipBinary.size(),
-                                           &retVal);
+                                           &retVal,
+                                           &device);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         UNRECOVERABLE_IF(program == nullptr);
 
@@ -94,7 +95,6 @@ static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
 // Pointer to program with built in kernels is returned to the user through API
 // call and user is responsible for releasing it by calling clReleaseProgram.
 Program *BuiltIns::createBuiltInProgram(
-    Context &context,
     Device &device,
     const char *kernelNames,
     int &errcodeRet) {
@@ -123,16 +123,16 @@ Program *BuiltIns::createBuiltInProgram(
 
     Program *pBuiltInProgram = nullptr;
 
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, device, true, nullptr);
+    pBuiltInProgram = Program::create(programSourceStr.c_str(), nullptr, device, true, nullptr);
 
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
         builtinsBuilders["block_motion_estimate_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, device);
         builtinsBuilders["block_advanced_motion_estimate_check_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, device);
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
         errcodeRet = pBuiltInProgram->build(
             &device,
             mediaKernelsBuildOptions,
@@ -147,9 +147,9 @@ Program *BuiltIns::createBuiltInProgram(
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferToBuffer,
                  "",
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
@@ -241,9 +241,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltInOp<EBuiltInOps::CopyBufferToBuffer>(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
@@ -259,9 +259,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferRect,
                  "",
                  "CopyBufferRectBytes2d", kernelBytes[0],
@@ -363,9 +363,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltInOps::CopyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferRectStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferRectBytes2d", kernelBytes[0],
@@ -380,9 +380,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltI
 template <>
 class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::FillBuffer,
                  "",
                  "FillBufferLeftLeftover", kernLeftLeftover,
@@ -463,8 +463,8 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
 template <>
 class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps::FillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
-        populate(context, device,
+    BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
+        populate(device,
                  EBuiltInOps::FillBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "FillBufferLeftLeftover", kernLeftLeftover,
@@ -479,9 +479,9 @@ class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferToImage3d,
                  "",
                  "CopyBufferToImage3dBytes", kernelBytes[0],
@@ -572,9 +572,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyBufferToImage3dStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyBufferToImage3dBytes", kernelBytes[0],
@@ -592,9 +592,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EB
 template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyImage3dToBuffer,
                  "",
                  "CopyImage3dToBufferBytes", kernelBytes[0],
@@ -686,9 +686,9 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>(kernelsLib) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyImage3dToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "CopyImage3dToBufferBytes", kernelBytes[0],
@@ -706,9 +706,9 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EB
 template <>
 class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::CopyImageToImage3d,
                  "",
                  "CopyImageToImage3d", kernel);
@@ -771,9 +771,9 @@ class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBui
 template <>
 class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, Device &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
-        populate(context, device,
+        populate(device,
                  EBuiltInOps::FillImage3d,
                  "",
                  "FillImage3d", kernel);
@@ -826,60 +826,60 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
     Kernel *kernel;
 };
 
-BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Context &context, Device &device) {
+BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = BuiltinOpsBuilders[operationId];
     switch (operation) {
     case EBuiltInOps::CopyBufferToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToBuffer>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToBuffer>>(*this, device); });
         break;
     case EBuiltInOps::CopyBufferToBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless>>(*this, device); });
         break;
     case EBuiltInOps::CopyBufferRect:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRect>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRect>>(*this, device); });
         break;
     case EBuiltInOps::CopyBufferRectStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRectStateless>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferRectStateless>>(*this, device); });
         break;
     case EBuiltInOps::FillBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBuffer>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBuffer>>(*this, device); });
         break;
     case EBuiltInOps::FillBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBufferStateless>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillBufferStateless>>(*this, device); });
         break;
     case EBuiltInOps::CopyBufferToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3d>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3d>>(*this, device); });
         break;
     case EBuiltInOps::CopyBufferToImage3dStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless>>(*this, device); });
         break;
     case EBuiltInOps::CopyImage3dToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>>(*this, device); });
         break;
     case EBuiltInOps::CopyImage3dToBufferStateless:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless>>(*this, device); });
         break;
     case EBuiltInOps::CopyImageToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImageToImage3d>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::CopyImageToImage3d>>(*this, device); });
         break;
     case EBuiltInOps::FillImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillImage3d>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillImage3d>>(*this, device); });
         break;
     case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>>(*this, device); });
         break;
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>>(*this, device); });
         break;
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(*this, device); });
         break;
     case EBuiltInOps::AuxTranslation:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::AuxTranslation>>(*this, context, device); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::AuxTranslation>>(*this, device); });
         break;
     default:
-        return getUnknownDispatchInfoBuilder(operation, context, device);
+        return getUnknownDispatchInfoBuilder(operation, device);
     }
     return *operationBuilder.first;
 }

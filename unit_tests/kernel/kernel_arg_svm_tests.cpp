@@ -54,7 +54,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
 
-        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
+        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());

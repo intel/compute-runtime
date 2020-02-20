@@ -1240,10 +1240,9 @@ TEST(DispatchWalker, WhenCalculatingDispatchDimensionsThenCorrectValuesAreReturn
 }
 
 HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
-    auto &context = pCmdQ->getContext();
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     auto builtIns = executionEnvironment->getBuiltIns();
-    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
@@ -1296,10 +1295,9 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
 }
 
 HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
-    auto &context = pCmdQ->getContext();
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     auto builtIns = executionEnvironment->getBuiltIns();
-    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);

@@ -1367,11 +1367,9 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
     if (retVal == CL_SUCCESS) {
 
         for (cl_uint i = 0; i < numDevices; i++) {
-            auto pContext = castToObject<Context>(context);
             auto pDevice = castToObject<ClDevice>(*deviceList);
 
             program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
-                *pContext,
                 pDevice->getDevice(),
                 kernelNames,
                 retVal);
@@ -1489,7 +1487,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         pContext = castToObject<Context>(context);
     }
     if (pContext != nullptr) {
-        program = new Program(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
+        program = new Program(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice());
         retVal = program->link(numDevices, deviceList, options,
                                numInputPrograms, inputPrograms,
                                funcNotify, userData);

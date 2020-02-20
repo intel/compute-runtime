@@ -17,5 +17,6 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,
                              std::vector<char> &binary,
                              size_t size,
-                             cl_int *errcodeRet);
+                             cl_int *errcodeRet,
+                             Device *device);
 } // namespace NEO

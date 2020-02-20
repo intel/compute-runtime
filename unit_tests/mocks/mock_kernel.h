@@ -295,7 +295,7 @@ class MockKernelWithInternals {
             mockContext = context;
         }
 
-        mockProgram = new MockProgram(*deviceArg.getExecutionEnvironment(), context, false);
+        mockProgram = new MockProgram(*deviceArg.getExecutionEnvironment(), context, false, nullptr);
         mockKernel = new MockKernel(mockProgram, kernelInfo, deviceArg);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
@@ -367,7 +367,7 @@ class MockParentKernel : public Kernel {
     using Kernel::auxTranslationRequired;
     using Kernel::patchBlocksCurbeWithConstantValues;
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
-        ClDevice &device = *context.getDevice(0);
+        Device &device = context.getDevice(0)->getDevice();
 
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
@@ -442,7 +442,10 @@ class MockParentKernel : public Kernel {
         assert(crossThreadSize >= crossThreadOffset);
         info->crossThreadData = new char[crossThreadSize];
 
-        auto parent = new MockParentKernel(mockProgram, *info, device);
+        auto clDevice = device.getSpecializedDevice<ClDevice>();
+        DEBUG_BREAK_IF(clDevice == nullptr);
+
+        auto parent = new MockParentKernel(mockProgram, *info, *clDevice);
         parent->crossThreadData = new char[crossThreadSize];
         memset(parent->crossThreadData, 0, crossThreadSize);
         parent->crossThreadDataSize = crossThreadSize;

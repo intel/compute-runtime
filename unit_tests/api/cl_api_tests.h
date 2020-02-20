@@ -49,7 +49,7 @@ struct ApiFixture : PlatformFixture {
 
         pCommandQueue = new CommandQueue(pContext, pDevice, nullptr);
 
-        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false);
+        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, &pDevice->getDevice());
 
         pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);

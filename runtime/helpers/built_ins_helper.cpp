@@ -18,15 +18,17 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,
                              std::vector<char> &binary,
                              size_t size,
-                             cl_int *errcodeRet) {
+                             cl_int *errcodeRet,
+                             Device *device) {
 
     cl_int retVal = 0;
     auto program = Program::createFromGenBinary(executionEnvironment,
-                                                nullptr,
+                                                context,
                                                 binary.data(),
                                                 size,
                                                 true,
-                                                &retVal);
+                                                &retVal,
+                                                device);
     DEBUG_BREAK_IF(retVal != 0);
     return program;
 }

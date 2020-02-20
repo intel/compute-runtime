@@ -97,8 +97,10 @@ cl_int Program::build(
                     options = std::string("-s ") + filename + " " + options;
                 }
             }
+            auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+            UNRECOVERABLE_IF(clDevice == nullptr);
 
-            auto compilerExtensionsOptions = this->pDevice->peekCompilerExtensions();
+            auto compilerExtensionsOptions = clDevice->peekCompilerExtensions();
             if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
                 CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
             }
@@ -114,7 +116,7 @@ cl_int Program::build(
                     "\nBuild Internal Options", inputArgs.internalOptions.begin());
             inputArgs.allowCaching = enableCaching;
             NEO::TranslationOutput compilerOuput = {};
-            auto compilerErr = pCompilerInterface->build(this->pDevice->getDevice(), inputArgs, compilerOuput);
+            auto compilerErr = pCompilerInterface->build(*this->pDevice, inputArgs, compilerOuput);
             this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
             this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);
@@ -144,9 +146,11 @@ cl_int Program::build(
 
         if (isKernelDebugEnabled()) {
             processDebugData();
-            if (pDevice->getSourceLevelDebugger()) {
+            auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+            UNRECOVERABLE_IF(clDevice == nullptr);
+            if (clDevice->getSourceLevelDebugger()) {
                 for (auto kernelInfo : kernelInfoArray) {
-                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
+                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
                 }
             }
         }
@@ -172,7 +176,11 @@ cl_int Program::build(
 bool Program::appendKernelDebugOptions() {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::debugKernelEnable);
     CompilerOptions::concatenateAppend(options, CompilerOptions::generateDebugInfo);
-    auto debugger = pDevice->getSourceLevelDebugger();
+
+    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+    UNRECOVERABLE_IF(clDevice == nullptr);
+
+    auto debugger = clDevice->getSourceLevelDebugger();
     if (debugger && debugger->isOptimizationDisabled()) {
         CompilerOptions::concatenateAppend(options, CompilerOptions::optDisable);
     }
@@ -180,8 +188,11 @@ bool Program::appendKernelDebugOptions() {
 }
 
 void Program::notifyDebuggerWithSourceCode(std::string &filename) {
-    if (pDevice->getSourceLevelDebugger()) {
-        pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
+    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+    UNRECOVERABLE_IF(clDevice == nullptr);
+
+    if (clDevice->getSourceLevelDebugger()) {
+        clDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
     }
 }
 

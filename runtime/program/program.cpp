@@ -33,24 +33,28 @@ namespace NEO {
 
 const std::string Program::clOptNameClVer("-cl-std=CL");
 
-Program::Program(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false) {
+Program::Program(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
     numDevices = 0;
 }
 
-Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn) : executionEnvironment(executionEnvironment),
-                                                                                                 context(context),
-                                                                                                 isBuiltIn(isBuiltIn) {
+Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device) : executionEnvironment(executionEnvironment),
+                                                                                                                 context(context),
+                                                                                                                 pDevice(device),
+                                                                                                                 isBuiltIn(isBuiltIn) {
     if (this->context && !this->isBuiltIn) {
         this->context->incRefInternal();
     }
     blockKernelManager = new BlockKernelManager();
-    pDevice = context ? context->getDevice(0) : nullptr;
+    auto clDevice = context != nullptr ? context->getDevice(0) : (device != nullptr) ? device->getSpecializedDevice<ClDevice>() : nullptr;
+    if (pDevice == nullptr && context != nullptr) {
+        pDevice = &context->getDevice(0)->getDevice();
+    }
     numDevices = 1;
     char paramValue[32] = {};
     bool force32BitAddressess = false;
 
-    if (pDevice) {
-        pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, nullptr);
+    if (clDevice) {
+        clDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, nullptr);
         if (strstr(paramValue, "2.1")) {
             internalOptions = "-ocl-version=210 ";
         } else if (strstr(paramValue, "2.0")) {
@@ -58,13 +62,13 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         } else if (strstr(paramValue, "1.2")) {
             internalOptions = "-ocl-version=120 ";
         }
-        force32BitAddressess = pDevice->getDeviceInfo().force32BitAddressess;
+        force32BitAddressess = clDevice->getDeviceInfo().force32BitAddressess;
 
         if (force32BitAddressess) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
         }
 
-        if (pDevice->areSharedSystemAllocationsAllowed() ||
+        if (clDevice->areSharedSystemAllocationsAllowed() ||
             DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
         }
@@ -77,9 +81,9 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         }
 
-        kernelDebugEnabled = pDevice->isDebuggerActive();
+        kernelDebugEnabled = clDevice->isDebuggerActive();
 
-        auto enableStatelessToStatefullWithOffset = pDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
+        auto enableStatelessToStatefullWithOffset = clDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
         if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
             enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
         }
@@ -88,8 +92,8 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
         }
 
-        auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper.isForceEmuInt32DivRemSPWARequired(pDevice->getHardwareInfo())) {
+        auto &hwHelper = HwHelper::get(clDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        if (hwHelper.isForceEmuInt32DivRemSPWARequired(clDevice->getHardwareInfo())) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
         }
     }
@@ -216,7 +220,7 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
         }
 
         SpecConstantInfo specConstInfo;
-        auto retVal = pCompilerInterface->getSpecConstantsInfo(this->getDevice(0).getDevice(), ArrayRef<const char>(sourceCode), specConstInfo);
+        auto retVal = pCompilerInterface->getSpecConstantsInfo(this->getDevice(), ArrayRef<const char>(sourceCode), specConstInfo);
 
         if (retVal != TranslationOutput::ErrorCode::Success) {
             return CL_INVALID_VALUE;
@@ -243,7 +247,7 @@ cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, co
 }
 
 void Program::setDevice(Device *device) {
-    this->pDevice = device->getSpecializedDevice<ClDevice>();
+    this->pDevice = device;
 }
 
 cl_int Program::getSource(std::string &binary) const {
@@ -256,7 +260,7 @@ cl_int Program::getSource(std::string &binary) const {
     return retVal;
 }
 
-void Program::updateBuildLog(const ClDevice *pDevice, const char *pErrorString,
+void Program::updateBuildLog(const Device *pDevice, const char *pErrorString,
                              size_t errorStringSize) {
     if ((pErrorString == nullptr) || (errorStringSize == 0) || (pErrorString[0] == '\0')) {
         return;
@@ -277,7 +281,7 @@ void Program::updateBuildLog(const ClDevice *pDevice, const char *pErrorString,
     buildLog[pDevice].append(pErrorString, pErrorString + errorStringSize);
 }
 
-const char *Program::getBuildLog(const ClDevice *pDevice) const {
+const char *Program::getBuildLog(const Device *pDevice) const {
     const char *entry = nullptr;
 
     auto it = buildLog.find(pDevice);
@@ -339,7 +343,7 @@ void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
             size_t privateSize = info->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize;
 
             if (privateSize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
-                privateSize *= getDevice(0).getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
+                privateSize *= getDevice().getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
                 auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE});
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }

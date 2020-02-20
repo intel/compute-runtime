@@ -141,7 +141,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+                                                                                                               pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

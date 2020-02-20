@@ -197,7 +197,6 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
     auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImage3dToBuffer,
-        pCmdQ->getContext(),
         pCmdQ->getDevice());
 
     // substitute original builder with mock builder
@@ -256,7 +255,6 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
-                                                                                                              pCmdQ->getContext(),
                                                                                                               pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 

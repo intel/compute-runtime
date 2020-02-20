@@ -107,7 +107,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
 
         MultiDispatchInfo dispatchInfo;
         auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                            this->getContext(), this->getDevice());
+                                                                                                            this->getDevice());
         BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         GeneralSurface dstSurface(svmData->cpuAllocation);
@@ -200,7 +200,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
 
         MultiDispatchInfo dispatchInfo;
         auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                            this->getContext(), this->getDevice());
+                                                                                                            this->getDevice());
         BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         GeneralSurface dstSurface(svmData->gpuAllocation);
@@ -335,7 +335,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     }
 
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(builtInType,
-                                                                                                        this->getContext(),
                                                                                                         this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
     MultiDispatchInfo dispatchInfo;
@@ -478,7 +477,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     }
 
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(builtInType,
-                                                                                                        this->getContext(),
                                                                                                         this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);

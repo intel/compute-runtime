@@ -30,7 +30,7 @@ T *Program::create(
     auto pContext = castToObject<Context>(context);
     DEBUG_BREAK_IF(!pContext);
 
-    auto program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
+    auto program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice());
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
 
@@ -71,7 +71,7 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
+        program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice());
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::SOURCE;
     }
@@ -103,7 +103,7 @@ T *Program::create(
         if (program->context && !program->isBuiltIn) {
             program->context->incRefInternal();
         }
-        program->pDevice = &device;
+        program->pDevice = &device.getDevice();
         program->numDevices = 1;
         if (is32bit || DebugManager.flags.DisableStatelessToStatefulOptimization.get() || device.areSharedSystemAllocationsAllowed()) {
             CompilerOptions::concatenateAppend(program->internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
@@ -134,7 +134,8 @@ T *Program::createFromGenBinary(
     const void *binary,
     size_t size,
     bool isBuiltIn,
-    cl_int *errcodeRet) {
+    cl_int *errcodeRet,
+    Device *device) {
     cl_int retVal = CL_SUCCESS;
     T *program = nullptr;
 
@@ -143,7 +144,7 @@ T *Program::createFromGenBinary(
     }
 
     if (CL_SUCCESS == retVal) {
-        program = new T(executionEnvironment, context, isBuiltIn);
+        program = new T(executionEnvironment, context, isBuiltIn, device);
         program->numDevices = 1;
         program->replaceDeviceBinary(makeCopy(binary, size), size);
         program->isCreatedFromBinary = true;
@@ -171,7 +172,7 @@ T *Program::createFromIL(Context *ctx,
         return nullptr;
     }
 
-    T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false);
+    T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false, &ctx->getDevice(0)->getDevice());
     errcodeRet = program->createProgramFromBinary(il, length);
     program->createdFrom = CreatedFrom::IL;
 

@@ -97,7 +97,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     MultiDispatchInfo multiDispatchInfo;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -129,7 +129,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
     MultiDispatchInfo mdi;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -156,7 +156,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
     MultiDispatchInfo mdi;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -183,7 +183,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
     MultiDispatchInfo mdi;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -277,7 +277,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     MultiDispatchInfo multiDispatchInfo;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -313,7 +313,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_WhenFillingBufferThenArgumentOneSho
     MultiDispatchInfo multiDispatchInfo;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -346,7 +346,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     MultiDispatchInfo multiDispatchInfo;
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -375,7 +375,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     // Extract the kernel used
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &builder = builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless,
-                                                           pCmdQ->getContext(), pCmdQ->getDevice());
+                                                           pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -794,7 +794,7 @@ TEST_F(KernelDataTest, givenFlatImageDataParamTokenWhenDecodingThenSetAllOffsets
             if (pKernelData) {
                 alignedFree(pKernelData);
             }
-            program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
+            program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, nullptr);
         }
 
         SPatchDataParameterBuffer dataParameterToken;

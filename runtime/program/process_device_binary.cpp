@@ -176,12 +176,12 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
     if (src.globalConstants.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->constantSurface = allocateGlobalsSurface(svmAllocsManager, pDevice->getDevice(), src.globalConstants.size, true, linkerInput.get(), src.globalConstants.initData);
+        this->constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput.get(), src.globalConstants.initData);
     }
 
     if (src.globalVariables.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->globalSurface = allocateGlobalsSurface(svmAllocsManager, pDevice->getDevice(), src.globalVariables.size, false, linkerInput.get(), src.globalVariables.initData);
+        this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput.get(), src.globalVariables.initData);
     }
 
     this->globalVarTotalSize = src.globalVariables.size;

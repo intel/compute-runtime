@@ -346,7 +346,8 @@ SchedulerKernel &Context::getSchedulerKernel() {
                                                     src.resource.data(),
                                                     src.resource.size(),
                                                     true,
-                                                    &retVal);
+                                                    &retVal,
+                                                    &getDevice(0)->getDevice());
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         DEBUG_BREAK_IF(!program);
 

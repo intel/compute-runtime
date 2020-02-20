@@ -8,6 +8,7 @@
 #pragma once
 #include "core/command_stream/thread_arbitration_policy.h"
 #include "core/debug_settings/debug_settings_manager.h"
+#include "core/device/device.h"
 #include "core/helpers/address_patch.h"
 #include "core/helpers/preamble.h"
 #include "core/unified_memory/unified_memory.h"
@@ -76,7 +77,9 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
-        pKernel = new kernel_t(program, kernelInfo, program->getDevice(0));
+        auto clDevice = program->getDevice().template getSpecializedDevice<ClDevice>();
+
+        pKernel = new kernel_t(program, kernelInfo, *clDevice);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {

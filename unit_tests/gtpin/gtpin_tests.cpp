@@ -982,7 +982,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
+    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1028,7 +1028,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     // Prepare a kernel with fake Execution Environment
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
+    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2034,7 +2034,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
         size_t binSize = 10;
-        MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
+        MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
         ASSERT_NE(nullptr, pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2305,7 +2305,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
     pKernelInfo->usesSsh = true;
 
-    auto pProgramm = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), context.get(), false);
+    auto pProgramm = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), context.get(), false, nullptr);
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
     std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), *pKernelInfo, *pDevice));
 

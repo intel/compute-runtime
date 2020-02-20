@@ -25,12 +25,12 @@
 using namespace NEO;
 
 TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
     EXPECT_FALSE(program.isKernelDebugEnabled());
 }
 
 TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramHasKernelDebugEnabled) {
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
     program.enableKernelDebug();
     EXPECT_TRUE(program.isKernelDebugEnabled());
 }
@@ -187,7 +187,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
         cl_int retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto program = std::unique_ptr<GMockProgram>(new GMockProgram(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false));
+        auto program = std::unique_ptr<GMockProgram>(new GMockProgram(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice()));
         program->enableKernelDebug();
 
         EXPECT_CALL(*program, appendKernelDebugOptions()).Times(1);

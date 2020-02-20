@@ -400,7 +400,7 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
     memset(decodedProgram.constSurfMutable + 1, 0U, sizeof(uintptr_t));
     ProgramInfo programInfo;
     MockProgram program(execEnv);
-    program.pDevice = &device;
+    program.pDevice = &device.getDevice();
     NEO::populateProgramInfo(programInfo, decodedProgram);
     program.processProgramInfo(programInfo);
     ASSERT_NE(nullptr, program.globalSurface);
@@ -576,7 +576,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     program.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
     program.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
 
-    program.pDevice = this->pContext->getDevice(0);
+    program.pDevice = &this->pContext->getDevice(0)->getDevice();
 
     auto ret = program.linkBinary();
     EXPECT_EQ(CL_SUCCESS, ret);
@@ -625,7 +625,7 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     program.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
     program.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
 
-    program.pDevice = this->pContext->getDevice(0);
+    program.pDevice = &this->pContext->getDevice(0)->getDevice();
 
     auto ret = program.linkBinary();
     EXPECT_EQ(CL_SUCCESS, ret);

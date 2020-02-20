@@ -110,7 +110,8 @@ class Program : public BaseObject<_cl_program> {
         const void *binary,
         size_t size,
         bool isBuiltIn,
-        cl_int *errcodeRet);
+        cl_int *errcodeRet,
+        Device *device);
 
     template <typename T = Program>
     static T *createFromIL(Context *context,
@@ -118,7 +119,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn);
+    Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device);
     ~Program() override;
 
     Program(const Program &) = delete;
@@ -173,7 +174,7 @@ class Program : public BaseObject<_cl_program> {
         return executionEnvironment;
     }
 
-    const ClDevice &getDevice(cl_uint deviceOrdinal) const {
+    const Device &getDevice() const {
         UNRECOVERABLE_IF(pDevice == nullptr);
         return *pDevice;
     }
@@ -186,9 +187,9 @@ class Program : public BaseObject<_cl_program> {
 
     void processDebugData();
 
-    void updateBuildLog(const ClDevice *pDevice, const char *pErrorString, const size_t errorStringSize);
+    void updateBuildLog(const Device *pDevice, const char *pErrorString, const size_t errorStringSize);
 
-    const char *getBuildLog(const ClDevice *pDevice) const;
+    const char *getBuildLog(const Device *pDevice) const;
 
     cl_uint getProgramBinaryType() const {
         return programBinaryType;
@@ -323,7 +324,7 @@ class Program : public BaseObject<_cl_program> {
     std::unique_ptr<LinkerInput> linkerInput;
     Linker::RelocatedSymbolsMap symbols;
 
-    std::map<const ClDevice *, std::string> buildLog;
+    std::map<const Device *, std::string> buildLog;
 
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
@@ -333,7 +334,7 @@ class Program : public BaseObject<_cl_program> {
     BlockKernelManager *blockKernelManager = nullptr;
     ExecutionEnvironment &executionEnvironment;
     Context *context = nullptr;
-    ClDevice *pDevice = nullptr;
+    Device *pDevice = nullptr;
     cl_uint numDevices = 0U;
 
     bool isBuiltIn = false;
