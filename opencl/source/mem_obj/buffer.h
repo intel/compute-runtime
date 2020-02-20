@@ -17,6 +17,7 @@
 #include "memory_properties_flags.h"
 
 namespace NEO {
+class Device;
 class Buffer;
 class ClDevice;
 class MemoryManager;
@@ -88,7 +89,7 @@ class Buffer : public MemObj {
                                   bool isHostPtrSVM,
                                   bool isImageRedescribed);
 
-    static Buffer *createBufferHwFromDevice(const ClDevice *device,
+    static Buffer *createBufferHwFromDevice(const Device *device,
                                             cl_mem_flags flags,
                                             cl_mem_flags_intel flagsIntel,
                                             size_t size,
@@ -105,7 +106,7 @@ class Buffer : public MemObj {
                             const cl_buffer_region *region,
                             cl_int &errcodeRet);
 
-    static void setSurfaceState(const ClDevice *device,
+    static void setSurfaceState(const Device *device,
                                 void *surfaceState,
                                 size_t svmSize,
                                 void *svmPtr,

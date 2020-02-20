@@ -1857,11 +1857,11 @@ TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCr
 class BufferTests : public ::testing::Test {
   protected:
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     }
     void TearDown() override {
     }
-    std::unique_ptr<MockClDevice> device;
+    std::unique_ptr<MockDevice> device;
 };
 
 typedef BufferTests BufferSetSurfaceTests;

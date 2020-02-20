@@ -270,7 +270,7 @@ HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
         {
             void *addressToPatch = svmAlloc.getUnderlyingBuffer();
             size_t sizeToPatch = svmAlloc.getUnderlyingBufferSize();
-            Buffer::setSurfaceState(pClDevice, &expectedSurfaceState, sizeToPatch,
+            Buffer::setSurfaceState(pDevice, &expectedSurfaceState, sizeToPatch,
                                     addressToPatch, 0, &svmAlloc, 0, 0);
         }
 
@@ -377,7 +377,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr size_t rendSurfSize = sizeof(RENDER_SURFACE_STATE);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
 
     uint32_t svmSize = MemoryConstants::pageSize;
     char *svmPtr = reinterpret_cast<char *>(alignedMalloc(svmSize, MemoryConstants::pageSize));

@@ -24,7 +24,7 @@ class MockBufferStorage {
     }
     char data[128];
     MockGraphicsAllocation mockGfxAllocation;
-    std::unique_ptr<MockClDevice> device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 };
 
 class MockBuffer : public MockBufferStorage, public Buffer {

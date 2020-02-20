@@ -562,7 +562,7 @@ Buffer *Buffer::createBufferHw(Context *context,
     return pBuffer;
 }
 
-Buffer *Buffer::createBufferHwFromDevice(const ClDevice *device,
+Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                                          cl_mem_flags flags,
                                          cl_mem_flags_intel flagsIntel,
                                          size_t size,
@@ -621,7 +621,7 @@ bool Buffer::isCompressed() const {
     return false;
 }
 
-void Buffer::setSurfaceState(const ClDevice *device,
+void Buffer::setSurfaceState(const Device *device,
                              void *surfaceState,
                              size_t svmSize,
                              void *svmPtr,
