@@ -58,7 +58,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily> {
         : DirectSubmissionHw<GfxFamily>(device, std::move(cmdDispatcher), osContext) {
     }
 
-    ~MockDirectSubmissionHw() {
+    ~MockDirectSubmissionHw() override {
         if (ringStart) {
             stopRingBuffer();
         }
