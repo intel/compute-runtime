@@ -30,6 +30,9 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
             if (drm.areNonPersistentContextsSupported()) {
                 drm.setNonPersistentContext(drmContextId);
             }
+            if (drm.isRingSizeChangeSupported()) {
+                drm.setMaxRingSize(drmContextId);
+            }
             if (drm.isPreemptionSupported() && lowPriority) {
                 drm.setLowPriorityContextParam(drmContextId);
             }

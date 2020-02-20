@@ -279,6 +279,19 @@ TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledAndPersitentContex
     EXPECT_FALSE(drm->areNonPersistentContextsSupported());
 }
 
+TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledThenIsRingSizeChangeSupportedReturnsTrue) {
+    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(drm->isRingSizeChangeSupported());
+}
+
+TEST_F(HwInfoConfigTestLinuxDummy, whenConfigureHwInfoIsCalledAndRingSizeChangeIsUnsupportedThenIsRingSizeChangeSupportedReturnsFalse) {
+    drm->StoredRetValForRingSizeChange = -1;
+    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_FALSE(drm->isRingSizeChangeSupported());
+}
+
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport =

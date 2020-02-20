@@ -90,6 +90,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
             return this->StoredRetValForPersistant;
         }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_RINGSIZE) {
+            receivedContextParamRequest.value = storedMaxRingSize;
+            return this->StoredRetValForRingSizeChange;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
@@ -108,6 +112,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
             static_cast<drm_i915_gem_context_param *>(arg)->value = this->StoredPersistentContextsSupport;
             return this->StoredRetValForPersistant;
+        }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_RINGSIZE) {
+            return this->StoredRetValForRingSizeChange;
         }
     }
 

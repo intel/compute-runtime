@@ -30,6 +30,7 @@ class DrmMock : public Drm {
     using Drm::nonPersistentContextsSupported;
     using Drm::preemptionSupported;
     using Drm::query;
+    using Drm::ringSizeChangeSupported;
     using Drm::sliceCountChangeSupported;
 
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd), rootDeviceEnvironment) {
@@ -102,6 +103,7 @@ class DrmMock : public Drm {
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
     int StoredRetValForPersistant = 0;
+    int StoredRetValForRingSizeChange = 0;
     int StoredPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
@@ -135,6 +137,7 @@ class DrmMock : public Drm {
 
     uint64_t storedGTTSize = 1ull << 47;
     uint64_t storedParamSseu = ULONG_MAX;
+    uint64_t storedMaxRingSize = 512u * MemoryConstants::kiloByte;
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
 

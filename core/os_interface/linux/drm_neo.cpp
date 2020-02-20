@@ -10,7 +10,6 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/hw_info.h"
-#include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/linux/hw_device_id.h"
 #include "core/os_interface/linux/os_inc.h"
 #include "core/os_interface/linux/sys_calls.h"
@@ -234,6 +233,27 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+}
+
+void Drm::checkRingSizeChangeSupport() {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.param = I915_CONTEXT_PARAM_RINGSIZE;
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+
+    ringSizeChangeSupported = (retVal == 0);
+}
+
+void Drm::setMaxRingSize(uint32_t drmContextId) {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.ctx_id = drmContextId;
+    contextParam.param = I915_CONTEXT_PARAM_RINGSIZE;
+    contextParam.value = maxRingSize;
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    if (retVal == ENODEV) {
+        ringSizeChangeSupported = false;
+    } else {
+        UNRECOVERABLE_IF(retVal != 0);
+    }
 }
 
 uint32_t Drm::createDrmContext() {

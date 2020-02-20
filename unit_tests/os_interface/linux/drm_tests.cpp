@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/file_io.h"
+#include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/device_factory.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
@@ -219,6 +220,40 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         ++expectedCount;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
+}
+
+TEST(DrmTest, givenDrmMockAndPositiveCheckSetRingSizeSupportWhenOsContextIsCreatedThenCorrectRingSizeIsReturned) {
+
+    DrmMock drmMock;
+    uint32_t drmContextId1 = 123;
+    auto expectedCount = 0u;
+    drmMock.StoredCtxId = drmContextId1;
+    drmMock.StoredRetValForRingSizeChange = 0;
+    drmMock.checkRingSizeChangeSupport();
+    ++expectedCount;
+
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    ++expectedCount;
+    EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
+
+    uint64_t maxRingSize = 512u * MemoryConstants::kiloByte;
+    EXPECT_EQ(maxRingSize, drmMock.receivedContextParamRequest.value);
+}
+
+TEST(DrmTest, givenDrmMockAndUnsupportedPlatformErrorWhenOsContextIsCreatedThenIsRingSizeChangeSupportedReturnsFalse) {
+
+    DrmMock drmMock;
+    uint32_t drmContextId1 = 123;
+    drmMock.StoredCtxId = drmContextId1;
+    auto unsupportedPlatformErrorCode = ENODEV;
+    drmMock.StoredRetValForRingSizeChange = 0;
+
+    drmMock.checkRingSizeChangeSupport();
+    EXPECT_TRUE(drmMock.isRingSizeChangeSupported());
+    drmMock.StoredRetValForRingSizeChange = unsupportedPlatformErrorCode;
+
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    EXPECT_FALSE(drmMock.isRingSizeChangeSupported());
 }
 
 TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {

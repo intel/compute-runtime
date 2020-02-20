@@ -162,6 +162,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();
+    drm->checkRingSizeChangeSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,

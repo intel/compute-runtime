@@ -7,6 +7,7 @@
 
 #pragma once
 #include "core/helpers/basic_math.h"
+#include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/linux/engine_info.h"
 #include "core/os_interface/linux/hw_device_id.h"
 #include "core/os_interface/linux/memory_info.h"
@@ -85,6 +86,10 @@ class Drm {
     void checkNonPersistentContextsSupport();
     void setNonPersistentContext(uint32_t drmContextId);
 
+    bool isRingSizeChangeSupported() const { return ringSizeChangeSupported; }
+    void checkRingSizeChangeSupport();
+    void setMaxRingSize(uint32_t drmContextId);
+
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
     }
@@ -94,11 +99,14 @@ class Drm {
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
-    bool sliceCountChangeSupported = false;
-    drm_i915_gem_context_param_sseu sseu{};
+
     bool preemptionSupported = false;
+    bool sliceCountChangeSupported = false;
+    bool ringSizeChangeSupported = false;
     bool nonPersistentContextsSupported = false;
+    drm_i915_gem_context_param_sseu sseu{};
     std::unique_ptr<HwDeviceId> hwDeviceId;
+    const uint64_t maxRingSize = 512u * MemoryConstants::kiloByte;
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;

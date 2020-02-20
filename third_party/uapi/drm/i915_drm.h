@@ -1582,6 +1582,18 @@ struct drm_i915_gem_context_param {
  * By default, new contexts allow persistence.
  */
 #define I915_CONTEXT_PARAM_PERSISTENCE	0xb
+
+/*
+ *
+ * I915_CONTEXT_PARAM_RINGSIZE:
+ *
+ * Sets the size of the ringbuffer to use for logical ring contexts.
+ * Only possible to be set prior to first use, i.e. during construction.
+ * Only applies to the current set of engine and lost for those engines
+ * are replaced by a new mapping.
+ * Must be between 4 - 512 KiB.
+ */
+#define I915_CONTEXT_PARAM_RINGSIZE	0xc
 /* Must be kept compact -- no holes and well documented */
 
 	__u64 value;
