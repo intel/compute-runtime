@@ -16,6 +16,7 @@
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/built_ins/vme_builtin.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/kernel/kernel.h"
@@ -971,18 +972,21 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
 
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
-        BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(op, *pDevice);
+        BuiltinDispatchInfoBuilder &builder = Vme::getBuiltinDispatchInfoBuilder(op, *pDevice);
         EXPECT_NE(nullptr, &builder);
     }
 
     restoreBuiltInBinaryName(pDevice);
 }
 
+TEST_F(VmeBuiltInTests, givenInvalidBuiltInOpWhenGetVmeBuilderInfoThenExceptionIsThrown) {
+    EXPECT_THROW(Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pDevice), std::exception);
+}
 TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
-        BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(op, *pDevice);
+        BuiltinDispatchInfoBuilder &builder = Vme::getBuiltinDispatchInfoBuilder(op, *pDevice);
 
         MultiDispatchInfo outMdi;
         Vec3<size_t> gws{352, 288, 0};
@@ -1004,7 +1008,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
     mockKernel.kernelInfo.reqdWorkGroupSize[2] = 0;
 
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     MultiDispatchInfo outMdi;
@@ -1071,7 +1075,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
     for (auto op : vmeOps) {
         MultiDispatchInfo outMdi;
         overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-        BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(op, *pDevice);
+        BuiltinDispatchInfoBuilder &builder = Vme::getBuiltinDispatchInfoBuilder(op, *pDevice);
         restoreBuiltInBinaryName(pDevice);
 
         bool ret = builder.setExplicitArg(srcImageArgNum, sizeof(cl_mem), &srcImageArg, err);
@@ -1984,7 +1988,8 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
     const char *kernelNames = "invalid_kernel";
     cl_int retVal = CL_SUCCESS;
 
-    cl_program program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
+    cl_program program = Vme::createBuiltInProgram(
+        *pContext,
         *pDevice,
         kernelNames,
         retVal);

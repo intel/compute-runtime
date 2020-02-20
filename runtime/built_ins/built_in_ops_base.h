@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include <cstdint>
 
 namespace NEO {
@@ -29,10 +30,8 @@ constexpr Type CopyImageToImage3d{13};
 constexpr Type FillImage1d{14};
 constexpr Type FillImage2d{15};
 constexpr Type FillImage3d{16};
-constexpr Type VmeBlockMotionEstimateIntel{17};
-constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{18};
-constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{19};
 
-constexpr uint32_t MaxBaseValue{19};
+constexpr Type MaxBaseValue{16};
+constexpr Type COUNT{64};
 } // namespace EBuiltInOps
 } // namespace NEO

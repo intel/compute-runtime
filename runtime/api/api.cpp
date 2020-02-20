@@ -21,6 +21,7 @@
 #include "runtime/api/additional_extensions.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/vme_builtin.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
@@ -1367,9 +1368,11 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
     if (retVal == CL_SUCCESS) {
 
         for (cl_uint i = 0; i < numDevices; i++) {
+            auto pContext = castToObject<Context>(context);
             auto pDevice = castToObject<ClDevice>(*deviceList);
 
-            program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
+            program = Vme::createBuiltInProgram(
+                *pContext,
                 pDevice->getDevice(),
                 kernelNames,
                 retVal);

@@ -13,7 +13,6 @@
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.inl"
 #include "runtime/built_ins/sip.h"
-#include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/convert_color.h"
@@ -70,78 +69,6 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);
     return *sipBuiltIn.first;
-}
-
-// VME:
-static const char *blockMotionEstimateIntelSrc = {
-#include "kernels/vme_block_motion_estimate_intel_frontend.igdrcl_built_in"
-};
-
-static const char *blockAdvancedMotionEstimateCheckIntelSrc = {
-#include "kernels/vme_block_advanced_motion_estimate_check_intel_frontend.igdrcl_built_in"
-};
-
-static const char *blockAdvancedMotionEstimateBidirectionalCheckIntelSrc = {
-#include "kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel_frontend.igdrcl_built_in"
-};
-
-static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
-    std::make_tuple("block_motion_estimate_intel", blockMotionEstimateIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc),
-    std::make_tuple("block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc),
-};
-
-// Unlike other built-ins media kernels are not stored in BuiltIns object.
-// Pointer to program with built in kernels is returned to the user through API
-// call and user is responsible for releasing it by calling clReleaseProgram.
-Program *BuiltIns::createBuiltInProgram(
-    Device &device,
-    const char *kernelNames,
-    int &errcodeRet) {
-    std::string programSourceStr = "";
-    std::istringstream ss(kernelNames);
-    std::string currentKernelName;
-
-    while (std::getline(ss, currentKernelName, ';')) {
-        bool found = false;
-        for (auto &builtInTuple : mediaBuiltIns) {
-            if (currentKernelName == std::get<0>(builtInTuple)) {
-                programSourceStr += std::get<1>(builtInTuple);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            errcodeRet = CL_INVALID_VALUE;
-            return nullptr;
-        }
-    }
-    if (programSourceStr.empty() == true) {
-        errcodeRet = CL_INVALID_VALUE;
-        return nullptr;
-    }
-
-    Program *pBuiltInProgram = nullptr;
-
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), nullptr, device, true, nullptr);
-
-    if (pBuiltInProgram) {
-        std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
-        builtinsBuilders["block_motion_estimate_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, device);
-        builtinsBuilders["block_advanced_motion_estimate_check_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, device);
-        builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
-            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
-        errcodeRet = pBuiltInProgram->build(
-            &device,
-            mediaKernelsBuildOptions,
-            enableCacheing,
-            builtinsBuilders);
-    } else {
-        errcodeRet = CL_INVALID_VALUE;
-    }
-    return pBuiltInProgram;
 }
 
 template <>
@@ -865,15 +792,6 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
         break;
     case EBuiltInOps::FillImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::FillImage3d>>(*this, device); });
-        break;
-    case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>>(*this, device); });
-        break;
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>>(*this, device); });
-        break;
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(*this, device); });
         break;
     case EBuiltInOps::AuxTranslation:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::AuxTranslation>>(*this, device); });

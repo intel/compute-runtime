@@ -53,6 +53,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
 std::string joinPath(const std::string &lhs, const std::string &rhs);
 const char *getBuiltinAsString(EBuiltInOps::Type builtin);
 const char *getUnknownBuiltinAsString(EBuiltInOps::Type builtin);
+const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin);
 
 class Storage {
   public:
@@ -173,11 +174,6 @@ class BuiltIns {
                                                                               std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
     BuiltIns();
     virtual ~BuiltIns();
-
-    Program *createBuiltInProgram(
-        Device &device,
-        const char *kernelNames,
-        int &errcodeRet);
 
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
 

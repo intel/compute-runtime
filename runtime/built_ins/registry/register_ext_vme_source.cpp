@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/built_ins/built_in_ops_vme.h"
 #include "runtime/built_ins/registry/built_ins_registry.h"
 
 #include <string>

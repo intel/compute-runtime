@@ -17,6 +17,10 @@
 namespace NEO {
 
 const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
+    const char *builtinString = getAdditionalBuiltinAsString(builtin);
+    if (builtinString) {
+        return builtinString;
+    }
     switch (builtin) {
     default:
         return getUnknownBuiltinAsString(builtin);
@@ -54,12 +58,6 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
         return "fill_image2d.igdrcl_built_in";
     case EBuiltInOps::FillImage3d:
         return "fill_image3d.igdrcl_built_in";
-    case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        return "vme_block_motion_estimate_intel.igdrcl_built_in";
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        return "vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in";
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
-        return "vme_block_advanced_motion_estimate_bidirectional_check_intel";
     };
 }
 

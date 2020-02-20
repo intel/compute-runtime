@@ -7,7 +7,9 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
+#include "runtime/built_ins/built_in_ops_vme.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/vme_builtin.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/base_object.h"
@@ -154,7 +156,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pDev);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -179,8 +181,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(6U, kernNeo->getKernelArgsNumber());
 
-    auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(NEO::EBuiltInOps::VmeBlockMotionEstimateIntel, ctxNeo->getDevice(0)->getDevice());
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pDev);
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
@@ -191,7 +192,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pDev);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -216,8 +217,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(15U, kernNeo->getKernelArgsNumber());
 
-    auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(NEO::EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, ctxNeo->getDevice(0)->getDevice());
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pDev);
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
@@ -228,7 +228,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pDev);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -254,7 +254,7 @@ TEST_F(clCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     EXPECT_EQ(20U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = pDev->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(NEO::EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, ctxNeo->getDevice(0)->getDevice());
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, ctxNeo->getDevice(0)->getDevice());
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
