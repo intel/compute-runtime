@@ -199,7 +199,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     }
     if (reservePerfCounters) {
 
-        const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+        const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType())
                                            ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                            : MetricsLibraryApi::GpuCommandBufferType::Render;
 

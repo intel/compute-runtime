@@ -93,7 +93,7 @@ bool Device::createDeviceImpl() {
 
 bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
-    auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!createEngine(deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
@@ -117,9 +117,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     }
 
     bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
-    if (internalUsage) {
-        engineType = defaultEngineType;
-    }
 
     if (commandStreamReceiver->needsPageTableManager(engineType)) {
         commandStreamReceiver->createPageTableManager();

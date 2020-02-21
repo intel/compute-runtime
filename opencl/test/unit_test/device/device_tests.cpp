@@ -54,7 +54,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
 }
 
 TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
-    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0]);
     for (uint32_t i = 0; i < engines.size(); i++) {
         bool lowPriority = (HwHelper::lowPriorityGpgpuEngineIndex == i);
         auto &deviceEngine = pDevice->getEngine(engines[i], lowPriority);
@@ -68,7 +68,7 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(true);
-    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0]);
     auto &deviceEngine = pDevice->getEngine(engines[0], false);
     auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, false);
     EXPECT_EQ(&notExistingEngine, &deviceEngine);
@@ -116,13 +116,18 @@ TEST_F(DeviceTest, WhenAppendingOsExtensionsThenDeviceInfoIsProperlyUpdated) {
     EXPECT_STREQ(expectedExtensions.c_str(), pDevice->deviceInfo.deviceExtensions);
 }
 
-TEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
-    auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
+HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
+        hwInfo.featureTable.ftrCCSNode = true;
+    }
 
-    auto actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType();
-    auto defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(&pDevice->getDefaultEngine().commandStreamReceiver->getOsContext(), pDevice->getDefaultEngine().osContext);
+    auto actualEngineType = device->getDefaultEngine().osContext->getEngineType();
+    auto defaultEngineType = device->getHardwareInfo().capabilityTable.defaultEngineType;
+
+    EXPECT_EQ(&device->getDefaultEngine().commandStreamReceiver->getOsContext(), device->getDefaultEngine().osContext);
     EXPECT_EQ(defaultEngineType, actualEngineType);
 }
 
@@ -183,7 +188,8 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto memoryManager = device->getMemoryManager();
-    auto numEnginesForDevice = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
+    auto &hwInfo = device->getHardwareInfo();
+    auto numEnginesForDevice = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size();
     if (device->getNumAvailableDevices() > 1) {
         numEnginesForDevice *= device->getNumAvailableDevices();
         numEnginesForDevice += device->engines.size();
@@ -195,7 +201,8 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
-    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size());
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo).size());
 
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
@@ -232,7 +239,8 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
-    const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    const auto &numGpgpuEngines = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo).size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
@@ -244,12 +252,15 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     }
 }
 
-TEST(DeviceCreation, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
+HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    hwHelper.adjustDefaultEngineType(executionEnvironment->getMutableHardwareInfo());
+
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
     auto osContext = device->getDefaultEngine().osContext;
 
-    EXPECT_EQ(platformDevices[0]->capabilityTable.defaultEngineType, osContext->getEngineType());
+    EXPECT_EQ(executionEnvironment->getHardwareInfo()->capabilityTable.defaultEngineType, osContext->getEngineType());
     EXPECT_FALSE(osContext->isLowPriority());
 }
 

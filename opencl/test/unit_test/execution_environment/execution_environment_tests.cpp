@@ -231,9 +231,10 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
     auto expectedOsContextCount = 0u;
     for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
-        auto &hwHelper = HwHelper::get(rootDeviceEnvironment->getHardwareInfo()->platform.eRenderCoreFamily);
-        auto osContextCount = hwHelper.getGpgpuEngineInstances().size();
-        auto subDevicesCount = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+        auto osContextCount = hwHelper.getGpgpuEngineInstances(*hwInfo).size();
+        auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
         bool hasRootCsr = subDevicesCount > 1;
         expectedOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
     }

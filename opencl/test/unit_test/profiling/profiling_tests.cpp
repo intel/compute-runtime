@@ -522,22 +522,36 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawData
     event.timeStampNode = nullptr;
 }
 
-struct ProfilingWithPerfCountersTests : public ProfilingTests,
-                                        public PerformanceCountersFixture {
+struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::testing::Test {
     void SetUp() override {
         PerformanceCountersFixture::SetUp();
-        ProfilingTests::SetUp();
         createPerfCounters();
+
+        HardwareInfo hwInfo = *platformDevices[0];
+        if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
+            hwInfo.featureTable.ftrCCSNode = true;
+        }
+
+        pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+        pClDevice = std::make_unique<ClDevice>(*pDevice, nullptr);
+
         pDevice->setPerfCounters(performanceCountersBase.release());
+
+        context = std::make_unique<MockContext>(pClDevice.get());
+
+        cl_int retVal = CL_SUCCESS;
+        cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+        pCmdQ.reset(CommandQueue::create(context.get(), pClDevice.get(), properties, false, retVal));
+
+        kernel = std::make_unique<MockKernelWithInternals>(*pClDevice);
     }
 
     void TearDown() override {
-        ProfilingTests::TearDown();
         PerformanceCountersFixture::TearDown();
     }
 
     template <typename GfxFamily>
-    GenCmdList::iterator expectStoreRegister(GenCmdList::iterator itor, uint64_t memoryAddress, uint32_t registerAddress) {
+    GenCmdList::iterator expectStoreRegister(const GenCmdList &cmdList, GenCmdList::iterator itor, uint64_t memoryAddress, uint32_t registerAddress) {
         using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
         itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
@@ -548,6 +562,12 @@ struct ProfilingWithPerfCountersTests : public ProfilingTests,
         itor++;
         return itor;
     }
+
+    MockDevice *pDevice = nullptr;
+    std::unique_ptr<ClDevice> pClDevice;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<CommandQueue> pCmdQ;
+    std::unique_ptr<MockKernelWithInternals> kernel;
 };
 
 HWTEST_F(ProfilingWithPerfCountersTests,
@@ -582,26 +602,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
 
     pCmdQ->setPerfCountersEnabled();
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = &kernel;
+    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        0,
-        nullptr,
-        &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    parseCommands<FamilyType>(*pCmdQ);
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*pCmdQ);
 
     // expect MI_REPORT_PERF_COUNT before WALKER
     auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
@@ -643,26 +654,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
 
     pCmdQ->setPerfCountersEnabled();
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = &kernel;
+    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        0,
-        nullptr,
-        &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    parseCommands<FamilyType>(*pCmdQ);
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*pCmdQ);
 
     // expect MI_REPORT_PERF_COUNT before WALKER
     auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
@@ -704,30 +706,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueBlo
 
     pCmdQ->setPerfCountersEnabled();
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
     cl_event ue = new UserEvent();
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        &kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        1,   // one user event to block queue
-        &ue, // user event not signaled
-        &event);
+    cl_kernel clKernel = kernel->mockKernel;
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr,
+                                                                          1,   // one user event to block queue
+                                                                          &ue, // user event not signaled
+                                                                          &event);
 
     //rseCommands<FamilyType>(*pCmdQ);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
     ASSERT_NE(nullptr, eventCommandStream);
-    parseCommands<FamilyType>(*eventCommandStream);
+
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*eventCommandStream);
 
     // expect MI_REPORT_PERF_COUNT before WALKER
     auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
@@ -768,25 +766,16 @@ HWTEST_F(ProfilingWithPerfCountersTests,
 
     pCmdQ->setPerfCountersEnabled();
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
-    cl_kernel clKernel = &kernel;
+    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, nullptr);
 
-    parseCommands<FamilyType>(*pCmdQ);
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*pCmdQ);
 
     // expect no MI_REPORT_PERF_COUNT before WALKER
     auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
@@ -842,34 +831,25 @@ HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCount
 
     pCmdQ->setPerfCountersEnabled();
 
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     uint32_t dimensions = 1;
     cl_event event;
-    cl_kernel clKernel = &kernel;
+    cl_kernel clKernel = kernel->mockKernel;
 
-    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
-        clKernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
-        0,
-        nullptr,
-        &event);
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get())->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
     auto pEvent = static_cast<MockEvent<Event> *>(event);
     EXPECT_EQ(pEvent->getHwTimeStampNode()->getGpuAddress(), timeStampGpuAddress);
     EXPECT_EQ(pEvent->getHwPerfCounterNode()->getGpuAddress(), perfCountersGpuAddress);
-    parseCommands<FamilyType>(*pCmdQ);
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*pCmdQ);
 
-    auto itor = expectStoreRegister<FamilyType>(cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, ContextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, ContextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     // after WALKER:
 
-    itor = expectStoreRegister<FamilyType>(itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
     EXPECT_TRUE(pEvent->calcProfilingData());
 

@@ -43,6 +43,6 @@ GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIs
 }
 
 GEN11TEST_F(HwHelperTestGen11, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
-    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
+    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());
 }

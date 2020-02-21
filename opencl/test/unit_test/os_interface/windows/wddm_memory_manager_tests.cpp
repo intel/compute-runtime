@@ -351,8 +351,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     executionEnvironment->rootDeviceEnvironments[1]->osInterface->get()->setWddm(wddm2);
     executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
 
-    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
-                                              2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
+                                              2, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0, 32, GraphicsAllocation::AllocationType::BUFFER}));
@@ -380,8 +381,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     executionEnvironment->rootDeviceEnvironments[1]->osInterface->get()->setWddm(wddm2);
     executionEnvironment->rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm2);
 
-    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
-                                              2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[1],
+                                              2, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
 
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0, 32, GraphicsAllocation::AllocationType::BUFFER}));

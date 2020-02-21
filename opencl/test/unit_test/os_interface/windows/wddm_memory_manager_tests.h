@@ -62,8 +62,10 @@ class MockWddmMemoryManagerFixture {
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         csr.reset(createCommandStream(*executionEnvironment, 0u));
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+        auto hwInfo = executionEnvironment->getHardwareInfo();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(),
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                              1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
 
         osContext->incRefInternal();
         mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());
@@ -113,7 +115,9 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         csr.reset(createCommandStream(*executionEnvironment, 0u));
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
+        auto hwInfo = executionEnvironment->getHardwareInfo();
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(),
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0], 1, preemptionMode, false);
 
         osContext->incRefInternal();
 

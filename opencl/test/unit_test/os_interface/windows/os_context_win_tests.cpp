@@ -16,7 +16,7 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
     void SetUp() override {
         WddmTestWithMockGdiDll::SetUp();
         preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
+        engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0];
 
         init();
     }

@@ -50,6 +50,6 @@ GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCal
 }
 
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoThreeEngines) {
-    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>();
+    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());
 }

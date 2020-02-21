@@ -104,9 +104,43 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCo
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, whenGetGpgpuEnginesThenReturnThreeRcsEnginesAndCcsEngine) {
-    EXPECT_EQ(4u, pDevice->engines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances();
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetWhenGetGpgpuEnginesThenReturnThreeRcsEngines) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.featureTable.ftrCCSNode = false;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(3u, device->engines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(3u, engines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2]);
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenReturnTwoRcsAndCcsEngines) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(4u, device->engines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(4u, engines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEnginesThenReturnThreeRcsAndCcsEngines) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(4u, device->engines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);

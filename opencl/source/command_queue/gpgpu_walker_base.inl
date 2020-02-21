@@ -160,7 +160,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType())
                                        ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                        : MetricsLibraryApi::GpuCommandBufferType::Render;
     const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, true);
@@ -176,7 +176,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     LinearStream *commandStream) {
 
     const auto pPerformanceCounters = commandQueue.getPerfCounters();
-    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getDevice().getDefaultEngine().osContext->getEngineType())
+    const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType())
                                        ? MetricsLibraryApi::GpuCommandBufferType::Compute
                                        : MetricsLibraryApi::GpuCommandBufferType::Render;
     const uint32_t size = pPerformanceCounters->getGpuCommandsSize(commandBufferType, false);
