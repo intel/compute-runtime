@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "core/command_stream/command_stream_receiver_hw.h"
 
 namespace NEO {
 

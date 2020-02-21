@@ -7,9 +7,9 @@
 
 #include "user_event.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 
 namespace NEO {

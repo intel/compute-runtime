@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 

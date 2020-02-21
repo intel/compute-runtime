@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/helpers/state_compute_mode_helper.h"
+#include "core/command_stream/command_stream_receiver_hw.h"
+#include "core/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>

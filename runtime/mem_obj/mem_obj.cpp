@@ -7,6 +7,7 @@
 
 #include "runtime/mem_obj/mem_obj.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
@@ -17,7 +18,6 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/get_info_status_mapper.h"

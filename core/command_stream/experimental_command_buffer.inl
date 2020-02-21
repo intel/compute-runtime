@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 
 namespace NEO {
 

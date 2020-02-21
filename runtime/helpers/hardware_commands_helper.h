@@ -149,8 +149,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
                                        uint64_t compareAddress,
                                        uint32_t compareData,
                                        COMPARE_OPERATION compareMode);
-    static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData);
-    static void appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd);
+
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
     static void programMiAtomic(MI_ATOMIC &atomic, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
     static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);

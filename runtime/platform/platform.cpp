@@ -7,6 +7,7 @@
 
 #include "platform.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/root_device.h"
@@ -20,7 +21,6 @@
 #include "core/os_interface/device_factory.h"
 #include "core/os_interface/os_interface.h"
 #include "runtime/api/api.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/gtpin/gtpin_notify.h"

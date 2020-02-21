@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/allocations_list.h"
@@ -13,7 +14,6 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"

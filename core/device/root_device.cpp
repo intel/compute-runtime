@@ -7,12 +7,12 @@
 
 #include "core/device/root_device.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/preemption.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/sub_device.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 
 namespace NEO {
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);

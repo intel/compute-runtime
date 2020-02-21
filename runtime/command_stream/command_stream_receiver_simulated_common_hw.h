@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/memory_manager/memory_banks.h"
 

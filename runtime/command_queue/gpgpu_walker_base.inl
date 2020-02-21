@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/engine_node_helper.h"
@@ -17,7 +18,6 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device_info.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"

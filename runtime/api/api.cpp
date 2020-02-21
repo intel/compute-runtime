@@ -7,6 +7,7 @@
 
 #include "api.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
@@ -23,7 +24,6 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/vme_builtin.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/context/driver_diagnostics.h"
 #include "runtime/device/cl_device.h"

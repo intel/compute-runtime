@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/device/device.h"
 #include "core/direct_submission/direct_submission_hw.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/mocks/mock_experimental_command_buffer.h"

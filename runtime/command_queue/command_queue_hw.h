@@ -6,13 +6,13 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/preemption.h"
 #include "core/helpers/engine_control.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/helpers/dispatch_info.h"

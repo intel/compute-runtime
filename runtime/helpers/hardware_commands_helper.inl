@@ -454,15 +454,4 @@ bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel)
             kernel.getKernelInfo().patchInfo.threadPayload->LocalIDZPresent);
 }
 
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData) {
-    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
-
-    auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
-    *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
-    miFlushDwCmd->setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    miFlushDwCmd->setDestinationAddress(immediateDataGpuAddress);
-    miFlushDwCmd->setImmediateData(immediateData);
-    appendMiFlushDw(miFlushDwCmd);
-}
 } // namespace NEO

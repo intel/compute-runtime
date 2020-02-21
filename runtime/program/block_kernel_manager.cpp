@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/program/block_kernel_manager.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/debug_helpers.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/program/kernel_info.h"
 
 namespace NEO {

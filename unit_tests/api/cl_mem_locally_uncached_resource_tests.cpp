@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_cmds.h"
@@ -12,7 +13,6 @@
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "runtime/api/api.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/extensions/public/cl_ext_private.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"

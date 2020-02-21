@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/event/perf_counter.h"

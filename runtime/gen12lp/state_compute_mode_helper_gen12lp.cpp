@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/state_compute_mode_helper.h"
+#include "core/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <>

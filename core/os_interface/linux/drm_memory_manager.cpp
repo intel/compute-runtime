@@ -7,6 +7,7 @@
 
 #include "core/os_interface/linux/drm_memory_manager.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
@@ -20,7 +21,6 @@
 #include "core/os_interface/linux/allocator_helper.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 
 #include "drm/i915_drm.h"
 

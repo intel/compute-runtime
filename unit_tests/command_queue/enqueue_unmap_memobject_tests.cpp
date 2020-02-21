@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"

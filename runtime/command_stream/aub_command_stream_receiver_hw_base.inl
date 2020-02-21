@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
@@ -24,7 +25,6 @@
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/neo_driver_version.h"
 #include "runtime/memory_manager/memory_banks.h"

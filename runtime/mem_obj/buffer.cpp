@@ -7,6 +7,7 @@
 
 #include "runtime/mem_obj/buffer.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
@@ -22,7 +23,6 @@
 #include "core/memory_manager/memory_operations_handler.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"

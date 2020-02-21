@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
@@ -18,7 +19,6 @@
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/os_interface/windows/wddm_residency_controller.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/create_command_stream.h"

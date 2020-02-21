@@ -161,9 +161,6 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd) {}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo) {
     pInterfaceDescriptor->setBarrierEnable(value);
 }

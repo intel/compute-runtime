@@ -7,6 +7,7 @@
 
 #include "runtime/context/context.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/get_info.h"
@@ -17,7 +18,6 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"

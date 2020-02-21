@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/event/event.h"
 #include "runtime/event/event_builder.h"

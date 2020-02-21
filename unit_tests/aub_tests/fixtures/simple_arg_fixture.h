@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/command_stream/command_stream_receiver.h"
+#include "core/command_stream/command_stream_receiver.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"

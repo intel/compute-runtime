@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/scratch_space_controller.h"
@@ -18,7 +19,6 @@
 #include "core/memory_manager/surface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/platform/platform.h"
 #include "test.h"

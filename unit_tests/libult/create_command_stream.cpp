@@ -7,11 +7,11 @@
 
 #include "unit_tests/libult/create_command_stream.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/create_command_stream_impl.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"

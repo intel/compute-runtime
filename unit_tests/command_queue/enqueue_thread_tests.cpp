@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/aligned_memory.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"

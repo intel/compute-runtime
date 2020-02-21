@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
+#include "core/command_stream/command_stream_receiver.h"
 
 #include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/preemption.h"

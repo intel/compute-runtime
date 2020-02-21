@@ -7,6 +7,7 @@
 
 #include "program.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/compiler_interface/intermediate_representations.h"
 #include "core/device_binary_format/device_binary_formats.h"
@@ -18,7 +19,6 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/platform/platform.h"

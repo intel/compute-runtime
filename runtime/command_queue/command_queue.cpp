@@ -7,6 +7,7 @@
 
 #include "runtime/command_queue/command_queue.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/array_count.h"
 #include "core/helpers/engine_node_helper.h"
@@ -19,7 +20,6 @@
 #include "core/utilities/api_intercept.h"
 #include "core/utilities/tag_allocator.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"

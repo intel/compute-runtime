@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"

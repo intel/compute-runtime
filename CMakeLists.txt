@@ -775,6 +775,7 @@ endif()
 # Please keep alphabetical order
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
+include_directories(${NEO_SOURCE_DIR}/core/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/compiler_interface/compiler_options${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/debug_settings/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/gmm_helper/client_context${BRANCH_DIR_SUFFIX})

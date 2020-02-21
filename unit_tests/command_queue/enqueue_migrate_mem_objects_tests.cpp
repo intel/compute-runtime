@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
+#include "core/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

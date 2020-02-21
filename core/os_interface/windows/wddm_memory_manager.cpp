@@ -7,6 +7,7 @@
 
 #include "core/os_interface/windows/wddm_memory_manager.h"
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -27,7 +28,6 @@
 #include "core/os_interface/windows/wddm_allocation.h"
 #include "core/os_interface/windows/wddm_residency_allocations_container.h"
 #include "core/os_interface/windows/wddm_residency_controller.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 
 #include <algorithm>
 

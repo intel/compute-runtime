@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
+#include "core/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/mem_obj/mem_obj.h"
 

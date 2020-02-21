@@ -7,9 +7,9 @@
 
 #include "core/program/sync_buffer_handler.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/kernel/kernel.h"
 
 namespace NEO {

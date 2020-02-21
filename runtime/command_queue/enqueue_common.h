@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/array_count.h"
 #include "core/helpers/engine_node_helper.h"
 #include "core/memory_manager/internal_allocation_storage.h"
@@ -21,7 +22,6 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"

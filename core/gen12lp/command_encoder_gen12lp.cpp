@@ -47,5 +47,5 @@ template struct EncodeSurfaceState<Family>;
 template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
-
+template struct EncodeMiFlushDW<Family>;
 } // namespace NEO

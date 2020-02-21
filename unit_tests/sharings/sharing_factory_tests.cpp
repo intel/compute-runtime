@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/helpers/string.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/platform/platform.h"

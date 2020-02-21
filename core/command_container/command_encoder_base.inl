@@ -265,4 +265,7 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
     return totalSize;
 }
 
+template <typename GfxFamily>
+void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd) {}
+
 } // namespace NEO

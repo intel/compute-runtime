@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver.h"
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/helpers/flat_batch_buffer_helper_hw.h"
 #include "core/helpers/flush_stamp.h"
@@ -13,8 +15,6 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
 #include "gmock/gmock.h"

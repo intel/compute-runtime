@@ -1415,23 +1415,6 @@ TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSup
     EXPECT_EQ(0U, allocationsForCacheFlush.size());
 }
 
-HWTEST_F(HardwareCommandsTest, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAllRequiredFields) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
-    LinearStream linearStream(buffer, sizeof(buffer));
-
-    uint64_t gpuAddress = 0x1230000;
-    uint64_t immData = 456;
-
-    HardwareCommandsHelper<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData);
-    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
-
-    EXPECT_EQ(sizeof(MI_FLUSH_DW), linearStream.getUsed());
-    EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushDwCmd->getPostSyncOperation());
-    EXPECT_EQ(gpuAddress, miFlushDwCmd->getDestinationAddress());
-    EXPECT_EQ(immData, miFlushDwCmd->getImmediateData());
-}
-
 using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
 HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocationsForFlushThenEmptyVectorIsReturned) {

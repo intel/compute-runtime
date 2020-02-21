@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/command_stream/thread_arbitration_policy.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
@@ -14,7 +15,6 @@
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/api/cl_types.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/extensions/public/cl_ext_private.h"
 #include "runtime/helpers/base_object.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/command_stream/experimental_command_buffer.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/command_stream/preemption.h"
@@ -28,8 +29,6 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 
 #include "command_stream_receiver_hw_ext.inl"
 
@@ -847,7 +846,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
         if (blitProperties.outputTimestampPacket) {
             auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
-            HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0);
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0);
             makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
 
@@ -859,7 +858,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
-    HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
 
     MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 

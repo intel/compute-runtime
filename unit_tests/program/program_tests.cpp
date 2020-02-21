@@ -7,6 +7,7 @@
 
 #include "unit_tests/program/program_tests.h"
 
+#include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/compiler_interface/intermediate_representations.h"
 #include "core/device_binary_format/elf/elf_decoder.h"
 #include "core/device_binary_format/elf/ocl_elf.h"
@@ -24,7 +25,6 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/create.inl"

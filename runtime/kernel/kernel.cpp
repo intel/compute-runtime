@@ -7,6 +7,7 @@
 
 #include "runtime/kernel/kernel.h"
 
+#include "core/command_stream/command_stream_receiver.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/aligned_memory.h"
@@ -24,7 +25,6 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"
 #include "runtime/device_queue/device_queue.h"
