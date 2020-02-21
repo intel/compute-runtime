@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,6 +26,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_snorm_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_tgllp_plus.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_tiled_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_transfer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_validate_tests.cpp
