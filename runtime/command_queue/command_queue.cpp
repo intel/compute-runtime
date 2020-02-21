@@ -553,9 +553,26 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
     bool debugVariableSet = (CL_COMMAND_READ_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnReadBuffer.get()) ||
                             (CL_COMMAND_WRITE_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnWriteBuffer.get());
 
-    return (debugVariableSet && !Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList) &&
-            buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-           buffer->isReadWriteOnCpuAllowed(blocking, numEventsInWaitList, ptr, size);
+    //if we are blocked by user events, we can't service the call on CPU
+    if (Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList)) {
+        return false;
+    }
+
+    if (debugVariableSet && buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        return true;
+    }
+
+    //check if buffer is compatible
+    if (!buffer->isReadWriteOnCpuAllowed(blocking, ptr, size)) {
+        return false;
+    }
+
+    //make sure that event wait list is empty
+    if (numEventsInWaitList == 0) {
+        return true;
+    }
+
+    return false;
 }
 
 bool CommandQueue::queueDependenciesClearRequired() const {

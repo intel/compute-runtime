@@ -501,8 +501,8 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
     return hostPtrSize;
 }
 
-bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitList, void *ptr, size_t size) {
-    return (blocking == CL_TRUE && numEventsInWaitList == 0 && !forceDisallowCPUCopy) && graphicsAllocation->peekSharedHandle() == 0 &&
+bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, void *ptr, size_t size) {
+    return (blocking == CL_TRUE && !forceDisallowCPUCopy) && graphicsAllocation->peekSharedHandle() == 0 &&
            (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
            (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu)) &&
            !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
