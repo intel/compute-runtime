@@ -13,6 +13,7 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
+#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
@@ -34,13 +35,10 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
 
-    auto memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                              DebugManager.flags.EnableForcePin.get(),
-                                              true,
-                                              executionEnvironment);
+    auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     ASSERT_NE(nullptr, memoryManager);
-    EXPECT_NE(nullptr, memoryManager->getPinBB());
+    EXPECT_NE(nullptr, memoryManager->pinBBs.at(0));
 }
 
 HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
@@ -55,12 +53,31 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+    auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
 
-    auto memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                              DebugManager.flags.EnableForcePin.get(),
-                                              true,
-                                              executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     ASSERT_NE(nullptr, memoryManager);
-    EXPECT_NE(nullptr, memoryManager->getPinBB());
+    EXPECT_NE(nullptr, memoryManager->pinBBs.at(0));
+}
+
+HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDeviceEnvWhenCreatingDrmMemoryManagerThenCreateAsManyPinBBs) {
+    DebugManagerStateRestore dbgRestorer;
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(2);
+    executionEnvironment.setHwInfo(*platformDevices);
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(new DrmMockCustom());
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+    }
+
+    auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
+
+    executionEnvironment.memoryManager.reset(memoryManager);
+    ASSERT_NE(nullptr, memoryManager);
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        EXPECT_NE(nullptr, memoryManager->pinBBs.at(rootDeviceIndex));
+    }
 }

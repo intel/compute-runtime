@@ -28,7 +28,6 @@ class DrmMemoryManager : public MemoryManager {
                      ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 
-    BufferObject *getPinBB() const;
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
@@ -86,8 +85,8 @@ class DrmMemoryManager : public MemoryManager {
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
 
-    BufferObject *pinBB = nullptr;
-    void *memoryForPinBB = nullptr;
+    std::vector<BufferObject *> pinBBs;
+    std::vector<void *> memoryForPinBBs;
     size_t pinThreshold = 8 * 1024 * 1024;
     bool forcePinEnabled = false;
     const bool validateHostPtrMemory;

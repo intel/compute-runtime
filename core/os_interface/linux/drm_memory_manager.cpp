@@ -44,34 +44,42 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }
 
-    memoryForPinBB = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
-    DEBUG_BREAK_IF(memoryForPinBB == nullptr);
-
-    if (forcePinEnabled || validateHostPtrMemory) {
-        pinBB = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBB), MemoryConstants::pageSize, 0, 0);
-    }
-
-    if (!pinBB) {
-        alignedFreeWrapper(memoryForPinBB);
-        memoryForPinBB = nullptr;
-        DEBUG_BREAK_IF(true);
-        UNRECOVERABLE_IF(validateHostPtrMemory);
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        if (forcePinEnabled || validateHostPtrMemory) {
+            memoryForPinBBs.push_back(alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize));
+            DEBUG_BREAK_IF(memoryForPinBBs.at(rootDeviceIndex) == nullptr);
+            pinBBs.push_back(allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs.at(rootDeviceIndex)), MemoryConstants::pageSize, 0, rootDeviceIndex));
+            if (!pinBBs.at(rootDeviceIndex)) {
+                alignedFreeWrapper(memoryForPinBBs.at(rootDeviceIndex));
+                memoryForPinBBs.at(rootDeviceIndex) = nullptr;
+                DEBUG_BREAK_IF(true);
+                UNRECOVERABLE_IF(validateHostPtrMemory);
+            }
+        } else {
+            pinBBs.push_back(nullptr);
+        }
     }
 }
 
 DrmMemoryManager::~DrmMemoryManager() {
-    if (memoryForPinBB) {
-        MemoryManager::alignedFreeWrapper(memoryForPinBB);
+    for (auto &memoryForPinBB : memoryForPinBBs) {
+        if (memoryForPinBB) {
+            MemoryManager::alignedFreeWrapper(memoryForPinBB);
+        }
     }
+    memoryForPinBBs.clear();
 }
 
 void DrmMemoryManager::commonCleanup() {
     if (gemCloseWorker) {
         gemCloseWorker->close(false);
     }
-    if (pinBB) {
-        DrmMemoryManager::unreference(pinBB, true);
+    for (auto &pinBB : pinBBs) {
+        if (pinBB) {
+            DrmMemoryManager::unreference(pinBB, true);
+        }
     }
+    pinBBs.clear();
 }
 
 void DrmMemoryManager::eraseSharedBufferObject(NEO::BufferObject *bo) {
@@ -156,8 +164,8 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 }
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
-    if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBB->pin(&bo, 1, getDefaultDrmContextId());
+    if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, getDefaultDrmContextId());
     }
 }
 
@@ -252,7 +260,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBB->pin(&bo, 1, getDefaultDrmContextId());
+        int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, getDefaultDrmContextId());
         if (result != SUCCESS) {
             unreference(bo, true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
@@ -607,7 +615,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, getDefaultDrmContextId());
+        int result = pinBBs.at(rootDeviceIndex)->pin(allocatedBos, numberOfBosAllocated, getDefaultDrmContextId());
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
@@ -641,10 +649,6 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t r
             handleStorage.fragmentStorageData[i].residency = nullptr;
         }
     }
-}
-
-BufferObject *DrmMemoryManager::getPinBB() const {
-    return pinBB;
 }
 
 bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable) {
