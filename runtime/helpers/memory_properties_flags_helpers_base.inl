@@ -5,7 +5,7 @@
  *
  */
 
-#include "common/helpers/bit_helpers.h"
+#include "core/helpers/bit_helpers.h"
 #include "public/cl_ext_private.h"
 #include "runtime/helpers/memory_properties_flags_helpers.h"
 

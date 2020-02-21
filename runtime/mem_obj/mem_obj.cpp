@@ -7,10 +7,10 @@
 
 #include "runtime/mem_obj/mem_obj.h"
 
-#include "common/helpers/bit_helpers.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/bit_helpers.h"
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/deferred_deleter.h"
 #include "core/memory_manager/internal_allocation_storage.h"

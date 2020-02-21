@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "common/helpers/bit_helpers.h"
 #include "core/command_stream/preemption_mode.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/helpers/bit_helpers.h"
 #include "core/helpers/common_types.h"
 #include "core/helpers/engine_control.h"
 #include "core/memory_manager/allocation_properties.h"

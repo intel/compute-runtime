@@ -1,7 +1,7 @@
 ---
 Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
 # WarningsAsErrors: '.*'
-HeaderFilterRegex: '/runtime/|/core/|/offline_compiler/|/common/'
+HeaderFilterRegex: '/runtime/|/core/|/offline_compiler/'
 AnalyzeTemporaryDtors: false
 CheckOptions:
   - key:             google-readability-braces-around-statements.ShortStatementLines

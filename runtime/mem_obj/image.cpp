@@ -7,7 +7,6 @@
 
 #include "runtime/mem_obj/image.h"
 
-#include "common/compiler_support.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_types_converter.h"
@@ -20,6 +19,7 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/memory_manager.h"
+#include "core/utilities/compiler_support.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/cl_device.h"

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "common/helpers/bit_helpers.h"
+#include "core/helpers/bit_helpers.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "public/cl_ext_private.h"

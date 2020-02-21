@@ -7,7 +7,6 @@
 
 #include "core/memory_manager/memory_manager.h"
 
-#include "common/compiler_support.h"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
@@ -26,6 +25,7 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
+#include "core/utilities/compiler_support.h"
 #include "core/utilities/stackvec.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 

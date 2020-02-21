@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "common/helpers/bit_helpers.h"
+#include "core/helpers/bit_helpers.h"
 
 #include "gtest/gtest.h"
 
