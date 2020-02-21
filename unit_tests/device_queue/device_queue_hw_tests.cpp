@@ -23,7 +23,7 @@
 using namespace NEO;
 using namespace DeviceHostQueue;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetOnlyExpected) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenResettingDeviceQueueThenQueueMatchesUnderlyingBuffer) {
     // profiling disabled
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
@@ -52,7 +52,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetOnlyExpected) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetStack) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenResettingDeviceQueueThenFirstStackElementAtValueOne) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
     auto deviceQueueHw = castToHwType<FamilyType>(deviceQueue);
@@ -65,7 +65,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetStack) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, acquireEMCriticalSectionDoesNotAcquireWhenNullHardwareIsEnabled) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, GivenNullHardwareIsEnabledWhenAcquiringEmCrticalSectionThenSectionIsNotAcquired) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.EnableNullHardware.set(1);
@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, acquireEMCriticalSectionDoesNotAc
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getCSPrefetchSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenGettinCsPrefetchSizeThenSizeIsGreaterThanZero) {
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device,
                                                                deviceQueueProperties::minimumProperties[0]);
 
@@ -88,7 +88,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getCSPrefetchSize) {
     delete mockDeviceQueueHw;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, addLriWithArbCheck) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, GivenAddLriCmdWithArbCheckWhenGettingSlbCsThenParamsAreCorrect) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device,
                                                                deviceQueueProperties::minimumProperties[0]);
@@ -112,7 +112,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, addLriWithArbCheck) {
     delete mockDeviceQueueHw;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, addLriWithoutArbCheck) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, GivenAddLriCmdWithoutArbCheckWhenGettingSlbCsThenParamsAreCorrect) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device,
                                                                deviceQueueProperties::minimumProperties[0]);
@@ -160,7 +160,7 @@ class DeviceQueueSlb : public DeviceQueueHwTest {
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, allocateSlbBufferAllocatesCorrectSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, WhenAllocatingSlbBufferThenCorrectSizeIsAllocated) {
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]));
 
     LinearStream *slbCS = mockDeviceQueueHw->getSlbCS();
@@ -174,7 +174,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, allocateSlbBufferAllocatesCorrectSiz
     EXPECT_LE(expectedSize, slbCS->getAvailableSpace());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, buildSlbAfterReset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, WhenBuildingSlbAfterResetThenCmdsAreCorrect) {
     auto mockDeviceQueueHw =
         new MockDeviceQueueHw<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]);
     auto mockDeviceQueueHwWithProfiling =
@@ -258,7 +258,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, buildSlbAfterReset) {
     delete mockDeviceQueueHwWithProfiling;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, slbEndOffset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, WhenBuildingSlbThenOffsetIsCorrect) {
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device,
                                                                deviceQueueProperties::minimumProperties[0]);
 
@@ -291,13 +291,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, slbEndOffset) {
     mockDeviceQueueHw->resetDeviceQueue();
     EXPECT_EQ(0, memcmp(slb->getUnderlyingBuffer(), slbCopy, commandsSize * 128)); // dont touch memory for enqueues
     compareCmds(ptrOffset(slb->getUnderlyingBuffer(), commandsSize * 128),
-                mockDeviceQueueHw->expectedCmds.bbStart); // bbStart always on the same place
+                mockDeviceQueueHw->expectedCmds.bbStart); // bbStart always in the same place
 
     delete mockDeviceQueueHw;
     free(slbCopy);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, WhenBuildingSlbThenCleanupSectionIsCorrect) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -365,7 +365,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     delete mockDeviceQueueHw;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, GivenProfilingWhenBuildingSlbThenEmCleanupSectionIsAdded) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -436,7 +436,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     delete mockDeviceQueueHw;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getIndirectHeapDSH) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenCreatingDeviceQueueThenDshBufferParamsAreCorrect) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     deviceQueue = createQueueObject();
@@ -463,7 +463,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getIndirectHeapDSH) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getDshOffset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenCreatingDeviceQueueThenDshOffsetIsCorrect) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     deviceQueue = createQueueObject();
@@ -512,7 +512,7 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
     MockContext *context;
 };
 
-HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectState) {
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSetiingIUpIndirectStateThenDshIsNotUsed) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -543,7 +543,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectState) {
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenCorrectStartBlockIdIsSet) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -570,7 +570,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectDSHValues) {
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenDshValuesAreSetCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
@@ -650,7 +650,7 @@ INSTANTIATE_TEST_CASE_P(DeviceQueueHwWithKernel,
 
 typedef testing::Test TheSimplestDeviceQueueFixture;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, resetDeviceQueueSetEarlyReturnValues) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenResettingDeviceQueueThenEarlyReturnValuesAreSet) {
 
     DebugManagerStateRestore dbgRestorer;
 
@@ -666,7 +666,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, resetDeviceQueueSetEa
     EXPECT_EQ(0u, mockDeviceQueueHw->getIgilQueue()->m_controls.m_SchedulerEarlyReturnCounter);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addMediaStateClearCmds) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenAddihMediaStateClearCmdsThenCmdsAreAddedCorrectly) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
@@ -698,7 +698,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addMediaStateClearCmd
     EXPECT_NE(hwParser.cmdList.end(), mediaVfeStateItor);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addExecutionModelCleanupSectionClearsMediaState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenAddingExecutionModelCleanupSectionThenMediaStateIsCleared) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
@@ -727,7 +727,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addExecutionModelClea
     EXPECT_TRUE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getMediaStateClearCmdsSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingMediaStateClearThenCmdsSizeIsCorrect) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
@@ -739,7 +739,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getMediaStateClearCmd
     EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getMediaStateClearCmdsSize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getExecutionModelCleanupSectionSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingExecutionModelCleanupThenSectionSizeIsCorrect) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -767,7 +767,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getExecutionModelClea
     EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getExecutionModelCleanupSectionSize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, getProfilingEndCmdsSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingProfilingEndThenCmdsSizeIsCorrect) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
