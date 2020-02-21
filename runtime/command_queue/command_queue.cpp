@@ -562,12 +562,23 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
         return false;
     }
 
-    if (debugVariableSet && buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+    //if buffer is compressed we cannot do CPU copy
+    if (buffer->isCompressed()) {
+        return false;
+    }
+
+    if (debugVariableSet) {
         return true;
     }
 
+    //non blocking transfers are not expected to be serviced by CPU
+    //we do not want to artifically stall the pipeline to allow CPU access
+    if (blocking == CL_FALSE) {
+        return false;
+    }
+
     //check if buffer is compatible
-    if (!buffer->isReadWriteOnCpuAllowed(blocking, ptr, size)) {
+    if (!buffer->isReadWriteOnCpuAllowed(ptr, size)) {
         return false;
     }
 

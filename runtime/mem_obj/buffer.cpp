@@ -501,11 +501,21 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
     return hostPtrSize;
 }
 
-bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, void *ptr, size_t size) {
-    return (blocking == CL_TRUE && !forceDisallowCPUCopy) && graphicsAllocation->peekSharedHandle() == 0 &&
-           (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
+bool Buffer::isReadWriteOnCpuAllowed(void *ptr, size_t size) {
+    if (forceDisallowCPUCopy) {
+        return false;
+    }
+
+    if (this->isCompressed()) {
+        return false;
+    }
+
+    if (graphicsAllocation->peekSharedHandle() != 0) {
+        return false;
+    }
+
+    return (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
            (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu)) &&
-           !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 
@@ -580,6 +590,17 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     } else {
         return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     }
+}
+
+bool Buffer::isCompressed() const {
+    if (this->getGraphicsAllocation()->getDefaultGmm()) {
+        return this->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed;
+    }
+    if (this->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        return true;
+    }
+
+    return false;
 }
 
 void Buffer::setSurfaceState(const ClDevice *device,
