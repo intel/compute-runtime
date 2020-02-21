@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "public/cl_gl_private_intel.h"
+#include "runtime/extensions/public/cl_gl_private_intel.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/gl/gl_texture.h"
 

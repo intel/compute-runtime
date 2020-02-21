@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "public/cl_gl_private_intel.h"
+#include "runtime/extensions/public/cl_gl_private_intel.h"
 #include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
 

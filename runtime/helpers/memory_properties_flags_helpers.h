@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "public/cl_ext_private.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 
 #include "memory_properties_flags.h"
 

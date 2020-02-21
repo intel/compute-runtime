@@ -7,7 +7,7 @@
 
 #include "core/unified_memory/unified_memory.h"
 #include "core/unified_memory/usm_memory_support.h"
-#include "public/cl_ext_private.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 
 #include "gtest/gtest.h"
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "public/cl_ext_private.h"
 #include "runtime/device/device_info.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 
 #include "CL/cl_ext_intel.h"
 #include <CL/cl.h>

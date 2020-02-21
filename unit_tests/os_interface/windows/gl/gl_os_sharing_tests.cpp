@@ -12,7 +12,7 @@
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
-#include "public/cl_gl_private_intel.h"
+#include "runtime/extensions/public/cl_gl_private_intel.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"

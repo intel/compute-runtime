@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/os_interface/os_library.h"
-#include "public/cl_gl_private_intel.h"
+#include "runtime/extensions/public/cl_gl_private_intel.h"
 
 #include "Gl/gl.h"
 

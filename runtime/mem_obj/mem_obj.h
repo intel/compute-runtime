@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 #include "core/debug_settings/debug_settings_manager.h"
-#include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/map_operations_handler.h"

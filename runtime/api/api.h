@@ -5,9 +5,9 @@
  *
  */
 
-#include "public/cl_ext_private.h"
 #include "runtime/api/api_enter.h"
 #include "runtime/api/dispatch.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"

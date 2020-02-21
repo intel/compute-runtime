@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "public/cl_ext_private.h"
+#include "runtime/extensions/public/cl_ext_private.h"
 #include <core/utilities/stackvec.h>
 
 #include "CL/cl.h"
