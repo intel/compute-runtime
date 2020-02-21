@@ -467,7 +467,9 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
     ASSERT_NE(nullptr, buffer.get());
     auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
-    EXPECT_LT(taskCount, taskCountSent);
+    if (is64bit) {
+        EXPECT_LT(taskCount, taskCountSent);
+    }
 }
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {

@@ -528,7 +528,8 @@ bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
     }
 
     //if we are not in System Memory Pool, it is more beneficial to do the transfer on GPU
-    if (!MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+    //for 32 bit applications, utilize CPU transfers here.
+    if (!MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) && is64bit) {
         return false;
     }
 

@@ -228,5 +228,25 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
     //read write on CPU is allowed, but not preffered. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
-    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    if (is32bit) {
+        EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    } else {
+        EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    }
+}
+
+TEST(ReadWriteBufferOnCpu, given32BitApplicationWhenLocalMemoryPoolAllocationIsAskedForPreferenceThenCpuIsChoosen) {
+    if (is64bit) {
+        GTEST_SKIP();
+    }
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
+    ASSERT_NE(nullptr, buffer.get());
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::LocalMemory);
+
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }
