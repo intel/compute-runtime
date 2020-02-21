@@ -211,9 +211,15 @@ void Device::initializeCaps() {
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
     deviceInfo.partitionMaxSubDevices = HwHelper::getSubDevicesCount(&hwInfo);
-    deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
-    deviceInfo.partitionProperties[1] = 0;
-    deviceInfo.partitionAffinityDomain = CL_DEVICE_AFFINITY_DOMAIN_NUMA | CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
+    if (deviceInfo.partitionMaxSubDevices > 1) {
+        deviceInfo.partitionProperties[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
+        deviceInfo.partitionProperties[1] = 0;
+        deviceInfo.partitionAffinityDomain = CL_DEVICE_AFFINITY_DOMAIN_NUMA | CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
+    } else {
+        deviceInfo.partitionMaxSubDevices = 0;
+        deviceInfo.partitionProperties[0] = 0;
+        deviceInfo.partitionAffinityDomain = 0;
+    }
     deviceInfo.partitionType[0] = 0;
     deviceInfo.preferredVectorWidthChar = 16;
     deviceInfo.preferredVectorWidthShort = 8;
