@@ -32,6 +32,8 @@
 #include "CL/cl_ext.h"
 #include "gmm_client_context.h"
 
+#include <algorithm>
+#include <map>
 namespace NEO {
 
 std::vector<std::unique_ptr<Platform>> platformsImpl;
@@ -260,7 +262,7 @@ std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](E
 };
 
 std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
-    std::unordered_map<PRODUCT_FAMILY, size_t> platformsMap;
+    std::map<PRODUCT_FAMILY, size_t> platformsMap;
     std::vector<DeviceVector> outDevices;
     for (auto &device : devices) {
         auto productFamily = device->getHardwareInfo().platform.eProductFamily;
@@ -272,6 +274,7 @@ std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
         auto platformId = platformsMap[productFamily];
         outDevices[platformId].push_back(std::move(device));
     }
+    std::reverse(outDevices.begin(), outDevices.end());
     return outDevices;
 }
 

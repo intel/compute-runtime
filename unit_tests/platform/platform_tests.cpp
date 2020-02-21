@@ -437,13 +437,13 @@ TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCrea
     auto groupedDevices = Platform::groupDevices(std::move(inputDevices));
 
     EXPECT_EQ(3u, groupedDevices.size());
-    EXPECT_EQ(3u, groupedDevices[0].size());
+    EXPECT_EQ(1u, groupedDevices[0].size());
     EXPECT_EQ(1u, groupedDevices[1].size());
-    EXPECT_EQ(1u, groupedDevices[2].size());
+    EXPECT_EQ(3u, groupedDevices[2].size());
 
-    EXPECT_EQ(skl0Device, groupedDevices[0][0].get());
-    EXPECT_EQ(skl1Device, groupedDevices[0][1].get());
-    EXPECT_EQ(skl2Device, groupedDevices[0][2].get());
+    EXPECT_EQ(skl0Device, groupedDevices[2][0].get());
+    EXPECT_EQ(skl1Device, groupedDevices[2][1].get());
+    EXPECT_EQ(skl2Device, groupedDevices[2][2].get());
     EXPECT_EQ(kbl0Device, groupedDevices[1][0].get());
-    EXPECT_EQ(cfl0Device, groupedDevices[2][0].get());
+    EXPECT_EQ(cfl0Device, groupedDevices[0][0].get());
 }
