@@ -106,8 +106,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         }
 
         MultiDispatchInfo dispatchInfo;
-        auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                            this->getDevice());
+        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                this->getDevice());
         BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         GeneralSurface dstSurface(svmData->cpuAllocation);
@@ -199,8 +199,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         svmData->gpuAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
 
         MultiDispatchInfo dispatchInfo;
-        auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                            this->getDevice());
+        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                this->getDevice());
         BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         GeneralSurface dstSurface(svmData->gpuAllocation);
@@ -334,8 +334,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         builtInType = EBuiltInOps::CopyBufferToBufferStateless;
     }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(builtInType,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
+                                                                            this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
     MultiDispatchInfo dispatchInfo;
     BuiltinOpParams operationParams;
@@ -476,8 +476,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         builtInType = EBuiltInOps::FillBufferStateless;
     }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(builtInType,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
+                                                                            this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 

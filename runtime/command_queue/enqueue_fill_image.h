@@ -31,8 +31,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
 
     MultiDispatchInfo di;
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
+                                                                            this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);

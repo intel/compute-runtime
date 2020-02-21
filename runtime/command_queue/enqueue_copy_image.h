@@ -33,8 +33,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
 
     MultiDispatchInfo di;
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                            this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcImgSurf(srcImage);

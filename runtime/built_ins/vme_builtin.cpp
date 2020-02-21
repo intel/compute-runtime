@@ -104,7 +104,7 @@ BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type
     auto &operationBuilder = builtins.BuiltinOpsBuilders[operationId];
     switch (operation) {
     default:
-        return builtins.getBuiltinDispatchInfoBuilder(operation, device);
+        return BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, device);
     case EBuiltInOps::VmeBlockMotionEstimateIntel:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>>(builtins, device); });
         break;

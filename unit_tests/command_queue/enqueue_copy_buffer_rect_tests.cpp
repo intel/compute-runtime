@@ -158,8 +158,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DTh
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
-                                                                                                               pCmdQ->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
+                                                                            pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -187,8 +187,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DTh
 
 HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRectStatelessThenStatelessKernelIsUsed) {
 
-    auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless,
-                                                                                                               pCmdQ->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless,
+                                                                            pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

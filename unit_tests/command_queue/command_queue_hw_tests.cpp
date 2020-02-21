@@ -751,7 +751,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
             *pDevice,
             std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns)));
 
-        mockBuilder = static_cast<MockBuilder *>(&builtIns->getBuiltinDispatchInfoBuilder(
+        mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
             operation,
             *pDevice));
     }

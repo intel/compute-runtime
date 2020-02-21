@@ -37,8 +37,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
 
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
+                                                                            this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcBufferSurf(srcBuffer);

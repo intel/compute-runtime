@@ -45,8 +45,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         return enqueueMarkerForReadWriteOperation(dstImage, const_cast<void *>(ptr), CL_COMMAND_WRITE_IMAGE, blockingWrite,
                                                   numEventsInWaitList, eventWaitList, event);
     }
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
+                                                                            this->getDevice());
 
     BuiltInOwnershipWrapper lock(builder, this->context);
 

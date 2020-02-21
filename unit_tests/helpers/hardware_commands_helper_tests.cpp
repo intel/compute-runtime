@@ -64,8 +64,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorData
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                            cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -136,8 +136,8 @@ HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                            cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -284,8 +284,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                     cmdQ.getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                            cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -502,8 +502,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = cmdQ.getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                             cmdQ.getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                            cmdQ.getDevice());
 
     BuiltinOpParams dc;
     dc.srcMemObj = img.get();
@@ -584,8 +584,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pDevice->getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                     cmdQ.getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
+                                                                            cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

@@ -49,8 +49,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
+                                                                            this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);

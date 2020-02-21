@@ -11,6 +11,7 @@
 #include "runtime/kernel/kernel.h"
 
 #include "CL/cl.h"
+#include "built_in_ops.h"
 
 #include <array>
 #include <cstdint>
@@ -97,6 +98,14 @@ class BuiltinDispatchInfoBuilder {
     std::unique_ptr<Program> prog;
     std::vector<std::unique_ptr<Kernel>> usedKernels;
     BuiltIns &kernelsLib;
+};
+
+class BuiltInDispatchBuilderOp {
+  public:
+    static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
+    static BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
+    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device,
+                                                                              std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
 };
 
 } // namespace NEO

@@ -203,7 +203,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     std::tie(srcImageType, dstImageType) = GetParam();
     auto builtIns = new MockBuiltins();
     pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
-    auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getDevice());
     // substitute original builder with mock builder
@@ -297,8 +297,8 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                              pCmdQ->getDevice()));
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                                                                              pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
     EXPECT_EQ(expectedSrcMipLevel, params->srcMipLevel);

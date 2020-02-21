@@ -71,8 +71,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
     }
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                                                        this->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
+                                                                            this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 

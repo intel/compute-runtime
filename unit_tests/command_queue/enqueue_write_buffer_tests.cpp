@@ -138,8 +138,8 @@ HWTEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenIndirectDataIsAdded) {
     EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ, srcBuffer.get(), EnqueueWriteBufferTraits::blocking);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                                                               pCmdQ->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                            pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

@@ -167,11 +167,6 @@ class BuiltinDispatchInfoBuilder;
 class BuiltIns {
   public:
     std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag> BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::COUNT)];
-
-    BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
-    BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
-    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device,
-                                                                              std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
     BuiltIns();
     virtual ~BuiltIns();
 

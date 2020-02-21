@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/mocks/mock_builtins.h"
+
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 
 namespace NEO {
 

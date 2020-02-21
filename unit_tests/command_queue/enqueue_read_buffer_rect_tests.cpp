@@ -172,8 +172,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenIndi
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
-                                                                                                               pCmdQ->getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
+                                                                            pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

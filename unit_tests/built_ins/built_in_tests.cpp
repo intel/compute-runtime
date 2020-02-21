@@ -155,7 +155,7 @@ TEST_F(BuiltInTests, SourceConsistency) {
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
     MockBuffer *dstPtr = new MockBuffer();
@@ -218,7 +218,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
 }
 
 HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
-    BuiltinDispatchInfoBuilder &baseBuilder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
@@ -265,7 +265,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTrans
 }
 
 HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
-    BuiltinDispatchInfoBuilder &baseBuilder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
@@ -312,7 +312,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslat
 }
 
 HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest) {
-    BuiltinDispatchInfoBuilder &baseBuilder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
@@ -347,7 +347,7 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPic
 }
 
 HWTEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort) {
-    BuiltinDispatchInfoBuilder &baseBuilder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
+    BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
@@ -421,7 +421,7 @@ TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesF
 }
 
 HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin) {
-    pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
+    BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pContext, *pDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
 
@@ -601,7 +601,7 @@ HWTEST_F(BuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSet
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
@@ -640,7 +640,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless, *pDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -671,7 +671,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectState
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRectStateless, *pDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -705,7 +705,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
         GTEST_SKIP();
     }
 
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBufferStateless, *pDevice);
 
     uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
     uint64_t bigOffset = 4ull * MemoryConstants::gigaByte;
@@ -742,7 +742,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessI
     std ::unique_ptr<Image> pDstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pDstImage.get());
 
-    auto &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3dStateless, *pDevice);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3dStateless, *pDevice);
 
     BuiltinOpParams dc;
     dc.srcPtr = &srcBuffer;
@@ -778,7 +778,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessI
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
-    auto &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBufferStateless, *pDevice);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBufferStateless, *pDevice);
 
     BuiltinOpParams dc;
     dc.srcMemObj = pSrcImage.get();
@@ -799,7 +799,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessI
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer src;
     AlignedBuffer dst;
@@ -824,7 +824,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer srcMemObj;
     auto size = 10 * MemoryConstants::cacheLineSize;
@@ -859,7 +859,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
-    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
     auto srcPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
@@ -894,8 +894,8 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderTwice) {
-    BuiltinDispatchInfoBuilder &builder1 = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
-    BuiltinDispatchInfoBuilder &builder2 = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
+    BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     EXPECT_EQ(&builder1, &builder2);
 }
@@ -903,7 +903,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderTwice) {
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
     bool caughtException = false;
     try {
-        pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pDevice);
+        BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pDevice);
     } catch (const std::runtime_error &) {
         caughtException = true;
     }
