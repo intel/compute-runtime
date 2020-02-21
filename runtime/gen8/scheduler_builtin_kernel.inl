@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "scheduler_definitions.h"
 
 uint GetPatchValueForSLMSize(uint slMsize) {
     uint PatchValue;

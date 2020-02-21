@@ -1114,20 +1114,20 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
 }
 
 TEST_F(VmeBuiltInTests, getBuiltinAsString) {
-    EXPECT_EQ(0, strcmp("aux_translation.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::AuxTranslation)));
-    EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)));
-    EXPECT_EQ(0, strcmp("copy_buffer_rect.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferRect)));
-    EXPECT_EQ(0, strcmp("fill_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::FillBuffer)));
-    EXPECT_EQ(0, strcmp("copy_buffer_to_image3d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferToImage3d)));
-    EXPECT_EQ(0, strcmp("copy_image3d_to_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyImage3dToBuffer)));
-    EXPECT_EQ(0, strcmp("copy_image_to_image1d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyImageToImage1d)));
-    EXPECT_EQ(0, strcmp("copy_image_to_image2d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyImageToImage2d)));
-    EXPECT_EQ(0, strcmp("copy_image_to_image3d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyImageToImage3d)));
-    EXPECT_EQ(0, strcmp("fill_image1d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::FillImage1d)));
-    EXPECT_EQ(0, strcmp("fill_image2d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::FillImage2d)));
-    EXPECT_EQ(0, strcmp("fill_image3d.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::FillImage3d)));
-    EXPECT_EQ(0, strcmp("vme_block_motion_estimate_intel.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::VmeBlockMotionEstimateIntel)));
-    EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel)));
+    EXPECT_EQ(0, strcmp("aux_translation.builtin_kernel", getBuiltinAsString(EBuiltInOps::AuxTranslation)));
+    EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)));
+    EXPECT_EQ(0, strcmp("copy_buffer_rect.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyBufferRect)));
+    EXPECT_EQ(0, strcmp("fill_buffer.builtin_kernel", getBuiltinAsString(EBuiltInOps::FillBuffer)));
+    EXPECT_EQ(0, strcmp("copy_buffer_to_image3d.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyBufferToImage3d)));
+    EXPECT_EQ(0, strcmp("copy_image3d_to_buffer.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyImage3dToBuffer)));
+    EXPECT_EQ(0, strcmp("copy_image_to_image1d.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyImageToImage1d)));
+    EXPECT_EQ(0, strcmp("copy_image_to_image2d.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyImageToImage2d)));
+    EXPECT_EQ(0, strcmp("copy_image_to_image3d.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyImageToImage3d)));
+    EXPECT_EQ(0, strcmp("fill_image1d.builtin_kernel", getBuiltinAsString(EBuiltInOps::FillImage1d)));
+    EXPECT_EQ(0, strcmp("fill_image2d.builtin_kernel", getBuiltinAsString(EBuiltInOps::FillImage2d)));
+    EXPECT_EQ(0, strcmp("fill_image3d.builtin_kernel", getBuiltinAsString(EBuiltInOps::FillImage3d)));
+    EXPECT_EQ(0, strcmp("vme_block_motion_estimate_intel.builtin_kernel", getBuiltinAsString(EBuiltInOps::VmeBlockMotionEstimateIntel)));
+    EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_check_intel.builtin_kernel", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel)));
     EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_bidirectional_check_intel", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel)));
     EXPECT_EQ(0, strcmp("unknown", getBuiltinAsString(EBuiltInOps::COUNT)));
 }
@@ -1167,13 +1167,13 @@ TEST_F(BuiltInTests, createBuiltinResourceName) {
     std::string resourceNameForPlatform = createBuiltinResourceName(builtin, extension, platformName);
     std::string resourceNameForPlatformAndStepping = createBuiltinResourceName(builtin, extension, platformName, deviceRevId);
 
-    EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.igdrcl_built_in.cl", resourceNameGeneric.c_str()));
-    EXPECT_EQ(0, strcmp("skl_0_copy_buffer_to_buffer.igdrcl_built_in.cl", resourceNameForPlatform.c_str()));
-    EXPECT_EQ(0, strcmp("skl_9_copy_buffer_to_buffer.igdrcl_built_in.cl", resourceNameForPlatformAndStepping.c_str()));
+    EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.builtin_kernel.cl", resourceNameGeneric.c_str()));
+    EXPECT_EQ(0, strcmp("skl_0_copy_buffer_to_buffer.builtin_kernel.cl", resourceNameForPlatform.c_str()));
+    EXPECT_EQ(0, strcmp("skl_9_copy_buffer_to_buffer.builtin_kernel.cl", resourceNameForPlatformAndStepping.c_str()));
 }
 
 TEST_F(BuiltInTests, joinPath) {
-    std::string resourceName = "copy_buffer_to_buffer.igdrcl_built_in.cl";
+    std::string resourceName = "copy_buffer_to_buffer.builtin_kernel.cl";
     std::string resourcePath = "path";
 
     EXPECT_EQ(0, strcmp(resourceName.c_str(), joinPath("", resourceName).c_str()));
@@ -1225,7 +1225,7 @@ TEST_F(BuiltInTests, EmbeddedStorageLoadImpl) {
     };
     MockEmbeddedStorage mockEmbeddedStorage("root");
 
-    BuiltinResourceT br = mockEmbeddedStorage.loadImpl("copy_buffer_to_buffer.igdrcl_built_in.cl");
+    BuiltinResourceT br = mockEmbeddedStorage.loadImpl("copy_buffer_to_buffer.builtin_kernel.cl");
     EXPECT_NE(0u, br.size());
 
     BuiltinResourceT bnr = mockEmbeddedStorage.loadImpl("unknown.cl");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -563,7 +563,7 @@ int AddGlobalToDebugBufferAllIds( __global DebugDataBuffer* ddb, __global uchar*
 #define MAX_SLB_OFFSET ( SECOND_LEVEL_BUFFER_SPACE_FOR_EACH_ENQUEUE * SECOND_LEVEL_BUFFER_NUMBER_OF_ENQUEUES )
 
 #ifndef SCHEDULER_EMULATION
-#include "scheduler_igdrcl_built_in.inl"
+#include "scheduler_builtin_kernel.inl"
 #endif
 
 //SOME COMMON CODE FUNCTIONS

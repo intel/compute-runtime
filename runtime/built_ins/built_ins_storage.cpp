@@ -25,39 +25,39 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     default:
         return getUnknownBuiltinAsString(builtin);
     case EBuiltInOps::AuxTranslation:
-        return "aux_translation.igdrcl_built_in";
+        return "aux_translation.builtin_kernel";
     case EBuiltInOps::CopyBufferToBuffer:
-        return "copy_buffer_to_buffer.igdrcl_built_in";
+        return "copy_buffer_to_buffer.builtin_kernel";
     case EBuiltInOps::CopyBufferToBufferStateless:
-        return "copy_buffer_to_buffer_stateless.igdrcl_built_in";
+        return "copy_buffer_to_buffer_stateless.builtin_kernel";
     case EBuiltInOps::CopyBufferRect:
-        return "copy_buffer_rect.igdrcl_built_in";
+        return "copy_buffer_rect.builtin_kernel";
     case EBuiltInOps::CopyBufferRectStateless:
-        return "copy_buffer_rect_stateless.igdrcl_built_in";
+        return "copy_buffer_rect_stateless.builtin_kernel";
     case EBuiltInOps::FillBuffer:
-        return "fill_buffer.igdrcl_built_in";
+        return "fill_buffer.builtin_kernel";
     case EBuiltInOps::FillBufferStateless:
-        return "fill_buffer_stateless.igdrcl_built_in";
+        return "fill_buffer_stateless.builtin_kernel";
     case EBuiltInOps::CopyBufferToImage3d:
-        return "copy_buffer_to_image3d.igdrcl_built_in";
+        return "copy_buffer_to_image3d.builtin_kernel";
     case EBuiltInOps::CopyBufferToImage3dStateless:
-        return "copy_buffer_to_image3d_stateless.igdrcl_built_in";
+        return "copy_buffer_to_image3d_stateless.builtin_kernel";
     case EBuiltInOps::CopyImage3dToBuffer:
-        return "copy_image3d_to_buffer.igdrcl_built_in";
+        return "copy_image3d_to_buffer.builtin_kernel";
     case EBuiltInOps::CopyImage3dToBufferStateless:
-        return "copy_image3d_to_buffer_stateless.igdrcl_built_in";
+        return "copy_image3d_to_buffer_stateless.builtin_kernel";
     case EBuiltInOps::CopyImageToImage1d:
-        return "copy_image_to_image1d.igdrcl_built_in";
+        return "copy_image_to_image1d.builtin_kernel";
     case EBuiltInOps::CopyImageToImage2d:
-        return "copy_image_to_image2d.igdrcl_built_in";
+        return "copy_image_to_image2d.builtin_kernel";
     case EBuiltInOps::CopyImageToImage3d:
-        return "copy_image_to_image3d.igdrcl_built_in";
+        return "copy_image_to_image3d.builtin_kernel";
     case EBuiltInOps::FillImage1d:
-        return "fill_image1d.igdrcl_built_in";
+        return "fill_image1d.builtin_kernel";
     case EBuiltInOps::FillImage2d:
-        return "fill_image2d.igdrcl_built_in";
+        return "fill_image2d.builtin_kernel";
     case EBuiltInOps::FillImage3d:
-        return "fill_image3d.igdrcl_built_in";
+        return "fill_image3d.builtin_kernel";
     };
 }
 

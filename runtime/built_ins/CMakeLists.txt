@@ -29,26 +29,26 @@ target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_INS})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_BUILT_INS ${RUNTIME_SRCS_BUILT_INS})
 
 set(RUNTIME_SRCS_BUILT_IN_KERNELS
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/aux_translation.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect_stateless.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer_stateless.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d_stateless.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image3d_to_buffer.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image3d_to_buffer_stateless.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image1d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image2d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image3d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer_stateless.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image1d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image2d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image3d.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_motion_estimate_intel.igdrcl_built_in
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/aux_translation.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect_stateless.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer_stateless.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d_stateless.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image3d_to_buffer.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image3d_to_buffer_stateless.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image1d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image2d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_image_to_image3d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_buffer_stateless.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image1d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image2d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image3d.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_check_intel.builtin_kernel
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_motion_estimate_intel.builtin_kernel
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_IN_KERNELS})

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,7 @@ float __intel__getProfilingTimerResolution() {
 }
 
 #include "runtime/gen12lp/device_enqueue.h"
-#include "runtime/gen12lp/scheduler_definitions.h"
-#include "runtime/gen12lp/scheduler_igdrcl_built_in.inl"
+#include "runtime/gen12lp/scheduler_builtin_kernel.inl"
 #include "runtime/scheduler/scheduler.cl"
 } // namespace Gen12LPSchedulerSimulation
 

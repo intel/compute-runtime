@@ -1,11 +1,16 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "scheduler_definitions.h"
+
 uint GetPatchValueForSLMSize(uint slMsize) {
+    //todo: veryfy this optimization :
+    //return ( SLMSize == 0 ) ? 0 : max( 33 - clz( ( SLMSize - 1 ) >> 10 ), 7 );
+
     uint PatchValue = 0;
     if (slMsize == 0) {
         PatchValue = 0;

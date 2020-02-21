@@ -352,7 +352,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
                                               "namespace NEO {\n"
                                               "static RegisterEmbeddedResource registerSchedulerBin(\n"
                                               "    \"" +
-                         gEnvironment->familyNameWithType + "_0_scheduler.igdrcl_built_in.bin\",\n"
+                         gEnvironment->familyNameWithType + "_0_scheduler.builtin_kernel.bin\",\n"
                                                             "    (const char *)SchedulerBinary_" +
                          familyNameWithType + ",\n"
                                               "    SchedulerBinarySize_" +
@@ -621,7 +621,7 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     size_t srcSize = 0;
-    auto ptrSrc = loadDataFromFile("test_files/copy_buffer_to_buffer.igdrcl_built_in", srcSize);
+    auto ptrSrc = loadDataFromFile("test_files/copy_buffer_to_buffer.builtin_kernel", srcSize);
 
     const std::string src = ptrSrc.get();
     ASSERT_EQ(srcSize, src.size());

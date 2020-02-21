@@ -64,7 +64,7 @@ void SchedulerKernel::computeGws() {
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
 }
 BuiltinCode SchedulerKernel::loadSchedulerKernel(Device *device) {
-    std::string schedulerResourceName = getFamilyNameWithType(device->getHardwareInfo()) + "_0_scheduler.igdrcl_built_in.bin";
+    std::string schedulerResourceName = getFamilyNameWithType(device->getHardwareInfo()) + "_0_scheduler.builtin_kernel.bin";
 
     BuiltinCode ret;
     auto storage = std::make_unique<EmbeddedStorage>("");

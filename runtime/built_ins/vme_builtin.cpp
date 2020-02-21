@@ -18,15 +18,15 @@
 namespace NEO {
 
 static const char *blockMotionEstimateIntelSrc = {
-#include "kernels/vme_block_motion_estimate_intel_frontend.igdrcl_built_in"
+#include "kernels/vme_block_motion_estimate_intel_frontend.builtin_kernel"
 };
 
 static const char *blockAdvancedMotionEstimateCheckIntelSrc = {
-#include "kernels/vme_block_advanced_motion_estimate_check_intel_frontend.igdrcl_built_in"
+#include "kernels/vme_block_advanced_motion_estimate_check_intel_frontend.builtin_kernel"
 };
 
 static const char *blockAdvancedMotionEstimateBidirectionalCheckIntelSrc = {
-#include "kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel_frontend.igdrcl_built_in"
+#include "kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel_frontend.builtin_kernel"
 };
 
 static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
@@ -90,9 +90,9 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
     default:
         return nullptr;
     case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        return "vme_block_motion_estimate_intel.igdrcl_built_in";
+        return "vme_block_motion_estimate_intel.builtin_kernel";
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        return "vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in";
+        return "vme_block_advanced_motion_estimate_check_intel.builtin_kernel";
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
         return "vme_block_advanced_motion_estimate_bidirectional_check_intel";
     }

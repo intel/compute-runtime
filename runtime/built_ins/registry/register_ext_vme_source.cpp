@@ -18,7 +18,7 @@ static RegisterEmbeddedResource registerVmeSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "runtime/built_ins/kernels/vme_block_motion_estimate_intel.igdrcl_built_in"
+#include "runtime/built_ins/kernels/vme_block_motion_estimate_intel.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerVmeAdvancedSrc(
@@ -27,7 +27,7 @@ static RegisterEmbeddedResource registerVmeAdvancedSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "runtime/built_ins/kernels/vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in"
+#include "runtime/built_ins/kernels/vme_block_advanced_motion_estimate_check_intel.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerVmeAdvancedBidirectionalSrc(
@@ -36,7 +36,7 @@ static RegisterEmbeddedResource registerVmeAdvancedBidirectionalSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "runtime/built_ins/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in"
+#include "runtime/built_ins/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.builtin_kernel"
         ));
 
 } // namespace NEO
