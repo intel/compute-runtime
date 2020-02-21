@@ -24,10 +24,12 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(unalignedPtr, 1));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 
     gmm->isRenderCompressed = true;
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(unalignedPtr, 1));
+    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 
     alignedFree(alignedPtr);
 }
@@ -50,7 +52,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
 
     bool aligned = (reinterpret_cast<uintptr_t>(unalignedReadPtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
     EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(unalignedReadPtr, size));
+    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    ASSERT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedReadPtr, size));
 
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
                                                           buffer.get(),
@@ -90,7 +93,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
 
     bool aligned = (reinterpret_cast<uintptr_t>(unalignedWritePtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
     EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(unalignedWritePtr, size));
+    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    ASSERT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedWritePtr, size));
 
     retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ,
                                                             buffer.get(),
@@ -135,31 +139,31 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
 
     // zeroCopy == true && aligned/unaligned hostPtr
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(alignedHostPtr, MemoryConstants::cacheLineSize + 1));
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(unalignedHostPtr, MemoryConstants::cacheLineSize));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(alignedHostPtr, MemoryConstants::cacheLineSize + 1));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedHostPtr, MemoryConstants::cacheLineSize));
 
     buffer.reset(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, unalignedBufferPtr, retVal));
 
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     // zeroCopy == false && unaligned hostPtr
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(unalignedHostPtr, MemoryConstants::cacheLineSize));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedHostPtr, MemoryConstants::cacheLineSize));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_USE_HOST_PTR, 1 * MB, smallBufferPtr, retVal));
 
     // platform LP == true && size <= 10 MB
     mockDevice->deviceInfo.platformLP = true;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(smallBufferPtr, 1 * MB));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(smallBufferPtr, 1 * MB));
 
     // platform LP == false && size <= 10 MB
     mockDevice->deviceInfo.platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(smallBufferPtr, 1 * MB));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(smallBufferPtr, 1 * MB));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == false && size > 10 MB
     mockDevice->deviceInfo.platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(buffer->getCpuAddress(), largeBufferSize));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(buffer->getCpuAddress(), largeBufferSize));
 
     alignedFree(smallBufferPtr);
     alignedFree(alignedHostPtr);
@@ -194,13 +198,13 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     // zeroCopy == false && aligned hostPtr
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(alignedHostPtr, MemoryConstants::cacheLineSize + 1));
+    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(alignedHostPtr, MemoryConstants::cacheLineSize + 1));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == true && size > 10 MB
     mockDevice->deviceInfo.platformLP = true;
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(buffer->getCpuAddress(), largeBufferSize));
+    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(buffer->getCpuAddress(), largeBufferSize));
 
     alignedFree(alignedHostPtr);
     alignedFree(alignedBufferPtr);
@@ -219,7 +223,10 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    //read write on CPU is allowed, but not preffered. We can access this memory via Lock.
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }

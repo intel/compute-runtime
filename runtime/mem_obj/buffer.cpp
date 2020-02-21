@@ -501,7 +501,7 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
     return hostPtrSize;
 }
 
-bool Buffer::isReadWriteOnCpuAllowed(void *ptr, size_t size) {
+bool Buffer::isReadWriteOnCpuAllowed() {
     if (forceDisallowCPUCopy) {
         return false;
     }
@@ -513,10 +513,26 @@ bool Buffer::isReadWriteOnCpuAllowed(void *ptr, size_t size) {
     if (graphicsAllocation->peekSharedHandle() != 0) {
         return false;
     }
+    return true;
+}
 
-    return (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
-           (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu)) &&
-           MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
+bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
+    //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
+    if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
+        return false;
+    }
+
+    //on low power devices larger transfers are better on the GPU
+    if (context->getDevice(0)->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
+        return false;
+    }
+
+    //if we are not in System Memory Pool, it is more beneficial to do the transfer on GPU
+    if (!MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+        return false;
+    }
+
+    return true;
 }
 
 Buffer *Buffer::createBufferHw(Context *context,

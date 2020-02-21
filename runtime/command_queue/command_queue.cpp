@@ -562,8 +562,8 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
         return false;
     }
 
-    //if buffer is compressed we cannot do CPU copy
-    if (buffer->isCompressed()) {
+    //check if buffer is compatible
+    if (!buffer->isReadWriteOnCpuAllowed()) {
         return false;
     }
 
@@ -577,8 +577,8 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
         return false;
     }
 
-    //check if buffer is compatible
-    if (!buffer->isReadWriteOnCpuAllowed(ptr, size)) {
+    //check if it is beneficial to do transfer on CPU
+    if (!buffer->isReadWriteOnCpuPreffered(ptr, size)) {
         return false;
     }
 
