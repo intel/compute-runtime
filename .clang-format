@@ -50,10 +50,12 @@ ExperimentalAutoDetectBinPacking: false
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
 IncludeBlocks:   Regroup
 IncludeCategories:
-  - Regex:           '^.(core|documentation|manifests|offline_compiler|opencl|scripts|unit_tests)/'
+  - Regex:           '^.(shared)/'
     Priority:        1
+  - Regex:           '^.(documentation|manifests|offline_compiler|opencl|scripts)/'
+    Priority:        2
   - Regex:           '^"test\.h"$'
-    Priority:        1
+    Priority:        2
   - Regex:           '(d3d9types|d3d10_1)\.h'
     Priority:        4
   - Regex:           '(gfxEscape|windows)\.h'
