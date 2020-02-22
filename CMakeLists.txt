@@ -103,7 +103,7 @@ if(NOT DEFINED NEO_SOURCE_DIR)
   set(NEO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-set(NEO_RUNTIME_SUB_DIR "runtime")
+set(NEO_RUNTIME_SUB_DIR "opencl/source")
 set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
 
 # Set the core source directory
@@ -554,7 +554,7 @@ else()
 endif()
 message(STATUS "Engine node dir: ${ENGINE_NODE_DIR}")
 
-include_directories(runtime)
+include_directories(opencl/source)
 
 add_definitions(-DGMM_OCL)
 
