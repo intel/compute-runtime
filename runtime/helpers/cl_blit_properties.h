@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/helpers/blit_commands_helper.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
 
 #include "CL/cl.h"
+#include "built_ins/builtins_dispatch_builder.h"
 
 namespace NEO {
 

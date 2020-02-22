@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/tracing/tracing_api.h"
+#include "tracing/tracing_api.h"
 
-#include "runtime/tracing/tracing_handle.h"
-#include "runtime/tracing/tracing_notify.h"
+#include "tracing/tracing_handle.h"
+#include "tracing/tracing_notify.h"
 
 namespace HostSideTracing {
 

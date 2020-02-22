@@ -8,10 +8,10 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 
 #include "core/device/device.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/context/context.h"
 #include "unit_tests/mocks/mock_device.h"
 
+#include "command_queue/command_queue_hw.h"
+#include "context/context.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

@@ -8,11 +8,11 @@
 #pragma once
 #include "core/command_stream/preemption_mode.h"
 #include "core/utilities/reference_tracked_object.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/device/device_info_map.h"
-#include "runtime/helpers/base_object.h"
 
+#include "api/cl_types.h"
+#include "device/device_info_map.h"
 #include "engine_node.h"
+#include "helpers/base_object.h"
 #include "igfxfmid.h"
 
 #include <vector>

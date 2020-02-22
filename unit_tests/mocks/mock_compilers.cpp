@@ -9,7 +9,6 @@
 
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_sip.h"
@@ -18,6 +17,7 @@
 #include "compiler_options.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
+#include "os_interface/os_inc_base.h"
 
 #include <fstream>
 #include <map>

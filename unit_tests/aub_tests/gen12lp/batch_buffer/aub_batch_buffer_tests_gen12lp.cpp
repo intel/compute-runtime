@@ -10,16 +10,17 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/aub_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "event/event.h"
+#include "helpers/hardware_commands_helper.h"
+#include "mem_obj/buffer.h"
 
 using Gen12LPAubBatchBufferTests = Test<NEO::DeviceFixture>;
 using Gen12LPTimestampTests = Test<HelloWorldFixture<AUBHelloWorldFixtureFactory>>;

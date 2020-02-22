@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
-#include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/page_table.h"
-#include "runtime/memory_manager/page_table.inl"
 #include "test.h"
 #include "unit_tests/mocks/mock_physical_address_allocator.h"
 
+#include "aub_mem_dump/page_table_entry_bits.h"
 #include "gtest/gtest.h"
+#include "memory_manager/memory_banks.h"
+#include "memory_manager/page_table.h"
+#include "memory_manager/page_table.inl"
 
 #include <memory>
 

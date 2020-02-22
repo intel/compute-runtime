@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/queue_helpers.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_event.h"
 
 #include "gtest/gtest.h"
+#include "helpers/queue_helpers.h"
 
 using namespace NEO;
 

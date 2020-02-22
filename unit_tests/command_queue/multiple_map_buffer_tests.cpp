@@ -5,12 +5,13 @@
  *
  */
 
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/user_event.h"
-#include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "event/user_event.h"
+#include "mem_obj/buffer.h"
 
 using namespace NEO;
 

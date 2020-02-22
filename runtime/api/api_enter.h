@@ -6,7 +6,8 @@
  */
 
 #include "core/utilities/perf_profiler.h"
-#include "runtime/utilities/logger.h"
+
+#include "utilities/logger.h"
 
 #define API_ENTER(retValPointer) \
     LoggerApiEnterWrapper<NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()> ApiWrapperForSingleCall(__FUNCTION__, retValPointer)

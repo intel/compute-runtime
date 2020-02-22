@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/mocks/mock_deferrable_deletion.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 
 #include "gtest/gtest.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 using namespace NEO;
 

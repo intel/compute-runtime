@@ -8,12 +8,12 @@
 #pragma once
 
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
 
+#include "device/cl_device.h"
 #include "gtest/gtest.h"
+#include "program/kernel_info.h"
 
 using namespace NEO;
 using namespace iOpenCL;

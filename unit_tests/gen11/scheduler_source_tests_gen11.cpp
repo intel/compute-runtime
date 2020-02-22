@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen11/hw_cmds.h"
-#include "runtime/device_queue/device_queue_hw.h"
+
+#include "device_queue/device_queue_hw.h"
 
 // Keep the order of device_enqueue.h and scheduler_definitions.h as the latter uses defines from the first one
-#include "runtime/gen11/device_enqueue.h"
-#include "runtime/gen11/scheduler_definitions.h"
 #include "unit_tests/scheduler/scheduler_source_tests.h"
+
+#include "gen11/device_enqueue.h"
+#include "gen11/scheduler_definitions.h"
 // Keep this include below scheduler_definitions.h and device_enqueue.h headers as it depends on defines defined in them
 #include "unit_tests/scheduler/scheduler_source_tests.inl"
 

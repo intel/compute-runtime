@@ -5,10 +5,11 @@
  *
  */
 
-#include "runtime/helpers/built_ins_helper.h"
+#include "helpers/built_ins_helper.h"
 
 #include "core/device/device.h"
-#include "runtime/program/program.h"
+
+#include "program/program.h"
 
 namespace NEO {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {

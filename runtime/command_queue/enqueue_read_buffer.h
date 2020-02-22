@@ -9,12 +9,13 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/unified_memory_manager.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/enqueue_common.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/mem_obj_surface.h"
+
+#include "built_ins/built_ins.h"
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/enqueue_common.h"
+#include "helpers/hardware_commands_helper.h"
+#include "mem_obj/buffer.h"
+#include "memory_manager/mem_obj_surface.h"
 
 #include <new>
 

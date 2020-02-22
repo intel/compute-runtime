@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/context/context.h"
-
 #include "cl_api_tests.h"
+#include "context/context.h"
 
 using namespace NEO;
 

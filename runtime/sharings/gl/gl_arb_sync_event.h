@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/event/event.h"
+#include "event/event.h"
 
 struct _tagCLGLSyncInfo;
 typedef _tagCLGLSyncInfo CL_GL_SYNC_INFO;

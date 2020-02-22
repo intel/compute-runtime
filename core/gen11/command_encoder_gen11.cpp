@@ -9,7 +9,8 @@
 #include "core/command_container/command_encoder.inl"
 #include "core/command_container/command_encoder_base.inl"
 #include "core/gen11/hw_cmds_base.h"
-#include "runtime/gen11/reg_configs.h"
+
+#include "gen11/reg_configs.h"
 namespace NEO {
 
 using Family = ICLFamily;

@@ -8,9 +8,10 @@
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/device_factory.h"
-#include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/tbx_command_stream_receiver.h"
+
+#include "command_stream/aub_command_stream_receiver.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "command_stream/tbx_command_stream_receiver.h"
 
 namespace NEO {
 

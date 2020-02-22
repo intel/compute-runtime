@@ -6,11 +6,12 @@
  */
 
 #include "core/helpers/get_info.h"
-#include "runtime/api/api.h"
-#include "runtime/api/dispatch.h"
-#include "runtime/context/context.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj.h"
+
+#include "api/api.h"
+#include "api/dispatch.h"
+#include "context/context.h"
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj.h"
 
 void NEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {

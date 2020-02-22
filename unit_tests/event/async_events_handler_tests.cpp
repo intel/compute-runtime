@@ -7,14 +7,14 @@
 
 #include "core/helpers/timestamp_packet.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/event/async_events_handler.h"
-#include "runtime/event/event.h"
-#include "runtime/event/user_event.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 
+#include "event/async_events_handler.h"
+#include "event/event.h"
+#include "event/user_event.h"
 #include "gmock/gmock.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 using namespace ::testing;

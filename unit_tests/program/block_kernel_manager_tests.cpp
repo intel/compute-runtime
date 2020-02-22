@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_block_kernel_manager.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
+#include "program/kernel_info.h"
 
 using namespace NEO;
 

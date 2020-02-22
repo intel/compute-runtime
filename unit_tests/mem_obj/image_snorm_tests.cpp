@@ -5,10 +5,9 @@
  *
  */
 
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/image.h"
-
 #include "gtest/gtest.h"
+#include "helpers/surface_formats.h"
+#include "mem_obj/image.h"
 
 #include <array>
 

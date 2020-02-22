@@ -5,13 +5,13 @@
  *
  */
 
-#include "runtime/command_queue/command_queue_hw.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/static_size3.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "command_queue/command_queue_hw.h"
 #include "reg_configs_common.h"
 
 namespace NEO {

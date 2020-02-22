@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/per_thread_data.h"
+#include "helpers/per_thread_data.h"
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/debug_helpers.h"

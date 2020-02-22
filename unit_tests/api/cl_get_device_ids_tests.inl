@@ -7,10 +7,10 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "cl_api_tests.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

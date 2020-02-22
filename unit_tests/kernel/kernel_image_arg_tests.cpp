@@ -6,8 +6,6 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -18,6 +16,8 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/page_fault_manager/cpu_page_fault_manager.h"
-#include "runtime/command_queue/command_queue.h"
+
+#include "command_queue/command_queue.h"
 
 namespace NEO {
 void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {

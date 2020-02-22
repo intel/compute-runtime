@@ -5,11 +5,11 @@
  *
  */
 
-#include "runtime/context/context.h"
-#include "runtime/event/event.h"
 #include "test.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "event/event.h"
 
 using namespace NEO;
 

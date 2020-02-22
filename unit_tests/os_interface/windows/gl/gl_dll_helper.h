@@ -6,10 +6,14 @@
  */
 
 #pragma once
+
+#include "core/helpers/debug_helpers.h"
 #include "core/os_interface/os_library.h"
-#include "runtime/extensions/public/cl_gl_private_intel.h"
 
 #include "Gl/gl.h"
+#include "extensions/public/cl_gl_private_intel.h"
+
+#include <memory>
 
 using namespace NEO;
 namespace Os {

@@ -5,12 +5,11 @@
  *
  */
 
-#include "runtime/api/api_enter.h"
-#include "runtime/api/dispatch.h"
-#include "runtime/extensions/public/cl_ext_private.h"
-
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
+#include "api/api_enter.h"
+#include "api/dispatch.h"
+#include "extensions/public/cl_ext_private.h"
 
 #ifdef __cplusplus
 extern "C" {

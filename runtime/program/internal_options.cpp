@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/program/program.h"
-
 #include "compiler_options.h"
+#include "program/program.h"
 
 #include <vector>
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/task_information.h"
+#include "helpers/task_information.h"
 
 namespace NEO {
 template <typename ObjectT>

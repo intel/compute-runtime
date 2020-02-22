@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/platform/extensions.h"
+#include "platform/extensions.h"
 
 #include "core/helpers/hw_info.h"
 

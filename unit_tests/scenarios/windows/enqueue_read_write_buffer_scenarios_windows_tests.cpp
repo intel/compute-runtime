@@ -8,7 +8,6 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
@@ -16,6 +15,8 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
+
+#include "os_interface/windows/wddm_device_command_stream.h"
 
 using namespace NEO;
 

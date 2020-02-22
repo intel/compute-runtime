@@ -5,11 +5,10 @@
  *
  */
 
-#include "runtime/context/context.h"
-#include "runtime/sampler/sampler.h"
-
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "sampler/sampler.h"
 
 using namespace NEO;
 

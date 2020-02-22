@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/properties_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
+#include "helpers/properties_helper.h"
 
 using namespace NEO;
 

@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/context/context.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 
 #include "CL/cl_gl.h"
+#include "context/context.h"
 #include "gtest/gtest.h"
+#include "platform/platform.h"
 
 #include <memory>
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/built_ins/built_in_ops_vme.h"
+#include "built_ins/built_in_ops_vme.h"
 
 namespace NEO {
 class Program;

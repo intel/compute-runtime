@@ -5,18 +5,18 @@
  *
  */
 
-#include "runtime/helpers/validators.h"
+#include "helpers/validators.h"
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/base_object.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
-#include "runtime/sampler/sampler.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "event/event.h"
+#include "helpers/base_object.h"
+#include "kernel/kernel.h"
+#include "mem_obj/mem_obj.h"
+#include "platform/platform.h"
+#include "program/program.h"
+#include "sampler/sampler.h"
 
 namespace NEO {
 

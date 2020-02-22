@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/sip.h"
 #include "test.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_program.h"
 
+#include "built_ins/built_ins.h"
+#include "built_ins/sip.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

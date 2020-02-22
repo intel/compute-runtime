@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/page_table.h"
 #include "unit_tests/mocks/mock_physical_address_allocator.h"
 
 #include "gtest/gtest.h"
+#include "memory_manager/memory_banks.h"
+#include "memory_manager/page_table.h"
 
 using namespace NEO;
 

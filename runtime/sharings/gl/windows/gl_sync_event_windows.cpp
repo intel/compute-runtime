@@ -9,14 +9,15 @@
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/helpers/timestamp_packet.h"
-#include "runtime/context/context.h"
-#include "runtime/event/async_events_handler.h"
-#include "runtime/event/event_builder.h"
-#include "runtime/extensions/public/cl_gl_private_intel.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/gl/gl_context_guard.h"
-#include "runtime/sharings/gl/gl_sync_event.h"
-#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
+
+#include "context/context.h"
+#include "event/async_events_handler.h"
+#include "event/event_builder.h"
+#include "extensions/public/cl_gl_private_intel.h"
+#include "platform/platform.h"
+#include "sharings/gl/gl_context_guard.h"
+#include "sharings/gl/gl_sync_event.h"
+#include "sharings/gl/windows/gl_sharing_windows.h"
 
 namespace NEO {
 GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)

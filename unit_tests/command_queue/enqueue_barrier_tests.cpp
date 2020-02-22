@@ -6,14 +6,15 @@
  */
 
 #include "core/command_stream/command_stream_receiver.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/user_event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/user_event.h"
+#include "helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 

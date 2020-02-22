@@ -6,19 +6,19 @@
  */
 
 #include "core/utilities/arrayref.h"
-#include "runtime/api/api.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/d3d/cl_d3d_api.h"
-#include "runtime/sharings/d3d/d3d_buffer.h"
-#include "runtime/sharings/d3d/d3d_sharing.h"
-#include "runtime/sharings/d3d/d3d_surface.h"
-#include "runtime/sharings/d3d/d3d_texture.h"
 #include "unit_tests/fixtures/d3d_test_fixture.h"
 
+#include "api/api.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "mem_obj/image.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
+#include "platform/platform.h"
+#include "sharings/d3d/cl_d3d_api.h"
+#include "sharings/d3d/d3d_buffer.h"
+#include "sharings/d3d/d3d_sharing.h"
+#include "sharings/d3d/d3d_surface.h"
+#include "sharings/d3d/d3d_texture.h"
 
 namespace NEO {
 template <typename T>

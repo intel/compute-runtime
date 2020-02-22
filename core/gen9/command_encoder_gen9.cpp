@@ -9,7 +9,8 @@
 #include "core/command_container/command_encoder.inl"
 #include "core/command_container/command_encoder_base.inl"
 #include "core/gen9/hw_cmds_base.h"
-#include "runtime/gen9/reg_configs.h"
+
+#include "gen9/reg_configs.h"
 
 namespace NEO {
 

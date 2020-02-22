@@ -6,10 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/execution_model/device_enqueue.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/program/printf_handler.h"
-#include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
@@ -23,7 +19,11 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sampler.h"
 
+#include "execution_model/device_enqueue.h"
+#include "kernel/kernel.h"
 #include "patch_list.h"
+#include "program/printf_handler.h"
+#include "sampler/sampler.h"
 
 #include <algorithm>
 #include <memory>

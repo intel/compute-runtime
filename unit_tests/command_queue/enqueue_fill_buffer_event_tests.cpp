@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
+
+#include "command_queue/command_queue.h"
+#include "event/event.h"
 
 using namespace NEO;
 

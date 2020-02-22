@@ -5,13 +5,14 @@
  *
  */
 
-#include "runtime/event/event_builder.h"
+#include "event/event_builder.h"
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/timestamp_packet.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/context/context.h"
-#include "runtime/event/user_event.h"
+
+#include "api/cl_types.h"
+#include "context/context.h"
+#include "event/user_event.h"
 
 namespace NEO {
 EventBuilder::~EventBuilder() {

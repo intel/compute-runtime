@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/mem_obj/map_operations_handler.h"
+#include "mem_obj/map_operations_handler.h"
 
 #include "core/helpers/ptr_math.h"
 

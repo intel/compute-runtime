@@ -5,25 +5,25 @@
  *
  */
 
-#include "runtime/accelerators/intel_accelerator.h"
-#include "runtime/api/api.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/base_object.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
-#include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_platform.h"
 
+#include "accelerators/intel_accelerator.h"
+#include "api/api.h"
+#include "api/cl_types.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device_queue/device_queue.h"
 #include "gmock/gmock.h"
+#include "helpers/base_object.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/mem_obj.h"
+#include "platform/platform.h"
+#include "program/program.h"
+#include "sampler/sampler.h"
 
 namespace NEO {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;

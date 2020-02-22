@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "runtime/extensions/public/cl_ext_private.h"
 #include <core/utilities/stackvec.h>
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
+#include "extensions/public/cl_ext_private.h"
 
 #include <cstdint>
 

@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/program/program.h"
 #include "unit_tests/perf_tests/fixtures/command_queue_fixture.h"
 #include "unit_tests/perf_tests/fixtures/device_fixture.h"
 #include "unit_tests/perf_tests/fixtures/platform_fixture.h"
 #include "unit_tests/perf_tests/perf_test_utils.h"
 
+#include "command_queue/command_queue.h"
+#include "context/context.h"
 #include "gtest/gtest.h"
+#include "program/program.h"
 
 namespace NEO {
 

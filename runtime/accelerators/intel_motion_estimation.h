@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/accelerators/intel_accelerator.h"
+#include "accelerators/intel_accelerator.h"
 
 //------------------------------------------------------------------------------
 // VmeAccelerator Class Stuff

@@ -9,9 +9,6 @@
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_allocator_multi_device_fixture.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
@@ -20,6 +17,10 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_os_context.h"
+
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj_helper.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

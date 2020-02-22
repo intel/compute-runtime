@@ -8,7 +8,8 @@
 #include "core/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "core/gen9/hw_cmds.h"
 #include "core/helpers/blit_commands_helper_bdw_plus.inl"
-#include "runtime/command_stream/device_command_stream.h"
+
+#include "command_stream/device_command_stream.h"
 
 namespace NEO {
 typedef SKLFamily Family;

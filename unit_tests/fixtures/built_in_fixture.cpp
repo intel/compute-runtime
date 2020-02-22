@@ -8,10 +8,11 @@
 #include "unit_tests/fixtures/built_in_fixture.h"
 
 #include "core/device/device.h"
-#include "runtime/built_ins/built_ins.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
+
+#include "built_ins/built_ins.h"
 
 using namespace NEO;
 

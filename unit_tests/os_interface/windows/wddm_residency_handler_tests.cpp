@@ -9,7 +9,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/device/cl_device.h"
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
@@ -18,6 +17,8 @@
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "device/cl_device.h"
 
 using namespace NEO;
 

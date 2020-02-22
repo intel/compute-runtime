@@ -20,10 +20,10 @@ add_executable(igdrcl_${target_name}
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   ${NEO_SOURCE_DIR}/core/os_interface/linux/sys_calls_linux.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/linux/allocator_helper.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/linux/options_linux.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/linux/os_interface.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/allocator_helper.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/drm_neo_create.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/options_linux.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/os_interface.cpp
   ${NEO_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   ${NEO_SOURCE_DIR}/unit_tests/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
   ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
@@ -37,7 +37,7 @@ target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
-  ${NEO_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/devices${BRANCH_DIR_SUFFIX}
   ${NEO_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )

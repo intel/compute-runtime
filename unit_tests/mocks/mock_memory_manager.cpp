@@ -10,8 +10,9 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/gmm_helper/gmm.h"
 #include "core/memory_manager/deferred_deleter.h"
-#include "runtime/helpers/surface_formats.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
+
+#include "helpers/surface_formats.h"
 
 #include <cstring>
 

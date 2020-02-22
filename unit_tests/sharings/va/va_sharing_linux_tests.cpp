@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/sharings/va/va_sharing_functions.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
 
 #include "gtest/gtest.h"
+#include "sharings/va/va_sharing_functions.h"
 
 #include <functional>
 #include <memory>

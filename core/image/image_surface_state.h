@@ -16,7 +16,7 @@
 
 namespace NEO {
 template <typename GfxFamily>
-inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const NEO::ImageInfo &imageInfo, NEO::Gmm *gmm, NEO::GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const NEO::SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
+inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo, Gmm *gmm, GmmHelper &gmmHelper, uint32_t cubeFaceIndex, uint64_t gpuAddress, const SurfaceOffsets &surfaceOffsets, bool isNV12Format) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;

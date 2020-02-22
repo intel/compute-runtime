@@ -9,9 +9,10 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/memory_manager/surface.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/event.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/event.h"
 
 namespace NEO {
 

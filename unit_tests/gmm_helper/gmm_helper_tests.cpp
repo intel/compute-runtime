@@ -12,8 +12,6 @@
 #include "core/helpers/ptr_math.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -26,6 +24,8 @@
 #include "gmm_client_context.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
+#include "platform/platform.h"
 
 using namespace ::testing;
 

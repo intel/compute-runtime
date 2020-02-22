@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/helpers/dispatch_info.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -13,6 +12,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
+#include "helpers/dispatch_info.h"
 
 #include <type_traits>
 

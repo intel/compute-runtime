@@ -9,7 +9,6 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/file_io.h"
-#include "runtime/program/program.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
@@ -18,6 +17,8 @@
 #include "unit_tests/fixtures/run_kernel_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
+
+#include "program/program.h"
 
 namespace NEO {
 

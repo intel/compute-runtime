@@ -80,14 +80,14 @@ if(WIN32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     ${WDK_INCLUDE_PATHS}
     ${NEO_SOURCE_DIR}/core/os_interface/windows
-    ${NEO_SOURCE_DIR}/runtime/os_interface/windows
+    ${NEO_RUNTIME_SOURCE_DIR}/os_interface/windows
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
   set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     ${NEO_SOURCE_DIR}/core/os_interface/linux
-    ${NEO_SOURCE_DIR}/runtime/os_interface/linux
+    ${NEO_RUNTIME_SOURCE_DIR}/os_interface/linux
     ${I915_INCLUDES_DIR}
   )
 endif()
@@ -127,7 +127,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
-    ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+    ${NEO_RUNTIME_SOURCE_DIR}/aub/aub_stream_interface.cpp
   )
 
   if(UNIX)

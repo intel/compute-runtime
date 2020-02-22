@@ -11,7 +11,6 @@
 #include "core/memory_manager/surface.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
@@ -20,6 +19,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

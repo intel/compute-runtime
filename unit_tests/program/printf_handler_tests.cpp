@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/program/printf_handler.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -16,6 +15,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "program/printf_handler.h"
 
 using namespace NEO;
 

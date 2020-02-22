@@ -8,14 +8,14 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
 #include "core/helpers/file_io.h"
-#include "runtime/context/context.h"
-#include "runtime/program/kernel_info.h"
-#include "runtime/program/program.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_compilers.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "program/kernel_info.h"
+#include "program/program.h"
 
 using namespace NEO;
 

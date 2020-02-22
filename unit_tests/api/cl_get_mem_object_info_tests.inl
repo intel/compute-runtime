@@ -8,10 +8,10 @@
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
 #include "core/helpers/file_io.h"
-#include "runtime/context/context.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
 
 using namespace NEO;
 

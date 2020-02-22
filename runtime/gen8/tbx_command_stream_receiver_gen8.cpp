@@ -7,9 +7,10 @@
 
 #include "core/gen8/hw_cmds.h"
 #include "core/helpers/array_count.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
+
+#include "command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "command_stream/tbx_command_stream_receiver_hw.h"
+#include "command_stream/tbx_command_stream_receiver_hw.inl"
 
 namespace NEO {
 

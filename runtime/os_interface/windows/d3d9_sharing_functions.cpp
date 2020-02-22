@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/context/context.inl"
-#include "runtime/os_interface/windows/d3d_sharing_functions.h"
-#include "runtime/sharings/sharing_factory.h"
+#include "context/context.inl"
+#include "os_interface/windows/d3d_sharing_functions.h"
+#include "sharings/sharing_factory.h"
 
 using namespace NEO;
 

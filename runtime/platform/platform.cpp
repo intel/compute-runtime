@@ -20,18 +20,18 @@
 #include "core/helpers/string.h"
 #include "core/os_interface/device_factory.h"
 #include "core/os_interface/os_interface.h"
-#include "runtime/api/api.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/event/async_events_handler.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/built_ins_helper.h"
-#include "runtime/helpers/get_info_status_mapper.h"
-#include "runtime/platform/extensions.h"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "CL/cl_ext.h"
+#include "api/api.h"
+#include "device/cl_device.h"
+#include "event/async_events_handler.h"
 #include "gmm_client_context.h"
+#include "gtpin/gtpin_notify.h"
+#include "helpers/built_ins_helper.h"
+#include "helpers/get_info_status_mapper.h"
+#include "platform/extensions.h"
+#include "sharings/sharing_factory.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 #include <algorithm>
 #include <map>

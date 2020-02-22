@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/aub/aub_helper_base.inl"
+#include "aub/aub_helper_base.inl"
 
 namespace NEO {
 

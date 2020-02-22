@@ -9,11 +9,12 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/device/driver_info.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/tests_configuration.h"
+
+#include "device/driver_info.h"
 
 using namespace NEO;
 

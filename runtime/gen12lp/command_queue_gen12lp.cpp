@@ -5,9 +5,8 @@
  *
  */
 
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/command_queue_hw_bdw_plus.inl"
-
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/command_queue_hw_bdw_plus.inl"
 #include "command_queue_helpers_gen12lp.inl"
 #include "enqueue_init_dispatch_globals.h"
 

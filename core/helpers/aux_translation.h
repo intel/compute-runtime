@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace NEO {
 
 enum class AuxTranslationDirection {

@@ -25,12 +25,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/os_interface/linux/drm_command_stream.h"
 #include "test.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -39,9 +33,15 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_platform.h"
 
+#include "command_stream/device_command_stream.h"
 #include "drm/i915_drm.h"
+#include "event/event.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/image.h"
+#include "os_interface/linux/drm_command_stream.h"
 
 #include <iostream>
 #include <memory>

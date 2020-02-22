@@ -11,10 +11,11 @@
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/program/print_formatter.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/buffer.h"
+
+#include "device/cl_device.h"
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
+#include "mem_obj/buffer.h"
 
 namespace NEO {
 

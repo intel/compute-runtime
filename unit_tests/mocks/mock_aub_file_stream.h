@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "runtime/command_stream/aub_command_stream_receiver.h"
-
+#include "command_stream/aub_command_stream_receiver.h"
 #include "gmock/gmock.h"
 
 #if defined(__clang__)

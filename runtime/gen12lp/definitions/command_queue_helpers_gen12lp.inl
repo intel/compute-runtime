@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/enqueue_resource_barrier.h"
+#include "command_queue/enqueue_resource_barrier.h"

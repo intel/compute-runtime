@@ -7,11 +7,6 @@
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/os_interface/os_interface.h"
-#include "runtime/context/context.h"
-#include "runtime/event/user_event.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/gl/gl_arb_sync_event.h"
-#include "runtime/sharings/sharing.h"
 #include "test.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
@@ -20,6 +15,12 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
+
+#include "context/context.h"
+#include "event/user_event.h"
+#include "platform/platform.h"
+#include "sharings/gl/gl_arb_sync_event.h"
+#include "sharings/sharing.h"
 
 using namespace NEO;
 

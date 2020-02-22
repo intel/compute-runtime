@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -18,6 +16,8 @@
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "mem_obj/buffer.h"
 
 #include <memory>
 

@@ -8,15 +8,16 @@
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/api/api.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "api/api.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/mem_obj.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

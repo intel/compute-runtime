@@ -15,10 +15,10 @@ set(NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS
 
 add_executable(igdrcl_windows_dll_tests
   ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
-  ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
-  ${NEO_SOURCE_DIR}/runtime/dll/windows/os_interface.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/aub/aub_stream_interface.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/create_command_stream.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/dll/windows/os_interface.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_create.cpp
   ${NEO_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp

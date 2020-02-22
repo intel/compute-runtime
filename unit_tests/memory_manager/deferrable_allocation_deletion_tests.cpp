@@ -10,12 +10,13 @@
 #include "core/memory_manager/deferrable_allocation_deletion.h"
 #include "core/memory_manager/deferred_deleter.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "platform/platform.h"
 
 using namespace NEO;
 

@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/sharings/sharing.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/mem_obj.h"
+#include "sharings/sharing.h"
 
 using namespace NEO;
 

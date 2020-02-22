@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/task_information.h"
+#include "helpers/task_information.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/csr_deps.h"
@@ -16,15 +16,16 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/surface.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_queue/enqueue_common.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/enqueue_properties.h"
-#include "runtime/helpers/task_information.inl"
-#include "runtime/mem_obj/mem_obj.h"
+
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/command_queue.h"
+#include "command_queue/enqueue_common.h"
+#include "device/cl_device.h"
+#include "device_queue/device_queue.h"
+#include "gtpin/gtpin_notify.h"
+#include "helpers/enqueue_properties.h"
+#include "helpers/task_information.inl"
+#include "mem_obj/mem_obj.h"
 
 namespace NEO {
 template void KernelOperation::ResourceCleaner::operator()<LinearStream>(LinearStream *);

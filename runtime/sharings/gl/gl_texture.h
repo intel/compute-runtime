@@ -6,10 +6,9 @@
  */
 
 #pragma once
-#include "runtime/extensions/public/cl_gl_private_intel.h"
-#include "runtime/sharings/gl/gl_sharing.h"
-
 #include "CL/cl_gl.h"
+#include "extensions/public/cl_gl_private_intel.h"
+#include "sharings/gl/gl_sharing.h"
 
 namespace NEO {
 class Context;

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/builtin_kernels_simulation/opencl_c.h"
+#include "builtin_kernels_simulation/opencl_c.h"
 
 #include <cstdint>
 #include <thread>

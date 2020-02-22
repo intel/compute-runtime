@@ -10,9 +10,9 @@
 #include "core/execution_environment/execution_environment.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/linux/drm_neo.h"
-#include "runtime/platform/platform.h"
 
 #include "drm/i915_drm.h"
+#include "platform/platform.h"
 
 #include <cstdio>
 #include <fstream>

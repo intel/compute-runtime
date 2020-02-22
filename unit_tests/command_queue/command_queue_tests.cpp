@@ -11,9 +11,6 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
@@ -34,8 +31,11 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
+#include "command_queue/command_queue_hw.h"
+#include "event/event.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 

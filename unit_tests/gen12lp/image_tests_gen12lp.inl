@@ -8,7 +8,6 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/image/image_surface_state.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
@@ -18,6 +17,7 @@
 #include "unit_tests/mocks/mock_gmm.h"
 
 #include "mock_gmm_client_context.h"
+#include "platform/platform.h"
 
 #include <functional>
 

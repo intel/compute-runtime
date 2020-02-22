@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/mem_obj/buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
+#include "mem_obj/buffer.h"
 
 #include <cassert>
 #include <memory>

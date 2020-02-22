@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/gtpin/gtpin_hw_helper.h"
+#include "gtpin/gtpin_hw_helper.h"
 
 namespace NEO {
 GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE] = {};

@@ -5,6 +5,8 @@
  *
  */
 
+#include <cstdint>
+
 namespace NEO {
 struct MemoryFlags {
     uint32_t readWrite : 1;

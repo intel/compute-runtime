@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/options.h"
-#include "runtime/command_stream/aub_stream_provider.h"
-#include "runtime/command_stream/aub_subcapture.h"
-#include "runtime/memory_manager/address_mapper.h"
-#include "runtime/memory_manager/physical_address_allocator.h"
 
+#include "command_stream/aub_stream_provider.h"
+#include "command_stream/aub_subcapture.h"
+#include "memory_manager/address_mapper.h"
+#include "memory_manager/physical_address_allocator.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
 namespace NEO {

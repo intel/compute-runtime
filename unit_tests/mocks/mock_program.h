@@ -9,11 +9,11 @@
 #include "core/device/device.h"
 #include "core/helpers/hash.h"
 #include "core/helpers/string.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/program/kernel_info.h"
-#include "runtime/program/program.h"
 
+#include "device/cl_device.h"
 #include "gmock/gmock.h"
+#include "program/kernel_info.h"
+#include "program/program.h"
 
 #include <string>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,14 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
-#include "runtime/command_queue/local_id_gen.h"
-#include "runtime/helpers/per_thread_data.h"
-#include "runtime/program/kernel_info.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
+#include "command_queue/local_id_gen.h"
+#include "helpers/per_thread_data.h"
 #include "patch_shared.h"
+#include "program/kernel_info.h"
 
 using namespace NEO;
 

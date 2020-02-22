@@ -20,7 +20,8 @@
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/linux/drm_command_stream.h"
+
+#include "os_interface/linux/drm_command_stream.h"
 
 #include <cstdlib>
 #include <cstring>

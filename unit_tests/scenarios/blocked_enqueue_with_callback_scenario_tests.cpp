@@ -5,15 +5,15 @@
  *
  */
 
-#include "runtime/event/async_events_handler.h"
-#include "runtime/event/user_event.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/scenario_test_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "event/async_events_handler.h"
+#include "event/user_event.h"
 #include "gtest/gtest.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

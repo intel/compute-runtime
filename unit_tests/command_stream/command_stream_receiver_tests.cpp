@@ -19,8 +19,6 @@
 #include "core/memory_manager/surface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
@@ -39,6 +37,8 @@
 
 #include "command_stream_receiver_simulated_hw.h"
 #include "gmock/gmock.h"
+#include "mem_obj/buffer.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

@@ -8,10 +8,10 @@
 #pragma once
 #include "core/helpers/array_count.h"
 #include "core/helpers/debug_helpers.h"
-#include "runtime/api/dispatch.h"
-#include "runtime/sharings/sharing.h"
 
 #include "DXGI1_2.h"
+#include "api/dispatch.h"
+#include "sharings/sharing.h"
 
 #include <map>
 #include <vector>

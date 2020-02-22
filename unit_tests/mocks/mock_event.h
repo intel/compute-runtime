@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "runtime/event/event_builder.h"
-#include "runtime/event/user_event.h"
+#include "event/event_builder.h"
+#include "event/user_event.h"
 
 namespace NEO {
 

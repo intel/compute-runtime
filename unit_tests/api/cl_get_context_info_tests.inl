@@ -6,9 +6,9 @@
  */
 
 #include "core/device/device.h"
-#include "runtime/context/context.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
 
 using namespace NEO;
 

@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
+
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

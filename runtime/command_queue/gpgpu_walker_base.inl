@@ -15,16 +15,17 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/os_context.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/command_queue/local_id_gen.h"
-#include "runtime/device/device_info.h"
-#include "runtime/event/perf_counter.h"
-#include "runtime/event/user_event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/queue_helpers.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/mem_obj/mem_obj.h"
+
+#include "command_queue/command_queue.h"
+#include "command_queue/gpgpu_walker.h"
+#include "command_queue/local_id_gen.h"
+#include "device/device_info.h"
+#include "event/perf_counter.h"
+#include "event/user_event.h"
+#include "helpers/hardware_commands_helper.h"
+#include "helpers/queue_helpers.h"
+#include "helpers/validators.h"
+#include "mem_obj/mem_obj.h"
 
 #include <algorithm>
 #include <cmath>

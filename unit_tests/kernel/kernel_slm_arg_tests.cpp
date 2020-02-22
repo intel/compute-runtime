@@ -7,7 +7,6 @@
 
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -15,6 +14,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

@@ -6,12 +6,13 @@
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/device_queue/device_queue_hw.h"
 #include "test.h"
 #include "unit_tests/api/cl_api_tests.h"
+
+#include "command_queue/command_queue.h"
+#include "device/cl_device.h"
+#include "device_queue/device_queue.h"
+#include "device_queue/device_queue_hw.h"
 
 using namespace NEO;
 

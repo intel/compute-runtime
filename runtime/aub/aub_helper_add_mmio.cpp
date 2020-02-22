@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/aub/aub_helper.h"
 
+#include "aub/aub_helper.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 namespace NEO {

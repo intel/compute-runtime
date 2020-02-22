@@ -8,13 +8,13 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/mem_obj/buffer.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+#include "mem_obj/buffer.h"
 
 namespace NEO {
 

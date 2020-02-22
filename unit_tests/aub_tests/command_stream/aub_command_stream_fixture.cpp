@@ -12,12 +12,12 @@
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/memory_management.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/tests_configuration.h"
 
+#include "command_queue/command_queue.h"
+#include "command_stream/tbx_command_stream_receiver.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

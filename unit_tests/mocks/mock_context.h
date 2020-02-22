@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "runtime/context/context.h"
-#include "runtime/sharings/sharing_factory.h"
+#include "context/context.h"
+#include "sharings/sharing_factory.h"
 
 #include <memory>
 

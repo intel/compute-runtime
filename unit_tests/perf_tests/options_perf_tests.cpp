@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/hw_cmds.h"
-#include "runtime/helpers/array_count.h"
+
+#include "helpers/array_count.h"
 
 namespace NEO {
 // IP address for TBX server

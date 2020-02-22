@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/unit_tests/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-#include "runtime/command_queue/command_queue.h"
 
+#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

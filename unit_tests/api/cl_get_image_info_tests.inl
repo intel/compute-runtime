@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/hw_info.h"
-#include "runtime/context/context.h"
-#include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

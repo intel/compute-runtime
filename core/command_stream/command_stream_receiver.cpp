@@ -25,7 +25,8 @@
 #include "core/os_interface/os_interface.h"
 #include "core/utilities/cpuintrinsics.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/built_ins/built_ins.h"
+
+#include "built_ins/built_ins.h"
 
 namespace NEO {
 

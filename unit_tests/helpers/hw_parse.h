@@ -10,11 +10,11 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/pipeline_select_helper.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/kernel/kernel.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
+#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
 
 namespace NEO {
 

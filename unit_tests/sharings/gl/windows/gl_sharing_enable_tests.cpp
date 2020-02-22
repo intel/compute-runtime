@@ -5,11 +5,11 @@
  *
  */
 
-#include "runtime/sharings/gl/windows/win_enable_gl.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+#include "sharings/gl/windows/win_enable_gl.h"
 
 using namespace NEO;
 

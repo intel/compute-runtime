@@ -6,13 +6,14 @@
  */
 
 #include "core/command_stream/command_stream_receiver_hw.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
-#include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/sampler/sampler.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "command_stream/aub_command_stream_receiver_hw.h"
+#include "command_stream/tbx_command_stream_receiver_hw.h"
+#include "device_queue/device_queue_hw.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/image.h"
+#include "sampler/sampler.h"
 
 namespace NEO {
 

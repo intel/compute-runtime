@@ -11,9 +11,9 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/preamble.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/kernel/kernel.h"
 
+#include "helpers/hardware_commands_helper.h"
+#include "kernel/kernel.h"
 #include "reg_configs_common.h"
 
 #include <cstddef>

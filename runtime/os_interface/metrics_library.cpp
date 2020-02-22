@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/metrics_library.h"
+#include "os_interface/metrics_library.h"
 
 #include "core/helpers/hw_helper.h"
-#include "runtime/os_interface/os_inc_base.h"
+
+#include "os_interface/os_inc_base.h"
 
 namespace NEO {
 ///////////////////////////////////////////////////////

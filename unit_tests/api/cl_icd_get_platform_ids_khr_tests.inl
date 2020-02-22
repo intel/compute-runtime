@@ -10,8 +10,9 @@
 #endif
 
 #include "core/device/device.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
+
+#include "platform/platform.h"
 
 #include <algorithm>
 

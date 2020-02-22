@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,16 @@
 
 #pragma once
 #ifdef SUPPORT_GEN8
-#include "runtime/gen8/reg_configs.h"
+#include "gen8/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN9
-#include "runtime/gen9/reg_configs.h"
+#include "gen9/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN11
-#include "runtime/gen11/reg_configs.h"
+#include "gen11/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN12LP
-#include "runtime/gen12lp/reg_configs.h"
+#include "gen12lp/reg_configs.h"
 #endif
 #include <cstdint>
 

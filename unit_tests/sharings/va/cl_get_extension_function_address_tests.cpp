@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/sharings/va/cl_va_api.h"
 #include "unit_tests/api/cl_api_tests.h"
+
+#include "sharings/va/cl_va_api.h"
 
 using namespace NEO;
 

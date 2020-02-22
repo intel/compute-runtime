@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
+#include "command_queue/command_queue.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
@@ -19,21 +19,21 @@
 #include "core/os_interface/os_context.h"
 #include "core/utilities/api_intercept.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/event/event_builder.h"
-#include "runtime/event/user_event.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/convert_color.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/mipmap.h"
-#include "runtime/helpers/queue_helpers.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/image.h"
 
 #include "CL/cl_ext.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "device_queue/device_queue.h"
+#include "event/event_builder.h"
+#include "event/user_event.h"
+#include "gtpin/gtpin_notify.h"
+#include "helpers/convert_color.h"
+#include "helpers/hardware_commands_helper.h"
+#include "helpers/mipmap.h"
+#include "helpers/queue_helpers.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/image.h"
 
 #include <map>
 

@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/sharings/d3d/d3d_sharing.h"
-
 #include "gmock/gmock.h"
+#include "sharings/d3d/d3d_sharing.h"
 using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::SetArgPointee;

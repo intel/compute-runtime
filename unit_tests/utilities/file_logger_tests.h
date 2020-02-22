@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,9 @@
 
 #include "core/helpers/file_io.h"
 #include "core/utilities/directory.h"
-#include "runtime/helpers/string_helpers.h"
-#include "runtime/utilities/logger.h"
+
+#include "helpers/string_helpers.h"
+#include "utilities/logger.h"
 
 #include <map>
 

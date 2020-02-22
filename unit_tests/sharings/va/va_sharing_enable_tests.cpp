@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/sharings/va/enable_va.h"
-#include "runtime/sharings/va/va_sharing_functions.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+#include "sharings/va/enable_va.h"
+#include "sharings/va/va_sharing_functions.h"
 
 using namespace NEO;
 

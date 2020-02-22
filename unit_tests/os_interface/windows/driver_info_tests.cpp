@@ -11,8 +11,6 @@
 #include "core/os_interface/windows/debug_registry_reader.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/os_interface/windows/driver_info.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -21,6 +19,8 @@
 #include "unit_tests/os_interface/windows/registry_reader_tests.h"
 
 #include "gtest/gtest.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
+#include "os_interface/windows/driver_info.h"
 
 #include <memory>
 

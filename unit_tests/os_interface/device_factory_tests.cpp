@@ -12,11 +12,11 @@
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_library.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 #include "hw_device_id.h"
+#include "platform/platform.h"
 
 #include <set>
 

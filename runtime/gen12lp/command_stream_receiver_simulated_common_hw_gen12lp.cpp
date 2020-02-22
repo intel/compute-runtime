@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver_simulated_common_hw_bdw_plus.inl"
-#include "runtime/gen12lp/helpers_gen12lp.h"
+#include "command_stream/command_stream_receiver_simulated_common_hw_bdw_plus.inl"
+#include "gen12lp/helpers_gen12lp.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #pragma once
 
 #include "core/helpers/debug_helpers.h"
-#include "runtime/tracing/tracing_types.h"
+
+#include "tracing/tracing_types.h"
 
 #include <bitset>
 #include <stdint.h>

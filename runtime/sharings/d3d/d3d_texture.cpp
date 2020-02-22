@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/sharings/d3d/d3d_texture.h"
+#include "sharings/d3d/d3d_texture.h"
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm.h"
@@ -14,9 +14,10 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/mem_obj/image.h"
+
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

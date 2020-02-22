@@ -6,12 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/api/api.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/os_interface/windows/d3d_sharing_functions.h"
-#include "runtime/sharings/d3d/cl_d3d_api.h"
-#include "runtime/sharings/d3d/d3d_surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -19,6 +13,13 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_d3d_objects.h"
 #include "unit_tests/mocks/mock_gmm.h"
+
+#include "api/api.h"
+#include "mem_obj/image.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
+#include "os_interface/windows/d3d_sharing_functions.h"
+#include "sharings/d3d/cl_d3d_api.h"
+#include "sharings/d3d/d3d_surface.h"
 
 namespace NEO {
 template <>

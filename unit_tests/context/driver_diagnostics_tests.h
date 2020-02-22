@@ -7,10 +7,6 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/context/context.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/buffer.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -19,7 +15,11 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "command_queue/gpgpu_walker.h"
+#include "context/context.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "mem_obj/buffer.h"
 
 using namespace NEO;
 

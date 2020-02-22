@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_queue/local_id_gen.h"
-
+#include "command_queue/local_id_gen.h"
 #include "patch_shared.h"
 
 #include <array>

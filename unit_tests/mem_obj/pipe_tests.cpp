@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/mem_obj/pipe.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/multi_root_device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "command_queue/command_queue.h"
+#include "mem_obj/pipe.h"
 
 using namespace NEO;
 

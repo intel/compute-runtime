@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/event/perf_counter.h"
-#include "runtime/os_interface/metrics_library.h"
+#include "event/perf_counter.h"
+#include "os_interface/metrics_library.h"
 
 #include <mutex>
 

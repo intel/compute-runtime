@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/os_interface/os_library.h"
-#include "runtime/helpers/validators.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/common/cif.h"
 #include "cif/import/library_api.h"
+#include "helpers/validators.h"
 #include "ocl_igc_interface/ocl_translation_output.h"
 
 namespace NEO {

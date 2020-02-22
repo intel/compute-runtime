@@ -11,10 +11,6 @@
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/helpers/dispatch_info.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
@@ -22,6 +18,10 @@
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 
+#include "built_ins/built_ins.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/command_queue.h"
+#include "helpers/dispatch_info.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

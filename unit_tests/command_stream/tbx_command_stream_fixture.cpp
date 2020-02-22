@@ -9,10 +9,10 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
-#include "runtime/command_queue/command_queue.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_device.h"
 
+#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

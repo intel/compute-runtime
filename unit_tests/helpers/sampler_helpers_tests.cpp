@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/sampler_helpers.h"
-
 #include "gtest/gtest.h"
+#include "helpers/sampler_helpers.h"
 
 TEST(SamplerHelpers, ForAddressingModeCalledForEnumReturnClkEnum) {
     EXPECT_EQ(CLK_ADDRESS_REPEAT, GetAddrModeEnum(CL_ADDRESS_REPEAT));

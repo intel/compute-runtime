@@ -7,9 +7,9 @@
 
 #include "unit_tests/fixtures/platform_fixture.h"
 
-#include "runtime/device/cl_device.h"
 #include "unit_tests/mocks/mock_platform.h"
 
+#include "device/cl_device.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_queue/local_id_gen.h"
+#include "command_queue/local_id_gen.h"
 
 #include "core/helpers/aligned_memory.h"
 #include "core/utilities/cpu_info.h"

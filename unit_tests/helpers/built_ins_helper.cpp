@@ -5,14 +5,15 @@
  *
  */
 
-#include "runtime/helpers/built_ins_helper.h"
+#include "helpers/built_ins_helper.h"
 
 #include "core/device/device.h"
-#include "runtime/compiler_interface/default_cl_cache_config.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sip.h"
+
+#include "compiler_interface/default_cl_cache_config.h"
 
 namespace NEO {
 

@@ -5,12 +5,13 @@
  *
  */
 
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

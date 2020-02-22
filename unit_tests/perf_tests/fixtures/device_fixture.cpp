@@ -7,8 +7,7 @@
 
 #include "device_fixture.h"
 
-#include "runtime/command_stream/command_stream_receiver.h"
-
+#include "command_stream/command_stream_receiver.h"
 #include "gtest/gtest.h"
 
 using NEO::Device;

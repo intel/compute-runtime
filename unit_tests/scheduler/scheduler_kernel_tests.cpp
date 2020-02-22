@@ -7,7 +7,6 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/scheduler/scheduler_kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -17,6 +16,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "scheduler/scheduler_kernel.h"
 
 #include <cstdint>
 #include <memory>

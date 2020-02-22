@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen8/hw_cmds.h"
-#include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/device_queue/device_queue_hw_bdw_plus.inl"
+
+#include "device_queue/device_queue_hw.h"
+#include "device_queue/device_queue_hw_bdw_plus.inl"
 
 namespace NEO {
 typedef BDWFamily Family;

@@ -19,11 +19,6 @@
 #include "core/os_interface/linux/debug_env_reader.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_helper.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/user_event.h"
-#include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -40,7 +35,12 @@
 #include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
+#include "built_ins/built_ins.h"
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/user_event.h"
 #include "gtest/gtest.h"
+#include "mem_obj/buffer.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

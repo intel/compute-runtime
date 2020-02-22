@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,8 @@
 
 #pragma once
 #include "core/helpers/basic_math.h"
-#include "runtime/memory_manager/physical_address_allocator.h"
+
+#include "memory_manager/physical_address_allocator.h"
 
 #include <array>
 #include <atomic>

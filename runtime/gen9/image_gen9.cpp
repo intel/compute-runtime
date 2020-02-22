@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen9/hw_cmds.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/image.inl"
+
+#include "mem_obj/image.h"
+#include "mem_obj/image.inl"
 
 #include <map>
 
@@ -38,5 +39,5 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
     surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
 }
 
-#include "runtime/mem_obj/image_factory_init.inl"
+#include "mem_obj/image_factory_init.inl"
 } // namespace NEO

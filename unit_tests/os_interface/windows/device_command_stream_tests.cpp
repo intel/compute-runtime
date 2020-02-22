@@ -20,13 +20,6 @@
 #include "core/os_interface/windows/wddm_residency_controller.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
-#include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/helpers/built_ins_helper.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/os_interface/windows/wddm_device_command_stream.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -43,6 +36,14 @@
 #include "unit_tests/mocks/mock_wddm_interface23.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "command_stream/aub_command_stream_receiver.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "command_stream/device_command_stream.h"
+#include "helpers/built_ins_helper.h"
+#include "mem_obj/buffer.h"
+#include "os_interface/windows/wddm_device_command_stream.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 using namespace ::testing;

@@ -7,14 +7,14 @@
 
 #pragma once
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/extensions/public/cl_ext_private.h"
-#include "runtime/helpers/base_object.h"
-#include "runtime/helpers/mipmap.h"
-#include "runtime/mem_obj/map_operations_handler.h"
-#include "runtime/sharings/sharing.h"
 
+#include "api/cl_types.h"
+#include "extensions/public/cl_ext_private.h"
+#include "helpers/base_object.h"
+#include "helpers/mipmap.h"
+#include "mem_obj/map_operations_handler.h"
 #include "memory_properties_flags.h"
+#include "sharings/sharing.h"
 
 #include <atomic>
 #include <cstdint>

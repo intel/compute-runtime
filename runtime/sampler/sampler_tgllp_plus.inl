@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/sampler/sampler.h"
-#include "runtime/sampler/sampler.inl"
+
+#include "sampler/sampler.h"
+#include "sampler/sampler.inl"
 
 namespace NEO {
 
@@ -20,5 +21,5 @@ void SamplerHw<Family>::appendSamplerStateParams(SAMPLER_STATE *state) {
     }
 }
 
-#include "runtime/sampler/sampler_factory_init.inl"
+#include "sampler/sampler_factory_init.inl"
 } // namespace NEO

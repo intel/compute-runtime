@@ -12,15 +12,16 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/api/api.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "api/api.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/command_queue_hw.h"
+#include "helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 

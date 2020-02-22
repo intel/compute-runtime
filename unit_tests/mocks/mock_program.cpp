@@ -12,12 +12,13 @@
 #include "core/helpers/hash.h"
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "runtime/context/context.h"
-#include "runtime/program/create.inl"
-#include "runtime/program/kernel_info.h"
 #include "unit_tests/helpers/ult_limits.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "context/context.h"
+#include "program/create.inl"
+#include "program/kernel_info.h"
 
 namespace NEO {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;

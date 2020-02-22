@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/sampler/sampler.h"
+#include "sampler/sampler.h"
 
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/get_info_status_mapper.h"
 
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/get_info_status_mapper.h"
 #include "patch_list.h"
 
 #include <limits>

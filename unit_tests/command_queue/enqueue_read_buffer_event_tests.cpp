@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 
+#include "command_queue/command_queue.h"
+#include "event/event.h"
 #include "gtest/gtest.h"
 
 #include <memory>

@@ -6,7 +6,8 @@
  */
 
 #include "core/utilities/debug_settings_reader_creator.h"
-#include "runtime/os_interface/ocl_reg_path.h"
+
+#include "os_interface/ocl_reg_path.h"
 
 namespace NEO {
 

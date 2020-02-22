@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/file_io.h"
-#include "runtime/program/program.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "program/program.h"
 
 namespace NEO {
 

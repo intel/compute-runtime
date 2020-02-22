@@ -9,7 +9,8 @@
 
 #include "core/os_interface/device_factory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/platform/platform.h"
+
+#include "platform/platform.h"
 
 namespace NEO {
 

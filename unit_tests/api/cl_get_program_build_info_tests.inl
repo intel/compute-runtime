@@ -12,11 +12,11 @@
 #include "core/device_binary_format/elf/elf_encoder.h"
 #include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/helpers/file_io.h"
-#include "runtime/context/context.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
 
 using namespace NEO;
 

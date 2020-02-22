@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/built_ins/sip.h"
+#include "built_ins/sip.h"
 
 #include "core/device/device.h"
 #include "core/execution_environment/execution_environment.h"
@@ -14,9 +14,10 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/program/kernel_info.h"
-#include "runtime/program/program.h"
+
+#include "built_ins/built_ins.h"
+#include "program/kernel_info.h"
+#include "program/program.h"
 
 namespace NEO {
 

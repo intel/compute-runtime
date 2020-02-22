@@ -5,15 +5,6 @@
  *
  */
 
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/enqueue_fill_buffer.h"
-#include "runtime/command_queue/enqueue_kernel.h"
-#include "runtime/command_queue/enqueue_read_buffer.h"
-#include "runtime/command_queue/enqueue_write_buffer.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
@@ -21,6 +12,16 @@
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
+
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/enqueue_fill_buffer.h"
+#include "command_queue/enqueue_kernel.h"
+#include "command_queue/enqueue_read_buffer.h"
+#include "command_queue/enqueue_write_buffer.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/event.h"
+#include "helpers/hardware_commands_helper.h"
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

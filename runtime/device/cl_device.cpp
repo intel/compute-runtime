@@ -5,16 +5,17 @@
  *
  */
 
-#include "runtime/device/cl_device.h"
+#include "device/cl_device.h"
 
 #include "core/device/device.h"
 #include "core/device/sub_device.h"
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/os_interface.h"
 #include "core/program/sync_buffer_handler.h"
-#include "runtime/platform/extensions.h"
-#include "runtime/platform/platform.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
+
+#include "platform/extensions.h"
+#include "platform/platform.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
 

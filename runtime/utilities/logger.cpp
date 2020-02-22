@@ -5,14 +5,15 @@
  *
  */
 
-#include "runtime/utilities/logger.h"
+#include "utilities/logger.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/timestamp_packet.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/mem_obj.h"
+
+#include "event/event.h"
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
+#include "mem_obj/mem_obj.h"
 
 #include <memory>
 #include <string>

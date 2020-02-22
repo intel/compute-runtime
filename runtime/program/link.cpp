@@ -12,13 +12,13 @@
 #include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/utilities/stackvec.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "compiler_options.h"
+#include "device/cl_device.h"
+#include "helpers/validators.h"
+#include "platform/platform.h"
+#include "program/program.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 #include <cstring>
 

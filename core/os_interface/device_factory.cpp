@@ -15,8 +15,8 @@
 #include "core/os_interface/aub_memory_operations_handler.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/os_interface.h"
-#include "runtime/aub/aub_center.h"
 
+#include "aub/aub_center.h"
 #include "hw_device_id.h"
 
 namespace NEO {

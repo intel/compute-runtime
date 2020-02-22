@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "aub_mem_dump/page_table_entry_bits.h"
+#include "command_stream/tbx_command_stream_receiver_hw.h"
 
 using namespace NEO;
 

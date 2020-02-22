@@ -11,7 +11,8 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/platform/platform.h"
+
+#include "platform/platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     referencedHwInfo = *platformDevices[0];

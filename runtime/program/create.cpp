@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/program/create.inl"
+#include "program/create.inl"
 
-#include "runtime/program/program.h"
+#include "program/program.h"
 
 namespace NEO {
 template Program *Program::create<Program>(cl_context, cl_uint, const cl_device_id *, const size_t *, const unsigned char **, cl_int *, cl_int &);

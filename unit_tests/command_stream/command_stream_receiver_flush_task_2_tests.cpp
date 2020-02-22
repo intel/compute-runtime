@@ -13,7 +13,6 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
@@ -28,6 +27,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
+#include "helpers/hardware_commands_helper.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

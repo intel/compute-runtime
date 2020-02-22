@@ -5,10 +5,9 @@
  *
  */
 
-#include "runtime/kernel/kernel_info_cl.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel_info_cl.h"
 
 TEST(AsClConvertersTest, whenConvertingAccessQualifiersThenProperEnumValuesAreReturned) {
     using namespace NEO::KernelArgMetadata;

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/device_queue/device_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "device_queue/device_queue_hw.h"
 
 namespace NEO {
 

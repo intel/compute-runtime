@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,15 @@
 
 #ifdef LIBVA
 
-#include "runtime/sharings/va/enable_va.h"
+#include "sharings/va/enable_va.h"
 
-#include "runtime/api/api.h"
-#include "runtime/context/context.h"
-#include "runtime/context/context.inl"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/sharings/sharing_factory.inl"
-#include "runtime/sharings/va/cl_va_api.h"
-#include "runtime/sharings/va/va_sharing.h"
+#include "api/api.h"
+#include "context/context.h"
+#include "context/context.inl"
+#include "sharings/sharing_factory.h"
+#include "sharings/sharing_factory.inl"
+#include "sharings/va/cl_va_api.h"
+#include "sharings/va/va_sharing.h"
 
 #include <memory>
 

@@ -7,7 +7,6 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/event/user_event.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -15,6 +14,8 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
+
+#include "event/user_event.h"
 
 using namespace NEO;
 

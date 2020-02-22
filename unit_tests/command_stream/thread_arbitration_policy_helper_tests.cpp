@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "public/cl_ext_private.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
-
+#include "command_stream/thread_arbitration_policy.h"
 #include "gtest/gtest.h"
+#include "public/cl_ext_private.h"
 
 namespace NEO {
 TEST(ThreadArbitrationPolicy, givenClKrenelExecThreadArbitrationPolicyWhenGetNewKernelArbitrationPolicyIsCalledThenExpectedThreadArbitrationPolicyIsReturned) {

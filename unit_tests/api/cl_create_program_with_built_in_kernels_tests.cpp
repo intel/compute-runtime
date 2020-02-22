@@ -7,17 +7,17 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
-#include "runtime/built_ins/built_in_ops_vme.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/vme_builtin.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/base_object.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/program/program.h"
 #include "unit_tests/fixtures/run_kernel_fixture.h"
 
+#include "built_ins/built_in_ops_vme.h"
+#include "built_ins/built_ins.h"
+#include "built_ins/vme_builtin.h"
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/base_object.h"
+#include "kernel/kernel.h"
+#include "program/program.h"
 
 using namespace NEO;
 

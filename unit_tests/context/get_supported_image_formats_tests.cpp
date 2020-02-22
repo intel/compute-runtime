@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/image.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
+#include "helpers/surface_formats.h"
+#include "mem_obj/image.h"
 
 #include <memory>
 

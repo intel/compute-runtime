@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/sharings/gl/gl_arb_sync_event.h"
+#include "sharings/gl/gl_arb_sync_event.h"
 
 template <bool FailCreation>
 struct DummyArbEvent : NEO::GlArbSyncEvent {

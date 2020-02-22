@@ -12,11 +12,11 @@
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
-#include "runtime/context/context.h"
-#include "runtime/extensions/public/cl_gl_private_intel.h"
-#include "runtime/sharings/gl/gl_arb_sync_event.h"
-#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
+#include "context/context.h"
+#include "extensions/public/cl_gl_private_intel.h"
+#include "sharings/gl/gl_arb_sync_event.h"
+#include "sharings/gl/windows/gl_sharing_windows.h"
 #include <GL/gl.h>
 
 namespace NEO {

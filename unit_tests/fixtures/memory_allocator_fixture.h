@@ -10,10 +10,11 @@
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 using namespace NEO;
 

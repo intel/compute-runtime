@@ -8,8 +8,9 @@
 #include "core/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/blit_commands_helper_bdw_plus.inl"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/gen11/reg_configs.h"
+
+#include "command_stream/device_command_stream.h"
+#include "gen11/reg_configs.h"
 
 namespace NEO {
 typedef ICLFamily Family;

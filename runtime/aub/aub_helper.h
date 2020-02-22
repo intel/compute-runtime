@@ -9,7 +9,8 @@
 #include "core/helpers/hw_info.h"
 #include "core/helpers/non_copyable_or_moveable.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/gen_common/aub_mapper_base.h"
+
+#include "gen_common/aub_mapper_base.h"
 
 namespace NEO {
 

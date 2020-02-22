@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/string.h"
-#include "runtime/gtpin/gtpin_hw_helper.h"
-#include "runtime/kernel/kernel.h"
+
+#include "gtpin/gtpin_hw_helper.h"
+#include "kernel/kernel.h"
 
 namespace NEO {
 

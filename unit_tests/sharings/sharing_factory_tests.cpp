@@ -9,17 +9,17 @@
 #include "core/device/device.h"
 #include "core/helpers/string.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/context/context.h"
-#include "runtime/platform/extensions.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/sharing.h"
-#include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_sharing_factory.h"
 
+#include "context/context.h"
 #include "gtest/gtest.h"
+#include "platform/extensions.h"
+#include "platform/platform.h"
+#include "sharings/sharing.h"
+#include "sharings/sharing_factory.h"
 
 using namespace NEO;
 

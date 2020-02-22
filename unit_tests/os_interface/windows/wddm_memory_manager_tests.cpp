@@ -18,11 +18,6 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
@@ -30,6 +25,12 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
+
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj_helper.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 using namespace ::testing;

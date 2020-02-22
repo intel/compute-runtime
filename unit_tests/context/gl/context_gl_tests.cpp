@@ -7,7 +7,7 @@
 
 #include "unit_tests/context/gl/context_gl_tests.h"
 
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "sharings/gl/gl_sharing.h"
 
 namespace NEO {
 

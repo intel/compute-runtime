@@ -5,18 +5,18 @@
  *
  */
 
-#include "runtime/sharings/d3d/d3d_surface.h"
+#include "sharings/d3d/d3d_surface.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_types_converter.h"
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
 
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj_helper.h"
 #include "mmsystem.h"
 
 using namespace NEO;

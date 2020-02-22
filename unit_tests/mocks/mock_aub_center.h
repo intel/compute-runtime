@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include "runtime/aub/aub_center.h"
-#include "runtime/command_stream/aub_stream_provider.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
+
+#include "aub/aub_center.h"
+#include "command_stream/aub_stream_provider.h"
 
 namespace NEO {
 class MockAubStreamProvider : public AubStreamProvider {

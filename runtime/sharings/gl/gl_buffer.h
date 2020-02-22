@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include "runtime/sharings/gl/gl_sharing.h"
-
 #include "CL/cl_gl.h"
+#include "sharings/gl/gl_sharing.h"
 
 struct _tagCLGLBufferInfo;
 

@@ -12,6 +12,8 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "sharings/unified/unified_sharing_types.h"
+
 namespace NEO {
 
 template <bool validContext>

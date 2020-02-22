@@ -8,7 +8,8 @@
 #pragma once
 #include "core/helpers/aux_translation.h"
 #include "core/helpers/hw_cmds.h"
-#include "runtime/helpers/properties_helper.h"
+
+#include "helpers/properties_helper.h"
 
 namespace NEO {
 

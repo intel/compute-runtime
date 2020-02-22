@@ -5,13 +5,13 @@
  *
  */
 
-#include "runtime/aub/aub_center.h"
+#include "aub/aub_center.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/aub/aub_helper.h"
 
+#include "aub/aub_helper.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 

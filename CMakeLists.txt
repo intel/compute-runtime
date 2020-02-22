@@ -9,6 +9,7 @@ if(WIN32)
 else()
     cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 endif()
+
 include(ExternalProject)
 
 # Include custom configs
@@ -101,6 +102,9 @@ message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
 if(NOT DEFINED NEO_SOURCE_DIR)
   set(NEO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
+
+set(NEO_RUNTIME_SUB_DIR "runtime")
+set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
 
 # Set the core source directory
 if(NOT DEFINED NEO_CORE_DIRECTORY)
@@ -550,6 +554,8 @@ else()
 endif()
 message(STATUS "Engine node dir: ${ENGINE_NODE_DIR}")
 
+include_directories(runtime)
+
 add_definitions(-DGMM_OCL)
 
 # We want to organize our IDE targets into folders
@@ -783,12 +789,12 @@ include_directories(${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory${BRANCH
 include_directories(${NEO_SOURCE_DIR}/core/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/built_ins/builtinops${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/command_queue/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/command_stream/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/mem_obj/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/runtime/memory_manager/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/built_ins/builtinops${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/command_queue/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/command_stream/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/mem_obj/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 
 
 if(HAVE_INSTRUMENTATION)
@@ -798,7 +804,7 @@ if(HAVE_INSTRUMENTATION)
 else()
   set(NEO__INSTRUMENTATION_DIR_SUFFIX "/")
 endif()
-include_directories(${NEO_SOURCE_DIR}/runtime/instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
+include_directories(${NEO_RUNTIME_SOURCE_DIR}/instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
 
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -833,9 +839,9 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
         set(NEO_CORE_LIB ${NEO_CORE_RELEASE_LIB_NAME})
     endif()
     if(NOT BUILD_WITHOUT_RUNTIME)
-        add_subdirectory(runtime "${NEO_BUILD_DIR}/${LIB_NAME}")
+        add_subdirectory(${NEO_RUNTIME_SUB_DIR} "${NEO_BUILD_DIR}/${LIB_NAME}")
     else()
-        add_subdirectory(runtime "${NEO_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
+        add_subdirectory(${NEO_RUNTIME_SUB_DIR} "${NEO_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
     endif()
     target_compile_definitions(${BUILTINS_SOURCES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
     target_compile_definitions(${BUILTINS_VME_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
@@ -900,7 +906,7 @@ endif()
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 
-hide_subdir(runtime)
+hide_subdir(${NEO_RUNTIME_SUB_DIR})
 add_subdirectories()
 
 if(NEO_BUILD_PACKAGE)

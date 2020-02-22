@@ -8,9 +8,6 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
@@ -21,6 +18,9 @@
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 
 #include "gtest/gtest.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "helpers/surface_formats.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

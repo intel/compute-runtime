@@ -6,13 +6,14 @@
  */
 
 #include "core/os_interface/linux/os_interface.h"
-#include "runtime/command_queue/command_queue_hw.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
+
+#include "command_queue/command_queue_hw.h"
 
 using namespace NEO;
 

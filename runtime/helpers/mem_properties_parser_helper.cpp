@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/mem_properties_parser_helper.h"
+#include "helpers/mem_properties_parser_helper.h"
 
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

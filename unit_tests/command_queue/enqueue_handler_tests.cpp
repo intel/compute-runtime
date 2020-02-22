@@ -6,9 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_stream/aub_subcapture.h"
-#include "runtime/event/user_event.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/command_stream/thread_arbitration_policy_helper.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
@@ -21,6 +18,10 @@
 #include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+
+#include "command_stream/aub_subcapture.h"
+#include "event/user_event.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

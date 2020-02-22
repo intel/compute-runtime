@@ -8,16 +8,17 @@
 #include "core/helpers/get_info.h"
 #include "core/helpers/hw_info.h"
 #include "core/utilities/api_intercept.h"
-#include "runtime/api/api.h"
-#include "runtime/api/dispatch.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/d3d/d3d_buffer.h"
-#include "runtime/sharings/d3d/d3d_surface.h"
-#include "runtime/sharings/d3d/d3d_texture.h"
+
+#include "api/api.h"
+#include "api/dispatch.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "mem_obj/image.h"
+#include "platform/platform.h"
+#include "sharings/d3d/d3d_buffer.h"
+#include "sharings/d3d/d3d_surface.h"
+#include "sharings/d3d/d3d_texture.h"
 
 using namespace NEO;
 

@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/cl_helper.h"
-
 #include "gtest/gtest.h"
+#include "helpers/cl_helper.h"
 
 #include <array>
 

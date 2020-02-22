@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue_hw.h"
+#include "command_queue/command_queue_hw.h"
 
 namespace NEO {
 

@@ -8,9 +8,6 @@
 #pragma once
 #include "core/device/device.h"
 #include "core/helpers/file_io.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/helpers/test_files.h"
@@ -20,6 +17,9 @@
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "platform/platform.h"
+#include "program/program.h"
 
 namespace NEO {
 

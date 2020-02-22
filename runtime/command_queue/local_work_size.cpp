@@ -9,9 +9,10 @@
 #include "core/helpers/array_count.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/debug_helpers.h"
-#include "runtime/context/context.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
+
+#include "context/context.h"
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
 
 #include <algorithm>
 #include <cmath>

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/hw_cmds.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_device.h"
+
+#include "helpers/hardware_commands_helper.h"
 
 using InterfaceDescriptorDataTests = ::testing::Test;
 

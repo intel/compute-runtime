@@ -5,9 +5,6 @@
  *
  */
 
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
@@ -16,6 +13,10 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "built_ins/built_ins.h"
+#include "helpers/hardware_commands_helper.h"
+#include "kernel/kernel.h"
 
 #include <memory>
 

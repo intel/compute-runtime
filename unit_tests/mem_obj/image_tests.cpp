@@ -10,10 +10,6 @@
 #include "core/image/image_surface_state.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/helpers/mipmap.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -26,6 +22,11 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "built_ins/built_ins.h"
+#include "helpers/mipmap.h"
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj_helper.h"
 
 using namespace NEO;
 

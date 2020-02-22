@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
+#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

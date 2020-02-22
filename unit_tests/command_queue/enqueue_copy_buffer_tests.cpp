@@ -6,11 +6,6 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_copy_buffer_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
@@ -18,6 +13,11 @@
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 
+#include "built_ins/built_ins.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/command_queue_hw.h"
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
 #include "reg_configs_common.h"
 
 #include <memory>

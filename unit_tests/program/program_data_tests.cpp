@@ -12,8 +12,6 @@
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -21,6 +19,9 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_with_source.h"
+
+#include "platform/platform.h"
+#include "program/program.h"
 
 using namespace NEO;
 

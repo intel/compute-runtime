@@ -6,11 +6,6 @@
  */
 
 #include "core/memory_manager/unified_memory_manager.h"
-#include "runtime/accelerators/intel_accelerator.h"
-#include "runtime/accelerators/intel_motion_estimation.h"
-#include "runtime/helpers/sampler_helpers.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/pipe.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -23,7 +18,12 @@
 #include "unit_tests/mocks/mock_sampler.h"
 
 #include "CL/cl.h"
+#include "accelerators/intel_accelerator.h"
+#include "accelerators/intel_motion_estimation.h"
 #include "gtest/gtest.h"
+#include "helpers/sampler_helpers.h"
+#include "kernel/kernel.h"
+#include "mem_obj/pipe.h"
 
 #include <memory>
 

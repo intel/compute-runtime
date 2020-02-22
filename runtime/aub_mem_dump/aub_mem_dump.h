@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,13 @@
 #include <cstdio>
 #include <fstream>
 #include <mutex>
+#include <string>
 
 #ifndef BIT
 #define BIT(x) (((uint64_t)1) << (x))
 #endif
 
-#include "runtime/aub_mem_dump/aub_data.h"
+#include "aub_mem_dump/aub_data.h"
 
 namespace NEO {
 class AubHelper;

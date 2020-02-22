@@ -7,9 +7,9 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
 
+#include "built_ins/built_ins.h"
+#include "built_ins/builtins_dispatch_builder.h"
 #include "os_inc.h"
 
 #include <cstdint>

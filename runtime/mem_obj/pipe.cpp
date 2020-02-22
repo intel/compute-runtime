@@ -5,15 +5,16 @@
  *
  */
 
-#include "runtime/mem_obj/pipe.h"
+#include "mem_obj/pipe.h"
 
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/get_info_status_mapper.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
+
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/get_info_status_mapper.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

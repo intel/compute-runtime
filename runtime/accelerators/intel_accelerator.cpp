@@ -5,12 +5,13 @@
  *
  */
 
-#include "runtime/accelerators/intel_accelerator.h"
+#include "accelerators/intel_accelerator.h"
 
 #include "core/helpers/get_info.h"
 #include "core/helpers/string.h"
-#include "runtime/context/context.h"
-#include "runtime/helpers/get_info_status_mapper.h"
+
+#include "context/context.h"
+#include "helpers/get_info_status_mapper.h"
 
 namespace NEO {
 

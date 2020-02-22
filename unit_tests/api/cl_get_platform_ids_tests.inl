@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/context/context.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/variable_backup.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

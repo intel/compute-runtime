@@ -8,10 +8,11 @@
 #pragma once
 #include "core/helpers/string.h"
 #include "core/image/image_surface_state.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/mem_obj.h"
+
+#include "helpers/surface_formats.h"
+#include "helpers/validators.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/mem_obj.h"
 
 namespace NEO {
 class Image;

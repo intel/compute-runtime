@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/aub_subcapture.h"
+#include "command_stream/aub_subcapture.h"
 
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/os_interface/ocl_reg_path.h"
+
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
+#include "os_interface/ocl_reg_path.h"
 
 namespace NEO {
 

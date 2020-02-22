@@ -6,10 +6,10 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_queue/gpgpu_walker.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "command_queue/gpgpu_walker.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

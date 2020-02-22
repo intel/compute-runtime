@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,8 @@
 
 #pragma once
 #include "core/utilities/iflist.h"
-#include "runtime/event/event.h"
+
+#include "event/event.h"
 
 #include <set>
 #include <unordered_map>

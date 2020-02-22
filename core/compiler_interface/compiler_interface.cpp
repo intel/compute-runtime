@@ -12,7 +12,6 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/os_interface/os_inc_base.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
@@ -21,6 +20,7 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
+#include "os_interface/os_inc_base.h"
 
 #include <fstream>
 

@@ -6,7 +6,6 @@
  */
 
 #include "core/memory_manager/unified_memory_manager.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
@@ -14,6 +13,8 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "event/event.h"
 
 using namespace NEO;
 

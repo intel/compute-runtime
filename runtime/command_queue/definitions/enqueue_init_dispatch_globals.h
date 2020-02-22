@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue_hw.h"
+#include "command_queue/command_queue_hw.h"
 
 namespace NEO {
 

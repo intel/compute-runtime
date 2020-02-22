@@ -9,7 +9,8 @@
 
 #include "core/command_stream/csr_deps.h"
 #include "core/command_stream/queue_throttle.h"
-#include "runtime/api/cl_types.h"
+
+#include "api/cl_types.h"
 
 #include <array>
 #include <unordered_set>

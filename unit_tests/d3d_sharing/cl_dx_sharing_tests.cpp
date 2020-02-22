@@ -6,11 +6,6 @@
  */
 
 #include "core/utilities/arrayref.h"
-#include "runtime/sharings/d3d/cl_d3d_api.h"
-#include "runtime/sharings/d3d/d3d_buffer.h"
-#include "runtime/sharings/d3d/d3d_sharing.h"
-#include "runtime/sharings/d3d/d3d_surface.h"
-#include "runtime/sharings/d3d/d3d_texture.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -18,6 +13,11 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "sharings/d3d/cl_d3d_api.h"
+#include "sharings/d3d/d3d_buffer.h"
+#include "sharings/d3d/d3d_sharing.h"
+#include "sharings/d3d/d3d_surface.h"
+#include "sharings/d3d/d3d_texture.h"
 
 static const DXGI_FORMAT DXGIformats[] = {
     DXGI_FORMAT_R32G32B32A32_TYPELESS,

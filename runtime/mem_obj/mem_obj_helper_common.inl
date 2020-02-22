@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/mem_obj/mem_obj_helper.h"
+#include "mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

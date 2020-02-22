@@ -7,9 +7,6 @@
 
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/aub_tests/fixtures/aub_fixture.h"
 #include "unit_tests/aub_tests/fixtures/hello_world_fixture.h"
@@ -19,6 +16,10 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
+
+#include "command_queue/command_queue.h"
+#include "event/event.h"
+#include "helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 

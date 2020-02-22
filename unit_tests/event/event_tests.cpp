@@ -11,10 +11,6 @@
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/perf_counter.h"
-#include "runtime/helpers/task_information.h"
-#include "runtime/memory_manager/mem_obj_surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -28,7 +24,11 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
+#include "command_queue/command_queue_hw.h"
+#include "event/perf_counter.h"
 #include "event_fixture.h"
+#include "helpers/task_information.h"
+#include "memory_manager/mem_obj_surface.h"
 
 #include <memory>
 #include <type_traits>

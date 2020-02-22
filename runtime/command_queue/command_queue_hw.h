@@ -11,14 +11,15 @@
 #include "core/helpers/engine_control.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/queue_helpers.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/program/printf_handler.h"
+
+#include "command_queue/command_queue.h"
+#include "command_queue/gpgpu_walker.h"
+#include "device/cl_device.h"
+#include "device_queue/device_queue_hw.h"
+#include "helpers/dispatch_info.h"
+#include "helpers/queue_helpers.h"
+#include "mem_obj/mem_obj.h"
+#include "program/printf_handler.h"
 
 #include <memory>
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/aub_command_stream_receiver_hw_base.inl"
+#include "command_stream/aub_command_stream_receiver_hw_base.inl"
 
 namespace NEO {
 

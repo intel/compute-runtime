@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/d3d_sharing_functions.h"
-#include "runtime/sharings/d3d/cl_d3d_api.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+#include "os_interface/windows/d3d_sharing_functions.h"
+#include "sharings/d3d/cl_d3d_api.h"
 
 using namespace NEO;
 

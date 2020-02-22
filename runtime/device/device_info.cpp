@@ -5,17 +5,18 @@
  *
  */
 
-#include "runtime/device/device_info.h"
+#include "device/device_info.h"
 
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/os_interface/os_time.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device/cl_device_vector.h"
-#include "runtime/device/device_info_map.h"
-#include "runtime/helpers/cl_device_helpers.h"
-#include "runtime/helpers/get_info_status_mapper.h"
-#include "runtime/platform/platform.h"
+
+#include "device/cl_device.h"
+#include "device/cl_device_vector.h"
+#include "device/device_info_map.h"
+#include "helpers/cl_device_helpers.h"
+#include "helpers/get_info_status_mapper.h"
+#include "platform/platform.h"
 
 using DeviceInfoTable::Map;
 

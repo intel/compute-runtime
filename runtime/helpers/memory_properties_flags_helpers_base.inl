@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/bit_helpers.h"
-#include "runtime/extensions/public/cl_ext_private.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
 
 #include "CL/cl_ext_intel.h"
+#include "extensions/public/cl_ext_private.h"
+#include "helpers/memory_properties_flags_helpers.h"
 
 namespace NEO {
 

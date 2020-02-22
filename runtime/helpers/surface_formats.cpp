@@ -9,9 +9,9 @@
 
 #include "core/gmm_helper/gmm_lib.h"
 #include "core/helpers/array_count.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/mem_obj/image.h"
 
+#include "api/cl_types.h"
+#include "mem_obj/image.h"
 #include "validators.h"
 
 namespace NEO {

@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -14,6 +13,8 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_with_source.h"
+
+#include "kernel/kernel.h"
 
 using namespace NEO;
 

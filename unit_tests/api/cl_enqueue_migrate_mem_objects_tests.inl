@@ -1,15 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/event/event.h"
-
 #include "cl_api_tests.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "event/event.h"
 
 using namespace NEO;
 

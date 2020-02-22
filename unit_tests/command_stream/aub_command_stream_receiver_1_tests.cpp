@@ -8,9 +8,6 @@
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/aub_mem_dump/aub_alloc_dump.h"
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
-#include "runtime/helpers/hardware_context_controller.h"
 #include "test.h"
 #include "unit_tests/fixtures/aub_command_stream_receiver_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -26,6 +23,10 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_os_context.h"
+
+#include "aub_mem_dump/aub_alloc_dump.h"
+#include "aub_mem_dump/page_table_entry_bits.h"
+#include "helpers/hardware_context_controller.h"
 
 using namespace NEO;
 

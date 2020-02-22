@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/accelerators/intel_motion_estimation.h"
+#include "accelerators/intel_motion_estimation.h"
 
 namespace NEO {
 

@@ -8,14 +8,14 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/extensions/public/cl_gl_private_intel.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/sharings/gl/gl_buffer.h"
-#include "runtime/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "config.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "extensions/public/cl_gl_private_intel.h"
+#include "mem_obj/buffer.h"
+#include "sharings/gl/gl_buffer.h"
+#include "sharings/gl/windows/gl_sharing_windows.h"
 
 using namespace NEO;
 

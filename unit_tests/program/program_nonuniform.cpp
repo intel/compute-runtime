@@ -10,8 +10,6 @@
 #include "core/helpers/hash.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
@@ -23,6 +21,8 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/hardware_commands_helper.h"
+#include "kernel/kernel.h"
 #include "program_tests.h"
 
 #include <map>
@@ -147,12 +147,13 @@ TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
     EXPECT_TRUE(pm.getAllowNonUniform());
 }
 
-#include "runtime/kernel/kernel.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "kernel/kernel.h"
 
 #include <vector>
 

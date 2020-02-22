@@ -6,8 +6,6 @@
  */
 
 #include "core/memory_manager/internal_allocation_storage.h"
-#include "runtime/event/user_event.h"
-#include "runtime/helpers/task_information.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/dispatch_flags_fixture.h"
@@ -15,6 +13,9 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "event/user_event.h"
+#include "helpers/task_information.h"
 
 #include <memory>
 

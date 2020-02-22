@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "unit_tests/fixtures/program_fixture.h"
 
-#include "runtime/program/create.inl"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "program/create.inl"
 
 namespace NEO {
 void ProgramFixture::CreateProgramWithSource(cl_context context,

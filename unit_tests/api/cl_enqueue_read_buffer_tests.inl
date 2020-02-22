@@ -6,11 +6,11 @@
  */
 
 #include "core/device/device.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/device_info.h"
 
 #include "cl_api_tests.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/device_info.h"
 
 using namespace NEO;
 

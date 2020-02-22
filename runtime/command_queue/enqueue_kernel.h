@@ -7,13 +7,14 @@
 
 #pragma once
 #include "core/command_stream/command_stream_receiver.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/task_information.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/mem_obj_surface.h"
+
+#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "helpers/hardware_commands_helper.h"
+#include "helpers/task_information.h"
+#include "mem_obj/buffer.h"
+#include "memory_manager/mem_obj_surface.h"
 
 #include <new>
 

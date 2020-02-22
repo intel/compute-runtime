@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "runtime/api/cl_types.h"
-#include "runtime/helpers/base_object.h"
+#include "api/cl_types.h"
+#include "helpers/base_object.h"
 
 //------------------------------------------------------------------------------
 // cl_intel_accelerator Class Stuff

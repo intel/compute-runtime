@@ -5,14 +5,15 @@
  *
  */
 
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/enqueue_barrier.h"
-#include "runtime/command_queue/enqueue_marker.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "built_ins/built_ins.h"
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/enqueue_barrier.h"
+#include "command_queue/enqueue_marker.h"
+#include "event/event.h"
 
 using namespace NEO;
 

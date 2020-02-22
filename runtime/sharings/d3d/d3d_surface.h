@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/sharings/d3d/d3d_sharing.h"
+#include "sharings/d3d/d3d_sharing.h"
 
 #include <map>
 

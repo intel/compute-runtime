@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include "runtime/built_ins/built_ins.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "built_ins/built_ins.h"
 
 #include <string>
 

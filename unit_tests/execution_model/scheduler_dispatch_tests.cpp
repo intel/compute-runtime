@@ -6,10 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/command_queue/enqueue_kernel.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/scheduler/scheduler_kernel.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -17,6 +13,11 @@
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "built_ins/built_ins.h"
+#include "command_queue/enqueue_kernel.h"
+#include "device_queue/device_queue.h"
+#include "scheduler/scheduler_kernel.h"
 
 using namespace NEO;
 

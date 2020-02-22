@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/device_queue/device_queue.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/mocks/mock_device_queue.h"
+
+#include "device_queue/device_queue.h"
 
 #include <memory>
 

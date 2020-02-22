@@ -6,12 +6,13 @@
  */
 
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "command_queue/gpgpu_walker.h"
+#include "context/context.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

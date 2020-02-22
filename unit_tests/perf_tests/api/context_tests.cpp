@@ -5,12 +5,12 @@
  *
  */
 
-#include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/helpers/file_io.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "cl_api_tests.h"
+#include "compiler_interface/compiler_interface.h"
+#include "helpers/file_io.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/mem_obj/image.h"
+#include "mem_obj/image.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm.h"
@@ -20,18 +20,18 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/utilities/compiler_support.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/get_info_status_mapper.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/helpers/mipmap.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/platform/platform.h"
 
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/get_info_status_mapper.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "helpers/mipmap.h"
+#include "helpers/surface_formats.h"
 #include "igfxfmid.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/mem_obj_helper.h"
+#include "platform/platform.h"
 
 #include <map>
 

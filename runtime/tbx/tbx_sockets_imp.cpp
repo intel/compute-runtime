@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/tbx/tbx_sockets_imp.h"
+#include "tbx/tbx_sockets_imp.h"
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"

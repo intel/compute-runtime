@@ -6,8 +6,6 @@
  */
 
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
@@ -16,6 +14,9 @@
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "event/event.h"
 
 using namespace NEO;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,8 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/aub/aub_helper.h"
+
+#include "aub/aub_helper.h"
 
 namespace AubMemDump {
 

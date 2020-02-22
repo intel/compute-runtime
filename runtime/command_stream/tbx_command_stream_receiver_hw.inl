@@ -15,15 +15,16 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/aub/aub_center.h"
-#include "runtime/aub/aub_helper.h"
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
-#include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/hardware_context_controller.h"
-#include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/physical_address_allocator.h"
+
+#include "aub/aub_center.h"
+#include "aub/aub_helper.h"
+#include "aub_mem_dump/page_table_entry_bits.h"
+#include "command_stream/aub_command_stream_receiver.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "helpers/dispatch_info.h"
+#include "helpers/hardware_context_controller.h"
+#include "memory_manager/memory_banks.h"
+#include "memory_manager/physical_address_allocator.h"
 
 #include <cstring>
 

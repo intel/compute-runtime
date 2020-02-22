@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
@@ -19,8 +19,9 @@
 #include "core/memory_manager/host_ptr_manager.h"
 #include "core/memory_manager/residency.h"
 #include "core/os_interface/os_memory.h"
-#include "runtime/aub/aub_center.h"
-#include "runtime/helpers/surface_formats.h"
+
+#include "aub/aub_center.h"
+#include "helpers/surface_formats.h"
 
 #include <cassert>
 

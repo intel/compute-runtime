@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/sharings/unified/enable_unified.h"
+#include "sharings/unified/enable_unified.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/context/context.h"
-#include "runtime/context/context.inl"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/sharings/sharing_factory.inl"
-#include "runtime/sharings/unified/unified_sharing.h"
-#include "runtime/sharings/unified/unified_sharing_types.h"
+
+#include "context/context.h"
+#include "context/context.inl"
+#include "sharings/sharing_factory.h"
+#include "sharings/sharing_factory.inl"
+#include "sharings/unified/unified_sharing.h"
+#include "sharings/unified/unified_sharing_types.h"
 
 #include <memory>
 

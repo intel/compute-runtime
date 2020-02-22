@@ -7,15 +7,15 @@
 
 #include "core/helpers/get_info.h"
 #include "core/utilities/api_intercept.h"
-#include "runtime/api/api.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/va/va_sharing.h"
-#include "runtime/sharings/va/va_surface.h"
 
 #include "CL/cl.h"
+#include "api/api.h"
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "platform/platform.h"
+#include "sharings/va/va_sharing.h"
+#include "sharings/va/va_surface.h"
 
 #include <cstring>
 

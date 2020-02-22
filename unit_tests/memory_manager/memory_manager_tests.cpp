@@ -17,14 +17,6 @@
 #include "core/program/program_initialization.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/event/event.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/printf_handler.h"
-#include "runtime/program/program.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
@@ -44,6 +36,15 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_os_context.h"
+
+#include "event/event.h"
+#include "helpers/dispatch_info.h"
+#include "helpers/hardware_commands_helper.h"
+#include "mem_obj/image.h"
+#include "mem_obj/mem_obj_helper.h"
+#include "platform/platform.h"
+#include "program/printf_handler.h"
+#include "program/program.h"
 
 #include <future>
 #include <type_traits>

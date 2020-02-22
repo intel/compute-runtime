@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/aub/aub_helper.h"
 #include "unit_tests/aub_tests/command_stream/aub_mem_dump_tests.h"
+
+#include "aub/aub_helper.h"
 
 template <typename FamilyType>
 void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType engineType, uint64_t gpuBatchBufferAddr) {

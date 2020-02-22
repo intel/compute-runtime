@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen11/hw_cmds_base.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/image.inl"
+
+#include "mem_obj/image.h"
+#include "mem_obj/image.inl"
 
 #include <map>
 
@@ -44,5 +45,5 @@ void ImageHw<Family>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceStat
     }
 }
 
-#include "runtime/mem_obj/image_factory_init.inl"
+#include "mem_obj/image_factory_init.inl"
 } // namespace NEO

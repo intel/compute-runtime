@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/mem_obj/map_operations_handler.h"
 #include "test.h"
+
+#include "mem_obj/map_operations_handler.h"
 
 #include <tuple>
 

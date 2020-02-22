@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/kernel/kernel.h"
-#include "runtime/program/block_kernel_manager.h"
-#include "runtime/program/printf_handler.h"
+#include "kernel/kernel.h"
+#include "program/block_kernel_manager.h"
+#include "program/printf_handler.h"
 
 namespace NEO {
 

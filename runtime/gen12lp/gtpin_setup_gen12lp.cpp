@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/gtpin/gtpin_hw_helper.h"
-#include "runtime/gtpin/gtpin_hw_helper.inl"
-
+#include "gtpin/gtpin_hw_helper.h"
+#include "gtpin/gtpin_hw_helper.inl"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

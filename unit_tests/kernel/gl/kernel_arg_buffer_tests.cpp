@@ -1,13 +1,10 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/sharings/gl/gl_buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -22,6 +19,9 @@
 #include "CL/cl.h"
 #include "config.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "mem_obj/buffer.h"
+#include "sharings/gl/gl_buffer.h"
 
 #include <memory>
 

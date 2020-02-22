@@ -5,9 +5,8 @@
  *
  */
 
-#include "runtime/platform/platform.h"
-
 #include "cl_api_tests.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

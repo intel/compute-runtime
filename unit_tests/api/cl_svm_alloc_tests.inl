@@ -7,9 +7,9 @@
 
 #include "core/device/device.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/context/context.h"
 
 #include "cl_api_tests.h"
+#include "context/context.h"
 
 using namespace NEO;
 

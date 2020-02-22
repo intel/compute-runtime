@@ -5,13 +5,14 @@
  *
  */
 
-#include "runtime/device/device_info.h"
-#include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "device/device_info.h"
+#include "helpers/dispatch_info.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

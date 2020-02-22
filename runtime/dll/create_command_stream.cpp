@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/hw_info.h"
-#include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/create_command_stream_impl.h"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/command_stream/tbx_command_stream_receiver.h"
+
+#include "command_stream/aub_command_stream_receiver.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "command_stream/create_command_stream_impl.h"
+#include "command_stream/device_command_stream.h"
+#include "command_stream/tbx_command_stream_receiver.h"
 
 namespace NEO {
 

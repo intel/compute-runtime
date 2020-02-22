@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #include "sharing_factory.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/platform/extensions.h"
+
+#include "platform/extensions.h"
 
 namespace NEO {
 

@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/array_count.h"
-#include "runtime/context/context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
+#include "context/context.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

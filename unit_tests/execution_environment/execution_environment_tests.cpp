@@ -14,16 +14,17 @@
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/destructor_counted.h"
-#include "runtime/aub/aub_center.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/platform/platform.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_memory_operations_handler.h"
+
+#include "aub/aub_center.h"
+#include "built_ins/built_ins.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
+#include "platform/platform.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 using namespace NEO;
 

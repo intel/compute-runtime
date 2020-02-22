@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
+
+#include "builtin_kernels_simulation/scheduler_simulation.h"
 
 #include <cstdint>
 #include <mutex>

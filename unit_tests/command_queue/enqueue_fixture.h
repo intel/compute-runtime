@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #pragma once
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/user_event.h"
-#include "runtime/kernel/kernel.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 
 #include "CL/cl.h"
+#include "command_queue/command_queue.h"
+#include "event/user_event.h"
+#include "kernel/kernel.h"
 
 #include <memory>
 

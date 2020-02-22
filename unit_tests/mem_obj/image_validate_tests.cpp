@@ -6,15 +6,15 @@
  */
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/convert_color.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/image.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
+#include "device/cl_device.h"
 #include "gtest/gtest.h"
+#include "helpers/convert_color.h"
+#include "helpers/surface_formats.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

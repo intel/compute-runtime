@@ -5,10 +5,10 @@
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
+#include "command_queue/command_queue.h"
 
 using namespace NEO;
 

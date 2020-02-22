@@ -7,12 +7,12 @@
 
 #pragma once
 #include "core/device/device.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 
 #include "instrumentation.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 

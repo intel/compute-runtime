@@ -8,8 +8,9 @@
 #pragma once
 
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/api/api.h"
 #include "unit_tests/aub_tests/fixtures/aub_fixture.h"
+
+#include "api/api.h"
 
 namespace NEO {
 class UnifiedMemoryAubFixture : public AUBFixture {

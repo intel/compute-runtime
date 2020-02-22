@@ -9,12 +9,6 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/built_ins/aux_translation_builtin.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/command_queue/hardware_interface.h"
-#include "runtime/event/perf_counter.h"
-#include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/task_information.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -26,6 +20,13 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "built_ins/aux_translation_builtin.h"
+#include "command_queue/gpgpu_walker.h"
+#include "command_queue/hardware_interface.h"
+#include "event/perf_counter.h"
+#include "helpers/hardware_commands_helper.h"
+#include "helpers/task_information.h"
 
 using namespace NEO;
 

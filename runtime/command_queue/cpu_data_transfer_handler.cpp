@@ -8,13 +8,14 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/event/event.h"
-#include "runtime/event/event_builder.h"
-#include "runtime/helpers/mipmap.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/image.h"
+
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "event/event.h"
+#include "event/event_builder.h"
+#include "helpers/mipmap.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/image.h"
 
 namespace NEO {
 void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) {

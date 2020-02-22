@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/kernel/image_transformer.h"
+#include "kernel/image_transformer.h"
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/program/kernel_info.h"
+
+#include "mem_obj/image.h"
+#include "program/kernel_info.h"
 
 namespace NEO {
 void ImageTransformer::registerImage3d(uint32_t argIndex) {

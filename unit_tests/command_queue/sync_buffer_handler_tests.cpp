@@ -6,12 +6,13 @@
  */
 
 #include "core/program/sync_buffer_handler.h"
-#include "runtime/api/api.h"
 #include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+
+#include "api/api.h"
 
 using namespace NEO;
 

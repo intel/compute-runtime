@@ -8,11 +8,11 @@
 #include "gtpin_init.h"
 
 #include "core/device/device.h"
-#include "runtime/device/device_info.h"
-#include "runtime/platform/platform.h"
 
 #include "CL/cl.h"
+#include "device/device_info.h"
 #include "gtpin_helpers.h"
+#include "platform/platform.h"
 
 using namespace gtpin;
 using namespace NEO;

@@ -6,8 +6,8 @@
  */
 
 #if __AVX2__
-#include "runtime/command_queue/local_id_gen.inl"
-#include "runtime/helpers/uint16_avx2.h"
+#include "command_queue/local_id_gen.inl"
+#include "helpers/uint16_avx2.h"
 
 #include <array>
 

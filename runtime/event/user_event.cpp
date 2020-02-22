@@ -9,8 +9,9 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
+
+#include "command_queue/command_queue.h"
+#include "context/context.h"
 
 namespace NEO {
 

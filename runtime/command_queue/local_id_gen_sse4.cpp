@@ -5,8 +5,8 @@
  *
  */
 
-#include "runtime/command_queue/local_id_gen.inl"
-#include "runtime/helpers/uint16_sse4.h"
+#include "command_queue/local_id_gen.inl"
+#include "helpers/uint16_sse4.h"
 
 #include <array>
 

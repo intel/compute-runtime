@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "core/helpers/completion_stamp.h"
 #include "core/helpers/hw_helper.h"
-#include "runtime/aub_mem_dump/aub_alloc_dump.inl"
-#include "runtime/aub_mem_dump/aub_mem_dump.inl"
 
 #include "aub_mapper.h"
+#include "aub_mem_dump/aub_alloc_dump.inl"
+#include "aub_mem_dump/aub_mem_dump.inl"
 #include "config.h"
 #include "reg_configs_common.h"
 

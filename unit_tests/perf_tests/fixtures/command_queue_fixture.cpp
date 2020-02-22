@@ -8,9 +8,9 @@
 #include "unit_tests/perf_tests/fixtures/command_queue_fixture.h"
 
 #include "core/device/device.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/context/context.h"
 
+#include "command_queue/command_queue_hw.h"
+#include "context/context.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

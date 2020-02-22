@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "unit_tests/mocks/mock_tbx_sockets.h"
 #include "unit_tests/mocks/mock_tbx_stream.h"
 
+#include "command_stream/tbx_command_stream_receiver_hw.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

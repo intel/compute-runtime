@@ -10,13 +10,13 @@
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/linux/drm_command_stream.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include "gmock/gmock.h"
+#include "os_interface/linux/drm_command_stream.h"
 
 #include <algorithm>
 

@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/built_ins/sip.h"
-#include "runtime/program/program.h"
+#include "built_ins/built_ins.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "built_ins/sip.h"
+#include "program/program.h"
 
 #include <memory>
 

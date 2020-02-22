@@ -12,15 +12,16 @@
 #include "core/image/image_surface_state.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/surface.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "helpers/surface_formats.h"
+#include "kernel/kernel.h"
+#include "mem_obj/image.h"
 
 #include <memory>
 

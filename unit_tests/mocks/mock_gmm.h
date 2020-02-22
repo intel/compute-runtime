@@ -7,10 +7,11 @@
 
 #pragma once
 #include "core/gmm_helper/gmm.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
+
+#include "helpers/surface_formats.h"
+#include "mem_obj/image.h"
 
 namespace NEO {
 namespace MockGmmParams {

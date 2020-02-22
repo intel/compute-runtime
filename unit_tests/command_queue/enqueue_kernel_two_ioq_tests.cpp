@@ -5,11 +5,12 @@
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+
+#include "command_queue/command_queue.h"
+#include "event/event.h"
 
 using namespace NEO;
 

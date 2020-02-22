@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/gen_common/aub_mapper_base.h"
+#include "aub_mem_dump/aub_mem_dump.h"
+#include "gen_common/aub_mapper_base.h"
 
 namespace NEO {
 

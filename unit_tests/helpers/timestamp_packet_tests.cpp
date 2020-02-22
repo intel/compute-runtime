@@ -9,10 +9,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/command_queue/hardware_interface.h"
-#include "runtime/event/user_event.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
@@ -27,7 +23,11 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
+#include "command_queue/gpgpu_walker.h"
+#include "command_queue/hardware_interface.h"
+#include "event/user_event.h"
 #include "gmock/gmock.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

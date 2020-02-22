@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen12lp/hw_info.h"
-#include "runtime/command_queue/gpgpu_walker_bdw_plus.inl"
-#include "runtime/command_queue/hardware_interface_bdw_plus.inl"
+
+#include "command_queue/gpgpu_walker_bdw_plus.inl"
+#include "command_queue/hardware_interface_bdw_plus.inl"
 
 namespace NEO {
 

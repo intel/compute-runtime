@@ -12,12 +12,6 @@
 #include "core/helpers/timestamp_packet.h"
 #include "core/os_interface/os_context.h"
 #include "core/utilities/tag_allocator.h"
-#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -27,6 +21,13 @@
 #include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_os_context.h"
+
+#include "command_stream/aub_command_stream_receiver_hw.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "command_stream/tbx_command_stream_receiver_hw.h"
+#include "helpers/dispatch_info.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

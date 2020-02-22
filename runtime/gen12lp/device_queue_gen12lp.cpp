@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/gen12lp/hw_cmds.h"
-#include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/device_queue/device_queue_hw_bdw_plus.inl"
-#include "runtime/device_queue/device_queue_hw_profiling.inl"
+
+#include "device_queue/device_queue_hw.h"
+#include "device_queue/device_queue_hw_bdw_plus.inl"
+#include "device_queue/device_queue_hw_profiling.inl"
 
 namespace NEO {
 typedef TGLLPFamily Family;

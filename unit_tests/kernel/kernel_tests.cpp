@@ -16,12 +16,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
@@ -38,6 +32,13 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_tests.h"
+
+#include "built_ins/builtins_dispatch_builder.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "helpers/surface_formats.h"
+#include "kernel/kernel.h"
+#include "mem_obj/image.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 #include <memory>
 

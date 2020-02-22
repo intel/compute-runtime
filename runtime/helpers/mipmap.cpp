@@ -5,11 +5,12 @@
  *
  */
 
-#include "runtime/helpers/mipmap.h"
+#include "helpers/mipmap.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
-#include "runtime/mem_obj/image.h"
+
+#include "mem_obj/image.h"
 
 #include <algorithm>
 #include <cstdint>

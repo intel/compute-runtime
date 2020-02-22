@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"
+
+#include "context/context.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

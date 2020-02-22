@@ -8,7 +8,8 @@
 #pragma once
 
 #include "core/utilities/cpuintrinsics.h"
-#include "runtime/tracing/tracing_handle.h"
+
+#include "tracing/tracing_handle.h"
 
 #include <atomic>
 #include <thread>

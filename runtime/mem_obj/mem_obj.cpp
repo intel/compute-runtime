@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/mem_obj/mem_obj.h"
+#include "mem_obj/mem_obj.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/gmm_helper/gmm.h"
@@ -17,10 +17,11 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/helpers/get_info_status_mapper.h"
+
+#include "command_queue/command_queue.h"
+#include "context/context.h"
+#include "device/cl_device.h"
+#include "helpers/get_info_status_mapper.h"
 
 #include <algorithm>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/memory_manager/memory_banks.h"
+
+#include "memory_manager/memory_banks.h"
 
 #include <atomic>
 #include <mutex>

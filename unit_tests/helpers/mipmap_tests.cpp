@@ -5,13 +5,13 @@
  *
  */
 
-#include "runtime/helpers/mipmap.h"
-#include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_image.h"
 
 #include "gtest/gtest.h"
+#include "helpers/mipmap.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

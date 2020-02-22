@@ -5,10 +5,10 @@
  *
  */
 
-#include "runtime/event/event_tracker.h"
+#include "event/event_tracker.h"
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/helpers/cl_helper.h"
+#include "command_queue/command_queue.h"
+#include "helpers/cl_helper.h"
 
 namespace NEO {
 

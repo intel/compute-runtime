@@ -8,11 +8,12 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "mem_obj/image.h"
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 using namespace NEO;
 

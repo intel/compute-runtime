@@ -10,16 +10,16 @@
 #include "core/device_binary_format/device_binary_formats.h"
 #include "core/execution_environment/execution_environment.h"
 #include "core/utilities/time_measure_wrapper.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/kernel_info.h"
-#include "runtime/program/program.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
-#include "runtime/utilities/logger.h"
 
 #include "compiler_options.h"
+#include "device/cl_device.h"
+#include "gtpin/gtpin_notify.h"
+#include "helpers/validators.h"
+#include "platform/platform.h"
+#include "program/kernel_info.h"
+#include "program/program.h"
+#include "source_level_debugger/source_level_debugger.h"
+#include "utilities/logger.h"
 
 #include <cstring>
 #include <iterator>

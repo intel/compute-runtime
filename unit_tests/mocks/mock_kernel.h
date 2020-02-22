@@ -10,13 +10,14 @@
 #include "core/device/device.h"
 #include "core/helpers/string.h"
 #include "core/kernel/grf_config.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/platform/platform.h"
-#include "runtime/program/block_kernel_manager.h"
-#include "runtime/scheduler/scheduler_kernel.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "device/cl_device.h"
+#include "kernel/kernel.h"
+#include "platform/platform.h"
+#include "program/block_kernel_manager.h"
+#include "scheduler/scheduler_kernel.h"
 
 #include <cassert>
 

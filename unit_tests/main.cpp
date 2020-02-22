@@ -14,7 +14,6 @@
 #include "core/unit_tests/helpers/memory_leak_listener.h"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "core/utilities/debug_settings_reader.h"
-#include "runtime/os_interface/ocl_reg_path.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_gmm.h"
@@ -27,6 +26,7 @@
 #include "gmock/gmock.h"
 #include "helpers/test_files.h"
 #include "mock_gmm_client_context.h"
+#include "os_interface/ocl_reg_path.h"
 
 #include <algorithm>
 #include <fstream>

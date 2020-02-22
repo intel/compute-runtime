@@ -10,11 +10,12 @@
 #include "core/execution_environment/execution_environment.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_platform.h"
+
+#include "memory_manager/os_agnostic_memory_manager.h"
 
 using namespace NEO;
 

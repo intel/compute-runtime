@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #include "va_sharing_functions.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-#include "runtime/sharings/va/va_surface.h"
+
+#include "sharings/va/va_surface.h"
 
 #include <dlfcn.h>
 

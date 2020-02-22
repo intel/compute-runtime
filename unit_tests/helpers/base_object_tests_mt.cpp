@@ -1,15 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/accelerators/intel_accelerator.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/platform/platform.h"
-
+#include "accelerators/intel_accelerator.h"
+#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
+#include "platform/platform.h"
 
 namespace NEO {
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/mem_obj/buffer_base.inl"
+#include "mem_obj/buffer_base.inl"
 
 namespace NEO {
 

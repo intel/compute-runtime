@@ -6,14 +6,15 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/api/api.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
+
+#include "api/api.h"
+#include "built_ins/builtins_dispatch_builder.h"
 
 using namespace NEO;
 

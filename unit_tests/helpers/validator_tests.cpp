@@ -6,15 +6,15 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/helpers/base_object.h"
-#include "runtime/helpers/error_mappers.h"
-#include "runtime/helpers/validators.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_platform.h"
 
+#include "api/cl_types.h"
 #include "gtest/gtest.h"
+#include "helpers/base_object.h"
+#include "helpers/error_mappers.h"
+#include "helpers/validators.h"
 
 using namespace NEO;
 

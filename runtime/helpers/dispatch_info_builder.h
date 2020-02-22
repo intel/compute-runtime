@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
+#include "command_queue/gpgpu_walker.h"
+#include "helpers/dispatch_info.h"
+#include "kernel/kernel.h"
 
 namespace NEO {
 

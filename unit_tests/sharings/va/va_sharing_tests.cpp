@@ -9,19 +9,19 @@
 #include "core/helpers/array_count.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/api/api.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/platform/platform.h"
-#include "runtime/sharings/va/cl_va_api.h"
-#include "runtime/sharings/va/va_sharing.h"
-#include "runtime/sharings/va/va_surface.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
 
+#include "api/api.h"
+#include "device/cl_device.h"
 #include "gtest/gtest.h"
+#include "platform/platform.h"
+#include "sharings/va/cl_va_api.h"
+#include "sharings/va/va_sharing.h"
+#include "sharings/va/va_surface.h"
 
 using namespace NEO;
 

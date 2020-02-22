@@ -5,10 +5,11 @@
  *
  */
 
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "helpers/hardware_commands_helper.h"
 
 using namespace NEO;
 

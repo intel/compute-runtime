@@ -11,10 +11,10 @@
 #include "core/device_binary_format/elf/elf_encoder.h"
 #include "core/program/program_info.h"
 #include "core/utilities/const_stringref.h"
-#include "runtime/api/cl_types.h"
-#include "runtime/helpers/base_object.h"
 
+#include "api/cl_types.h"
 #include "cif/builtins/memory/buffer/buffer.h"
+#include "helpers/base_object.h"
 #include "patch_list.h"
 
 #include <map>

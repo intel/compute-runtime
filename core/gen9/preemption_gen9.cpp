@@ -8,7 +8,8 @@
 #include "core/command_stream/csr_definitions.h"
 #include "core/command_stream/preemption.h"
 #include "core/command_stream/preemption.inl"
-#include "runtime/built_ins/built_ins.h"
+
+#include "built_ins/built_ins.h"
 
 #include <cstring>
 

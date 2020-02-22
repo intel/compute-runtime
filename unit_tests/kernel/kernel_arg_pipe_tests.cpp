@@ -5,8 +5,6 @@
  *
  */
 
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/pipe.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -18,6 +16,8 @@
 
 #include "CL/cl.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "mem_obj/pipe.h"
 
 #include <memory>
 

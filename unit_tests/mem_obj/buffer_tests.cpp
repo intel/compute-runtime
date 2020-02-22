@@ -17,13 +17,6 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/user_event.h"
-#include "runtime/extensions/public/cl_ext_private.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -41,8 +34,15 @@
 #include "unit_tests/mocks/mock_platform.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/user_event.h"
+#include "extensions/public/cl_ext_private.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/buffer.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

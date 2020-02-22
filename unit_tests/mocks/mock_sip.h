@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "runtime/built_ins/sip.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
+
+#include "built_ins/sip.h"
 
 #include <memory>
 #include <vector>

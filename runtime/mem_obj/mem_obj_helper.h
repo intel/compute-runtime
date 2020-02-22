@@ -9,11 +9,11 @@
 #include "core/helpers/bit_helpers.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
-#include "runtime/extensions/public/cl_ext_private.h"
-#include "runtime/helpers/mem_properties_parser_helper.h"
-#include "runtime/mem_obj/mem_obj.h"
 
 #include "CL/cl.h"
+#include "extensions/public/cl_ext_private.h"
+#include "helpers/mem_properties_parser_helper.h"
+#include "mem_obj/mem_obj.h"
 #include "memory_properties_flags.h"
 
 namespace NEO {

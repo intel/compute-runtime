@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/memory_properties_flags_helpers_base.inl"
+#include "helpers/memory_properties_flags_helpers_base.inl"
 
 namespace NEO {
 

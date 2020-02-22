@@ -9,9 +9,6 @@
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/allocations_list.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/helpers/dispatch_info.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
@@ -21,6 +18,9 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 
+#include "built_ins/built_ins.h"
+#include "built_ins/builtins_dispatch_builder.h"
+#include "helpers/dispatch_info.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "runtime/mem_obj/image.h"
-#include "runtime/sharings/va/va_sharing.h"
+#include "mem_obj/image.h"
+#include "sharings/va/va_sharing.h"
 
 namespace NEO {
 class Context;

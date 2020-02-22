@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/kernel/kernel.h"
-
 #include "CL/cl.h"
+#include "command_queue/command_queue.h"
+#include "kernel/kernel.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

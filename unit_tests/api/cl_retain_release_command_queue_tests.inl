@@ -5,9 +5,10 @@
  *
  */
 
-#include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+
+#include "context/context.h"
 
 using namespace NEO;
 namespace DeviceHostQueue {

@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/aligned_memory.h"
-#include "runtime/helpers/uint16_sse4.h"
 
 #include "gtest/gtest.h"
+#include "helpers/uint16_sse4.h"
 
 using namespace NEO;
 

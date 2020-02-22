@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/environment_variables.h"
+#include "os_interface/windows/environment_variables.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 

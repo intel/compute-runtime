@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/dispatch_info.h"
+#include "helpers/dispatch_info.h"
 
-#include "runtime/kernel/kernel.h"
+#include "kernel/kernel.h"
 
 namespace NEO {
 bool DispatchInfo::usesSlm() const {

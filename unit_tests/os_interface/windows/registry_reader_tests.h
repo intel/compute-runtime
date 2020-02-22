@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/os_interface/windows/debug_registry_reader.h"
-#include "runtime/os_interface/ocl_reg_path.h"
+
+#include "os_interface/ocl_reg_path.h"
 
 namespace NEO {
 class TestedRegistryReader : public RegistryReader {

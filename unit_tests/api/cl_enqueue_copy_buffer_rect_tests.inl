@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "core/helpers/ptr_math.h"
-#include "runtime/command_queue/command_queue.h"
 #include "unit_tests/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
+#include "command_queue/command_queue.h"
 
 using namespace NEO;
 

@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/mem_obj/image.h"
-
 #include "gtest/gtest.h"
+#include "mem_obj/image.h"
 
 using namespace NEO;
 

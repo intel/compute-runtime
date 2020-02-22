@@ -9,8 +9,9 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
 #include "core/memory_manager/surface.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/event/event.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "event/event.h"
 
 #include <new>
 

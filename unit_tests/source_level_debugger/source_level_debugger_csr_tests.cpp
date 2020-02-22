@@ -5,8 +5,6 @@
  *
  */
 
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
@@ -17,6 +15,9 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "command_queue/command_queue_hw.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 #include <memory>
 

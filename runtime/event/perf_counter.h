@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #pragma once
 
 #include "core/memory_manager/graphics_allocation.h"
-#include "runtime/event/hw_timestamps.h"
+
+#include "event/hw_timestamps.h"
 
 namespace NEO {
 

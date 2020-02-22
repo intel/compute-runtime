@@ -7,7 +7,7 @@
 
 #include "core/program/program_info.h"
 
-#include "runtime/program/kernel_info.h"
+#include "program/kernel_info.h"
 
 namespace NEO {
 

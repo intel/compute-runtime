@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,8 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
-#include "runtime/sharings/va/va_sharing.h"
+
+#include "sharings/va/va_sharing.h"
 
 namespace NEO {
 

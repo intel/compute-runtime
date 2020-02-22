@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/command_stream/tbx_command_stream_receiver.h"
+#include "command_stream/tbx_command_stream_receiver.h"
 
 namespace NEO {
 

@@ -16,8 +16,9 @@
 #include "core/os_interface/os_context.h"
 #include "core/os_interface/os_interface.h"
 #include "core/os_interface/os_time.h"
-#include "runtime/device/driver_info.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
+
+#include "device/driver_info.h"
+#include "source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
 

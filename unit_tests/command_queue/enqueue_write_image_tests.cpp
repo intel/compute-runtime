@@ -7,7 +7,6 @@
 
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_write_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
@@ -15,6 +14,7 @@
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 #include "unit_tests/mocks/mock_builtins.h"
 
+#include "built_ins/builtins_dispatch_builder.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

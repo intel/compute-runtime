@@ -10,8 +10,6 @@
 #include "core/helpers/array_count.h"
 #include "core/helpers/file_io.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/program/program.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -21,6 +19,8 @@
 #include "CL/cl.h"
 #include "compiler_options.h"
 #include "gtest/gtest.h"
+#include "kernel/kernel.h"
+#include "program/program.h"
 
 #include <type_traits>
 

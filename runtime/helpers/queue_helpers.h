@@ -8,10 +8,11 @@
 #pragma once
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/device/cl_device.h"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/get_info_status_mapper.h"
+
+#include "command_queue/command_queue.h"
+#include "device/cl_device.h"
+#include "device_queue/device_queue.h"
+#include "helpers/get_info_status_mapper.h"
 
 namespace NEO {
 

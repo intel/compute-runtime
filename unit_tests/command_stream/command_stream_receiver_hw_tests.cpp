@@ -22,13 +22,6 @@
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/gpgpu_walker.h"
-#include "runtime/event/user_event.h"
-#include "runtime/helpers/cl_blit_properties.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -50,6 +43,13 @@
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
+#include "built_ins/built_ins.h"
+#include "command_queue/command_queue_hw.h"
+#include "command_queue/gpgpu_walker.h"
+#include "event/user_event.h"
+#include "helpers/cl_blit_properties.h"
+#include "mem_obj/buffer.h"
+#include "mem_obj/mem_obj_helper.h"
 #include "reg_configs_common.h"
 
 #include <memory>

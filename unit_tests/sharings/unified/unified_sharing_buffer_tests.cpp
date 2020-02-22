@@ -5,9 +5,10 @@
  *
  */
 
-#include "runtime/sharings/unified/unified_buffer.h"
 #include "unit_tests/sharings/unified/unified_sharing_fixtures.h"
 #include "unit_tests/sharings/unified/unified_sharing_mocks.h"
+
+#include "sharings/unified/unified_buffer.h"
 
 using UnifiedSharingBufferTestsWithMemoryManager = UnifiedSharingFixture<true, true>;
 using UnifiedSharingBufferTestsWithInvalidMemoryManager = UnifiedSharingFixture<true, false>;

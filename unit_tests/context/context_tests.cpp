@@ -7,10 +7,6 @@
 
 #include "core/device/device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/context/context.inl"
-#include "runtime/device_queue/device_queue.h"
-#include "runtime/sharings/sharing.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -19,7 +15,11 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_platform.h"
 
+#include "command_queue/command_queue.h"
+#include "context/context.inl"
+#include "device_queue/device_queue.h"
 #include "gtest/gtest.h"
+#include "sharings/sharing.h"
 
 using namespace NEO;
 

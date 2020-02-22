@@ -11,10 +11,10 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/bit_helpers.h"
 #include "core/helpers/hw_cmds.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/mem_obj/buffer.h"
 
 #include "buffer_ext.inl"
+#include "helpers/surface_formats.h"
+#include "mem_obj/buffer.h"
 
 namespace NEO {
 

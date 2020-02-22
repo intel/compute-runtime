@@ -9,9 +9,9 @@
 #include "core/helpers/abort.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/utilities/reference_tracked_object.h"
-#include "runtime/api/dispatch.h"
 
 #include "CL/cl.h"
+#include "api/dispatch.h"
 
 #include <atomic>
 #include <condition_variable>

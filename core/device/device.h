@@ -10,8 +10,9 @@
 #include "core/helpers/common_types.h"
 #include "core/helpers/engine_control.h"
 #include "core/helpers/hw_info.h"
-#include "runtime/device/device_info.h"
-#include "runtime/os_interface/performance_counters.h"
+
+#include "device/device_info.h"
+#include "os_interface/performance_counters.h"
 
 namespace NEO {
 class DriverInfo;

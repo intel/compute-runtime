@@ -5,10 +5,9 @@
  *
  */
 
-#include "runtime/sharings/gl/gl_texture.h"
-
 #include "config.h"
 #include "gtest/gtest.h"
+#include "sharings/gl/gl_texture.h"
 
 namespace NEO {
 namespace glTypes {

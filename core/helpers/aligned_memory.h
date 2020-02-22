@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,8 @@
 #pragma once
 #include "core/helpers/debug_helpers.h"
 #include "core/memory_manager/memory_constants.h"
-#include "runtime/utilities/logger.h"
+
+#include "utilities/logger.h"
 
 #include <algorithm>
 #include <cstddef>

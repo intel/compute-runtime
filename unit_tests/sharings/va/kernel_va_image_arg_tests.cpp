@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/sharings/va/va_surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -13,6 +12,7 @@
 #include "unit_tests/sharings/va/mock_va_sharing.h"
 
 #include "gtest/gtest.h"
+#include "sharings/va/va_surface.h"
 
 using namespace NEO;
 

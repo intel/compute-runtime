@@ -6,8 +6,9 @@
  */
 
 #include "core/gen8/hw_cmds.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/image.inl"
+
+#include "mem_obj/image.h"
+#include "mem_obj/image.inl"
 
 #include <map>
 
@@ -22,5 +23,5 @@ void ImageHw<Family>::setMediaSurfaceRotation(void *) {}
 template <>
 void ImageHw<Family>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
 
-#include "runtime/mem_obj/image_factory_init.inl"
+#include "mem_obj/image_factory_init.inl"
 } // namespace NEO

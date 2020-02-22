@@ -8,7 +8,8 @@
 #pragma once
 #include "core/helpers/engine_node_helper.h"
 #include "core/os_interface/os_context.h"
-#include "runtime/command_queue/hardware_interface_base.inl"
+
+#include "command_queue/hardware_interface_base.inl"
 
 namespace NEO {
 

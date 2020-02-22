@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,15 @@
 
 #ifdef WIN32
 
-#include "runtime/sharings/d3d/enable_d3d.h"
+#include "sharings/d3d/enable_d3d.h"
 
-#include "runtime/api/api.h"
-#include "runtime/context/context.h"
-#include "runtime/context/context.inl"
-#include "runtime/os_interface/windows/d3d_sharing_functions.h"
-#include "runtime/sharings/d3d/cl_d3d_api.h"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/sharings/sharing_factory.inl"
+#include "api/api.h"
+#include "context/context.h"
+#include "context/context.inl"
+#include "os_interface/windows/d3d_sharing_functions.h"
+#include "sharings/d3d/cl_d3d_api.h"
+#include "sharings/sharing_factory.h"
+#include "sharings/sharing_factory.inl"
 
 #include <memory>
 

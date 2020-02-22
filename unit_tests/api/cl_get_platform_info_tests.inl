@@ -7,11 +7,11 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
-#include "runtime/platform/platform.h"
 #include "test.h"
 
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
+#include "platform/platform.h"
 
 using namespace NEO;
 

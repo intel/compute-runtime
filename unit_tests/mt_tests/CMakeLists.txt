@@ -10,7 +10,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${NEO_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${NEO_SOURCE_DIR}/unit_tests/ult_configuration.cpp
-  ${NEO_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+  ${NEO_RUNTIME_SOURCE_DIR}/aub/aub_stream_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
@@ -79,7 +79,7 @@ function(run_mt_tests target slices subslices eu_per_ss)
   )
 endfunction()
 
-target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/runtime/gen_common)
+target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_RUNTIME_SOURCE_DIR}/gen_common)
 
 macro(macro_for_each_test_config)
   run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})

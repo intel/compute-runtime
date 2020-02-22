@@ -6,9 +6,9 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/event/event.h"
 
 #include "cl_api_tests.h"
+#include "event/event.h"
 using namespace NEO;
 
 namespace ClSetEventCallbackTests {

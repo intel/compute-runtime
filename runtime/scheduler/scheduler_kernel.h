@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/kernel/kernel.h"
+#include "built_ins/built_ins.h"
+#include "kernel/kernel.h"
 
 #include <algorithm>
 

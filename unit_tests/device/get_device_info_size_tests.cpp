@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/device/device_info_map.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
+#include "device/device_info_map.h"
 #include "gtest/gtest.h"
 
 #include <memory>

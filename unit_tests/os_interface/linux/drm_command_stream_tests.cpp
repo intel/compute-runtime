@@ -18,9 +18,6 @@
 #include "core/os_interface/linux/os_interface.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/memory_properties_flags_helpers.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/os_interface/linux/drm_command_stream.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/dispatch_flags_helper.h"
@@ -36,6 +33,9 @@
 
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
+#include "helpers/memory_properties_flags_helpers.h"
+#include "mem_obj/buffer.h"
+#include "os_interface/linux/drm_command_stream.h"
 
 using namespace NEO;
 

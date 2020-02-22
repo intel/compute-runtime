@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/device/cl_device.h"
+#include "device/cl_device.h"
 
 namespace NEO {
 

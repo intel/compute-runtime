@@ -7,11 +7,12 @@
 
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/memory_manager.h"
-#include "runtime/event/event.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "event/event.h"
 
 using namespace NEO;
 

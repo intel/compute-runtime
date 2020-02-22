@@ -7,7 +7,6 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/linear_stream.h"
-#include "runtime/command_queue/command_queue_hw.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
@@ -17,6 +16,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
+#include "command_queue/command_queue_hw.h"
 #include "gtest/gtest.h"
 #include "reg_configs_common.h"
 

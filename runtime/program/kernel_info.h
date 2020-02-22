@@ -9,10 +9,10 @@
 #include "core/helpers/hw_info.h"
 #include "core/utilities/arrayref.h"
 #include "core/utilities/const_stringref.h"
-#include "runtime/program/heap_info.h"
-#include "runtime/program/kernel_arg_info.h"
 
 #include "patch_info.h"
+#include "program/heap_info.h"
+#include "program/kernel_arg_info.h"
 
 #include <algorithm>
 #include <array>

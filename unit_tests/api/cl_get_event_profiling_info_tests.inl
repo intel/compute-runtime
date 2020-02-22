@@ -5,15 +5,16 @@
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
-#include "runtime/event/user_event.h"
-#include "runtime/extensions/public/cl_ext_private.h"
 #include "test.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
+
+#include "command_queue/command_queue.h"
+#include "event/event.h"
+#include "event/user_event.h"
+#include "extensions/public/cl_ext_private.h"
 
 using namespace NEO;
 
