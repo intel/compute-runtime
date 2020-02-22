@@ -13,9 +13,8 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/hw_helper.h"
-
-#include "built_ins/built_ins.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {

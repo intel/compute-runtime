@@ -8,16 +8,16 @@
 #pragma once
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/os_interface.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/tests_configuration.h"
+#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/source/platform/platform.h"
 
-#include "aub_mem_dump/aub_mem_dump.h"
-#include "aub_mem_dump/page_table_entry_bits.h"
-#include "command_stream/aub_command_stream_receiver_hw.h"
-#include "command_stream/command_stream_receiver_with_aub_dump.h"
-#include "command_stream/tbx_command_stream_receiver_hw.h"
-#include "platform/platform.h"
+#include "command_queue/command_queue_fixture.h"
+#include "mocks/mock_device.h"
+#include "tests_configuration.h"
 
 #include <sstream>
 

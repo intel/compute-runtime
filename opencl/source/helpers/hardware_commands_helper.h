@@ -7,10 +7,9 @@
 
 #pragma once
 #include "core/indirect_heap/indirect_heap.h"
-
-#include "built_ins/built_ins.h"
-#include "helpers/per_thread_data.h"
-#include "kernel/kernel.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/helpers/per_thread_data.h"
+#include "opencl/source/kernel/kernel.h"
 
 #include <algorithm>
 #include <cstddef>

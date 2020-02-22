@@ -7,10 +7,9 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gen11/hw_cmds.h"
-
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/hardware_commands_helper.inl"
-#include "helpers/hardware_commands_helper_base.inl"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/hardware_commands_helper.inl"
+#include "opencl/source/helpers/hardware_commands_helper_base.inl"
 
 namespace NEO {
 

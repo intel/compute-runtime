@@ -5,9 +5,10 @@
  *
  */
 
+#include "opencl/source/context/context.h"
+#include "opencl/source/platform/platform.h"
+
 #include "cl_api_tests.h"
-#include "context/context.h"
-#include "platform/platform.h"
 
 using namespace NEO;
 

@@ -8,8 +8,9 @@
 #pragma once
 #include "core/memory_manager/deferred_deleter.h"
 #include "core/os_interface/windows/wddm_memory_manager.h"
-#include "unit_tests/mocks/mock_host_ptr_manager.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "mocks/mock_host_ptr_manager.h"
+#include "mocks/mock_memory_manager.h"
 
 namespace NEO {
 class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {

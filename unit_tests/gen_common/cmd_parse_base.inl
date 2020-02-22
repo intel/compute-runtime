@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "gen_common/gen_cmd_parse.h"
 
 // clang-format off
 using namespace NEO;

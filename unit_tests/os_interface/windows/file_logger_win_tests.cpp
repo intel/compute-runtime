@@ -7,11 +7,11 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
-#include "unit_tests/utilities/file_logger_tests.h"
 
-#include "platform/platform.h"
+#include "os_interface/windows/mock_wddm_allocation.h"
+#include "utilities/file_logger_tests.h"
 
 using namespace NEO;
 

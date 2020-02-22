@@ -13,12 +13,12 @@
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/mocks/mock_wddm_interface23.h"
-#include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 
-#include "platform/platform.h"
+#include "mocks/mock_wddm.h"
+#include "mocks/mock_wddm_interface23.h"
+#include "os_interface/windows/gdi_dll_fixture.h"
 
 using namespace NEO;
 

@@ -6,13 +6,13 @@
  */
 
 #pragma once
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
 #include "test.h"
-#include "unit_tests/api/cl_api_tests.h"
 
-#include "command_queue/command_queue.h"
-#include "device/cl_device.h"
-#include "device_queue/device_queue.h"
-#include "device_queue/device_queue_hw.h"
+#include "api/cl_api_tests.h"
 
 using namespace NEO;
 

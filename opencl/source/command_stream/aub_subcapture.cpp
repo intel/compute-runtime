@@ -5,13 +5,12 @@
  *
  */
 
-#include "command_stream/aub_subcapture.h"
+#include "opencl/source/command_stream/aub_subcapture.h"
 
 #include "core/utilities/debug_settings_reader.h"
-
-#include "helpers/dispatch_info.h"
-#include "kernel/kernel.h"
-#include "os_interface/ocl_reg_path.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 

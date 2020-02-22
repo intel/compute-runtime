@@ -7,12 +7,12 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/ptr_math.h"
-#include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/mem_obj/image.h"
 
+#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "command_queue/command_enqueue_fixture.h"
 #include "gtest/gtest.h"
-#include "mem_obj/image.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

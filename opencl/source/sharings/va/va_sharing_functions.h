@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "sharings/sharing.h"
-#include "sharings/va/va_sharing_defines.h"
+#include "opencl/source/sharings/sharing.h"
+#include "opencl/source/sharings/va/va_sharing_defines.h"
 
 #include <functional>
 #include <vector>

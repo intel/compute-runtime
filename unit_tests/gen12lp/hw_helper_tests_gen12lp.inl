@@ -6,13 +6,13 @@
  */
 
 #include "core/command_container/command_encoder.h"
-#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
-#include "unit_tests/helpers/hw_helper_tests.h"
-#include "unit_tests/helpers/raii_hw_helper.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_hw_helper.h"
 
 #include "engine_node.h"
+#include "gen12lp/special_ult_helper_gen12lp.h"
+#include "helpers/hw_helper_tests.h"
+#include "helpers/raii_hw_helper.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_hw_helper.h"
 
 using HwHelperTestGen12Lp = HwHelperTest;
 

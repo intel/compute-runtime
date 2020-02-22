@@ -5,12 +5,11 @@
  *
  */
 
-#include "event/async_events_handler.h"
+#include "opencl/source/event/async_events_handler.h"
 
 #include "core/helpers/timestamp_packet.h"
 #include "core/os_interface/os_thread.h"
-
-#include "event/event.h"
+#include "opencl/source/event/event.h"
 
 #include <iterator>
 

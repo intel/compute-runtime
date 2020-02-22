@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "event/event.h"
+#include "opencl/source/event/event.h"
 
 struct _tagCLGLSyncInfo;
 typedef _tagCLGLSyncInfo CL_GL_SYNC_INFO;

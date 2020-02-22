@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "CL/cl.h"
-#include "mem_obj/buffer.h"
+#include "mocks/mock_context.h"
 
 #include <cassert>
 #include <memory>

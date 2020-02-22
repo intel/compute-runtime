@@ -7,10 +7,9 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/debug_helpers.h"
-
-#include "aub/aub_helper.h"
-#include "command_stream/tbx_command_stream_receiver.h"
-#include "tbx/tbx_sockets.h"
+#include "opencl/source/aub/aub_helper.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver.h"
+#include "opencl/source/tbx/tbx_sockets.h"
 
 namespace NEO {
 

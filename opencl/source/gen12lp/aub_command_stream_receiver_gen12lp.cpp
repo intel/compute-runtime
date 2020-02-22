@@ -7,11 +7,10 @@
 
 #include "core/helpers/array_count.h"
 #include "core/memory_manager/memory_pool.h"
-
-#include "aub_mem_dump/aub_alloc_dump.h"
-#include "command_stream/aub_command_stream_receiver_hw.h"
-#include "command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
-#include "helpers/base_object.h"
+#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
+#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

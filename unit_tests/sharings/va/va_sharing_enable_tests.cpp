@@ -5,13 +5,13 @@
  *
  */
 
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/sharings/va/enable_va.h"
+#include "opencl/source/sharings/va/va_sharing_functions.h"
 
+#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "sharings/va/enable_va.h"
-#include "sharings/va/va_sharing_functions.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

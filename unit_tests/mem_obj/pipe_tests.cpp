@@ -5,14 +5,14 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/mem_obj/pipe.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "command_queue/command_queue.h"
-#include "mem_obj/pipe.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/memory_management_fixture.h"
+#include "fixtures/multi_root_device_fixture.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

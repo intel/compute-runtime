@@ -6,9 +6,8 @@
  */
 
 #include "core/gen8/hw_cmds.h"
-
-#include "device_queue/device_queue_hw.h"
-#include "device_queue/device_queue_hw_bdw_plus.inl"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/device_queue/device_queue_hw_bdw_plus.inl"
 
 namespace NEO {
 typedef BDWFamily Family;

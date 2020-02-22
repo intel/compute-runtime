@@ -6,10 +6,9 @@
  */
 
 #include "core/gen12lp/hw_cmds.h"
-
-#include "gen12lp/helpers_gen12lp.h"
-#include "mem_obj/image.h"
-#include "mem_obj/image.inl"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/mem_obj/image.inl"
 
 namespace NEO {
 
@@ -39,7 +38,7 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 }
 
 // clang-format off
-#include "mem_obj/image_tgllp_plus.inl"
-#include "mem_obj/image_factory_init.inl"
+#include "opencl/source/mem_obj/image_tgllp_plus.inl"
+#include "opencl/source/mem_obj/image_factory_init.inl"
 // clang-format on
 } // namespace NEO

@@ -6,9 +6,9 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/api/cl_api_tests.h"
+#include "opencl/source/sharings/va/cl_va_api.h"
 
-#include "sharings/va/cl_va_api.h"
+#include "api/cl_api_tests.h"
 
 using namespace NEO;
 

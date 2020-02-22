@@ -6,9 +6,8 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "sampler/sampler.h"
-#include "sampler/sampler.inl"
+#include "opencl/source/sampler/sampler.h"
+#include "opencl/source/sampler/sampler.inl"
 
 namespace NEO {
 
@@ -21,5 +20,5 @@ void SamplerHw<Family>::appendSamplerStateParams(SAMPLER_STATE *state) {
     }
 }
 
-#include "sampler/sampler_factory_init.inl"
+#include "opencl/source/sampler/sampler_factory_init.inl"
 } // namespace NEO

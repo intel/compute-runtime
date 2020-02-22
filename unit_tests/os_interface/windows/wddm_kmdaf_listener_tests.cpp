@@ -13,12 +13,12 @@
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_allocation.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/mock_gdi/mock_gdi.h"
-#include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
-#include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 
-#include "platform/platform.h"
+#include "mock_gdi/mock_gdi.h"
+#include "os_interface/windows/mock_kmdaf_listener.h"
+#include "os_interface/windows/mock_wddm_allocation.h"
 
 using namespace NEO;
 

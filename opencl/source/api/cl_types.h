@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "api/dispatch.h"
+#include "opencl/source/api/dispatch.h"
 
 #include <cstdint>
 

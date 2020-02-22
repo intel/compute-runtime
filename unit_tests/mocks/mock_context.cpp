@@ -5,18 +5,18 @@
  *
  */
 
-#include "unit_tests/mocks/mock_context.h"
+#include "mocks/mock_context.h"
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/memory_manager/deferred_deleter.h"
 #include "core/memory_manager/unified_memory_manager.h"
-#include "unit_tests/fixtures/device_fixture.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/sharings/sharing.h"
 
-#include "built_ins/built_ins.h"
-#include "command_queue/command_queue.h"
 #include "d3d_sharing_functions.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
-#include "sharings/sharing.h"
+#include "fixtures/device_fixture.h"
 
 namespace NEO {
 

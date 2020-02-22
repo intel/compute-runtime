@@ -7,8 +7,7 @@
 
 #pragma once
 #include "core/command_stream/command_stream_receiver.h"
-
-#include "command_queue/command_queue_hw.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
 
 namespace NEO {
 

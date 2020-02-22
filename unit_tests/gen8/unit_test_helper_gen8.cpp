@@ -6,8 +6,9 @@
  */
 
 #include "core/gen8/hw_info.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/helpers/unit_test_helper.inl"
+
+#include "helpers/unit_test_helper.h"
+#include "helpers/unit_test_helper.inl"
 
 namespace NEO {
 

@@ -8,16 +8,16 @@
 #pragma once
 #include "core/execution_environment/root_device_environment.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/tracing/tracing_api.h"
 #include "test.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/helpers/ult_limits.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
-#include "api/api.h"
-#include "command_queue/command_queue.h"
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "tracing/tracing_api.h"
+#include "helpers/ult_limits.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_kernel.h"
 
 #include <memory>
 

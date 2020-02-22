@@ -6,16 +6,16 @@
  */
 
 #include "core/gmm_helper/gmm_types_converter.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/gl/gl_texture.h"
 
 #include "gtest/gtest.h"
-#include "mem_obj/image.h"
-#include "platform/platform.h"
-#include "sharings/gl/gl_texture.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

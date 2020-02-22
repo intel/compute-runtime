@@ -5,13 +5,13 @@
  *
  */
 
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/sharings/sharing.h"
 
 #include "gtest/gtest.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "mem_obj/mem_obj.h"
-#include "sharings/sharing.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

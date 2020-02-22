@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_wddm.h"
+#include "mocks/mock_wddm.h"
 
 namespace NEO {
 Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {

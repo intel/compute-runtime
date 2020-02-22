@@ -9,11 +9,11 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/mocks/mock_aub_center.h"
-#include "unit_tests/mocks/mock_aub_manager.h"
-#include "unit_tests/tests_configuration.h"
+#include "opencl/source/platform/platform.h"
 
-#include "platform/platform.h"
+#include "mocks/mock_aub_center.h"
+#include "mocks/mock_aub_manager.h"
+#include "tests_configuration.h"
 
 namespace NEO {
 struct MockAubCenterFixture {

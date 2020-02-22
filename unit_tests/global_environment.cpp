@@ -8,8 +8,7 @@
 #include "global_environment.h"
 
 #include "core/helpers/hw_info.h"
-
-#include "os_interface/os_inc_base.h"
+#include "opencl/source/os_interface/os_inc_base.h"
 
 TestEnvironment::TestEnvironment(void)
     : libraryFrontEnd(nullptr), libraryIGC(nullptr),

@@ -11,13 +11,12 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "device/cl_device.h"
-#include "helpers/dispatch_info.h"
-#include "kernel/kernel.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
-#include "sampler/sampler.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sampler/sampler.h"
 
 #include <cstdint>
 #include <cstring>

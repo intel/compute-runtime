@@ -5,8 +5,9 @@
  *
  */
 
-#include "gtpin/gtpin_hw_helper.h"
-#include "gtpin/gtpin_hw_helper.inl"
+#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/gtpin/gtpin_hw_helper.inl"
+
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

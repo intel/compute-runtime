@@ -6,13 +6,12 @@
  */
 
 #include "core/gen11/hw_cmds.h"
-
-#include "mem_obj/buffer_bdw_plus.inl"
+#include "opencl/source/mem_obj/buffer_bdw_plus.inl"
 
 namespace NEO {
 
 typedef ICLFamily Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
-#include "mem_obj/buffer_factory_init.inl"
+#include "opencl/source/mem_obj/buffer_factory_init.inl"
 } // namespace NEO

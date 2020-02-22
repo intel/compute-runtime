@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "sharings/gl/windows/gl_sharing_windows.h"
-#include "sharings/sharing_factory.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
 #include <memory>
 

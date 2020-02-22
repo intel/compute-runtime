@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/ocl_reg_path.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 const char *oclRegPath = "Software\\Intel\\IGFX\\OCL\\";

@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/string.h"
-#include "unit_tests/mocks/mock_platform.h"
+#include "opencl/source/api/dispatch.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
-#include "api/dispatch.h"
 #include "gtest/gtest.h"
-#include "sharings/sharing_factory.h"
+#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

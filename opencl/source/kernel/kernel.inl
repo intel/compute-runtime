@@ -5,9 +5,9 @@
  *
  */
 
-#include "kernel/kernel.h"
-#include "program/block_kernel_manager.h"
-#include "program/printf_handler.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/program/block_kernel_manager.h"
+#include "opencl/source/program/printf_handler.h"
 
 namespace NEO {
 

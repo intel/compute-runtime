@@ -5,7 +5,7 @@
  *
  */
 
-#include "api/additional_extensions.h"
+#include "opencl/source/api/additional_extensions.h"
 
 namespace NEO {
 void *CL_API_CALL getAdditionalExtensionFunctionAddress(const char *funcName) {

@@ -5,7 +5,8 @@
  *
  */
 
-#include "device/driver_info.h"
+#include "opencl/source/device/driver_info.h"
+
 #include "gtest/gtest.h"
 
 #include <memory>

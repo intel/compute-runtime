@@ -7,10 +7,9 @@
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
-
-#include "aub/aub_center.h"
-#include "command_stream/aub_command_stream_receiver.h"
-#include "command_stream/command_stream_receiver_with_aub_dump.h"
+#include "opencl/source/aub/aub_center.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver.h"
+#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 
 namespace NEO {
 

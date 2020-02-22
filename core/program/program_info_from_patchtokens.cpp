@@ -11,9 +11,8 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/program/program_info.h"
-
-#include "program/kernel_info.h"
-#include "program/kernel_info_from_patchtokens.h"
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/program/kernel_info_from_patchtokens.h"
 
 namespace NEO {
 

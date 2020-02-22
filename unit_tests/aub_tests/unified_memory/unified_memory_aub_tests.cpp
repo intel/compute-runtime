@@ -6,7 +6,8 @@
  */
 
 #include "test.h"
-#include "unit_tests/aub_tests/fixtures/unified_memory_fixture.h"
+
+#include "aub_tests/fixtures/unified_memory_fixture.h"
 
 namespace NEO {
 

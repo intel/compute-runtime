@@ -10,10 +10,10 @@
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/mocks/mock_aub_center.h"
-#include "unit_tests/mocks/mock_aub_manager.h"
 
 #include "gtest/gtest.h"
+#include "mocks/mock_aub_center.h"
+#include "mocks/mock_aub_manager.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;

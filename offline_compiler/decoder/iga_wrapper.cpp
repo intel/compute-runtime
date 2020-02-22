@@ -9,10 +9,10 @@
 
 #include "core/helpers/hw_info.h"
 #include "core/os_interface/os_library.h"
+#include "opencl/source/os_interface/os_inc_base.h"
 
 #include "helper.h"
 #include "igfxfmid.h"
-#include "os_interface/os_inc_base.h"
 #include "translate_platform_base.h"
 
 #include <memory>

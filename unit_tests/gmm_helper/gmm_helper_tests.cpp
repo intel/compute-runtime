@@ -12,20 +12,20 @@
 #include "core/helpers/ptr_math.h"
 #include "core/sku_info/operations/sku_info_transfer.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/platform/platform.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"
 #include "gmm_client_context.h"
 #include "gtest/gtest.h"
+#include "helpers/variable_backup.h"
 #include "igfxfmid.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
-#include "platform/platform.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace ::testing;
 

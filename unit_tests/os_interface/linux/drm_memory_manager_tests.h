@@ -8,11 +8,12 @@
 #pragma once
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+
+#include "fixtures/memory_management_fixture.h"
+#include "mocks/linux/mock_drm_memory_manager.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_execution_environment.h"
+#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
 

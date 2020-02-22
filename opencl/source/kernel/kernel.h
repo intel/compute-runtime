@@ -14,15 +14,14 @@
 #include "core/helpers/preamble.h"
 #include "core/unified_memory/unified_memory.h"
 #include "core/utilities/stackvec.h"
-
-#include "api/cl_types.h"
-#include "device_queue/device_queue.h"
-#include "extensions/public/cl_ext_private.h"
-#include "helpers/base_object.h"
-#include "helpers/properties_helper.h"
-#include "kernel/kernel_execution_type.h"
-#include "program/kernel_info.h"
-#include "program/program.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/properties_helper.h"
+#include "opencl/source/kernel/kernel_execution_type.h"
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/program/program.h"
 
 #include <vector>
 

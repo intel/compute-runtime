@@ -5,17 +5,17 @@
  *
  */
 
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "fixtures/device_fixture.h"
+#include "fixtures/memory_management_fixture.h"
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "mem_obj/buffer.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

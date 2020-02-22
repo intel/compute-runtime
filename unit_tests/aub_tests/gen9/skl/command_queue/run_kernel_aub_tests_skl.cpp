@@ -5,8 +5,8 @@
  *
  */
 
-#include "unit_tests/aub_tests/fixtures/run_kernel_fixture.h"
-#include "unit_tests/fixtures/two_walker_fixture.h"
+#include "aub_tests/fixtures/run_kernel_fixture.h"
+#include "fixtures/two_walker_fixture.h"
 
 using namespace NEO;
 

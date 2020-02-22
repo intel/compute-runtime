@@ -6,12 +6,12 @@
  */
 
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "opencl/source/helpers/surface_formats.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "helpers/surface_formats.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
 #
 
 if(NOT DISABLED_GTPIN_SUPPORT)
-  set(GTPIN_INIT_FILE "${NEO_RUNTIME_SOURCE_DIR}/gtpin/gtpin_init.cpp")
+  set(GTPIN_INIT_FILE "${NEO_SOURCE_DIR}/opencl/source/gtpin/gtpin_init.cpp")
 else()
   set(GTPIN_INIT_FILE "")
 endif()
@@ -28,9 +28,9 @@ set(RUNTIME_SRCS_DLL_BASE
   ${NEO_SOURCE_DIR}/core/helpers/allow_deferred_deleter.cpp
   ${NEO_SOURCE_DIR}/core/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/core/utilities/debug_settings_reader_creator.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/api/api.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/compiler_interface/default_cache_config.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/helpers/built_ins_helper.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/helpers/built_ins_helper.cpp
 
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "device/driver_info.h"
+#include "opencl/source/device/driver_info.h"
 
 #include <memory>
 #include <string>

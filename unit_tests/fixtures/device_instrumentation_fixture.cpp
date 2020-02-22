@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/fixtures/device_instrumentation_fixture.h"
+#include "fixtures/device_instrumentation_fixture.h"
 
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "helpers/execution_environment_helper.h"
+#include "mocks/mock_device.h"
 
 namespace NEO {
 void DeviceInstrumentationFixture::SetUp(bool instrumentation) {

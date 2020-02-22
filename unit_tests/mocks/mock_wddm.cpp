@@ -5,16 +5,16 @@
  *
  */
 
-#include "unit_tests/mocks/mock_wddm.h"
+#include "mocks/mock_wddm.h"
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/os_interface/windows/gdi_interface.h"
 #include "core/os_interface/windows/wddm_allocation.h"
-#include "unit_tests/mock_gdi/mock_gdi.h"
-#include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
 
 #include "gtest/gtest.h"
+#include "mock_gdi/mock_gdi.h"
+#include "mocks/mock_wddm_residency_allocations_container.h"
 
 using namespace NEO;
 

@@ -5,16 +5,15 @@
  *
  */
 
-#include "sharings/gl/windows/win_enable_gl.h"
+#include "opencl/source/sharings/gl/windows/win_enable_gl.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "context/context.h"
-#include "context/context.inl"
-#include "sharings/gl/cl_gl_api_intel.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
-#include "sharings/sharing_factory.h"
-#include "sharings/sharing_factory.inl"
+#include "opencl/source/context/context.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/sharings/gl/cl_gl_api_intel.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/source/sharings/sharing_factory.inl"
 
 #include <memory>
 

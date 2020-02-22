@@ -6,9 +6,10 @@
  */
 
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_source_level_debugger.h"
+
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_source_level_debugger.h"
 
 using namespace NEO;
 struct BdwDeviceTest : public DeviceFixture,

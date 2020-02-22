@@ -5,15 +5,14 @@
  *
  */
 
-#include "helpers/properties_helper.h"
+#include "opencl/source/helpers/properties_helper.h"
 
 #include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "command_queue/command_queue.h"
-#include "helpers/mipmap.h"
-#include "mem_obj/image.h"
-#include "mem_obj/mem_obj.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
 

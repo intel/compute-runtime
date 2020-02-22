@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_gfx_partition.h"
+#include "mocks/mock_gfx_partition.h"
 
 using namespace NEO;
 

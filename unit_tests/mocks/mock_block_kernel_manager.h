@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "program/block_kernel_manager.h"
+#include "opencl/source/program/block_kernel_manager.h"
 
 namespace NEO {
 

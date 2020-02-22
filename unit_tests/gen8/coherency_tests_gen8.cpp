@@ -7,10 +7,10 @@
 
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/execution_environment/execution_environment.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/helpers/dispatch_flags_helper.h"
 
-#include "platform/platform.h"
+#include "helpers/dispatch_flags_helper.h"
 
 using namespace NEO;
 

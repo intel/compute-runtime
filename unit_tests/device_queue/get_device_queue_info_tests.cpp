@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
+#include "opencl/source/context/context.h"
 
-#include "context/context.h"
+#include "fixtures/device_host_queue_fixture.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

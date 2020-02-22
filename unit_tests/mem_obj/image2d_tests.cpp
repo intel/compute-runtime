@@ -5,13 +5,13 @@
  *
  */
 
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/mem_obj/image.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "helpers/memory_properties_flags_helpers.h"
-#include "mem_obj/image.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

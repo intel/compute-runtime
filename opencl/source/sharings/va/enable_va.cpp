@@ -7,15 +7,15 @@
 
 #ifdef LIBVA
 
-#include "sharings/va/enable_va.h"
+#include "opencl/source/sharings/va/enable_va.h"
 
-#include "api/api.h"
-#include "context/context.h"
-#include "context/context.inl"
-#include "sharings/sharing_factory.h"
-#include "sharings/sharing_factory.inl"
-#include "sharings/va/cl_va_api.h"
-#include "sharings/va/va_sharing.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/source/sharings/sharing_factory.inl"
+#include "opencl/source/sharings/va/cl_va_api.h"
+#include "opencl/source/sharings/va/va_sharing.h"
 
 #include <memory>
 

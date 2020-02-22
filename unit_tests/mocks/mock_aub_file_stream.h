@@ -7,7 +7,8 @@
 
 #pragma once
 
-#include "command_stream/aub_command_stream_receiver.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver.h"
+
 #include "gmock/gmock.h"
 
 #if defined(__clang__)

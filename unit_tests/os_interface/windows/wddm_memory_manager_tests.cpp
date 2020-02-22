@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
+#include "os_interface/windows/wddm_memory_manager_tests.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -18,19 +18,19 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "core/utilities/tag_allocator.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_os_context.h"
-#include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/platform/platform.h"
 
-#include "helpers/memory_properties_flags_helpers.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
-#include "mem_obj/mem_obj_helper.h"
-#include "platform/platform.h"
+#include "helpers/execution_environment_helper.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_deferred_deleter.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
+#include "mocks/mock_os_context.h"
+#include "os_interface/windows/mock_wddm_allocation.h"
 
 using namespace NEO;
 using namespace ::testing;

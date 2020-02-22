@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
+#include "indirect_heap/indirect_heap_fixture.h"
 
-#include "command_queue/command_queue.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 namespace NEO {
 

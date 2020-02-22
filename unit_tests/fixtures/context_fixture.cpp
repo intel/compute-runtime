@@ -7,9 +7,8 @@
 
 #include "context_fixture.h"
 
-#include "unit_tests/mocks/mock_context.h"
-
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
 
 namespace NEO {
 

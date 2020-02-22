@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_queue/command_queue.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 #include <cstdint>
 

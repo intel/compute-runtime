@@ -5,7 +5,7 @@
  *
  */
 
-#include "sharings/unified/enable_unified.h"
+#include "opencl/source/sharings/unified/enable_unified.h"
 
 namespace NEO {
 std::string UnifiedSharingBuilderFactory::getExtensions() {

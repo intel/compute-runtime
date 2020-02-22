@@ -5,11 +5,10 @@
  *
  */
 
-#include "gen12lp/helpers_gen12lp.h"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
 
 #include "core/command_stream/command_stream_receiver.h"
-
-#include "command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 
 namespace NEO {
 namespace Gen12LPHelpers {

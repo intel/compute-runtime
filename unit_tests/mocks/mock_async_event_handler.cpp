@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_async_event_handler.h"
+#include "mocks/mock_async_event_handler.h"
 namespace MockAsyncEventHandlerGlobals {
 bool destructorCalled = false;
 }

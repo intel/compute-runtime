@@ -8,12 +8,12 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/string.h"
 #include "core/program/print_formatter.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 #include <cmath>
 

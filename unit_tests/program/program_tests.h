@@ -6,9 +6,8 @@
  */
 
 #pragma once
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
 
 #include <vector>

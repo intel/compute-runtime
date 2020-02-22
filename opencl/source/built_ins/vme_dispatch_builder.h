@@ -7,14 +7,14 @@
 
 #pragma once
 
-#include "accelerators/intel_accelerator.h"
-#include "accelerators/intel_motion_estimation.h"
-#include "built_ins/built_in_ops_vme.h"
-#include "built_ins/built_ins.h"
-#include "built_ins/builtins_dispatch_builder.h"
-#include "helpers/dispatch_info_builder.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
+#include "opencl/source/accelerators/intel_motion_estimation.h"
+#include "opencl/source/built_ins/built_in_ops_vme.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
 
 namespace NEO {
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {

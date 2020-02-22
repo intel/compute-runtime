@@ -6,8 +6,8 @@
  */
 
 #include "test.h"
-#include "unit_tests/helpers/cmd_buffer_validator.h"
 
+#include "helpers/cmd_buffer_validator.h"
 #include "hw_parse.h"
 
 using HwParseTest = ::testing::Test;

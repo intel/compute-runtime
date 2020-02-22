@@ -6,9 +6,8 @@
  */
 
 #include "core/command_stream/command_stream_receiver.h"
-
-#include "context/context.h"
-#include "mem_obj/mem_obj.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
 

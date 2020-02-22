@@ -7,8 +7,8 @@
 
 #include "mock_performance_counters_linux.h"
 
-#include "unit_tests/os_interface/linux/mock_os_time_linux.h"
-#include "unit_tests/os_interface/mock_performance_counters.h"
+#include "os_interface/linux/mock_os_time_linux.h"
+#include "os_interface/mock_performance_counters.h"
 
 namespace NEO {
 //////////////////////////////////////////////////////

@@ -9,13 +9,14 @@
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "test.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "fixtures/buffer_fixture.h"
+#include "helpers/execution_environment_helper.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

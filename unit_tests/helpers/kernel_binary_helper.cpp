@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/helpers/kernel_binary_helper.h"
+#include "helpers/kernel_binary_helper.h"
 
-#include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/test_files.h"
+#include "global_environment.h"
+#include "helpers/test_files.h"
 
 #include <string>
 

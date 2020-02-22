@@ -9,16 +9,16 @@
 #include "core/memory_manager/allocations_list.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_svm_manager.h"
 
-#include "api/api.h"
 #include "gtest/gtest.h"
-#include "mem_obj/mem_obj_helper.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_memory_manager.h"
+#include "mocks/mock_svm_manager.h"
 
 using namespace NEO;
 

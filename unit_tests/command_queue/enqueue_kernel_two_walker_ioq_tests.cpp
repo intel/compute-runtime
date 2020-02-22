@@ -5,10 +5,10 @@
  *
  */
 
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-#include "unit_tests/fixtures/two_walker_fixture.h"
 
-#include "helpers/hardware_commands_helper.h"
+#include "fixtures/two_walker_fixture.h"
 
 using namespace NEO;
 

@@ -11,14 +11,14 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/state_base_address.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
 
-#include "api/api.h"
-#include "command_queue/command_queue_hw.h"
-#include "extensions/public/cl_ext_private.h"
-#include "kernel/kernel.h"
+#include "fixtures/hello_world_fixture.h"
+#include "helpers/hw_parse.h"
 
 using namespace NEO;
 

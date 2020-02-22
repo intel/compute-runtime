@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
 #include "CL/cl.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "kernel/kernel.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

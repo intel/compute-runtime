@@ -5,13 +5,13 @@
  *
  */
 
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_image.h"
+#include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "gtest/gtest.h"
-#include "helpers/mipmap.h"
-#include "mem_obj/image.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_image.h"
 
 using namespace NEO;
 

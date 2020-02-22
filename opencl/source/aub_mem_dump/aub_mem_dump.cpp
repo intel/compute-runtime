@@ -10,8 +10,7 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
-
-#include "aub/aub_helper.h"
+#include "opencl/source/aub/aub_helper.h"
 
 namespace AubMemDump {
 

@@ -7,10 +7,9 @@
 
 #pragma once
 #include "core/helpers/hw_helper.h"
-
-#include "built_ins/built_ins.h"
-#include "built_ins/builtins_dispatch_builder.h"
-#include "helpers/dispatch_info_builder.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/dispatch_info_builder.h"
 
 #include <memory>
 

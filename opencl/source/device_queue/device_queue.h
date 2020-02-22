@@ -9,10 +9,9 @@
 #include "core/helpers/hw_info.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "api/cl_types.h"
-#include "execution_model/device_enqueue.h"
-#include "helpers/base_object.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/execution_model/device_enqueue.h"
+#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 class ClDevice;

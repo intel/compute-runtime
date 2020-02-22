@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/queue_helpers.h"
+#include "opencl/source/helpers/queue_helpers.h"
 
 namespace NEO {
 bool isExtraToken(const cl_queue_properties *property) {

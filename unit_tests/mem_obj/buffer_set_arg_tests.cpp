@@ -11,15 +11,15 @@
 #include "core/memory_manager/surface.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "kernel/kernel.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

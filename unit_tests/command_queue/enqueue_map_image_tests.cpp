@@ -8,17 +8,17 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "test.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
-#include "event/user_event.h"
-#include "helpers/memory_properties_flags_helpers.h"
+#include "command_queue/command_enqueue_fixture.h"
+#include "command_queue/command_queue_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -14,15 +14,15 @@
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/memory_manager.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sharings/gl/gl_texture.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "CL/cl_gl.h"
 #include "config.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "extensions/public/cl_gl_private_intel.h"
-#include "mem_obj/image.h"
-#include "sharings/gl/gl_texture.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
 #include <GL/gl.h>
 
 namespace NEO {

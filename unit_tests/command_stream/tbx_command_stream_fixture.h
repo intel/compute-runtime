@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "unit_tests/command_stream/command_stream_fixture.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 
-#include "command_stream/tbx_command_stream_receiver_hw.h"
+#include "command_stream/command_stream_fixture.h"
 
 #include <cstdint>
 

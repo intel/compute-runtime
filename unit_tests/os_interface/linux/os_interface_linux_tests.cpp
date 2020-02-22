@@ -9,9 +9,9 @@
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
-#include "unit_tests/os_interface/linux/drm_mock.h"
 
 #include "gtest/gtest.h"
+#include "os_interface/linux/drm_mock.h"
 
 namespace NEO {
 

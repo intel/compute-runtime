@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
 #include "config.h"
-#include "extensions/public/cl_gl_private_intel.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
+#include "os_interface/windows/gl/gl_dll_helper.h"
 
 #include <cstring>
 

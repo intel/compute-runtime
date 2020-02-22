@@ -5,11 +5,12 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
+
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "event/event.h"
-#include "event/user_event.h"
 
 using namespace NEO;
 

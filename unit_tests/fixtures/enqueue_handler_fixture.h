@@ -6,10 +6,9 @@
  */
 
 #pragma once
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
 
 class EnqueueHandlerTest : public NEO::DeviceFixture,
                            public testing::Test {

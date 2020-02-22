@@ -58,7 +58,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
   ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.cpp
   ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.h
-  ${NEO_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
+  ${NEO_RUNTIME_TESTS_DIR}/helpers/test_files.cpp
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
   ${IGDRCL_SRCS_tests_compiler_mocks}

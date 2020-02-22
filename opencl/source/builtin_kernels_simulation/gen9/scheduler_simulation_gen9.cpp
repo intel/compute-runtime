@@ -7,12 +7,12 @@
 
 #include "core/gen9/hw_cmds.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "opencl/source/builtin_kernels_simulation/opencl_c.h"
+#include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
+#include "opencl/source/builtin_kernels_simulation/scheduler_simulation.inl"
+#include "opencl/source/execution_model/device_enqueue.h"
 
 #include "CL/cl.h"
-#include "builtin_kernels_simulation/opencl_c.h"
-#include "builtin_kernels_simulation/scheduler_simulation.h"
-#include "builtin_kernels_simulation/scheduler_simulation.inl"
-#include "execution_model/device_enqueue.h"
 
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;
@@ -29,9 +29,9 @@ float __intel__getProfilingTimerResolution() {
     return static_cast<float>(DEFAULT_GEN9_PLATFORM::hwInfo.capabilityTable.defaultProfilingTimerResolution);
 }
 
-#include "gen9/device_enqueue.h"
-#include "gen9/scheduler_builtin_kernel.inl"
-#include "scheduler/scheduler.cl"
+#include "opencl/source/gen9/device_enqueue.h"
+#include "opencl/source/gen9/scheduler_builtin_kernel.inl"
+#include "opencl/source/scheduler/scheduler.cl"
 } // namespace Gen9SchedulerSimulation
 
 namespace BuiltinKernelsSimulation {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/buffer_base.inl"
+#include "opencl/source/mem_obj/buffer_base.inl"
 
 namespace NEO {
 

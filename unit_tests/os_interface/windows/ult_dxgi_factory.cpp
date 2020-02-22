@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
+#include "os_interface/windows/ult_dxgi_factory.h"
 
 namespace NEO {
 

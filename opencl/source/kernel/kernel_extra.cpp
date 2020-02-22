@@ -6,8 +6,7 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "kernel/kernel.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {

@@ -5,13 +5,13 @@
  *
  */
 
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_sampler.h"
+#include "opencl/source/sampler/sampler.h"
 
+#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_sampler.h"
 #include "patch_list.h"
-#include "sampler/sampler.h"
 
 #include <tuple>
 

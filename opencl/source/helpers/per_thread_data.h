@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "command_queue/local_id_gen.h"
+#include "opencl/source/command_queue/local_id_gen.h"
+
 #include "patch_shared.h"
 
 #include <array>

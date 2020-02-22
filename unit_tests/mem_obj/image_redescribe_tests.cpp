@@ -6,15 +6,15 @@
  */
 
 #include "core/helpers/aligned_memory.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "helpers/surface_formats.h"
 #include "igfxfmid.h"
-#include "mem_obj/image.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "mocks/mock_context.h"
 
 extern GFXCORE_FAMILY renderCoreFamily;
 

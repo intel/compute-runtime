@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
+#include "memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
 
 #include "core/helpers/array_count.h"
 

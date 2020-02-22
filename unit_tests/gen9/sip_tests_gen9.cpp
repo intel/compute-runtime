@@ -5,14 +5,14 @@
  *
  */
 
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/sip.h"
 #include "test.h"
-#include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_device.h"
 
-#include "built_ins/built_ins.h"
-#include "built_ins/sip.h"
+#include "global_environment.h"
 #include "gtest/gtest.h"
+#include "helpers/test_files.h"
+#include "mocks/mock_device.h"
 
 using namespace NEO;
 

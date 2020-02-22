@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/hw_info.h"
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
+#include "opencl/source/device/cl_device.h"
 
-#include "device/cl_device.h"
+#include "api/cl_api_tests.h"
+#include "os_interface/windows/gl/gl_dll_helper.h"
 
 using namespace NEO;
 

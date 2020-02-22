@@ -7,8 +7,7 @@
 
 #include "core/gen8/hw_cmds.h"
 #include "core/os_interface/hw_info_config.h"
-
-#include "helpers/enable_product.inl"
+#include "opencl/source/helpers/enable_product.inl"
 
 namespace NEO {
 

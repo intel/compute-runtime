@@ -5,14 +5,14 @@
  *
  */
 
+#include "opencl/source/sharings/unified/unified_sharing_types.h"
 #include "test.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "sharings/unified/unified_sharing_types.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_memory_manager.h"
 
 namespace NEO {
 

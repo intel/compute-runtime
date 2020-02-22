@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "unit_tests/aub_tests/fixtures/simple_arg_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/simple_arg_fixture.h"
+#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "aub_tests/fixtures/simple_arg_fixture.h"
+#include "fixtures/hello_world_fixture.h"
+#include "fixtures/simple_arg_fixture.h"
 
 namespace NEO {
 

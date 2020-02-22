@@ -7,14 +7,14 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
+#include "opencl/source/command_queue/local_id_gen.h"
+#include "opencl/source/helpers/per_thread_data.h"
+#include "opencl/source/program/kernel_info.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 
-#include "command_queue/local_id_gen.h"
-#include "helpers/per_thread_data.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_graphics_allocation.h"
 #include "patch_shared.h"
-#include "program/kernel_info.h"
 
 using namespace NEO;
 

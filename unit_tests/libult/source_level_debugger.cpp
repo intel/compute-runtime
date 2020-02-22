@@ -5,9 +5,9 @@
  *
  */
 
-#include "source_level_debugger/source_level_debugger.h"
+#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
-#include "unit_tests/libult/source_level_debugger_library.h"
+#include "libult/source_level_debugger_library.h"
 
 namespace NEO {
 OsLibrary *SourceLevelDebugger::loadDebugger() {

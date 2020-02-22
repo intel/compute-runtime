@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "aub_mem_dump/aub_mem_dump.h"
+#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 struct MockLrcaHelper : AubMemDump::LrcaHelper {
     mutable uint32_t setContextSaveRestoreFlagsCalled = 0;

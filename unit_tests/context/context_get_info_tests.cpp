@@ -5,11 +5,10 @@
  *
  */
 
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-
+#include "fixtures/context_fixture.h"
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

@@ -5,15 +5,15 @@
  *
  */
 
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "mem_obj/buffer.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_memory_manager.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

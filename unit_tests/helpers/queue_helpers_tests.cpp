@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_event.h"
+#include "opencl/source/helpers/queue_helpers.h"
 
 #include "gtest/gtest.h"
-#include "helpers/queue_helpers.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_event.h"
 
 using namespace NEO;
 

@@ -42,8 +42,8 @@ set(CLOC_SRCS_LIB
   ${NEO_SOURCE_DIR}/core/compiler_interface/compiler_options/compiler_options_base.cpp
   ${NEO_SOURCE_DIR}/core/compiler_interface/create_main.cpp
   ${NEO_SOURCE_DIR}/core/helpers/hw_info.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/platform/extensions.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/platform/extensions.h
+  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
 )
 
 if(${IGA_HEADERS_AVAILABLE})
@@ -61,13 +61,13 @@ if(WIN32)
   list(APPEND CLOC_SRCS_LIB
     ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.cpp
     ${NEO_SOURCE_DIR}/core/os_interface/windows/os_library_win.h
-    ${NEO_RUNTIME_SOURCE_DIR}/dll/windows/options_windows.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/dll/windows/options_windows.cpp
   )
 else()
   list(APPEND CLOC_SRCS_LIB
     ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.cpp
     ${NEO_SOURCE_DIR}/core/os_interface/linux/os_library_linux.h
-    ${NEO_RUNTIME_SOURCE_DIR}/dll/linux/options_linux.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
   )
 endif()
 
@@ -83,12 +83,12 @@ set(RUNTIME_GENX_CPP_FILES
 )
 
 macro(macro_for_each_platform)
-  list(APPEND CLOC_SRCS_LIB ${NEO_RUNTIME_SOURCE_DIR}/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl)
+  list(APPEND CLOC_SRCS_LIB ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl)
 endmacro()
 
 macro(macro_for_each_gen)
   foreach(SRC_IT ${RUNTIME_GENX_CPP_FILES})
-    set(SRC_FILE ${NEO_RUNTIME_SOURCE_DIR}/${GEN_TYPE_LOWER}/${SRC_IT})
+    set(SRC_FILE ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/${SRC_IT})
     if(EXISTS ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
       list(APPEND CLOC_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
     endif()

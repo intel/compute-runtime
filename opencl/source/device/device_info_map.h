@@ -6,9 +6,10 @@
  */
 
 #pragma once
+#include "opencl/source/device/device_info.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
+
 #include "CL/cl_ext_intel.h"
-#include "device/device_info.h"
-#include "extensions/public/cl_ext_private.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 

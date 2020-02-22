@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/linux/performance_counters_linux.h"
+#include "opencl/source/os_interface/linux/performance_counters_linux.h"
 
 namespace NEO {
 

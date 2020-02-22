@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/command_queue/enqueue_fixture.h"
+#include "command_queue/enqueue_fixture.h"
 
 #include "core/helpers/ptr_math.h"
 

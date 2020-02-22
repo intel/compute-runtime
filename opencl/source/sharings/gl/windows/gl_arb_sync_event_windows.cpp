@@ -7,13 +7,13 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/sharings/gl/gl_arb_sync_event.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "extensions/public/cl_gl_private_intel.h"
-#include "helpers/base_object.h"
-#include "sharings/gl/gl_arb_sync_event.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
 #include <GL/gl.h>
 
 namespace NEO {

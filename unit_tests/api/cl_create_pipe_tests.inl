@@ -7,10 +7,10 @@
 
 #include "core/device/device.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/helpers/base_object.h"
 
 #include "cl_api_tests.h"
-#include "context/context.h"
-#include "helpers/base_object.h"
 
 using namespace NEO;
 

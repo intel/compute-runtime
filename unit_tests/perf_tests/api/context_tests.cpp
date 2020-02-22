@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/helpers/memory_management.h"
-#include "unit_tests/helpers/test_files.h"
+#include "opencl/source/compiler_interface/compiler_interface.h"
+#include "opencl/source/helpers/file_io.h"
 
 #include "cl_api_tests.h"
-#include "compiler_interface/compiler_interface.h"
-#include "helpers/file_io.h"
+#include "helpers/memory_management.h"
+#include "helpers/test_files.h"
 
 using namespace NEO;
 

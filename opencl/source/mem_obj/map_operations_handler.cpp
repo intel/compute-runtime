@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/map_operations_handler.h"
+#include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include "core/helpers/ptr_math.h"
 

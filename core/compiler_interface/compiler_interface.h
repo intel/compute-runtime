@@ -11,8 +11,8 @@
 #include "core/os_interface/os_library.h"
 #include "core/utilities/arrayref.h"
 #include "core/utilities/spinlock.h"
+#include "opencl/source/built_ins/sip.h"
 
-#include "built_ins/sip.h"
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

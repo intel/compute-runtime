@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
+#include "os_interface/linux/hw_info_config_linux_tests.h"
 
 using HwInfoConfigTestLinuxTGLLP = HwInfoConfigTestLinux;
 

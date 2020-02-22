@@ -5,20 +5,20 @@
  *
  */
 
-#include "unit_tests/scheduler/scheduler_source_tests.h"
+#include "scheduler/scheduler_source_tests.h"
 
 #include "core/helpers/hw_cmds.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_device_queue.h"
 
-#include "device_queue/device_queue_hw.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "fixtures/execution_model_fixture.h"
 #include "gtest/gtest.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_device_queue.h"
 // Keep this include after execution_model_fixture.h otherwise there is high chance of conflict with macros
-#include "builtin_kernels_simulation/opencl_c.h"
-#include "builtin_kernels_simulation/scheduler_simulation.h"
+#include "opencl/source/builtin_kernels_simulation/opencl_c.h"
+#include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 
 using namespace NEO;
 using namespace BuiltinKernelsSimulation;

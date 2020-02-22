@@ -8,12 +8,13 @@
 #pragma once
 
 #include "core/command_stream/command_stream_receiver.h"
-#include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/fixtures/simple_arg_fixture.h"
-#include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
+
+#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "command_queue/command_queue_fixture.h"
+#include "command_stream/command_stream_fixture.h"
+#include "fixtures/simple_arg_fixture.h"
+#include "fixtures/simple_arg_kernel_fixture.h"
+#include "indirect_heap/indirect_heap_fixture.h"
 
 namespace NEO {
 

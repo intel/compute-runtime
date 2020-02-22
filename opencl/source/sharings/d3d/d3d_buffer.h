@@ -7,9 +7,8 @@
 
 #pragma once
 #include "core/memory_manager/memory_manager.h"
-
-#include "mem_obj/buffer.h"
-#include "sharings/d3d/d3d_sharing.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
 
 namespace NEO {
 class Buffer;

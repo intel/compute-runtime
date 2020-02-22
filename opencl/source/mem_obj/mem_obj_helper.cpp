@@ -5,7 +5,8 @@
  *
  */
 
-#include "mem_obj/mem_obj_helper_common.inl"
+#include "opencl/source/mem_obj/mem_obj_helper_common.inl"
+
 #include "memory_properties_flags.h"
 
 namespace NEO {

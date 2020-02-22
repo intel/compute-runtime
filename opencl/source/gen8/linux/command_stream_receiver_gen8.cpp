@@ -5,10 +5,10 @@
  *
  */
 
-#include "command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "os_interface/linux/device_command_stream.inl"
-#include "os_interface/linux/drm_command_stream.inl"
-#include "os_interface/linux/drm_command_stream_bdw_plus.inl"
+#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "opencl/source/os_interface/linux/device_command_stream.inl"
+#include "opencl/source/os_interface/linux/drm_command_stream.inl"
+#include "opencl/source/os_interface/linux/drm_command_stream_bdw_plus.inl"
 
 namespace NEO {
 

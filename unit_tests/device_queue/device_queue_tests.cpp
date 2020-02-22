@@ -5,14 +5,14 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/gen_common/matchers.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/device/device_info.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
-#include "device/device_info.h"
-#include "helpers/dispatch_info.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "gen_common/matchers.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

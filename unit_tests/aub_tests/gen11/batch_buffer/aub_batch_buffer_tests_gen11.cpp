@@ -7,7 +7,7 @@
 
 #include "aub_batch_buffer_tests_gen11.h"
 
-#include "unit_tests/fixtures/device_fixture.h"
+#include "fixtures/device_fixture.h"
 
 using Gen11AubBatchBufferTests = Test<NEO::DeviceFixture>;
 

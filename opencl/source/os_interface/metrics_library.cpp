@@ -5,11 +5,10 @@
  *
  */
 
-#include "os_interface/metrics_library.h"
+#include "opencl/source/os_interface/metrics_library.h"
 
 #include "core/helpers/hw_helper.h"
-
-#include "os_interface/os_inc_base.h"
+#include "opencl/source/os_interface/os_inc_base.h"
 
 namespace NEO {
 ///////////////////////////////////////////////////////

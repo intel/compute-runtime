@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "sharings/sharing_factory.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
 #include <memory>
 

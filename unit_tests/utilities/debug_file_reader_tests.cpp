@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/utilities/debug_file_reader_tests.inl"
+#include "utilities/debug_file_reader_tests.inl"
 
 using namespace NEO;
 using namespace std;

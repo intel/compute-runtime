@@ -5,12 +5,11 @@
  *
  */
 
-#include "helpers/mipmap.h"
+#include "opencl/source/helpers/mipmap.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
-
-#include "mem_obj/image.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include <algorithm>
 #include <cstdint>

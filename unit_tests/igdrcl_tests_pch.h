@@ -16,8 +16,8 @@
 #include "core/memory_manager/memory_constants.h"
 #include "core/sku_info/sku_info_base.h"
 #include "test.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
 
+#include "gen_common/gen_cmd_parse.h"
 #include "third_party/opencl_headers/CL/cl.h"
 
 #include <algorithm>

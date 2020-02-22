@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_kernel.h"
+#include "opencl/source/context/context.h"
 
 #include "cl_api_tests.h"
-#include "context/context.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_kernel.h"
 
 #include <type_traits>
 

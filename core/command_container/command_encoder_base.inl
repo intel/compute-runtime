@@ -14,8 +14,7 @@
 #include "core/helpers/simd_helper.h"
 #include "core/helpers/state_base_address.h"
 #include "core/kernel/dispatch_kernel_encoder_interface.h"
-
-#include "helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include <algorithm>
 

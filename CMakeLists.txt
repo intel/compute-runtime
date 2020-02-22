@@ -106,6 +106,9 @@ endif()
 set(NEO_RUNTIME_SUB_DIR "opencl/source")
 set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
 
+set(NEO_RUNTIME_TESTS_SUB_DIR "unit_tests")
+set(NEO_RUNTIME_TESTS_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR}")
+
 # Set the core source directory
 if(NOT DEFINED NEO_CORE_DIRECTORY)
   set(NEO_CORE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core)
@@ -554,8 +557,6 @@ else()
 endif()
 message(STATUS "Engine node dir: ${ENGINE_NODE_DIR}")
 
-include_directories(opencl/source)
-
 add_definitions(-DGMM_OCL)
 
 # We want to organize our IDE targets into folders
@@ -789,12 +790,12 @@ include_directories(${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory${BRANCH
 include_directories(${NEO_SOURCE_DIR}/core/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/core/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/built_ins/builtinops${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/command_queue/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/command_stream/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/mem_obj/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/memory_manager/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/built_ins/builtinops${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/command_stream/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 
 
 if(HAVE_INSTRUMENTATION)
@@ -804,7 +805,7 @@ if(HAVE_INSTRUMENTATION)
 else()
   set(NEO__INSTRUMENTATION_DIR_SUFFIX "/")
 endif()
-include_directories(${NEO_RUNTIME_SOURCE_DIR}/instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
+include_directories(${NEO_SOURCE_DIR}/opencl/source/instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
 
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

@@ -7,9 +7,9 @@
 
 #include "core/os_interface/windows/os_library_win.h"
 #include "test.h"
-#include "unit_tests/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"
+#include "helpers/variable_backup.h"
 
 #include <memory>
 

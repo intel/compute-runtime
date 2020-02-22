@@ -12,9 +12,8 @@ using Family = NEO::TGLLPFamily;
 #include "core/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "core/command_stream/command_stream_receiver_hw_tgllp_plus.inl"
 #include "core/helpers/blit_commands_helper_bdw_plus.inl"
-
-#include "command_stream/device_command_stream.h"
-#include "gen12lp/helpers_gen12lp.h"
+#include "opencl/source/command_stream/device_command_stream.h"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
 
 namespace NEO {
 static auto gfxCore = IGFX_GEN12LP_CORE;

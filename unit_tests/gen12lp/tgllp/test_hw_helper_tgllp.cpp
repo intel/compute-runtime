@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/hw_helper_tests.h"
+#include "helpers/hw_helper_tests.h"
 
 using HwHelperTestGen12Lp = HwHelperTest;
 

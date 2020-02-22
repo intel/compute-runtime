@@ -5,13 +5,13 @@
  *
  */
 
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sampler/sampler.h"
 #include "test.h"
-#include "unit_tests/aub_tests/fixtures/aub_parent_kernel_fixture.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
 
-#include "built_ins/built_ins.h"
-#include "mem_obj/image.h"
-#include "sampler/sampler.h"
+#include "aub_tests/fixtures/aub_parent_kernel_fixture.h"
+#include "fixtures/buffer_fixture.h"
 
 using namespace NEO;
 

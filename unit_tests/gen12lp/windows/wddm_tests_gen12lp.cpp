@@ -9,11 +9,11 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/windows/gdi_interface.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 
 #include "mock_gmm_memory.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_wddm.h"
+#include "os_interface/windows/gdi_dll_fixture.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_stream/tbx_command_stream_receiver.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"

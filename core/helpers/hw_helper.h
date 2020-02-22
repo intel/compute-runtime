@@ -9,10 +9,9 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/aux_translation.h"
 #include "core/helpers/hw_cmds.h"
-
-#include "built_ins/sip.h"
-#include "gen_common/aub_mapper.h"
-#include "mem_obj/buffer.h"
+#include "opencl/source/built_ins/sip.h"
+#include "opencl/source/gen_common/aub_mapper.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include <cstdint>
 #include <string>

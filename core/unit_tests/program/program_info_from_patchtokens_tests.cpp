@@ -11,11 +11,11 @@
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "opencl/source/program/kernel_info.h"
 
 #include "RelocationInfo.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "program/kernel_info.h"
 
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenRequiresLocalMemoryWindowVAIsCalledThenReturnsTrueOnlyIfAnyOfKernelsRequireLocalMemoryWindowVA) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens emptyProgram;

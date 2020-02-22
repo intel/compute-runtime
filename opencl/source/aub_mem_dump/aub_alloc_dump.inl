@@ -7,8 +7,8 @@
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
+#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 
-#include "aub_mem_dump/aub_alloc_dump.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;

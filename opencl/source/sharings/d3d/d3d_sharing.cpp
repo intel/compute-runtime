@@ -5,12 +5,11 @@
  *
  */
 
-#include "sharings/d3d/d3d_sharing.h"
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
 
 #include "core/gmm_helper/gmm.h"
-
-#include "context/context.h"
-#include "mem_obj/image.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/image.h"
 
 using namespace NEO;
 

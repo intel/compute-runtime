@@ -8,18 +8,18 @@
 #pragma once
 #include "core/device/device.h"
 #include "core/helpers/file_io.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/program_fixture.h"
-#include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/program_fixture.h"
 #include "gtest/gtest.h"
-#include "kernel/kernel.h"
-#include "platform/platform.h"
-#include "program/program.h"
+#include "helpers/test_files.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 namespace NEO {
 

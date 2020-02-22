@@ -8,11 +8,11 @@
 #pragma once
 
 #include "core/os_interface/os_library.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/sharings/sharing.h"
+#include "opencl/source/sharings/unified/unified_sharing_types.h"
 
 #include "CL/cl.h"
-#include "mem_obj/mem_obj.h"
-#include "sharings/sharing.h"
-#include "sharings/unified/unified_sharing_types.h"
 
 #include <functional>
 #include <mutex>

@@ -5,9 +5,8 @@
  *
  */
 
-#include "unit_tests/os_interface/linux/drm_mock.h"
-
 #include "gtest/gtest.h"
+#include "os_interface/linux/drm_mock.h"
 
 using namespace NEO;
 

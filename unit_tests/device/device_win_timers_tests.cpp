@@ -7,13 +7,13 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_ostime.h"
-#include "unit_tests/mocks/mock_ostime_win.h"
-#include "unit_tests/mocks/mock_wddm.h"
 
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_ostime.h"
+#include "mocks/mock_ostime_win.h"
+#include "mocks/mock_wddm.h"
 
 using namespace NEO;
 

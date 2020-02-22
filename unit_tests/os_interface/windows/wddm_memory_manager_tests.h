@@ -11,16 +11,16 @@
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "test.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
-#include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
-#include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/execution_environment_helper.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_gmm_page_table_mngr.h"
+#include "mocks/mock_wddm_residency_allocations_container.h"
+#include "os_interface/windows/mock_wddm_memory_manager.h"
+#include "os_interface/windows/wddm_fixture.h"
 
 #include <type_traits>
 

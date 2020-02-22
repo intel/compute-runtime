@@ -9,10 +9,10 @@
 #include "core/os_interface/linux/os_interface.h"
 #include "core/os_interface/linux/os_time_linux.h"
 #include "test.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
-#include "unit_tests/os_interface/linux/mock_os_time_linux.h"
 
 #include "gtest/gtest.h"
+#include "os_interface/linux/device_command_stream_fixture.h"
+#include "os_interface/linux/mock_os_time_linux.h"
 
 #include <dlfcn.h>
 

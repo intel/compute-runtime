@@ -8,7 +8,8 @@
 #pragma once
 
 #include "core/os_interface/hw_info_config.h"
-#include "unit_tests/os_interface/hw_info_config_tests.h"
+
+#include "os_interface/hw_info_config_tests.h"
 
 #include <memory>
 

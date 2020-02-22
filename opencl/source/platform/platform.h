@@ -6,9 +6,10 @@
  */
 
 #pragma once
-#include "api/cl_types.h"
-#include "device/cl_device_vector.h"
-#include "helpers/base_object.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/device/cl_device_vector.h"
+#include "opencl/source/helpers/base_object.h"
+
 #include "platform_info.h"
 
 #include <condition_variable>

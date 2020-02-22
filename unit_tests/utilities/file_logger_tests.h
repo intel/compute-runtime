@@ -9,9 +9,8 @@
 
 #include "core/helpers/file_io.h"
 #include "core/utilities/directory.h"
-
-#include "helpers/string_helpers.h"
-#include "utilities/logger.h"
+#include "opencl/source/helpers/string_helpers.h"
+#include "opencl/source/utilities/logger.h"
 
 #include <map>
 

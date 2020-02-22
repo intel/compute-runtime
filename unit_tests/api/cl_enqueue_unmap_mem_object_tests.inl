@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
 
-#include "command_queue/command_queue.h"
+#include "api/cl_api_tests.h"
+#include "fixtures/buffer_fixture.h"
 
 #include <memory>
 

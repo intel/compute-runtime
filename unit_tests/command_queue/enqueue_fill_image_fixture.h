@@ -6,10 +6,9 @@
  */
 
 #pragma once
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-
+#include "command_queue/command_enqueue_fixture.h"
+#include "command_queue/enqueue_fixture.h"
+#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

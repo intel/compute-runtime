@@ -7,7 +7,8 @@
 
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "mocks/mock_graphics_allocation.h"
 
 #include <memory>
 

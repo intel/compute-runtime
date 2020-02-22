@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {

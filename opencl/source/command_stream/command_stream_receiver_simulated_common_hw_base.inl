@@ -11,12 +11,12 @@
 #include "core/gmm_helper/resource_info.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
+#include "opencl/source/aub/aub_helper.h"
+#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
+#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "opencl/source/helpers/hardware_context_controller.h"
+#include "opencl/source/memory_manager/address_mapper.h"
 
-#include "aub/aub_helper.h"
-#include "aub_mem_dump/page_table_entry_bits.h"
-#include "command_stream/command_stream_receiver_simulated_common_hw.h"
-#include "helpers/hardware_context_controller.h"
-#include "memory_manager/address_mapper.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
 namespace NEO {

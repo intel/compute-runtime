@@ -10,6 +10,6 @@ set(IGDRCL_SRCS_mt_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_clear_queue_mt_tests.cpp
 
   # necessary dependencies from igdrcl_tests
-  ${NEO_SOURCE_DIR}/unit_tests/memory_manager/deferred_deleter_mt_tests.cpp
+  ${NEO_RUNTIME_TESTS_DIR}/memory_manager/deferred_deleter_mt_tests.cpp
 )
 target_sources(igdrcl_mt_tests PRIVATE ${IGDRCL_SRCS_mt_tests_memory_manager})

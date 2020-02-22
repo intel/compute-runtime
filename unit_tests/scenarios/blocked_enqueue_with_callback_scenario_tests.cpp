@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/event/async_events_handler.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/fixtures/scenario_test_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
-#include "event/async_events_handler.h"
-#include "event/user_event.h"
+#include "fixtures/scenario_test_fixture.h"
 #include "gtest/gtest.h"
-#include "platform/platform.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

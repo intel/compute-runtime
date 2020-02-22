@@ -5,9 +5,9 @@
  *
  */
 
-#include "builtin_kernels_simulation/scheduler_simulation.h"
+#include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 
-#include "builtin_kernels_simulation/opencl_c.h"
+#include "opencl/source/builtin_kernels_simulation/opencl_c.h"
 
 #include <thread>
 

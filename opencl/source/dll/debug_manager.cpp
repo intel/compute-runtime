@@ -6,8 +6,7 @@
  */
 
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "os_interface/ocl_reg_path.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 using namespace std;
 

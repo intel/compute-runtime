@@ -9,7 +9,8 @@
 #include "core/os_interface/windows/sys_calls.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "test.h"
-#include "unit_tests/helpers/variable_backup.h"
+
+#include "helpers/variable_backup.h"
 
 namespace NEO {
 

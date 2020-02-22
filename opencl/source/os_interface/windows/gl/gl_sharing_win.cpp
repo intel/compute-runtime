@@ -7,10 +7,9 @@
 
 #include "core/helpers/timestamp_packet.h"
 #include "core/os_interface/windows/windows_wrapper.h"
-
-#include "helpers/windows/gl_helper.h"
-#include "sharings/gl/gl_arb_sync_event.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/source/helpers/windows/gl_helper.h"
+#include "opencl/source/sharings/gl/gl_arb_sync_event.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
 #include <algorithm>
 #include <cstdint>

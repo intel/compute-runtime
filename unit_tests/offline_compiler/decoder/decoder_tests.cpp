@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/array_count.h"
-#include "unit_tests/test_files/patch_list.h"
 
 #include "gmock/gmock.h"
 #include "mock/mock_decoder.h"
+#include "test_files/patch_list.h"
 
 #include <fstream>
 

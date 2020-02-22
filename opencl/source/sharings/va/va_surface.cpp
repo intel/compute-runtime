@@ -5,15 +5,14 @@
  *
  */
 
-#include "sharings/va/va_surface.h"
+#include "opencl/source/sharings/va/va_surface.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "mem_obj/image.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/mem_obj/image.h"
 
 namespace NEO {
 Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sharingFunctions,

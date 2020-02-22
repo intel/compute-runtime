@@ -8,11 +8,11 @@
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/hw_helper.h"
 #include "core/helpers/ptr_math.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_device.h"
 
-#include "helpers/hardware_commands_helper.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_device.h"
 
 using namespace NEO;
 

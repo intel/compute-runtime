@@ -10,12 +10,12 @@
 #include "core/device/sub_device.h"
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/fixtures/mock_aub_center_fixture.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_allocation_properties.h"
+#include "opencl/source/device/cl_device.h"
 
-#include "device/cl_device.h"
+#include "fixtures/mock_aub_center_fixture.h"
+#include "helpers/variable_backup.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/mock_allocation_properties.h"
 
 namespace NEO {
 class OSTime;

@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/hw_info.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "opencl/source/context/context.h"
 
 #include "cl_api_tests.h"
-#include "context/context.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_device.h"
 
 using namespace NEO;
 

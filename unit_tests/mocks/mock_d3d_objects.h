@@ -6,8 +6,9 @@
  */
 
 #pragma once
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
+
 #include "gmock/gmock.h"
-#include "sharings/d3d/d3d_sharing.h"
 using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::SetArgPointee;

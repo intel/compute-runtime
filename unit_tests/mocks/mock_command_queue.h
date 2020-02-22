@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/memory_manager/graphics_allocation.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
 
-#include "command_queue/command_queue_hw.h"
+#include "libult/ult_command_stream_receiver.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation

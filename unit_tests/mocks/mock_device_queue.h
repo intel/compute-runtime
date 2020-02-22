@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "device_queue/device_queue.h"
-#include "device_queue/device_queue_hw.h"
-#include "helpers/hardware_commands_helper.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>

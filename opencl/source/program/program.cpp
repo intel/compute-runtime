@@ -19,13 +19,13 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/os_interface/os_context.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/block_kernel_manager.h"
+#include "opencl/source/program/kernel_info.h"
 
 #include "compiler_options.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "platform/platform.h"
-#include "program/block_kernel_manager.h"
-#include "program/kernel_info.h"
 
 #include <sstream>
 

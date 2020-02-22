@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/os_interface/windows/mock_environment_variables.h"
+#include "os_interface/windows/mock_environment_variables.h"
 
-#include "os_interface/windows/environment_variables.h"
+#include "opencl/source/os_interface/windows/environment_variables.h"
 
 extern uint32_t (*getEnvironmentVariableMock)(const char *name, char *outBuffer, uint32_t outBufferSize) = nullptr;
 

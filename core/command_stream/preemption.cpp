@@ -9,10 +9,9 @@
 
 #include "core/device/device.h"
 #include "core/helpers/string.h"
-
-#include "built_ins/built_ins.h"
-#include "helpers/dispatch_info.h"
-#include "kernel/kernel.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 

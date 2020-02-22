@@ -10,8 +10,7 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "kernel/kernel.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 

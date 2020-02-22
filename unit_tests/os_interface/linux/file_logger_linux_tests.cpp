@@ -7,8 +7,9 @@
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "test.h"
-#include "unit_tests/mocks/linux/mock_drm_allocation.h"
-#include "unit_tests/utilities/file_logger_tests.h"
+
+#include "mocks/linux/mock_drm_allocation.h"
+#include "utilities/file_logger_tests.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_cif.h"
+#include "mocks/mock_cif.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/export/library_api.h"

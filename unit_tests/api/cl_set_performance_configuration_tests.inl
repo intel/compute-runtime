@@ -5,10 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/device_instrumentation_fixture.h"
-#include "unit_tests/os_interface/mock_performance_counters.h"
-
 #include "cl_api_tests.h"
+#include "fixtures/device_instrumentation_fixture.h"
+#include "os_interface/mock_performance_counters.h"
 
 using namespace NEO;
 

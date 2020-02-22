@@ -6,18 +6,18 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/kernel_arg_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_image.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
+#include "fixtures/kernel_arg_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "kernel/kernel.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_image.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/fixtures/kernel_data_fixture.h"
+#include "fixtures/kernel_data_fixture.h"
 
 #include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/helpers/aligned_memory.h"

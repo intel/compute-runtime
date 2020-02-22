@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/built_ins/built_ins_file_names.h"
+#include "built_ins/built_ins_file_names.h"
 
 namespace NEO {
 

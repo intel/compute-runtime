@@ -5,20 +5,20 @@
  *
  */
 
-#include "unit_tests/mocks/mock_program.h"
+#include "mocks/mock_program.h"
 
 #include "core/compiler_interface/compiler_cache.h"
 #include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/helpers/hash.h"
 #include "core/program/program_info_from_patchtokens.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/helpers/ult_limits.h"
-#include "unit_tests/mocks/mock_compilers.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/program/create.inl"
+#include "opencl/source/program/kernel_info.h"
 
-#include "context/context.h"
-#include "program/create.inl"
-#include "program/kernel_info.h"
+#include "helpers/ult_limits.h"
+#include "mocks/mock_compilers.h"
+#include "mocks/mock_graphics_allocation.h"
 
 namespace NEO {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;

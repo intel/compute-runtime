@@ -7,15 +7,15 @@
 
 #ifdef WIN32
 
-#include "sharings/d3d/enable_d3d.h"
+#include "opencl/source/sharings/d3d/enable_d3d.h"
 
-#include "api/api.h"
-#include "context/context.h"
-#include "context/context.inl"
-#include "os_interface/windows/d3d_sharing_functions.h"
-#include "sharings/d3d/cl_d3d_api.h"
-#include "sharings/sharing_factory.h"
-#include "sharings/sharing_factory.inl"
+#include "opencl/source/api/api.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
+#include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/source/sharings/sharing_factory.inl"
 
 #include <memory>
 

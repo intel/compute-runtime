@@ -5,13 +5,13 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "event/user_event.h"
-#include "mem_obj/buffer.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

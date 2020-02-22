@@ -6,15 +6,15 @@
  */
 
 #include "core/utilities/tag_allocator.h"
-#include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_device_queue.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/source/event/hw_timestamps.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/task_information.h"
 
-#include "command_queue/gpgpu_walker.h"
-#include "command_queue/hardware_interface.h"
-#include "event/hw_timestamps.h"
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/task_information.h"
+#include "fixtures/execution_model_fixture.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_device_queue.h"
 
 #include <memory>
 

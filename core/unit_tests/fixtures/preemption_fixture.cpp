@@ -9,6 +9,11 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_info.h"
+#include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/command_queue/enqueue_kernel.h"
+#include "opencl/source/command_queue/enqueue_marker.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
@@ -17,12 +22,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-#include "command_queue/enqueue_common.h"
-#include "command_queue/enqueue_kernel.h"
-#include "command_queue/enqueue_marker.h"
 #include "gtest/gtest.h"
-#include "helpers/dispatch_info.h"
-#include "scheduler/scheduler_kernel.h"
 
 using namespace NEO;
 

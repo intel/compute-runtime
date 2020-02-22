@@ -5,9 +5,9 @@
  *
  */
 
-#include "device/cl_device.h"
-#include "device_queue/device_queue_hw_base.inl"
-#include "program/block_kernel_manager.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/device_queue/device_queue_hw_base.inl"
+#include "opencl/source/program/block_kernel_manager.h"
 
 namespace NEO {
 

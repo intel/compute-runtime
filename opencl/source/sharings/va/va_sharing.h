@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "api/cl_types.h"
-#include "sharings/sharing.h"
-#include "sharings/va/va_sharing_defines.h"
-#include "sharings/va/va_sharing_functions.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/sharings/sharing.h"
+#include "opencl/source/sharings/va/va_sharing_defines.h"
+#include "opencl/source/sharings/va/va_sharing_functions.h"
 
 namespace NEO {
 class VASharing : public SharingHandler {

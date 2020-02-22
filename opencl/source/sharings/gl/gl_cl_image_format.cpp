@@ -5,11 +5,12 @@
  *
  */
 
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/sharings/gl/gl_sharing.h"
+#include "opencl/source/sharings/gl/gl_texture.h"
+
 #include "GL/gl.h"
 #include "config.h"
-#include "extensions/public/cl_gl_private_intel.h"
-#include "sharings/gl/gl_sharing.h"
-#include "sharings/gl/gl_texture.h"
 
 namespace NEO {
 bool GlTexture::setClImageFormat(int glFormat, cl_image_format &clImgFormat) {

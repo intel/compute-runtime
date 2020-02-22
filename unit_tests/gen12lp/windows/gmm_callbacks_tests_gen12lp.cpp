@@ -11,15 +11,15 @@
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
 
-#include "command_stream/aub_command_stream_receiver_hw.h"
-#include "command_stream/command_stream_receiver_with_aub_dump.h"
-#include "os_interface/windows/wddm_device_command_stream.h"
-#include "platform/platform.h"
+#include "helpers/execution_environment_helper.h"
+#include "helpers/hw_parse.h"
+#include "libult/ult_command_stream_receiver.h"
 
 using namespace NEO;
 

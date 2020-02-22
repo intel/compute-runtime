@@ -6,9 +6,8 @@
  */
 
 #pragma once
-#include "unit_tests/mocks/mock_device.h"
-
 #include "gtest/gtest.h"
+#include "mocks/mock_device.h"
 
 namespace NEO {
 

@@ -7,11 +7,10 @@
 
 #pragma once
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "context/context_type.h"
-#include "context/driver_diagnostics.h"
-#include "device/cl_device_vector.h"
-#include "helpers/base_object.h"
+#include "opencl/source/context/context_type.h"
+#include "opencl/source/context/driver_diagnostics.h"
+#include "opencl/source/device/cl_device_vector.h"
+#include "opencl/source/helpers/base_object.h"
 
 #include <vector>
 

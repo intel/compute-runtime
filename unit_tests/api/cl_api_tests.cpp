@@ -7,8 +7,8 @@
 
 #include "cl_api_tests.h"
 
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
 
 namespace NEO {
 

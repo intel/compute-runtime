@@ -8,12 +8,11 @@
 #include "hardware_commands_helper_gen12lp.inl"
 
 #include "core/gen12lp/hw_cmds.h"
-
-#include "command_queue/command_queue.h"
-#include "gen12lp/helpers_gen12lp.h"
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/hardware_commands_helper.inl"
-#include "helpers/hardware_commands_helper_base.inl"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/hardware_commands_helper.inl"
+#include "opencl/source/helpers/hardware_commands_helper_base.inl"
 
 namespace NEO {
 

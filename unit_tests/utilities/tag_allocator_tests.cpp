@@ -8,8 +8,8 @@
 #include "core/helpers/timestamp_packet.h"
 #include "core/utilities/tag_allocator.h"
 #include "test.h"
-#include "unit_tests/fixtures/memory_allocator_fixture.h"
 
+#include "fixtures/memory_allocator_fixture.h"
 #include "gtest/gtest.h"
 
 #include <cstdint>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/fixtures/hello_world_fixture.h"
+#include "fixtures/hello_world_fixture.h"
 
 using namespace NEO;
 

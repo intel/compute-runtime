@@ -10,10 +10,10 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/get_info.h"
 #include "core/memory_manager/memory_manager.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "config.h"
-#include "context/context.h"
-#include "mem_obj/buffer.h"
 
 using namespace NEO;
 

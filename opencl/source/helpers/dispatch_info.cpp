@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/dispatch_info.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
-#include "kernel/kernel.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 bool DispatchInfo::usesSlm() const {

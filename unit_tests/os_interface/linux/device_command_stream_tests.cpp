@@ -8,17 +8,17 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/linear_stream.h"
 #include "core/os_interface/linux/os_interface.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver.h"
+#include "opencl/source/command_stream/device_command_stream.h"
+#include "opencl/source/os_interface/linux/device_command_stream.inl"
+#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/mock_aub_center_fixture.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
-#include "command_stream/aub_command_stream_receiver.h"
-#include "command_stream/device_command_stream.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/mock_aub_center_fixture.h"
 #include "gtest/gtest.h"
-#include "os_interface/linux/device_command_stream.inl"
-#include "os_interface/linux/drm_command_stream.h"
+#include "helpers/execution_environment_helper.h"
+#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
 

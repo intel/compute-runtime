@@ -6,10 +6,10 @@
  */
 
 #include "test.h"
-#include "unit_tests/command_stream/thread_arbitration_policy_helper.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
+#include "command_stream/thread_arbitration_policy_helper.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

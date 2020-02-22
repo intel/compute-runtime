@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/linux/drm_command_stream.h"
+#include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 using namespace NEO;
 

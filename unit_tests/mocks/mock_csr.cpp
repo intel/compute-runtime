@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_csr.h"
+#include "mocks/mock_csr.h"
 
 bool MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return true;

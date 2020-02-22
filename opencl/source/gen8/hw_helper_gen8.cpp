@@ -8,8 +8,7 @@
 #include "core/helpers/flat_batch_buffer_helper_hw.inl"
 #include "core/helpers/hw_helper_bdw_plus.inl"
 #include "core/memory_manager/memory_constants.h"
-
-#include "aub/aub_helper_bdw_plus.inl"
+#include "opencl/source/aub/aub_helper_bdw_plus.inl"
 
 namespace NEO {
 typedef BDWFamily Family;

@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/performance_counters.h"
+#include "opencl/source/os_interface/performance_counters.h"
 
 #include "core/utilities/tag_allocator.h"
 

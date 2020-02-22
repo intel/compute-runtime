@@ -11,13 +11,13 @@
 #include "core/os_interface/linux/drm_memory_manager.h"
 #include "core/os_interface/linux/drm_neo.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/helpers/gtest_helpers.h"
+#include "opencl/source/platform/platform.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "platform/platform.h"
+#include "helpers/gtest_helpers.h"
 
 #include <atomic>
 #include <cstdint>

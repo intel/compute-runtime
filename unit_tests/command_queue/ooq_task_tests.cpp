@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/mocks/mock_csr.h"
+#include "command_queue/enqueue_fixture.h"
+#include "fixtures/hello_world_fixture.h"
+#include "mocks/mock_csr.h"
 
 using namespace NEO;
 

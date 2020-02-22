@@ -5,10 +5,10 @@
  *
  */
 
-#include "built_ins/aux_translation_builtin.h"
-#include "built_ins/populate_built_ins.inl"
-#include "kernel/kernel.h"
-#include "mem_obj/buffer.h"
+#include "opencl/source/built_ins/aux_translation_builtin.h"
+#include "opencl/source/built_ins/populate_built_ins.inl"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/buffer.h"
 namespace NEO {
 
 BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {

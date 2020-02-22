@@ -10,7 +10,8 @@
 #include "core/device/device.h"
 #include "core/helpers/hw_helper.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
+
+#include "fixtures/device_fixture.h"
 
 using namespace NEO;
 

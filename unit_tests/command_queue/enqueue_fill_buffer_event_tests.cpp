@@ -5,11 +5,11 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/event.h"
 #include "test.h"
-#include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 
-#include "command_queue/command_queue.h"
-#include "event/event.h"
+#include "command_queue/enqueue_fill_buffer_fixture.h"
 
 using namespace NEO;
 

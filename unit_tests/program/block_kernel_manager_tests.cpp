@@ -6,11 +6,11 @@
  */
 
 #include "core/memory_manager/graphics_allocation.h"
-#include "unit_tests/mocks/mock_block_kernel_manager.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "opencl/source/program/kernel_info.h"
 
 #include "gtest/gtest.h"
-#include "program/kernel_info.h"
+#include "mocks/mock_block_kernel_manager.h"
+#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

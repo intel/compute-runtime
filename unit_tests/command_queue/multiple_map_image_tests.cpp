@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/event/user_event.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "event/user_event.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_context.h"
 
 namespace NEO {
 extern ImageFuncs imageFactory[IGFX_MAX_CORE];

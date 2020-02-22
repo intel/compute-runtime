@@ -5,11 +5,10 @@
  *
  */
 
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
-
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

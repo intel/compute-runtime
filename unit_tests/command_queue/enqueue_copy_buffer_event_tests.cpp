@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/event.h"
 
-#include "command_queue/command_queue.h"
-#include "event/event.h"
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/built_in_fixture.h"
+#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
 
 #include <memory>

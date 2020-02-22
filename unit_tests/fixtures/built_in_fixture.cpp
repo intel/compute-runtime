@@ -5,14 +5,14 @@
  *
  */
 
-#include "unit_tests/fixtures/built_in_fixture.h"
+#include "fixtures/built_in_fixture.h"
 
 #include "core/device/device.h"
-#include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/kernel_binary_helper.h"
-#include "unit_tests/helpers/test_files.h"
+#include "opencl/source/built_ins/built_ins.h"
 
-#include "built_ins/built_ins.h"
+#include "global_environment.h"
+#include "helpers/kernel_binary_helper.h"
+#include "helpers/test_files.h"
 
 using namespace NEO;
 

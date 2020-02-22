@@ -8,9 +8,9 @@
 #include "core/command_stream/csr_definitions.h"
 #include "core/helpers/engine_node_helper.h"
 #include "core/helpers/preamble_bdw_plus.inl"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 
-#include "gen12lp/helpers_gen12lp.h"
-#include "helpers/hardware_commands_helper.h"
 #include "reg_configs_common.h"
 
 namespace NEO {

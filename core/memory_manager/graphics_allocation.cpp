@@ -9,8 +9,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "utilities/logger.h"
+#include "opencl/source/utilities/logger.h"
 
 namespace NEO {
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {

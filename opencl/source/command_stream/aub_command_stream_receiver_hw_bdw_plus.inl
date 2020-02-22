@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_stream/aub_command_stream_receiver_hw_base.inl"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw_base.inl"
 
 namespace NEO {
 

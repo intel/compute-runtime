@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/gmm_helper/resource_info.h"
+#include "opencl/source/helpers/surface_formats.h"
 
 #include "gmock/gmock.h"
-#include "helpers/surface_formats.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push

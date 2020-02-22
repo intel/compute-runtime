@@ -6,9 +6,9 @@
  */
 
 #include "test.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/program/program_tests.h"
 
+#include "mocks/mock_program.h"
+#include "program/program_tests.h"
 #include "program_debug_data.h"
 
 #include <memory>

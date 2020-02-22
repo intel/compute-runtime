@@ -7,8 +7,7 @@
 
 #pragma once
 #include "core/execution_environment/execution_environment.h"
-
-#include "built_ins/built_ins.h"
+#include "opencl/source/built_ins/built_ins.h"
 
 namespace NEO {
 class Device;

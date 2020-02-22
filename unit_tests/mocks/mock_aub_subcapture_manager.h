@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_stream/aub_subcapture.h"
+#include "opencl/source/command_stream/aub_subcapture.h"
 
 using namespace NEO;
 

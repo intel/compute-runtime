@@ -7,7 +7,8 @@
 
 #include "core/helpers/preamble.h"
 #include "test.h"
-#include "unit_tests/fixtures/media_kernel_fixture.h"
+
+#include "fixtures/media_kernel_fixture.h"
 
 using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;

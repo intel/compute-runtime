@@ -7,17 +7,17 @@
 
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/aligned_memory.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "kernel/kernel.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "fixtures/device_fixture.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

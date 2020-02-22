@@ -9,8 +9,8 @@
 
 #include "core/device/device.h"
 #include "test.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

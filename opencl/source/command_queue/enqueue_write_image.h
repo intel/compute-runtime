@@ -9,12 +9,11 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/basic_math.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "built_ins/built_ins.h"
-#include "command_queue/command_queue_hw.h"
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/mipmap.h"
-#include "mem_obj/image.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include <algorithm>
 #include <new>

@@ -8,8 +8,8 @@
 #pragma once
 
 #include "core/compiler_interface/compiler_interface.h"
-#include "unit_tests/mocks/mock_cif.h"
 
+#include "mocks/mock_cif.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 

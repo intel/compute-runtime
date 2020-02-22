@@ -9,9 +9,9 @@
 #include "core/helpers/ptr_math.h"
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/graphics_allocation.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
+#include "mocks/mock_graphics_allocation.h"
 
 #include <memory>
 

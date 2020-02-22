@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/source/compiler_interface/default_cl_cache_config.h"
 #include "test.h"
-
-#include "compiler_interface/default_cl_cache_config.h"
 
 TEST(CompilerCache, GivenDefaultClCacheConfigThenValuesAreProperlyPopulated) {
     auto cacheConfig = NEO::getDefaultClCompilerCacheConfig();

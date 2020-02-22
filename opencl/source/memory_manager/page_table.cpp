@@ -5,10 +5,10 @@
  *
  */
 
-#include "memory_manager/page_table.h"
+#include "opencl/source/memory_manager/page_table.h"
 
-#include "aub_mem_dump/page_table_entry_bits.h"
-#include "memory_manager/page_table.inl"
+#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
+#include "opencl/source/memory_manager/page_table.inl"
 
 namespace NEO {
 

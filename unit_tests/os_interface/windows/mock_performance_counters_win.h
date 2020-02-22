@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "unit_tests/os_interface/mock_performance_counters.h"
+#include "opencl/source/os_interface/windows/performance_counters_win.h"
 
-#include "os_interface/windows/performance_counters_win.h"
+#include "os_interface/mock_performance_counters.h"
 
 namespace NEO {
 

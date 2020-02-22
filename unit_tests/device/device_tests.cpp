@@ -11,16 +11,16 @@
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
 
-#include "platform/platform.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "helpers/variable_backup.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_execution_environment.h"
 
 #include <memory>
 

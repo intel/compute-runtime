@@ -5,9 +5,9 @@
  *
  */
 
-#include "context/context.inl"
-#include "os_interface/windows/d3d_sharing_functions.h"
-#include "sharings/sharing_factory.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
 using namespace NEO;
 

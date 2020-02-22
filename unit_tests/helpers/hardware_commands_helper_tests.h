@@ -5,18 +5,18 @@
  *
  */
 
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
-#include "built_ins/built_ins.h"
-#include "helpers/hardware_commands_helper.h"
-#include "kernel/kernel.h"
+#include "fixtures/built_in_fixture.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 #include <memory>
 

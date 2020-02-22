@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "unit_tests/fixtures/image_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
+#include "fixtures/image_fixture.h"
 
 using namespace NEO;
 

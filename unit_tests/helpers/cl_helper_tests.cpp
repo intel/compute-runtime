@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/helpers/cl_helper.h"
+
 #include "gtest/gtest.h"
-#include "helpers/cl_helper.h"
 
 #include <array>
 

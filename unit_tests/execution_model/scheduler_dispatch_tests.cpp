@@ -6,18 +6,18 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device_queue.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/enqueue_kernel.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/scheduler/scheduler_kernel.h"
 
-#include "built_ins/built_ins.h"
-#include "command_queue/enqueue_kernel.h"
-#include "device_queue/device_queue.h"
-#include "scheduler/scheduler_kernel.h"
+#include "fixtures/execution_model_fixture.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device_queue.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

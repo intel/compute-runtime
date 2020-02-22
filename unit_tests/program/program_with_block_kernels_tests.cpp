@@ -7,15 +7,15 @@
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/device/device.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/fixtures/program_fixture.h"
-#include "unit_tests/fixtures/run_kernel_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/program/block_kernel_manager.h"
 
-#include "device/cl_device.h"
-#include "program/block_kernel_manager.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/platform_fixture.h"
+#include "fixtures/program_fixture.h"
+#include "fixtures/run_kernel_fixture.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_program.h"
 
 #include <vector>
 

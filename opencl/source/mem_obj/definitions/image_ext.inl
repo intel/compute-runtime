@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/image.h"
+#include "opencl/source/mem_obj/image.h"
 
 namespace NEO {
 

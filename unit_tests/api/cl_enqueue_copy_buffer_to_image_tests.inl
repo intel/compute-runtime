@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/fixtures/buffer_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/surface_formats.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "helpers/surface_formats.h"
+#include "fixtures/buffer_fixture.h"
 
 using namespace NEO;
 

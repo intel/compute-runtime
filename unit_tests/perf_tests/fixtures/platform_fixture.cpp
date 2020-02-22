@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/fixtures/platform_fixture.h"
+#include "fixtures/platform_fixture.h"
 
 #include "core/device/device.h"
 

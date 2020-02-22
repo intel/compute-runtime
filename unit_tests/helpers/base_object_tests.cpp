@@ -5,25 +5,25 @@
  *
  */
 
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_platform.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
+#include "opencl/source/sampler/sampler.h"
 
-#include "accelerators/intel_accelerator.h"
-#include "api/api.h"
-#include "api/cl_types.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "device_queue/device_queue.h"
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
 #include "gmock/gmock.h"
-#include "helpers/base_object.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/mem_obj.h"
-#include "platform/platform.h"
-#include "program/program.h"
-#include "sampler/sampler.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_platform.h"
 
 namespace NEO {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;

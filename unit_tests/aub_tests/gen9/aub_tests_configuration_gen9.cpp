@@ -6,7 +6,8 @@
  */
 
 #include "core/helpers/hw_cmds.h"
-#include "unit_tests/aub_tests/aub_tests_configuration.inl"
+
+#include "aub_tests/aub_tests_configuration.inl"
 
 using namespace NEO;
 

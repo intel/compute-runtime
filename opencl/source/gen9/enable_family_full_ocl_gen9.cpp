@@ -6,15 +6,14 @@
  */
 
 #include "core/command_stream/command_stream_receiver_hw.h"
-
-#include "command_queue/command_queue_hw.h"
-#include "command_stream/aub_command_stream_receiver_hw.h"
-#include "command_stream/tbx_command_stream_receiver_hw.h"
-#include "device_queue/device_queue_hw.h"
-#include "event/perf_counter.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
-#include "sampler/sampler.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/event/perf_counter.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/sampler/sampler.h"
 
 #include <type_traits>
 

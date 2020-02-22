@@ -5,11 +5,11 @@
  *
  */
 
-#include "sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
-#include "context/context.inl"
-#include "helpers/windows/gl_helper.h"
-#include "sharings/gl/gl_arb_sync_event.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/helpers/windows/gl_helper.h"
+#include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 
 namespace NEO {
 GLSharingFunctionsWindows::GLSharingFunctionsWindows(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)

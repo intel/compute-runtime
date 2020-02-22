@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/file_io.h"
-#include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/program/program.h"
 
 #include "gtest/gtest.h"
-#include "program/program.h"
+#include "helpers/test_files.h"
+#include "mocks/mock_program.h"
 
 namespace NEO {
 

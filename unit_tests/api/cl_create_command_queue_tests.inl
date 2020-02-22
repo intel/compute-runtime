@@ -7,12 +7,12 @@
 
 #include "core/device/device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/context/context.h"
 #include "test.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
-#include "context/context.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/mock_device.h"
 
 using namespace NEO;
 

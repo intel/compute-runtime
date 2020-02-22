@@ -5,10 +5,10 @@
  *
  */
 
-#include "event/event_tracker.h"
+#include "opencl/source/event/event_tracker.h"
 
-#include "command_queue/command_queue.h"
-#include "helpers/cl_helper.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/helpers/cl_helper.h"
 
 namespace NEO {
 

@@ -6,9 +6,10 @@
  */
 
 #include "core/gen12lp/hw_info.h"
-#include "unit_tests/gen12lp/special_ult_helper_gen12lp.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/helpers/unit_test_helper.inl"
+
+#include "gen12lp/special_ult_helper_gen12lp.h"
+#include "helpers/unit_test_helper.h"
+#include "helpers/unit_test_helper.inl"
 
 namespace NEO {
 

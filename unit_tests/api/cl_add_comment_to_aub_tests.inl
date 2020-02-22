@@ -7,13 +7,13 @@
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/execution_environment/root_device_environment.h"
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/mocks/mock_aub_center.h"
-#include "unit_tests/mocks/mock_aub_manager.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/platform/platform.h"
 
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "platform/platform.h"
+#include "api/cl_api_tests.h"
+#include "mocks/mock_aub_center.h"
+#include "mocks/mock_aub_manager.h"
 
 using namespace NEO;
 

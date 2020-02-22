@@ -5,14 +5,14 @@
  *
  */
 
-#include "unit_tests/fixtures/device_instrumentation_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/os_interface/mock_performance_counters.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/event/event.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "event/event.h"
+#include "fixtures/device_instrumentation_fixture.h"
+#include "mocks/mock_context.h"
+#include "os_interface/mock_performance_counters.h"
 
 using namespace NEO;
 

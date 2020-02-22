@@ -9,14 +9,14 @@
 #include "core/memory_manager/memory_constants.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
-#include "unit_tests/mocks/mock_experimental_command_buffer.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "fixtures/multi_root_device_fixture.h"
+#include "fixtures/ult_command_stream_receiver_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/hardware_commands_helper.h"
+#include "mocks/mock_experimental_command_buffer.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

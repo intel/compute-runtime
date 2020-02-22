@@ -9,11 +9,11 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

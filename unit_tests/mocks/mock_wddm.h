@@ -12,9 +12,9 @@
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_residency_allocations_container.h"
 #include "core/os_interface/windows/windows_defs.h"
-#include "unit_tests/mocks/wddm_mock_helpers.h"
 
 #include "gmock/gmock.h"
+#include "mocks/wddm_mock_helpers.h"
 
 #include <set>
 #include <vector>

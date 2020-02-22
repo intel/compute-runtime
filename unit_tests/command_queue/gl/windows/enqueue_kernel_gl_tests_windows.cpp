@@ -8,17 +8,17 @@
 #include "core/helpers/preamble.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_constants.h"
-#include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_submissions_aggregator.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/sharings/gl/gl_buffer.h"
 
-#include "built_ins/built_ins.h"
-#include "sharings/gl/gl_buffer.h"
+#include "command_queue/enqueue_fixture.h"
+#include "fixtures/hello_world_fixture.h"
+#include "fixtures/memory_management_fixture.h"
+#include "helpers/hw_parse.h"
+#include "mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_submissions_aggregator.h"
 
 using namespace NEO;
 

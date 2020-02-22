@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/task_information.h"
+#include "opencl/source/helpers/task_information.h"
 
 namespace NEO {
 template <typename ObjectT>

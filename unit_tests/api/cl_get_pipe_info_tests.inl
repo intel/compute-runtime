@@ -5,9 +5,10 @@
  *
  */
 
+#include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/pipe.h"
+
 #include "cl_api_tests.h"
-#include "context/context.h"
-#include "mem_obj/pipe.h"
 
 using namespace NEO;
 

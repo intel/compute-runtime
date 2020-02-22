@@ -5,4 +5,4 @@
  *
  */
 
-#include "command_queue/enqueue_resource_barrier.h"
+#include "opencl/source/command_queue/enqueue_resource_barrier.h"

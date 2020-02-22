@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/windows/registry_reader_tests.h"
+#include "os_interface/windows/registry_reader_tests.h"
 
 #include "test.h"
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "api/cl_types.h"
+#include "opencl/source/api/cl_types.h"
 
 #include <vector>
 

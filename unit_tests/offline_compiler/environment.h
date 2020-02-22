@@ -8,11 +8,11 @@
 #pragma once
 
 #include "offline_compiler/offline_compiler.h"
-#include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_compilers.h"
+#include "opencl/source/os_interface/os_inc_base.h"
 
 #include "gtest/gtest.h"
-#include "os_interface/os_inc_base.h"
+#include "helpers/test_files.h"
+#include "mocks/mock_compilers.h"
 
 class Environment : public ::testing::Environment {
   public:

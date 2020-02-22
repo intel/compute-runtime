@@ -8,10 +8,10 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/file_io.h"
 #include "core/utilities/debug_settings_reader.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
-#include "os_interface/ocl_reg_path.h"
 
 #include <fstream>
 #include <string>

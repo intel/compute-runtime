@@ -10,16 +10,16 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/user_event.h"
 
-#include "command_queue/command_queue.h"
-#include "event/user_event.h"
+#include "command_queue/command_queue_fixture.h"
+#include "command_stream/command_stream_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

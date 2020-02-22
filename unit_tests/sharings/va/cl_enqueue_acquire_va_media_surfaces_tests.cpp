@@ -5,8 +5,7 @@
  *
  */
 
-#include "unit_tests/api/cl_api_tests.h"
-
+#include "api/cl_api_tests.h"
 #include <CL/cl_va_api_media_sharing_intel.h>
 
 using namespace NEO;

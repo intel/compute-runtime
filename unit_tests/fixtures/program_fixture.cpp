@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/fixtures/program_fixture.h"
+#include "fixtures/program_fixture.h"
 
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/program/create.inl"
 
-#include "program/create.inl"
+#include "mocks/mock_program.h"
 
 namespace NEO {
 void ProgramFixture::CreateProgramWithSource(cl_context context,

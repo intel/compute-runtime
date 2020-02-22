@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/source/api/additional_extensions.h"
 #include "test.h"
-
-#include "api/additional_extensions.h"
 
 using namespace NEO;
 

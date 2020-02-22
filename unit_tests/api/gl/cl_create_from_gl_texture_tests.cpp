@@ -5,8 +5,7 @@
  *
  */
 
-#include "unit_tests/api/cl_api_tests.h"
-
+#include "api/cl_api_tests.h"
 #include <GL/gl.h>
 
 using namespace NEO;

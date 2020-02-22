@@ -6,7 +6,8 @@
  */
 
 #include "core/os_interface/windows/os_interface.h"
-#include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
+
+#include "os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;
 using namespace std;

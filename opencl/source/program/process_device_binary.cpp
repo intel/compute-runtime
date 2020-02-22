@@ -14,12 +14,12 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/program/program_info.h"
 #include "core/program/program_initialization.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/program/program.h"
 
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "gtpin/gtpin_notify.h"
-#include "program/kernel_info.h"
-#include "program/program.h"
 #include "program_debug_data.h"
 
 #include <algorithm>

@@ -29,9 +29,9 @@ set_property(GLOBAL PROPERTY RUNTIME_SRCS_SHARINGS ${RUNTIME_SRCS_SHARINGS})
 
 
 if(WIN32)
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_RUNTIME_SOURCE_DIR}/os_interface/windows)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows)
 else()
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_RUNTIME_SOURCE_DIR}/os_interface/linux)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux)
 endif()
 
 add_subdirectories()

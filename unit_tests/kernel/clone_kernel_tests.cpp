@@ -6,24 +6,24 @@
  */
 
 #include "core/memory_manager/unified_memory_manager.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
+#include "opencl/source/accelerators/intel_motion_estimation.h"
+#include "opencl/source/helpers/sampler_helpers.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/pipe.h"
 #include "test.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_device_queue.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_pipe.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_sampler.h"
 
 #include "CL/cl.h"
-#include "accelerators/intel_accelerator.h"
-#include "accelerators/intel_motion_estimation.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/sampler_helpers.h"
-#include "kernel/kernel.h"
-#include "mem_obj/pipe.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_device_queue.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_pipe.h"
+#include "mocks/mock_program.h"
+#include "mocks/mock_sampler.h"
 
 #include <memory>
 

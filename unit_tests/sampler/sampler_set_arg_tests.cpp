@@ -7,16 +7,16 @@
 
 #include "core/helpers/ptr_math.h"
 #include "core/utilities/numeric.h"
+#include "opencl/source/helpers/sampler_helpers.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/sampler/sampler.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
-#include "helpers/sampler_helpers.h"
-#include "kernel/kernel.h"
-#include "sampler/sampler.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

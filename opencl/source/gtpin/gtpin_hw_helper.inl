@@ -7,9 +7,8 @@
 
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/string.h"
-
-#include "gtpin/gtpin_hw_helper.h"
-#include "kernel/kernel.h"
+#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 

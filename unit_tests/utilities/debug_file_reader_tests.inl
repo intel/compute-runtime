@@ -73,7 +73,7 @@ TEST(SettingsFileReader, GetStringSettingFromFile) {
             EXPECT_TRUE(true);                                                    \
         }                                                                         \
     }
-#include "unit_tests/helpers/test_debug_variables.inl"
+#include "helpers/test_debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 

@@ -6,13 +6,12 @@
  */
 
 #include "core/gen12lp/hw_cmds.h"
-
-#include "mem_obj/buffer_bdw_plus.inl"
+#include "opencl/source/mem_obj/buffer_bdw_plus.inl"
 
 namespace NEO {
 
 typedef TGLLPFamily Family;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
-#include "mem_obj/buffer_factory_init.inl"
+#include "opencl/source/mem_obj/buffer_factory_init.inl"
 } // namespace NEO

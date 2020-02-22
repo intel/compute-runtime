@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/sampler/sampler.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_sampler.h"
 
-#include "program/kernel_info.h"
-#include "sampler/sampler.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_sampler.h"
 
 #include <memory>
 

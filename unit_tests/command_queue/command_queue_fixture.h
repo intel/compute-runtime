@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 #include "CL/cl.h"
-#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
 
 namespace NEO {
 class Device;

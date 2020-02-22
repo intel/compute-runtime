@@ -7,8 +7,7 @@
 
 #pragma once
 #include "core/memory_manager/surface.h"
-
-#include "mem_obj/mem_obj.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
 

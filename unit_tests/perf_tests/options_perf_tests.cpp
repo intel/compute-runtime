@@ -6,8 +6,7 @@
  */
 
 #include "core/helpers/hw_cmds.h"
-
-#include "helpers/array_count.h"
+#include "opencl/source/helpers/array_count.h"
 
 namespace NEO {
 // IP address for TBX server

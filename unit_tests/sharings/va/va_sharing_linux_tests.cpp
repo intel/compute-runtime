@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/sharings/va/mock_va_sharing.h"
+#include "opencl/source/sharings/va/va_sharing_functions.h"
 
 #include "gtest/gtest.h"
-#include "sharings/va/va_sharing_functions.h"
+#include "helpers/variable_backup.h"
+#include "sharings/va/mock_va_sharing.h"
 
 #include <functional>
 #include <memory>

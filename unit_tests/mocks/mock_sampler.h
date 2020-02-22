@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "sampler/sampler.h"
+#include "opencl/source/sampler/sampler.h"
 
 namespace NEO {
 

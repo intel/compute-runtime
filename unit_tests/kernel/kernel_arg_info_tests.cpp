@@ -5,16 +5,16 @@
  *
  */
 
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/kernel_binary_helper.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/program/program_tests.h"
-#include "unit_tests/program/program_with_source.h"
 
-#include "kernel/kernel.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/memory_management_fixture.h"
+#include "helpers/kernel_binary_helper.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
+#include "program/program_tests.h"
+#include "program/program_with_source.h"
 
 using namespace NEO;
 

@@ -6,7 +6,8 @@
  */
 
 #include "test.h"
-#include "unit_tests/mocks/mock_mdi.h"
+
+#include "mocks/mock_mdi.h"
 
 using namespace NEO;
 

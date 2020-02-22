@@ -5,11 +5,10 @@
  *
  */
 
-#include "program/kernel_info_from_patchtokens.h"
+#include "opencl/source/program/kernel_info_from_patchtokens.h"
 
 #include "core/device_binary_format/patchtokens_decoder.h"
-
-#include "program/kernel_info.h"
+#include "opencl/source/program/kernel_info.h"
 
 #include <cstring>
 

@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/api/cl_api_tests.h"
+#include "opencl/source/tracing/tracing_api.h"
+#include "opencl/source/tracing/tracing_notify.h"
 
-#include "tracing/tracing_api.h"
-#include "tracing/tracing_notify.h"
+#include "api/cl_api_tests.h"
 
 using namespace NEO;
 

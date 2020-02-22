@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/metrics_library.h"
+#include "opencl/source/os_interface/metrics_library.h"
 
 namespace NEO {
 //////////////////////////////////////////////////////

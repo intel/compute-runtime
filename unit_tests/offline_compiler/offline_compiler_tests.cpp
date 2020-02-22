@@ -12,12 +12,12 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_compilers.h"
 
 #include "compiler_options.h"
 #include "environment.h"
 #include "gmock/gmock.h"
 #include "mock/mock_offline_compiler.h"
+#include "mocks/mock_compilers.h"
 
 #include <algorithm>
 #include <fstream>
@@ -348,7 +348,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
                          familyNameWithType + "[10] = {\n"
                                               "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
                                               "    0x66097860, 0xff000000};\n\n"
-                                              "#include \"built_ins/registry/built_ins_registry.h\"\n\n"
+                                              "#include \"opencl/source/built_ins/registry/built_ins_registry.h\"\n\n"
                                               "namespace NEO {\n"
                                               "static RegisterEmbeddedResource registerSchedulerBin(\n"
                                               "    \"" +

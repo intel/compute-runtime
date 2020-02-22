@@ -5,7 +5,7 @@
  *
  */
 
-#include "accelerators/intel_motion_estimation.h"
+#include "opencl/source/accelerators/intel_motion_estimation.h"
 
 namespace NEO {
 

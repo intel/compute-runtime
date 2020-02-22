@@ -6,9 +6,8 @@
  */
 
 #include "core/gen11/hw_cmds_base.h"
-
-#include "mem_obj/image.h"
-#include "mem_obj/image.inl"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/mem_obj/image.inl"
 
 #include <map>
 
@@ -45,5 +44,5 @@ void ImageHw<Family>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceStat
     }
 }
 
-#include "mem_obj/image_factory_init.inl"
+#include "opencl/source/mem_obj/image_factory_init.inl"
 } // namespace NEO

@@ -8,9 +8,9 @@ project(igdrcl_mt_tests)
 
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${NEO_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
-  ${NEO_SOURCE_DIR}/unit_tests/ult_configuration.cpp
-  ${NEO_RUNTIME_SOURCE_DIR}/aub/aub_stream_interface.cpp
+  ${NEO_RUNTIME_TESTS_DIR}/libult/os_interface.cpp
+  ${NEO_RUNTIME_TESTS_DIR}/ult_configuration.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
@@ -30,11 +30,11 @@ target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
+    ${NEO_RUNTIME_TESTS_DIR}/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_neo_create.cpp
+    ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 
@@ -79,7 +79,7 @@ function(run_mt_tests target slices subslices eu_per_ss)
   )
 endfunction()
 
-target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_RUNTIME_SOURCE_DIR}/gen_common)
+target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/gen_common)
 
 macro(macro_for_each_test_config)
   run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})

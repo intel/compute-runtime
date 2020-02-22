@@ -6,9 +6,8 @@
  */
 
 #include "core/unit_tests/helpers/default_hw_info.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-
-#include "helpers/hardware_commands_helper.h"
 
 namespace NEO {
 struct TemplatedFixtureTests : public ::testing::Test {

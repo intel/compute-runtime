@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/hw_cmds.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_device.h"
 
-#include "helpers/hardware_commands_helper.h"
+#include "mocks/mock_device.h"
 
 using InterfaceDescriptorDataTests = ::testing::Test;
 

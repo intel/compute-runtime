@@ -5,7 +5,7 @@
  *
  */
 
-#include "event/event.h"
+#include "opencl/source/event/event.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
@@ -16,17 +16,16 @@
 #include "core/utilities/range.h"
 #include "core/utilities/stackvec.h"
 #include "core/utilities/tag_allocator.h"
-
-#include "api/cl_types.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "event/async_events_handler.h"
-#include "event/event_tracker.h"
-#include "extensions/public/cl_ext_private.h"
-#include "helpers/get_info_status_mapper.h"
-#include "helpers/hardware_commands_helper.h"
-#include "mem_obj/mem_obj.h"
-#include "platform/platform.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/event/async_events_handler.h"
+#include "opencl/source/event/event_tracker.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
+#include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/platform/platform.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)
 

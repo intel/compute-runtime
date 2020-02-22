@@ -7,11 +7,10 @@
 
 #include "core/gen11/hw_cmds.h"
 #include "core/helpers/array_count.h"
-
-#include "command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "command_stream/tbx_command_stream_receiver_hw.h"
-#include "command_stream/tbx_command_stream_receiver_hw.inl"
-#include "helpers/base_object.h"
+#include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.inl"
+#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 typedef ICLFamily Family;

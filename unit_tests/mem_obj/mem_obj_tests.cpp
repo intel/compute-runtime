@@ -10,18 +10,18 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/memory_manager/allocations_list.h"
 #include "core/os_interface/os_context.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/properties_helper.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/platform/platform.h"
 
+#include "fixtures/multi_root_device_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "helpers/properties_helper.h"
-#include "mem_obj/mem_obj.h"
-#include "platform/platform.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_deferred_deleter.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

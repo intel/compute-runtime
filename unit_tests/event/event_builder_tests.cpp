@@ -7,17 +7,17 @@
 
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "core/utilities/arrayref.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_event.h"
-#include "unit_tests/mocks/mock_kernel.h"
+#include "opencl/source/event/event_builder.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/task_information.h"
 
-#include "event/event_builder.h"
-#include "event/user_event.h"
 #include "gtest/gtest.h"
-#include "helpers/task_information.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_event.h"
+#include "mocks/mock_kernel.h"
 
 namespace NEO {
 

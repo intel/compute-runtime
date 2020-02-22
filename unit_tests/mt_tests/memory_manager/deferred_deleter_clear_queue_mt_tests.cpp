@@ -5,10 +5,9 @@
  *
  */
 
-#include "unit_tests/mocks/mock_deferrable_deletion.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
-
 #include "gtest/gtest.h"
+#include "mocks/mock_deferrable_deletion.h"
+#include "mocks/mock_deferred_deleter.h"
 
 using namespace NEO;
 

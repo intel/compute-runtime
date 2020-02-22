@@ -7,14 +7,14 @@
 
 #pragma once
 #ifdef SUPPORT_GEN8
-#include "gen8/aub_mapper.h"
+#include "opencl/source/gen8/aub_mapper.h"
 #endif
 #ifdef SUPPORT_GEN9
-#include "gen9/aub_mapper.h"
+#include "opencl/source/gen9/aub_mapper.h"
 #endif
 #ifdef SUPPORT_GEN11
-#include "gen11/aub_mapper.h"
+#include "opencl/source/gen11/aub_mapper.h"
 #endif
 #ifdef SUPPORT_GEN12LP
-#include "gen12lp/aub_mapper.h"
+#include "opencl/source/gen12lp/aub_mapper.h"
 #endif

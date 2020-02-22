@@ -5,15 +5,14 @@
  *
  */
 
-#include "utilities/logger.h"
+#include "opencl/source/utilities/logger.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/helpers/timestamp_packet.h"
-
-#include "event/event.h"
-#include "helpers/dispatch_info.h"
-#include "kernel/kernel.h"
-#include "mem_obj/mem_obj.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 #include <memory>
 #include <string>

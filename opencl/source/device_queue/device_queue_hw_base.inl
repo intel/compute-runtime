@@ -11,10 +11,9 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/utilities/tag_allocator.h"
-
-#include "command_queue/gpgpu_walker.h"
-#include "device_queue/device_queue_hw.h"
-#include "helpers/hardware_commands_helper.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>

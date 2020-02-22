@@ -7,15 +7,15 @@
 
 #include "core/memory_manager/allocations_list.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "test.h"
-#include "unit_tests/command_queue/enqueue_read_image_fixture.h"
-#include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
-#include "unit_tests/mocks/mock_builtins.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 
-#include "built_ins/builtins_dispatch_builder.h"
+#include "command_queue/enqueue_read_image_fixture.h"
+#include "gen_common/gen_commands_common_validation.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_builtin_dispatch_info_builder.h"
+#include "mocks/mock_builtins.h"
+#include "mocks/mock_command_queue.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

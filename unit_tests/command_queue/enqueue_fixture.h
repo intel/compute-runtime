@@ -7,13 +7,13 @@
 
 #pragma once
 #include "core/memory_manager/graphics_allocation.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/kernel/kernel.h"
 
 #include "CL/cl.h"
-#include "command_queue/command_queue.h"
-#include "event/user_event.h"
-#include "kernel/kernel.h"
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/image_fixture.h"
 
 #include <memory>
 

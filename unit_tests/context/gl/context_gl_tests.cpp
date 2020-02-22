@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/context/gl/context_gl_tests.h"
+#include "context/gl/context_gl_tests.h"
 
-#include "sharings/gl/gl_sharing.h"
+#include "opencl/source/sharings/gl/gl_sharing.h"
 
 namespace NEO {
 

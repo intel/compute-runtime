@@ -5,16 +5,16 @@
  *
  */
 
+#include "opencl/source/sharings/unified/enable_unified.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
+#include "opencl/source/sharings/unified/unified_sharing.h"
 #include "test.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/sharings/unified/unified_sharing_fixtures.h"
 
-#include "sharings/unified/enable_unified.h"
-#include "sharings/unified/unified_buffer.h"
-#include "sharings/unified/unified_sharing.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
+#include "sharings/unified/unified_sharing_fixtures.h"
 
 using namespace NEO;
 

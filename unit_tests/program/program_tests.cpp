@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/program/program_tests.h"
+#include "program/program_tests.h"
 
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/compiler_interface/intermediate_representations.h"
@@ -25,25 +25,25 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/program/create.inl"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/kernel_binary_helper.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_platform.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/program/program_from_binary.h"
-#include "unit_tests/program/program_with_source.h"
 
 #include "compiler_options.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/multi_root_device_fixture.h"
+#include "global_environment.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "helpers/hardware_commands_helper.h"
-#include "kernel/kernel.h"
-#include "program/create.inl"
+#include "helpers/kernel_binary_helper.h"
+#include "libult/ult_command_stream_receiver.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_platform.h"
+#include "mocks/mock_program.h"
+#include "program/program_from_binary.h"
+#include "program/program_with_source.h"
 
 #include <map>
 #include <memory>

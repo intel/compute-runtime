@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "event/event_builder.h"
-#include "event/user_event.h"
+#include "opencl/source/event/event_builder.h"
+#include "opencl/source/event/user_event.h"
 
 namespace NEO {
 

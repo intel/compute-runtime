@@ -5,12 +5,12 @@
  *
  */
 
+#include "opencl/source/aub_mem_dump/aub_services.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
 #include "test.h"
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/mocks/mock_csr.h"
 
-#include "aub_mem_dump/aub_services.h"
-#include "extensions/public/cl_ext_private.h"
+#include "api/cl_api_tests.h"
+#include "mocks/mock_csr.h"
 
 using namespace NEO;
 

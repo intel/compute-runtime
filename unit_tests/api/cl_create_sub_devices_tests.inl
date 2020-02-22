@@ -6,10 +6,10 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/api/api.h"
 #include "test.h"
-#include "unit_tests/helpers/variable_backup.h"
 
-#include "api/api.h"
+#include "helpers/variable_backup.h"
 
 #include <memory>
 

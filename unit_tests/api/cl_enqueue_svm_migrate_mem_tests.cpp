@@ -8,11 +8,11 @@
 #include "core/device/device.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/unified_memory_manager.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/user_event.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "event/user_event.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

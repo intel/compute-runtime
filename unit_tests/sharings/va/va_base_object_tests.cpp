@@ -5,14 +5,14 @@
  *
  */
 
-#include "unit_tests/mocks/mock_platform.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
-#include "accelerators/intel_accelerator.h"
-#include "command_queue/command_queue.h"
-#include "device_queue/device_queue.h"
 #include "gtest/gtest.h"
-#include "helpers/base_object.h"
-#include "sharings/sharing_factory.h"
+#include "mocks/mock_platform.h"
 
 namespace NEO {
 

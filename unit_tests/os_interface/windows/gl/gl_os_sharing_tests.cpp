@@ -12,14 +12,14 @@
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
-#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/source/sharings/gl/gl_arb_sync_event.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
-#include "extensions/public/cl_gl_private_intel.h"
 #include "gtest/gtest.h"
-#include "sharings/gl/gl_arb_sync_event.h"
-#include "sharings/gl/windows/gl_sharing_windows.h"
+#include "mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "mocks/mock_execution_environment.h"
+#include "os_interface/windows/wddm_fixture.h"
 #include <GL/gl.h>
 
 using namespace NEO;

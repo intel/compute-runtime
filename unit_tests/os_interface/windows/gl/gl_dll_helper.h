@@ -9,9 +9,9 @@
 
 #include "core/helpers/debug_helpers.h"
 #include "core/os_interface/os_library.h"
+#include "opencl/source/extensions/public/cl_gl_private_intel.h"
 
 #include "Gl/gl.h"
-#include "extensions/public/cl_gl_private_intel.h"
 
 #include <memory>
 

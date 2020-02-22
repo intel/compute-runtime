@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "sharings/unified/unified_sharing.h"
+#include "opencl/source/sharings/unified/unified_sharing.h"
 
 namespace NEO {
 class Buffer;

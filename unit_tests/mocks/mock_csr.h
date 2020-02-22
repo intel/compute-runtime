@@ -15,9 +15,9 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/os_interface/os_context.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
 
 #include "gmock/gmock.h"
+#include "libult/ult_command_stream_receiver.h"
 
 #include <vector>
 

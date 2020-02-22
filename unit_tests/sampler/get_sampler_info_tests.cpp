@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/sampler/sampler.h"
 
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "sampler/sampler.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

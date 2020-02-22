@@ -5,12 +5,11 @@
  *
  */
 
-#include "scheduler/scheduler_kernel.h"
+#include "opencl/source/scheduler/scheduler_kernel.h"
 
 #include "core/device/device.h"
 #include "core/helpers/hw_helper.h"
-
-#include "device/cl_device.h"
+#include "opencl/source/device/cl_device.h"
 
 #include <cinttypes>
 

@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/program_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/built_ins/built_ins.h"
 
-#include "built_ins/built_ins.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/program_fixture.h"
+#include "mocks/mock_context.h"
 
 #include <string>
 

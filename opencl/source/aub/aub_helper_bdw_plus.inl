@@ -5,7 +5,7 @@
  *
  */
 
-#include "aub/aub_helper_base.inl"
+#include "opencl/source/aub/aub_helper_base.inl"
 
 namespace NEO {
 

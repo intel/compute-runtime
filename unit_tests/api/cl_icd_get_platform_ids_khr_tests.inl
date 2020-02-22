@@ -10,9 +10,9 @@
 #endif
 
 #include "core/device/device.h"
-#include "unit_tests/api/cl_api_tests.h"
+#include "opencl/source/platform/platform.h"
 
-#include "platform/platform.h"
+#include "api/cl_api_tests.h"
 
 #include <algorithm>
 

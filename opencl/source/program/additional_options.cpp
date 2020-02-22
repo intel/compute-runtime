@@ -5,7 +5,7 @@
  *
  */
 
-#include "program/program.h"
+#include "opencl/source/program/program.h"
 
 namespace NEO {
 void Program::applyAdditionalOptions() {

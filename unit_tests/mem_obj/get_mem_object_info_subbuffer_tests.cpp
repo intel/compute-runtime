@@ -7,10 +7,10 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "gtest/gtest.h"
-#include "mem_obj/buffer.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

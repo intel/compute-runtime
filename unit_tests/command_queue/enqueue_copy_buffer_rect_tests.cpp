@@ -6,14 +6,14 @@
  */
 
 #include "core/memory_manager/memory_constants.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "test.h"
-#include "unit_tests/command_queue/enqueue_copy_buffer_rect_fixture.h"
-#include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "unit_tests/mocks/mock_buffer.h"
 
-#include "built_ins/built_ins.h"
-#include "built_ins/builtins_dispatch_builder.h"
-#include "helpers/dispatch_info.h"
+#include "command_queue/enqueue_copy_buffer_rect_fixture.h"
+#include "gen_common/gen_commands_common_validation.h"
+#include "mocks/mock_buffer.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

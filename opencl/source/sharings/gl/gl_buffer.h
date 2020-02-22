@@ -7,8 +7,9 @@
 
 #pragma once
 
+#include "opencl/source/sharings/gl/gl_sharing.h"
+
 #include "CL/cl_gl.h"
-#include "sharings/gl/gl_sharing.h"
 
 struct _tagCLGLBufferInfo;
 

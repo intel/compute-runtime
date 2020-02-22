@@ -5,11 +5,10 @@
  *
  */
 
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
+#include "mocks/mock_gmm_resource_info.h"
 
 #include "core/helpers/aligned_memory.h"
-
-#include "helpers/surface_formats.h"
+#include "opencl/source/helpers/surface_formats.h"
 
 using namespace ::testing;
 

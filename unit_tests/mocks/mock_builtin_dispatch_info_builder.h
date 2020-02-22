@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "built_ins/built_ins.h"
-#include "helpers/dispatch_info.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
 using namespace NEO;
 

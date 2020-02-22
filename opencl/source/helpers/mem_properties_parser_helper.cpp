@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/mem_properties_parser_helper.h"
+#include "opencl/source/helpers/mem_properties_parser_helper.h"
 
-#include "helpers/memory_properties_flags_helpers.h"
-#include "mem_obj/mem_obj_helper.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

@@ -6,13 +6,13 @@
  */
 
 #pragma once
-#include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
+#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "command_queue/command_enqueue_fixture.h"
+#include "command_queue/command_queue_fixture.h"
+#include "command_stream/command_stream_fixture.h"
+#include "fixtures/built_in_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/hw_parse.h"
 
 namespace NEO {
 

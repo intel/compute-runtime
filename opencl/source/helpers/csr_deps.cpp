@@ -7,7 +7,7 @@
 
 #include "core/command_stream/csr_deps.h"
 
-#include "helpers/timestamp_packet.h"
+#include "opencl/source/helpers/timestamp_packet.h"
 
 namespace NEO {
 

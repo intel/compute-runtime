@@ -6,10 +6,11 @@
  */
 
 #include "test.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
+
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
 
 #include <functional>
 

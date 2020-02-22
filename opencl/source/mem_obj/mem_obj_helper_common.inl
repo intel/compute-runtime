@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/mem_obj_helper.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

@@ -7,11 +7,11 @@
 
 #include "core/os_interface/os_library.h"
 #include "core/os_interface/windows/windows_wrapper.h"
+#include "opencl/source/helpers/windows/gl_helper.h"
 #include "test.h"
-#include "unit_tests/helpers/windows/mock_function.h"
 
 #include "gtest/gtest.h"
-#include "helpers/windows/gl_helper.h"
+#include "helpers/windows/mock_function.h"
 
 #include <memory>
 

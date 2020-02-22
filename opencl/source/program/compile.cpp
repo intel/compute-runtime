@@ -11,13 +11,13 @@
 #include "core/device_binary_format/elf/elf_encoder.h"
 #include "core/device_binary_format/elf/ocl_elf.h"
 #include "core/execution_environment/execution_environment.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/validators.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
 #include "compiler_options.h"
-#include "device/cl_device.h"
-#include "helpers/validators.h"
-#include "platform/platform.h"
 #include "program.h"
-#include "source_level_debugger/source_level_debugger.h"
 
 #include <cstring>
 

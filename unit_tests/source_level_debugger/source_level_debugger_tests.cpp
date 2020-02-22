@@ -8,16 +8,16 @@
 #include "core/device/device.h"
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/source_level_debugger_library.h"
-#include "unit_tests/mocks/mock_platform.h"
-#include "unit_tests/mocks/mock_source_level_debugger.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/kernel_info.h"
+#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
-#include "platform/platform.h"
-#include "program/kernel_info.h"
-#include "source_level_debugger/source_level_debugger.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/execution_environment_helper.h"
+#include "helpers/variable_backup.h"
+#include "libult/source_level_debugger_library.h"
+#include "mocks/mock_platform.h"
+#include "mocks/mock_source_level_debugger.h"
 #include <gtest/gtest.h>
 
 #include <memory>

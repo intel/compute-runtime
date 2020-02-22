@@ -8,8 +8,7 @@
 #include "perf_test_utils.h"
 
 #include "core/helpers/aligned_memory.h"
-
-#include "helpers/hash.h"
+#include "opencl/source/helpers/hash.h"
 
 #include <fstream>
 #include <string>

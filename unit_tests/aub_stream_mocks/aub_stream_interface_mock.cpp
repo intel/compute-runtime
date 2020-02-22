@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_aub_manager.h"
+#include "mocks/mock_aub_manager.h"
 
 namespace NEO {
 aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode) {

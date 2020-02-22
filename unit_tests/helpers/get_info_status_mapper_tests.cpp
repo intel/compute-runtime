@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/helpers/get_info_status_mapper.h"
+
 #include "gtest/gtest.h"
-#include "helpers/get_info_status_mapper.h"
 
 TEST(getInfoStatusMapper, GivenValidGetInfoStatusReturnExpectedCLCode) {
     auto getInfoStatus = changeGetInfoStatusToCLResultType(GetInfoStatus::SUCCESS);

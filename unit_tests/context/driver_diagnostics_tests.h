@@ -7,19 +7,19 @@
 
 #pragma once
 #include "core/helpers/aligned_memory.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/fixtures/program_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/buffer.h"
 
-#include "command_queue/gpgpu_walker.h"
-#include "context/context.h"
+#include "command_queue/command_queue_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "fixtures/platform_fixture.h"
+#include "fixtures/program_fixture.h"
 #include "gtest/gtest.h"
-#include "kernel/kernel.h"
-#include "mem_obj/buffer.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

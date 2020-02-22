@@ -7,9 +7,9 @@
 
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/gmm_helper/page_table_mngr.h"
+#include "opencl/source/platform/platform.h"
 
 #include "gmm_client_context.h"
-#include "platform/platform.h"
 
 namespace NEO {
 GmmPageTableMngr::GmmPageTableMngr(GmmClientContext *gmmClientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) : clientContext(gmmClientContext->getHandle()) {

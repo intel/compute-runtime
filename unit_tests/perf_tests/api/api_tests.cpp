@@ -5,10 +5,11 @@
  *
  */
 
+#include "opencl/source/compiler_interface/compiler_interface.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/platform/platform.h"
+
 #include "cl_api_tests.h"
-#include "compiler_interface/compiler_interface.h"
-#include "kernel/kernel.h"
-#include "platform/platform.h"
 
 namespace NEO {
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "unit_tests/fixtures/kernel_data_fixture.h"
-#include "unit_tests/helpers/gtest_helpers.h"
+#include "fixtures/kernel_data_fixture.h"
+#include "helpers/gtest_helpers.h"
 
 TEST_F(KernelDataTest, GIVENpatchTokenAllocateStatelessEventPoolSurfaceWHENdecodeTokensTHENtokenLocatedInPatchInfo) {
     iOpenCL::SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;

@@ -16,7 +16,7 @@
 #define BIT(x) (((uint64_t)1) << (x))
 #endif
 
-#include "aub_mem_dump/aub_data.h"
+#include "opencl/source/aub_mem_dump/aub_data.h"
 
 namespace NEO {
 class AubHelper;

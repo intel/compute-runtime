@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_manager/physical_address_allocator.h"
+#include "opencl/source/memory_manager/physical_address_allocator.h"
 
 using namespace NEO;
 

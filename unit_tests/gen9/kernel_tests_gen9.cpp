@@ -5,12 +5,12 @@
  *
  */
 
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
-#include "helpers/hardware_commands_helper.h"
-#include "mem_obj/buffer.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "kernel/kernel.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 void Kernel::getAdditionalInfo(cl_kernel_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const {

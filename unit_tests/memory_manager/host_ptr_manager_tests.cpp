@@ -10,12 +10,13 @@
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
 #include "test.h"
-#include "unit_tests/fixtures/memory_manager_fixture.h"
-#include "unit_tests/mocks/mock_allocation_properties.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_host_ptr_manager.h"
-#include "unit_tests/mocks/mock_internal_allocation_storage.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "fixtures/memory_manager_fixture.h"
+#include "mocks/mock_allocation_properties.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_host_ptr_manager.h"
+#include "mocks/mock_internal_allocation_storage.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

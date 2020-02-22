@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/program/program.h"
+
 #include "compiler_options.h"
-#include "program/program.h"
 
 #include <vector>
 

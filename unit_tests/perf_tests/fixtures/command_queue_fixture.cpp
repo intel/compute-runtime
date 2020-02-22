@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/perf_tests/fixtures/command_queue_fixture.h"
+#include "perf_tests/fixtures/command_queue_fixture.h"
 
 #include "core/device/device.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/context/context.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "context/context.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

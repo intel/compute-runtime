@@ -5,16 +5,15 @@
  *
  */
 
-#include "sharings/unified/enable_unified.h"
+#include "opencl/source/sharings/unified/enable_unified.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
-
-#include "context/context.h"
-#include "context/context.inl"
-#include "sharings/sharing_factory.h"
-#include "sharings/sharing_factory.inl"
-#include "sharings/unified/unified_sharing.h"
-#include "sharings/unified/unified_sharing_types.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/source/sharings/sharing_factory.inl"
+#include "opencl/source/sharings/unified/unified_sharing.h"
+#include "opencl/source/sharings/unified/unified_sharing_types.h"
 
 #include <memory>
 

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${NEO_RUNTIME_SOURCE_DIR}/core_files.cmake)
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${NEO_SOURCE_DIR}/opencl/source/core_files.cmake)
 
 append_sources_from_properties(NEO_CORE_SOURCES
   NEO_CORE_BUILT_INS

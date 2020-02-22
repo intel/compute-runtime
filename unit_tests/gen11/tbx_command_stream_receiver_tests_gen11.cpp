@@ -5,10 +5,10 @@
  *
  */
 
+#include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
 
-#include "command_stream/tbx_command_stream_receiver_hw.h"
+#include "fixtures/device_fixture.h"
 
 using namespace NEO;
 

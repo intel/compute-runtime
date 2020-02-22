@@ -6,22 +6,22 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/command_stream/thread_arbitration_policy_helper.h"
-#include "unit_tests/fixtures/enqueue_handler_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_aub_csr.h"
-#include "unit_tests/mocks/mock_aub_subcapture_manager.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_internal_allocation_storage.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
 
-#include "command_stream/aub_subcapture.h"
-#include "event/user_event.h"
-#include "platform/platform.h"
+#include "command_stream/thread_arbitration_policy_helper.h"
+#include "fixtures/enqueue_handler_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_aub_csr.h"
+#include "mocks/mock_aub_subcapture_manager.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_internal_allocation_storage.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_mdi.h"
 
 using namespace NEO;
 

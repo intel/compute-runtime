@@ -7,14 +7,14 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "test.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 
+#include "command_queue/command_queue_fixture.h"
+#include "command_stream/command_stream_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_command_queue.h"
 
 using namespace NEO;
 

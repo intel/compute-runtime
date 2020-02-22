@@ -7,8 +7,9 @@
 
 #include "sharing.h"
 
+#include "opencl/source/mem_obj/mem_obj.h"
+
 #include "CL/cl.h"
-#include "mem_obj/mem_obj.h"
 
 #include <memory>
 

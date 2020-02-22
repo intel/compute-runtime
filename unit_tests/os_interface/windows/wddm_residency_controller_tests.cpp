@@ -19,16 +19,16 @@
 #include "core/os_interface/windows/wddm_memory_operations_handler.h"
 #include "core/os_interface/windows/wddm_residency_controller.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "unit_tests/mocks/mock_allocation_properties.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
-#include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 
 #include "gmock/gmock.h"
-#include "platform/platform.h"
+#include "libult/create_command_stream.h"
+#include "mocks/mock_allocation_properties.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_wddm.h"
+#include "os_interface/windows/mock_wddm_allocation.h"
+#include "os_interface/windows/mock_wddm_memory_manager.h"
 
 #include <memory>
 

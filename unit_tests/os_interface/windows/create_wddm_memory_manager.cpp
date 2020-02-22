@@ -10,8 +10,7 @@
 #include "core/os_interface/windows/os_interface.h"
 #include "core/os_interface/windows/wddm_memory_manager.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 

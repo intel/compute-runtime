@@ -8,13 +8,13 @@
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
+#include "opencl/source/memory_manager/mem_obj_surface.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_csr.h"
 
 #include "gtest/gtest.h"
-#include "memory_manager/mem_obj_surface.h"
-#include "platform/platform.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_csr.h"
 
 #include <type_traits>
 

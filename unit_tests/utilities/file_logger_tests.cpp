@@ -5,19 +5,19 @@
  *
  */
 
-#include "unit_tests/utilities/file_logger_tests.h"
+#include "utilities/file_logger_tests.h"
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/utilities/logger.h"
 
-#include "utilities/logger.h"
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_mdi.h"
+#include "mocks/mock_program.h"
 
 #include <cstdio>
 #include <memory>

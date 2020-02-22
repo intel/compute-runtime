@@ -12,12 +12,12 @@
 #include "core/helpers/file_io.h"
 #include "core/helpers/string.h"
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
-#include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_program.h"
 
 #include "compiler_options.h"
 #include "gtest/gtest.h"
+#include "helpers/test_files.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_program.h"
 
 #include <cstring>
 

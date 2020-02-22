@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/linux/device_factory_tests.h"
+#include "os_interface/linux/device_factory_tests.h"
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/linux/os_interface.h"

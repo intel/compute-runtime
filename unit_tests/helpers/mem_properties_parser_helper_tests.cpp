@@ -5,10 +5,11 @@
  *
  */
 
+#include "opencl/source/helpers/mem_properties_parser_helper.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
+
 #include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"
-#include "helpers/mem_properties_parser_helper.h"
-#include "mem_obj/mem_obj_helper.h"
 
 using namespace NEO;
 

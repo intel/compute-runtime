@@ -6,7 +6,8 @@
  */
 
 #include "test.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
+
+#include "command_queue/command_enqueue_fixture.h"
 
 using namespace NEO;
 

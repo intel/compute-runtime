@@ -8,11 +8,10 @@
 #pragma once
 #include "core/memory_manager/surface.h"
 #include "core/memory_manager/unified_memory_manager.h"
-
-#include "built_ins/built_ins.h"
-#include "command_queue/command_queue_hw.h"
-#include "command_queue/enqueue_common.h"
-#include "event/event.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/event/event.h"
 
 #include <new>
 

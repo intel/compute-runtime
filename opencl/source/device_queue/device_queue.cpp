@@ -5,16 +5,15 @@
  *
  */
 
-#include "device_queue/device_queue.h"
+#include "opencl/source/device_queue/device_queue.h"
 
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "device_queue/device_queue_hw.h"
-#include "helpers/dispatch_info.h"
-#include "helpers/queue_helpers.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/queue_helpers.h"
 
 namespace NEO {
 DeviceQueueCreateFunc deviceQueueFactory[IGFX_MAX_CORE] = {};

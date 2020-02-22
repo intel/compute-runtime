@@ -11,13 +11,12 @@
 #include "core/helpers/hash.h"
 #include "core/helpers/hw_info.h"
 #include "core/helpers/string.h"
+#include "opencl/source/compiler_interface/default_cl_cache_config.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
-
-#include "compiler_interface/default_cl_cache_config.h"
 
 #include <array>
 #include <list>

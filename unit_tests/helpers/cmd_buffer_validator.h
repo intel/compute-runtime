@@ -8,7 +8,8 @@
 #pragma once
 
 #include "core/utilities/stackvec.h"
-#include "unit_tests/helpers/hw_parse.h"
+
+#include "helpers/hw_parse.h"
 
 #include <memory>
 #include <string>

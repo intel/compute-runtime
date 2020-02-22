@@ -6,14 +6,14 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
+#include "opencl/source/memory_manager/memory_banks.h"
+#include "opencl/source/memory_manager/page_table.h"
+#include "opencl/source/memory_manager/page_table.inl"
 #include "test.h"
-#include "unit_tests/mocks/mock_physical_address_allocator.h"
 
-#include "aub_mem_dump/page_table_entry_bits.h"
 #include "gtest/gtest.h"
-#include "memory_manager/memory_banks.h"
-#include "memory_manager/page_table.h"
-#include "memory_manager/page_table.inl"
+#include "mocks/mock_physical_address_allocator.h"
 
 #include <memory>
 

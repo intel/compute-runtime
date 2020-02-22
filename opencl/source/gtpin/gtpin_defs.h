@@ -5,9 +5,10 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/kernel/kernel.h"
+
 #include "CL/cl.h"
-#include "command_queue/command_queue.h"
-#include "kernel/kernel.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace NEO {

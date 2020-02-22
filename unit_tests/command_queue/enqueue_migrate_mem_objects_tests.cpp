@@ -6,13 +6,13 @@
  */
 
 #include "core/command_stream/command_stream_receiver.h"
+#include "opencl/source/event/user_event.h"
 #include "test.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
 
-#include "event/user_event.h"
+#include "command_queue/command_queue_fixture.h"
+#include "command_stream/command_stream_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_buffer.h"
 
 using namespace NEO;
 

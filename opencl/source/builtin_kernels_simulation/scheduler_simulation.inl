@@ -6,8 +6,7 @@
  */
 
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "builtin_kernels_simulation/scheduler_simulation.h"
+#include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 
 #include <cstdint>
 #include <mutex>

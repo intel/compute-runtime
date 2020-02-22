@@ -5,23 +5,23 @@
  *
  */
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/command_queue/enqueue_fill_buffer.h"
+#include "opencl/source/command_queue/enqueue_kernel.h"
+#include "opencl/source/command_queue/enqueue_read_buffer.h"
+#include "opencl/source/command_queue/enqueue_write_buffer.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/kernel/kernel.h"
 #include "test.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 
-#include "built_ins/builtins_dispatch_builder.h"
-#include "command_queue/enqueue_fill_buffer.h"
-#include "command_queue/enqueue_kernel.h"
-#include "command_queue/enqueue_read_buffer.h"
-#include "command_queue/enqueue_write_buffer.h"
-#include "command_queue/gpgpu_walker.h"
-#include "event/event.h"
-#include "helpers/hardware_commands_helper.h"
-#include "kernel/kernel.h"
+#include "command_queue/command_enqueue_fixture.h"
+#include "command_queue/enqueue_fixture.h"
+#include "fixtures/buffer_fixture.h"
+#include "fixtures/hello_world_kernel_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "fixtures/simple_arg_kernel_fixture.h"
 
 using namespace NEO;
 

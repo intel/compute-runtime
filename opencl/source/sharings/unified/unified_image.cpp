@@ -14,10 +14,9 @@
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/memory_manager.h"
-
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "mem_obj/image.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/mem_obj/image.h"
 
 namespace NEO {
 

@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
 
 using namespace NEO;
 

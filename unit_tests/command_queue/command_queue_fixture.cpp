@@ -5,14 +5,14 @@
  *
  */
 
-#include "unit_tests/command_queue/command_queue_fixture.h"
+#include "command_queue/command_queue_fixture.h"
 
 #include "core/device/device.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/context/context.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "context/context.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_device.h"
 
 namespace NEO {
 

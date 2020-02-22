@@ -11,15 +11,14 @@
 #include "core/helpers/engine_control.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "command_queue/command_queue.h"
-#include "command_queue/gpgpu_walker.h"
-#include "device/cl_device.h"
-#include "device_queue/device_queue_hw.h"
-#include "helpers/dispatch_info.h"
-#include "helpers/queue_helpers.h"
-#include "mem_obj/mem_obj.h"
-#include "program/printf_handler.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/queue_helpers.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/program/printf_handler.h"
 
 #include <memory>
 

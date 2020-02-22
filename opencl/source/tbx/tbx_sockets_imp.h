@@ -6,8 +6,9 @@
  */
 
 #pragma once
+#include "opencl/source/tbx/tbx_sockets.h"
+
 #include "os_socket.h"
-#include "tbx/tbx_sockets.h"
 
 #include <iostream>
 

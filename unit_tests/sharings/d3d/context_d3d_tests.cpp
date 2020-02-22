@@ -5,13 +5,13 @@
  *
  */
 
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/helpers/gtest_helpers.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
 
+#include "api/cl_api_tests.h"
 #include "gtest/gtest.h"
-#include "os_interface/windows/d3d_sharing_functions.h"
-#include "sharings/d3d/cl_d3d_api.h"
+#include "helpers/gtest_helpers.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/command_stream/compute_mode_tests.h"
+#include "command_stream/compute_mode_tests.h"
 
 TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
     SetUpImpl<FamilyType>();

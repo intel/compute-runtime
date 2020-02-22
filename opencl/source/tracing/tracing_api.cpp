@@ -5,10 +5,10 @@
  *
  */
 
-#include "tracing/tracing_api.h"
+#include "opencl/source/tracing/tracing_api.h"
 
-#include "tracing/tracing_handle.h"
-#include "tracing/tracing_notify.h"
+#include "opencl/source/tracing/tracing_handle.h"
+#include "opencl/source/tracing/tracing_notify.h"
 
 namespace HostSideTracing {
 

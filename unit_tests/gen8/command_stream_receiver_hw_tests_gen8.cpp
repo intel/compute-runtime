@@ -7,23 +7,23 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/command_stream/linear_stream.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/dispatch_flags_helper.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_event.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
-#include "command_queue/command_queue_hw.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
+#include "helpers/dispatch_flags_helper.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_event.h"
+#include "mocks/mock_kernel.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;
 
-#include "unit_tests/command_stream/command_stream_receiver_hw_tests.inl"
+#include "command_stream/command_stream_receiver_hw_tests.inl"
 
 using CommandStreamReceiverHwTestGen8 = CommandStreamReceiverHwTest<BDWFamily>;
 

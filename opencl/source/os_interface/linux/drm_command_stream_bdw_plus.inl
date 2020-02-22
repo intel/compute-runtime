@@ -6,8 +6,7 @@
  */
 
 #include "core/os_interface/linux/drm_allocation.h"
-
-#include "os_interface/linux/drm_command_stream.h"
+#include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 namespace NEO {
 template <typename GfxFamily>

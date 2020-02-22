@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/mocks/mock_physical_address_allocator.h"
+#include "opencl/source/memory_manager/memory_banks.h"
+#include "opencl/source/memory_manager/page_table.h"
 
 #include "gtest/gtest.h"
-#include "memory_manager/memory_banks.h"
-#include "memory_manager/page_table.h"
+#include "mocks/mock_physical_address_allocator.h"
 
 using namespace NEO;
 

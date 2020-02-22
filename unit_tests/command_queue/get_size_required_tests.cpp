@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/command_queue/enqueue_barrier.h"
+#include "opencl/source/command_queue/enqueue_marker.h"
+#include "opencl/source/event/event.h"
 #include "test.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "built_ins/built_ins.h"
-#include "command_queue/command_queue_hw.h"
-#include "command_queue/enqueue_barrier.h"
-#include "command_queue/enqueue_marker.h"
-#include "event/event.h"
+#include "command_queue/command_enqueue_fixture.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

@@ -11,9 +11,8 @@
 #include "core/helpers/vec.h"
 #include "core/memory_manager/surface.h"
 #include "core/utilities/stackvec.h"
-
-#include "built_ins/builtins_dispatch_builder.h"
-#include "mem_obj/mem_obj.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
 #include <memory>

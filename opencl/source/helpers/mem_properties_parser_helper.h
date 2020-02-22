@@ -8,8 +8,8 @@
 #pragma once
 #include "core/helpers/bit_helpers.h"
 #include "core/memory_manager/allocation_properties.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
 
-#include "extensions/public/cl_ext_private.h"
 #include "memory_properties_flags.h"
 
 namespace NEO {

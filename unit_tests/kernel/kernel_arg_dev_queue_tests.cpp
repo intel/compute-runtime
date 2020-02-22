@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

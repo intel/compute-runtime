@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/mocks/mock_kernel.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "command_queue/gpgpu_walker.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

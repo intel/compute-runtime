@@ -7,13 +7,13 @@
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "test.h"
-#include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_context.h"
 
-#include "api/api.h"
-#include "mem_obj/buffer.h"
+#include "aub_tests/command_queue/command_enqueue_fixture.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

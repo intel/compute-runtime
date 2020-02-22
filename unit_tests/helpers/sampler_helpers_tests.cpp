@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/helpers/sampler_helpers.h"
+
 #include "gtest/gtest.h"
-#include "helpers/sampler_helpers.h"
 
 TEST(SamplerHelpers, ForAddressingModeCalledForEnumReturnClkEnum) {
     EXPECT_EQ(CLK_ADDRESS_REPEAT, GetAddrModeEnum(CL_ADDRESS_REPEAT));

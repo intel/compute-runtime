@@ -6,14 +6,14 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_aub_subcapture_manager.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
-#include "command_stream/aub_subcapture.h"
-#include "helpers/dispatch_info.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_aub_subcapture_manager.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

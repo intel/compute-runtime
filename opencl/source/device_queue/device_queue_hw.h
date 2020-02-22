@@ -10,11 +10,10 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/ptr_math.h"
 #include "core/indirect_heap/indirect_heap.h"
-
-#include "device_queue/device_queue.h"
-#include "kernel/kernel.h"
-#include "program/program.h"
-#include "scheduler/scheduler_kernel.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/program/program.h"
+#include "opencl/source/scheduler/scheduler_kernel.h"
 
 namespace NEO {
 

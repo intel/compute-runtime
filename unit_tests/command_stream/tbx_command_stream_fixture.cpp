@@ -5,15 +5,15 @@
  *
  */
 
-#include "unit_tests/command_stream/tbx_command_stream_fixture.h"
+#include "command_stream/tbx_command_stream_fixture.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "opencl/source/command_queue/command_queue.h"
 
-#include "command_queue/command_queue.h"
+#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_device.h"
 
 namespace NEO {
 

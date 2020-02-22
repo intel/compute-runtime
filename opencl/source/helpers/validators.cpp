@@ -5,18 +5,18 @@
  *
  */
 
-#include "helpers/validators.h"
+#include "opencl/source/helpers/validators.h"
 
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "event/event.h"
-#include "helpers/base_object.h"
-#include "kernel/kernel.h"
-#include "mem_obj/mem_obj.h"
-#include "platform/platform.h"
-#include "program/program.h"
-#include "sampler/sampler.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
+#include "opencl/source/sampler/sampler.h"
 
 namespace NEO {
 

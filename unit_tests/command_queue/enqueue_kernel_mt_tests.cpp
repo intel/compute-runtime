@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_submissions_aggregator.h"
+#include "command_queue/enqueue_fixture.h"
+#include "fixtures/hello_world_fixture.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_submissions_aggregator.h"
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;

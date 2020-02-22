@@ -5,9 +5,10 @@
  *
  */
 
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+
 #include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"
-#include "helpers/memory_properties_flags_helpers.h"
 
 using namespace NEO;
 

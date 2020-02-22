@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "api/cl_types.h"
-#include "platform/platform.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/platform/platform.h"
 
 namespace NEO {
 

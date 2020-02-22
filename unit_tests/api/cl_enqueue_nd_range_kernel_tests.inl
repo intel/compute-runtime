@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/mocks/mock_kernel.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

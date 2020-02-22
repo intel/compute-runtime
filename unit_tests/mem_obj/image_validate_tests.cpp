@@ -6,15 +6,15 @@
  */
 
 #include "core/helpers/aligned_memory.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/convert_color.h"
+#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/image.h"
 
-#include "device/cl_device.h"
+#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/convert_color.h"
-#include "helpers/surface_formats.h"
-#include "mem_obj/image.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

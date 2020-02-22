@@ -7,16 +7,16 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/hw_helper.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/platform/extensions.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/raii_hw_helper.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_gmm.h"
 
-#include "helpers/memory_properties_flags_helpers.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
-#include "platform/extensions.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/raii_hw_helper.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_gmm.h"
 
 using namespace NEO;
 

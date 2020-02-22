@@ -19,17 +19,17 @@
 #include "core/os_interface/windows/wddm_engine_mapper.h"
 #include "core/os_interface/windows/wddm_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_gfx_partition.h"
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
-#include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "gtest/gtest.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_gfx_partition.h"
+#include "mocks/mock_gmm_resource_info.h"
+#include "mocks/mock_memory_manager.h"
+#include "os_interface/windows/mock_wddm_allocation.h"
+#include "os_interface/windows/ult_dxgi_factory.h"
+#include "os_interface/windows/wddm_fixture.h"
 
 #include <functional>
 #include <memory>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
+#include "os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/linux/os_interface.h"

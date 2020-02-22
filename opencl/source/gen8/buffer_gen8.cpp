@@ -6,13 +6,12 @@
  */
 
 #include "core/gen8/hw_cmds.h"
-
-#include "mem_obj/buffer_bdw_plus.inl"
+#include "opencl/source/mem_obj/buffer_bdw_plus.inl"
 
 namespace NEO {
 
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
-#include "mem_obj/buffer_factory_init.inl"
+#include "opencl/source/mem_obj/buffer_factory_init.inl"
 } // namespace NEO

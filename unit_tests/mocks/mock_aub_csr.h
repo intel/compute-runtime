@@ -12,11 +12,11 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/default_hw_info.h"
-#include "unit_tests/mocks/mock_allocation_properties.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/source/platform/platform.h"
 
-#include "command_stream/aub_command_stream_receiver_hw.h"
 #include "gmock/gmock.h"
-#include "platform/platform.h"
+#include "mocks/mock_allocation_properties.h"
 
 #include <string>
 

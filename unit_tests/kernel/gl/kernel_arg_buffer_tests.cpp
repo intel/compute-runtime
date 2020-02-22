@@ -5,23 +5,23 @@
  *
  */
 
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/gl/gl_buffer.h"
 #include "test.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/kernel/kernel_arg_buffer_fixture.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
 #include "CL/cl.h"
 #include "config.h"
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "kernel/kernel.h"
-#include "mem_obj/buffer.h"
-#include "sharings/gl/gl_buffer.h"
+#include "kernel/kernel_arg_buffer_fixture.h"
+#include "mocks/gl/mock_gl_sharing.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 #include <memory>
 

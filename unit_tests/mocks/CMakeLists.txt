@@ -108,8 +108,8 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
     ${NEO_SOURCE_DIR}/core/os_interface/linux/page_table_manager_functions.cpp
-    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_mock.cpp
-    ${NEO_SOURCE_DIR}/unit_tests/os_interface/linux/drm_mock.h
+    ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_mock.cpp
+    ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_mock.h
   )
 endif()
 
@@ -118,7 +118,7 @@ add_subdirectories()
 
 if(WIN32)
   target_include_directories(igdrcl_mocks PUBLIC
-    ${NEO_SOURCE_DIR}/unit_tests/mocks/gmm_memory${BRANCH_DIR_SUFFIX}
+    ${NEO_RUNTIME_TESTS_DIR}/mocks/gmm_memory${BRANCH_DIR_SUFFIX}
   )
 endif()
 

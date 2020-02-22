@@ -10,9 +10,10 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/utilities/containers_tests_helpers.h"
 #include "test.h"
-#include "unit_tests/fixtures/memory_allocator_fixture.h"
-#include "unit_tests/mocks/mock_allocation_properties.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "fixtures/memory_allocator_fixture.h"
+#include "mocks/mock_allocation_properties.h"
+#include "mocks/mock_graphics_allocation.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {

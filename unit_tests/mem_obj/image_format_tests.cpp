@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/source/mem_obj/image.h"
+
 #include "gtest/gtest.h"
-#include "mem_obj/image.h"
 
 using namespace NEO;
 

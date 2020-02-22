@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/buffer_fixture.h"
+#include "fixtures/buffer_fixture.h"
 
-#include "unit_tests/mocks/mock_context.h"
+#include "mocks/mock_context.h"
 
 using NEO::Context;
 

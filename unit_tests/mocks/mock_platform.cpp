@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/mocks/mock_platform.h"
+#include "mocks/mock_platform.h"
 
 #include "core/device/device.h"
 

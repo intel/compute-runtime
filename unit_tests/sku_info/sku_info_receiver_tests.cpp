@@ -6,9 +6,9 @@
  */
 
 #include "core/sku_info/operations/windows/sku_info_receiver.h"
-#include "unit_tests/sku_info/sku_info_base_reference.h"
 
 #include "gtest/gtest.h"
+#include "sku_info/sku_info_base_reference.h"
 
 using namespace NEO;
 

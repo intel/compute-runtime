@@ -14,19 +14,19 @@
 #include "core/unit_tests/helpers/memory_leak_listener.h"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "core/utilities/debug_settings_reader.h"
-#include "unit_tests/custom_event_listener.h"
-#include "unit_tests/helpers/kernel_binary_helper.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_sip.h"
-#include "unit_tests/tests_configuration.h"
-#include "unit_tests/ult_config_listener.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
+#include "custom_event_listener.h"
 #include "global_environment.h"
 #include "gmock/gmock.h"
+#include "helpers/kernel_binary_helper.h"
 #include "helpers/test_files.h"
 #include "mock_gmm_client_context.h"
-#include "os_interface/ocl_reg_path.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_program.h"
+#include "mocks/mock_sip.h"
+#include "tests_configuration.h"
+#include "ult_config_listener.h"
 
 #include <algorithm>
 #include <fstream>

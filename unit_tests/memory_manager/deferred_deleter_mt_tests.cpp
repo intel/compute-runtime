@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/mocks/mock_deferrable_deletion.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 #include "gtest/gtest.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
+#include "mocks/mock_deferrable_deletion.h"
+#include "mocks/mock_deferred_deleter.h"
 
 using namespace NEO;
 

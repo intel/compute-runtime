@@ -6,14 +6,14 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/mocks/mock_gmm.h"
 
-#include "mem_obj/image.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
-#include "platform/platform.h"
+#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "command_queue/command_enqueue_fixture.h"
+#include "mocks/mock_gmm.h"
 
 #include <memory>
 

@@ -5,4 +5,4 @@
  *
  */
 
-#include "dll/linux/devices/devices_base.inl"
+#include "opencl/source/dll/linux/devices/devices_base.inl"

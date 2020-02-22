@@ -6,20 +6,20 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
+#include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "test.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_d3d_objects.h"
-#include "unit_tests/mocks/mock_gmm.h"
 
-#include "api/api.h"
-#include "mem_obj/image.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
-#include "os_interface/windows/d3d_sharing_functions.h"
-#include "sharings/d3d/cl_d3d_api.h"
-#include "sharings/d3d/d3d_surface.h"
+#include "fixtures/multi_root_device_fixture.h"
+#include "fixtures/platform_fixture.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_d3d_objects.h"
+#include "mocks/mock_gmm.h"
 
 namespace NEO {
 template <>

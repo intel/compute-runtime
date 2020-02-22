@@ -5,16 +5,15 @@
  *
  */
 
-#include "built_ins/vme_builtin.h"
+#include "opencl/source/built_ins/vme_builtin.h"
 
 #include "core/device/device.h"
-
-#include "built_ins/built_in_ops_vme.h"
-#include "built_ins/built_ins.h"
-#include "built_ins/builtins_dispatch_builder.h"
-#include "built_ins/populate_built_ins.inl"
-#include "built_ins/vme_dispatch_builder.h"
-#include "program/program.h"
+#include "opencl/source/built_ins/built_in_ops_vme.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/built_ins/populate_built_ins.inl"
+#include "opencl/source/built_ins/vme_dispatch_builder.h"
+#include "opencl/source/program/program.h"
 
 namespace NEO {
 

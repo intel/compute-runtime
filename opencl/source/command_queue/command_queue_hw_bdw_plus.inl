@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_queue/command_queue_hw_base.inl"
+#include "opencl/source/command_queue/command_queue_hw_base.inl"
 
 namespace NEO {
 

@@ -7,10 +7,10 @@
 
 #include "core/memory_manager/unified_memory_manager.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -7,9 +7,9 @@
 
 #include "core/device/device.h"
 #include "core/helpers/string.h"
-#include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

@@ -8,15 +8,15 @@
 #include "core/device/device.h"
 #include "core/helpers/get_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/platform/platform.h"
 
-#include "api/api.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "platform/platform.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
 
 using namespace ::testing;
 

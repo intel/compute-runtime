@@ -5,7 +5,7 @@
  *
  */
 
-#include "tbx/tbx_sockets_imp.h"
+#include "opencl/source/tbx/tbx_sockets_imp.h"
 
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/string.h"

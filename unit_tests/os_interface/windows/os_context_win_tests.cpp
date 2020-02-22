@@ -6,8 +6,9 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "mocks/mock_wddm.h"
+#include "os_interface/windows/wddm_fixture.h"
 
 using namespace NEO;
 

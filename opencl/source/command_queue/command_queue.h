@@ -7,11 +7,10 @@
 
 #pragma once
 #include "core/helpers/engine_control.h"
-
-#include "event/event.h"
-#include "helpers/base_object.h"
-#include "helpers/dispatch_info.h"
-#include "helpers/task_information.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/task_information.h"
 
 #include <atomic>
 #include <cstdint>

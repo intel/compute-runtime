@@ -8,18 +8,18 @@
 #include "core/helpers/timestamp_packet.h"
 #include "core/memory_manager/surface.h"
 #include "core/os_interface/os_context.h"
+#include "opencl/source/event/event_builder.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/enqueue_properties.h"
 #include "test.h"
-#include "unit_tests/fixtures/dispatch_flags_fixture.h"
-#include "unit_tests/fixtures/enqueue_handler_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_timestamp_container.h"
 
-#include "event/event_builder.h"
-#include "event/user_event.h"
-#include "helpers/enqueue_properties.h"
+#include "fixtures/dispatch_flags_fixture.h"
+#include "fixtures/enqueue_handler_fixture.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_timestamp_container.h"
 
 namespace NEO {
 

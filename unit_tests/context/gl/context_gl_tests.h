@@ -7,10 +7,9 @@
 
 #pragma once
 
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_context.h"
 #include <GL/gl.h>
 
 namespace NEO {

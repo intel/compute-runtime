@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/image.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/gmm_helper/gmm.h"
@@ -20,18 +20,18 @@
 #include "core/helpers/string.h"
 #include "core/memory_manager/memory_manager.h"
 #include "core/utilities/compiler_support.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/platform/platform.h"
 
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "helpers/get_info_status_mapper.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "helpers/mipmap.h"
-#include "helpers/surface_formats.h"
 #include "igfxfmid.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/mem_obj_helper.h"
-#include "platform/platform.h"
 
 #include <map>
 

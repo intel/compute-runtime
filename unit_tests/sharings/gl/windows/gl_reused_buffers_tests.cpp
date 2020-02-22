@@ -7,14 +7,14 @@
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/resource_info.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/gl/gl_buffer.h"
 #include "test.h"
-#include "unit_tests/mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "device/cl_device.h"
-#include "mem_obj/buffer.h"
-#include "sharings/gl/gl_buffer.h"
+#include "mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

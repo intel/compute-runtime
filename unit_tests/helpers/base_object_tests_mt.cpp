@@ -5,10 +5,11 @@
  *
  */
 
-#include "accelerators/intel_accelerator.h"
-#include "command_queue/command_queue.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/platform/platform.h"
+
 #include "gtest/gtest.h"
-#include "platform/platform.h"
 
 namespace NEO {
 

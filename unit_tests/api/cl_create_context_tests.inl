@@ -6,8 +6,9 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "unit_tests/api/cl_api_tests.h"
-#include "unit_tests/mocks/mock_platform.h"
+
+#include "api/cl_api_tests.h"
+#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

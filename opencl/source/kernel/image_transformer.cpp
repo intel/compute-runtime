@@ -5,12 +5,11 @@
  *
  */
 
-#include "kernel/image_transformer.h"
+#include "opencl/source/kernel/image_transformer.h"
 
 #include "core/helpers/ptr_math.h"
-
-#include "mem_obj/image.h"
-#include "program/kernel_info.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/program/kernel_info.h"
 
 namespace NEO {
 void ImageTransformer::registerImage3d(uint32_t argIndex) {

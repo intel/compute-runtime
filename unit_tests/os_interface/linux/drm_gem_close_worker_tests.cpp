@@ -12,16 +12,16 @@
 #include "core/os_interface/linux/drm_memory_manager.h"
 #include "core/os_interface/linux/drm_memory_operations_handler.h"
 #include "core/os_interface/linux/os_interface.h"
+#include "opencl/source/command_stream/device_command_stream.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
-#include "command_stream/device_command_stream.h"
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mem_obj/buffer.h"
-#include "os_interface/linux/drm_command_stream.h"
+#include "mocks/mock_execution_environment.h"
+#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <iostream>
 #include <memory>

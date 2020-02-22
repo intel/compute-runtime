@@ -6,8 +6,9 @@
  */
 
 #pragma once
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
+
 #include "d3d_sharing_functions.h"
-#include "sharings/d3d/d3d_sharing.h"
 
 enum GMM_RESOURCE_FORMAT_ENUM;
 namespace NEO {

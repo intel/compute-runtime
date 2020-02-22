@@ -8,8 +8,9 @@
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/basic_math.h"
 #include "test.h"
-#include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
+
+#include "command_queue/enqueue_read_buffer_fixture.h"
+#include "mocks/mock_command_queue.h"
 
 using namespace NEO;
 

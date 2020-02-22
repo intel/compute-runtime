@@ -5,14 +5,14 @@
  *
  */
 
+#include "opencl/source/helpers/dispatch_info.h"
 #include "test.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
+#include "fixtures/context_fixture.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/dispatch_info.h"
+#include "mocks/mock_kernel.h"
 
 #include <type_traits>
 

@@ -6,8 +6,9 @@
  */
 
 #pragma once
+#include "opencl/source/command_queue/command_queue.h"
+
 #include "CL/cl.h"
-#include "command_queue/command_queue.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

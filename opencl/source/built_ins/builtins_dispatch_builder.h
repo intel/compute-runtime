@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/vec.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/kernel/kernel.h"
 
 #include "CL/cl.h"
 #include "built_in_ops.h"
-#include "built_ins/built_ins.h"
-#include "kernel/kernel.h"
 
 #include <array>
 #include <cstdint>

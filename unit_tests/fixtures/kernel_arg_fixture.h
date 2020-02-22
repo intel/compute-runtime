@@ -8,7 +8,8 @@
 #pragma once
 
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
+
+#include "fixtures/device_fixture.h"
 
 #include <cstdint>
 

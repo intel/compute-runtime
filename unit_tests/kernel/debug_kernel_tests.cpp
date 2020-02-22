@@ -6,10 +6,11 @@
  */
 
 #include "test.h"
-#include "unit_tests/fixtures/execution_model_kernel_fixture.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+
+#include "fixtures/execution_model_kernel_fixture.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 #include <memory>
 

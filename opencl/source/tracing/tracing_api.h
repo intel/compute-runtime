@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "tracing/tracing_types.h"
+#include "opencl/source/tracing/tracing_types.h"
 
 #ifdef __cplusplus
 extern "C" {

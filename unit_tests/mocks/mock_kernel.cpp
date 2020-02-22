@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/mocks/mock_kernel.h"
+#include "mocks/mock_kernel.h"
 
-#include "kernel/kernel.inl"
-#include "program/printf_handler.h"
+#include "opencl/source/kernel/kernel.inl"
+#include "opencl/source/program/printf_handler.h"
 
 namespace NEO {
 

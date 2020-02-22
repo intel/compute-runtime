@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "aub_mem_dump/aub_mem_dump.h"
-#include "gen_common/aub_mapper_base.h"
+#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "opencl/source/gen_common/aub_mapper_base.h"
 
 namespace NEO {
 

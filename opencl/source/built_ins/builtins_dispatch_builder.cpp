@@ -5,25 +5,25 @@
  *
  */
 
-#include "built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 #include "core/compiler_interface/compiler_interface.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/debug_helpers.h"
+#include "opencl/source/built_ins/aux_translation_builtin.h"
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/built_ins/built_ins.inl"
+#include "opencl/source/built_ins/sip.h"
+#include "opencl/source/built_ins/vme_dispatch_builder.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/built_ins_helper.h"
+#include "opencl/source/helpers/convert_color.h"
+#include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/program/program.h"
 
-#include "built_ins/aux_translation_builtin.h"
-#include "built_ins/built_ins.h"
-#include "built_ins/built_ins.inl"
-#include "built_ins/sip.h"
-#include "built_ins/vme_dispatch_builder.h"
 #include "compiler_options.h"
-#include "device/cl_device.h"
-#include "helpers/built_ins_helper.h"
-#include "helpers/convert_color.h"
-#include "helpers/dispatch_info_builder.h"
-#include "kernel/kernel.h"
-#include "mem_obj/image.h"
-#include "program/program.h"
 
 #include <cstdint>
 #include <sstream>

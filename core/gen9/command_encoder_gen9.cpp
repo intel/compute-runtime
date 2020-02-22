@@ -9,8 +9,7 @@
 #include "core/command_container/command_encoder.inl"
 #include "core/command_container/command_encoder_base.inl"
 #include "core/gen9/hw_cmds_base.h"
-
-#include "gen9/reg_configs.h"
+#include "opencl/source/gen9/reg_configs.h"
 
 namespace NEO {
 

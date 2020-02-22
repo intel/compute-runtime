@@ -5,8 +5,8 @@
  *
  */
 
-#include "command_queue/gpgpu_walker.h"
-#include "device_queue/device_queue_hw.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
 
 namespace NEO {
 

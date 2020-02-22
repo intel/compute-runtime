@@ -7,8 +7,7 @@
 
 #pragma once
 #include "core/utilities/iflist.h"
-
-#include "event/event.h"
+#include "opencl/source/event/event.h"
 
 #include <set>
 #include <unordered_map>

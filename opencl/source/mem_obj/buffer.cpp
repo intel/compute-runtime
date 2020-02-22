@@ -5,7 +5,7 @@
  *
  */
 
-#include "mem_obj/buffer.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/debug_settings/debug_settings_manager.h"
@@ -22,13 +22,12 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/memory_manager/memory_operations_handler.h"
 #include "core/memory_manager/unified_memory_manager.h"
-
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "helpers/memory_properties_flags_helpers.h"
-#include "helpers/validators.h"
-#include "mem_obj/mem_obj_helper.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/validators.h"
+#include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 

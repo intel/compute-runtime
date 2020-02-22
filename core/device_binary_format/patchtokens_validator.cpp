@@ -9,9 +9,9 @@
 
 #include "core/device_binary_format/patchtokens_decoder.h"
 #include "core/helpers/hw_info.h"
+#include "opencl/source/program/kernel_arg_info.h"
 
 #include "igfxfmid.h"
-#include "program/kernel_arg_info.h"
 
 #include <string>
 

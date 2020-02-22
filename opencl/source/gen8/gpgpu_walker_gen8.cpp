@@ -6,9 +6,8 @@
  */
 
 #include "core/gen8/hw_info.h"
-
-#include "command_queue/gpgpu_walker_bdw_plus.inl"
-#include "command_queue/hardware_interface_bdw_plus.inl"
+#include "opencl/source/command_queue/gpgpu_walker_bdw_plus.inl"
+#include "opencl/source/command_queue/hardware_interface_bdw_plus.inl"
 
 namespace NEO {
 

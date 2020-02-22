@@ -5,10 +5,9 @@
  *
  */
 
-#include "unit_tests/os_interface/linux/mock_performance_counters_linux.h"
-#include "unit_tests/os_interface/mock_performance_counters.h"
-
 #include "gtest/gtest.h"
+#include "os_interface/linux/mock_performance_counters_linux.h"
+#include "os_interface/mock_performance_counters.h"
 
 using namespace NEO;
 

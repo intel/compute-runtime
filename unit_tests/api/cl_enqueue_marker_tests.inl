@@ -5,9 +5,10 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/enqueue_common.h"
+
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "command_queue/enqueue_common.h"
 
 using namespace NEO;
 

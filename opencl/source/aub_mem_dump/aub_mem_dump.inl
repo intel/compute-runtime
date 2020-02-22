@@ -8,8 +8,8 @@
 #include "core/helpers/debug_helpers.h"
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
+#include "opencl/source/aub/aub_helper.h"
 
-#include "aub/aub_helper.h"
 #include "aub_mem_dump.h"
 
 #include <algorithm>

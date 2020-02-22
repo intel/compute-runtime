@@ -5,11 +5,11 @@
  *
  */
 
+#include "opencl/source/device/device_info_map.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/device_info_fixture.h"
 
-#include "device/device_info_map.h"
+#include "fixtures/device_fixture.h"
+#include "fixtures/device_info_fixture.h"
 #include "gtest/gtest.h"
 
 #include <memory>

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "mem_obj/buffer.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 namespace NEO {
 class Pipe : public MemObj {

@@ -5,11 +5,12 @@
  *
  */
 
+#include "opencl/source/api/api_enter.h"
+#include "opencl/source/api/dispatch.h"
+#include "opencl/source/extensions/public/cl_ext_private.h"
+
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
-#include "api/api_enter.h"
-#include "api/dispatch.h"
-#include "extensions/public/cl_ext_private.h"
 
 #ifdef __cplusplus
 extern "C" {

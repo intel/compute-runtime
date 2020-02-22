@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_device_queue.h"
+#include "opencl/source/context/context.h"
 
-#include "context/context.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_device_queue.h"
 
 #include <memory>
 

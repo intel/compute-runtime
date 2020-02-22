@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
-#include "unit_tests/mocks/mock_device_queue.h"
+#include "opencl/source/device_queue/device_queue.h"
 
-#include "device_queue/device_queue.h"
+#include "fixtures/device_host_queue_fixture.h"
+#include "mocks/mock_device_queue.h"
 
 #include <memory>
 

@@ -9,10 +9,10 @@
 
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_aub_csr.h"
+#include "opencl/source/aub/aub_helper.h"
 
-#include "aub/aub_helper.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_aub_csr.h"
 
 using NEO::AUBCommandStreamReceiver;
 using NEO::AUBCommandStreamReceiverHw;

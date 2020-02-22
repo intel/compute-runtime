@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/fixtures/device_host_queue_fixture.h"
+#include "fixtures/device_host_queue_fixture.h"
 
 using namespace NEO;
 

@@ -16,19 +16,19 @@
 #include "core/helpers/hw_info.h"
 #include "core/helpers/string.h"
 #include "core/os_interface/os_library.h"
+#include "opencl/source/helpers/validators.h"
+#include "opencl/source/os_interface/os_inc_base.h"
+#include "opencl/source/platform/extensions.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
 #include "cif/import/library_api.h"
 #include "compiler_options.h"
-#include "helpers/validators.h"
 #include "igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
-#include "os_interface/os_inc_base.h"
-#include "platform/extensions.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -577,7 +577,7 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     out << "};" << std::endl;
 
     out << std::endl
-        << "#include \"built_ins/registry/built_ins_registry.h\"\n"
+        << "#include \"opencl/source/built_ins/registry/built_ins_registry.h\"\n"
         << std::endl;
     out << "namespace NEO {" << std::endl;
     out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;

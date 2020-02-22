@@ -5,7 +5,7 @@
  *
  */
 
-#include "device/cl_device.h"
+#include "opencl/source/device/cl_device.h"
 
 namespace NEO {
 

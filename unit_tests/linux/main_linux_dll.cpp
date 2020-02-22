@@ -15,15 +15,15 @@
 #include "core/unit_tests/helpers/default_hw_info.inl"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
 #include "test.h"
-#include "unit_tests/custom_event_listener.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/linux/drm_wrap.h"
-#include "unit_tests/linux/mock_os_layer.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
+#include "custom_event_listener.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "helpers/variable_backup.h"
+#include "linux/drm_wrap.h"
+#include "linux/mock_os_layer.h"
+#include "mocks/mock_execution_environment.h"
+#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <string>
 

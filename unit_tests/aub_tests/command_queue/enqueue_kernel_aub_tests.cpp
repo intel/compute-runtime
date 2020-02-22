@@ -7,19 +7,19 @@
 
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/event/event.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
-#include "unit_tests/aub_tests/fixtures/aub_fixture.h"
-#include "unit_tests/aub_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/simple_arg_fixture.h"
-#include "unit_tests/fixtures/two_walker_fixture.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/helpers/unit_test_helper.h"
-#include "unit_tests/mocks/mock_buffer.h"
 
-#include "command_queue/command_queue.h"
-#include "event/event.h"
-#include "helpers/hardware_commands_helper.h"
+#include "aub_tests/fixtures/aub_fixture.h"
+#include "aub_tests/fixtures/hello_world_fixture.h"
+#include "fixtures/hello_world_fixture.h"
+#include "fixtures/simple_arg_fixture.h"
+#include "fixtures/two_walker_fixture.h"
+#include "gen_common/gen_cmd_parse.h"
+#include "helpers/unit_test_helper.h"
+#include "mocks/mock_buffer.h"
 
 using namespace NEO;
 

@@ -7,15 +7,15 @@
 
 #include "core/helpers/basic_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/source/aub/aub_helper.h"
+#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
+#include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_lrca_helper.h"
 
-#include "aub/aub_helper.h"
-#include "aub_mem_dump/aub_mem_dump.h"
-#include "aub_mem_dump/page_table_entry_bits.h"
-#include "command_stream/aub_command_stream_receiver_hw.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_lrca_helper.h"
 
 using namespace NEO;
 

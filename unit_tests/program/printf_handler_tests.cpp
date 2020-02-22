@@ -5,17 +5,17 @@
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/multi_root_device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/program/printf_handler.h"
 
+#include "fixtures/device_fixture.h"
+#include "fixtures/multi_root_device_fixture.h"
 #include "gtest/gtest.h"
-#include "program/printf_handler.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_mdi.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

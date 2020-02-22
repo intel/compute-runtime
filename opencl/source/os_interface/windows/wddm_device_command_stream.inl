@@ -20,8 +20,7 @@
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/windows/gmm_callbacks.h"
 #include "core/os_interface/windows/wddm/wddm.h"
-
-#include "os_interface/windows/wddm_device_command_stream.h"
+#include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
 #include "core/os_interface/windows/gdi_interface.h"

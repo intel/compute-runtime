@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "unit_tests/tests_configuration.h"
+#include "tests_configuration.h"
 
 namespace NEO {
 constexpr TestMode defaultTestMode = TestMode::AubTests;

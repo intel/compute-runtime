@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "accelerators/intel_accelerator.h"
+#include "opencl/source/accelerators/intel_accelerator.h"
 
 //------------------------------------------------------------------------------
 // VmeAccelerator Class Stuff

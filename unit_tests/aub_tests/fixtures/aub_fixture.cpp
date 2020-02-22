@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/aub_tests/fixtures/aub_fixture.h"
+#include "aub_tests/fixtures/aub_fixture.h"
 
 #include "core/memory_manager/graphics_allocation.h"
 #include "core/memory_manager/internal_allocation_storage.h"

@@ -11,7 +11,8 @@
 #include "core/os_interface/windows/wddm/wddm.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
+
+#include "mocks/mock_execution_environment.h"
 
 #include <typeinfo>
 

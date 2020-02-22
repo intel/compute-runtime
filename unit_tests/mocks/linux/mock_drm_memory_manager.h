@@ -7,7 +7,8 @@
 
 #pragma once
 #include "core/os_interface/linux/drm_memory_manager.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "mocks/mock_memory_manager.h"
 
 #include <atomic>
 

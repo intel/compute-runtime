@@ -6,9 +6,9 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
 
-#include "command_queue/command_queue.h"
+#include "command_queue/enqueue_fill_buffer_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

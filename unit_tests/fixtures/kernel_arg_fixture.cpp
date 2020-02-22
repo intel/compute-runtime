@@ -5,15 +5,15 @@
  *
  */
 
-#include "unit_tests/fixtures/kernel_arg_fixture.h"
+#include "fixtures/kernel_arg_fixture.h"
 
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_image.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "opencl/source/program/kernel_info.h"
 
-#include "program/kernel_info.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_image.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 KernelImageArgTest::~KernelImageArgTest() = default;
 

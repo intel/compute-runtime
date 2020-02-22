@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "opencl/source/sharings/va/va_sharing.h"
 
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "sharings/va/va_sharing.h"
+#include "mocks/mock_context.h"
 
 using namespace NEO;
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "unit_tests/aub_tests/aub_tests_configuration.h"
+#include "aub_tests/aub_tests_configuration.h"
 
 template <typename GfxFamily>
 AubTestsConfig GetAubTestsConfig() {

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "built_ins/built_ins.h"
+#include "opencl/source/built_ins/built_ins.h"
 
 #include <string>
 #include <unordered_map>

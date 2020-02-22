@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/hello_world_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
 
-#include "command_queue/command_queue.h"
+#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

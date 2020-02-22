@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/base_object.h"
+#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 

@@ -7,8 +7,9 @@
 
 #pragma once
 
+#include "opencl/source/program/kernel_arg_info.h"
+
 #include "CL/cl.h"
-#include "program/kernel_arg_info.h"
 
 namespace NEO {
 

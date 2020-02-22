@@ -11,12 +11,11 @@
 #include "core/utilities/arrayref.h"
 #include "core/utilities/idlist.h"
 #include "core/utilities/iflist.h"
-
-#include "api/cl_types.h"
-#include "event/hw_timestamps.h"
-#include "helpers/base_object.h"
-#include "helpers/task_information.h"
-#include "os_interface/performance_counters.h"
+#include "opencl/source/api/cl_types.h"
+#include "opencl/source/event/hw_timestamps.h"
+#include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/task_information.h"
+#include "opencl/source/os_interface/performance_counters.h"
 
 #include <atomic>
 #include <cstdint>

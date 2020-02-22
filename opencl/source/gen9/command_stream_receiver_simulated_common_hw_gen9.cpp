@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_stream/command_stream_receiver_simulated_common_hw_bdw_plus.inl"
+#include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_plus.inl"
 
 namespace NEO {
 typedef SKLFamily Family;

@@ -5,7 +5,7 @@
  *
  */
 
-#include "context/context.h"
+#include "opencl/source/context/context.h"
 
 namespace NEO {
 

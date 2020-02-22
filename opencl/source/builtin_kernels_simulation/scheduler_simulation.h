@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "builtin_kernels_simulation/opencl_c.h"
+#include "opencl/source/builtin_kernels_simulation/opencl_c.h"
 
 #include <cstdint>
 #include <thread>

@@ -5,19 +5,19 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/source_level_debugger/source_level_debugger.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/dispatch_flags_helper.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_builtins.h"
-#include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "source_level_debugger/source_level_debugger.h"
+#include "fixtures/device_fixture.h"
+#include "helpers/dispatch_flags_helper.h"
+#include "helpers/execution_environment_helper.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_builtins.h"
+#include "mocks/mock_csr.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_graphics_allocation.h"
+#include "mocks/mock_memory_manager.h"
 
 #include <memory>
 

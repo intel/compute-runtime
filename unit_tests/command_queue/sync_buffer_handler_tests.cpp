@@ -6,13 +6,13 @@
  */
 
 #include "core/program/sync_buffer_handler.h"
+#include "opencl/source/api/api.h"
 #include "test.h"
-#include "unit_tests/fixtures/enqueue_handler_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
 
-#include "api/api.h"
+#include "fixtures/enqueue_handler_fixture.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_mdi.h"
 
 using namespace NEO;
 

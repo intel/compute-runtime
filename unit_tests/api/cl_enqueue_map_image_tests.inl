@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/fixtures/image_fixture.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/helpers/surface_formats.h"
 
 #include "cl_api_tests.h"
-#include "command_queue/command_queue.h"
-#include "context/context.h"
-#include "helpers/surface_formats.h"
+#include "fixtures/image_fixture.h"
 
 using namespace NEO;
 

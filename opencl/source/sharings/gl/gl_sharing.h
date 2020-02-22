@@ -8,11 +8,11 @@
 #pragma once
 
 #include "core/os_interface/os_library.h"
+#include "opencl/source/sharings/sharing.h"
 
 #include "CL/cl.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "sharings/sharing.h"
 
 #include <functional>
 #include <mutex>

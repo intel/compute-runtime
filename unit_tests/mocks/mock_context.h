@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "context/context.h"
-#include "sharings/sharing_factory.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/sharings/sharing_factory.h"
 
 #include <memory>
 

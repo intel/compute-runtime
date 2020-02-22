@@ -5,10 +5,11 @@
  *
  */
 
+#include "opencl/source/context/context.h"
+#include "opencl/source/sampler/sampler.h"
+
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
-#include "context/context.h"
-#include "sampler/sampler.h"
 
 using namespace NEO;
 

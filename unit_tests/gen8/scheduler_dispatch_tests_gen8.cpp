@@ -5,18 +5,18 @@
  *
  */
 
+#include "opencl/source/built_ins/built_ins.h"
+#include "opencl/source/command_queue/enqueue_kernel.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
 
-#include "built_ins/built_ins.h"
-#include "command_queue/enqueue_kernel.h"
-#include "command_queue/gpgpu_walker.h"
-#include "device_queue/device_queue.h"
-#include "device_queue/device_queue_hw.h"
+#include "fixtures/execution_model_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/hardware_commands_helper.h"
-#include "scheduler/scheduler_kernel.h"
+#include "helpers/hw_parse.h"
 
 using namespace NEO;
 

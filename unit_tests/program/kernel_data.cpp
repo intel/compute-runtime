@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/string.h"
-#include "unit_tests/fixtures/kernel_data_fixture.h"
-#include "unit_tests/helpers/gtest_helpers.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
 
-#include "platform/platform.h"
-#include "program/program.h"
+#include "fixtures/kernel_data_fixture.h"
+#include "helpers/gtest_helpers.h"
 
 TEST_F(KernelDataTest, KernelInfo_Name) {
     kernelName = "myTestKernel";

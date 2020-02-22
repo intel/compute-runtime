@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/dispatch_info.h"
+#include "opencl/source/helpers/dispatch_info.h"
 
 using namespace NEO;
 

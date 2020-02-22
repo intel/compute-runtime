@@ -6,9 +6,9 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_event.h"
 
 #include "event_fixture.h"
+#include "mocks/mock_event.h"
 
 #include <memory>
 

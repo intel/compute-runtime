@@ -6,9 +6,8 @@
  */
 
 #include "core/gen9/hw_cmds.h"
-
-#include "mem_obj/image.h"
-#include "mem_obj/image.inl"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/mem_obj/image.inl"
 
 #include <map>
 
@@ -39,5 +38,5 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
     surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
 }
 
-#include "mem_obj/image_factory_init.inl"
+#include "opencl/source/mem_obj/image_factory_init.inl"
 } // namespace NEO

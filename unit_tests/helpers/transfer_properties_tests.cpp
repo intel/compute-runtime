@@ -6,12 +6,12 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+#include "opencl/source/helpers/properties_helper.h"
 
 #include "gtest/gtest.h"
-#include "helpers/properties_helper.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_execution_environment.h"
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "os_interface/windows/gl/gl_sharing_os.h"
-#include "sharings/gl/gl_sharing.h"
+#include "opencl/source/os_interface/windows/gl/gl_sharing_os.h"
+#include "opencl/source/sharings/gl/gl_sharing.h"
 
 namespace NEO {
 class GLContextGuard {

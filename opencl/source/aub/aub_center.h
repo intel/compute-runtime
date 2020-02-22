@@ -7,11 +7,11 @@
 
 #pragma once
 #include "core/helpers/options.h"
+#include "opencl/source/command_stream/aub_stream_provider.h"
+#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/memory_manager/address_mapper.h"
+#include "opencl/source/memory_manager/physical_address_allocator.h"
 
-#include "command_stream/aub_stream_provider.h"
-#include "command_stream/aub_subcapture.h"
-#include "memory_manager/address_mapper.h"
-#include "memory_manager/physical_address_allocator.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
 namespace NEO {

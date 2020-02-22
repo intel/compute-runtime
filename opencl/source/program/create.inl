@@ -8,13 +8,13 @@
 #include "core/debug_settings/debug_settings_manager.h"
 #include "core/device/device.h"
 #include "core/memory_manager/memory_constants.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/helpers/string_helpers.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/program/program.h"
 
 #include "compiler_options.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "helpers/string_helpers.h"
-#include "platform/platform.h"
-#include "program/program.h"
 
 namespace NEO {
 

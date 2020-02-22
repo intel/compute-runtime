@@ -7,11 +7,10 @@
 
 #pragma once
 #include "core/memory_manager/internal_allocation_storage.h"
-
-#include "command_queue/gpgpu_walker.h"
-#include "command_queue/hardware_interface.h"
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/task_information.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/task_information.h"
 
 namespace NEO {
 

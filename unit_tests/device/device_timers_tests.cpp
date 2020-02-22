@@ -5,10 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_ostime.h"
-
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_ostime.h"
 
 using namespace NEO;
 

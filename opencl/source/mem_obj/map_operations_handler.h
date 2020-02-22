@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/properties_helper.h"
+#include "opencl/source/helpers/properties_helper.h"
 
 #include <mutex>
 #include <vector>

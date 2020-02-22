@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/memory_properties_flags_helpers_base.inl"
+#include "opencl/source/helpers/memory_properties_flags_helpers_base.inl"
 
 namespace NEO {
 

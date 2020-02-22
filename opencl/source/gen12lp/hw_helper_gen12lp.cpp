@@ -8,10 +8,10 @@
 #include "core/command_container/command_encoder.h"
 #include "core/helpers/flat_batch_buffer_helper_hw.inl"
 #include "core/helpers/hw_helper_bdw_plus.inl"
+#include "opencl/source/aub/aub_helper_bdw_plus.inl"
+#include "opencl/source/gen12lp/helpers_gen12lp.h"
 
-#include "aub/aub_helper_bdw_plus.inl"
 #include "engine_node.h"
-#include "gen12lp/helpers_gen12lp.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

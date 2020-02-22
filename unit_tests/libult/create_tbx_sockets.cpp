@@ -5,10 +5,10 @@
  *
  */
 
-#include "unit_tests/mocks/mock_tbx_sockets.h"
-#include "unit_tests/tests_configuration.h"
+#include "opencl/source/tbx/tbx_sockets_imp.h"
 
-#include "tbx/tbx_sockets_imp.h"
+#include "mocks/mock_tbx_sockets.h"
+#include "tests_configuration.h"
 
 namespace NEO {
 TbxSockets *TbxSockets::create() {

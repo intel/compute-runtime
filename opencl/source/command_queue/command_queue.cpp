@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_queue/command_queue.h"
+#include "opencl/source/command_queue/command_queue.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
@@ -19,21 +19,21 @@
 #include "core/os_interface/os_context.h"
 #include "core/utilities/api_intercept.h"
 #include "core/utilities/tag_allocator.h"
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/context/context.h"
+#include "opencl/source/device/cl_device.h"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/event/event_builder.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/convert_color.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/helpers/queue_helpers.h"
+#include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "CL/cl_ext.h"
-#include "built_ins/builtins_dispatch_builder.h"
-#include "context/context.h"
-#include "device/cl_device.h"
-#include "device_queue/device_queue.h"
-#include "event/event_builder.h"
-#include "event/user_event.h"
-#include "gtpin/gtpin_notify.h"
-#include "helpers/convert_color.h"
-#include "helpers/hardware_commands_helper.h"
-#include "helpers/mipmap.h"
-#include "helpers/queue_helpers.h"
-#include "mem_obj/buffer.h"
-#include "mem_obj/image.h"
 
 #include <map>
 

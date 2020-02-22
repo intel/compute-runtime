@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "sharings/unified/unified_buffer.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 namespace NEO {
 

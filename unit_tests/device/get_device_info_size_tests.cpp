@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
+#include "opencl/source/device/device_info_map.h"
 
-#include "device/device_info_map.h"
+#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
 
 #include <memory>

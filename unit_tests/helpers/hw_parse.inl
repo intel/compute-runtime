@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/hw_parse.h"
+#include "helpers/hw_parse.h"
 
 namespace NEO {
 

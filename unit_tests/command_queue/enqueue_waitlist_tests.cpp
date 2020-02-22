@@ -5,9 +5,9 @@
  *
  */
 
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
+#include "fixtures/hello_world_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_buffer.h"
 
 class clEventWrapper {
   public:

@@ -9,7 +9,8 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/os_interface.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
+
+#include "mocks/mock_execution_environment.h"
 using namespace MetricsLibraryApi;
 
 namespace NEO {

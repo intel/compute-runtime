@@ -6,10 +6,10 @@
  */
 
 #include "core/helpers/file_io.h"
-#include "unit_tests/helpers/test_files.h"
+#include "opencl/source/context/context.h"
 
 #include "cl_api_tests.h"
-#include "context/context.h"
+#include "helpers/test_files.h"
 
 using namespace NEO;
 

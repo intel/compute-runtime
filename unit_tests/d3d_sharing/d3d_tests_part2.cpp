@@ -7,19 +7,19 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/arrayref.h"
-#include "unit_tests/fixtures/d3d_test_fixture.h"
+#include "opencl/source/api/api.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
+#include "opencl/source/sharings/d3d/d3d_buffer.h"
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
+#include "opencl/source/sharings/d3d/d3d_surface.h"
+#include "opencl/source/sharings/d3d/d3d_texture.h"
 
-#include "api/api.h"
+#include "fixtures/d3d_test_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mem_obj/image.h"
-#include "memory_manager/os_agnostic_memory_manager.h"
-#include "platform/platform.h"
-#include "sharings/d3d/cl_d3d_api.h"
-#include "sharings/d3d/d3d_buffer.h"
-#include "sharings/d3d/d3d_sharing.h"
-#include "sharings/d3d/d3d_surface.h"
-#include "sharings/d3d/d3d_texture.h"
 
 namespace NEO {
 TYPED_TEST_CASE_P(D3DTests);

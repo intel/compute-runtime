@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "kernel/kernel.h"
+#include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
 

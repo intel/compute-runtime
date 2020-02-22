@@ -7,19 +7,19 @@
 
 #include "core/device/device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_platform.h"
+#include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.inl"
+#include "opencl/source/device_queue/device_queue.h"
+#include "opencl/source/sharings/sharing.h"
 
-#include "command_queue/command_queue.h"
-#include "context/context.inl"
-#include "device_queue/device_queue.h"
+#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "sharings/sharing.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_deferred_deleter.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
+#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

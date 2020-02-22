@@ -6,18 +6,18 @@
  */
 
 #include "core/utilities/arrayref.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
+#include "opencl/source/sharings/d3d/d3d_buffer.h"
+#include "opencl/source/sharings/d3d/d3d_sharing.h"
+#include "opencl/source/sharings/d3d/d3d_surface.h"
+#include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "test.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_d3d_objects.h"
 
+#include "fixtures/platform_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "sharings/d3d/cl_d3d_api.h"
-#include "sharings/d3d/d3d_buffer.h"
-#include "sharings/d3d/d3d_sharing.h"
-#include "sharings/d3d/d3d_surface.h"
-#include "sharings/d3d/d3d_texture.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_d3d_objects.h"
 
 static const DXGI_FORMAT DXGIformats[] = {
     DXGI_FORMAT_R32G32B32A32_TYPELESS,

@@ -9,11 +9,11 @@
 #include "core/os_interface/linux/drm_memory_manager.h"
 #include "core/os_interface/linux/os_interface.h"
 #include "test.h"
-#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
-#include "unit_tests/mocks/mock_execution_environment.h"
-#include "unit_tests/os_interface/linux/drm_memory_manager_tests.h"
 
 #include "gtest/gtest.h"
+#include "mocks/linux/mock_drm_memory_manager.h"
+#include "mocks/mock_execution_environment.h"
+#include "os_interface/linux/drm_memory_manager_tests.h"
 
 using namespace NEO;
 

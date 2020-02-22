@@ -6,10 +6,10 @@
  */
 
 #include "core/program/program_info.h"
+#include "opencl/source/program/kernel_info.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "program/kernel_info.h"
 
 TEST(ProgramInfoTests, WhenPrepareLinkerInputStorageGetsCalledTwiceThenLinkerInputStorageIsReused) {
     NEO::ProgramInfo programInfo;

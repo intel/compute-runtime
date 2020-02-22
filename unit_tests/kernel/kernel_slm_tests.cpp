@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/kernel/kernel.h"
+#include "opencl/source/program/kernel_info.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 
-#include "command_queue/command_queue_hw.h"
-#include "helpers/hardware_commands_helper.h"
-#include "kernel/kernel.h"
-#include "program/kernel_info.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_kernel.h"
+#include "mocks/mock_program.h"
 
 using namespace NEO;
 

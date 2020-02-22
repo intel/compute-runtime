@@ -12,13 +12,13 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/os_interface.h"
+#include "opencl/source/device/driver_info.h"
+#include "opencl/source/platform/extensions.h"
+#include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
 #include "CL/cl_ext_intel.h"
-#include "device/driver_info.h"
 #include "driver_version.h"
-#include "platform/extensions.h"
-#include "sharings/sharing_factory.h"
-#include "source_level_debugger/source_level_debugger.h"
 
 #include <algorithm>
 

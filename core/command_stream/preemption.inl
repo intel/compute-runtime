@@ -9,9 +9,8 @@
 #include "core/device/device.h"
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "built_ins/sip.h"
-#include "command_queue/gpgpu_walker.h"
+#include "opencl/source/built_ins/sip.h"
+#include "opencl/source/command_queue/gpgpu_walker.h"
 
 namespace NEO {
 

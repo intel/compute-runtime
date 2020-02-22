@@ -5,15 +5,15 @@
  *
  */
 
+#include "opencl/source/event/async_events_handler.h"
+#include "opencl/source/event/user_event.h"
+#include "opencl/source/platform/platform.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_event.h"
 
-#include "event/async_events_handler.h"
-#include "event/user_event.h"
-#include "platform/platform.h"
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_event.h"
 
 #include <memory>
 
