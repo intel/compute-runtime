@@ -7,9 +7,10 @@
 
 #define _GDI32_ //It causes that definitions of functions are not loaded from dll in file wingdi.h because they are in this file.
 
+#include "opencl/test/unit_test/helpers/windows/mock_function.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+
 #include "GL/gl.h"
-#include "helpers/windows/mock_function.h"
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
 
 #include <string.h>
 

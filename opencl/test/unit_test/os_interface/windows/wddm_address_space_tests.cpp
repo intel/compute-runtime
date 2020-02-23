@@ -7,10 +7,9 @@
 
 #include "core/command_stream/preemption.h"
 #include "core/execution_environment/root_device_environment.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "test.h"
-
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_wddm.h"
 
 using namespace NEO;
 

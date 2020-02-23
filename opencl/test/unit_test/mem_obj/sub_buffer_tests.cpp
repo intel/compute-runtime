@@ -8,11 +8,11 @@
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

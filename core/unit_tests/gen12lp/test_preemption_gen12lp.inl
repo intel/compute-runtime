@@ -6,10 +6,9 @@
  */
 
 #include "core/unit_tests/fixtures/preemption_fixture.h"
-
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
 
 using namespace NEO;
 

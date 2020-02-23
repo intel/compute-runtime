@@ -7,8 +7,7 @@
 
 #pragma once
 #include "opencl/source/aub/aub_helper.h"
-
-#include "aub_tests/command_stream/aub_mem_dump_tests.h"
+#include "opencl/test/unit_test/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>
 void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType engineType, uint64_t gpuBatchBufferAddr) {

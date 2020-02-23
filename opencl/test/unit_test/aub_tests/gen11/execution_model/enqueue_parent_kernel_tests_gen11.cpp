@@ -8,10 +8,9 @@
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_parent_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "test.h"
-
-#include "aub_tests/fixtures/aub_parent_kernel_fixture.h"
-#include "fixtures/buffer_fixture.h"
 
 using namespace NEO;
 

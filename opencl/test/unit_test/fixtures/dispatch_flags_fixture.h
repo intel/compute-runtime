@@ -8,11 +8,10 @@
 #pragma once
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-
-#include "mocks/mock_context.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 
 namespace NEO {
 struct DispatchFlagsTests : public ::testing::Test {

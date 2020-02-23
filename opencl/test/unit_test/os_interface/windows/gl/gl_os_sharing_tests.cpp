@@ -15,11 +15,11 @@
 #include "opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 #include "gtest/gtest.h"
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "mocks/mock_execution_environment.h"
-#include "os_interface/windows/wddm_fixture.h"
 #include <GL/gl.h>
 
 using namespace NEO;

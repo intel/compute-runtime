@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
 
 bool MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return true;

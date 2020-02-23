@@ -10,16 +10,15 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/simple_arg_fixture.h"
+#include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
-
-#include "aub_tests/fixtures/aub_fixture.h"
-#include "aub_tests/fixtures/hello_world_fixture.h"
-#include "fixtures/hello_world_fixture.h"
-#include "fixtures/simple_arg_fixture.h"
-#include "fixtures/two_walker_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_buffer.h"
 
 using namespace NEO;
 

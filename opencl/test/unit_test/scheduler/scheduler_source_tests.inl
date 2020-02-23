@@ -6,9 +6,8 @@
  */
 
 #include "opencl/source/device_queue/device_queue.h"
-
-#include "fixtures/device_host_queue_fixture.h"
-#include "mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 
 #include <memory>
 

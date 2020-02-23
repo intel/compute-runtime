@@ -10,10 +10,9 @@
 #include "opencl/source/command_queue/enqueue_barrier.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

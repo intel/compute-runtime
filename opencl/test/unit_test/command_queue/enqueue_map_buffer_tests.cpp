@@ -8,17 +8,17 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "command_queue/enqueue_map_buffer_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

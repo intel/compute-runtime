@@ -8,11 +8,10 @@
 #include "core/utilities/tag_allocator.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
-
-#include "fixtures/device_host_queue_fixture.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device_queue.h"
-#include "mocks/mock_kernel.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

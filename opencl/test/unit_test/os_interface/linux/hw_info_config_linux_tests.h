@@ -10,9 +10,8 @@
 #include "core/os_interface/hw_info_config.h"
 #include "core/os_interface/os_interface.h"
 #include "core/utilities/cpu_info.h"
-
-#include "os_interface/hw_info_config_tests.h"
-#include "os_interface/linux/drm_mock.h"
+#include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
 using namespace NEO;
 using namespace std;

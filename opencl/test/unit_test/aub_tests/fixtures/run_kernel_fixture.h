@@ -10,15 +10,14 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/file_io.h"
 #include "opencl/source/program/program.h"
-
-#include "aub_tests/command_queue/command_enqueue_fixture.h"
-#include "aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "command_queue/command_enqueue_fixture.h"
-#include "command_queue/command_queue_fixture.h"
-#include "command_stream/command_stream_fixture.h"
-#include "fixtures/run_kernel_fixture.h"
-#include "global_environment.h"
-#include "helpers/test_files.h"
+#include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
+#include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
 
 namespace NEO {
 

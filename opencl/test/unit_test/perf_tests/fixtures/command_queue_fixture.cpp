@@ -5,7 +5,7 @@
  *
  */
 
-#include "perf_tests/fixtures/command_queue_fixture.h"
+#include "opencl/test/unit_test/perf_tests/fixtures/command_queue_fixture.h"
 
 #include "core/device/device.h"
 #include "opencl/source/command_queue/command_queue_hw.h"

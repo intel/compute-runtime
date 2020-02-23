@@ -6,11 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_aub_stream.h"
 #include "test.h"
 
 #include "command_stream_receiver_simulated_hw.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_aub_stream.h"
 
 using namespace NEO;
 

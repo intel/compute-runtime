@@ -15,8 +15,8 @@
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
+#include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
 
-#include "fixtures/d3d_test_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

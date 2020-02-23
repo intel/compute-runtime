@@ -8,8 +8,7 @@
 #pragma once
 
 #include "opencl/source/mem_obj/image.h"
-
-#include "mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 struct MockImageBase : public NEO::Image {
     using Image::graphicsAllocation;

@@ -6,10 +6,9 @@
  */
 
 #include "opencl/source/context/context.h"
-
-#include "fixtures/device_host_queue_fixture.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 
 using namespace NEO;
 using namespace DeviceHostQueue;

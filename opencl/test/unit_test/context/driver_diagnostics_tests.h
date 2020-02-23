@@ -11,15 +11,15 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "fixtures/platform_fixture.h"
-#include "fixtures/program_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

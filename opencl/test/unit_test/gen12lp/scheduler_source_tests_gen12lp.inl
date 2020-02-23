@@ -11,10 +11,9 @@
 // Keep the order of device_enqueue.h and scheduler_definitions.h as the latter uses defines from the first one
 #include "opencl/source/gen12lp/device_enqueue.h"
 #include "opencl/source/gen12lp/scheduler_definitions.h"
-
-#include "scheduler/scheduler_source_tests.h"
+#include "opencl/test/unit_test/scheduler/scheduler_source_tests.h"
 // Keep this include below scheduler_definitions.h and device_enqueue.h headers as it depends on defines defined in them
-#include "scheduler/scheduler_source_tests.inl"
+#include "opencl/test/unit_test/scheduler/scheduler_source_tests.inl"
 
 using namespace NEO;
 

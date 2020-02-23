@@ -7,10 +7,10 @@
 
 #include "core/execution_environment/root_device_environment.h"
 #include "core/os_interface/windows/deferrable_deletion_win.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_wddm.h"
 
 #include <type_traits>
 

@@ -9,12 +9,12 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/perf_tests/fixtures/command_queue_fixture.h"
+#include "opencl/test/unit_test/perf_tests/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/perf_tests/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/perf_tests/perf_test_utils.h"
 
 #include "gtest/gtest.h"
-#include "perf_tests/fixtures/command_queue_fixture.h"
-#include "perf_tests/fixtures/device_fixture.h"
-#include "perf_tests/fixtures/platform_fixture.h"
-#include "perf_tests/perf_test_utils.h"
 
 namespace NEO {
 

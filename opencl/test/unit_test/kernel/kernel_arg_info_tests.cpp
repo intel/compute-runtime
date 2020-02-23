@@ -6,15 +6,14 @@
  */
 
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/program/program_tests.h"
+#include "opencl/test/unit_test/program/program_with_source.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "fixtures/memory_management_fixture.h"
-#include "helpers/kernel_binary_helper.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
-#include "program/program_tests.h"
-#include "program/program_with_source.h"
 
 using namespace NEO;
 

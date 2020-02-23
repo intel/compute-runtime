@@ -10,10 +10,10 @@
 #include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/source/memory_manager/page_table.h"
 #include "opencl/source/memory_manager/page_table.inl"
+#include "opencl/test/unit_test/mocks/mock_physical_address_allocator.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_physical_address_allocator.h"
 
 #include <memory>
 

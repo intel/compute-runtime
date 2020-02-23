@@ -7,10 +7,9 @@
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

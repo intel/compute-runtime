@@ -14,14 +14,13 @@
 #include "core/unit_tests/device_binary_format/patchtokens_tests.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/program/program_with_source.h"
 #include "test.h"
-
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_program.h"
-#include "program/program_with_source.h"
 
 using namespace NEO;
 

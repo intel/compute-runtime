@@ -14,13 +14,12 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
-
-#include "aub_tests/command_stream/aub_command_stream_fixture.h"
-#include "aub_tests/fixtures/hello_world_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
 
 using Gen12LPAubBatchBufferTests = Test<NEO::DeviceFixture>;
 using Gen12LPTimestampTests = Test<HelloWorldFixture<AUBHelloWorldFixtureFactory>>;

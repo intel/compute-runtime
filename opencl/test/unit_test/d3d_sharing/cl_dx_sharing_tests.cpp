@@ -11,13 +11,13 @@
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
 #include "test.h"
 
-#include "fixtures/platform_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_d3d_objects.h"
 
 static const DXGI_FORMAT DXGIformats[] = {
     DXGI_FORMAT_R32G32B32A32_TYPELESS,

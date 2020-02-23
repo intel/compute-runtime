@@ -7,15 +7,15 @@
 
 #include "core/helpers/hw_helper.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_gmm.h"
-#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

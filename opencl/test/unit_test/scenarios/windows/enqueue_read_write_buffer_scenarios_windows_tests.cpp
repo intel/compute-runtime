@@ -9,14 +9,13 @@
 #include "core/os_interface/windows/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"
 #include "test.h"
-
-#include "fixtures/buffer_fixture.h"
-#include "helpers/execution_environment_helper.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_device.h"
-#include "os_interface/windows/mock_wddm_memory_manager.h"
 
 using namespace NEO;
 

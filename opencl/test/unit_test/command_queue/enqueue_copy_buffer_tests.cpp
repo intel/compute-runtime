@@ -11,13 +11,13 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
-#include "command_queue/enqueue_copy_buffer_fixture.h"
-#include "command_queue/enqueue_fixture.h"
-#include "gen_common/gen_commands_common_validation.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_buffer.h"
 #include "reg_configs_common.h"
 
 #include <memory>

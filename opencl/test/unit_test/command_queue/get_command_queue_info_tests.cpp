@@ -5,9 +5,10 @@
  *
  */
 
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/context_fixture.h"
-#include "fixtures/device_fixture.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+
 #include "gtest/gtest.h"
 
 using namespace NEO;

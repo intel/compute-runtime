@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
 
 using namespace NEO;
 

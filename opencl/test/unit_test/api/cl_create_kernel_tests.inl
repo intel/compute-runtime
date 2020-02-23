@@ -8,10 +8,10 @@
 #include "core/helpers/file_io.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "cl_api_tests.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_program.h"
 
 using namespace NEO;
 

@@ -7,11 +7,10 @@
 
 #pragma once
 #include "opencl/source/built_ins/built_ins.h"
-
-#include "fixtures/context_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/program_fixture.h"
-#include "mocks/mock_context.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <string>
 

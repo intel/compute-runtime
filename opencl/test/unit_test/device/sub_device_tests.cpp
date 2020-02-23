@@ -8,11 +8,10 @@
 #include "core/device/sub_device.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
-
-#include "helpers/variable_backup.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_platform.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 

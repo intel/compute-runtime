@@ -6,10 +6,10 @@
  */
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "command_stream/command_stream_fixture.h"
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

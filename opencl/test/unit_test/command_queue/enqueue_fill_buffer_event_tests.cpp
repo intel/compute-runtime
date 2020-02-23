@@ -7,9 +7,8 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fill_buffer_fixture.h"
 #include "test.h"
-
-#include "command_queue/enqueue_fill_buffer_fixture.h"
 
 using namespace NEO;
 

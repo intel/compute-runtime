@@ -5,10 +5,10 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/program/program_tests.h"
 #include "test.h"
 
-#include "mocks/mock_program.h"
-#include "program/program_tests.h"
 #include "program_debug_data.h"
 
 #include <memory>

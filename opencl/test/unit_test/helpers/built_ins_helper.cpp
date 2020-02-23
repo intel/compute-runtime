@@ -9,11 +9,10 @@
 
 #include "core/device/device.h"
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
-
-#include "mocks/mock_builtins.h"
-#include "mocks/mock_compilers.h"
-#include "mocks/mock_program.h"
-#include "mocks/mock_sip.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_sip.h"
 
 namespace NEO {
 

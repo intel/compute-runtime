@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_program.h"
+
 #include "cl_api_tests.h"
-#include "mocks/mock_program.h"
 
 using namespace NEO;
 

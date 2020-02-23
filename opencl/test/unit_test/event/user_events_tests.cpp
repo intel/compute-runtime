@@ -9,10 +9,10 @@
 #include "core/memory_manager/memory_manager.h"
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 
-#include "command_queue/enqueue_fixture.h"
 #include "event_fixture.h"
-#include "mocks/mock_event.h"
 
 TEST(UserEvent, testInitialStatusOfUserEventCmdQueue) {
     UserEvent uEvent;

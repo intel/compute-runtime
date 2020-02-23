@@ -8,10 +8,9 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 

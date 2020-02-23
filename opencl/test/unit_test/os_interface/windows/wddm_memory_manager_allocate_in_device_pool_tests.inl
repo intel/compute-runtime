@@ -6,10 +6,10 @@
  */
 
 #include "core/os_interface/windows/wddm_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_memory_manager_tests.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_memory_manager.h"
-#include "os_interface/windows/wddm_memory_manager_tests.h"
 using namespace NEO;
 using namespace ::testing;
 

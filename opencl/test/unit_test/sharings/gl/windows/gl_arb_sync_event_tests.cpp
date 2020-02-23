@@ -12,15 +12,14 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/sharing.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "test.h"
-
-#include "mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_event.h"
 
 using namespace NEO;
 

@@ -17,13 +17,13 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
 #include "gmock/gmock.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_platform.h"
 
 namespace NEO {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;

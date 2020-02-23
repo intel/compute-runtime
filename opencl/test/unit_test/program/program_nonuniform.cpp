@@ -12,17 +12,17 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/program/program_from_binary.h"
+#include "opencl/test/unit_test/program/program_with_source.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "helpers/kernel_binary_helper.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
-#include "program/program_from_binary.h"
-#include "program/program_with_source.h"
 #include "program_tests.h"
 
 #include <map>
@@ -148,12 +148,11 @@ TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
 }
 
 #include "opencl/source/kernel/kernel.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/context_fixture.h"
-#include "fixtures/platform_fixture.h"
-#include "fixtures/program_fixture.h"
-#include "mocks/mock_program.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include <vector>
 

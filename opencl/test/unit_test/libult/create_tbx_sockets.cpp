@@ -6,9 +6,8 @@
  */
 
 #include "opencl/source/tbx/tbx_sockets_imp.h"
-
-#include "mocks/mock_tbx_sockets.h"
-#include "tests_configuration.h"
+#include "opencl/test/unit_test/mocks/mock_tbx_sockets.h"
+#include "opencl/test/unit_test/tests_configuration.h"
 
 namespace NEO {
 TbxSockets *TbxSockets::create() {

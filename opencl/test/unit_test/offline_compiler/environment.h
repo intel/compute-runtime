@@ -9,10 +9,10 @@
 
 #include "offline_compiler/offline_compiler.h"
 #include "opencl/source/os_interface/os_inc_base.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_compilers.h"
 
 class Environment : public ::testing::Environment {
   public:

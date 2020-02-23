@@ -7,8 +7,7 @@
 
 #include "core/device/device.h"
 #include "core/helpers/hw_info.h"
-
-#include "api/cl_api_tests.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 #include <cstring>
 

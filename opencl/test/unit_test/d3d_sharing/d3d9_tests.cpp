@@ -12,14 +12,13 @@
 #include "opencl/source/os_interface/windows/d3d_sharing_functions.h"
 #include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/source/sharings/d3d/d3d_surface.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
-
-#include "fixtures/multi_root_device_fixture.h"
-#include "fixtures/platform_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_d3d_objects.h"
-#include "mocks/mock_gmm.h"
 
 namespace NEO {
 template <>

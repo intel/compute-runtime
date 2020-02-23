@@ -562,8 +562,6 @@ add_definitions(-DGMM_OCL)
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include_directories(${NEO_RUNTIME_TESTS_SUB_DIR})
-
 # determine Neo version
 include(version.cmake)
 

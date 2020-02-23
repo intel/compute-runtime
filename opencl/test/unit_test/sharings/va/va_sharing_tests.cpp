@@ -15,13 +15,13 @@
 #include "opencl/source/sharings/va/cl_va_api.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/libult/create_command_stream.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 
-#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "libult/create_command_stream.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_context.h"
-#include "sharings/va/mock_va_sharing.h"
 
 using namespace NEO;
 

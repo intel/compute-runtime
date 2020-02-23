@@ -11,13 +11,13 @@
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/tracing/tracing_api.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/helpers/ult_limits.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/ult_limits.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_kernel.h"
 
 #include <memory>
 

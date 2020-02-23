@@ -8,12 +8,11 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_builtins.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_source_level_debugger.h"
 
 using PreambleTest = ::testing::Test;
 using namespace NEO;

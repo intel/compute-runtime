@@ -7,12 +7,12 @@
 
 #pragma once
 #include "core/helpers/ptr_math.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "command_queue/command_enqueue_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
 
 namespace NEO {
 

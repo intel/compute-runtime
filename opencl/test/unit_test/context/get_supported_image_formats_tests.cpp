@@ -7,12 +7,12 @@
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
-#include "fixtures/context_fixture.h"
-#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
 
 #include <memory>
 

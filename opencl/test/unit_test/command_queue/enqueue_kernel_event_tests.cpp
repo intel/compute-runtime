@@ -7,8 +7,8 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 
-#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

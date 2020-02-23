@@ -18,16 +18,15 @@
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/mocks/mock_aub_center.h"
+#include "opencl/test/unit_test/mocks/mock_aub_csr.h"
+#include "opencl/test/unit_test/mocks/mock_aub_manager.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "test.h"
-
-#include "fixtures/mock_aub_center_fixture.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_allocation_properties.h"
-#include "mocks/mock_aub_center.h"
-#include "mocks/mock_aub_csr.h"
-#include "mocks/mock_aub_manager.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_os_context.h"
 
 using namespace NEO;
 

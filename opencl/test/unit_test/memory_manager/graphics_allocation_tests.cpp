@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+
 #include "gtest/gtest.h"
-#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

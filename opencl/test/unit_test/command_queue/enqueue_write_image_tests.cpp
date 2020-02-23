@@ -8,13 +8,13 @@
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/memory_manager.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "test.h"
 
-#include "command_queue/enqueue_write_image_fixture.h"
-#include "gen_common/gen_commands_common_validation.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_builtin_dispatch_info_builder.h"
-#include "mocks/mock_builtins.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

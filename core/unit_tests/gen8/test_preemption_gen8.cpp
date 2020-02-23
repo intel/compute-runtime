@@ -10,14 +10,13 @@
 #include "core/helpers/hw_helper.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/unit_tests/fixtures/preemption_fixture.h"
-
-#include "command_queue/enqueue_fixture.h"
-#include "fixtures/hello_world_fixture.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_submissions_aggregator.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 
 using namespace NEO;
 

@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
 #include "test.h"
-
-#include "fixtures/media_kernel_fixture.h"
 
 using namespace NEO;
 

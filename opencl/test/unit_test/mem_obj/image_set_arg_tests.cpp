@@ -15,16 +15,16 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
 #include "gmock/gmock.h"
-#include "mocks/mock_gmm.h"
-#include "mocks/mock_gmm_resource_info.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
 
 using namespace NEO;
 using namespace ::testing;

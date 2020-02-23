@@ -11,10 +11,10 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "test.h"
 
 #include "gmock/gmock.h"
-#include "mocks/mock_async_event_handler.h"
 
 using namespace NEO;
 using namespace ::testing;

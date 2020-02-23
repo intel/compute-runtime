@@ -12,12 +12,11 @@
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
-
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

@@ -15,9 +15,9 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 
 #include "cl_api_tests.h"
-#include "fixtures/run_kernel_fixture.h"
 
 using namespace NEO;
 

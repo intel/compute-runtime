@@ -6,12 +6,12 @@
  */
 
 #include "opencl/source/command_queue/command_queue_hw.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/static_size3.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
-#include "helpers/hw_parse.h"
-#include "helpers/static_size3.h"
-#include "mocks/mock_kernel.h"
 #include "reg_configs_common.h"
 
 namespace NEO {

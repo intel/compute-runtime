@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/hardware_commands_helper_tests.h"
+#include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
 
 #include "core/helpers/basic_math.h"
 #include "core/helpers/engine_node_helper.h"
@@ -16,12 +16,11 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-
-#include "fixtures/execution_model_kernel_fixture.h"
-#include "fixtures/hello_world_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

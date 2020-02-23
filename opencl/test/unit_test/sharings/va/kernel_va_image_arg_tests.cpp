@@ -6,13 +6,13 @@
  */
 
 #include "opencl/source/sharings/va/va_surface.h"
+#include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 #include "test.h"
 
-#include "fixtures/kernel_arg_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
-#include "sharings/va/mock_va_sharing.h"
 
 using namespace NEO;
 

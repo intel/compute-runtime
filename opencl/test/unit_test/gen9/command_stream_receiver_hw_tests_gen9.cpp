@@ -10,23 +10,23 @@
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
+#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
-#include "fixtures/ult_command_stream_receiver_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/dispatch_flags_helper.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_event.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
 #include "reg_configs_common.h"
 using namespace NEO;
 
-#include "command_stream/command_stream_receiver_hw_tests.inl"
+#include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_tests.inl"
 
 using CommandStreamReceiverHwTestGen9 = CommandStreamReceiverHwTest<SKLFamily>;
 

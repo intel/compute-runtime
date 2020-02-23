@@ -8,10 +8,10 @@
 #pragma once
 #include "core/helpers/file_io.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_program.h"
 
 namespace NEO {
 

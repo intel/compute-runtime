@@ -10,11 +10,11 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
-#include "mocks/mock_context.h"
 
 extern GFXCORE_FAMILY renderCoreFamily;
 

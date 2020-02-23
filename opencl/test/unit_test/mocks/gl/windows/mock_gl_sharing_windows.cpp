@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
 
 #include "config.h"
 

@@ -9,17 +9,17 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/helpers/kernel_filename_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/program/program_from_binary.h"
 #include "test.h"
 
 #include "compiler_options.h"
-#include "fixtures/enqueue_handler_fixture.h"
 #include "gmock/gmock.h"
-#include "helpers/kernel_binary_helper.h"
-#include "helpers/kernel_filename_helper.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_kernel.h"
-#include "program/program_from_binary.h"
 
 using namespace NEO;
 using namespace ::testing;

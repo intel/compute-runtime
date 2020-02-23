@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_gmm_client_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 
 namespace NEO {
 

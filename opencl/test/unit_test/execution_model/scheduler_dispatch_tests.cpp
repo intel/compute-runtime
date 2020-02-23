@@ -10,14 +10,13 @@
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
-
-#include "fixtures/execution_model_fixture.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device_queue.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
+#include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
 

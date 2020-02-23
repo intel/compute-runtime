@@ -6,11 +6,11 @@
  */
 
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
-#include "fixtures/device_host_queue_fixture.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_kernel.h"
 
 #include <type_traits>
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_gmm_page_table_mngr.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 
 namespace NEO {
 using namespace ::testing;

@@ -11,13 +11,13 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/libult/source_level_debugger_library.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
-#include "fixtures/device_fixture.h"
-#include "helpers/execution_environment_helper.h"
-#include "helpers/variable_backup.h"
-#include "libult/source_level_debugger_library.h"
-#include "mocks/mock_platform.h"
-#include "mocks/mock_source_level_debugger.h"
 #include <gtest/gtest.h>
 
 #include <memory>

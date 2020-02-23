@@ -6,12 +6,11 @@
  */
 
 #include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "fixtures/context_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_kernel.h"
 
 namespace NEO {
 

@@ -11,19 +11,19 @@
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/pipe.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_pipe.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_sampler.h"
 #include "test.h"
 
 #include "CL/cl.h"
-#include "fixtures/context_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_device_queue.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_pipe.h"
-#include "mocks/mock_program.h"
-#include "mocks/mock_sampler.h"
 
 #include <memory>
 

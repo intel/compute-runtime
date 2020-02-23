@@ -7,9 +7,9 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 
 #include "cl_api_tests.h"
-#include "fixtures/buffer_fixture.h"
 
 using namespace NEO;
 

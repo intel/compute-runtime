@@ -8,13 +8,12 @@
 #include "core/memory_manager/allocations_list.h"
 #include "core/memory_manager/unified_memory_manager.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_builtin_dispatch_info_builder.h"
-#include "mocks/mock_builtins.h"
 
 using namespace NEO;
 

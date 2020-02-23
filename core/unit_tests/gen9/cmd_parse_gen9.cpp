@@ -5,16 +5,17 @@
  *
  */
 
-#include "gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+
 #include "gtest/gtest.h"
 using GenStruct = NEO::GEN9;
 using GenGfxFamily = NEO::SKLFamily;
-#include "gen_common/cmd_parse_base.inl"
-#include "gen_common/cmd_parse_base_mi_arb.inl"
-#include "gen_common/cmd_parse_gpgpu_walker.inl"
-#include "gen_common/cmd_parse_sip.inl"
-#include "helpers/hw_parse.h"
-#include "helpers/hw_parse.inl"
+#include "opencl/test/unit_test/gen_common/cmd_parse_base.inl"
+#include "opencl/test/unit_test/gen_common/cmd_parse_base_mi_arb.inl"
+#include "opencl/test/unit_test/gen_common/cmd_parse_gpgpu_walker.inl"
+#include "opencl/test/unit_test/gen_common/cmd_parse_sip.inl"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/hw_parse.inl"
 
 template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {

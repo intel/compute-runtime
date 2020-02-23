@@ -9,9 +9,9 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
 #include "core/os_interface/os_memory.h"
+#include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_gfx_partition.h"
 
 using namespace NEO;
 

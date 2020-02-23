@@ -7,9 +7,9 @@
 
 #include "core/helpers/ptr_math.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 
 #include "cl_api_tests.h"
-#include "mocks/mock_buffer.h"
 
 using namespace NEO;
 

@@ -8,9 +8,9 @@
 #pragma once
 #include "core/helpers/hw_info.h"
 #include "core/os_interface/os_library.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_compilers.h"
 
 using namespace NEO;
 

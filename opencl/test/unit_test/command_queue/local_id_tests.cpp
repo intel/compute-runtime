@@ -9,9 +9,8 @@
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
 #include "opencl/source/command_queue/local_id_gen.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
-
-#include "helpers/unit_test_helper.h"
 
 #include <algorithm>
 #include <cstdint>

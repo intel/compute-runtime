@@ -5,9 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/helpers/cmd_buffer_validator.h"
 #include "test.h"
 
-#include "helpers/cmd_buffer_validator.h"
 #include "hw_parse.h"
 
 using HwParseTest = ::testing::Test;

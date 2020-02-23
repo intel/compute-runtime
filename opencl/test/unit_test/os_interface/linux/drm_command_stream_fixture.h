@@ -11,12 +11,12 @@
 #include "core/os_interface/linux/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gmock/gmock.h"
-#include "mocks/linux/mock_drm_command_stream_receiver.h"
-#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <algorithm>
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "aub_tests/command_queue/command_enqueue_fixture.h"
-#include "fixtures/hello_world_kernel_fixture.h"
+#include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 
 namespace NEO {
 static const char programFile[] = "simple_block_kernel";

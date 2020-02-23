@@ -11,15 +11,14 @@
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/enqueue_properties.h"
+#include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
+#include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
-
-#include "fixtures/dispatch_flags_fixture.h"
-#include "fixtures/enqueue_handler_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_timestamp_container.h"
 
 namespace NEO {
 

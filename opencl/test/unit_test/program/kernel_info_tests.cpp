@@ -9,10 +9,10 @@
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/program/kernel_arg_info.h"
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 
-#include "fixtures/multi_root_device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_execution_environment.h"
 
 #include <memory>
 #include <type_traits>

@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+
 #include "cl_api_tests.h"
-#include "fixtures/buffer_fixture.h"
 
 using namespace NEO;
 

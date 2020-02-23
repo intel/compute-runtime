@@ -11,11 +11,11 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "cl_api_tests.h"
-#include "helpers/kernel_binary_helper.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_compilers.h"
 
 using namespace NEO;
 

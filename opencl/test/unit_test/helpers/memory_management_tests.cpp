@@ -6,8 +6,8 @@
  */
 
 #include "core/unit_tests/helpers/memory_management.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 using MemoryManagement::AllocationEvent;

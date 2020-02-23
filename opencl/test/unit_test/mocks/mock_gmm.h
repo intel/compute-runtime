@@ -9,9 +9,8 @@
 #include "core/gmm_helper/gmm.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
-
-#include "mocks/mock_device.h"
-#include "mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 
 namespace NEO {
 namespace MockGmmParams {

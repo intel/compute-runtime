@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
 
 namespace NEO {
 

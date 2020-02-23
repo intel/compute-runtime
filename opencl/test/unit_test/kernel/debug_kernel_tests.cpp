@@ -5,12 +5,11 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
-
-#include "fixtures/execution_model_kernel_fixture.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
 
 #include <memory>
 

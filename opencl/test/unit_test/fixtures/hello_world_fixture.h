@@ -9,14 +9,13 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/aligned_memory.h"
 #include "core/memory_manager/memory_manager.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "test.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "command_stream/command_stream_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/hello_world_kernel_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
-#include "indirect_heap/indirect_heap_fixture.h"
 
 namespace NEO {
 

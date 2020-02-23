@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -19,11 +19,10 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/image.h"
-
-#include "helpers/unit_test_helper.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_context.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <chrono>
 #include <iostream>

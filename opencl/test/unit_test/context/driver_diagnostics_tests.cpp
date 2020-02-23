@@ -10,8 +10,7 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-
-#include "mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include <tuple>
 

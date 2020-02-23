@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
+
 #include "drm/i915_drm.h"
-#include "os_interface/linux/drm_mock.h"
 
 namespace NEO {
 

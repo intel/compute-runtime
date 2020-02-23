@@ -6,8 +6,7 @@
  */
 
 #include "core/command_stream/linear_stream.h"
-
-#include "fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
 class DispatcherFixture : public DeviceFixture {
   public:

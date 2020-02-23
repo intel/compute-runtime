@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "tests_configuration.h"
+#include "opencl/test/unit_test/tests_configuration.h"
 
 namespace NEO {
 constexpr TestMode defaultTestMode = TestMode::UnitTests;

@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/test/unit_test/aub_tests/fixtures/unified_memory_fixture.h"
 #include "test.h"
-
-#include "aub_tests/fixtures/unified_memory_fixture.h"
 
 namespace NEO {
 

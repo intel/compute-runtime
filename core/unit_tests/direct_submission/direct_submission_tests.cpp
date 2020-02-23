@@ -13,12 +13,11 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/mocks/mock_direct_submission_hw.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "helpers/dispatch_flags_helper.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_csr.h"
 
 #include <atomic>
 #include <memory>

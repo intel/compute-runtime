@@ -5,7 +5,7 @@
  *
  */
 
-#include "fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
 #include "gtest/gtest.h"
 

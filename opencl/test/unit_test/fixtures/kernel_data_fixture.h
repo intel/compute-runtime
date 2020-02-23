@@ -10,10 +10,10 @@
 #include "core/memory_manager/memory_manager.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_program.h"
 
 using namespace NEO;
 using namespace iOpenCL;

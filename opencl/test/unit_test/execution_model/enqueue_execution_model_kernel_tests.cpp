@@ -16,16 +16,15 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/kernel/kernel.h"
-
-#include "fixtures/device_host_queue_fixture.h"
-#include "fixtures/execution_model_fixture.h"
-#include "helpers/gtest_helpers.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device_queue.h"
-#include "mocks/mock_event.h"
-#include "mocks/mock_mdi.h"
-#include "mocks/mock_submissions_aggregator.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
+#include "opencl/test/unit_test/helpers/gtest_helpers.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_mdi.h"
+#include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 
 using namespace NEO;
 

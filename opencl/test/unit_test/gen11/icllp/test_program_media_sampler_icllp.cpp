@@ -9,11 +9,10 @@
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/gen11/reg_configs.h"
+#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
-
-#include "helpers/dispatch_flags_helper.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device.h"
 
 using namespace NEO;
 

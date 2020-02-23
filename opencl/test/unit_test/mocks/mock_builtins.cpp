@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 

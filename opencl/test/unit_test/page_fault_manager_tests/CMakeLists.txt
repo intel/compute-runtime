@@ -12,8 +12,8 @@ add_executable(neo_page_fault_manager_tests
   $<TARGET_OBJECTS:igdrcl_libult_env>
   $<TARGET_OBJECTS:mock_gmm>
   ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/libult/os_interface.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/ult_configuration.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
 )
 
 append_sources_from_properties(CPU_PAGE_FAULT_MANAGER_TESTS  NEO_CORE_CPU_PAGE_FAULT_MANAGER_TESTS)
@@ -30,7 +30,7 @@ if(WIN32)
 else()
   target_sources(neo_page_fault_manager_tests PRIVATE
   ${CPU_PAGE_FAULT_MANAGER_LINUX_TESTS}
-  ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_neo_create.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 
@@ -38,7 +38,7 @@ target_link_libraries(neo_page_fault_manager_tests ${NEO_MOCKABLE_LIB_NAME} ${NE
 
 target_include_directories(neo_page_fault_manager_tests PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
-  ${NEO_RUNTIME_TESTS_DIR}/gen_common${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
 )
 
 create_project_source_tree(neo_page_fault_manager_tests)

@@ -14,15 +14,15 @@
 #include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

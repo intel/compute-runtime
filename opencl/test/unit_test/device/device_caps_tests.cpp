@@ -9,14 +9,14 @@
 #include "core/os_interface/os_interface.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/device/driver_info.h"
+#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 
 #include "driver_version.h"
 #include "gtest/gtest.h"
-#include "helpers/hw_helper_tests.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_builtins.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_execution_environment.h"
 
 #include <memory>
 

@@ -9,14 +9,14 @@
 #include "core/helpers/get_info.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_gmm.h"
 
 namespace NEO {
 class CreateFromGlTexture : public ::testing::Test {

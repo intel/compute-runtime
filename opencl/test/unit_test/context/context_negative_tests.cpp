@@ -7,11 +7,11 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "test.h"
 
 #include "CL/cl_gl.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 #include <memory>

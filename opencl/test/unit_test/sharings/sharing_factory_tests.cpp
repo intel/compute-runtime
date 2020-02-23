@@ -14,12 +14,12 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_sharing_factory.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_sharing_factory.h"
 
 using namespace NEO;
 

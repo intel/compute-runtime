@@ -5,11 +5,10 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "test.h"
-
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_device_queue.h"
 
 using namespace NEO;
 

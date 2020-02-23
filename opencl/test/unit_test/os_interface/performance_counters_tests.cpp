@@ -10,12 +10,12 @@
 #include "core/os_interface/os_time.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/tag_allocator.h"
+#include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
-#include "fixtures/device_instrumentation_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_execution_environment.h"
-#include "os_interface/mock_performance_counters.h"
 
 using namespace NEO;
 

@@ -7,11 +7,11 @@
 
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_gmm.h"
-#include "mocks/mock_image.h"
 
 using namespace NEO;
 

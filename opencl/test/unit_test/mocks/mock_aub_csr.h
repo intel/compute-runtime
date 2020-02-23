@@ -14,9 +14,9 @@
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 
 #include "gmock/gmock.h"
-#include "mocks/mock_allocation_properties.h"
 
 #include <string>
 

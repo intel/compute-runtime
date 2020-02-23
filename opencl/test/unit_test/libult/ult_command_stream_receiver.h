@@ -13,9 +13,8 @@
 #include "core/os_interface/os_context.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-
-#include "helpers/dispatch_flags_helper.h"
-#include "mocks/mock_experimental_command_buffer.h"
+#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/mocks/mock_experimental_command_buffer.h"
 
 #include <map>
 #include <memory>

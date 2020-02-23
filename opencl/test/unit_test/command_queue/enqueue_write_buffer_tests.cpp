@@ -10,15 +10,15 @@
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/command_queue/buffer_operations_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "test.h"
 
-#include "command_queue/buffer_operations_fixture.h"
-#include "command_queue/enqueue_fixture.h"
-#include "gen_common/gen_commands_common_validation.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_execution_environment.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

@@ -7,10 +7,9 @@
 
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

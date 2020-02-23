@@ -11,9 +11,9 @@
 #include "core/os_interface/linux/os_library_linux.h"
 #endif
 #include "core/os_interface/os_library.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "test.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 #include <memory>

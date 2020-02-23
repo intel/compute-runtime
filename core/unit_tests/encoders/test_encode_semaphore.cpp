@@ -8,8 +8,7 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/fixtures/command_container_fixture.h"
-
-#include "helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
 
 using namespace NEO;
 

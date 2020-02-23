@@ -8,8 +8,7 @@
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/context/context.h"
-
-#include "api/cl_api_tests.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
 

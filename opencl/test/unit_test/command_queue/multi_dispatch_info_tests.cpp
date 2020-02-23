@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "test.h"
-
-#include "mocks/mock_mdi.h"
 
 using namespace NEO;
 

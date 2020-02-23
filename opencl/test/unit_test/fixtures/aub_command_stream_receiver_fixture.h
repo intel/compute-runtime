@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "fixtures/device_fixture.h"
-#include "fixtures/mock_aub_center_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
 struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixture {

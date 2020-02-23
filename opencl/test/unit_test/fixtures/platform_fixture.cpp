@@ -5,12 +5,12 @@
  *
  */
 
-#include "fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 #include "opencl/source/device/cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_platform.h"
 
 namespace NEO {
 

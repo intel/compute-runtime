@@ -13,14 +13,14 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/windows/driver_info.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
 #include "gtest/gtest.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_wddm.h"
-#include "os_interface/windows/registry_reader_tests.h"
 
 #include <memory>
 

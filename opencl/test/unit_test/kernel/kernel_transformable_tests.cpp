@@ -7,13 +7,12 @@
 
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_sampler.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_sampler.h"
 
 #include <memory>
 

@@ -14,14 +14,14 @@
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
-#include "fixtures/multi_root_device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_deferred_deleter.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

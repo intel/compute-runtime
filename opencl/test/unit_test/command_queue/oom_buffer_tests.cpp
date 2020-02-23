@@ -8,15 +8,14 @@
 #include "core/memory_manager/memory_manager.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "test.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "command_queue/enqueue_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/hello_world_kernel_fixture.h"
-#include "fixtures/memory_management_fixture.h"
-#include "fixtures/simple_arg_kernel_fixture.h"
 
 using namespace NEO;
 

@@ -6,10 +6,10 @@
  */
 
 #include "opencl/source/sharings/gl/windows/win_enable_gl.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

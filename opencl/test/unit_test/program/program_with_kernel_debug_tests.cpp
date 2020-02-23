@@ -5,18 +5,18 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/helpers/kernel_filename_helper.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
+#include "opencl/test/unit_test/program/program_from_binary.h"
+#include "opencl/test/unit_test/program/program_tests.h"
 #include "test.h"
 
 #include "compiler_options.h"
-#include "fixtures/program_fixture.h"
-#include "global_environment.h"
 #include "gmock/gmock.h"
-#include "helpers/kernel_binary_helper.h"
-#include "helpers/kernel_filename_helper.h"
-#include "mocks/mock_program.h"
-#include "mocks/mock_source_level_debugger.h"
-#include "program/program_from_binary.h"
-#include "program/program_tests.h"
 
 #include <algorithm>
 #include <memory>

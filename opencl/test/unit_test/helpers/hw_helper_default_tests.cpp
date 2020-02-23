@@ -6,8 +6,7 @@
  */
 
 #include "core/helpers/hw_info.h"
-
-#include "helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo) {
     HardwareCapabilities hwCaps = {0};

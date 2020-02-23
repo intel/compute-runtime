@@ -15,9 +15,8 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
-
-#include "mocks/mock_context.h"
-#include "mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include <cassert>
 

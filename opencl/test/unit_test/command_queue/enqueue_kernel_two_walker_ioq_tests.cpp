@@ -6,9 +6,8 @@
  */
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 #include "test.h"
-
-#include "fixtures/two_walker_fixture.h"
 
 using namespace NEO;
 

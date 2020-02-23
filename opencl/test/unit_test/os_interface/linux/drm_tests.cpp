@@ -9,10 +9,10 @@
 #include "core/os_interface/device_factory.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "core/os_interface/linux/os_interface.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "os_interface/linux/drm_mock.h"
 
 #include <fstream>
 #include <memory>

@@ -8,11 +8,10 @@
 #pragma once
 
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/program/program_from_binary.h"
 #include "test.h"
-
-#include "fixtures/platform_fixture.h"
-#include "mocks/mock_kernel.h"
-#include "program/program_from_binary.h"
 
 using namespace NEO;
 

@@ -10,11 +10,10 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
-#include "mocks/mock_command_queue.h"
 
 using namespace NEO;
 

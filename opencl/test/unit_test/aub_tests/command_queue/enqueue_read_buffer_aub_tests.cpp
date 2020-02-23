@@ -8,12 +8,11 @@
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/helpers/ptr_math.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/aub_tests/aub_tests_configuration.h"
+#include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
-
-#include "aub_tests/aub_tests_configuration.h"
-#include "aub_tests/command_queue/command_enqueue_fixture.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_graphics_allocation.h"
 
 #include <memory>
 

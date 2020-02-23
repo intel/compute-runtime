@@ -6,10 +6,10 @@
  */
 
 #include "core/os_interface/os_library.h"
+#include "opencl/test/unit_test/custom_event_listener.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
 
-#include "custom_event_listener.h"
 #include "environment.h"
-#include "helpers/test_files.h"
 #include "limits.h"
 
 #ifdef WIN32

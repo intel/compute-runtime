@@ -5,10 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

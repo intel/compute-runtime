@@ -8,10 +8,9 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

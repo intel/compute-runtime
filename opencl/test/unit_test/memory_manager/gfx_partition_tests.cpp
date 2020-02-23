@@ -5,4 +5,4 @@
  *
  */
 
-#include "memory_manager/gfx_partition_tests.inl"
+#include "opencl/test/unit_test/memory_manager/gfx_partition_tests.inl"

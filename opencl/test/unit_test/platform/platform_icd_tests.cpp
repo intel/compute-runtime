@@ -8,9 +8,9 @@
 #include "core/helpers/string.h"
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

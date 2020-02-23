@@ -11,15 +11,15 @@
 #include "opencl/source/context/context.inl"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/sharings/sharing.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_deferred_deleter.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

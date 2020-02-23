@@ -9,11 +9,10 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
-
-#include "aub_tests/command_queue/command_enqueue_fixture.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

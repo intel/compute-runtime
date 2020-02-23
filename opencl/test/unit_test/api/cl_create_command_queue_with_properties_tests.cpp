@@ -11,14 +11,14 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device_queue/device_queue.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
-#include "fixtures/memory_management_fixture.h"
-#include "helpers/unit_test_helper.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
 
 using namespace NEO;
 

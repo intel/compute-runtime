@@ -7,9 +7,8 @@
 
 #include "opencl/source/kernel/image_transformer.h"
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "test.h"
-
-#include "fixtures/image_fixture.h"
 
 using namespace NEO;
 

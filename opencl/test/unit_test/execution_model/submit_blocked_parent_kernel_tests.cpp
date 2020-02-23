@@ -11,10 +11,9 @@
 #include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
-
-#include "fixtures/execution_model_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 
 #include <memory>
 

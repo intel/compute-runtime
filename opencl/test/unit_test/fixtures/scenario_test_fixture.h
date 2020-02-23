@@ -8,12 +8,12 @@
 #pragma once
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

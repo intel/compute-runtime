@@ -7,8 +7,7 @@
 
 #include "opencl/source/tracing/tracing_api.h"
 #include "opencl/source/tracing/tracing_notify.h"
-
-#include "api/cl_api_tests.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
 

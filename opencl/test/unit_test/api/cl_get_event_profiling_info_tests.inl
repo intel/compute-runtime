@@ -9,12 +9,11 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 #include "test.h"
-
-#include "api/cl_api_tests.h"
-#include "fixtures/device_instrumentation_fixture.h"
-#include "mocks/mock_event.h"
-#include "os_interface/mock_performance_counters.h"
 
 using namespace NEO;
 

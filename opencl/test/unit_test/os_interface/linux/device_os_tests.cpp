@@ -10,13 +10,13 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
 
 using namespace ::testing;
 

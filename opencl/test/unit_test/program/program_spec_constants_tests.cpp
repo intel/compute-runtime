@@ -10,14 +10,14 @@
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_cif.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "fixtures/device_fixture.h"
-#include "global_environment.h"
 #include "gmock/gmock.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_cif.h"
-#include "mocks/mock_compilers.h"
-#include "mocks/mock_program.h"
 
 #include <memory>
 

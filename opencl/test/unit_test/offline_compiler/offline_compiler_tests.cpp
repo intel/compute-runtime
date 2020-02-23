@@ -12,12 +12,12 @@
 #include "core/helpers/hw_cmds.h"
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "compiler_options.h"
 #include "environment.h"
 #include "gmock/gmock.h"
 #include "mock/mock_offline_compiler.h"
-#include "mocks/mock_compilers.h"
 
 #include <algorithm>
 #include <fstream>

@@ -10,12 +10,12 @@
 #include "core/helpers/file_io.h"
 #include "core/helpers/hw_info.h"
 #include "opencl/source/os_interface/os_inc_base.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "opencl/test/unit_test/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
 #include "compiler_options.h"
-#include "helpers/test_files.h"
-#include "mocks/mock_compilers.h"
-#include "mocks/mock_sip.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 

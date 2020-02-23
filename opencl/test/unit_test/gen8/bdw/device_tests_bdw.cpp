@@ -5,11 +5,10 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_source_level_debugger.h"
 
 using namespace NEO;
 struct BdwDeviceTest : public DeviceFixture,

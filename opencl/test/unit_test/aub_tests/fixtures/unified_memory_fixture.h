@@ -9,8 +9,7 @@
 
 #include "core/memory_manager/memory_constants.h"
 #include "opencl/source/api/api.h"
-
-#include "aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 
 namespace NEO {
 class UnifiedMemoryAubFixture : public AUBFixture {

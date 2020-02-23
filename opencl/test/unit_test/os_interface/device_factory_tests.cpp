@@ -13,10 +13,10 @@
 #include "core/os_interface/os_library.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 #include "hw_device_id.h"
-#include "mocks/mock_execution_environment.h"
 
 #include <set>
 

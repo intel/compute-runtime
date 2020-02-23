@@ -11,12 +11,11 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/extensions.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "helpers/raii_hw_helper.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_gmm.h"
 
 using namespace NEO;
 

@@ -11,14 +11,14 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gmock/gmock.h"
-#include "helpers/dispatch_flags_helper.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_builtins.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -8,8 +8,7 @@
 #pragma once
 #include "core/helpers/aligned_memory.h"
 #include "opencl/source/mem_obj/pipe.h"
-
-#include "mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

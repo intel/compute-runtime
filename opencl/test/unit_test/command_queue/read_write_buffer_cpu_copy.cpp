@@ -7,10 +7,9 @@
 
 #include "core/gmm_helper/gmm.h"
 #include "core/helpers/basic_math.h"
+#include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
-
-#include "command_queue/enqueue_read_buffer_fixture.h"
-#include "mocks/mock_command_queue.h"
 
 using namespace NEO;
 

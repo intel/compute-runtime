@@ -5,14 +5,13 @@
  *
  */
 
-#include "fixtures/memory_manager_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 
 #include "core/command_stream/preemption.h"
 #include "core/helpers/hw_helper.h"
 #include "core/os_interface/os_context.h"
-
-#include "mocks/mock_csr.h"
-#include "mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

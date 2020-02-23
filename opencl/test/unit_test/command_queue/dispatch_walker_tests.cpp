@@ -15,18 +15,17 @@
 #include "opencl/source/event/perf_counter.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_mdi.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "helpers/hw_parse.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_mdi.h"
-#include "mocks/mock_program.h"
 
 using namespace NEO;
 

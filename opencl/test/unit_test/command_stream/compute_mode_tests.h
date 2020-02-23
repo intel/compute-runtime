@@ -8,10 +8,9 @@
 #pragma once
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/helpers/hw_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
-
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device.h"
 
 using namespace NEO;
 

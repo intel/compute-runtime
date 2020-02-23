@@ -17,12 +17,12 @@
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "opencl/source/sharings/d3d/enable_d3d.h"
+#include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_sharing_factory.h"
 
-#include "fixtures/d3d_test_fixture.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_sharing_factory.h"
 
 namespace NEO {
 TYPED_TEST_CASE_P(D3DTests);

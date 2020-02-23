@@ -7,12 +7,12 @@
 
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/scenario_test_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -6,11 +6,11 @@
  */
 
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_sampler.h"
 
-#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_sampler.h"
 #include "patch_list.h"
 
 #include <tuple>

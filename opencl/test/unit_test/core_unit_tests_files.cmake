@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(igdrcl_tests PRIVATE ${NEO_RUNTIME_TESTS_DIR}/core_unit_tests_files.cmake)
+target_sources(igdrcl_tests PRIVATE ${NEO_SOURCE_DIR}/opencl/test/unit_test/core_unit_tests_files.cmake)
 
 append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
   NEO_CORE_COMMAND_CONTAINER_TESTS

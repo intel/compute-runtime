@@ -8,10 +8,9 @@
 #include "core/direct_submission/dispatchers/render_dispatcher.h"
 #include "core/direct_submission/linux/drm_direct_submission.h"
 #include "core/os_interface/linux/os_context_linux.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "os_interface/linux/drm_mock.h"
 
 #include <memory>
 

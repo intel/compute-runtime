@@ -8,15 +8,14 @@
 #pragma once
 #include "core/helpers/hw_info.h"
 #include "core/memory_manager/internal_allocation_storage.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
-
-#include "fixtures/buffer_fixture.h"
-#include "helpers/execution_environment_helper.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

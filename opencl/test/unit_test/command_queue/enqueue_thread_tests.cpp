@@ -13,11 +13,10 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

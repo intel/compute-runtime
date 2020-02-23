@@ -13,10 +13,9 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/libult/create_command_stream.h"
 #include "test.h"
-
-#include "helpers/variable_backup.h"
-#include "libult/create_command_stream.h"
 
 namespace NEO {
 bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {

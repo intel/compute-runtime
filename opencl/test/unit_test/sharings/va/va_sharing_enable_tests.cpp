@@ -7,11 +7,11 @@
 
 #include "opencl/source/sharings/va/enable_va.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

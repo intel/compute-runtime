@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/hw_info_config_tests.h"
+#include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "core/helpers/hw_helper.h"
 

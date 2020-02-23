@@ -8,8 +8,8 @@ project(igdrcl_mt_tests)
 
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${NEO_RUNTIME_TESTS_DIR}/libult/os_interface.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/ult_configuration.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
   ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   $<TARGET_OBJECTS:igdrcl_libult>
@@ -30,11 +30,11 @@ target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_RUNTIME_TESTS_DIR}/os_interface/windows/wddm_create.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_neo_create.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 

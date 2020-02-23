@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/windows/mock_environment_variables.h"
+#include "opencl/test/unit_test/os_interface/windows/mock_environment_variables.h"
 
 #include "opencl/source/os_interface/windows/environment_variables.h"
 

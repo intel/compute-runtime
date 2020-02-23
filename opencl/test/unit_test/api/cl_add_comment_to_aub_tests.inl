@@ -10,10 +10,9 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/platform/platform.h"
-
-#include "api/cl_api_tests.h"
-#include "mocks/mock_aub_center.h"
-#include "mocks/mock_aub_manager.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/mocks/mock_aub_center.h"
+#include "opencl/test/unit_test/mocks/mock_aub_manager.h"
 
 using namespace NEO;
 

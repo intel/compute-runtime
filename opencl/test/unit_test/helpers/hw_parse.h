@@ -12,8 +12,8 @@
 #include "core/helpers/ptr_math.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 
-#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
 
 namespace NEO {

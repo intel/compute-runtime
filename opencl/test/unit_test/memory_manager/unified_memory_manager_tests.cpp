@@ -11,14 +11,14 @@
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_svm_manager.h"
 
 using namespace NEO;
 

@@ -6,8 +6,6 @@
 
 project(igdrcl_tests)
 
-include_directories(${NEO_RUNTIME_TESTS_DIR})
-
 set(TEST_PROJECTS_FOLDER "opencl runtime")
 set(PLATFORM_SPECIFIC_TARGETS_FOLDER "${TEST_PROJECTS_FOLDER}/test platforms")
 
@@ -52,7 +50,7 @@ set(IGDRCL_SRCS_tests_local
 )
 
 if(WIN32)
-   list(APPEND IGDRCL_SRCS_tests_local ${NEO_RUNTIME_TESTS_DIR}/os_interface/windows/wddm_create.cpp)
+   list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp)
 endif()
 
 add_subdirectory(libult)
@@ -93,7 +91,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
 
 if(DEFINED AUB_STREAM_DIR)
   add_library (aub_stream_mock_lib OBJECT EXCLUDE_FROM_ALL
-    ${NEO_RUNTIME_TESTS_DIR}/aub_stream_mocks/aub_stream_interface_mock.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/aub_stream_mocks/aub_stream_interface_mock.cpp
   )
   list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
@@ -108,7 +106,7 @@ add_executable(igdrcl_tests
   ${IGDRCL_SRCS_tests_local}
 )
 
-include(${NEO_RUNTIME_TESTS_DIR}/core_unit_tests_files.cmake)
+include(${NEO_SOURCE_DIR}/opencl/test/unit_test/core_unit_tests_files.cmake)
 
 hide_subdir(gen_common)
 add_subdirectory(gen_common)
@@ -155,7 +153,7 @@ else()
 endif()
 
 target_include_directories(igdrcl_tests PRIVATE
-  ${NEO_RUNTIME_TESTS_DIR}/mocks${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
   ${ENGINE_NODE_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -176,10 +174,10 @@ function(neo_copy_test_files target product)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
     COMMAND echo copying built-in kernel files from ${BUILT_IN_KERNEL_DIR}/kernels to ${outputdir}/test_files
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILT_IN_KERNEL_DIR}/kernels ${outputdir}/test_files
-    COMMAND echo copying test files from ${NEO_RUNTIME_TESTS_DIR}/test_files to ${outputdir}/test_files
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${NEO_RUNTIME_TESTS_DIR}/test_files ${outputdir}/test_files
+    COMMAND echo copying test files from ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files to ${outputdir}/test_files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files ${outputdir}/test_files
     COMMAND WORKING_DIRECTORY ${TargetDir}
-    DEPENDS ${NEO_RUNTIME_TESTS_DIR}/test_files
+    DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
@@ -494,7 +492,7 @@ macro(macro_for_each_gen)
         set(sip_kernel_output_file)
         set(sip_debug_kernel_output_file)
         set(sip_debug_local_kernel_output_file)
-        list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_${NEO_BITS}.ll")
+        list(APPEND sip_kernel_file_name "opencl/test/unit_test/test_files/sip_dummy_kernel_${NEO_BITS}.ll")
         list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_${NEO_BITS}")
         list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_${NEO_BITS}")
 

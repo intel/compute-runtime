@@ -5,9 +5,8 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
-
-#include "fixtures/platform_fixture.h"
 
 using namespace NEO;
 

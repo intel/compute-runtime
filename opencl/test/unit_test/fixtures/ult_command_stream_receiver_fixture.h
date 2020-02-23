@@ -12,12 +12,11 @@
 #include "core/gmm_helper/gmm_helper.h"
 #include "core/helpers/cache_policy.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "fixtures/device_fixture.h"
-#include "helpers/hw_parse.h"
-#include "helpers/unit_test_helper.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
 

@@ -8,9 +8,9 @@
 #pragma once
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "test.h"
 
-#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
 
 #include <cinttypes>

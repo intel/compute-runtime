@@ -5,11 +5,11 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
 
 class SchedulerSourceTest : public testing::Test {
   public:

@@ -17,14 +17,13 @@
 #include "opencl/source/event/perf_counter.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
+#include "opencl/test/unit_test/fixtures/built_in_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "command_queue/enqueue_fixture.h"
-#include "command_queue/enqueue_write_image_fixture.h"
-#include "fixtures/built_in_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

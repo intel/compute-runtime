@@ -10,11 +10,10 @@
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
-
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

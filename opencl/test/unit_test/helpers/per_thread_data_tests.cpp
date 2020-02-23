@@ -10,10 +10,10 @@
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/program/kernel_info.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_graphics_allocation.h"
 #include "patch_shared.h"
 
 using namespace NEO;

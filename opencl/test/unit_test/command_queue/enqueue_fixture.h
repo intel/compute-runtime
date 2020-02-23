@@ -10,10 +10,10 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
 
 #include "CL/cl.h"
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/image_fixture.h"
 
 #include <memory>
 

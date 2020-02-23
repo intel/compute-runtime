@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/windows/wddm_memory_manager_tests.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_memory_manager_tests.h"
 
 #include "core/gmm_helper/gmm.h"
 #include "core/gmm_helper/gmm_helper.h"
@@ -23,14 +23,13 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"
-
-#include "helpers/execution_environment_helper.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_deferred_deleter.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_os_context.h"
-#include "os_interface/windows/mock_wddm_allocation.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
+#include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
 using namespace NEO;
 using namespace ::testing;

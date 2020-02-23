@@ -9,13 +9,13 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/gl/windows/mock_gl_sharing_windows.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_gmm.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

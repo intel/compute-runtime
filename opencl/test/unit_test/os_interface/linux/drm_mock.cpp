@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/linux/drm_mock.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
 const int DrmMock::mockFd;
 

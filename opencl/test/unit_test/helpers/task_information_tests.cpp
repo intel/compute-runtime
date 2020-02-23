@@ -8,14 +8,13 @@
 #include "core/memory_manager/internal_allocation_storage.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "fixtures/dispatch_flags_fixture.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_kernel.h"
 
 #include <memory>
 

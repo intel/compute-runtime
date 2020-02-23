@@ -19,12 +19,11 @@
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "test.h"
-
-#include "mocks/mock_device.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_memory_operations_handler.h"
 
 using namespace NEO;
 

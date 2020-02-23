@@ -10,11 +10,11 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/error_mappers.h"
 #include "opencl/source/helpers/validators.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_platform.h"
 
 using namespace NEO;
 

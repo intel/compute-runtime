@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 
 #include "core/helpers/aligned_memory.h"
 #include "opencl/source/helpers/surface_formats.h"

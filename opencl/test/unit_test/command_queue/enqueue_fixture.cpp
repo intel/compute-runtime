@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 
 #include "core/helpers/ptr_math.h"
 

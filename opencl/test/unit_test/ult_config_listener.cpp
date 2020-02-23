@@ -5,7 +5,7 @@
  *
  */
 
-#include "ult_config_listener.h"
+#include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "core/execution_environment/execution_environment.h"
 #include "core/memory_manager/memory_manager.h"

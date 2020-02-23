@@ -12,13 +12,13 @@
 #include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/os_interface/linux/device_command_stream.inl"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
-#include "fixtures/mock_aub_center_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/execution_environment_helper.h"
-#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
 

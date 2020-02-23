@@ -12,11 +12,11 @@
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
+#include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "test.h"
 
-#include "fixtures/execution_model_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/hw_parse.h"
 
 using namespace NEO;
 

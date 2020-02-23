@@ -15,17 +15,16 @@
 #include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/command_queue/enqueue_migrate_mem_objects.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/event/event_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "event/event_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_event.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
-#include "os_interface/mock_performance_counters.h"
 
 namespace NEO {
 

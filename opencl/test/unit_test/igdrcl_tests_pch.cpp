@@ -5,4 +5,4 @@
  *
  */
 
-#include "igdrcl_tests_pch.h"
+#include "opencl/test/unit_test/igdrcl_tests_pch.h"

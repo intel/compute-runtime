@@ -5,7 +5,7 @@
  *
  */
 
-#include "built_ins/built_ins_file_names.h"
+#include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 
 namespace NEO {
 

@@ -10,11 +10,11 @@
 #include "core/memory_manager/graphics_allocation.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_csr.h"
 
 #include <type_traits>
 

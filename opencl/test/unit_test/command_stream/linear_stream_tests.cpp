@@ -7,9 +7,8 @@
 
 #include "core/command_stream/linear_stream.h"
 #include "core/memory_manager/graphics_allocation.h"
-
-#include "command_stream/linear_stream_fixture.h"
-#include "mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

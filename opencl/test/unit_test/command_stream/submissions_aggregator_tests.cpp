@@ -8,14 +8,13 @@
 #include "core/command_stream/submissions_aggregator.h"
 #include "core/helpers/flush_stamp.h"
 #include "opencl/source/event/event.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_csr.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

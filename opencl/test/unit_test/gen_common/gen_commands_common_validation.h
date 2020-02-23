@@ -9,10 +9,10 @@
 
 #include "core/indirect_heap/indirect_heap.h"
 #include "core/memory_manager/memory_constants.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 
-#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
-#include "helpers/unit_test_helper.h"
 
 #include <cstdint>
 

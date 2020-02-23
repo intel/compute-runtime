@@ -5,17 +5,17 @@
  *
  */
 
-#include "scheduler/scheduler_source_tests.h"
+#include "opencl/test/unit_test/scheduler/scheduler_source_tests.h"
 
 #include "core/helpers/hw_cmds.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "test.h"
 
-#include "fixtures/device_host_queue_fixture.h"
-#include "fixtures/execution_model_fixture.h"
 #include "gtest/gtest.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device_queue.h"
 // Keep this include after execution_model_fixture.h otherwise there is high chance of conflict with macros
 #include "opencl/source/builtin_kernels_simulation/opencl_c.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"

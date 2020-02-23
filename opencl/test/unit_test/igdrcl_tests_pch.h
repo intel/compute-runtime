@@ -15,9 +15,9 @@
 #include "core/helpers/ptr_math.h"
 #include "core/memory_manager/memory_constants.h"
 #include "core/sku_info/sku_info_base.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "test.h"
 
-#include "gen_common/gen_cmd_parse.h"
 #include "third_party/opencl_headers/CL/cl.h"
 
 #include <algorithm>

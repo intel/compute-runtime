@@ -5,7 +5,7 @@
  *
  */
 
-#include "context/gl/context_gl_tests.h"
+#include "opencl/test/unit_test/context/gl/context_gl_tests.h"
 
 namespace NEO {
 

@@ -7,10 +7,10 @@
 
 #include "opencl/source/compiler_interface/compiler_interface.h"
 #include "opencl/source/helpers/file_io.h"
+#include "opencl/test/unit_test/helpers/memory_management.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
 
 #include "cl_api_tests.h"
-#include "helpers/memory_management.h"
-#include "helpers/test_files.h"
 
 using namespace NEO;
 

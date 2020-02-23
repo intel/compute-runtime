@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "opencl/source/kernel/kernel.inl"
 #include "opencl/source/program/printf_handler.h"

@@ -10,15 +10,14 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
-
-#include "command_queue/command_enqueue_fixture.h"
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "helpers/unit_test_helper.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

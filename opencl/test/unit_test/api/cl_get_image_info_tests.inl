@@ -8,9 +8,9 @@
 #include "core/helpers/hw_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
-#include "mocks/mock_device.h"
 
 using namespace NEO;
 

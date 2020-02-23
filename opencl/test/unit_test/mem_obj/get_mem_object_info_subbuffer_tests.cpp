@@ -8,9 +8,9 @@
 #include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

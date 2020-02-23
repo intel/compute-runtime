@@ -6,9 +6,8 @@
  */
 
 #include "opencl/source/command_queue/command_queue.h"
-
-#include "api/cl_api_tests.h"
-#include "fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 
 #include <memory>
 

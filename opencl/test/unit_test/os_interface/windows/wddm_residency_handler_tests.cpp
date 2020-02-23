@@ -10,15 +10,14 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/utilities/stackvec.h"
 #include "opencl/source/device/cl_device.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 #include "test.h"
-
-#include "helpers/variable_backup.h"
-#include "mocks/mock_allocation_properties.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_platform.h"
-#include "mocks/mock_wddm.h"
-#include "os_interface/windows/mock_wddm_allocation.h"
-#include "os_interface/windows/wddm_fixture.h"
 
 using namespace NEO;
 

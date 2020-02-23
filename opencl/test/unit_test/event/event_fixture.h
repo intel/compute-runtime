@@ -12,14 +12,14 @@
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "command_stream/command_stream_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_buffer.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

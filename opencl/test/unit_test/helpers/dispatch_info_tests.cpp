@@ -6,13 +6,13 @@
  */
 
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "fixtures/context_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_kernel.h"
 
 #include <type_traits>
 

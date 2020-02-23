@@ -5,11 +5,11 @@
  *
  */
 
+#include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
 #include "cl_api_tests.h"
-#include "command_stream/thread_arbitration_policy_helper.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

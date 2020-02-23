@@ -5,7 +5,7 @@
  *
  */
 
-#include "program/program_tests.h"
+#include "opencl/test/unit_test/program/program_tests.h"
 
 #include "core/command_stream/command_stream_receiver_hw.h"
 #include "core/compiler_interface/intermediate_representations.h"
@@ -28,22 +28,22 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/program/program_from_binary.h"
+#include "opencl/test/unit_test/program/program_with_source.h"
 #include "test.h"
 
 #include "compiler_options.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/multi_root_device_fixture.h"
-#include "global_environment.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "helpers/kernel_binary_helper.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_platform.h"
-#include "mocks/mock_program.h"
-#include "program/program_from_binary.h"
-#include "program/program_with_source.h"
 
 #include <map>
 #include <memory>

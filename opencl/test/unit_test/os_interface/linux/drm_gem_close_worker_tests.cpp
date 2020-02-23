@@ -15,13 +15,13 @@
 #include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_execution_environment.h"
-#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <iostream>
 #include <memory>

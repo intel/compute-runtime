@@ -10,9 +10,9 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "cl_api_tests.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

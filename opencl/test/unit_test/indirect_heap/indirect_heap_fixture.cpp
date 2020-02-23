@@ -5,7 +5,7 @@
  *
  */
 
-#include "indirect_heap/indirect_heap_fixture.h"
+#include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 

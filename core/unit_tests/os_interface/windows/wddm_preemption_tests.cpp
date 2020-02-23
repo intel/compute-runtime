@@ -9,9 +9,8 @@
 #include "core/execution_environment/root_device_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 #include "test.h"
-
-#include "os_interface/windows/wddm_fixture.h"
 
 using namespace NEO;
 

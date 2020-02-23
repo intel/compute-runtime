@@ -6,14 +6,14 @@
  */
 
 #include "core/execution_environment/root_device_environment.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_ostime.h"
+#include "opencl/test/unit_test/mocks/mock_ostime_win.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_ostime.h"
-#include "mocks/mock_ostime_win.h"
-#include "mocks/mock_wddm.h"
 
 using namespace NEO;
 

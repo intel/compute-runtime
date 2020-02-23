@@ -11,11 +11,10 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-
-#include "fixtures/memory_management_fixture.h"
-#include "helpers/variable_backup.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_platform.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 

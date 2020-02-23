@@ -5,10 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 #include "test.h"
-
-#include "fixtures/hello_world_fixture.h"
-#include "fixtures/two_walker_fixture.h"
 
 using namespace NEO;
 

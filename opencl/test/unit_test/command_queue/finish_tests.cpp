@@ -6,15 +6,15 @@
  */
 
 #include "core/command_stream/command_stream_receiver.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
-#include "command_queue/command_queue_fixture.h"
-#include "command_stream/command_stream_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
-#include "helpers/hw_parse.h"
-#include "mocks/mock_command_queue.h"
 
 using namespace NEO;
 

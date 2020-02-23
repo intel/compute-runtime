@@ -9,13 +9,13 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/command_queue/enqueue_write_buffer_rect_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_enqueue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
-#include "command_queue/enqueue_write_buffer_rect_fixture.h"
-#include "fixtures/buffer_enqueue_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "gen_common/gen_commands_common_validation.h"
-#include "mocks/mock_buffer.h"
 #include "reg_configs_common.h"
 
 using namespace NEO;

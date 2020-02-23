@@ -7,9 +7,8 @@
 
 #include "core/helpers/hw_info.h"
 #include "opencl/source/device/cl_device.h"
-
-#include "api/cl_api_tests.h"
-#include "os_interface/windows/gl/gl_dll_helper.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/os_interface/windows/gl/gl_dll_helper.h"
 
 using namespace NEO;
 

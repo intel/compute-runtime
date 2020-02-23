@@ -6,9 +6,8 @@
  */
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
 
 using namespace NEO;
 

@@ -14,10 +14,9 @@
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/memory_manager/memory_banks.h"
-
-#include "command_stream/command_stream_fixture.h"
-#include "mocks/mock_allocation_properties.h"
-#include "tests_configuration.h"
+#include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/tests_configuration.h"
 
 #include <cstdint>
 

@@ -18,13 +18,13 @@
 #include "core/unit_tests/helpers/default_hw_info.h"
 #include "core/unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "opencl/test/unit_test/mocks/mock_wddm_interface20.h"
+#include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
+#include "opencl/test/unit_test/os_interface/windows/gdi_dll_fixture.h"
 #include "test.h"
 
 #include "mock_gmm_memory.h"
-#include "mocks/mock_wddm.h"
-#include "mocks/mock_wddm_interface20.h"
-#include "mocks/mock_wddm_residency_allocations_container.h"
-#include "os_interface/windows/gdi_dll_fixture.h"
 
 namespace NEO {
 struct WddmFixture : ::testing::Test {

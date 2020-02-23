@@ -24,9 +24,9 @@ add_executable(igdrcl_${target_name}
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/drm_neo_create.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/os_interface.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/aub_stream_mocks/aub_stream_interface_mock.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/create_drm_memory_manager.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/aub_stream_mocks/aub_stream_interface_mock.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}/drm_other_requests.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/create_drm_memory_manager.cpp
 )
 if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
@@ -38,7 +38,7 @@ set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS $
 target_include_directories(igdrcl_${target_name} PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}
-  ${NEO_RUNTIME_TESTS_DIR}/gen_common${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_dependencies(unit_tests igdrcl_${target_name})

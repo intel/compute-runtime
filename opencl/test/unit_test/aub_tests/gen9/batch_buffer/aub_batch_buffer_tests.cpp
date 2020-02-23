@@ -7,7 +7,7 @@
 
 #include "aub_batch_buffer_tests.h"
 
-#include "fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
 using AubBatchBufferTests = Test<NEO::DeviceFixture>;
 

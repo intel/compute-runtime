@@ -11,12 +11,11 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/libult/create_command_stream.h"
 #include "test.h"
-
-#include "fixtures/mock_aub_center_fixture.h"
-#include "helpers/execution_environment_helper.h"
-#include "helpers/variable_backup.h"
-#include "libult/create_command_stream.h"
 
 using namespace NEO;
 

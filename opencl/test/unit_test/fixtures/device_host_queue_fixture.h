@@ -10,9 +10,8 @@
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "test.h"
-
-#include "api/cl_api_tests.h"
 
 using namespace NEO;
 

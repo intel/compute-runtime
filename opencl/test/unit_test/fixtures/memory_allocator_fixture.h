@@ -11,10 +11,9 @@
 #include "core/execution_environment/execution_environment.h"
 #include "core/helpers/hw_helper.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-
-#include "fixtures/memory_management_fixture.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

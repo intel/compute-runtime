@@ -8,9 +8,9 @@
 #pragma once
 #include "opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
+#include "opencl/test/unit_test/os_interface/windows/gl/gl_dll_helper.h"
 
 #include "config.h"
-#include "os_interface/windows/gl/gl_dll_helper.h"
 
 #include <cstring>
 

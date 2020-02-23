@@ -10,7 +10,7 @@ set(CLOC_SEGFAULT_TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/os_library.h
-  ${NEO_RUNTIME_TESTS_DIR}/helpers/debug_helpers.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
 )
 
 if(WIN32)

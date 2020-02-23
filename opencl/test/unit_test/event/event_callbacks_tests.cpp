@@ -8,12 +8,11 @@
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_event.h"
 
 #include <memory>
 

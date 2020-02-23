@@ -8,9 +8,9 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
 
 #include "cl_api_tests.h"
-#include "helpers/variable_backup.h"
 
 using namespace NEO;
 

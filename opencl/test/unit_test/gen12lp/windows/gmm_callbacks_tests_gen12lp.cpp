@@ -15,11 +15,10 @@
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
-
-#include "helpers/execution_environment_helper.h"
-#include "helpers/hw_parse.h"
-#include "libult/ult_command_stream_receiver.h"
 
 using namespace NEO;
 

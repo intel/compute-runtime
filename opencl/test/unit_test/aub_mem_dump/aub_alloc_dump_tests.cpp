@@ -10,13 +10,12 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "mocks/mock_gmm.h"
-#include "mocks/mock_gmm_resource_info.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

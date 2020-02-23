@@ -7,9 +7,9 @@
 
 #pragma once
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "CL/cl.h"
-#include "mocks/mock_context.h"
 
 #include <cassert>
 #include <memory>

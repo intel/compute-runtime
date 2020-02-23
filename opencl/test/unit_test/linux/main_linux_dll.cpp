@@ -14,16 +14,16 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/helpers/default_hw_info.inl"
 #include "core/unit_tests/helpers/ult_hw_config.inl"
+#include "opencl/test/unit_test/custom_event_listener.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/linux/drm_wrap.h"
+#include "opencl/test/unit_test/linux/mock_os_layer.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
-#include "custom_event_listener.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "helpers/variable_backup.h"
-#include "linux/drm_wrap.h"
-#include "linux/mock_os_layer.h"
-#include "mocks/mock_execution_environment.h"
-#include "os_interface/linux/device_command_stream_fixture.h"
 
 #include <string>
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "mocks/mock_gmm_client_context_base.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_client_context_base.h"
 
 namespace NEO {
 class MockGmmClientContext : public MockGmmClientContextBase {

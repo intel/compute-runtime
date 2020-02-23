@@ -8,8 +8,7 @@
 #pragma once
 
 #include "core/utilities/stackvec.h"
-
-#include "helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
 
 #include <memory>
 #include <string>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/debug_file_reader_tests.inl"
+#include "opencl/test/unit_test/utilities/debug_file_reader_tests.inl"
 
 using namespace NEO;
 using namespace std;

@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
-#include "global_environment.h"
-#include "helpers/test_files.h"
+#include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/helpers/test_files.h"
 
 #include <string>
 

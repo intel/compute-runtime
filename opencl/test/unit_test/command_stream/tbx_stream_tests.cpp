@@ -6,10 +6,10 @@
  */
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "opencl/test/unit_test/mocks/mock_tbx_sockets.h"
+#include "opencl/test/unit_test/mocks/mock_tbx_stream.h"
 
 #include "gtest/gtest.h"
-#include "mocks/mock_tbx_sockets.h"
-#include "mocks/mock_tbx_stream.h"
 
 using namespace NEO;
 

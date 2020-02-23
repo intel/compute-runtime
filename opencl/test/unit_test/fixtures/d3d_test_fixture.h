@@ -6,13 +6,12 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_d3d_objects.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
-
-#include "fixtures/platform_fixture.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_d3d_objects.h"
-#include "mocks/mock_gmm.h"
 
 namespace NEO {
 template <>

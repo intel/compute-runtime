@@ -7,9 +7,8 @@
 
 #include "core/helpers/basic_math.h"
 #include "core/helpers/string.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
-
-#include "helpers/unit_test_helper.h"
 
 #include <algorithm>
 #include <cstdint>

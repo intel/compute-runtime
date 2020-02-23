@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "core/device/device.h"
 

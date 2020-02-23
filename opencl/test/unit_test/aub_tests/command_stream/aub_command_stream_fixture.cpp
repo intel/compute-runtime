@@ -5,7 +5,7 @@
  *
  */
 
-#include "aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 
 #include "core/command_stream/command_stream_receiver.h"
 #include "core/device/device.h"
@@ -14,11 +14,11 @@
 #include "core/unit_tests/helpers/memory_management.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/tests_configuration.h"
 
-#include "gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_device.h"
-#include "tests_configuration.h"
 
 namespace NEO {
 

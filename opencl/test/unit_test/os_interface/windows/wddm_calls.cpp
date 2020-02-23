@@ -6,9 +6,8 @@
  */
 
 #include "core/memory_manager/host_ptr_defines.h"
-
-#include "mocks/mock_wddm.h"
-#include "os_interface/windows/ult_dxgi_factory.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
+#include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
 
 namespace NEO {
 

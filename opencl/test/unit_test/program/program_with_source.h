@@ -8,13 +8,12 @@
 #pragma once
 
 #include "core/compiler_interface/compiler_interface.h"
-
-#include "fixtures/context_fixture.h"
-#include "fixtures/memory_management_fixture.h"
-#include "fixtures/platform_fixture.h"
-#include "fixtures/program_fixture.h"
-#include "helpers/kernel_binary_helper.h"
-#include "mocks/mock_context.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
 

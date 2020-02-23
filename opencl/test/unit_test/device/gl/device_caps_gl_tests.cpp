@@ -10,9 +10,9 @@
 #include "core/helpers/hw_info.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gmock/gmock.h"
 
 #include <memory>

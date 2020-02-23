@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "mocks/mock_gmm_memory_base.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_memory_base.h"
 
 namespace NEO {
 

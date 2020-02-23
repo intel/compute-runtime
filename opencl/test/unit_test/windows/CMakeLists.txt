@@ -20,7 +20,7 @@ add_executable(igdrcl_windows_dll_tests
   ${NEO_SOURCE_DIR}/opencl/source/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/windows/os_interface.cpp
   ${NEO_SOURCE_DIR}/core/os_interface/windows/wddm/wddm_create.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/ult_configuration.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
@@ -31,7 +31,7 @@ target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CO
 
 target_include_directories(igdrcl_windows_dll_tests PRIVATE
   ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX}
-  ${NEO_RUNTIME_TESTS_DIR}/gen_common${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

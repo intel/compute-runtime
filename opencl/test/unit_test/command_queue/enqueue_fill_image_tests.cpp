@@ -6,11 +6,11 @@
  */
 
 #include "opencl/source/helpers/convert_color.h"
+#include "opencl/test/unit_test/command_queue/enqueue_fill_image_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
 
-#include "command_queue/enqueue_fill_image_fixture.h"
-#include "gen_common/gen_commands_common_validation.h"
-#include "helpers/unit_test_helper.h"
 #include "reg_configs_common.h"
 
 #include <algorithm>

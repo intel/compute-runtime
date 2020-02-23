@@ -6,9 +6,9 @@
  */
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
-#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

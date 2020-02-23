@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_deferred_deleter.h"
+#include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
 
 #include "core/memory_manager/deferrable_deletion.h"
 #include "core/os_interface/os_thread.h"

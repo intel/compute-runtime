@@ -5,14 +5,13 @@
  *
  */
 
-#include "mocks/linux/mock_drm_memory_manager.h"
+#include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 
 #include "core/os_interface/linux/allocator_helper.h"
 #include "core/os_interface/linux/drm_memory_manager.h"
-
-#include "mocks/mock_allocation_properties.h"
-#include "mocks/mock_host_ptr_manager.h"
-#include "mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+#include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 #include <atomic>
 

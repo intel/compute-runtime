@@ -12,15 +12,15 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/program_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "CL/cl.h"
 #include "compiler_options.h"
-#include "fixtures/device_fixture.h"
-#include "fixtures/program_fixture.h"
 #include "gtest/gtest.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_program.h"
 
 #include <type_traits>
 

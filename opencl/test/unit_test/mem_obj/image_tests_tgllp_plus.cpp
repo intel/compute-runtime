@@ -6,11 +6,10 @@
  */
 
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
-
-#include "fixtures/device_fixture.h"
-#include "fixtures/image_fixture.h"
-#include "mocks/mock_context.h"
 
 using namespace NEO;
 

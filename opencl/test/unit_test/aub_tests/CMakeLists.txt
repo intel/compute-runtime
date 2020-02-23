@@ -11,7 +11,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
-  ${NEO_RUNTIME_TESTS_DIR}/libult/os_interface.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   $<TARGET_OBJECTS:igdrcl_libult>
@@ -40,7 +40,7 @@ set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 if(WIN32)
   target_include_directories(igdrcl_aub_tests PRIVATE
-    ${NEO_RUNTIME_TESTS_DIR}/mocks${BRANCH_DIR_SUFFIX}
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
   )
 endif()
 
@@ -56,12 +56,12 @@ if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
     ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
     ${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory.cpp
-    ${NEO_RUNTIME_TESTS_DIR}/os_interface/windows/wddm_create.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_aub_tests PRIVATE
     ${NEO_SOURCE_DIR}/core/os_interface/linux/gmm_interface_linux.cpp
-    ${NEO_RUNTIME_TESTS_DIR}/os_interface/linux/drm_neo_create.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 

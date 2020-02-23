@@ -8,11 +8,10 @@
 #include "core/gmm_helper/gmm.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
-
-#include "helpers/raii_hw_helper.h"
-#include "mocks/mock_gmm_resource_info.h"
-#include "sharings/unified/unified_sharing_fixtures.h"
-#include "sharings/unified/unified_sharing_mocks.h"
+#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
+#include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"
 
 using UnifiedSharingImageTestsWithMemoryManager = UnifiedSharingFixture<true, true>;
 using UnifiedSharingImageTestsWithInvalidMemoryManager = UnifiedSharingFixture<true, false>;

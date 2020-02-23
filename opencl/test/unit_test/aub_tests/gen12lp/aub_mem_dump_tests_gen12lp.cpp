@@ -5,8 +5,8 @@
  *
  */
 
-#include "aub_tests/command_stream/aub_mem_dump_tests.h"
-#include "fixtures/device_fixture.h"
+#include "opencl/test/unit_test/aub_tests/command_stream/aub_mem_dump_tests.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
 namespace NEO {
 

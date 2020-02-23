@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/get_gpgpu_engines_tests.inl"
-#include "helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
+#include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 using HwHelperTestGen11 = HwHelperTest;
 

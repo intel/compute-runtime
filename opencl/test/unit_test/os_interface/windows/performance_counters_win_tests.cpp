@@ -5,8 +5,9 @@
  *
  */
 
+#include "opencl/test/unit_test/os_interface/windows/mock_performance_counters_win.h"
+
 #include "gtest/gtest.h"
-#include "os_interface/windows/mock_performance_counters_win.h"
 
 using namespace NEO;
 

@@ -15,18 +15,17 @@
 #include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "test.h"
-
-#include "command_queue/command_queue_fixture.h"
-#include "command_queue/enqueue_map_buffer_fixture.h"
-#include "fixtures/buffer_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "helpers/hw_parse.h"
-#include "libult/ult_command_stream_receiver.h"
-#include "mocks/mock_command_queue.h"
-#include "mocks/mock_context.h"
-#include "mocks/mock_kernel.h"
-#include "mocks/mock_svm_manager.h"
 
 using namespace NEO;
 

@@ -7,11 +7,10 @@
 
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
-
-#include "mocks/mock_context.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

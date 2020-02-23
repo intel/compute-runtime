@@ -12,15 +12,14 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
+#include "opencl/test/unit_test/helpers/execution_environment_helper.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "test.h"
-
-#include "fixtures/memory_allocator_multi_device_fixture.h"
-#include "fixtures/memory_manager_fixture.h"
-#include "helpers/execution_environment_helper.h"
-#include "mocks/mock_execution_environment.h"
-#include "mocks/mock_graphics_allocation.h"
-#include "mocks/mock_memory_manager.h"
-#include "mocks/mock_os_context.h"
 
 using namespace NEO;
 

@@ -9,12 +9,12 @@
 #include "core/helpers/ptr_math.h"
 #include "core/os_interface/os_context.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "test.h"
 
 #include "aub_command_stream_fixture.h"
-#include "command_queue/command_queue_fixture.h"
-#include "fixtures/device_fixture.h"
-#include "gen_common/gen_cmd_parse.h"
 
 #include <cstdint>
 

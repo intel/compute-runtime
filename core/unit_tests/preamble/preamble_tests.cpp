@@ -11,11 +11,11 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/utilities/stackvec.h"
 #include "opencl/source/gen11/reg_configs.h"
+#include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
-#include "helpers/hw_parse.h"
-#include "mocks/mock_device.h"
-#include "mocks/mock_graphics_allocation.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>

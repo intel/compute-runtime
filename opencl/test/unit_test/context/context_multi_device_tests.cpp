@@ -7,9 +7,9 @@
 
 #include "core/helpers/array_count.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 
-#include "fixtures/device_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

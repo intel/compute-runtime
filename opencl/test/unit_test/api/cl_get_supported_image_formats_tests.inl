@@ -8,9 +8,9 @@
 #include "core/device/device.h"
 #include "core/unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
-#include "mocks/mock_device.h"
 
 using namespace NEO;
 
