@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gen12lp/hw_info.h"
+#include "gen12lp/hw_info.h"
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.inl"

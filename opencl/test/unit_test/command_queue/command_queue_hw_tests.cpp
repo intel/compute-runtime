@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

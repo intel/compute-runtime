@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/memory_pool.h"
+#include "memory_manager/memory_pool.h"
 
 #include "gtest/gtest.h"
 

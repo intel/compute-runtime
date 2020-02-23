@@ -7,9 +7,9 @@
 
 #include "opencl/source/aub/aub_center.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/hw_info.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/hw_helper.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/aub/aub_helper.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"

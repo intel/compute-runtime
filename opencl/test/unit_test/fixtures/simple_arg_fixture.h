@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/command_stream/command_stream_receiver.h"
+#include "command_stream/command_stream_receiver.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"

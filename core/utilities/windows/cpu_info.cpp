@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/cpu_info.h"
+#include "utilities/cpu_info.h"
 
 #include <intrin.h>
 

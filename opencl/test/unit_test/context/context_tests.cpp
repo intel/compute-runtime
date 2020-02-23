@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "device/device.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/device_queue/device_queue.h"

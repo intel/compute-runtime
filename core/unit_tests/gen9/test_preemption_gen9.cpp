@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/helpers/hw_helper.h"
-#include "core/unit_tests/fixtures/preemption_fixture.h"
+#include "command_stream/preemption.h"
+#include "helpers/hw_helper.h"
+#include "unit_tests/fixtures/preemption_fixture.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"

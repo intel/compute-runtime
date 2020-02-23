@@ -7,7 +7,7 @@
 
 #include "default_cl_cache_config.h"
 
-#include "core/utilities/debug_settings_reader.h"
+#include "utilities/debug_settings_reader.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include "config.h"

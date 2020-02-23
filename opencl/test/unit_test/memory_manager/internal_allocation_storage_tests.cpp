@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/os_interface/os_context.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/containers_tests_helpers.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "os_interface/os_context.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/containers_tests_helpers.h"
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"

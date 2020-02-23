@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/basic_math.h"
-#include "core/memory_manager/memory_constants.h"
+#include "helpers/basic_math.h"
+#include "memory_manager/memory_constants.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/mem_obj.h"

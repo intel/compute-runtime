@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/abort.h"
+#include "helpers/abort.h"
 
 #define UNRECOVERABLE_IF(expression)                 \
                                                      \

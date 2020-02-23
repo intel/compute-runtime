@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gmm_helper/resource_info.h"
+#include "gmm_helper/resource_info.h"
 #include "opencl/source/helpers/surface_formats.h"
 
 #include "gmock/gmock.h"

@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/os_interface/windows/os_interface.h"
+#include "os_interface/windows/os_interface.h"
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/windows/sys_calls.h"
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/os_interface/windows/wddm_memory_operations_handler.h"
+#include "execution_environment/root_device_environment.h"
+#include "os_interface/windows/sys_calls.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/wddm_memory_operations_handler.h"
 
 namespace NEO {
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/debug_helpers.h"
-#include "core/memory_manager/unified_memory_manager.h"
-#include "core/page_fault_manager/cpu_page_fault_manager.h"
+#include "helpers/debug_helpers.h"
+#include "memory_manager/unified_memory_manager.h"
+#include "page_fault_manager/cpu_page_fault_manager.h"
 #include "opencl/source/command_queue/command_queue.h"
 
 namespace NEO {

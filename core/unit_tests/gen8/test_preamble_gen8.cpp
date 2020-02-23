@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/thread_arbitration_policy.h"
-#include "core/helpers/preamble.h"
-#include "core/unit_tests/preamble/preamble_fixture.h"
+#include "command_stream/thread_arbitration_policy.h"
+#include "helpers/preamble.h"
+#include "unit_tests/preamble/preamble_fixture.h"
 #include "opencl/source/gen8/reg_configs.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 

@@ -7,9 +7,9 @@
 
 #include "offline_compiler/ocloc_fatbinary.h"
 
-#include "core/device_binary_format/ar/ar_encoder.h"
-#include "core/helpers/file_io.h"
-#include "core/helpers/hw_info.h"
+#include "device_binary_format/ar/ar_encoder.h"
+#include "helpers/file_io.h"
+#include "helpers/hw_info.h"
 #include "offline_compiler/offline_compiler.h"
 #include "offline_compiler/utilities/safety_caller.h"
 

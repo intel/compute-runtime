@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/get_info.h"
+#include "helpers/get_info.h"
 
-#include "core/device/device.h"
+#include "device/device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/base_object.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/array_count.h"
+#include "helpers/array_count.h"
 #include "offline_compiler/decoder/binary_decoder.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 

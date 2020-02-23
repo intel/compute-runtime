@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "core/device_binary_format/device_binary_formats.h"
-#include "core/helpers/ptr_math.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/stackvec.h"
+#include "device_binary_format/device_binary_formats.h"
+#include "helpers/ptr_math.h"
+#include "utilities/arrayref.h"
+#include "utilities/stackvec.h"
 
 #include "igfxfmid.h"
 #include "patch_g7.h"

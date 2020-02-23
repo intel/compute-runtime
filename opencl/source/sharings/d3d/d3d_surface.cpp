@@ -7,10 +7,10 @@
 
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/gmm_types_converter.h"
-#include "core/helpers/get_info.h"
-#include "core/memory_manager/memory_manager.h"
+#include "gmm_helper/gmm.h"
+#include "gmm_helper/gmm_types_converter.h"
+#include "helpers/get_info.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"

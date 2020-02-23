@@ -7,7 +7,7 @@
 
 #include "opencl_c.h"
 
-#include "core/helpers/string.h"
+#include "helpers/string.h"
 
 namespace BuiltinKernelsSimulation {
 

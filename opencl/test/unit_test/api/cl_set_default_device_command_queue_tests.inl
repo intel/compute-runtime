@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/device/device.h"
+#include "device/device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "test.h"

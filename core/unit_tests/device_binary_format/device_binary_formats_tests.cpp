@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/device_binary_format/ar/ar_encoder.h"
-#include "core/device_binary_format/device_binary_formats.h"
-#include "core/device_binary_format/elf/elf_encoder.h"
-#include "core/device_binary_format/elf/ocl_elf.h"
-#include "core/program/program_info.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "device_binary_format/ar/ar_encoder.h"
+#include "device_binary_format/device_binary_formats.h"
+#include "device_binary_format/elf/elf_encoder.h"
+#include "device_binary_format/elf/ocl_elf.h"
+#include "program/program_info.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 TEST(DecodeError, WhenStringRepresentationIsNeededThenAsStringEncodesProperly) {

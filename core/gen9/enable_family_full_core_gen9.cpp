@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gen8/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
+#include "gen8/hw_cmds.h"
+#include "helpers/hw_helper.h"
 
 #include <type_traits>
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/ptr_math.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

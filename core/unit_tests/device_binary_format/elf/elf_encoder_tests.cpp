@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/device_binary_format/elf/elf_encoder.h"
-#include "core/utilities/range.h"
+#include "device_binary_format/elf/elf_encoder.h"
+#include "utilities/range.h"
 #include "test.h"
 
 using namespace NEO::Elf;

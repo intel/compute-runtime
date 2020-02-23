@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/hw_helper.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/hw_helper.h"
 
 namespace NEO {
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/ptr_math.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/ptr_math.h"
 
 #include <atomic>
 #include <cstddef>

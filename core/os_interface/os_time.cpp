@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/os_interface/os_time.h"
+#include "os_interface/os_time.h"
 
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 
 namespace NEO {
 

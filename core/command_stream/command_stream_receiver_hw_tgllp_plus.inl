@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/helpers/state_compute_mode_helper.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>

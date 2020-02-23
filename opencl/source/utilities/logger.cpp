@@ -7,8 +7,8 @@
 
 #include "opencl/source/utilities/logger.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/timestamp_packet.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/timestamp_packet.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"

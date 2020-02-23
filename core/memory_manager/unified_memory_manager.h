@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/common_types.h"
-#include "core/unified_memory/unified_memory.h"
-#include "core/utilities/spinlock.h"
+#include "helpers/common_types.h"
+#include "unified_memory/unified_memory.h"
+#include "utilities/spinlock.h"
 
 #include "memory_properties_flags.h"
 

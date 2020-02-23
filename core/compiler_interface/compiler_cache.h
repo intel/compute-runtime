@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/utilities/arrayref.h"
+#include "utilities/arrayref.h"
 
 #include <cstdint>
 #include <cstring>

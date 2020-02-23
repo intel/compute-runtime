@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/reference_tracked_object.h"
+#include "utilities/reference_tracked_object.h"
 
 #include "gtest/gtest.h"
 

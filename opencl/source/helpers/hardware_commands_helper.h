@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/indirect_heap/indirect_heap.h"
+#include "indirect_heap/indirect_heap.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/kernel/kernel.h"

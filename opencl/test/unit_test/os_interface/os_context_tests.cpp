@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_context.h"
+#include "os_interface/os_context.h"
 
 #include "gtest/gtest.h"
 

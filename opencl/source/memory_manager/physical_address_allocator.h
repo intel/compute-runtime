@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/memory_manager/memory_constants.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/debug_helpers.h"
+#include "memory_manager/memory_constants.h"
 #include "opencl/source/memory_manager/memory_banks.h"
 
 #include <atomic>

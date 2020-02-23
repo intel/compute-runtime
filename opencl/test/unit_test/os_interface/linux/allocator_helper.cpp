@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/os_interface/linux/allocator_helper.h"
+#include "os_interface/linux/allocator_helper.h"
 
-#include "core/helpers/basic_math.h"
+#include "helpers/basic_math.h"
 
 namespace NEO {
 

@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/utilities/timer_util.h"
+#include "utilities/timer_util.h"
 
-#include "core/helpers/debug_helpers.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "helpers/debug_helpers.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 

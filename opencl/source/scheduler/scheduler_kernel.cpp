@@ -7,8 +7,8 @@
 
 #include "opencl/source/scheduler/scheduler_kernel.h"
 
-#include "core/device/device.h"
-#include "core/helpers/hw_helper.h"
+#include "device/device.h"
+#include "helpers/hw_helper.h"
 #include "opencl/source/device/cl_device.h"
 
 #include <cinttypes>

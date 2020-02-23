@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/debug_helpers.h"
-#include "core/memory_manager/memory_constants.h"
+#include "helpers/debug_helpers.h"
+#include "memory_manager/memory_constants.h"
 #include "opencl/source/utilities/logger.h"
 
 #include <algorithm>

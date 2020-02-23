@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"

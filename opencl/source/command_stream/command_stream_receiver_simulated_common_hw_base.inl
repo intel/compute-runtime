@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/gmm_helper/resource_info.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_context.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "gmm_helper/gmm.h"
+#include "gmm_helper/gmm_helper.h"
+#include "gmm_helper/resource_info.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/aub/aub_helper.h"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"

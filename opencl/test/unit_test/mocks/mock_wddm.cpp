@@ -7,10 +7,10 @@
 
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/os_interface/windows/gdi_interface.h"
-#include "core/os_interface/windows/wddm_allocation.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/aligned_memory.h"
+#include "os_interface/windows/gdi_interface.h"
+#include "os_interface/windows/wddm_allocation.h"
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
 

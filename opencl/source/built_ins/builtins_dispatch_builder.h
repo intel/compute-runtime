@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/vec.h"
+#include "helpers/vec.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/kernel/kernel.h"
 

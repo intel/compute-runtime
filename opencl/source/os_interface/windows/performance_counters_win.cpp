@@ -7,10 +7,10 @@
 
 #include "performance_counters_win.h"
 
-#include "core/device/device.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/os_time_win.h"
+#include "device/device.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/os_time_win.h"
 
 namespace NEO {
 /////////////////////////////////////////////////////

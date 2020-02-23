@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/utilities/directory.h"
+#include "utilities/directory.h"
 
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 

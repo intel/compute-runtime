@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gen12lp/hw_cmds_base.h"
+#include "gen12lp/hw_cmds_base.h"
 namespace NEO {
 
 struct TGLLP : public TGLLPFamily {

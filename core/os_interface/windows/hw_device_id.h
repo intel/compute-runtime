@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/non_copyable_or_moveable.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "helpers/non_copyable_or_moveable.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 

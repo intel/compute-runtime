@@ -7,9 +7,9 @@
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/memory_manager/deferred_deleter.h"
-#include "core/memory_manager/unified_memory_manager.h"
+#include "compiler_interface/compiler_interface.h"
+#include "memory_manager/deferred_deleter.h"
+#include "memory_manager/unified_memory_manager.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

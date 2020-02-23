@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/timestamp_packet.h"
-#include "core/os_interface/os_interface.h"
-#include "core/os_interface/windows/gdi_interface.h"
-#include "core/os_interface/windows/os_context_win.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/wddm/wddm.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/timestamp_packet.h"
+#include "os_interface/os_interface.h"
+#include "os_interface/windows/gdi_interface.h"
+#include "os_interface/windows/os_context_win.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/wddm/wddm.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"

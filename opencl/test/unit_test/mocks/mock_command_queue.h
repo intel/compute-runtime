@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/graphics_allocation.h"
+#include "memory_manager/graphics_allocation.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 

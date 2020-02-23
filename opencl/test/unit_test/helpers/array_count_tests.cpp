@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/array_count.h"
+#include "helpers/array_count.h"
 
 #include "gtest/gtest.h"
 

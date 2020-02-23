@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/command_container/command_encoder.h"
+#include "command_container/command_encoder.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 

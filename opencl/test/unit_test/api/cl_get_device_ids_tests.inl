@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/helpers/ult_hw_config.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/ult_hw_config.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 

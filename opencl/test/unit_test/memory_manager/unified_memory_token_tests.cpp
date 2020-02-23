@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/unified_memory/unified_memory.h"
-#include "core/unified_memory/usm_memory_support.h"
+#include "unified_memory/unified_memory.h"
+#include "unified_memory/usm_memory_support.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
 
 #include "gtest/gtest.h"

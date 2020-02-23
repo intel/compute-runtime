@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 
 #include "gtest/gtest.h"
 

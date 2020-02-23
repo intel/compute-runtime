@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/gmm_helper/gmm_helper.h"
+#include "gmm_helper/gmm_helper.h"
 
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/hw_info.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/os_interface/os_library.h"
-#include "core/sku_info/operations/sku_info_transfer.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/hw_info.h"
+#include "memory_manager/graphics_allocation.h"
+#include "os_interface/os_library.h"
+#include "sku_info/operations/sku_info_transfer.h"
 
 #include "gmm_client_context.h"
 

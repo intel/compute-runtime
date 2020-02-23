@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/helpers/kernel_helpers.h"
+#include "helpers/kernel_helpers.h"
 
-#include "core/helpers/basic_math.h"
-#include "core/helpers/debug_helpers.h"
+#include "helpers/basic_math.h"
+#include "helpers/debug_helpers.h"
 
 #include <algorithm>
 

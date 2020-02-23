@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/gmm_helper/gmm_interface.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/os_interface/os_library.h"
+#include "gmm_helper/gmm_interface.h"
+#include "helpers/debug_helpers.h"
+#include "os_interface/os_library.h"
 
 #include <memory>
 

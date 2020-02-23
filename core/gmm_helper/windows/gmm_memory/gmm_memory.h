@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gmm_helper/windows/gmm_memory_base.h"
+#include "gmm_helper/windows/gmm_memory_base.h"
 
 namespace NEO {
 class GmmMemory : public GmmMemoryBase {

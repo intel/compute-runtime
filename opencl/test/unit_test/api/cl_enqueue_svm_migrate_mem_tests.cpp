@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/unified_memory_manager.h"
+#include "device/device.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/unified_memory_manager.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

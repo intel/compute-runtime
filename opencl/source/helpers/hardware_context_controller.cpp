@@ -7,8 +7,8 @@
 
 #include "opencl/source/helpers/hardware_context_controller.h"
 
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/os_context.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 using namespace NEO;

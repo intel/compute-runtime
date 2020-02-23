@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_context.h"
-#include "core/os_interface/windows/wddm_allocation.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "helpers/aligned_memory.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_context.h"
+#include "os_interface/windows/wddm_allocation.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 

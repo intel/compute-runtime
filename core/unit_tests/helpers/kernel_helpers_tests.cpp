@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/basic_math.h"
-#include "core/helpers/kernel_helpers.h"
+#include "helpers/basic_math.h"
+#include "helpers/kernel_helpers.h"
 #include "test.h"
 
 using namespace NEO;

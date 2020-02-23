@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/command_stream/preemption_mode.h"
-#include "core/direct_submission/direct_submission_properties.h"
-#include "core/helpers/kmd_notify_properties.h"
+#include "command_stream/preemption_mode.h"
+#include "direct_submission/direct_submission_properties.h"
+#include "helpers/kmd_notify_properties.h"
 
 #include "engine_node.h"
 #include "gtsysinfo.h"

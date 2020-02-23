@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {

@@ -7,9 +7,9 @@
 
 #include "aub_batch_buffer_tests_gen12lp.h"
 
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/utilities/tag_allocator.h"
+#include "memory_manager/graphics_allocation.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "utilities/tag_allocator.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

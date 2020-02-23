@@ -7,14 +7,14 @@
 
 #pragma once
 #ifdef SUPPORT_GEN8
-#include "core/gen8/hw_cmds.h"
+#include "gen8/hw_cmds.h"
 #endif
 #ifdef SUPPORT_GEN9
-#include "core/gen9/hw_cmds.h"
+#include "gen9/hw_cmds.h"
 #endif
 #ifdef SUPPORT_GEN11
-#include "core/gen11/hw_cmds.h"
+#include "gen11/hw_cmds.h"
 #endif
 #ifdef SUPPORT_GEN12LP
-#include "core/gen12lp/hw_cmds.h"
+#include "gen12lp/hw_cmds.h"
 #endif

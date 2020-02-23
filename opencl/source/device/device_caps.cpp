@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/basic_math.h"
-#include "core/helpers/hw_helper.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/hw_info_config.h"
-#include "core/os_interface/os_interface.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/basic_math.h"
+#include "helpers/hw_helper.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/hw_info_config.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/device/driver_info.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"

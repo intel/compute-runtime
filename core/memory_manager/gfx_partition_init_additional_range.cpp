@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/gfx_partition.h"
+#include "memory_manager/gfx_partition.h"
 
 namespace NEO {
 

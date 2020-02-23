@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/resource_info.h"
+#include "gmm_helper/gmm.h"
+#include "gmm_helper/resource_info.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"

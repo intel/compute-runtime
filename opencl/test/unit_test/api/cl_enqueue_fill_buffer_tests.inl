@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/command_queue/command_queue.h"
 
 #include "cl_api_tests.h"

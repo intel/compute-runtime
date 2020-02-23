@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/utilities/idlist.h"
+#include "utilities/idlist.h"
 
 #include <atomic>
 #include <condition_variable>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/unified_memory_manager.h"
+#include "memory_manager/unified_memory_manager.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

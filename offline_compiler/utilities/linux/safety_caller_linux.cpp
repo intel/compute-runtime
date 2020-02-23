@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_library.h"
+#include "os_interface/os_library.h"
 #include "offline_compiler/offline_compiler.h"
 #include "offline_compiler/utilities/linux/safety_guard_linux.h"
 

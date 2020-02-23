@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/os_memory.h"
-#include "core/utilities/heap_allocator.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/os_memory.h"
+#include "utilities/heap_allocator.h"
 
 #include <array>
 

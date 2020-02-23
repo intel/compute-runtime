@@ -7,8 +7,8 @@
 
 #include "opencl/source/tbx/tbx_sockets_imp.h"
 
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/string.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/string.h"
 
 #ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN

@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/linux/drm_memory_manager.h"
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/unit_tests/helpers/default_hw_info.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/linux/drm_memory_manager.h"
+#include "os_interface/linux/drm_neo.h"
+#include "unit_tests/helpers/default_hw_info.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 

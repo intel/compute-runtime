@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/memory_manager.h"
+#include "memory_manager/memory_manager.h"
 
 namespace NEO {
 uint32_t MemoryManager::getBanksCount() {

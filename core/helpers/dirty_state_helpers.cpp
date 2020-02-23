@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/dirty_state_helpers.h"
+#include "helpers/dirty_state_helpers.h"
 
-#include "core/indirect_heap/indirect_heap.h"
+#include "indirect_heap/indirect_heap.h"
 
 using namespace NEO;
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/utilities/debug_settings_reader.h"
+#include "utilities/debug_settings_reader.h"
 
 #include <memory>
 

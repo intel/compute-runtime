@@ -7,7 +7,7 @@
 
 #include "opencl/source/os_interface/windows/environment_variables.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
+#include "debug_settings/debug_settings_manager.h"
 
 #include <Windows.h>
 

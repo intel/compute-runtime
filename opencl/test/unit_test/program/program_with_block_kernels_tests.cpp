@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/device/device.h"
+#include "compiler_interface/compiler_interface.h"
+#include "device/device.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"

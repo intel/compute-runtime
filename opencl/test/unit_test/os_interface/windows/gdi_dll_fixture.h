@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/os_library.h"
-#include "core/unit_tests/helpers/default_hw_info.h"
+#include "helpers/hw_info.h"
+#include "os_interface/os_library.h"
+#include "unit_tests/helpers/default_hw_info.h"
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 
 using namespace NEO;

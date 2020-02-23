@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
-#include "core/utilities/compiler_support.h"
+#include "helpers/aligned_memory.h"
+#include "utilities/compiler_support.h"
 
 #include <cstdint>
 

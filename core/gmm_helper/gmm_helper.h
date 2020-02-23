@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/gmm_helper/gmm_lib.h"
-#include "core/helpers/basic_math.h"
-#include "core/memory_manager/memory_constants.h"
+#include "gmm_helper/gmm_lib.h"
+#include "helpers/basic_math.h"
+#include "memory_manager/memory_constants.h"
 
 #include <memory>
 

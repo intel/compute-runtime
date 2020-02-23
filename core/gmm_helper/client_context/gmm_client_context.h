@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gmm_helper/client_context/gmm_client_context_base.h"
+#include "gmm_helper/client_context/gmm_client_context_base.h"
 
 namespace NEO {
 class GmmClientContext : public GmmClientContextBase {

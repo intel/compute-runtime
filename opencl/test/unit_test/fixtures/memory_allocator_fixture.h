@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/command_stream/preemption.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/hw_helper.h"
+#include "command_stream/preemption.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/hw_helper.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

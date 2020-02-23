@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gen8/hw_cmds.h"
+#include "gen8/hw_cmds.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 
 // Keep the order of device_enqueue.h and scheduler_definitions.h as the latter uses defines from the first one

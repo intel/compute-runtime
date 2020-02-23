@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "device_binary_format/patchtokens_decoder.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
 

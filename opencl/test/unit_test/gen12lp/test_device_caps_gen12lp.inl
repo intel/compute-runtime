@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_helper.h"
+#include "helpers/hw_helper.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 

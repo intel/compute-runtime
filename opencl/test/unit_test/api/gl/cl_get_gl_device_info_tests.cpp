@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/helpers/hw_info.h"
+#include "device/device.h"
+#include "helpers/hw_info.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 #include <cstring>

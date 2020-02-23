@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/linux/os_thread_linux.h"
+#include "os_interface/linux/os_thread_linux.h"
 
 namespace NEO {
 ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};

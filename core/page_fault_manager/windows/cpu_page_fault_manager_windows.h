@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/page_fault_manager/cpu_page_fault_manager.h"
+#include "page_fault_manager/cpu_page_fault_manager.h"
 
 #include <Windows.h>
 

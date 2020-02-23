@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/completion_stamp.h"
+#include "helpers/completion_stamp.h"
 
 namespace NEO {
 

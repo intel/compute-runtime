@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/os_context.h"
-#include "core/os_interface/os_interface.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/os_context.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"

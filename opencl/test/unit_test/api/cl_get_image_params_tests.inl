@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 

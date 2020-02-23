@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/helpers/array_count.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "gmm_helper/gmm.h"
+#include "helpers/array_count.h"
+#include "memory_manager/graphics_allocation.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/platform/platform.h"

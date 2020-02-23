@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/hw_info.h"
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/os_interface/os_interface.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/utilities/tag_allocator.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/hw_info.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "os_interface/os_interface.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "utilities/tag_allocator.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/perf_counter.h"
 #include "opencl/source/helpers/task_information.h"

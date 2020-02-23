@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/deferred_deleter_helper.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/deferred_deleter_helper.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
 

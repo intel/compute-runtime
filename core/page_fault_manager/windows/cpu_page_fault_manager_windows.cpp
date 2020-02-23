@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
+#include "page_fault_manager/windows/cpu_page_fault_manager_windows.h"
 
-#include "core/helpers/debug_helpers.h"
+#include "helpers/debug_helpers.h"
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {

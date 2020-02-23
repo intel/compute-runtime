@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/execution_environment/execution_environment.h"
+#include "execution_environment/execution_environment.h"
 
 #include "CL/cl.h"
 

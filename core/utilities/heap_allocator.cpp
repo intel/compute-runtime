@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/heap_allocator.h"
+#include "utilities/heap_allocator.h"
 
 namespace NEO {
 

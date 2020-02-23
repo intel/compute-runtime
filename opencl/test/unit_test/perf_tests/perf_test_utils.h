@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/utilities/timer_util.h"
+#include "utilities/timer_util.h"
 
 #include "gtest/gtest.h"
 

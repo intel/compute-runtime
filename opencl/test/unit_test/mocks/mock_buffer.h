@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
+#include "helpers/aligned_memory.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

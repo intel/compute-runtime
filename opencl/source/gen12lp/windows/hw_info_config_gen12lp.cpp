@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/hw_info_config.h"
-#include "core/os_interface/hw_info_config.inl"
-#include "core/os_interface/hw_info_config_bdw_plus.inl"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/hw_info.h"
+#include "os_interface/hw_info_config.h"
+#include "os_interface/hw_info_config.inl"
+#include "os_interface/hw_info_config_bdw_plus.inl"
 
 namespace NEO {
 

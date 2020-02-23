@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/perf_profiler.h"
+#include "utilities/perf_profiler.h"
 
 #include "test.h"
 

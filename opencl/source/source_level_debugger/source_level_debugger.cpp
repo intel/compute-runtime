@@ -7,9 +7,9 @@
 
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
 
-#include "core/debugger/debugger.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/os_interface/os_interface.h"
+#include "debugger/debugger.h"
+#include "helpers/debug_helpers.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/program/kernel_info.h"
 
 #include "igfx_debug_interchange_types.h"

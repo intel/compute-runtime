@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
+#include "helpers/ptr_math.h"
 
 #include "RelocationInfo.h"
 #include "gmock/gmock.h"

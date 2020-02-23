@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/helpers/file_io.h"
-#include "core/os_interface/device_factory.h"
-#include "core/os_interface/linux/os_context_linux.h"
-#include "core/os_interface/linux/os_interface.h"
+#include "helpers/file_io.h"
+#include "os_interface/device_factory.h"
+#include "os_interface/linux/os_context_linux.h"
+#include "os_interface/linux/os_interface.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 

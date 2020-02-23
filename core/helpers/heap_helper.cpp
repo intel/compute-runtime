@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/helpers/heap_helper.h"
+#include "helpers/heap_helper.h"
 
-#include "core/indirect_heap/indirect_heap.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/memory_manager/memory_manager.h"
+#include "indirect_heap/indirect_heap.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "memory_manager/memory_manager.h"
 
 namespace NEO {
 

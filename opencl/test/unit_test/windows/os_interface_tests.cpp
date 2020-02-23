@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/windows/os_interface.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/windows/os_interface.h"
 #include "test.h"
 
 TEST(osInterfaceTests, osInterfaceLocalMemoryEnabledByDefault) {

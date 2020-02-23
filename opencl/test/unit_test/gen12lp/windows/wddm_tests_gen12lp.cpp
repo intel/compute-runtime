@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/windows/gdi_interface.h"
+#include "command_stream/preemption.h"
+#include "execution_environment/root_device_environment.h"
+#include "os_interface/windows/gdi_interface.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/os_interface/windows/gdi_dll_fixture.h"

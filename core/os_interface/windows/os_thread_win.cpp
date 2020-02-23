@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/os_thread_win.h"
+#include "os_interface/windows/os_thread_win.h"
 namespace NEO {
 ThreadWin::ThreadWin(std::thread *thread) {
     this->thread.reset(thread);

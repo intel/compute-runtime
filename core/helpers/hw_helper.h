@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/command_stream/linear_stream.h"
-#include "core/helpers/aux_translation.h"
-#include "core/helpers/hw_cmds.h"
+#include "command_stream/linear_stream.h"
+#include "helpers/aux_translation.h"
+#include "helpers/hw_cmds.h"
 #include "opencl/source/built_ins/sip.h"
 #include "opencl/source/gen_common/aub_mapper.h"
 #include "opencl/source/mem_obj/buffer.h"

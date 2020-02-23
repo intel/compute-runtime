@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/commands/bxml_generator_glue.h"
-#include "core/gen9/hw_info.h"
-#include "core/helpers/debug_helpers.h"
+#include "commands/bxml_generator_glue.h"
+#include "gen9/hw_info.h"
+#include "helpers/debug_helpers.h"
 
 #include "igfxfmid.h"
 
@@ -20,7 +20,7 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN9 {
-#include "core/generated/gen9/hw_cmds_generated_gen9.inl"
+#include "generated/gen9/hw_cmds_generated_gen9.inl"
 };
 
 struct SKLFamily : public GEN9 {

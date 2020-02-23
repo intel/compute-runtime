@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/allocations_list.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/allocations_list.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue.h"

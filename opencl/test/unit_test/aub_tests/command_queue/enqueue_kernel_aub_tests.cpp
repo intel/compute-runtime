@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/ptr_math.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

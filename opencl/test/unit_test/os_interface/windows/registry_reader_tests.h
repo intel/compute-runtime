@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/debug_registry_reader.h"
+#include "os_interface/windows/debug_registry_reader.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {

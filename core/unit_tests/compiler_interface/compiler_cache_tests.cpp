@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/compiler_interface/compiler_cache.h"
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/hash.h"
-#include "core/helpers/hw_info.h"
-#include "core/helpers/string.h"
+#include "compiler_interface/compiler_cache.h"
+#include "compiler_interface/compiler_interface.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/hash.h"
+#include "helpers/hw_info.h"
+#include "helpers/string.h"
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"

@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "core/device/device.h"
+#include "device/device.h"
 
 namespace NEO {
 

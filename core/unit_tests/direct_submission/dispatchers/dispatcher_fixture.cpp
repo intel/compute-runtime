@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/unit_tests/direct_submission/dispatchers/dispatcher_fixture.h"
+#include "unit_tests/direct_submission/dispatchers/dispatcher_fixture.h"
 
-#include "core/helpers/aligned_memory.h"
-#include "core/memory_manager/memory_constants.h"
+#include "helpers/aligned_memory.h"
+#include "memory_manager/memory_constants.h"
 
 void DispatcherFixture::SetUp() {
     DeviceFixture::SetUp();

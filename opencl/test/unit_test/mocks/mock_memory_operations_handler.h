@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_operations_handler.h"
+#include "memory_manager/memory_operations_handler.h"
 
 namespace NEO {
 

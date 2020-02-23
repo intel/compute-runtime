@@ -5,16 +5,16 @@
  *
  */
 
-#include "core/gmm_helper/gmm_lib.h"
-#include "core/helpers/abort.h"
-#include "core/helpers/completion_stamp.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/hw_info.h"
-#include "core/helpers/kmd_notify_properties.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/sku_info/sku_info_base.h"
+#include "gmm_helper/gmm_lib.h"
+#include "helpers/abort.h"
+#include "helpers/completion_stamp.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/hw_info.h"
+#include "helpers/kmd_notify_properties.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/memory_constants.h"
+#include "sku_info/sku_info_base.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "test.h"
 

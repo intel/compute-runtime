@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/utilities/cpuintrinsics.h"
+#include "utilities/cpuintrinsics.h"
 #include "opencl/source/tracing/tracing_handle.h"
 
 #include <atomic>

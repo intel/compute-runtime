@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "core/helpers/registered_method_dispatcher.h"
-#include "core/helpers/vec.h"
-#include "core/memory_manager/surface.h"
-#include "core/utilities/stackvec.h"
+#include "helpers/registered_method_dispatcher.h"
+#include "helpers/vec.h"
+#include "memory_manager/surface.h"
+#include "utilities/stackvec.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 

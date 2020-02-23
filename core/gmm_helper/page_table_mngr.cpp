@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gmm_helper/page_table_mngr.h"
+#include "gmm_helper/page_table_mngr.h"
 
 namespace NEO {
 GmmPageTableMngr *GmmPageTableMngr::create(GmmClientContext *clientContext, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {

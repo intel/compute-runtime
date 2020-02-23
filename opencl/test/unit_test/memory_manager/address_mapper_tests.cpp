@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
+#include "helpers/aligned_memory.h"
 #include "opencl/source/memory_manager/address_mapper.h"
 #include "test.h"
 

@@ -7,12 +7,12 @@
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/hw_info.h"
-#include "core/helpers/options.h"
+#include "execution_environment/execution_environment.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/hw_helper.h"
+#include "helpers/hw_info.h"
+#include "helpers/options.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 

@@ -7,8 +7,8 @@
 
 #include "opencl/source/device_queue/device_queue.h"
 
-#include "core/helpers/hw_helper.h"
-#include "core/memory_manager/memory_manager.h"
+#include "helpers/hw_helper.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue_hw.h"

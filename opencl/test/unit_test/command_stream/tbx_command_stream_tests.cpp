@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/ptr_math.h"
-#include "core/os_interface/os_context.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/hw_helper.h"
+#include "helpers/ptr_math.h"
+#include "os_interface/os_context.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"

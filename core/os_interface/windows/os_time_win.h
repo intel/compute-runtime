@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/os_interface/os_time.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/os_time.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 #include "gfxEscape.h"
 

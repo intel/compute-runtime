@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

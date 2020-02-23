@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/linux/sys_calls.h"
+#include "os_interface/linux/sys_calls.h"
 
 #include <fcntl.h>
 #include <sys/ioctl.h>

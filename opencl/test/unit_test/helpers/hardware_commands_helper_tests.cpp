@@ -7,11 +7,11 @@
 
 #include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
 
-#include "core/helpers/basic_math.h"
-#include "core/helpers/engine_node_helper.h"
-#include "core/memory_manager/unified_memory_manager.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "helpers/basic_math.h"
+#include "helpers/engine_node_helper.h"
+#include "memory_manager/unified_memory_manager.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"

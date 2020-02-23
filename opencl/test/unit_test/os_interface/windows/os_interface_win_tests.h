@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/device_factory.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/wddm/wddm.h"
+#include "helpers/hw_info.h"
+#include "os_interface/device_factory.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/wddm/wddm.h"
 
 #include "gtest/gtest.h"
 

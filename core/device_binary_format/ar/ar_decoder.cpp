@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/device_binary_format/ar/ar_decoder.h"
+#include "device_binary_format/ar/ar_decoder.h"
 
 #include <cstdint>
 

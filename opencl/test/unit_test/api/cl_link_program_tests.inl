@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/helpers/file_io.h"
+#include "compiler_interface/compiler_interface.h"
+#include "helpers/file_io.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 

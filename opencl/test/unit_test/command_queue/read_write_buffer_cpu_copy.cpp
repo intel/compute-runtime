@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/helpers/basic_math.h"
+#include "gmm_helper/gmm.h"
+#include "helpers/basic_math.h"
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"

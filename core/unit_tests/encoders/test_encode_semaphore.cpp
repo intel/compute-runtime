@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/linear_stream.h"
-#include "core/helpers/ptr_math.h"
-#include "core/unit_tests/fixtures/command_container_fixture.h"
+#include "command_stream/linear_stream.h"
+#include "helpers/ptr_math.h"
+#include "unit_tests/fixtures/command_container_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 
 using namespace NEO;

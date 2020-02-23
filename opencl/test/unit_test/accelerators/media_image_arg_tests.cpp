@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/surface.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/surface.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"

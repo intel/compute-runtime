@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/utilities/tag_allocator.h"
+#include "helpers/aligned_memory.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "utilities/tag_allocator.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"

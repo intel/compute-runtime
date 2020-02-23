@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/global_environment.h"
 
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 
 TestEnvironment::TestEnvironment(void)

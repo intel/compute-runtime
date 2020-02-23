@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/helpers/string.h"
-#include "core/memory_manager/allocations_list.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/unified_memory_manager.h"
-#include "core/program/program_info_from_patchtokens.h"
-#include "core/unit_tests/compiler_interface/linker_mock.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "helpers/string.h"
+#include "memory_manager/allocations_list.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/unified_memory_manager.h"
+#include "program/program_info_from_patchtokens.h"
+#include "unit_tests/compiler_interface/linker_mock.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

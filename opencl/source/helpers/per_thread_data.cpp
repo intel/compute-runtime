@@ -7,8 +7,8 @@
 
 #include "opencl/source/helpers/per_thread_data.h"
 
-#include "core/command_stream/linear_stream.h"
-#include "core/helpers/debug_helpers.h"
+#include "command_stream/linear_stream.h"
+#include "helpers/debug_helpers.h"
 
 #include <array>
 

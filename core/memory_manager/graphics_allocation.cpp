@@ -7,8 +7,8 @@
 
 #include "graphics_allocation.h"
 
-#include "core/helpers/aligned_memory.h"
-#include "core/memory_manager/memory_manager.h"
+#include "helpers/aligned_memory.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/utilities/logger.h"
 
 namespace NEO {

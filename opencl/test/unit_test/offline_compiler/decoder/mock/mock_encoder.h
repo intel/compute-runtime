@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/hash.h"
+#include "helpers/hash.h"
 #include "offline_compiler/decoder/binary_encoder.h"
 
 #include "mock_iga_wrapper.h"

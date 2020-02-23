@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/debug_helpers.h"
+#include "helpers/debug_helpers.h"
 
 #include <stdexcept>
 #include <string>

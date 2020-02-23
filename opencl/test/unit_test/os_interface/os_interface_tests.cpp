@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_interface.h"
+#include "os_interface/os_interface.h"
 
 #include "gtest/gtest.h"
 

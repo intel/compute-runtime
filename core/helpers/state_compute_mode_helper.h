@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/command_stream/csr_definitions.h"
-#include "core/helpers/hw_cmds.h"
+#include "command_stream/csr_definitions.h"
+#include "helpers/hw_cmds.h"
 
 namespace NEO {
 template <typename GfxFamily>

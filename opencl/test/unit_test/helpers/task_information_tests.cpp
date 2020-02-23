@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/internal_allocation_storage.h"
+#include "memory_manager/internal_allocation_storage.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

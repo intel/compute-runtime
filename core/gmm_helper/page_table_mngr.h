@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gmm_helper/gmm_lib.h"
+#include "gmm_helper/gmm_lib.h"
 
 #include "External/Common/GmmPageTableMgr.h"
 

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/os_interface/os_interface.h"
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/os_interface.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 #include "profileapi.h"
 #include "umKmInc/sharedata.h"

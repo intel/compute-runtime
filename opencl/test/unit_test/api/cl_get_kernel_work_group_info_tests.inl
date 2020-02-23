@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/device/device.h"
-#include "core/helpers/file_io.h"
+#include "compiler_interface/compiler_interface.h"
+#include "device/device.h"
+#include "helpers/file_io.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"

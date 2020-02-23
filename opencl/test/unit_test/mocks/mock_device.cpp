@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
-#include "core/command_stream/preemption.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/preemption.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/device/driver_info.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

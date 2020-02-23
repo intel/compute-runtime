@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_helper.h"
+#include "helpers/hw_helper.h"
 #include "test.h"
 
 using namespace NEO;

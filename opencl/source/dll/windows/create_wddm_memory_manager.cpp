@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_interface.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/wddm_memory_manager.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "execution_environment/execution_environment.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_interface.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {

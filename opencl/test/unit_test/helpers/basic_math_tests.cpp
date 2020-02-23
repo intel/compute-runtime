@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/basic_math.h"
+#include "helpers/basic_math.h"
 
 #include "gtest/gtest.h"
 

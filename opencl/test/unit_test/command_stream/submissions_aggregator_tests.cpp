@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/submissions_aggregator.h"
-#include "core/helpers/flush_stamp.h"
+#include "command_stream/submissions_aggregator.h"
+#include "helpers/flush_stamp.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/device_binary_format/device_binary_formats.h"
-#include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/device_binary_format/patchtokens_dumper.h"
-#include "core/device_binary_format/patchtokens_validator.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/program/program_info_from_patchtokens.h"
+#include "device_binary_format/device_binary_formats.h"
+#include "device_binary_format/patchtokens_decoder.h"
+#include "device_binary_format/patchtokens_dumper.h"
+#include "device_binary_format/patchtokens_validator.h"
+#include "helpers/debug_helpers.h"
+#include "program/program_info_from_patchtokens.h"
 #include "opencl/source/utilities/logger.h"
 
 namespace NEO {

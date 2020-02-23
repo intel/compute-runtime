@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/deferrable_deletion.h"
+#include "memory_manager/deferrable_deletion.h"
 
 namespace NEO {
 

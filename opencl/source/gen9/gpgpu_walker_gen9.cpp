@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gen9/hw_cmds_base.h"
+#include "gen9/hw_cmds_base.h"
 #include "opencl/source/command_queue/gpgpu_walker_bdw_plus.inl"
 #include "opencl/source/command_queue/hardware_interface_bdw_plus.inl"
 

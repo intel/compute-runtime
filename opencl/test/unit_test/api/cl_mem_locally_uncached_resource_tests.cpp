@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/state_base_address.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/state_base_address.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"

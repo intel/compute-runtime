@@ -7,8 +7,8 @@
 
 #include "mock_compilers.h"
 
-#include "core/helpers/file_io.h"
-#include "core/helpers/hw_info.h"
+#include "helpers/file_io.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"

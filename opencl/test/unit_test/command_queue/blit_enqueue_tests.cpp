@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

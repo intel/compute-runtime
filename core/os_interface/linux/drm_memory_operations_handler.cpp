@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/linux/drm_memory_operations_handler.h"
+#include "os_interface/linux/drm_memory_operations_handler.h"
 
 namespace NEO {
 

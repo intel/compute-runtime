@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
+#include "command_stream/preemption.h"
 
-#include "core/device/device.h"
-#include "core/helpers/string.h"
+#include "device/device.h"
+#include "helpers/string.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"

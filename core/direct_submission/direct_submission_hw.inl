@@ -5,20 +5,20 @@
  *
  */
 
-#include "core/command_container/command_encoder.h"
-#include "core/command_stream/submissions_aggregator.h"
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/device/device.h"
-#include "core/direct_submission/direct_submission_hw.h"
-#include "core/direct_submission/dispatchers/dispatcher.h"
-#include "core/helpers/flush_stamp.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/allocation_properties.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_context.h"
-#include "core/utilities/cpu_info.h"
-#include "core/utilities/cpuintrinsics.h"
+#include "command_container/command_encoder.h"
+#include "command_stream/submissions_aggregator.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "device/device.h"
+#include "direct_submission/direct_submission_hw.h"
+#include "direct_submission/dispatchers/dispatcher.h"
+#include "helpers/flush_stamp.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/allocation_properties.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_context.h"
+#include "utilities/cpu_info.h"
+#include "utilities/cpuintrinsics.h"
 
 #include <cstring>
 

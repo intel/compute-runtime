@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/gmm_helper/gmm.h"
-#include "core/memory_manager/allocations_list.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "gmm_helper/gmm.h"
+#include "memory_manager/allocations_list.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"

@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/command_stream/linear_stream.h"
-#include "core/command_stream/preemption.h"
-#include "core/device/device.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/preamble.h"
+#include "command_stream/linear_stream.h"
+#include "command_stream/preemption.h"
+#include "device/device.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/preamble.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 

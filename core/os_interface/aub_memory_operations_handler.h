@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_operations_handler.h"
-#include "core/utilities/spinlock.h"
+#include "memory_manager/memory_operations_handler.h"
+#include "utilities/spinlock.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"
 

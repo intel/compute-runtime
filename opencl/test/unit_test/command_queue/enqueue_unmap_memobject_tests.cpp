@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/command_stream_receiver.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

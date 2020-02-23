@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/array_count.h"
-#include "core/utilities/spinlock.h"
+#include "helpers/array_count.h"
+#include "utilities/spinlock.h"
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/gen_common/aub_mapper.h"

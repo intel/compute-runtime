@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/cpuintrinsics.h"
+#include "utilities/cpuintrinsics.h"
 
 #include <atomic>
 #include <cstdint>

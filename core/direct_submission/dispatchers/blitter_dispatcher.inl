@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/linear_stream.h"
-#include "core/direct_submission/dispatchers/blitter_dispatcher.h"
-#include "core/helpers/hw_info.h"
+#include "command_stream/linear_stream.h"
+#include "direct_submission/dispatchers/blitter_dispatcher.h"
+#include "helpers/hw_info.h"
 
 namespace NEO {
 

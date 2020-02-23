@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_cmds.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/hw_cmds.h"
 
 #include <algorithm>
 

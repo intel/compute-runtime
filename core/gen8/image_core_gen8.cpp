@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gen8/hw_cmds.h"
-#include "core/image/image_surface_state.h"
+#include "gen8/hw_cmds.h"
+#include "image/image_surface_state.h"
 
 namespace NEO {
 
@@ -16,6 +16,6 @@ template <>
 void setMipTailStartLod<Family>(Family::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {}
 
 // clang-format off
-#include "core/image/image_bdw_plus.inl"
+#include "image/image_bdw_plus.inl"
 // clang-format on
 } // namespace NEO

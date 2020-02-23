@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/os_interface/windows/gdi_interface.h"
+#include "os_interface/windows/gdi_interface.h"
 
 namespace NEO {
 

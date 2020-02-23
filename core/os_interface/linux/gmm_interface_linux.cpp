@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gmm_helper/gmm_interface.h"
+#include "gmm_helper/gmm_interface.h"
 namespace NEO {
 namespace GmmInterface {
 GMM_STATUS initialize(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {

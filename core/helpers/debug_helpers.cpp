@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/debug_helpers.h"
+#include "helpers/debug_helpers.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
+#include "debug_settings/debug_settings_manager.h"
 
 #include <assert.h>
 #include <cstdio>

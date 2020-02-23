@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/const_stringref.h"
+#include "utilities/const_stringref.h"
 
 #include "gtest/gtest.h"
 

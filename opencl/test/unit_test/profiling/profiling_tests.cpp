@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/os_interface/os_interface.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
-#include "core/utilities/tag_allocator.h"
+#include "os_interface/os_interface.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
+#include "utilities/tag_allocator.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_kernel.h"

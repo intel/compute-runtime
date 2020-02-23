@@ -5,14 +5,14 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/hw_helper.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/windows/gdi_interface.h"
-#include "core/os_interface/windows/os_context_win.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/preemption.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/hw_helper.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/windows/gdi_interface.h"
+#include "os_interface/windows/os_context_win.h"
+#include "os_interface/windows/os_interface.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface23.h"

@@ -7,11 +7,11 @@
 
 #include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "test.h"
 

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "core/helpers/non_copyable_or_moveable.h"
-#include "core/utilities/spinlock.h"
+#include "helpers/non_copyable_or_moveable.h"
+#include "utilities/spinlock.h"
 
 #include <memory>
 #include <unordered_map>

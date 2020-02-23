@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/program/sync_buffer_handler.h"
+#include "program/sync_buffer_handler.h"
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/memory_manager.h"
+#include "command_stream/command_stream_receiver.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {

@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/device/device.h"
-#include "core/device_binary_format/elf/elf.h"
-#include "core/device_binary_format/elf/elf_encoder.h"
-#include "core/device_binary_format/elf/ocl_elf.h"
-#include "core/execution_environment/execution_environment.h"
+#include "compiler_interface/compiler_interface.h"
+#include "device/device.h"
+#include "device_binary_format/elf/elf.h"
+#include "device_binary_format/elf/elf_encoder.h"
+#include "device_binary_format/elf/ocl_elf.h"
+#include "execution_environment/execution_environment.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/platform/platform.h"

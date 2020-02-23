@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/linux/os_context_linux.h"
-#include "core/os_interface/linux/os_interface.h"
+#include "command_stream/preemption.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/linux/os_context_linux.h"
+#include "os_interface/linux/os_interface.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
 #include "gtest/gtest.h"

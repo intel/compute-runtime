@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/extendable_enum.h"
+#include "helpers/extendable_enum.h"
 
 #include "gtest/gtest.h"
 

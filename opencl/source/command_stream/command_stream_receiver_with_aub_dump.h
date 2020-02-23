@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/command_stream/command_stream_receiver.h"
+#include "command_stream/command_stream_receiver.h"
 
 #include <memory>
 

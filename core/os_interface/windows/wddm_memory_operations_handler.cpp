@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/os_interface/windows/wddm_memory_operations_handler.h"
+#include "os_interface/windows/wddm_memory_operations_handler.h"
 
-#include "core/memory_manager/host_ptr_defines.h"
-#include "core/os_interface/windows/wddm_allocation.h"
-#include "core/os_interface/windows/wddm_residency_allocations_container.h"
-#include "core/utilities/stackvec.h"
+#include "memory_manager/host_ptr_defines.h"
+#include "os_interface/windows/wddm_allocation.h"
+#include "os_interface/windows/wddm_residency_allocations_container.h"
+#include "utilities/stackvec.h"
 
 namespace NEO {
 

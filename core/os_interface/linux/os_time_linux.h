@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/os_interface/os_time.h"
+#include "os_interface/linux/drm_neo.h"
+#include "os_interface/os_time.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (36)
 #define OCLRT_NUM_TIMESTAMP_BITS_FALLBACK (32)

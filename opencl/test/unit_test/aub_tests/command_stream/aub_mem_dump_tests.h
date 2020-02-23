@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/device/device.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
+#include "device/device.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/gen_common/aub_mapper.h"

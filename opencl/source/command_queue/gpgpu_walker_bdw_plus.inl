@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/simd_helper.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/simd_helper.h"
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
 #include "opencl/source/device/cl_device.h"
 

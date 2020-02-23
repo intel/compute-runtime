@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "core/built_ins/sip_kernel_type.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/non_copyable_or_moveable.h"
-#include "core/helpers/vec.h"
+#include "built_ins/sip_kernel_type.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/non_copyable_or_moveable.h"
+#include "helpers/vec.h"
 
 #include "CL/cl.h"
 #include "built_in_ops.h"

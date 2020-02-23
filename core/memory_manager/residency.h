@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_manager.h"
-#include "core/utilities/stackvec.h"
+#include "memory_manager/memory_manager.h"
+#include "utilities/stackvec.h"
 
 #include <vector>
 

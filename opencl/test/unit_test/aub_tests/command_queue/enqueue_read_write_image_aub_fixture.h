@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

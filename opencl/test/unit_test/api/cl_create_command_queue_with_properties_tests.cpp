@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/os_context.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/os_context.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/hw_cmds.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/utilities/tag_allocator.h"
+#include "helpers/hw_cmds.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "utilities/tag_allocator.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"

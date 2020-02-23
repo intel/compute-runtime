@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/unified_memory_manager.h"
-#include "core/unified_memory/unified_memory.h"
-#include "core/unit_tests/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/unified_memory_manager.h"
+#include "unified_memory/unified_memory.h"
+#include "unit_tests/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
 using namespace NEO;

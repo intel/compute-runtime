@@ -7,8 +7,8 @@
 
 #include "opencl/source/program/block_kernel_manager.h"
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/debug_helpers.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/debug_helpers.h"
 #include "opencl/source/program/kernel_info.h"
 
 namespace NEO {

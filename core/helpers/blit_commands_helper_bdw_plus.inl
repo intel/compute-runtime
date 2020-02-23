@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/blit_commands_helper_base.inl"
+#include "helpers/blit_commands_helper_base.inl"
 
 namespace NEO {
 

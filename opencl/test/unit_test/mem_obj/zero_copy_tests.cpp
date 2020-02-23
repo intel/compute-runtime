@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/aligned_memory.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"

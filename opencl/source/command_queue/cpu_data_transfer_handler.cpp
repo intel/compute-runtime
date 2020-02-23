@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/get_info.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/get_info.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"

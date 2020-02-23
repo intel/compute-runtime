@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/helpers/hw_helper.h"
-#include "core/unit_tests/fixtures/preemption_fixture.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/preemption.h"
+#include "helpers/hw_helper.h"
+#include "unit_tests/fixtures/preemption_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"

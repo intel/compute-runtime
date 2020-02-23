@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "gmm_helper/gmm.h"
+#include "gmm_helper/gmm_helper.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

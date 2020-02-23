@@ -7,9 +7,9 @@
 
 #include "opencl/source/device/device_info.h"
 
-#include "core/device/device.h"
-#include "core/helpers/get_info.h"
-#include "core/os_interface/os_time.h"
+#include "device/device.h"
+#include "helpers/get_info.h"
+#include "os_interface/os_time.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/device/cl_device_vector.h"
 #include "opencl/source/device/device_info_map.h"

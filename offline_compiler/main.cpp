@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_library.h"
+#include "os_interface/os_library.h"
 #include "offline_compiler/multi_command.h"
 #include "offline_compiler/ocloc_fatbinary.h"
 #include "offline_compiler/offline_compiler.h"

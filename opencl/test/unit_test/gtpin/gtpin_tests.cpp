@@ -5,14 +5,14 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/helpers/basic_math.h"
-#include "core/helpers/file_io.h"
-#include "core/helpers/hash.h"
-#include "core/memory_manager/surface.h"
-#include "core/os_interface/os_context.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "device/device.h"
+#include "device_binary_format/patchtokens_decoder.h"
+#include "helpers/basic_math.h"
+#include "helpers/file_io.h"
+#include "helpers/hash.h"
+#include "memory_manager/surface.h"
+#include "os_interface/os_context.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_defs.h"

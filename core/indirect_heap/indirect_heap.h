@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "core/command_stream/linear_stream.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/basic_math.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/memory_constants.h"
+#include "command_stream/linear_stream.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/basic_math.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/memory_constants.h"
 
 namespace NEO {
 class GraphicsAllocation;

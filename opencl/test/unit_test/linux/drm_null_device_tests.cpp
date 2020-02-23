@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/os_interface/linux/drm_null_device.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "execution_environment/execution_environment.h"
+#include "os_interface/linux/drm_null_device.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
 #include "test.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/surface_formats.h"

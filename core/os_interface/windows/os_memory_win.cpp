@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/os_memory_win.h"
+#include "os_interface/windows/os_memory_win.h"
 
 namespace NEO {
 

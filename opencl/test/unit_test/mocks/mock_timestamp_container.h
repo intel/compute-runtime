@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/timestamp_packet.h"
+#include "helpers/timestamp_packet.h"
 
 namespace NEO {
 

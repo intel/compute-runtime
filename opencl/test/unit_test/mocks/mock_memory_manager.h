@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/execution_environment/execution_environment.h"
-#include "core/unit_tests/helpers/default_hw_info.h"
+#include "execution_environment/execution_environment.h"
+#include "unit_tests/helpers/default_hw_info.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"

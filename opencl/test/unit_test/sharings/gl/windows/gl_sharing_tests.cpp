@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/gmm_helper/gmm.h"
-#include "core/helpers/array_count.h"
-#include "core/os_interface/os_interface.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "device/device.h"
+#include "gmm_helper/gmm.h"
+#include "helpers/array_count.h"
+#include "os_interface/os_interface.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"

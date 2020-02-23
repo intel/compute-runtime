@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/memory_manager/allocations_list.h"
-#include "core/memory_manager/unified_memory_manager.h"
-#include "core/os_interface/os_context.h"
+#include "memory_manager/allocations_list.h"
+#include "memory_manager/unified_memory_manager.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/mem_obj.h"

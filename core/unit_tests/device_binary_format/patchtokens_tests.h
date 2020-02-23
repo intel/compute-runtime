@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/device_binary_format/patchtokens_decoder.h"
+#include "device_binary_format/patchtokens_decoder.h"
 
 #include "igfxfmid.h"
 

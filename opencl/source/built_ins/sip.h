@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/built_ins/sip_kernel_type.h"
-#include "core/helpers/hw_info.h"
+#include "built_ins/sip_kernel_type.h"
+#include "helpers/hw_info.h"
 
 #include <memory>
 

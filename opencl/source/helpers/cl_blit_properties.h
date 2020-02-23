@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/blit_commands_helper.h"
+#include "helpers/blit_commands_helper.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 #include "CL/cl.h"

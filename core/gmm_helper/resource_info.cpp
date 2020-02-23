@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gmm_helper/resource_info.h"
+#include "gmm_helper/resource_info.h"
 
 namespace NEO {
 GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams) {

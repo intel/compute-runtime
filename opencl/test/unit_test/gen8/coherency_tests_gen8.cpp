@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/execution_environment/execution_environment.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "execution_environment/execution_environment.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "test.h"

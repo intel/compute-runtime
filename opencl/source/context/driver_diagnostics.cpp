@@ -7,7 +7,7 @@
 
 #include "driver_diagnostics.h"
 
-#include "core/helpers/debug_helpers.h"
+#include "helpers/debug_helpers.h"
 
 namespace NEO {
 

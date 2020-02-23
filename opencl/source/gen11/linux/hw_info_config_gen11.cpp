@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/os_interface/hw_info_config.inl"
-#include "core/os_interface/hw_info_config_bdw_plus.inl"
+#include "os_interface/hw_info_config.inl"
+#include "os_interface/hw_info_config_bdw_plus.inl"
 
 #ifdef SUPPORT_ICLLP
 #include "hw_info_config_icllp.inl"

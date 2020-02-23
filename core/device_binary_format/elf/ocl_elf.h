@@ -8,8 +8,8 @@
 // Abstract: Defines the types used for ELF headers/sections.
 #pragma once
 
-#include "core/device_binary_format/elf/elf.h"
-#include "core/utilities/const_stringref.h"
+#include "device_binary_format/elf/elf.h"
+#include "utilities/const_stringref.h"
 
 #include <inttypes.h>
 #include <stddef.h>

@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/os_interface/os_library.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/os_library.h"
+#include "os_interface/windows/windows_wrapper.h"
 #include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/test/unit_test/helpers/windows/mock_function.h"
 #include "test.h"

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/linux/drm_neo.h"
+#include "execution_environment/execution_environment.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/linux/drm_neo.h"
 #include "opencl/source/platform/platform.h"
 
 #include "drm/i915_drm.h"

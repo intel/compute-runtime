@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/command_stream/csr_definitions.h"
+#include "command_stream/csr_definitions.h"
 
 using namespace NEO;
 

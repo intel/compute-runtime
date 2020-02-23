@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/device/device.h"
+#include "device/device.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
 

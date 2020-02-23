@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/linux/debug_env_reader.h"
+#include "os_interface/linux/debug_env_reader.h"
 
 #include "test.h"
 

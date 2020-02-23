@@ -5,14 +5,14 @@
  *
  */
 
-#include "core/execution_environment/execution_environment.h"
+#include "execution_environment/execution_environment.h"
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/compiler_interface/default_cache_config.h"
-#include "core/debugger/debugger.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/hw_helper.h"
+#include "compiler_interface/compiler_interface.h"
+#include "compiler_interface/default_cache_config.h"
+#include "debugger/debugger.h"
+#include "execution_environment/root_device_environment.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/hw_helper.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 

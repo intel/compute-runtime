@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/debug_settings_reader_creator.h"
+#include "utilities/debug_settings_reader_creator.h"
 
 namespace NEO {
 std::unique_ptr<SettingsReader> SettingsReaderCreator::create(const std::string &regKey) {

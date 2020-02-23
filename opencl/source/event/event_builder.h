@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/utilities/arrayref.h"
-#include "core/utilities/stackvec.h"
+#include "utilities/arrayref.h"
+#include "utilities/stackvec.h"
 
 #include "CL/cl.h"
 

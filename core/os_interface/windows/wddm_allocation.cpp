@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/wddm_allocation.h"
+#include "os_interface/windows/wddm_allocation.h"
 
 namespace NEO {
 std::string WddmAllocation::getAllocationInfoString() const {

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/direct_submission/direct_submission_hw.h"
+#include "direct_submission/direct_submission_hw.h"
 
 namespace NEO {
 

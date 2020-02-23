@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/device_binary_format/ar/ar.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/const_stringref.h"
+#include "device_binary_format/ar/ar.h"
+#include "utilities/arrayref.h"
+#include "utilities/const_stringref.h"
 
 #include <cstring>
 #include <vector>

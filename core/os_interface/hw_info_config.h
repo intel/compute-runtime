@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "core/helpers/hw_info.h"
-#include "core/unified_memory/usm_memory_support.h"
+#include "helpers/hw_info.h"
+#include "unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
 

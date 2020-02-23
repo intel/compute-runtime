@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/device_binary_format/elf/elf_encoder.h"
+#include "device_binary_format/elf/elf_encoder.h"
 
-#include "core/utilities/range.h"
+#include "utilities/range.h"
 
 #include <algorithm>
 

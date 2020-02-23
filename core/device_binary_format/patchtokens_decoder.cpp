@@ -7,10 +7,10 @@
 
 #include "patchtokens_decoder.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/hash.h"
-#include "core/helpers/ptr_math.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/hash.h"
+#include "helpers/ptr_math.h"
 
 #include <algorithm>
 

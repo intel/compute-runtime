@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/unit_tests/fixtures/preemption_fixture.h"
+#include "unit_tests/fixtures/preemption_fixture.h"
 
-#include "core/command_stream/preemption.h"
-#include "core/helpers/hw_info.h"
+#include "command_stream/preemption.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/enqueue_marker.h"

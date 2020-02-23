@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_helper.h"
+#include "helpers/hw_info.h"
 
 namespace NEO {
 

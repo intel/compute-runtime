@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/os_interface/windows/os_time_win.h"
+#include "os_interface/windows/os_time_win.h"
 
 namespace NEO {
 class MockOSTimeWin : public OSTimeWin {

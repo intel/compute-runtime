@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gen9/hw_info.h"
+#include "gen9/hw_info.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.inl"
 

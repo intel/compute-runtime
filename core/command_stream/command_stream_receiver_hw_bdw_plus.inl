@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw_base.inl"
+#include "command_stream/command_stream_receiver_hw_base.inl"
 
 namespace NEO {
 

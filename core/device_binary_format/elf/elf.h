@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/utilities/const_stringref.h"
+#include "utilities/const_stringref.h"
 
 #include <inttypes.h>
 #include <stddef.h>

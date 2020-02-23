@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/debugger/debugger.h"
-#include "core/os_interface/os_library.h"
+#include "debugger/debugger.h"
+#include "os_interface/os_library.h"
 
 #include <memory>
 #include <string>

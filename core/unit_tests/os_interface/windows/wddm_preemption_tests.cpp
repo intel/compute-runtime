@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/hw_helper.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/preemption.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/hw_helper.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 #include "test.h"
 

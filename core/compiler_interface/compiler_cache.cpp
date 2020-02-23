@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/compiler_interface/compiler_cache.h"
+#include "compiler_interface/compiler_cache.h"
 
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/file_io.h"
-#include "core/helpers/hash.h"
-#include "core/helpers/hw_info.h"
-#include "core/utilities/debug_settings_reader.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/file_io.h"
+#include "helpers/hash.h"
+#include "helpers/hw_info.h"
+#include "utilities/debug_settings_reader.h"
 
 #include "config.h"
 #include "os_inc.h"

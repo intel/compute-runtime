@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/options.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/helpers/ult_hw_config.h"
+#include "helpers/options.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/ult_hw_config.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 

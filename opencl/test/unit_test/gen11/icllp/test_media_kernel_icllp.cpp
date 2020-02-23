@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/pipeline_select_helper.h"
-#include "core/helpers/preamble.h"
+#include "helpers/pipeline_select_helper.h"
+#include "helpers/preamble.h"
 #include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
 #include "test.h"
 

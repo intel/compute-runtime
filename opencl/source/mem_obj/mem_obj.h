@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/debug_settings/debug_settings_manager.h"
+#include "debug_settings/debug_settings_manager.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/base_object.h"

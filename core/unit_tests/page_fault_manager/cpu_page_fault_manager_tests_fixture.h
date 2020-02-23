@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
 

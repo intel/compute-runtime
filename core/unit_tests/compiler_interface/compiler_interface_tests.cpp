@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/compiler_interface/compiler_interface.inl"
-#include "core/helpers/file_io.h"
-#include "core/helpers/hw_info.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "compiler_interface/compiler_interface.h"
+#include "compiler_interface/compiler_interface.inl"
+#include "helpers/file_io.h"
+#include "helpers/hw_info.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/test_files.h"

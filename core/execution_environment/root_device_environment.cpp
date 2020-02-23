@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/execution_environment/root_device_environment.h"
+#include "execution_environment/root_device_environment.h"
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/gmm_helper/page_table_mngr.h"
-#include "core/memory_manager/memory_operations_handler.h"
-#include "core/os_interface/os_interface.h"
+#include "execution_environment/execution_environment.h"
+#include "gmm_helper/page_table_mngr.h"
+#include "memory_manager/memory_operations_handler.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/aub/aub_center.h"
 
 namespace NEO {

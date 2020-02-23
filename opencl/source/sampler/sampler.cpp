@@ -7,8 +7,8 @@
 
 #include "opencl/source/sampler/sampler.h"
 
-#include "core/helpers/get_info.h"
-#include "core/helpers/hw_info.h"
+#include "helpers/get_info.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"

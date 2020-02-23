@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "core/memory_manager/host_ptr_defines.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/os_interface/windows/wddm_residency_allocations_container.h"
-#include "core/os_interface/windows/windows_defs.h"
+#include "memory_manager/host_ptr_defines.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/wddm_residency_allocations_container.h"
+#include "os_interface/windows/windows_defs.h"
 #include "opencl/test/unit_test/mocks/wddm_mock_helpers.h"
 
 #include "gmock/gmock.h"

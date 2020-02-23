@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_helper.h"
+#include "helpers/hw_helper.h"
 #include "offline_compiler/ocloc_fatbinary.h"
 
 #include "gtest/gtest.h"

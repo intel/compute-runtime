@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/flush_stamp.h"
+#include "helpers/flush_stamp.h"
 
 using namespace NEO;
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/gen12lp/hw_cmds.h"
+#include "gen12lp/hw_cmds.h"
 #include "opencl/source/mem_obj/buffer_bdw_plus.inl"
 
 namespace NEO {

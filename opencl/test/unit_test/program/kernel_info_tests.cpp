@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/execution_environment/execution_environment.h"
+#include "execution_environment/execution_environment.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/program/kernel_arg_info.h"
 #include "opencl/source/program/kernel_info.h"

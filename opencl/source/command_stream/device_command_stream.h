@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/command_stream/command_stream_receiver_hw.h"
+#include "command_stream/command_stream_receiver_hw.h"
 
 namespace NEO {
 

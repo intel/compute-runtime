@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/gen9/hw_cmds.h"
-#include "core/helpers/windows/gmm_callbacks.h"
-#include "core/helpers/windows/gmm_callbacks.inl"
+#include "gen9/hw_cmds.h"
+#include "helpers/windows/gmm_callbacks.h"
+#include "helpers/windows/gmm_callbacks.inl"
 
 using namespace NEO;
 

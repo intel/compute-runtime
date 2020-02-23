@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/memory_manager/internal_allocation_storage.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "memory_manager/internal_allocation_storage.h"
+#include "memory_manager/memory_manager.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"

@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/hash.h"
-#include "core/helpers/string.h"
+#include "helpers/hash.h"
+#include "helpers/string.h"
 
 #include "gtest/gtest.h"
 

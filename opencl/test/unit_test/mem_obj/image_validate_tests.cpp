@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/aligned_memory.h"
+#include "helpers/aligned_memory.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/surface_formats.h"

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/string.h"
-#include "core/image/image_surface_state.h"
+#include "helpers/string.h"
+#include "image/image_surface_state.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/buffer.h"

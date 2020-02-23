@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/program/program_info.h"
+#include "program/program_info.h"
 #include "opencl/source/program/kernel_info.h"
 
 #include "gmock/gmock.h"

@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/helpers/flat_batch_buffer_helper_hw.h"
-#include "core/helpers/preamble.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/utilities/stackvec.h"
+#include "command_stream/preemption.h"
+#include "helpers/flat_batch_buffer_helper_hw.h"
+#include "helpers/preamble.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "utilities/stackvec.h"
 #include "opencl/source/gen11/reg_configs.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

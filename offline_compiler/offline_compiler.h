@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/os_interface/os_library.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/const_stringref.h"
+#include "os_interface/os_library.h"
+#include "utilities/arrayref.h"
+#include "utilities/const_stringref.h"
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

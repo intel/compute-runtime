@@ -7,9 +7,9 @@
 
 #include "unified_buffer.h"
 
-#include "core/gmm_helper/gmm.h"
-#include "core/helpers/get_info.h"
-#include "core/memory_manager/memory_manager.h"
+#include "gmm_helper/gmm.h"
+#include "helpers/get_info.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
 

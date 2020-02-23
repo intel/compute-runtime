@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/direct_submission/direct_submission_hw.h"
-#include "core/memory_manager/graphics_allocation.h"
+#include "direct_submission/direct_submission_hw.h"
+#include "memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

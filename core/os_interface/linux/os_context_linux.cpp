@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/os_interface/linux/os_context_linux.h"
+#include "os_interface/linux/os_context_linux.h"
 
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/os_interface/linux/os_interface.h"
-#include "core/os_interface/os_context.h"
+#include "os_interface/linux/drm_neo.h"
+#include "os_interface/linux/os_interface.h"
+#include "os_interface/os_context.h"
 
 namespace NEO {
 

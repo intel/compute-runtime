@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/os_interface/os_interface.h"
+#include "execution_environment/execution_environment.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"

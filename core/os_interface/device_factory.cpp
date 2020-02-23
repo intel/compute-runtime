@@ -5,16 +5,16 @@
  *
  */
 
-#include "core/os_interface/device_factory.h"
+#include "os_interface/device_factory.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/device/device.h"
-#include "core/device/root_device.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/hw_helper.h"
-#include "core/os_interface/aub_memory_operations_handler.h"
-#include "core/os_interface/hw_info_config.h"
-#include "core/os_interface/os_interface.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "device/device.h"
+#include "device/root_device.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/hw_helper.h"
+#include "os_interface/aub_memory_operations_handler.h"
+#include "os_interface/hw_info_config.h"
+#include "os_interface/os_interface.h"
 #include "opencl/source/aub/aub_center.h"
 
 #include "hw_device_id.h"

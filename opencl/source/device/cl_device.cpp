@@ -7,11 +7,11 @@
 
 #include "opencl/source/device/cl_device.h"
 
-#include "core/device/device.h"
-#include "core/device/sub_device.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/os_interface.h"
-#include "core/program/sync_buffer_handler.h"
+#include "device/device.h"
+#include "device/sub_device.h"
+#include "execution_environment/root_device_environment.h"
+#include "os_interface/os_interface.h"
+#include "program/sync_buffer_handler.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"

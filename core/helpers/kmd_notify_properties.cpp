@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/kmd_notify_properties.h"
+#include "helpers/kmd_notify_properties.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
+#include "debug_settings/debug_settings_manager.h"
 
 #include <cstdint>
 

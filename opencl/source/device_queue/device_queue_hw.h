@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "core/command_stream/linear_stream.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/ptr_math.h"
-#include "core/indirect_heap/indirect_heap.h"
+#include "command_stream/linear_stream.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/ptr_math.h"
+#include "indirect_heap/indirect_heap.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"

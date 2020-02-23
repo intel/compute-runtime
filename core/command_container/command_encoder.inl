@@ -6,16 +6,16 @@
  */
 
 #pragma once
-#include "core/command_container/command_encoder.h"
-#include "core/command_stream/linear_stream.h"
-#include "core/device/device.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/preamble.h"
-#include "core/helpers/register_offsets.h"
-#include "core/helpers/simd_helper.h"
-#include "core/helpers/string.h"
-#include "core/kernel/dispatch_kernel_encoder_interface.h"
+#include "command_container/command_encoder.h"
+#include "command_stream/linear_stream.h"
+#include "device/device.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/hw_helper.h"
+#include "helpers/preamble.h"
+#include "helpers/register_offsets.h"
+#include "helpers/simd_helper.h"
+#include "helpers/string.h"
+#include "kernel/dispatch_kernel_encoder_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include <algorithm>

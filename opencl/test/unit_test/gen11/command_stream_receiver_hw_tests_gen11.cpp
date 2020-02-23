@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/command_stream/linear_stream.h"
+#include "command_stream/command_stream_receiver.h"
+#include "command_stream/linear_stream.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"

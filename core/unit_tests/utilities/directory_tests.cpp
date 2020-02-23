@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/directory.h"
+#include "utilities/directory.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

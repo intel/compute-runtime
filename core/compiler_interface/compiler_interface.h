@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/compiler_interface/compiler_cache.h"
-#include "core/helpers/string.h"
-#include "core/os_interface/os_library.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/spinlock.h"
+#include "compiler_interface/compiler_cache.h"
+#include "helpers/string.h"
+#include "os_interface/os_library.h"
+#include "utilities/arrayref.h"
+#include "utilities/spinlock.h"
 #include "opencl/source/built_ins/sip.h"
 
 #include "cif/common/cif_main.h"

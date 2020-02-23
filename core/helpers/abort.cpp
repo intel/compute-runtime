@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/abort.h"
+#include "helpers/abort.h"
 
 #include <cstdlib>
 

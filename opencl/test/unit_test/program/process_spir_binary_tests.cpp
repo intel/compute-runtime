@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/helpers/string.h"
+#include "device/device.h"
+#include "helpers/string.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"

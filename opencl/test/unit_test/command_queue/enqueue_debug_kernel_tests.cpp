@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_context.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"

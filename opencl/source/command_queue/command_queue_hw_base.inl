@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/blit_commands_helper.h"
+#include "helpers/blit_commands_helper.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/command_queue/enqueue_barrier.h"
 #include "opencl/source/command_queue/enqueue_copy_buffer.h"

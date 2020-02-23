@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_container/command_encoder.h"
-#include "core/command_container/command_encoder.inl"
-#include "core/command_container/command_encoder_base.inl"
-#include "core/gen12lp/hw_cmds_base.h"
+#include "command_container/command_encoder.h"
+#include "command_container/command_encoder.inl"
+#include "command_container/command_encoder_base.inl"
+#include "gen12lp/hw_cmds_base.h"
 #include "opencl/source/gen12lp/reg_configs.h"
 
 namespace NEO {

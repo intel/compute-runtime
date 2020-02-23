@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/image/image_surface_state.h"
-#include "core/os_interface/os_context.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "compiler_interface/compiler_interface.h"
+#include "helpers/aligned_memory.h"
+#include "image/image_surface_state.h"
+#include "os_interface/os_context.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"

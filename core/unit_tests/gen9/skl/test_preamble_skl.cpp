@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/command_stream/preemption.h"
-#include "core/command_stream/thread_arbitration_policy.h"
-#include "core/helpers/preamble.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/preamble/preamble_fixture.h"
+#include "command_stream/preemption.h"
+#include "command_stream/thread_arbitration_policy.h"
+#include "helpers/preamble.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/preamble/preamble_fixture.h"
 #include "opencl/source/gen9/reg_configs.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 

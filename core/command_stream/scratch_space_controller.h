@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/indirect_heap/indirect_heap.h"
+#include "indirect_heap/indirect_heap.h"
 
 #include <cstddef>
 #include <cstdint>

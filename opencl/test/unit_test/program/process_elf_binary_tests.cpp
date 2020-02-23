@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/device/device.h"
-#include "core/device_binary_format/elf/elf.h"
-#include "core/device_binary_format/elf/elf_decoder.h"
-#include "core/device_binary_format/elf/ocl_elf.h"
-#include "core/helpers/file_io.h"
-#include "core/helpers/string.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "device/device.h"
+#include "device_binary_format/elf/elf.h"
+#include "device_binary_format/elf/elf_decoder.h"
+#include "device_binary_format/elf/ocl_elf.h"
+#include "helpers/file_io.h"
+#include "helpers/string.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

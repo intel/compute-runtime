@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/memory_manager/gfx_partition.h"
+#include "memory_manager/gfx_partition.h"
 
-#include "core/helpers/aligned_memory.h"
+#include "helpers/aligned_memory.h"
 
 namespace NEO {
 

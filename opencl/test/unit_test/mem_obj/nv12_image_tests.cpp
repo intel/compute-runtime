@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "gmm_helper/gmm.h"
+#include "helpers/aligned_memory.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"

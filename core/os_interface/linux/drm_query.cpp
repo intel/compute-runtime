@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/linux/drm_engine_mapper.h"
+#include "os_interface/linux/drm_engine_mapper.h"
 
 #include "drm_neo.h"
 

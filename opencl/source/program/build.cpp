@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/compiler_interface/compiler_interface.h"
-#include "core/device/device.h"
-#include "core/device_binary_format/device_binary_formats.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/utilities/time_measure_wrapper.h"
+#include "compiler_interface/compiler_interface.h"
+#include "device/device.h"
+#include "device_binary_format/device_binary_formats.h"
+#include "execution_environment/execution_environment.h"
+#include "utilities/time_measure_wrapper.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/validators.h"

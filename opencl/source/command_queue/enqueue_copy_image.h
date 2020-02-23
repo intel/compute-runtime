@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/basic_math.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/basic_math.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

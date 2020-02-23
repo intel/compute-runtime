@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/os_interface/linux/os_time_linux.h"
+#include "os_interface/linux/os_time_linux.h"
 
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/os_interface/linux/os_interface.h"
+#include "os_interface/linux/drm_neo.h"
+#include "os_interface/linux/os_interface.h"
 
 #include "drm/i915_drm.h"
 

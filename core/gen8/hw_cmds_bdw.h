@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gen8/hw_cmds_base.h"
+#include "gen8/hw_cmds_base.h"
 
 #include <string>
 

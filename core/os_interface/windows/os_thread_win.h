@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_thread.h"
+#include "os_interface/os_thread.h"
 
 #include <thread>
 

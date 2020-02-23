@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/memory_manager/deferrable_allocation_deletion.h"
-#include "core/memory_manager/deferred_deleter.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "memory_manager/deferrable_allocation_deletion.h"
+#include "memory_manager/deferred_deleter.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/os_interface/os_interface.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/command_stream_receiver.h"
+#include "os_interface/os_interface.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/device/driver_info.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

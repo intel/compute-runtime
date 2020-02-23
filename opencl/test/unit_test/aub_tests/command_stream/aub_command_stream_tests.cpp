@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/helpers/ptr_math.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "helpers/ptr_math.h"
+#include "os_interface/os_context.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/os_interface/windows/wddm/wddm_interface.h"
+#include "os_interface/windows/wddm/wddm_interface.h"
 
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/windows/gdi_interface.h"
-#include "core/os_interface/windows/os_context_win.h"
-#include "core/os_interface/windows/wddm/wddm.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/windows/gdi_interface.h"
+#include "os_interface/windows/os_context_win.h"
+#include "os_interface/windows/wddm/wddm.h"
 
 using namespace NEO;
 

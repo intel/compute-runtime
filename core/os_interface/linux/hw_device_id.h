@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/non_copyable_or_moveable.h"
+#include "helpers/non_copyable_or_moveable.h"
 
 namespace NEO {
 

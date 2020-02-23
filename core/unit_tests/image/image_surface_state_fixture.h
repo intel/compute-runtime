@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/gmm_helper/gmm.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/basic_math.h"
-#include "core/image/image_surface_state.h"
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/memory_manager/surface.h"
+#include "gmm_helper/gmm.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/basic_math.h"
+#include "image/image_surface_state.h"
+#include "memory_manager/graphics_allocation.h"
+#include "memory_manager/surface.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/command_stream/aub_subcapture_status.h"
+#include "command_stream/aub_subcapture_status.h"
 
 #include <atomic>
 #include <memory>

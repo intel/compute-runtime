@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/os_interface/linux/drm_buffer_object.h"
-#include "core/os_interface/linux/drm_gem_close_worker.h"
-#include "core/os_interface/linux/drm_memory_manager.h"
-#include "core/os_interface/linux/drm_memory_operations_handler.h"
-#include "core/os_interface/linux/os_interface.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/aligned_memory.h"
+#include "os_interface/linux/drm_buffer_object.h"
+#include "os_interface/linux/drm_gem_close_worker.h"
+#include "os_interface/linux/drm_memory_manager.h"
+#include "os_interface/linux/drm_memory_operations_handler.h"
+#include "os_interface/linux/os_interface.h"
 #include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"

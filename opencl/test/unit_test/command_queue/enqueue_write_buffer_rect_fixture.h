@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

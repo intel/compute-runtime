@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/os_interface/os_library.h"
+#include "os_interface/os_library.h"
 #include "opencl/source/helpers/validators.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"

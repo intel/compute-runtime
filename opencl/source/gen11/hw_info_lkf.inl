@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gen11/hw_cmds_lkf.h"
-#include "core/memory_manager/memory_constants.h"
+#include "gen11/hw_cmds_lkf.h"
+#include "memory_manager/memory_constants.h"
 #include "opencl/source/aub_mem_dump/aub_services.h"
 
 #include "engine_node.h"

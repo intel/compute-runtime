@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/hw_info_config.h"
+#include "helpers/hw_info.h"
+#include "os_interface/hw_info_config.h"
 
 namespace NEO {
 

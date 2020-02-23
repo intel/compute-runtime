@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/memory_manager/memory_constants.h"
+#include "memory_manager/memory_constants.h"
 
 #include <cstdint>
 

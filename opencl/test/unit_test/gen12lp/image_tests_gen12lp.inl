@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/image/image_surface_state.h"
-#include "core/memory_manager/memory_manager.h"
+#include "gmm_helper/gmm_helper.h"
+#include "image/image_surface_state.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"

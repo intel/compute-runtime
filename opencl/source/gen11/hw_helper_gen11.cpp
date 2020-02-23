@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/flat_batch_buffer_helper_hw.inl"
-#include "core/helpers/hw_helper_bdw_plus.inl"
+#include "helpers/flat_batch_buffer_helper_hw.inl"
+#include "helpers/hw_helper_bdw_plus.inl"
 #include "opencl/source/aub/aub_helper_bdw_plus.inl"
 
 namespace NEO {

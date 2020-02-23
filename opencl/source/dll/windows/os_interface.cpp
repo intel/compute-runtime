@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/os_interface/windows/os_interface.h"
+#include "os_interface/windows/os_interface.h"
 
-#include "core/memory_manager/memory_constants.h"
+#include "memory_manager/memory_constants.h"
 namespace NEO {
 
 bool OSInterface::osEnableLocalMemory = true;

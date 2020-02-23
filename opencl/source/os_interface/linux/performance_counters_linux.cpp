@@ -7,8 +7,8 @@
 
 #include "performance_counters_linux.h"
 
-#include "core/device/device.h"
-#include "core/helpers/hw_helper.h"
+#include "device/device.h"
+#include "helpers/hw_helper.h"
 
 namespace NEO {
 ////////////////////////////////////////////////////

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/helpers/debug_helpers.h"
+#include "helpers/debug_helpers.h"
 #include "opencl/source/tracing/tracing_types.h"
 
 #include <bitset>

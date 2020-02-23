@@ -7,9 +7,9 @@
 
 #include "linker.h"
 
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/ptr_math.h"
-#include "core/utilities/compiler_support.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/ptr_math.h"
+#include "utilities/compiler_support.h"
 
 #include "RelocationInfo.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_library.h"
+#include "os_interface/os_library.h"
 #include "offline_compiler/offline_compiler.h"
 #include "offline_compiler/utilities/get_current_dir.h"
 #include "offline_compiler/utilities/safety_caller.h"

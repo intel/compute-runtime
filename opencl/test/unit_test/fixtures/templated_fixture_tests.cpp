@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/unit_tests/helpers/default_hw_info.h"
+#include "unit_tests/helpers/default_hw_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 

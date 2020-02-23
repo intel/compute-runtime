@@ -7,10 +7,10 @@
 
 #include "printf_handler.h"
 
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/program/print_formatter.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/memory_manager.h"
+#include "program/print_formatter.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"

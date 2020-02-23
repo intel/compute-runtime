@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "core/utilities/arrayref.h"
-#include "core/utilities/const_stringref.h"
+#include "utilities/arrayref.h"
+#include "utilities/const_stringref.h"
 
 #include <algorithm>
 #include <cstdint>

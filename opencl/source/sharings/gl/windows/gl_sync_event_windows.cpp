@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/get_info.h"
-#include "core/helpers/timestamp_packet.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/get_info.h"
+#include "helpers/timestamp_packet.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event_builder.h"

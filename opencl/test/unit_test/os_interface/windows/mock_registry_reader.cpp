@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 LSTATUS APIENTRY RegOpenKeyExA(
     HKEY hKey,

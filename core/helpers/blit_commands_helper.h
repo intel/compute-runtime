@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "core/command_stream/csr_deps.h"
-#include "core/helpers/aux_translation.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/utilities/stackvec.h"
+#include "command_stream/csr_deps.h"
+#include "helpers/aux_translation.h"
+#include "memory_manager/memory_constants.h"
+#include "utilities/stackvec.h"
 
 #include <cstdint>
 

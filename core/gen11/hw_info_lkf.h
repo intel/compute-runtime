@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/gen11/hw_info_gen11.h"
+#include "gen11/hw_info_gen11.h"
 
 namespace NEO {
 

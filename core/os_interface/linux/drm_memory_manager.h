@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/linux/drm_allocation.h"
-#include "core/os_interface/linux/drm_buffer_object.h"
-#include "core/os_interface/linux/drm_neo.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/linux/drm_allocation.h"
+#include "os_interface/linux/drm_buffer_object.h"
+#include "os_interface/linux/drm_neo.h"
 
 #include "drm_gem_close_worker.h"
 

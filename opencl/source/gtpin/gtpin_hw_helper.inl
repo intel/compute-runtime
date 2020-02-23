@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/string.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/string.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 

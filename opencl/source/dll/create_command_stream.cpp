@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_info.h"
+#include "helpers/hw_info.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/create_command_stream_impl.h"

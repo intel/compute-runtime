@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/utilities/arrayref.h"
+#include "utilities/arrayref.h"
 #include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/source/sharings/d3d/d3d_buffer.h"
 #include "opencl/source/sharings/d3d/d3d_sharing.h"

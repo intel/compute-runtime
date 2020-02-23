@@ -7,9 +7,9 @@
 
 #include "mock_performance_counters_win.h"
 
-#include "core/os_interface/os_interface.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/os_interface.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/windows_wrapper.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_os_time_win.h"
 

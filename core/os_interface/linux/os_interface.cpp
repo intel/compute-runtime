@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/os_interface/linux/os_interface.h"
+#include "os_interface/linux/os_interface.h"
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/hw_info_config.h"
-#include "core/os_interface/linux/drm_memory_operations_handler.h"
-#include "core/os_interface/linux/drm_neo.h"
+#include "execution_environment/execution_environment.h"
+#include "execution_environment/root_device_environment.h"
+#include "os_interface/hw_info_config.h"
+#include "os_interface/linux/drm_memory_operations_handler.h"
+#include "os_interface/linux/drm_neo.h"
 
 namespace NEO {
 

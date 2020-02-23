@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/kernel/dispatch_kernel_encoder_interface.h"
+#include "kernel/dispatch_kernel_encoder_interface.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gmock/gmock.h"

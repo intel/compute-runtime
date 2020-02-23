@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/interlocked_max.h"
+#include "helpers/interlocked_max.h"
 
 #include "gtest/gtest.h"
 

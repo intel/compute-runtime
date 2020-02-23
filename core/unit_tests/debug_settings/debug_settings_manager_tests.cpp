@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/memory_manager/graphics_allocation.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "core/unit_tests/utilities/base_object_utils.h"
-#include "core/utilities/debug_file_reader.h"
+#include "memory_manager/graphics_allocation.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/utilities/base_object_utils.h"
+#include "utilities/debug_file_reader.h"
 #include "test.h"
 
 #include "debug_settings_manager_fixture.h"

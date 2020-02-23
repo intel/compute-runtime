@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/graphics_allocation.h"
+#include "memory_manager/graphics_allocation.h"
 
 #include <cinttypes>
 

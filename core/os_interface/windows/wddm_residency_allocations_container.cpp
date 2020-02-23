@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/os_interface/windows/wddm_residency_allocations_container.h"
+#include "os_interface/windows/wddm_residency_allocations_container.h"
 
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/os_interface/windows/wddm_allocation.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/wddm_allocation.h"
 
 #include <algorithm>
 

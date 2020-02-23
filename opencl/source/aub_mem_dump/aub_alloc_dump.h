@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/gmm_helper/resource_info.h"
-#include "core/memory_manager/graphics_allocation.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "gmm_helper/resource_info.h"
+#include "memory_manager/graphics_allocation.h"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 using namespace NEO;

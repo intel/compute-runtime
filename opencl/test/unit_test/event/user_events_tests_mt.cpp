@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/memory_manager.h"
+#include "memory_manager/memory_manager.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 

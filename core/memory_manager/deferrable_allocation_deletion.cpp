@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/memory_manager/deferrable_allocation_deletion.h"
+#include "memory_manager/deferrable_allocation_deletion.h"
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/engine_control.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/os_interface/os_context.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/engine_control.h"
+#include "memory_manager/memory_manager.h"
+#include "os_interface/os_context.h"
 
 namespace NEO {
 

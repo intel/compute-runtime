@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "core/memory_manager/residency_container.h"
-#include "core/os_interface/windows/windows_defs.h"
-#include "core/os_interface/windows/windows_wrapper.h"
-#include "core/utilities/spinlock.h"
+#include "memory_manager/residency_container.h"
+#include "os_interface/windows/windows_defs.h"
+#include "os_interface/windows/windows_wrapper.h"
+#include "utilities/spinlock.h"
 
 #include <atomic>
 #include <mutex>

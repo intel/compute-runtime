@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "core/device_binary_format/elf/elf.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/const_stringref.h"
-#include "core/utilities/stackvec.h"
+#include "device_binary_format/elf/elf.h"
+#include "utilities/arrayref.h"
+#include "utilities/const_stringref.h"
+#include "utilities/stackvec.h"
 
 #include <cstdint>
 

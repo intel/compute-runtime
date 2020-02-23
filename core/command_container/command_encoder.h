@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/command_container/cmdcontainer.h"
-#include "core/command_stream/linear_stream.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/simd_helper.h"
-#include "core/kernel/dispatch_kernel_encoder_interface.h"
+#include "command_container/cmdcontainer.h"
+#include "command_stream/linear_stream.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/simd_helper.h"
+#include "kernel/dispatch_kernel_encoder_interface.h"
 
 #include <algorithm>
 

@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/helpers/basic_math.h"
-#include "core/os_interface/linux/engine_info.h"
-#include "core/os_interface/linux/hw_device_id.h"
-#include "core/os_interface/linux/memory_info.h"
-#include "core/utilities/api_intercept.h"
+#include "helpers/basic_math.h"
+#include "os_interface/linux/engine_info.h"
+#include "os_interface/linux/hw_device_id.h"
+#include "os_interface/linux/memory_info.h"
+#include "utilities/api_intercept.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"

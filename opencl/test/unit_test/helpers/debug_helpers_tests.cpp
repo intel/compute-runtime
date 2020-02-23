@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/debug_helpers.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/debug_helpers.h"
 
 #include "gtest/gtest.h"
 

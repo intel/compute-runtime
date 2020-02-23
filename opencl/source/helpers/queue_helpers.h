@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/device/device.h"
-#include "core/helpers/get_info.h"
+#include "device/device.h"
+#include "helpers/get_info.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"

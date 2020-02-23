@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/command_stream/csr_definitions.h"
-#include "core/helpers/preamble_bdw_plus.inl"
+#include "command_stream/csr_definitions.h"
+#include "helpers/preamble_bdw_plus.inl"
 
 namespace NEO {
 

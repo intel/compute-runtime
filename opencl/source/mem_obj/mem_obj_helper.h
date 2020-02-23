@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/bit_helpers.h"
-#include "core/memory_manager/memory_manager.h"
-#include "core/memory_manager/unified_memory_manager.h"
+#include "helpers/bit_helpers.h"
+#include "memory_manager/memory_manager.h"
+#include "memory_manager/unified_memory_manager.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/mem_properties_parser_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"

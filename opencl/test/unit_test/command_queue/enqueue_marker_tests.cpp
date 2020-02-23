@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
+#include "command_stream/command_stream_receiver.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"

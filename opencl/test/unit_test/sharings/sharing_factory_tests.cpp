@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/helpers/string.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "helpers/string.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"

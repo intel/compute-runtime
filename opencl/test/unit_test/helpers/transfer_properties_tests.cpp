@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

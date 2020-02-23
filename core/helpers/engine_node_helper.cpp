@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/engine_node_helper.h"
+#include "helpers/engine_node_helper.h"
 
 namespace NEO {
 namespace EngineHelpers {

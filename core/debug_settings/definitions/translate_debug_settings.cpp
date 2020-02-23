@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/debug_settings/definitions/translate_debug_settings.h"
+#include "debug_settings/definitions/translate_debug_settings.h"
 
 namespace NEO {
 

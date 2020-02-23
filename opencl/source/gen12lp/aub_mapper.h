@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/memory_constants.h"
+#include "memory_manager/memory_constants.h"
 #include "opencl/source/gen_common/aub_mapper_base.h"
 
 #include "engine_node.h"

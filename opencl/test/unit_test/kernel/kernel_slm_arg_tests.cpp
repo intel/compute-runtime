@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/helpers/basic_math.h"
-#include "core/helpers/ptr_math.h"
+#include "helpers/basic_math.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

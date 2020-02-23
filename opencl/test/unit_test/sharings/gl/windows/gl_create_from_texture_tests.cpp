@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gmm_helper/gmm_types_converter.h"
-#include "core/helpers/get_info.h"
+#include "gmm_helper/gmm_types_converter.h"
+#include "helpers/get_info.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/helpers/ptr_math.h"
-#include "core/unit_tests/fixtures/command_container_fixture.h"
-#include "core/unit_tests/mocks/mock_dispatch_kernel_encoder_interface.h"
+#include "helpers/ptr_math.h"
+#include "unit_tests/fixtures/command_container_fixture.h"
+#include "unit_tests/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 

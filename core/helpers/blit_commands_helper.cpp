@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/helpers/blit_commands_helper.h"
+#include "helpers/blit_commands_helper.h"
 
-#include "core/helpers/timestamp_packet.h"
-#include "core/memory_manager/surface.h"
+#include "helpers/timestamp_packet.h"
+#include "memory_manager/surface.h"
 
 namespace NEO {
 BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,

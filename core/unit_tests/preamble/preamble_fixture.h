@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/preamble.h"
+#include "helpers/preamble.h"
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"

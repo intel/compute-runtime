@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/simd_helper.h"
+#include "helpers/simd_helper.h"
 #include "test.h"
 
 namespace NEO {

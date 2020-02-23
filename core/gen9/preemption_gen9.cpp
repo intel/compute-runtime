@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/csr_definitions.h"
-#include "core/command_stream/preemption.h"
-#include "core/command_stream/preemption.inl"
+#include "command_stream/csr_definitions.h"
+#include "command_stream/preemption.h"
+#include "command_stream/preemption.inl"
 #include "opencl/source/built_ins/built_ins.h"
 
 #include <cstring>

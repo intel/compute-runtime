@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/command_stream/csr_definitions.h"
-#include "core/command_stream/linear_stream.h"
-#include "core/memory_manager/residency_container.h"
-#include "core/utilities/idlist.h"
-#include "core/utilities/stackvec.h"
+#include "command_stream/csr_definitions.h"
+#include "command_stream/linear_stream.h"
+#include "memory_manager/residency_container.h"
+#include "utilities/idlist.h"
+#include "utilities/stackvec.h"
 
 #include <vector>
 namespace NEO {

@@ -7,7 +7,7 @@
 
 #pragma once
 #ifdef WIN32
-#include "core/os_interface/windows/windows_wrapper.h"
+#include "os_interface/windows/windows_wrapper.h"
 
 #else
 #ifndef C_ASSERT

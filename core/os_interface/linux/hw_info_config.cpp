@@ -5,17 +5,17 @@
  *
  */
 
-#include "core/os_interface/hw_info_config.h"
+#include "os_interface/hw_info_config.h"
 
-#include "core/command_stream/preemption.h"
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/hw_info.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/os_interface/linux/os_interface.h"
-#include "core/utilities/cpu_info.h"
+#include "command_stream/preemption.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/hw_helper.h"
+#include "helpers/hw_info.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/linux/drm_neo.h"
+#include "os_interface/linux/os_interface.h"
+#include "utilities/cpu_info.h"
 
 #include "instrumentation.h"
 

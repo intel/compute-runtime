@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/helpers/pipeline_select_helper.h"
+#include "helpers/pipeline_select_helper.h"
 
 #include "engine_node.h"
 #include "igfxfmid.h"

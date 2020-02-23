@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/linear_stream.h"
+#include "command_stream/linear_stream.h"
 
-#include "core/memory_manager/graphics_allocation.h"
+#include "memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

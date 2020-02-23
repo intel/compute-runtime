@@ -7,7 +7,7 @@
 
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
-#include "core/helpers/ptr_math.h"
+#include "helpers/ptr_math.h"
 
 using namespace NEO;
 

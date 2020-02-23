@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "core/execution_environment/execution_environment.h"
-#include "core/helpers/hw_helper.h"
+#include "execution_environment/execution_environment.h"
+#include "helpers/hw_helper.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {

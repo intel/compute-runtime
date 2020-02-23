@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/device_binary_format/patchtokens_decoder.h"
-#include "core/device_binary_format/patchtokens_dumper.h"
-#include "core/unit_tests/device_binary_format/patchtokens_tests.h"
+#include "device_binary_format/patchtokens_decoder.h"
+#include "device_binary_format/patchtokens_dumper.h"
+#include "unit_tests/device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 #include <sstream>
@@ -126,8 +126,7 @@ TEST(ProgramDumper, GivenProgramWithPatchtokensThenProperlyCreatesDump) {
 
     std::string generated = NEO::PatchTokenBinary::asString(progWithConst);
     std::stringstream expected;
-    expected <<
-        R"===(Program of size : )===" << progWithConst.blobs.programInfo.size() << R"===( decoded successfully
+    expected << R"===(Program of size : )===" << progWithConst.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -265,8 +264,7 @@ TEST(ProgramDumper, GivenProgramWithKernelThenProperlyCreatesDump) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm program;
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
-    expected <<
-        R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
+    expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -347,8 +345,7 @@ TEST(ProgramDumper, GivenProgramWithMultipleKerneslThenProperlyCreatesDump) {
     program.kernels[2].name = ArrayRef<const char>();
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
-    expected <<
-        R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
+    expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
     uint32_t   Version; // = )==="
@@ -561,8 +558,7 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
 
     std::string generated = NEO::PatchTokenBinary::asString(kernel);
     std::stringstream expected;
-    expected <<
-        R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
+    expected << R"===(Kernel of size : )===" << kernel.blobs.kernelInfo.size() << R"===(  decoded successfully
 struct SKernelBinaryHeader {
     uint32_t   CheckSum;// = )==="
              << kernel.header->CheckSum << R"===(

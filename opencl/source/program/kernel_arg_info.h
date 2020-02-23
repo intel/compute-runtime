@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "core/compiler_interface/compiler_options/compiler_options_base.h"
-#include "core/utilities/const_stringref.h"
+#include "compiler_interface/compiler_options/compiler_options_base.h"
+#include "utilities/const_stringref.h"
 
 #include <cstdint>
 #include <cstring>

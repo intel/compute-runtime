@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/utilities/stackvec.h"
+#include "utilities/stackvec.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 
 #include <memory>

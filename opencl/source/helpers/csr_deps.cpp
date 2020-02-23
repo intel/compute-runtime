@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/command_stream/csr_deps.h"
+#include "command_stream/csr_deps.h"
 
 #include "opencl/source/helpers/timestamp_packet.h"
 

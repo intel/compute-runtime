@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/device/device.h"
-#include "core/memory_manager/surface.h"
+#include "command_stream/command_stream_receiver.h"
+#include "device/device.h"
+#include "memory_manager/surface.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 

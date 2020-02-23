@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/os_interface/os_library.h"
+#include "os_interface/os_library.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/ptr_math.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "helpers/hw_helper.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

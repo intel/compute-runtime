@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/hw_info.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/const_stringref.h"
+#include "helpers/hw_info.h"
+#include "utilities/arrayref.h"
+#include "utilities/const_stringref.h"
 #include "opencl/source/program/heap_info.h"
 #include "opencl/source/program/kernel_arg_info.h"
 

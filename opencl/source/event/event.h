@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/helpers/flush_stamp.h"
-#include "core/os_interface/os_time.h"
-#include "core/utilities/arrayref.h"
-#include "core/utilities/idlist.h"
-#include "core/utilities/iflist.h"
+#include "helpers/flush_stamp.h"
+#include "os_interface/os_time.h"
+#include "utilities/arrayref.h"
+#include "utilities/idlist.h"
+#include "utilities/iflist.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/base_object.h"

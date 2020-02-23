@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/hw_info.h"
-#include "core/helpers/non_copyable_or_moveable.h"
-#include "core/memory_manager/graphics_allocation.h"
+#include "helpers/hw_info.h"
+#include "helpers/non_copyable_or_moveable.h"
+#include "memory_manager/graphics_allocation.h"
 #include "opencl/source/gen_common/aub_mapper_base.h"
 
 namespace NEO {

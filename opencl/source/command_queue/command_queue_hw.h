@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/command_stream/preemption.h"
-#include "core/helpers/engine_control.h"
-#include "core/helpers/hw_helper.h"
-#include "core/memory_manager/graphics_allocation.h"
+#include "command_stream/command_stream_receiver.h"
+#include "command_stream/preemption.h"
+#include "helpers/engine_control.h"
+#include "helpers/hw_helper.h"
+#include "memory_manager/graphics_allocation.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device/cl_device.h"

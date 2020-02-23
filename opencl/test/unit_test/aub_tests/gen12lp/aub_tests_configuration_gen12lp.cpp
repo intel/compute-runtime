@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/helpers/hw_cmds.h"
+#include "helpers/hw_cmds.h"
 #include "opencl/test/unit_test/aub_tests/aub_tests_configuration.h"
 
 using namespace NEO;

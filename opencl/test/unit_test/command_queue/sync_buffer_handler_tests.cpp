@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/program/sync_buffer_handler.h"
+#include "program/sync_buffer_handler.h"
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

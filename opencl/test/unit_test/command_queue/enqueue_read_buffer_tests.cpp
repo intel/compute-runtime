@@ -5,10 +5,10 @@
  *
  */
 
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/cache_policy.h"
-#include "core/memory_manager/allocations_list.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/cache_policy.h"
+#include "memory_manager/allocations_list.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"

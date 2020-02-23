@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gen12lp/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
+#include "gen12lp/hw_cmds.h"
+#include "helpers/hw_helper.h"
 
 namespace NEO {
 

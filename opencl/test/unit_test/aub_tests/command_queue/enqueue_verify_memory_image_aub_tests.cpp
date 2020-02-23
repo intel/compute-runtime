@@ -5,9 +5,9 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/ptr_math.h"
+#include "command_stream/command_stream_receiver.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/ptr_math.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

@@ -7,10 +7,10 @@
 
 #include "opencl/test/unit_test/os_interface/linux/device_factory_tests.h"
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/os_interface/linux/os_interface.h"
-#include "core/os_interface/os_interface.h"
-#include "core/unit_tests/helpers/default_hw_info.h"
+#include "execution_environment/root_device_environment.h"
+#include "os_interface/linux/os_interface.h"
+#include "os_interface/os_interface.h"
+#include "unit_tests/helpers/default_hw_info.h"
 
 TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     const HardwareInfo *refHwinfo = *platformDevices;

@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/command_stream/command_stream_receiver_hw.h"
-#include "core/helpers/aligned_memory.h"
-#include "core/helpers/hash.h"
-#include "core/helpers/ptr_math.h"
-#include "core/memory_manager/graphics_allocation.h"
+#include "command_stream/command_stream_receiver_hw.h"
+#include "helpers/aligned_memory.h"
+#include "helpers/hash.h"
+#include "helpers/ptr_math.h"
+#include "memory_manager/graphics_allocation.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

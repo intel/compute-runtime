@@ -5,15 +5,15 @@
  *
  */
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/execution_environment/execution_environment.h"
-#include "core/execution_environment/root_device_environment.h"
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/hw_helper.h"
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/linux/drm_neo.h"
-#include "core/os_interface/linux/drm_null_device.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "execution_environment/execution_environment.h"
+#include "execution_environment/root_device_environment.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/hw_helper.h"
+#include "helpers/hw_info.h"
+#include "os_interface/linux/drm_neo.h"
+#include "os_interface/linux/drm_null_device.h"
 
 #include "drm/i915_drm.h"
 

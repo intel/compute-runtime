@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "core/helpers/abort.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/utilities/reference_tracked_object.h"
+#include "helpers/abort.h"
+#include "helpers/debug_helpers.h"
+#include "utilities/reference_tracked_object.h"
 #include "opencl/source/api/dispatch.h"
 
 #include "CL/cl.h"

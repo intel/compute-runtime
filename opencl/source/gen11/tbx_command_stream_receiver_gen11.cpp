@@ -5,8 +5,8 @@
  *
  */
 
-#include "core/gen11/hw_cmds.h"
-#include "core/helpers/array_count.h"
+#include "gen11/hw_cmds.h"
+#include "helpers/array_count.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.inl"

@@ -5,11 +5,11 @@
  *
  */
 
-#include "core/direct_submission/direct_submission_hw.inl"
-#include "core/direct_submission/dispatchers/blitter_dispatcher.inl"
-#include "core/direct_submission/dispatchers/render_dispatcher.inl"
-#include "core/direct_submission/linux/drm_direct_submission.inl"
-#include "core/helpers/hw_cmds.h"
+#include "direct_submission/direct_submission_hw.inl"
+#include "direct_submission/dispatchers/blitter_dispatcher.inl"
+#include "direct_submission/dispatchers/render_dispatcher.inl"
+#include "direct_submission/linux/drm_direct_submission.inl"
+#include "helpers/hw_cmds.h"
 
 namespace NEO {
 template class BlitterDispatcher<BDWFamily>;

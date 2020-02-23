@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/device_binary_format/device_binary_formats.h"
+#include "device_binary_format/device_binary_formats.h"
 
 #include <string>
 

@@ -5,13 +5,13 @@
  *
  */
 
-#include "core/execution_environment/root_device_environment.h"
-#include "core/helpers/timestamp_packet.h"
-#include "core/os_interface/os_interface.h"
-#include "core/os_interface/windows/os_context_win.h"
-#include "core/os_interface/windows/os_interface.h"
-#include "core/os_interface/windows/wddm/wddm.h"
-#include "core/os_interface/windows/wddm_memory_operations_handler.h"
+#include "execution_environment/root_device_environment.h"
+#include "helpers/timestamp_packet.h"
+#include "os_interface/os_interface.h"
+#include "os_interface/windows/os_context_win.h"
+#include "os_interface/windows/os_interface.h"
+#include "os_interface/windows/wddm/wddm.h"
+#include "os_interface/windows/wddm_memory_operations_handler.h"
 #include "opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"

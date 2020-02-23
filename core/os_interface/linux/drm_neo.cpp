@@ -7,15 +7,15 @@
 
 #include "drm_neo.h"
 
-#include "core/debug_settings/debug_settings_manager.h"
-#include "core/helpers/debug_helpers.h"
-#include "core/helpers/hw_info.h"
-#include "core/memory_manager/memory_constants.h"
-#include "core/os_interface/linux/hw_device_id.h"
-#include "core/os_interface/linux/os_inc.h"
-#include "core/os_interface/linux/sys_calls.h"
-#include "core/os_interface/os_interface.h"
-#include "core/utilities/directory.h"
+#include "debug_settings/debug_settings_manager.h"
+#include "helpers/debug_helpers.h"
+#include "helpers/hw_info.h"
+#include "memory_manager/memory_constants.h"
+#include "os_interface/linux/hw_device_id.h"
+#include "os_interface/linux/os_inc.h"
+#include "os_interface/linux/sys_calls.h"
+#include "os_interface/os_interface.h"
+#include "utilities/directory.h"
 
 #include <cstdio>
 #include <cstring>

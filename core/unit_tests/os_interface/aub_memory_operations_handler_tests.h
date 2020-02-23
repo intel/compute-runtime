@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "core/helpers/hw_info.h"
-#include "core/os_interface/aub_memory_operations_handler.h"
-#include "core/os_interface/device_factory.h"
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/hw_info.h"
+#include "os_interface/aub_memory_operations_handler.h"
+#include "os_interface/device_factory.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"

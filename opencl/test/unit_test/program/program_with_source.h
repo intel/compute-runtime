@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/compiler_interface/compiler_interface.h"
+#include "compiler_interface/compiler_interface.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"

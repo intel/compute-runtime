@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "core/helpers/basic_math.h"
-#include "core/memory_manager/memory_manager.h"
+#include "helpers/basic_math.h"
+#include "memory_manager/memory_manager.h"
 
 namespace NEO {
 constexpr size_t bigAllocation = 1 * MB;

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/command_stream/submissions_aggregator.h"
+#include "command_stream/submissions_aggregator.h"
 
 namespace NEO {
 struct mockSubmissionsAggregator : public SubmissionAggregator {

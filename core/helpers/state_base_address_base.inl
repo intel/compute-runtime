@@ -5,12 +5,12 @@
  *
  */
 
-#include "core/gmm_helper/gmm_helper.h"
-#include "core/helpers/cache_policy.h"
-#include "core/helpers/hw_cmds.h"
-#include "core/helpers/state_base_address.h"
-#include "core/indirect_heap/indirect_heap.h"
-#include "core/memory_manager/memory_constants.h"
+#include "gmm_helper/gmm_helper.h"
+#include "helpers/cache_policy.h"
+#include "helpers/hw_cmds.h"
+#include "helpers/state_base_address.h"
+#include "indirect_heap/indirect_heap.h"
+#include "memory_manager/memory_constants.h"
 
 namespace NEO {
 template <typename GfxFamily>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/device/device.h"
+#include "device/device.h"
 #include "opencl/source/context/context.h"
 
 #include "cl_api_tests.h"
