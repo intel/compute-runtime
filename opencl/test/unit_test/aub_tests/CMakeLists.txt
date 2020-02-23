@@ -47,7 +47,7 @@ endif()
 target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(igdrcl_aub_tests PRIVATE
-  ${NEO_CORE_DIRECTORY}/unit_tests/page_fault_manager/default_asan_options.cpp
+  ${NEO_CORE_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
   ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
@@ -80,7 +80,7 @@ else()
     ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_CORE_DIRECTORY}/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
   if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)

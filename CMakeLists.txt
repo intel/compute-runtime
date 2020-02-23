@@ -114,6 +114,11 @@ if(NOT DEFINED NEO_CORE_DIRECTORY)
   set(NEO_CORE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shared/source)
 endif()
 
+# Set the core source directory
+if(NOT DEFINED NEO_CORE_TEST_DIRECTORY)
+  set(NEO_CORE_TEST_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shared/test)
+endif()
+
 if(SKIP_UNIT_TESTS)
   set(SKIP_NEO_UNIT_TESTS TRUE)
 endif()
@@ -780,7 +785,7 @@ endif()
 
 # Project-wide include paths
 # Please keep alphabetical order
-include_directories(shared/source/unit_tests)
+include_directories(shared/test/unit_test)
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
 include_directories(${NEO_CORE_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})
@@ -829,6 +834,7 @@ else()
     endif()
 endif()
 add_subdirectory_unique(shared/source)
+add_subdirectory_unique(shared/test/unit_test)
 
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
     set(NEO_STATIC_LIB_NAME ${LIB_NAME})

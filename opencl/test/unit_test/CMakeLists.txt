@@ -199,7 +199,7 @@ set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_CORE_DIRECTORY}/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
 if(WIN32)
   set(cloc_cmd_prefix ocloc)
