@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 
 namespace NEO {
 

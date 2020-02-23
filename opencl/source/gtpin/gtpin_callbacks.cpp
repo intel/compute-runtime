@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "memory_manager/surface.h"
-#include "utilities/spinlock.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/surface.h"
+#include "shared/source/utilities/spinlock.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"

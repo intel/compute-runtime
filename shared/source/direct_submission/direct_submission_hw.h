@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "command_stream/linear_stream.h"
-#include "helpers/completion_stamp.h"
-#include "memory_manager/memory_constants.h"
-#include "utilities/stackvec.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <memory>
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/os_context.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "gtest/gtest.h"
 

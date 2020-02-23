@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/aligned_memory.h"
-#include "helpers/basic_math.h"
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"

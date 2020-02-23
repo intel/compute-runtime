@@ -5,8 +5,8 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/deferred_deleter_helper.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/deferred_deleter_helper.h"
 
 namespace NEO {
 bool isDeferredDeleterEnabled() {

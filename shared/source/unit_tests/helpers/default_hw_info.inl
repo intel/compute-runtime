@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/array_count.h"
-#include "helpers/hw_cmds.h"
+#include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/hw_cmds.h"
 
 namespace NEO {
 static const HardwareInfo *DefaultPlatformDevices[] = {

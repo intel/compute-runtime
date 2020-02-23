@@ -7,7 +7,7 @@
 
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
 
-#include "device_binary_format/patchtokens_decoder.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "opencl/source/program/kernel_info.h"
 
 #include <cstring>

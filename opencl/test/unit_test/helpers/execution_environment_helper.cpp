@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 
-#include "os_interface/device_factory.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {

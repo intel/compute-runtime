@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/windows/deferrable_deletion_win.h"
+#include "shared/source/os_interface/windows/deferrable_deletion_win.h"
 
-#include "os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
 

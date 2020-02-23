@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/utilities/base_object_utils.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include <string.h>
 

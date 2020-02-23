@@ -5,11 +5,11 @@
  *
  */
 
-#include "os_interface/windows/debug_registry_reader.h"
+#include "shared/source/os_interface/windows/debug_registry_reader.h"
 
-#include "debug_settings/debug_settings_manager.h"
-#include "os_interface/windows/windows_wrapper.h"
-#include "utilities/debug_settings_reader.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 
 #include <stdint.h>
 

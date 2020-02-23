@@ -5,7 +5,7 @@
  *
  */
 
-#include "image/image_surface_state.h"
+#include "shared/source/image/image_surface_state.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

@@ -5,12 +5,12 @@
  *
  */
 
-#include "execution_environment/execution_environment.h"
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/resource_info.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/bit_helpers.h"
-#include "helpers/hw_cmds.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/hw_cmds.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/buffer.h"
 

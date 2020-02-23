@@ -7,10 +7,10 @@
 
 #include "binary_decoder.h"
 
-#include "device_binary_format/elf/elf_decoder.h"
-#include "device_binary_format/elf/ocl_elf.h"
-#include "helpers/file_io.h"
-#include "helpers/ptr_math.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "offline_compiler/offline_compiler.h"
 
 #include "helper.h"

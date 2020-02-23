@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "gmm_helper/gmm_lib.h"
-#include "helpers/surface_format_info.h"
-#include "utilities/arrayref.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/utilities/arrayref.h"
 
 #include "CL/cl.h"
 

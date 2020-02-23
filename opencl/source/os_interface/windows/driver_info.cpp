@@ -7,9 +7,9 @@
 
 #include "opencl/source/device/driver_info.h"
 
-#include "os_interface/windows/debug_registry_reader.h"
-#include "os_interface/windows/os_interface.h"
-#include "os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/debug_registry_reader.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "opencl/source/os_interface/windows/driver_info.h"
 
 namespace NEO {

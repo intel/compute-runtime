@@ -5,17 +5,17 @@
  *
  */
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/experimental_command_buffer.h"
-#include "command_stream/preemption.h"
-#include "execution_environment/root_device_environment.h"
-#include "helpers/hw_helper.h"
-#include "memory_manager/memory_manager.h"
-#include "os_interface/os_context.h"
-#include "os_interface/os_interface.h"
-#include "os_interface/os_time.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/experimental_command_buffer.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "opencl/source/device/driver_info.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
 

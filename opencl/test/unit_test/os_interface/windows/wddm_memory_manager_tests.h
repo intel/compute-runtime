@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "os_interface/windows/os_interface.h"
-#include "os_interface/windows/wddm_memory_operations_handler.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
+#include "os_interface/windows/mock_gdi_interface.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"

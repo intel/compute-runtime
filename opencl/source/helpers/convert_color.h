@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/basic_math.h"
+#include "shared/source/helpers/basic_math.h"
 
 #include "CL/cl.h"
 

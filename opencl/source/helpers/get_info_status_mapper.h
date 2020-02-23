@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/get_info_status.h"
+#include "shared/source/helpers/get_info_status.h"
 
 #include <CL/cl.h>
 

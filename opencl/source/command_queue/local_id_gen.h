@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include <algorithm>
 #include <array>

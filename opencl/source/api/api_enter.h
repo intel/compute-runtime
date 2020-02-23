@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/perf_profiler.h"
+#include "shared/source/utilities/perf_profiler.h"
 #include "opencl/source/utilities/logger.h"
 
 #define API_ENTER(retValPointer) \

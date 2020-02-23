@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 

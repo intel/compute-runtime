@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/deferred_deleter.h"
 
 namespace NEO {
 class MockDeferredDeleter : public DeferredDeleter {

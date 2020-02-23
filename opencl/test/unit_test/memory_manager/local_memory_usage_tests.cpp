@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/basic_math.h"
-#include "memory_manager/local_memory_usage.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 
 #include "third_party/gtest/gtest/gtest.h"
 

@@ -7,7 +7,7 @@
 
 #include "opencl/source/os_interface/performance_counters.h"
 
-#include "utilities/tag_allocator.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 using namespace MetricsLibraryApi;
 

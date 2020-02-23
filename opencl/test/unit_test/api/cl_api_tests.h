@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "execution_environment/root_device_environment.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/tracing/tracing_api.h"

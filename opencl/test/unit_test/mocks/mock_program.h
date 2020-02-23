@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "device/device.h"
-#include "helpers/hash.h"
-#include "helpers/string.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/string.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"

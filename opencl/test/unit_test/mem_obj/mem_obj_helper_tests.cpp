@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/utilities/base_object_utils.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"

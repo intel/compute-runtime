@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/aligned_memory.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"

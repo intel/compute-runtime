@@ -5,12 +5,12 @@
  *
  */
 
-#include "compiler_interface/intermediate_representations.h"
-#include "device_binary_format/device_binary_formats.h"
-#include "device_binary_format/elf/elf_decoder.h"
-#include "device_binary_format/elf/elf_encoder.h"
-#include "device_binary_format/elf/ocl_elf.h"
-#include "utilities/compiler_support.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/utilities/compiler_support.h"
 
 #include <tuple>
 

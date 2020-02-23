@@ -5,8 +5,8 @@
  *
  */
 
-#include "gen12lp/hw_cmds.h"
-#include "os_interface/hw_info_config.h"
+#include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 

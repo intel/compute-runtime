@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "helpers/debug_helpers.h"
-#include "helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <atomic>
 #include <memory>

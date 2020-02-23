@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 
 #include "sku_info.h"
 

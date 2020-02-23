@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/execution_model/device_enqueue.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/printf_handler.h"

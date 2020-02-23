@@ -5,8 +5,8 @@
  *
  */
 
-#include "gen11/hw_cmds.h"
-#include "helpers/hw_helper.h"
+#include "shared/source/gen11/hw_cmds.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 

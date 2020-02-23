@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "compiler_interface/compiler_interface.h"
-#include "compiler_interface/linker.h"
-#include "device_binary_format/elf/elf_encoder.h"
-#include "program/program_info.h"
-#include "utilities/const_stringref.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/program/program_info.h"
+#include "shared/source/utilities/const_stringref.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
 

@@ -7,8 +7,8 @@
 
 #include "opencl/source/sharings/unified/unified_sharing.h"
 
-#include "helpers/string.h"
-#include "helpers/timestamp_packet.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/sharings/sharing_factory.h"
 

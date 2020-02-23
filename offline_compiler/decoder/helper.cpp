@@ -7,8 +7,8 @@
 
 #include "helper.h"
 
-#include "helpers/hw_info.h"
-#include "os_interface/os_library.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_library.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 
 #include "igfxfmid.h"

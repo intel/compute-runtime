@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/get_info.h"
+#include "shared/source/helpers/get_info.h"
 
 #include "gtest/gtest.h"
 

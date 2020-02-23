@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_properties/memory_properties_flags_common.inl"
+#include "shared/source/memory_properties/memory_properties_flags_common.inl"
 
 namespace NEO {
 

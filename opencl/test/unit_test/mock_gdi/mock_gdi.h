@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "gmm_helper/gmm_lib.h"
-#include "os_interface/windows/os_time_win.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/os_interface/windows/os_time_win.h"
 
 #include <d3d10_1.h>
 #include <d3d9types.h>

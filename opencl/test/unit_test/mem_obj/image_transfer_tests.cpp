@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

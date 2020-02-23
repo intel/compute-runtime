@@ -7,9 +7,9 @@
 
 #include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 
-#include "command_stream/preemption.h"
-#include "helpers/hw_helper.h"
-#include "os_interface/os_context.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 

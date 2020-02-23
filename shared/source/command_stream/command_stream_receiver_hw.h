@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "execution_environment/execution_environment.h"
-#include "helpers/dirty_state_helpers.h"
-#include "helpers/hw_cmds.h"
-#include "helpers/hw_info.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/dirty_state_helpers.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
 template <typename GfxFamily>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/os_memory.h"
+#include "shared/source/os_interface/os_memory.h"
 
 #include <windows.h>
 

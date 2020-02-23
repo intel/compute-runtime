@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include <csignal>
 #include <functional>

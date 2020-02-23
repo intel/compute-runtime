@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "os_interface/os_context.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/os_context.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"

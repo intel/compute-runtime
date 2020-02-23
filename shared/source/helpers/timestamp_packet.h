@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "command_container/command_encoder.h"
-#include "command_stream/csr_deps.h"
-#include "helpers/aux_translation.h"
-#include "helpers/non_copyable_or_moveable.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include <atomic>
 #include <cstdint>

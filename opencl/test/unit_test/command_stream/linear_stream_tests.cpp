@@ -5,8 +5,8 @@
  *
  */
 
-#include "command_stream/linear_stream.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_stream/scratch_space_controller.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 
 namespace NEO {
 

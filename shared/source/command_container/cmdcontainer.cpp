@@ -5,16 +5,16 @@
  *
  */
 
-#include "command_container/cmdcontainer.h"
+#include "shared/source/command_container/cmdcontainer.h"
 
-#include "command_container/command_encoder.h"
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/linear_stream.h"
-#include "device/device.h"
-#include "helpers/debug_helpers.h"
-#include "helpers/heap_helper.h"
-#include "indirect_heap/indirect_heap.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/heap_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 

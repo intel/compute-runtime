@@ -7,13 +7,13 @@
 
 #include "program_initialization.h"
 
-#include "compiler_interface/linker.h"
-#include "device/device.h"
-#include "helpers/string.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/memory_manager.h"
-#include "memory_manager/unified_memory_manager.h"
-#include "program/program_info.h"
+#include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/program/program_info.h"
 
 namespace NEO {
 

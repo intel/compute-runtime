@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/blit_commands_helper.h"
-#include "helpers/hw_helper.h"
-#include "helpers/timestamp_packet.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/timestamp_packet.h"
 
 namespace NEO {
 

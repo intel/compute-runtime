@@ -7,7 +7,7 @@
 
 #include "opencl/source/os_interface/metrics_library.h"
 
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 
 namespace NEO {

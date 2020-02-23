@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "utilities/stackvec.h"
+#include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
 

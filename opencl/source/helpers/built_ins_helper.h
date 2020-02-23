@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "opencl/source/built_ins/built_ins.h"
 
 namespace NEO {

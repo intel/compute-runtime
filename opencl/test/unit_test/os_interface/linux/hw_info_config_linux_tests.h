@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "os_interface/hw_info_config.h"
-#include "os_interface/os_interface.h"
-#include "utilities/cpu_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 

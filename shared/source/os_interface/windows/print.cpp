@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/print.h"
+#include "shared/source/os_interface/print.h"
 
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <cctype>
 #include <cstdint>

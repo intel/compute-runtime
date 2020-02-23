@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/basic_math.h"
-#include "os_interface/linux/allocator_helper.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/os_interface/linux/allocator_helper.h"
 
 #include "gtest/gtest.h"
 

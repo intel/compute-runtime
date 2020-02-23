@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "helpers/file_io.h"
-#include "utilities/directory.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/utilities/directory.h"
 #include "opencl/source/helpers/string_helpers.h"
 #include "opencl/source/utilities/logger.h"
 

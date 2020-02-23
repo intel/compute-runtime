@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/windows/windows_defs.h"
+#include "shared/source/os_interface/windows/windows_defs.h"
 
 #include <cstdint>
 

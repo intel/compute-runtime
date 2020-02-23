@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 
 // clang-format off
 // EnqueueTraits

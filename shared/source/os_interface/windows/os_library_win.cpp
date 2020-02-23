@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/windows/os_library_win.h"
+#include "shared/source/os_interface/windows/os_library_win.h"
 
 namespace NEO {
 

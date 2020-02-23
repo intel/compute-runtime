@@ -5,8 +5,8 @@
  *
  */
 
-#include "page_fault_manager/linux/cpu_page_fault_manager_linux.h"
-#include "unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "shared/source/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
+#include "page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
 

@@ -7,7 +7,7 @@
 
 #include "test_files.h"
 
-#include "helpers/file_io.h"
+#include "shared/source/helpers/file_io.h"
 
 #include "config.h"
 

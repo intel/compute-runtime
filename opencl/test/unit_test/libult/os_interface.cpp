@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/os_interface.h"
+#include "shared/source/os_interface/os_interface.h"
 
-#include "memory_manager/memory_constants.h"
+#include "shared/source/memory_manager/memory_constants.h"
 
 namespace NEO {
 

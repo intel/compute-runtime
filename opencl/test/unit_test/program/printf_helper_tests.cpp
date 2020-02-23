@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/aligned_memory.h"
-#include "helpers/string.h"
-#include "program/print_formatter.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/program/print_formatter.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"

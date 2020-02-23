@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/experimental_command_buffer.h"
-#include "command_stream/experimental_command_buffer.inl"
-#include "helpers/hw_helper.h"
+#include "shared/source/command_stream/experimental_command_buffer.h"
+#include "shared/source/command_stream/experimental_command_buffer.inl"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 typedef SKLFamily GfxFamily;

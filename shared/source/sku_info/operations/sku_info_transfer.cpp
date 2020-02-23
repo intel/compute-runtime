@@ -5,7 +5,7 @@
  *
  */
 
-#include "sku_info/operations/sku_info_transfer.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
 void SkuInfoTransfer::transferWaTableForGmm(_WA_TABLE *dstWaTable, const NEO::WorkaroundTable *srcWaTable) {

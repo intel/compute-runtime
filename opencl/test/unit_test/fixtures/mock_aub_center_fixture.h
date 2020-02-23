@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "execution_environment/root_device_environment.h"
-#include "unit_tests/helpers/default_hw_info.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "helpers/default_hw_info.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"
 #include "opencl/test/unit_test/mocks/mock_aub_manager.h"

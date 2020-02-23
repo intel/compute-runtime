@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/timestamp_packet.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
 #include "test.h"
 

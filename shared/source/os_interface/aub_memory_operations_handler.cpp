@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/aub_memory_operations_handler.h"
+#include "shared/source/os_interface/aub_memory_operations_handler.h"
 
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 #include <algorithm>

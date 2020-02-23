@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/file_io.h"
+#include "shared/source/helpers/file_io.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 

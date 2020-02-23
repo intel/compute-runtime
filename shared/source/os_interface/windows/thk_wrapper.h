@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "helpers/options.h"
-#include "utilities/api_intercept.h"
+#include "shared/source/helpers/options.h"
+#include "shared/source/utilities/api_intercept.h"
 
 #include <d3dkmthk.h>
 

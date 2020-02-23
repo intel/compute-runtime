@@ -7,7 +7,7 @@
 
 #include "opencl/source/memory_manager/address_mapper.h"
 
-#include "helpers/aligned_memory.h"
+#include "shared/source/helpers/aligned_memory.h"
 
 #include <inttypes.h>
 #include <iostream>

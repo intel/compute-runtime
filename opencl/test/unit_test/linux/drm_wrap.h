@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "os_interface/linux/drm_neo.h"
-#include "os_interface/os_interface.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "drm/i915_drm.h"
 

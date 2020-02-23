@@ -5,12 +5,12 @@
  *
  */
 
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "helpers/ptr_math.h"
-#include "memory_manager/surface.h"
-#include "memory_manager/unified_memory_manager.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/surface.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"

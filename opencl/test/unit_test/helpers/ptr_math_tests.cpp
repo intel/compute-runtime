@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "gtest/gtest.h"
 

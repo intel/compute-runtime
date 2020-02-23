@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/linux/os_inc.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 namespace Os {
 const char *fileSeparator = "/";
 }

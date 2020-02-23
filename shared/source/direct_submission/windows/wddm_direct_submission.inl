@@ -5,15 +5,15 @@
  *
  */
 
-#include "direct_submission/windows/wddm_direct_submission.h"
-#include "execution_environment/root_device_environment.h"
-#include "gmm_helper/gmm_helper.h"
-#include "os_interface/windows/os_context_win.h"
-#include "os_interface/windows/wddm/wddm.h"
-#include "os_interface/windows/wddm/wddm_interface.h"
-#include "os_interface/windows/wddm_allocation.h"
-#include "os_interface/windows/wddm_memory_operations_handler.h"
-#include "utilities/arrayref.h"
+#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
+#include "shared/source/utilities/arrayref.h"
 
 namespace NEO {
 

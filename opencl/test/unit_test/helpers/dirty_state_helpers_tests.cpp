@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/dirty_state_helpers.h"
-#include "helpers/ptr_math.h"
-#include "indirect_heap/indirect_heap.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/helpers/dirty_state_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"

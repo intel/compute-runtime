@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "memory_manager/internal_allocation_storage.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 
 namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {

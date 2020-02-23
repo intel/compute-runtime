@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/preamble.h"
+#include "shared/source/helpers/preamble.h"
 
 namespace NEO {
 

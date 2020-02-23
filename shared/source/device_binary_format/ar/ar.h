@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "utilities/const_stringref.h"
+#include "shared/source/utilities/const_stringref.h"
 
 namespace NEO {
 namespace Ar {

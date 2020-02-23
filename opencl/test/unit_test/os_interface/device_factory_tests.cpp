@@ -5,13 +5,13 @@
  *
  */
 
-#include "execution_environment/execution_environment.h"
-#include "helpers/hw_info.h"
-#include "memory_manager/memory_constants.h"
-#include "os_interface/device_factory.h"
-#include "os_interface/os_interface.h"
-#include "os_interface/os_library.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_library.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 

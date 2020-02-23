@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "helpers/hw_helper.h"
-#include "helpers/preamble.h"
-#include "helpers/string.h"
-#include "memory_manager/memory_manager.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

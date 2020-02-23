@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "memory_manager/memory_operations_status.h"
-#include "os_interface/windows/windows_defs.h"
-#include "utilities/spinlock.h"
+#include "shared/source/memory_manager/memory_operations_status.h"
+#include "shared/source/os_interface/windows/windows_defs.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include <mutex>
 #include <vector>

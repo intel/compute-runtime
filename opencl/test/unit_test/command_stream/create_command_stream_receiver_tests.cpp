@@ -5,10 +5,10 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "execution_environment/execution_environment.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/ult_hw_config.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "helpers/ult_hw_config.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"

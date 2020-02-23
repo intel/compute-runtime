@@ -7,7 +7,7 @@
 
 #include "print_formatter.h"
 
-#include "helpers/string.h"
+#include "shared/source/helpers/string.h"
 
 #include <iostream>
 

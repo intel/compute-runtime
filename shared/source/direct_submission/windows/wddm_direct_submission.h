@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "direct_submission/direct_submission_hw.h"
-#include "os_interface/windows/windows_defs.h"
+#include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/os_interface/windows/windows_defs.h"
 
 struct COMMAND_BUFFER_HEADER_REC;
 

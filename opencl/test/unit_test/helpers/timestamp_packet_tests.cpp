@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/timestamp_packet.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/utilities/base_object_utils.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "utilities/base_object_utils.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/user_event.h"

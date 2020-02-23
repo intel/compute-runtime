@@ -5,9 +5,9 @@
  *
  */
 
-#include "device_binary_format/ar/ar.h"
-#include "device_binary_format/ar/ar_decoder.h"
-#include "device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/ar/ar.h"
+#include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 
 namespace NEO {
 

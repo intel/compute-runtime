@@ -7,9 +7,9 @@
 
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/internal_allocation_storage.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 

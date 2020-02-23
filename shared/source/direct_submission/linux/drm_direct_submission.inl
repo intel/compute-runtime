@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/linear_stream.h"
-#include "direct_submission/linux/drm_direct_submission.h"
-#include "os_interface/linux/drm_allocation.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/direct_submission/linux/drm_direct_submission.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 
 namespace NEO {
 

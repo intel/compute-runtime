@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/cache_policy.h"
+#include "shared/source/helpers/cache_policy.h"
 
-#include "helpers/aligned_memory.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 
 namespace AubMemDump {
 struct AubStream;

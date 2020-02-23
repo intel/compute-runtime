@@ -7,7 +7,7 @@
 
 #ifdef _WIN32
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/device/cl_device.h"
 
 namespace NEO {

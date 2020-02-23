@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "command_stream/preemption.h"
-#include "os_interface/linux/os_context_linux.h"
-#include "os_interface/linux/os_interface.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/os_interface.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"

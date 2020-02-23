@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/file_io.h"
-#include "utilities/directory.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/utilities/directory.h"
 
 #include <map>
 

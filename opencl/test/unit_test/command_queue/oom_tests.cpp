@@ -5,8 +5,8 @@
  *
  */
 
-#include "indirect_heap/indirect_heap.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

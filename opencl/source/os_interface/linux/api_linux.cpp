@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/get_info.h"
+#include "shared/source/helpers/get_info.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/context/context.h"

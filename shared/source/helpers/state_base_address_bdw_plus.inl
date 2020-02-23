@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/state_base_address_base.inl"
+#include "shared/source/helpers/state_base_address_base.inl"
 
 namespace NEO {
 

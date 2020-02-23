@@ -7,7 +7,7 @@
 
 #include "gtpin_helpers.h"
 
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/buffer.h"

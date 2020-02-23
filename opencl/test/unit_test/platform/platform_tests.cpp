@@ -5,10 +5,10 @@
  *
  */
 
-#include "device/device.h"
-#include "helpers/hw_info.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/ult_hw_config.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "helpers/ult_hw_config.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"

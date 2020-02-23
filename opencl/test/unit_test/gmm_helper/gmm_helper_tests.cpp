@@ -5,13 +5,13 @@
  *
  */
 
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/gmm_types_converter.h"
-#include "helpers/hw_info.h"
-#include "helpers/ptr_math.h"
-#include "sku_info/operations/sku_info_transfer.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_types_converter.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

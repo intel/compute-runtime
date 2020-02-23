@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/kmd_notify_properties.h"
+#include "shared/source/helpers/kmd_notify_properties.h"
 
 using namespace NEO;
 

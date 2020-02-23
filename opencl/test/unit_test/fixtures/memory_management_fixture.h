@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "unit_tests/helpers/memory_management.h"
+#include "helpers/memory_management.h"
 
 #include "gtest/gtest.h"
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/preemption.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/preamble/preamble_fixture.h"
+#include "shared/source/command_stream/preemption.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "preamble/preamble_fixture.h"
 
 #include "reg_configs_common.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 
 #include "gmock/gmock.h"
 

@@ -5,11 +5,11 @@
  *
  */
 
-#include "execution_environment/root_device_environment.h"
-#include "helpers/hw_info.h"
-#include "os_interface/os_interface.h"
-#include "os_interface/windows/wddm/wddm.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "test.h"
 

@@ -5,14 +5,14 @@
  *
  */
 
-#include "gmm_helper/client_context/gmm_client_context_base.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context_base.h"
 
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/gmm_interface.h"
-#include "helpers/debug_helpers.h"
-#include "helpers/hw_info.h"
-#include "os_interface/os_interface.h"
-#include "sku_info/operations/sku_info_transfer.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_interface.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
 GmmClientContextBase::GmmClientContextBase(OSInterface *osInterface, HardwareInfo *hwInfo) : hardwareInfo(hwInfo) {

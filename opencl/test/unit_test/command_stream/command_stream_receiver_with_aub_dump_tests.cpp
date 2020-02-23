@@ -5,13 +5,13 @@
  *
  */
 
-#include "command_stream/preemption.h"
-#include "execution_environment/execution_environment.h"
-#include "helpers/flush_stamp.h"
-#include "helpers/hw_helper.h"
-#include "helpers/timestamp_packet.h"
-#include "os_interface/os_context.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"

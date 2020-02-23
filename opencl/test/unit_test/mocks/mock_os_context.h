@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/os_context.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 class MockOsContext : public OsContext {

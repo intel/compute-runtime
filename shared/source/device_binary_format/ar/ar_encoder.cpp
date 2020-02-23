@@ -5,10 +5,10 @@
  *
  */
 
-#include "device_binary_format/ar/ar_encoder.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 
-#include "helpers/debug_helpers.h"
-#include "helpers/string.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
 #include <vector>
 

@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "os_interface/windows/os_inc.h"
-#include "os_interface/windows/os_library_win.h"
-#include "os_interface/windows/thk_wrapper.h"
+#include "shared/source/os_interface/windows/os_inc.h"
+#include "shared/source/os_interface/windows/os_library_win.h"
+#include "shared/source/os_interface/windows/thk_wrapper.h"
 
 #include <d3d9types.h>
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "gmm_helper/gmm.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"

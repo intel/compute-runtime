@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_stream/linear_stream.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 

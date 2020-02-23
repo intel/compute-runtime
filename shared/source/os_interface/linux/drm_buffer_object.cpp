@@ -5,14 +5,14 @@
  *
  */
 
-#include "os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 
-#include "helpers/aligned_memory.h"
-#include "helpers/debug_helpers.h"
-#include "os_interface/linux/drm_memory_manager.h"
-#include "os_interface/linux/drm_neo.h"
-#include "os_interface/linux/os_time_linux.h"
-#include "utilities/stackvec.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_time_linux.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
 

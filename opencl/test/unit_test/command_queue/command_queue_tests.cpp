@@ -5,12 +5,12 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/basic_math.h"
-#include "helpers/timestamp_packet.h"
-#include "memory_manager/internal_allocation_storage.h"
-#include "memory_manager/memory_manager.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

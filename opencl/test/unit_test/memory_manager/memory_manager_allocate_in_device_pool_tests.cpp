@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
 
-#include "helpers/array_count.h"
+#include "shared/source/helpers/array_count.h"
 
 TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);

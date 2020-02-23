@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {

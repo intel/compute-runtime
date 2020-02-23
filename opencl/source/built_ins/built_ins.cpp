@@ -7,9 +7,9 @@
 
 #include "opencl/source/built_ins/built_ins.h"
 
-#include "compiler_interface/compiler_interface.h"
-#include "helpers/basic_math.h"
-#include "helpers/debug_helpers.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/sip.h"
 #include "opencl/source/device/cl_device.h"

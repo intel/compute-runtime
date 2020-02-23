@@ -5,9 +5,9 @@
  *
  */
 
-#include "page_fault_manager/linux/cpu_page_fault_manager_linux.h"
+#include "shared/source/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
 
-#include "helpers/debug_helpers.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include <sys/mman.h>
 

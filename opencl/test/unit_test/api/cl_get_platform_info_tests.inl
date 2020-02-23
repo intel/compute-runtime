@@ -5,8 +5,8 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "device/device.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/platform/platform.h"
 #include "test.h"
 

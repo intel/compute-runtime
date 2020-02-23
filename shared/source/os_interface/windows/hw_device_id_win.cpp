@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/debug_helpers.h"
-#include "os_interface/windows/gdi_interface.h"
-#include "os_interface/windows/hw_device_id.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
 namespace NEO {
 
 HwDeviceId::~HwDeviceId() {

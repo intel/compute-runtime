@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/hash.h"
+#include "shared/source/helpers/hash.h"
 
 #include "gtest/gtest.h"
 

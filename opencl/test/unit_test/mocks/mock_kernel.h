@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "device/device.h"
-#include "helpers/string.h"
-#include "kernel/grf_config.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/kernel/grf_config.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/platform/platform.h"

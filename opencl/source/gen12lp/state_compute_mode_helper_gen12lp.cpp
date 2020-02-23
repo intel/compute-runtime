@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/state_compute_mode_helper.h"
+#include "shared/source/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <>

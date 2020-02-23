@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/cache_policy.h"
-#include "memory_manager/unified_memory_manager.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/cache_policy.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"

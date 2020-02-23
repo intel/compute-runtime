@@ -5,9 +5,9 @@
  *
  */
 
-#include "device_binary_format/patchtokens_decoder.h"
-#include "execution_environment/execution_environment.h"
-#include "unit_tests/device_binary_format/patchtokens_tests.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "device_binary_format/patchtokens_tests.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/source/program/program.h"
 

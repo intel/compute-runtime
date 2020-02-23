@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "utilities/iflist.h"
+#include "shared/source/utilities/iflist.h"
 #include "opencl/source/event/event.h"
 
 #include <set>

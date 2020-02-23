@@ -5,9 +5,9 @@
  *
  */
 
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "unit_tests/direct_submission/dispatchers/dispatcher_fixture.h"
-#include "unit_tests/fixtures/preemption_fixture.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "direct_submission/dispatchers/dispatcher_fixture.h"
+#include "fixtures/preemption_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "test.h"
 

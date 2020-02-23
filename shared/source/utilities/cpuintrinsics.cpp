@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/cpuintrinsics.h"
+#include "shared/source/utilities/cpuintrinsics.h"
 
 #include <emmintrin.h>
 

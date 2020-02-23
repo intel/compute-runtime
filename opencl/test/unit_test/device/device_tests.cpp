@@ -5,12 +5,12 @@
  *
  */
 
-#include "device/device.h"
-#include "helpers/hw_helper.h"
-#include "indirect_heap/indirect_heap.h"
-#include "os_interface/os_context.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/ult_hw_config.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/os_interface/os_context.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "helpers/ult_hw_config.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"

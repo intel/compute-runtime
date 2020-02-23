@@ -7,11 +7,11 @@
 
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 
-#include "device_binary_format/patchtokens_decoder.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/string.h"
-#include "memory_manager/graphics_allocation.h"
-#include "program/program_info_from_patchtokens.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/program/program_info_from_patchtokens.h"
 
 void KernelDataTest::buildAndDecode() {
     cl_int error = CL_SUCCESS;

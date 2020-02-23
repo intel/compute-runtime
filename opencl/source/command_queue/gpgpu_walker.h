@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption.h"
-#include "helpers/register_offsets.h"
-#include "helpers/timestamp_packet.h"
-#include "helpers/vec.h"
-#include "indirect_heap/indirect_heap.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/register_offsets.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/vec.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

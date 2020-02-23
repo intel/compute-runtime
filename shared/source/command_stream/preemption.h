@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption_mode.h"
-#include "helpers/hw_info.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "sku_info.h"
 

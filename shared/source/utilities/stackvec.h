@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/debug_helpers.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include <cinttypes>
 #include <cstddef>

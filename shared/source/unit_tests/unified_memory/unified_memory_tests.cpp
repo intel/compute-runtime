@@ -5,7 +5,7 @@
  *
  */
 
-#include "unified_memory/unified_memory.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "gtest/gtest.h"
 

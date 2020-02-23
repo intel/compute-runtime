@@ -5,14 +5,14 @@
  *
  */
 
-#include "device/root_device.h"
+#include "shared/source/device/root_device.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/preemption.h"
-#include "debug_settings/debug_settings_manager.h"
-#include "device/sub_device.h"
-#include "helpers/hw_helper.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);

@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_container/command_encoder.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unified_memory/unified_memory.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 uint32_t UnifiedMemoryControls::generateMask() {
     uint32_t resourceMask = 0u;

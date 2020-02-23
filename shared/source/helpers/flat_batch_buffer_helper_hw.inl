@@ -5,12 +5,12 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/flat_batch_buffer_helper_hw.h"
-#include "helpers/hw_helper.h"
-#include "helpers/string.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 

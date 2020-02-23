@@ -7,11 +7,11 @@
 
 #include "debug_settings_manager.h"
 
-#include "debug_settings/definitions/translate_debug_settings.h"
-#include "helpers/debug_helpers.h"
-#include "helpers/ptr_math.h"
-#include "helpers/string.h"
-#include "utilities/debug_settings_reader_creator.h"
+#include "shared/source/debug_settings/definitions/translate_debug_settings.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include <cstdio>
 #include <sstream>

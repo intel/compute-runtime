@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/windows/kmdaf_listener.h"
+#include "shared/source/os_interface/windows/kmdaf_listener.h"
 
 namespace NEO {
 

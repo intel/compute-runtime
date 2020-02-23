@@ -5,13 +5,13 @@
  *
  */
 
-#include "compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
 
-#include "compiler_interface/compiler_cache.h"
-#include "compiler_interface/compiler_interface.inl"
-#include "debug_settings/debug_settings_manager.h"
-#include "device/device.h"
-#include "helpers/hw_info.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 
 #include "cif/common/cif_main.h"

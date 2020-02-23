@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver_hw.h"
-#include "command_stream/csr_definitions.h"
-#include "command_stream/linear_stream.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/linear_stream.h"
 
 namespace NEO {
 

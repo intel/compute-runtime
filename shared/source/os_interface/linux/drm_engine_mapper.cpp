@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/linux/drm_engine_mapper.h"
+#include "shared/source/os_interface/linux/drm_engine_mapper.h"
 
-#include "helpers/debug_helpers.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "drm/i915_drm.h"
 

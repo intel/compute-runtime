@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "utilities/const_stringref.h"
-#include "utilities/stackvec.h"
+#include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
 namespace CompilerOptions {

@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "execution_environment/execution_environment.h"
-#include "helpers/common_types.h"
-#include "helpers/engine_control.h"
-#include "helpers/hw_info.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/hw_info.h"
 #include "opencl/source/device/device_info.h"
 #include "opencl/source/os_interface/performance_counters.h"
 

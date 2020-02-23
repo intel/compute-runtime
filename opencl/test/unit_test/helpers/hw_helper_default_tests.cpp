@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/hw_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo) {

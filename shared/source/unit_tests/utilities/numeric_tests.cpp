@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/numeric.h"
+#include "shared/source/utilities/numeric.h"
 #include "test.h"
 
 #include <type_traits>

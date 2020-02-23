@@ -5,13 +5,13 @@
  *
  */
 
-#include "compiler_interface/compiler_interface.h"
-#include "compiler_interface/intermediate_representations.h"
-#include "device/device.h"
-#include "device_binary_format/elf/elf.h"
-#include "device_binary_format/elf/elf_encoder.h"
-#include "device_binary_format/elf/ocl_elf.h"
-#include "helpers/file_io.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/file_io.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/helpers/test_files.h"

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "os_interface/linux/drm_allocation.h"
-#include "os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 namespace NEO {
 

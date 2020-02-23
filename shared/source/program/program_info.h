@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "compiler_interface/linker.h"
+#include "shared/source/compiler_interface/linker.h"
 
 #include <cstddef>
 #include <memory>

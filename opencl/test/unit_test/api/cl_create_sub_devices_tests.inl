@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"

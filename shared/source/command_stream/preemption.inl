@@ -5,10 +5,10 @@
  *
  */
 
-#include "command_stream/preemption.h"
-#include "device/device.h"
-#include "helpers/hw_helper.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/source/built_ins/sip.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 

@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_sip.h"
 
-#include "helpers/file_io.h"
-#include "helpers/hw_info.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hw_info.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 #include "opencl/test/unit_test/helpers/test_files.h"

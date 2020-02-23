@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/hw_cmds.h"
-#include "helpers/hw_info.h"
-#include "os_interface/hw_info_config.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 

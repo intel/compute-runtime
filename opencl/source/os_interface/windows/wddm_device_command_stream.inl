@@ -9,24 +9,24 @@
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption.h"
-#include "direct_submission/dispatchers/blitter_dispatcher.h"
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "direct_submission/windows/wddm_direct_submission.h"
-#include "gmm_helper/page_table_mngr.h"
-#include "helpers/flush_stamp.h"
-#include "helpers/hw_cmds.h"
-#include "helpers/ptr_math.h"
-#include "helpers/windows/gmm_callbacks.h"
-#include "os_interface/windows/wddm/wddm.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/windows/gmm_callbacks.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
-#include "os_interface/windows/gdi_interface.h"
-#include "os_interface/windows/os_context_win.h"
-#include "os_interface/windows/os_interface.h"
-#include "os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
 

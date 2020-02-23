@@ -5,9 +5,9 @@
  *
  */
 
-#include "utilities/perf_profiler.h"
+#include "shared/source/utilities/perf_profiler.h"
 
-#include "utilities/stackvec.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "os_inc.h"
 

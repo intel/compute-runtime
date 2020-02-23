@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

@@ -5,8 +5,8 @@
  *
  */
 
-#include "direct_submission/dispatchers/blitter_dispatcher.h"
-#include "unit_tests/direct_submission/dispatchers/dispatcher_fixture.h"
+#include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "direct_submission/dispatchers/dispatcher_fixture.h"
 #include "test.h"
 
 using BlitterDispatcheTest = Test<DispatcherFixture>;

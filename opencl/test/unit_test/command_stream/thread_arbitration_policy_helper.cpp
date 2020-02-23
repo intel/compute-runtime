@@ -5,7 +5,7 @@
  *
  */
 
-#include "command_stream/thread_arbitration_policy.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"
 
 #include <stdint.h>

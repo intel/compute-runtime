@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/engine_node_helper.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/utilities/base_object_utils.h"
+#include "shared/source/helpers/engine_node_helper.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

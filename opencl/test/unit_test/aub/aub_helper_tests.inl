@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/basic_math.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/helpers/basic_math.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/aub/aub_helper.h"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"

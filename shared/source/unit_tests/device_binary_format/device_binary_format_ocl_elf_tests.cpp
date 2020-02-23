@@ -5,13 +5,13 @@
  *
  */
 
-#include "compiler_interface/intermediate_representations.h"
-#include "device_binary_format/device_binary_formats.h"
-#include "device_binary_format/elf/elf_decoder.h"
-#include "device_binary_format/elf/elf_encoder.h"
-#include "device_binary_format/elf/ocl_elf.h"
-#include "program/program_info.h"
-#include "unit_tests/device_binary_format/patchtokens_tests.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/program/program_info.h"
+#include "device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 #include <algorithm>

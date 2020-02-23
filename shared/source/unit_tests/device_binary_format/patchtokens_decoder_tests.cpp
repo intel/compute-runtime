@@ -5,8 +5,8 @@
  *
  */
 
-#include "device_binary_format/patchtokens_decoder.h"
-#include "helpers/hash.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/hash.h"
 #include "test.h"
 
 #include "patchtokens_tests.h"

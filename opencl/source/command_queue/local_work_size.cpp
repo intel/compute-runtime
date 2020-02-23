@@ -5,10 +5,10 @@
  *
  */
 
-#include "device/device.h"
-#include "helpers/array_count.h"
-#include "helpers/basic_math.h"
-#include "helpers/debug_helpers.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"

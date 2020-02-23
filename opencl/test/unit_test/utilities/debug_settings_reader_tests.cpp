@@ -5,9 +5,9 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/file_io.h"
-#include "utilities/debug_settings_reader.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "test.h"
 

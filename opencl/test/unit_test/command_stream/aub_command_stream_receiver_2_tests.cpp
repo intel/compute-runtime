@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/hw_helper.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/helpers/hardware_context_controller.h"

@@ -7,7 +7,7 @@
 
 #include "memory_leak_listener.h"
 
-#include "unit_tests/helpers/memory_management.h"
+#include "helpers/memory_management.h"
 
 using ::testing::TestInfo;
 using namespace NEO;

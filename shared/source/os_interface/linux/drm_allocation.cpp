@@ -5,10 +5,10 @@
  *
  */
 
-#include "os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 
-#include "os_interface/linux/drm_buffer_object.h"
-#include "os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 
 #include <sstream>
 

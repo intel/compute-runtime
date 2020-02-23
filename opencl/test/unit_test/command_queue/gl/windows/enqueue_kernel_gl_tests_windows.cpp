@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/preamble.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"

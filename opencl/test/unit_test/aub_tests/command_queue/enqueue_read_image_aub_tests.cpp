@@ -5,10 +5,10 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "device/device.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/ptr_math.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/aub_tests/command_queue/command_enqueue_fixture.h"

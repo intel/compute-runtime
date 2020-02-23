@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "debug_settings/debug_settings_manager.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include <cinttypes>
 #include <cstddef>

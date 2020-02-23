@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "gen9/hw_cmds_base.h"
+#include "shared/source/gen9/hw_cmds_base.h"
 
 namespace NEO {
 

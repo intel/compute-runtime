@@ -7,11 +7,11 @@
 
 #include "binary_encoder.h"
 
-#include "device_binary_format/elf/elf_encoder.h"
-#include "device_binary_format/elf/ocl_elf.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/file_io.h"
-#include "helpers/hash.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hash.h"
 #include "offline_compiler/offline_compiler.h"
 
 #include "CL/cl.h"

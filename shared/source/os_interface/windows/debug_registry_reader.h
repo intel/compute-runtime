@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "utilities/debug_settings_reader.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 
 #include <Windows.h>
 

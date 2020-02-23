@@ -7,8 +7,8 @@
 
 #include "opencl/source/command_queue/local_id_gen.h"
 
-#include "helpers/aligned_memory.h"
-#include "utilities/cpu_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/utilities/cpu_info.h"
 
 #include <array>
 

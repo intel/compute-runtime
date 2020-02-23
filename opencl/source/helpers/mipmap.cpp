@@ -7,8 +7,8 @@
 
 #include "opencl/source/helpers/mipmap.h"
 
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/resource_info.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "opencl/source/mem_obj/image.h"
 
 #include <algorithm>

@@ -5,8 +5,8 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "device/device.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/extensions/public/cl_gl_private_intel.h"

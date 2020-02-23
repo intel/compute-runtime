@@ -5,8 +5,8 @@
  *
  */
 
-#include "gen8/hw_cmds.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/gen8/hw_cmds.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/source/builtin_kernels_simulation/opencl_c.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.inl"

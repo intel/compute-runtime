@@ -5,14 +5,14 @@
  *
  */
 
-#include "command_stream/preemption.h"
-#include "execution_environment/root_device_environment.h"
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "memory_manager/memory_manager.h"
-#include "os_interface/windows/wddm/wddm.h"
-#include "os_interface/windows/wddm_allocation.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "os_interface/windows/mock_gdi_interface.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_kmdaf_listener.h"

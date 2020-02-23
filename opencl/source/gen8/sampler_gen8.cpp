@@ -5,7 +5,7 @@
  *
  */
 
-#include "gen8/hw_cmds.h"
+#include "shared/source/gen8/hw_cmds.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/source/sampler/sampler.inl"
 

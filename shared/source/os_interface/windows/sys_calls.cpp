@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/windows/sys_calls.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 
 namespace NEO {
 

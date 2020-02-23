@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "os_interface/device_factory.h"
-#include "utilities/reference_tracked_object.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
 #include <vector>

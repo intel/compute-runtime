@@ -6,15 +6,15 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/command_stream_receiver_hw.h"
-#include "execution_environment/execution_environment.h"
-#include "helpers/flat_batch_buffer_helper_hw.h"
-#include "helpers/flush_stamp.h"
-#include "helpers/hw_info.h"
-#include "helpers/string.h"
-#include "memory_manager/graphics_allocation.h"
-#include "os_interface/os_context.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
+#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 #include "gmock/gmock.h"

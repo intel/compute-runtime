@@ -5,14 +5,14 @@
  *
  */
 
-#include "command_stream/scratch_space_controller.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 
-#include "execution_environment/execution_environment.h"
-#include "execution_environment/root_device_environment.h"
-#include "helpers/hw_helper.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/internal_allocation_storage.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 ScratchSpaceController::ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)

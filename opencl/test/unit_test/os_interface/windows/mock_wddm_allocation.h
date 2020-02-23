@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/windows/wddm_allocation.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
 
 namespace NEO {
 

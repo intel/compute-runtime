@@ -5,14 +5,14 @@
  *
  */
 
-#include "command_stream/submissions_aggregator.h"
-#include "debug_settings/debug_settings_manager.h"
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "helpers/flush_stamp.h"
-#include "os_interface/os_context.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/ult_hw_config.h"
-#include "unit_tests/mocks/mock_direct_submission_hw.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/os_interface/os_context.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "helpers/ult_hw_config.h"
+#include "mocks/mock_direct_submission_hw.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

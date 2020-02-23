@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 
 #include "engine_node.h"
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/file_io.h"
-#include "helpers/stdio.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/stdio.h"
 
 #include "gtest/gtest.h"
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "page_fault_manager/windows/cpu_page_fault_manager_windows.h"
-#include "unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
+#include "page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
 #include <Windows.h>

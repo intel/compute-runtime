@@ -5,8 +5,8 @@
  *
  */
 
-#include "device/device.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/device/device.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

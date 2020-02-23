@@ -5,11 +5,11 @@
  *
  */
 
-#include "os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
 
-#include "os_interface/windows/os_interface.h"
-#include "os_interface/windows/wddm/wddm.h"
-#include "os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
 namespace NEO {
 

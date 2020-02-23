@@ -7,11 +7,11 @@
 
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "compiler_interface/compiler_cache.h"
-#include "device_binary_format/patchtokens_decoder.h"
-#include "helpers/hash.h"
-#include "program/program_info_from_patchtokens.h"
-#include "unit_tests/helpers/default_hw_info.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/hash.h"
+#include "shared/source/program/program_info_from_patchtokens.h"
+#include "helpers/default_hw_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/source/program/kernel_info.h"

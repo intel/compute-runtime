@@ -5,7 +5,7 @@
  *
  */
 
-#include "gmm_helper/gmm_interface.h"
+#include "shared/source/gmm_helper/gmm_interface.h"
 
 namespace NEO {
 GMM_INIT_IN_ARGS passedInputArgs = {};

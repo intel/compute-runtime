@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/residency.h"
+#include "shared/source/memory_manager/residency.h"
 
 using namespace NEO;
 

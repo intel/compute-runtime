@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/debug_helpers.h"
-#include "helpers/ptr_math.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/source/aub/aub_helper.h"
 
 #include "aub_mem_dump.h"

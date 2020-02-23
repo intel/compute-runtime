@@ -5,11 +5,11 @@
  *
  */
 
-#include "execution_environment/root_device_environment.h"
-#include "os_interface/os_interface.h"
-#include "os_interface/os_time.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

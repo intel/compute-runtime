@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_stream/experimental_command_buffer.h"
+#include "shared/source/command_stream/experimental_command_buffer.h"
 
 namespace NEO {
 

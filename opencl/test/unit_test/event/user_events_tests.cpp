@@ -5,10 +5,10 @@
  *
  */
 
-#include "memory_manager/internal_allocation_storage.h"
-#include "memory_manager/memory_manager.h"
-#include "os_interface/os_context.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 

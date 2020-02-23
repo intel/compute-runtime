@@ -5,11 +5,11 @@
  *
  */
 
-#include "helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/linear_stream.h"
-#include "utilities/tag_allocator.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 using namespace NEO;
 

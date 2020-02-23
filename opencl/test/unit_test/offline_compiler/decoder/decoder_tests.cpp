@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/array_count.h"
+#include "shared/source/helpers/array_count.h"
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
 #include "gmock/gmock.h"

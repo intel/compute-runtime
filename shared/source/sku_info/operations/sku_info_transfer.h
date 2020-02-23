@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "gmm_helper/gmm_lib.h"
-#include "sku_info/operations/sku_info_transfer.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 #include "sku_info.h"
 

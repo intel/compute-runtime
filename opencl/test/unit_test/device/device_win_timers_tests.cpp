@@ -5,7 +5,7 @@
  *
  */
 
-#include "execution_environment/root_device_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_ostime.h"

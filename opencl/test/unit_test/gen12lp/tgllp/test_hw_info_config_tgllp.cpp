@@ -5,8 +5,8 @@
  *
  */
 
-#include "os_interface/device_factory.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "test.h"
 

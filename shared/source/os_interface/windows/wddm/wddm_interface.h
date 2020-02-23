@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "helpers/hw_info.h"
-#include "os_interface/os_context.h"
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 

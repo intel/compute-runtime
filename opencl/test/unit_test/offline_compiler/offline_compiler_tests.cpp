@@ -7,11 +7,11 @@
 
 #include "offline_compiler_tests.h"
 
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/file_io.h"
-#include "helpers/hw_cmds.h"
-#include "helpers/hw_info.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/hw_info.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "compiler_options.h"

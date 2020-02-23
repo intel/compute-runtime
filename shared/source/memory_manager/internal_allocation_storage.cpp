@@ -5,12 +5,12 @@
  *
  */
 
-#include "memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "memory_manager/host_ptr_manager.h"
-#include "memory_manager/memory_manager.h"
-#include "os_interface/os_context.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};

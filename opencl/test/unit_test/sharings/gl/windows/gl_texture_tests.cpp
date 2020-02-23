@@ -5,7 +5,7 @@
  *
  */
 
-#include "gmm_helper/gmm_types_converter.h"
+#include "shared/source/gmm_helper/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/gl/gl_texture.h"

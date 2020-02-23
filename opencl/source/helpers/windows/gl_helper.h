@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/os_library.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "GL/gl.h"
 

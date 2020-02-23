@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 
 namespace NEO {
 enum GFX3DSTATE_SURFACEFORMAT : unsigned short {

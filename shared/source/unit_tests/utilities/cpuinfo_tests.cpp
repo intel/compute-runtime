@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/cpu_info.h"
+#include "shared/source/utilities/cpu_info.h"
 
 #include "gtest/gtest.h"
 

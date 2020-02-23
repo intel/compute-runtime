@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "test.h"
 
 #include <array>

@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "device/root_device.h"
-#include "device/sub_device.h"
-#include "helpers/hw_helper.h"
-#include "unit_tests/helpers/default_hw_info.h"
+#include "shared/source/device/root_device.h"
+#include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "helpers/default_hw_info.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

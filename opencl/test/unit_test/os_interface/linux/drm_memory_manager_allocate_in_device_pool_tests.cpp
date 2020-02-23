@@ -5,9 +5,9 @@
  *
  */
 
-#include "execution_environment/execution_environment.h"
-#include "os_interface/linux/drm_memory_manager.h"
-#include "os_interface/linux/os_interface.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests.h"

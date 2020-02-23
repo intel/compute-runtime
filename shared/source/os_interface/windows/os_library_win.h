@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "os_interface/os_library.h"
+#include "shared/source/os_interface/os_library.h"
 
 #define UMDF_USING_NTSTATUS
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 namespace Windows {

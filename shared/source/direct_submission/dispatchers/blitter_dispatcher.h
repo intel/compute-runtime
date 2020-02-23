@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "direct_submission/dispatchers/dispatcher.h"
+#include "shared/source/direct_submission/dispatchers/dispatcher.h"
 
 namespace NEO {
 

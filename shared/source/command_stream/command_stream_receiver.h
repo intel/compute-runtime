@@ -6,18 +6,18 @@
  */
 
 #pragma once
-#include "command_stream/aub_subcapture_status.h"
-#include "command_stream/csr_definitions.h"
-#include "command_stream/linear_stream.h"
-#include "command_stream/submissions_aggregator.h"
-#include "command_stream/thread_arbitration_policy.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/blit_commands_helper.h"
-#include "helpers/completion_stamp.h"
-#include "helpers/flat_batch_buffer_helper.h"
-#include "helpers/options.h"
-#include "indirect_heap/indirect_heap.h"
-#include "kernel/grf_config.h"
+#include "shared/source/command_stream/aub_subcapture_status.h"
+#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
+#include "shared/source/helpers/options.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/grf_config.h"
 
 #include <cstddef>
 #include <cstdint>

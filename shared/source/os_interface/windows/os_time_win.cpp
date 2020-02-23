@@ -5,10 +5,10 @@
  *
  */
 
-#include "os_interface/windows/os_time_win.h"
+#include "shared/source/os_interface/windows/os_time_win.h"
 
-#include "os_interface/windows/os_interface.h"
-#include "os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include <memory>
 

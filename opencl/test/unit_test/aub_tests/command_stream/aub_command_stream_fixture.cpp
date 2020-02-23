@@ -7,11 +7,11 @@
 
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "device/device.h"
-#include "helpers/hw_helper.h"
-#include "os_interface/os_context.h"
-#include "unit_tests/helpers/memory_management.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_context.h"
+#include "helpers/memory_management.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/extendable_enum.h"
+#include "shared/source/helpers/extendable_enum.h"
 
 namespace MemoryPool {
 struct Type : ExtendableEnum {

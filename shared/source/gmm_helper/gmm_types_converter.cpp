@@ -5,11 +5,11 @@
  *
  */
 
-#include "gmm_helper/gmm_types_converter.h"
+#include "shared/source/gmm_helper/gmm_types_converter.h"
 
-#include "helpers/get_info.h"
-#include "helpers/surface_format_info.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"

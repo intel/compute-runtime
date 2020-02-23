@@ -6,17 +6,17 @@
  */
 
 #pragma once
-#include "command_stream/preemption_mode.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/bit_helpers.h"
-#include "helpers/common_types.h"
-#include "helpers/engine_control.h"
-#include "memory_manager/allocation_properties.h"
-#include "memory_manager/gfx_partition.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/host_ptr_defines.h"
-#include "memory_manager/local_memory_usage.h"
-#include "page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/engine_control.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/host_ptr_defines.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "engine_node.h"
 

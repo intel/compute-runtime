@@ -5,8 +5,8 @@
  *
  */
 
-#include "memory_manager/allocations_list.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"

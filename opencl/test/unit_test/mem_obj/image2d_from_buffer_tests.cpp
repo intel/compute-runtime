@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/aligned_memory.h"
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"

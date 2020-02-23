@@ -5,9 +5,9 @@
  *
  */
 
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "direct_submission/linux/drm_direct_submission.h"
-#include "os_interface/linux/os_context_linux.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/linux/drm_direct_submission.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"

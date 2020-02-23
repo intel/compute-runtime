@@ -7,9 +7,9 @@
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 
-#include "execution_environment/execution_environment.h"
-#include "execution_environment/root_device_environment.h"
-#include "helpers/hw_info.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <string>
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/ptr_math.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"

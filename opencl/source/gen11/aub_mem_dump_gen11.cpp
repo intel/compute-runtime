@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/completion_stamp.h"
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "opencl/source/aub_mem_dump/aub_mem_dump.inl"
 

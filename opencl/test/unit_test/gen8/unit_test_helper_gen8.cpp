@@ -5,7 +5,7 @@
  *
  */
 
-#include "gen8/hw_info.h"
+#include "shared/source/gen8/hw_info.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.inl"
 

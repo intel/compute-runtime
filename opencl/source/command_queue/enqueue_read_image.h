@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/basic_math.h"
-#include "helpers/cache_policy.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/cache_policy.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"

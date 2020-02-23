@@ -7,7 +7,7 @@
 
 #include "mock_gdi.h"
 
-#include "memory_manager/memory_constants.h"
+#include "shared/source/memory_manager/memory_constants.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};

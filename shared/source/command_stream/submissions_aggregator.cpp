@@ -7,8 +7,8 @@
 
 #include "submissions_aggregator.h"
 
-#include "helpers/flush_stamp.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 void NEO::SubmissionAggregator::recordCommandBuffer(CommandBuffer *commandBuffer) {
     this->cmdBuffers.pushTailOne(*commandBuffer);

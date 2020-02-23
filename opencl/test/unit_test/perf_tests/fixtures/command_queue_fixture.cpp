@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/perf_tests/fixtures/command_queue_fixture.h"
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
 

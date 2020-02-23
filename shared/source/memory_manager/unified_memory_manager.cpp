@@ -5,11 +5,11 @@
  *
  */
 
-#include "memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/aligned_memory.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {

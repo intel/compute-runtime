@@ -5,8 +5,8 @@
  *
  */
 
-#include "memory_manager/internal_allocation_storage.h"
-#include "utilities/arrayref.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/arrayref.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"

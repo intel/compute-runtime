@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 
 namespace NEO {
 

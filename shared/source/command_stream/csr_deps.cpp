@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/csr_deps.h"
+#include "shared/source/command_stream/csr_deps.h"
 
-#include "helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet.h"
 
 namespace NEO {
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_container/command_encoder.h"
-#include "helpers/flat_batch_buffer_helper_hw.inl"
-#include "helpers/hw_helper_bdw_plus.inl"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
+#include "shared/source/helpers/hw_helper_bdw_plus.inl"
 #include "opencl/source/aub/aub_helper_bdw_plus.inl"
 #include "opencl/source/gen12lp/helpers_gen12lp.h"
 

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "os_interface/linux/os_interface.h"
-#include "os_interface/linux/os_time_linux.h"
+#include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/source/os_interface/linux/os_time_linux.h"
 
 namespace NEO {
 class MockOSTimeLinux : public OSTimeLinux {

@@ -5,10 +5,10 @@
  *
  */
 
-#include "memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/deferred_deleter.h"
 
-#include "memory_manager/deferrable_deletion.h"
-#include "os_interface/os_thread.h"
+#include "shared/source/memory_manager/deferrable_deletion.h"
+#include "shared/source/os_interface/os_thread.h"
 
 namespace NEO {
 DeferredDeleter::DeferredDeleter() {

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/host_ptr_manager.h"
 
 namespace NEO {
 class MockHostPtrManager : public HostPtrManager {

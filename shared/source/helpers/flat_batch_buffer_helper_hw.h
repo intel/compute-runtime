@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/flat_batch_buffer_helper.h"
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 
 namespace NEO {
 

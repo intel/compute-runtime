@@ -5,14 +5,14 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "helpers/file_io.h"
-#include "helpers/hash.h"
-#include "helpers/string.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/utilities/base_object_utils.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/string.h"
+#include "helpers/debug_manager_state_restore.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/get_info.h"
-#include "helpers/hw_info.h"
-#include "utilities/api_intercept.h"
+#include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/utilities/api_intercept.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/command_queue/command_queue.h"

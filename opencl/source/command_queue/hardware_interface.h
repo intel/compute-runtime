@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "command_stream/preemption_mode.h"
+#include "shared/source/command_stream/preemption_mode.h"
 
 #include "CL/cl.h"
 

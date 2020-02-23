@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/debug_file_reader.h"
+#include "shared/source/utilities/debug_file_reader.h"
 
 using namespace std;
 

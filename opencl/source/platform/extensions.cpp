@@ -7,7 +7,7 @@
 
 #include "opencl/source/platform/extensions.h"
 
-#include "helpers/hw_info.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <string>
 

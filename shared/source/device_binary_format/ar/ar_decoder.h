@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include "compiler_interface/intermediate_representations.h"
-#include "device_binary_format/ar/ar.h"
-#include "utilities/arrayref.h"
-#include "utilities/stackvec.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/ar/ar.h"
+#include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
 namespace Ar {

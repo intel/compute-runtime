@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "execution_environment/execution_environment.h"
-#include "helpers/options.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/options.h"
 
 using namespace NEO;
 

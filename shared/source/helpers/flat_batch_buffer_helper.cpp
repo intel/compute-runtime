@@ -5,10 +5,10 @@
  *
  */
 
-#include "helpers/flat_batch_buffer_helper.h"
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 
-#include "execution_environment/execution_environment.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

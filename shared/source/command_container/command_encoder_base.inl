@@ -6,14 +6,14 @@
  */
 
 #pragma once
-#include "command_container/command_encoder.h"
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption.h"
-#include "execution_environment/execution_environment.h"
-#include "gmm_helper/gmm_helper.h"
-#include "helpers/simd_helper.h"
-#include "helpers/state_base_address.h"
-#include "kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/simd_helper.h"
+#include "shared/source/helpers/state_base_address.h"
+#include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include <algorithm>

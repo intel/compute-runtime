@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 
 namespace NEO {
 class WddmMockInterface20 : public WddmInterface20 {

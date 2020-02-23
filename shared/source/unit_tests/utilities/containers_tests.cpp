@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/utilities/containers_tests_helpers.h"
-#include "utilities/arrayref.h"
-#include "utilities/idlist.h"
-#include "utilities/iflist.h"
-#include "utilities/range.h"
-#include "utilities/stackvec.h"
+#include "utilities/containers_tests_helpers.h"
+#include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/idlist.h"
+#include "shared/source/utilities/iflist.h"
+#include "shared/source/utilities/range.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

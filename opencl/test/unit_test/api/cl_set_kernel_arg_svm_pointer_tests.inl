@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"

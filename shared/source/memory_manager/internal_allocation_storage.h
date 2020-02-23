@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/allocations_list.h"
 
 namespace NEO {
 class CommandStreamReceiver;

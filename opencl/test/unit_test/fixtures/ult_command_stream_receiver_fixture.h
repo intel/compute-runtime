@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver.h"
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption.h"
-#include "gmm_helper/gmm_helper.h"
-#include "helpers/cache_policy.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/cache_policy.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"

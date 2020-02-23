@@ -5,14 +5,14 @@
  *
  */
 
-#include "os_interface/hw_info_config.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
-#include "command_stream/preemption.h"
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/hw_cmds.h"
-#include "helpers/hw_helper.h"
-#include "helpers/hw_info.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/memory_constants.h"
 
 #include "instrumentation.h"
 

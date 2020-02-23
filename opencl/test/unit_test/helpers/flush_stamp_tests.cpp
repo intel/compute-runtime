@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/flush_stamp.h"
+#include "shared/source/helpers/flush_stamp.h"
 
 #include "gtest/gtest.h"
 

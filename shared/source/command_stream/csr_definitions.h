@@ -6,13 +6,13 @@
  */
 
 #pragma once
-#include "command_stream/csr_deps.h"
-#include "command_stream/queue_throttle.h"
-#include "command_stream/thread_arbitration_policy.h"
-#include "helpers/hw_info.h"
-#include "helpers/pipeline_select_args.h"
-#include "kernel/grf_config.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/command_stream/queue_throttle.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/pipeline_select_args.h"
+#include "shared/source/kernel/grf_config.h"
+#include "shared/source/memory_manager/memory_constants.h"
 
 #include <limits>
 

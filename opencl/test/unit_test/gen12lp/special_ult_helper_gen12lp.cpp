@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 
-#include "helpers/hw_info.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
 

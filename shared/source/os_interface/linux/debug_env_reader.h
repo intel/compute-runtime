@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "debug_settings/debug_settings_manager.h"
-#include "utilities/debug_settings_reader.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 
 namespace NEO {
 

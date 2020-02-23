@@ -5,8 +5,8 @@
  *
  */
 
-#include "program/program_initialization.h"
-#include "unit_tests/compiler_interface/linker_mock.h"
+#include "shared/source/program/program_initialization.h"
+#include "compiler_interface/linker_mock.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_svm_manager.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/image/image_surface_state_fixture.h"
+#include "image/image_surface_state_fixture.h"
 
 using ImageSurfaceStateTestsGen12LP = ImageSurfaceStateTests;
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "command_stream/linear_stream.h"
-#include "helpers/hw_helper.h"
-#include "helpers/windows/gmm_callbacks.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/windows/gmm_callbacks.h"
 
 #include <cstdint>
 

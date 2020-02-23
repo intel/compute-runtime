@@ -5,12 +5,12 @@
  *
  */
 
-#include "page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include "helpers/debug_helpers.h"
-#include "helpers/ptr_math.h"
-#include "memory_manager/graphics_allocation.h"
-#include "memory_manager/unified_memory_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include <mutex>
 

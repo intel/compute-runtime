@@ -7,7 +7,7 @@
 
 #include "opencl/source/helpers/built_ins_helper.h"
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/program/program.h"
 
 namespace NEO {

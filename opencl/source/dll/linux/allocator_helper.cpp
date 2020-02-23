@@ -5,10 +5,10 @@
  *
  */
 
-#include "os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/allocator_helper.h"
 
-#include "helpers/aligned_memory.h"
-#include "helpers/basic_math.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 
 namespace NEO {
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/os_time.h"
+#include "shared/source/os_interface/os_time.h"
 
 namespace NEO {
 class MockOSTime : public OSTime {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "gen12lp/hw_cmds.h"
+#include "shared/source/gen12lp/hw_cmds.h"
 #include "opencl/source/helpers/windows/gmm_callbacks_tgllp_plus.inl"
 
 using namespace NEO;

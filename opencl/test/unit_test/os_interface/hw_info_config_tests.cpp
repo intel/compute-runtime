@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 
 using namespace NEO;
 using namespace std;

@@ -5,10 +5,10 @@
  *
  */
 
-#include "compiler_interface/intermediate_representations.h"
-#include "device_binary_format/ar/ar_encoder.h"
-#include "helpers/ptr_math.h"
-#include "helpers/string.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "test.h"
 
 #include <cstring>

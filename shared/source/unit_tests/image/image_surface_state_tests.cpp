@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/image/image_surface_state_fixture.h"
+#include "image/image_surface_state_fixture.h"
 
 HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet) {
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);

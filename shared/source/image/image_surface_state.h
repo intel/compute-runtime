@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include "execution_environment/execution_environment.h"
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/resource_info.h"
-#include "helpers/surface_format_info.h"
-#include "memory_manager/graphics_allocation.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 template <typename GfxFamily>

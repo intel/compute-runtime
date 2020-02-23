@@ -5,7 +5,7 @@
  *
  */
 
-#include "gen9/hw_cmds.h"
+#include "shared/source/gen9/hw_cmds.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/image.inl"
 

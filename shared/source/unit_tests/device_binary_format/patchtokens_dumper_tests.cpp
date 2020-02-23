@@ -5,9 +5,9 @@
  *
  */
 
-#include "device_binary_format/patchtokens_decoder.h"
-#include "device_binary_format/patchtokens_dumper.h"
-#include "unit_tests/device_binary_format/patchtokens_tests.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/device_binary_format/patchtokens_dumper.h"
+#include "device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 #include <sstream>

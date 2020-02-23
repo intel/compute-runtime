@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/utilities/base_object_utils.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

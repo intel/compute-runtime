@@ -5,8 +5,8 @@
  *
  */
 
-#include "command_stream/command_stream_receiver_hw.h"
-#include "helpers/aligned_memory.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/kernel/kernel.h"

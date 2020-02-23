@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "drm/i915_drm.h"
 

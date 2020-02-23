@@ -5,12 +5,12 @@
  *
  */
 
-#include "command_stream/preemption.h"
-#include "execution_environment/execution_environment.h"
-#include "execution_environment/root_device_environment.h"
-#include "os_interface/windows/debug_registry_reader.h"
-#include "os_interface/windows/os_interface.h"
-#include "unit_tests/helpers/ult_hw_config.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/windows/debug_registry_reader.h"
+#include "shared/source/os_interface/windows/os_interface.h"
+#include "helpers/ult_hw_config.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/os_interface/windows/driver_info.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

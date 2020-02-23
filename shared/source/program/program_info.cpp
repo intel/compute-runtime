@@ -5,7 +5,7 @@
  *
  */
 
-#include "program/program_info.h"
+#include "shared/source/program/program_info.h"
 
 #include "opencl/source/program/kernel_info.h"
 

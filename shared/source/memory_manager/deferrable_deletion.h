@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "utilities/idlist.h"
+#include "shared/source/utilities/idlist.h"
 
 namespace NEO {
 class DeferrableDeletion : public IDNode<DeferrableDeletion> {

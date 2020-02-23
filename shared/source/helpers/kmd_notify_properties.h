@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/completion_stamp.h"
+#include "shared/source/helpers/completion_stamp.h"
 
 #include <atomic>
 #include <chrono>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 

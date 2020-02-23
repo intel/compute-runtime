@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include "helpers/debug_helpers.h"
-#include "helpers/ptr_math.h"
-#include "memory_manager/host_ptr_defines.h"
-#include "memory_manager/memory_constants.h"
-#include "memory_manager/memory_pool.h"
-#include "utilities/idlist.h"
-#include "utilities/stackvec.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/host_ptr_defines.h"
+#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/utilities/idlist.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "engine_limits.h"
 #include "storage_info.h"

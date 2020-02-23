@@ -5,8 +5,8 @@
  *
  */
 
-#include "command_stream/command_stream_receiver.h"
-#include "helpers/ptr_math.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 

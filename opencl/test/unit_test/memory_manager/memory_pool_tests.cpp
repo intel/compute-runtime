@@ -5,7 +5,7 @@
  *
  */
 
-#include "memory_manager/memory_pool.h"
+#include "shared/source/memory_manager/memory_pool.h"
 
 #include "gtest/gtest.h"
 

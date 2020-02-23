@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/string.h"
+#include "shared/source/helpers/string.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"

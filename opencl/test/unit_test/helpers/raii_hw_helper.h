@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];

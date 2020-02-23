@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/ptr_math.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/basic_math.h"
-#include "os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {

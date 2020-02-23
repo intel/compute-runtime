@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "helpers/aligned_memory.h"
-#include "os_interface/print.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/os_interface/print.h"
 
 #include <algorithm>
 #include <cctype>

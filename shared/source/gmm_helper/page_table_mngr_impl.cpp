@@ -5,10 +5,10 @@
  *
  */
 
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/page_table_mngr.h"
-#include "gmm_helper/resource_info.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/gmm_helper/resource_info.h"
 
 #include "gmm_client_context.h"
 

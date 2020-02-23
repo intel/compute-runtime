@@ -5,13 +5,13 @@
  *
  */
 
-#include "os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
-#include "debug_settings/debug_settings_manager.h"
-#include "os_interface/windows/wddm/wddm.h"
-#include "os_interface/windows/wddm_allocation.h"
-#include "os_interface/windows/wddm_residency_allocations_container.h"
-#include "utilities/spinlock.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
+#include "shared/source/utilities/spinlock.h"
 
 namespace NEO {
 

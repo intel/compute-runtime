@@ -5,12 +5,12 @@
  *
  */
 
-#include "device_binary_format/patchtokens_decoder.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/hw_cmds.h"
-#include "helpers/ptr_math.h"
-#include "helpers/string.h"
-#include "memory_manager/memory_manager.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_cmds.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"

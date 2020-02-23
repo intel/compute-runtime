@@ -5,8 +5,8 @@
  *
  */
 
-#include "gmm_helper/gmm_helper.h"
-#include "unit_tests/helpers/default_hw_info.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "helpers/default_hw_info.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"

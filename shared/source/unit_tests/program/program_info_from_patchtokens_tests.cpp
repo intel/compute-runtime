@@ -5,12 +5,12 @@
  *
  */
 
-#include "compiler_interface/linker.h"
-#include "device_binary_format/patchtokens_decoder.h"
-#include "program/program_info.h"
-#include "program/program_info_from_patchtokens.h"
-#include "unit_tests/compiler_interface/linker_mock.h"
-#include "unit_tests/device_binary_format/patchtokens_tests.h"
+#include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/program/program_info.h"
+#include "shared/source/program/program_info_from_patchtokens.h"
+#include "compiler_interface/linker_mock.h"
+#include "device_binary_format/patchtokens_tests.h"
 #include "opencl/source/program/kernel_info.h"
 
 #include "RelocationInfo.h"

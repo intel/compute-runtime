@@ -5,9 +5,9 @@
  *
  */
 
-#include "memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/host_ptr_manager.h"
 
-#include "memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 using namespace NEO;
 

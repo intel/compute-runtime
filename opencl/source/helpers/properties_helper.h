@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "command_stream/csr_deps.h"
-#include "command_stream/queue_throttle.h"
+#include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/command_stream/queue_throttle.h"
 #include "opencl/source/api/cl_types.h"
 
 #include <array>

@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "memory_manager/memory_operations_status.h"
-#include "utilities/arrayref.h"
+#include "shared/source/memory_manager/memory_operations_status.h"
+#include "shared/source/utilities/arrayref.h"
 
 namespace NEO {
 

@@ -5,9 +5,9 @@
  *
  */
 
-#include "execution_environment/execution_environment.h"
-#include "execution_environment/root_device_environment.h"
-#include "os_interface/device_factory.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"

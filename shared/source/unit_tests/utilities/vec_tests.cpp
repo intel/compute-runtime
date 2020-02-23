@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/vec.h"
+#include "shared/source/helpers/vec.h"
 
 #include "gtest/gtest.h"
 

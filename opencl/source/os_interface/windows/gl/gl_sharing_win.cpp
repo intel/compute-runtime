@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/timestamp_packet.h"
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"

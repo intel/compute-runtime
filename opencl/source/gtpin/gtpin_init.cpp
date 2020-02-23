@@ -7,7 +7,7 @@
 
 #include "gtpin_init.h"
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/device/device_info.h"
 #include "opencl/source/platform/platform.h"
 

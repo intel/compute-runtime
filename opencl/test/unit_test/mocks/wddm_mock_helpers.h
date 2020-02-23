@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "memory_manager/eviction_status.h"
-#include "os_interface/windows/wddm/wddm_defs.h"
-#include "os_interface/windows/windows_defs.h"
+#include "shared/source/memory_manager/eviction_status.h"
+#include "shared/source/os_interface/windows/wddm/wddm_defs.h"
+#include "shared/source/os_interface/windows/windows_defs.h"
 
 #include <vector>
 

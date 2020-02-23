@@ -5,10 +5,10 @@
  *
  */
 
-#include "execution_environment/execution_environment.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/ptr_math.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"

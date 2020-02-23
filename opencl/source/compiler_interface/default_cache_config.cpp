@@ -5,7 +5,7 @@
  *
  */
 
-#include "compiler_interface/default_cache_config.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
 

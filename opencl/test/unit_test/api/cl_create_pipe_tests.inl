@@ -5,8 +5,8 @@
  *
  */
 
-#include "device/device.h"
-#include "unit_tests/utilities/base_object_utils.h"
+#include "shared/source/device/device.h"
+#include "utilities/base_object_utils.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
 

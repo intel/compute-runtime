@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "command_stream/preemption_mode.h"
-#include "helpers/common_types.h"
-#include "utilities/reference_tracked_object.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/utilities/reference_tracked_object.h"
 
 #include "engine_node.h"
 

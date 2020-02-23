@@ -5,9 +5,9 @@
  *
  */
 
-#include "debug_settings/debug_settings_manager.h"
-#include "helpers/hw_info.h"
-#include "utilities/debug_settings_reader_creator.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/utilities/debug_settings_reader_creator.h"
 
 namespace NEO {
 

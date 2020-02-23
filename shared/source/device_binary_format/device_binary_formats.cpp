@@ -5,7 +5,7 @@
  *
  */
 
-#include "device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 
 namespace NEO {
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "gen12lp/hw_cmds.h"
-#include "memory_manager/memory_constants.h"
+#include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/source/aub_mem_dump/aub_services.h"
 
 #include "engine_node.h"

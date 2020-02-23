@@ -7,8 +7,8 @@
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 
-#include "helpers/get_info.h"
-#include "helpers/string.h"
+#include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/string.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 

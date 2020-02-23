@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "command_stream/csr_definitions.h"
-#include "helpers/heap_helper.h"
-#include "helpers/non_copyable_or_moveable.h"
-#include "indirect_heap/indirect_heap.h"
+#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/helpers/heap_helper.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 
 #include <cstdint>
 #include <limits>

@@ -6,14 +6,14 @@
  */
 
 #pragma once
-#include "command_stream/command_stream_receiver_hw.h"
-#include "command_stream/thread_arbitration_policy.h"
-#include "debug_settings/debug_settings_manager.h"
-#include "device/device.h"
-#include "helpers/address_patch.h"
-#include "helpers/preamble.h"
-#include "unified_memory/unified_memory.h"
-#include "utilities/stackvec.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/preamble.h"
+#include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/stackvec.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"

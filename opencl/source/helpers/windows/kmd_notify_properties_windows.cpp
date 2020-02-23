@@ -5,8 +5,8 @@
  *
  */
 
-#include "helpers/kmd_notify_properties.h"
-#include "os_interface/windows/sys_calls.h"
+#include "shared/source/helpers/kmd_notify_properties.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 
 using namespace NEO;
 

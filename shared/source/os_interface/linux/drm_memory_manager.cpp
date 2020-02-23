@@ -5,22 +5,22 @@
  *
  */
 
-#include "os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "execution_environment/execution_environment.h"
-#include "execution_environment/root_device_environment.h"
-#include "gmm_helper/gmm.h"
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/resource_info.h"
-#include "helpers/hw_info.h"
-#include "helpers/ptr_math.h"
-#include "helpers/surface_format_info.h"
-#include "memory_manager/host_ptr_manager.h"
-#include "memory_manager/residency.h"
-#include "os_interface/linux/allocator_helper.h"
-#include "os_interface/linux/os_context_linux.h"
-#include "os_interface/linux/os_interface.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/residency.h"
+#include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 
 #include "drm/i915_drm.h"
 

@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "commands/bxml_generator_glue.h"
-#include "gen12lp/hw_info.h"
-#include "helpers/debug_helpers.h"
+#include "shared/source/commands/bxml_generator_glue.h"
+#include "shared/source/gen12lp/hw_info.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "igfxfmid.h"
 
@@ -20,7 +20,7 @@ struct CmdParse;
 namespace NEO {
 
 struct GEN12LP {
-#include "generated/gen12lp/hw_cmds_generated_gen12lp.inl"
+#include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (((1 << 0) | (1 << 1)) << 3);
 };
 struct TGLLPFamily : public GEN12LP {

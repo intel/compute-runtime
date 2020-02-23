@@ -6,11 +6,11 @@
  */
 
 #if defined(_WIN32)
-#include "os_interface/windows/os_library_win.h"
+#include "shared/source/os_interface/windows/os_library_win.h"
 #elif defined(__linux__)
-#include "os_interface/linux/os_library_linux.h"
+#include "shared/source/os_interface/linux/os_library_linux.h"
 #endif
-#include "os_interface/os_library.h"
+#include "shared/source/os_interface/os_library.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "test.h"
 

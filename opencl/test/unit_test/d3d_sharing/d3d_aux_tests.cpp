@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/arrayref.h"
+#include "shared/source/utilities/arrayref.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

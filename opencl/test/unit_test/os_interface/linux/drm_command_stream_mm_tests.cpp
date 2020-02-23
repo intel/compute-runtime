@@ -5,11 +5,11 @@
  *
  */
 
-#include "execution_environment/root_device_environment.h"
-#include "os_interface/linux/drm_memory_manager.h"
-#include "os_interface/linux/drm_memory_operations_handler.h"
-#include "os_interface/linux/os_interface.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/os_interface.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"

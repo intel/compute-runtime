@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/spinlock.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "gtest/gtest.h"
 

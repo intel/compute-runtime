@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 
 namespace NEO {
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "gen9/hw_cmds.h"
-#include "os_interface/hw_info_config.h"
+#include "shared/source/gen9/hw_cmds.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "opencl/source/helpers/enable_product.inl"
 
 namespace NEO {

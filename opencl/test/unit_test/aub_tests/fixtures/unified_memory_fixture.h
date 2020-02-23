@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "memory_manager/memory_constants.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 

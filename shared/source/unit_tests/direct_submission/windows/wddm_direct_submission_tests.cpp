@@ -5,10 +5,10 @@
  *
  */
 
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "direct_submission/windows/wddm_direct_submission.h"
-#include "os_interface/windows/os_context_win.h"
-#include "os_interface/windows/wddm/wddm.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"

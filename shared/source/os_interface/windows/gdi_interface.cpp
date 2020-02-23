@@ -5,9 +5,9 @@
  *
  */
 
-#include "os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/gdi_interface.h"
 
-#include "debug_settings/debug_settings_manager.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 
 namespace NEO {
 

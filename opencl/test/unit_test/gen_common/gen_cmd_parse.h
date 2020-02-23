@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "helpers/hw_cmds.h"
+#include "shared/source/helpers/hw_cmds.h"
 
 #include <list>
 #include <vector>

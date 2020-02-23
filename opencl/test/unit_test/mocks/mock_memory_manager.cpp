@@ -7,9 +7,9 @@
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
-#include "command_stream/command_stream_receiver.h"
-#include "gmm_helper/gmm.h"
-#include "memory_manager/deferred_deleter.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/deferred_deleter.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 

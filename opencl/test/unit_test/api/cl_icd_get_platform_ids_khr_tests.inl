@@ -6,10 +6,10 @@
  */
 
 #if defined(_WIN32)
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #endif
 
-#include "device/device.h"
+#include "shared/source/device/device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 

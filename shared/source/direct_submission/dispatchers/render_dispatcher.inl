@@ -5,10 +5,10 @@
  *
  */
 
-#include "command_stream/linear_stream.h"
-#include "command_stream/preemption.h"
-#include "direct_submission/dispatchers/render_dispatcher.h"
-#include "helpers/hw_helper.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "execution_environment/root_device_environment.h"
-#include "os_interface/windows/deferrable_deletion_win.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/windows/deferrable_deletion_win.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 

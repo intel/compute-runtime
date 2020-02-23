@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/aligned_memory.h"
+#include "shared/source/helpers/aligned_memory.h"
 
 #include "gtest/gtest.h"
 

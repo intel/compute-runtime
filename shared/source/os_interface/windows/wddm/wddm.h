@@ -6,14 +6,14 @@
  */
 
 #pragma once
-#include "command_stream/preemption_mode.h"
-#include "gmm_helper/gmm_lib.h"
-#include "helpers/debug_helpers.h"
-#include "memory_manager/gfx_partition.h"
-#include "os_interface/os_context.h"
-#include "os_interface/windows/hw_device_id.h"
-#include "os_interface/windows/wddm/wddm_defs.h"
-#include "utilities/spinlock.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/wddm/wddm_defs.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "sku_info.h"
 

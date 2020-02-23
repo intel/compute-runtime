@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "os_interface/windows/windows_wrapper.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 

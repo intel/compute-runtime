@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "command_stream/preemption.h"
-#include "helpers/preamble.h"
+#include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/preamble.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

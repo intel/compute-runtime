@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/timestamp_packet.h"
-#include "memory_manager/surface.h"
-#include "os_interface/os_context.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/surface.h"
+#include "shared/source/os_interface/os_context.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/enqueue_properties.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/bit_helpers.h"
+#include "shared/source/helpers/bit_helpers.h"
 
 #include "gtest/gtest.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm/i915_drm.h"
 

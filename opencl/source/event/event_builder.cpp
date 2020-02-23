@@ -7,8 +7,8 @@
 
 #include "opencl/source/event/event_builder.h"
 
-#include "helpers/debug_helpers.h"
-#include "helpers/timestamp_packet.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"

@@ -5,9 +5,9 @@
  *
  */
 
-#include "helpers/hw_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 
-#include "debug_settings/debug_settings_manager.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 
 namespace NEO {
 HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};

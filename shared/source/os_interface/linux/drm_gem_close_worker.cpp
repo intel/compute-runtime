@@ -5,12 +5,12 @@
  *
  */
 
-#include "os_interface/linux/drm_gem_close_worker.h"
+#include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 
-#include "helpers/aligned_memory.h"
-#include "os_interface/linux/drm_buffer_object.h"
-#include "os_interface/linux/drm_memory_manager.h"
-#include "os_interface/os_thread.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/os_thread.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 #include <atomic>

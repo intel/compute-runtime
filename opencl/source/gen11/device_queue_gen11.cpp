@@ -5,7 +5,7 @@
  *
  */
 
-#include "gen11/hw_cmds.h"
+#include "shared/source/gen11/hw_cmds.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/device_queue/device_queue_hw_bdw_plus.inl"
 #include "opencl/source/device_queue/device_queue_hw_profiling.inl"

@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "device/device.h"
-#include "helpers/array_count.h"
-#include "helpers/file_io.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/file_io.h"
+#include "helpers/debug_manager_state_restore.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

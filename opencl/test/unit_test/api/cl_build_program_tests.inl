@@ -5,9 +5,9 @@
  *
  */
 
-#include "compiler_interface/compiler_interface.h"
-#include "device/device.h"
-#include "helpers/file_io.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/file_io.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"

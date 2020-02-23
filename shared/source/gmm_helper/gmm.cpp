@@ -5,17 +5,17 @@
  *
  */
 
-#include "gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm.h"
 
-#include "gmm_helper/client_context/gmm_client_context.h"
-#include "gmm_helper/gmm_helper.h"
-#include "gmm_helper/resource_info.h"
-#include "helpers/aligned_memory.h"
-#include "helpers/debug_helpers.h"
-#include "helpers/hw_helper.h"
-#include "helpers/hw_info.h"
-#include "helpers/ptr_math.h"
-#include "helpers/surface_format_info.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/surface_format_info.h"
 
 namespace NEO {
 Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, uncacheable, false, true, {}) {}
