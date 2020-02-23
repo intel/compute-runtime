@@ -47,20 +47,20 @@ endif()
 target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(igdrcl_aub_tests PRIVATE
-  ${NEO_SOURCE_DIR}/core/unit_tests/page_fault_manager/default_asan_options.cpp
-  ${NEO_SOURCE_DIR}/core/gmm_helper/resource_info.cpp
+  ${NEO_CORE_DIRECTORY}/unit_tests/page_fault_manager/default_asan_options.cpp
+  ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
-    ${NEO_SOURCE_DIR}/core/gmm_helper/windows/gmm_memory.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+    ${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_SOURCE_DIR}/core/os_interface/linux/gmm_interface_linux.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
@@ -77,10 +77,10 @@ if(UNIX)
 else()
   add_dependencies(igdrcl_aub_tests ${GMM_TARGET_NAME})
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_CORE_DIRECTORY}/unit_tests/test_macros${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
   if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)

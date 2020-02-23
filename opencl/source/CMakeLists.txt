@@ -79,14 +79,14 @@ if(WIN32)
   set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     ${WDK_INCLUDE_PATHS}
-    ${NEO_SOURCE_DIR}/core/os_interface/windows
+    ${NEO_CORE_DIRECTORY}/os_interface/windows
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
   set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
-    ${NEO_SOURCE_DIR}/core/os_interface/linux
+    ${NEO_CORE_DIRECTORY}/os_interface/linux
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux
     ${I915_INCLUDES_DIR}
   )
@@ -159,7 +159,7 @@ if(${GENERATE_EXECUTABLE})
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} dxgi)
     add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMM_TARGET_NAME})
     target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE
-      ${NEO_SOURCE_DIR}/core/os_interface/windows/gmm_interface_win.cpp
+      ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
     )
   else()
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${GMM_LINK_NAME})
@@ -174,7 +174,7 @@ if(${GENERATE_EXECUTABLE})
     )
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
     target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE
-      ${NEO_SOURCE_DIR}/core/os_interface/linux/gmm_interface_linux.cpp
+      ${NEO_CORE_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
     )
   endif()
 

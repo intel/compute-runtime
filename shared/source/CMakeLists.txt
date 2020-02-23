@@ -38,12 +38,12 @@ function(generate_core_lib LIB_NAME MOCKABLE)
   if(WIN32)
     target_include_directories(${LIB_NAME} PUBLIC
       ${WDK_INCLUDE_PATHS}
-      ${NEO_SOURCE_DIR}/core/os_interface/windows
+      ${NEO_CORE_DIRECTORY}/os_interface/windows
     )
   else()
     target_include_directories(${LIB_NAME} PUBLIC
       ${I915_INCLUDES_DIR}
-      ${NEO_SOURCE_DIR}/core/os_interface/linux
+      ${NEO_CORE_DIRECTORY}/os_interface/linux
     )
   endif()
   create_project_source_tree(${LIB_NAME})

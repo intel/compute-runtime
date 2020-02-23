@@ -54,10 +54,10 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
-  ${NEO_SOURCE_DIR}/core/helpers/abort.cpp
-  ${NEO_SOURCE_DIR}/core/helpers/file_io.cpp
-  ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.cpp
-  ${NEO_SOURCE_DIR}/core/memory_manager/deferred_deleter.h
+  ${NEO_CORE_DIRECTORY}/helpers/abort.cpp
+  ${NEO_CORE_DIRECTORY}/helpers/file_io.cpp
+  ${NEO_CORE_DIRECTORY}/memory_manager/deferred_deleter.cpp
+  ${NEO_CORE_DIRECTORY}/memory_manager/deferred_deleter.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/test_files.cpp
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
@@ -68,11 +68,11 @@ set(IGDRCL_SRCS_offline_compiler_tests
 
 if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
-    ${NEO_SOURCE_DIR}/core/os_interface/windows/os_thread_win.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_thread_win.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
-    ${NEO_SOURCE_DIR}/core/os_interface/linux/os_thread_linux.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
   )
 endif()
 

@@ -6,25 +6,25 @@
 
 macro(macro_for_each_gen)
   list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-    ${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/core/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SOURCE_DIR}/core/${GEN_TYPE_LOWER}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp
+    ${NEO_CORE_DIRECTORY}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+    ${NEO_CORE_DIRECTORY}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
+    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
+    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
+    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp
     ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
   )
 
-  if(EXISTS "${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    include_directories(${NEO_SOURCE_DIR}/core/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
+  if(EXISTS "${NEO_CORE_DIRECTORY}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_CORE_DIRECTORY}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    include_directories(${NEO_CORE_DIRECTORY}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
   endif()
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
-  ${NEO_SOURCE_DIR}/core/helpers/allow_deferred_deleter.cpp
-  ${NEO_SOURCE_DIR}/core/unit_tests/utilities/cpuintrinsics.cpp
+  ${NEO_CORE_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+  ${NEO_CORE_DIRECTORY}/unit_tests/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/debugger.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp

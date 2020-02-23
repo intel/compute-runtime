@@ -79,7 +79,7 @@ function(run_mt_tests target slices subslices eu_per_ss)
   )
 endfunction()
 
-target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_SOURCE_DIR}/core/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/gen_common)
+target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_CORE_DIRECTORY}/unit_tests/test_macros${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/gen_common)
 
 macro(macro_for_each_test_config)
   run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
