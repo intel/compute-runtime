@@ -9,7 +9,8 @@
 #include "core/unit_tests/direct_submission/dispatchers/dispatcher_fixture.h"
 #include "core/unit_tests/fixtures/preemption_fixture.h"
 #include "test.h"
-#include "unit_tests/helpers/hw_parse.h"
+
+#include "helpers/hw_parse.h"
 
 using RenderDispatcheTest = Test<DispatcherFixture>;
 

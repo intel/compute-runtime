@@ -7,7 +7,8 @@
 
 #include "core/command_container/command_encoder.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
+
+#include "fixtures/device_fixture.h"
 
 using namespace NEO;
 

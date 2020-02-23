@@ -7,9 +7,9 @@
 
 #pragma once
 #include "core/kernel/dispatch_kernel_encoder_interface.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gmock/gmock.h"
+#include "mocks/mock_graphics_allocation.h"
 
 #include <stdint.h>
 

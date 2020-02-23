@@ -9,7 +9,8 @@
 #include "core/memory_manager/unified_memory_manager.h"
 #include "core/unified_memory/unified_memory.h"
 #include "core/unit_tests/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "mocks/mock_memory_manager.h"
 
 using namespace NEO;
 

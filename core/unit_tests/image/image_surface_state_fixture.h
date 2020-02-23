@@ -16,11 +16,12 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "fixtures/device_fixture.h"
+#include "fixtures/image_fixture.h"
+#include "mocks/mock_gmm.h"
+#include "mocks/mock_gmm_resource_info.h"
+#include "mocks/mock_graphics_allocation.h"
 
 #include <memory>
 

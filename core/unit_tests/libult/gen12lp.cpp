@@ -6,7 +6,8 @@
  */
 
 #include "opencl/source/helpers/base_object.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
+
+#include "libult/ult_command_stream_receiver.h"
 
 namespace NEO {
 

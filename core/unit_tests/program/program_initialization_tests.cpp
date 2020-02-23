@@ -7,12 +7,12 @@
 
 #include "core/program/program_initialization.h"
 #include "core/unit_tests/compiler_interface/linker_mock.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_svm_manager.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_memory_manager.h"
+#include "mocks/mock_svm_manager.h"
 
 #include <cstdint>
 

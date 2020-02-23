@@ -11,9 +11,9 @@
 #include "core/os_interface/aub_memory_operations_handler.h"
 #include "core/os_interface/device_factory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
+#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

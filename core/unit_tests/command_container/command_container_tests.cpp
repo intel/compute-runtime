@@ -7,8 +7,9 @@
 
 #include "core/command_container/cmdcontainer.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "fixtures/device_fixture.h"
+#include "mocks/mock_graphics_allocation.h"
 
 using namespace NEO;
 

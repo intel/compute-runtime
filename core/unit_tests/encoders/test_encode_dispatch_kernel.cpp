@@ -9,7 +9,8 @@
 #include "core/unit_tests/fixtures/command_container_fixture.h"
 #include "core/unit_tests/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
+
+#include "gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

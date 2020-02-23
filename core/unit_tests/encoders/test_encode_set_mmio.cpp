@@ -7,8 +7,9 @@
 
 #include "core/command_container/command_encoder.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
+
+#include "fixtures/device_fixture.h"
+#include "gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

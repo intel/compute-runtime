@@ -11,7 +11,8 @@
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "core/unit_tests/preamble/preamble_fixture.h"
 #include "opencl/source/gen9/reg_configs.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
+
+#include "gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

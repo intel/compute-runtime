@@ -106,7 +106,7 @@ endif()
 set(NEO_RUNTIME_SUB_DIR "opencl/source")
 set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
 
-set(NEO_RUNTIME_TESTS_SUB_DIR "unit_tests")
+set(NEO_RUNTIME_TESTS_SUB_DIR "opencl/test/unit_test")
 set(NEO_RUNTIME_TESTS_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR}")
 
 # Set the core source directory
@@ -562,6 +562,8 @@ add_definitions(-DGMM_OCL)
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+include_directories(${NEO_RUNTIME_TESTS_SUB_DIR})
+
 # determine Neo version
 include(version.cmake)
 
@@ -885,9 +887,9 @@ else()
 endif()
 
 if(DEFAULT_TESTED_PLATFORM AND NOT SKIP_NEO_UNIT_TESTS)
-  add_subdirectory_unique(unit_tests ${NEO_BUILD_DIR}/unit_tests)
+  add_subdirectory_unique(${NEO_RUNTIME_TESTS_SUB_DIR} ${NEO_BUILD_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR})
 else()
-  hide_subdir(unit_tests)
+  hide_subdir(${NEO_RUNTIME_TESTS_SUB_DIR})
 endif()
 
 set(DONT_LINK_ELF_STATICALLY TRUE)

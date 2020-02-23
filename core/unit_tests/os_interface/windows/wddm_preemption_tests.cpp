@@ -10,7 +10,8 @@
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "os_interface/windows/wddm_fixture.h"
 
 using namespace NEO;
 

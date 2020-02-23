@@ -15,14 +15,14 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
 #include "test.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
 
+#include "fixtures/hello_world_fixture.h"
 #include "gtest/gtest.h"
+#include "helpers/hw_parse.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_context.h"
+#include "mocks/mock_device.h"
+#include "mocks/mock_kernel.h"
 
 using namespace NEO;
 

@@ -8,10 +8,11 @@
 #include "core/helpers/hw_helper.h"
 #include "core/unit_tests/fixtures/preemption_fixture.h"
 #include "opencl/source/built_ins/built_ins.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_csr.h"
+
+#include "helpers/hw_parse.h"
+#include "mocks/mock_buffer.h"
+#include "mocks/mock_command_queue.h"
+#include "mocks/mock_csr.h"
 
 using namespace NEO;
 

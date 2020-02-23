@@ -14,10 +14,11 @@
 #include "core/unit_tests/helpers/ult_hw_config.h"
 #include "core/unit_tests/mocks/mock_direct_submission_hw.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/dispatch_flags_helper.h"
-#include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/mocks/mock_csr.h"
+
+#include "fixtures/device_fixture.h"
+#include "helpers/dispatch_flags_helper.h"
+#include "helpers/variable_backup.h"
+#include "mocks/mock_csr.h"
 
 #include <atomic>
 #include <memory>

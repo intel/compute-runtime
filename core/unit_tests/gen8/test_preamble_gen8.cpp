@@ -9,7 +9,8 @@
 #include "core/helpers/preamble.h"
 #include "core/unit_tests/preamble/preamble_fixture.h"
 #include "opencl/source/gen8/reg_configs.h"
-#include "unit_tests/fixtures/platform_fixture.h"
+
+#include "fixtures/platform_fixture.h"
 
 using namespace NEO;
 

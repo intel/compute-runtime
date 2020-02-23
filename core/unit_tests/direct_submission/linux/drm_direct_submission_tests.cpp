@@ -9,8 +9,9 @@
 #include "core/direct_submission/linux/drm_direct_submission.h"
 #include "core/os_interface/linux/os_context_linux.h"
 #include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/os_interface/linux/drm_mock.h"
+
+#include "fixtures/device_fixture.h"
+#include "os_interface/linux/drm_mock.h"
 
 #include <memory>
 

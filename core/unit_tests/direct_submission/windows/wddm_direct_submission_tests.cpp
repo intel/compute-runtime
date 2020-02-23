@@ -9,9 +9,10 @@
 #include "core/direct_submission/windows/wddm_direct_submission.h"
 #include "core/os_interface/windows/os_context_win.h"
 #include "core/os_interface/windows/wddm/wddm.h"
-#include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "helpers/hw_parse.h"
+#include "mocks/mock_device.h"
+#include "os_interface/windows/wddm_fixture.h"
 
 struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
