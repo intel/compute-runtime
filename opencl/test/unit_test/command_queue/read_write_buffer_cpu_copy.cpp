@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -247,6 +248,23 @@ TEST(ReadWriteBufferOnCpu, given32BitApplicationWhenLocalMemoryPoolAllocationIsA
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::LocalMemory);
+
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+}
+
+TEST(ReadWriteBufferOnCpu, given32BitAppAndLocalMemoryBufferWhenAskedForCpuTransferPreferenceThenTrueIsReturned) {
+    if (is64bit) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(true);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
+    ASSERT_NE(nullptr, buffer.get());
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));

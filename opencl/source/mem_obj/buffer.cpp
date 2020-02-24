@@ -518,19 +518,22 @@ bool Buffer::isReadWriteOnCpuAllowed() {
 }
 
 bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
-    //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
-    if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
-        return false;
-    }
+    if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+        //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
+        if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
+            return false;
+        }
 
-    //on low power devices larger transfers are better on the GPU
-    if (context->getDevice(0)->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
-        return false;
+        //on low power devices larger transfers are better on the GPU
+        if (context->getDevice(0)->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
+            return false;
+        }
+        return true;
     }
 
     //if we are not in System Memory Pool, it is more beneficial to do the transfer on GPU
     //for 32 bit applications, utilize CPU transfers here.
-    if (!MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) && is64bit) {
+    if (is64bit) {
         return false;
     }
 
