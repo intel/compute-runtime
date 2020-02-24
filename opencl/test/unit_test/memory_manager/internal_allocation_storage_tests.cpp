@@ -7,8 +7,8 @@
 
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
-#include "helpers/debug_manager_state_restore.h"
-#include "utilities/containers_tests_helpers.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"

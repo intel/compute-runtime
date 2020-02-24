@@ -785,7 +785,6 @@ endif()
 
 # Project-wide include paths
 # Please keep alphabetical order
-include_directories(shared/test/unit_test)
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
 include_directories(${NEO_CORE_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})

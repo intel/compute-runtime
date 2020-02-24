@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 

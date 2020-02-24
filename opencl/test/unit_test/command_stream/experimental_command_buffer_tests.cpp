@@ -8,7 +8,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "opencl/source/command_stream/aub_subcapture.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"

@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/os_interface.h"
-#include "helpers/debug_manager_state_restore.h"
-#include "utilities/base_object_utils.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"

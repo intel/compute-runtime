@@ -11,7 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"

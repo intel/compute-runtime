@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/kmd_notify_properties.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "test.h"
 
 namespace NEO {

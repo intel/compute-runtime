@@ -9,8 +9,8 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
-#include "helpers/debug_manager_state_restore.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include <cstring>
 

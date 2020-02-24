@@ -11,7 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
-#include "helpers/memory_management.h"
+#include "shared/test/unit_test/helpers/memory_management.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"

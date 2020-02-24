@@ -10,7 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     const HardwareInfo *refHwinfo = *platformDevices;

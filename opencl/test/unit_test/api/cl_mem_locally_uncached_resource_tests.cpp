@@ -10,7 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/state_base_address.h"
-#include "utilities/base_object_utils.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"

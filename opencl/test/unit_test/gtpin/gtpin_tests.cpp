@@ -12,7 +12,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
-#include "device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_defs.h"

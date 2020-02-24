@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
-#include "helpers/debug_manager_state_restore.h"
-#include "helpers/ult_hw_config.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/source/utilities/stackvec.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

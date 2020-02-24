@@ -5,7 +5,7 @@
  *
  */
 
-#include "fixtures/preemption_fixture.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_info.h"

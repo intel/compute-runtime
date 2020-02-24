@@ -10,7 +10,7 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/hw_info.h"
-#include "device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 TEST(IsDeviceBinaryFormatAr, GivenValidBinaryReturnTrue) {

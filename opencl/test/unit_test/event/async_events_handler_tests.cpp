@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/timestamp_packet.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"

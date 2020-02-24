@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 
-#include "helpers/memory_leak_listener.h"
-#include "helpers/memory_management.h"
+#include "shared/test/unit_test/helpers/memory_leak_listener.h"
+#include "shared/test/unit_test/helpers/memory_management.h"
 
 #include <cinttypes>
 #if defined(__linux__)

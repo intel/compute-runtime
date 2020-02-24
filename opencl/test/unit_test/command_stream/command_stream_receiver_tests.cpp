@@ -17,7 +17,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"

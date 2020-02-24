@@ -17,7 +17,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_context.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/memory_management.h"
+#include "shared/test/unit_test/helpers/memory_management.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 
 #include "gtest/gtest.h"

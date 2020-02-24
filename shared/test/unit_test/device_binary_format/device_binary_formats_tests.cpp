@@ -10,7 +10,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/program/program_info.h"
-#include "device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "test.h"
 
 TEST(DecodeError, WhenStringRepresentationIsNeededThenAsStringEncodesProperly) {

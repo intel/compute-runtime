@@ -11,7 +11,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/source/program/kernel_info.h"

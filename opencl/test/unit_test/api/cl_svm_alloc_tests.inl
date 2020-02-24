@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
-#include "utilities/base_object_utils.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 #include "opencl/source/context/context.h"
 
 #include "cl_api_tests.h"

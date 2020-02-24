@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/ult_hw_config.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
 
 namespace NEO {
 UltHwConfig ultHwConfig{};

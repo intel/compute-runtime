@@ -8,8 +8,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
-#include "helpers/debug_manager_state_restore.h"
-#include "helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"
 #include "opencl/test/unit_test/mocks/mock_aub_manager.h"
 

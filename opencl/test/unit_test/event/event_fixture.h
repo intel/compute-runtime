@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "utilities/base_object_utils.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

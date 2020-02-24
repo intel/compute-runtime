@@ -5,15 +5,15 @@
  *
  */
 
-#include "helpers/debug_manager_state_restore.h"
-#include "source_level_debugger/source_level_debugger_preamble_test.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 typedef SKLFamily GfxFamily;
 
-#include "source_level_debugger/source_level_debugger_preamble_test.inl"
+#include "shared/test/unit_test/source_level_debugger/source_level_debugger_preamble_test.inl"
 
 using PreambleTestGen9 = ::testing::Test;
 

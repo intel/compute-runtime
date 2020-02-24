@@ -5,7 +5,7 @@
  *
  */
 
-#include "mocks/mock_dispatch_kernel_encoder_interface.h"
+#include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
 

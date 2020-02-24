@@ -5,7 +5,7 @@
  *
  */
 
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/source/utilities/arrayref.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"

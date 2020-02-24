@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/deferred_deleter_helper.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
 

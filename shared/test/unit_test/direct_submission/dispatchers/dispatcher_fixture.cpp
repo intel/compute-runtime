@@ -5,7 +5,7 @@
  *
  */
 
-#include "direct_submission/dispatchers/dispatcher_fixture.h"
+#include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_constants.h"

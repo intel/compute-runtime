@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_helper.h"
-#include "fixtures/preemption_fixture.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

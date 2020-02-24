@@ -5,7 +5,7 @@
  *
  */
 
-#include "utilities/containers_tests_helpers.h"
+#include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"

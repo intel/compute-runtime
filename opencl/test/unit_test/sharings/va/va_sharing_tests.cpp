@@ -8,7 +8,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/platform/platform.h"
