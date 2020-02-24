@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/windows/gmm_callbacks.h"
+
 #include "test.h"
 
 using namespace NEO;

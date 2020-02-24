@@ -16,6 +16,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
+
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/os_interface/os_inc_base.h"
 #include "opencl/source/platform/extensions.h"

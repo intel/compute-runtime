@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/utilities/api_intercept.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

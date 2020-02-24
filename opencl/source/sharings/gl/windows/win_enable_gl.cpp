@@ -8,6 +8,7 @@
 #include "opencl/source/sharings/gl/windows/win_enable_gl.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/sharings/gl/cl_gl_api_intel.h"

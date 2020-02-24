@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/utilities/cpuintrinsics.h"
+
 #include "opencl/source/tracing/tracing_handle.h"
 
 #include <atomic>

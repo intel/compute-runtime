@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/memory_constants.h"
+
 #include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 

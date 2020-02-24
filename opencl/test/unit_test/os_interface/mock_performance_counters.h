@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/device/device.h"
+
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

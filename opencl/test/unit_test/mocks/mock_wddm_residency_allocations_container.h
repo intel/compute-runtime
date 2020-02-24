@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
+
 #include "opencl/test/unit_test/mocks/wddm_mock_helpers.h"
 
 namespace NEO {

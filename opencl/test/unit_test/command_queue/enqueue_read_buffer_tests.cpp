@@ -9,6 +9,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"

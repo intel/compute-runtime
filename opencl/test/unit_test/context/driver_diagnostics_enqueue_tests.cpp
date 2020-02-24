@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/context/driver_diagnostics_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

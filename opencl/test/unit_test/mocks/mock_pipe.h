@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+
 #include "opencl/source/mem_obj/pipe.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 

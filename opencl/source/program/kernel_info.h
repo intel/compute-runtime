@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
+
 #include "opencl/source/program/heap_info.h"
 #include "opencl/source/program/kernel_arg_info.h"
 

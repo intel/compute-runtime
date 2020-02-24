@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+
 #include "opencl/test/unit_test/mocks/mock_host_ptr_manager.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 

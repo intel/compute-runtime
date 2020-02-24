@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
 

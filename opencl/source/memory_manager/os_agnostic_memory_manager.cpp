@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_memory.h"
+
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/helpers/surface_formats.h"
 

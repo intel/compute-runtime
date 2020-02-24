@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/string.h"
+
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

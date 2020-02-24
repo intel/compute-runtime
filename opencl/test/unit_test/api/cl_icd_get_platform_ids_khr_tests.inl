@@ -10,6 +10,7 @@
 #endif
 
 #include "shared/source/device/device.h"
+
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 

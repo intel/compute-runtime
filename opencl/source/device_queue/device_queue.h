@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/execution_model/device_enqueue.h"
 #include "opencl/source/helpers/base_object.h"

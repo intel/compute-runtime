@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/event_tracker.h"
 

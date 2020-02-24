@@ -12,6 +12,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
+
 #include "offline_compiler/offline_compiler.h"
 
 #include "CL/cl.h"

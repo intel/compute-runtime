@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_thread.h"
+
 #include "opencl/source/event/event.h"
 
 #include <iterator>

@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
+
 #include "opencl/source/utilities/logger.h"
 
 namespace NEO {

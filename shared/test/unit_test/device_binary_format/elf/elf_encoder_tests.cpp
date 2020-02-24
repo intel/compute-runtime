@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/utilities/range.h"
+
 #include "test.h"
 
 using namespace NEO::Elf;

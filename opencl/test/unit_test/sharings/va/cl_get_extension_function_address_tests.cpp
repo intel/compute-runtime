@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/sharings/va/cl_va_api.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 

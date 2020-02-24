@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 

@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
+
 #include "opencl/source/platform/platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {

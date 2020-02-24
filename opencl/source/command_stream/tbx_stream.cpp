@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+
 #include "opencl/source/aub/aub_helper.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/source/tbx/tbx_sockets.h"

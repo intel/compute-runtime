@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/const_stringref.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
 

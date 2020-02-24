@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "test.h"
 

@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
+
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"

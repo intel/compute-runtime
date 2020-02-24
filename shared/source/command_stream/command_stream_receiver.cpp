@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 
 namespace NEO {

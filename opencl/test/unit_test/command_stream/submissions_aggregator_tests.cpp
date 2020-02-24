@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/flush_stamp.h"
+
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

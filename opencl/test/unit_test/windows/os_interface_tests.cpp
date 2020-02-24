@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/windows/os_interface.h"
+
 #include "test.h"
 
 TEST(osInterfaceTests, osInterfaceLocalMemoryEnabledByDefault) {

@@ -8,6 +8,7 @@
 #include "va_sharing_functions.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "opencl/source/sharings/va/va_surface.h"
 
 #include <dlfcn.h>

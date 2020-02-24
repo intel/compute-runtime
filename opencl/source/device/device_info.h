@@ -6,8 +6,9 @@
  */
 
 #pragma once
-#include "opencl/source/extensions/public/cl_ext_private.h"
 #include <shared/source/utilities/stackvec.h>
+
+#include "opencl/source/extensions/public/cl_ext_private.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"

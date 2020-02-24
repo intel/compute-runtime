@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/hw_helper.h"
+
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 

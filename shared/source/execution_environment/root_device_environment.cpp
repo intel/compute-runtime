@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
+
 #include "opencl/source/aub/aub_center.h"
 
 namespace NEO {

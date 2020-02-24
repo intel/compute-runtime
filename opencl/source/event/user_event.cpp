@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 

@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/scheduler/scheduler_source_tests.h"
 
 #include "shared/source/helpers/hw_cmds.h"
+
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"

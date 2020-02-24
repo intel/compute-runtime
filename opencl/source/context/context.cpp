@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device/cl_device.h"

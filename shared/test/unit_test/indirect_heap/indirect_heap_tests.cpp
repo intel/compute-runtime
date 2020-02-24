@@ -7,6 +7,7 @@
 
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "test.h"
 
 using namespace NEO;

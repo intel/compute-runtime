@@ -9,6 +9,7 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/array_count.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/mem_obj/image.h"
 

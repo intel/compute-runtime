@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/memory_info.h"
+
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 
 #include "gtest/gtest.h"

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/string.h"
+
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 
 #include "gtest/gtest.h"

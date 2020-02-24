@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hash.h"
+
 #include "opencl/source/helpers/string_helpers.h"
 
 #include "gtest/gtest.h"

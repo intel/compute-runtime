@@ -11,6 +11,7 @@
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"

@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
+
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {

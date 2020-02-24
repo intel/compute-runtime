@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {

@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
+
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface20.h"

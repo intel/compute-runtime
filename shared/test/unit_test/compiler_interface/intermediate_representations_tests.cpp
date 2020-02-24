@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
+
 #include "test.h"
 
 TEST(HasSameMagic, WhenMagicIsMatchedThenReturnTrue) {

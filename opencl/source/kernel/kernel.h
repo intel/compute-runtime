@@ -14,6 +14,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/extensions/public/cl_ext_private.h"

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device/cl_device.h"

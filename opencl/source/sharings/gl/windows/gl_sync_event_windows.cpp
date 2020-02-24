@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event_builder.h"

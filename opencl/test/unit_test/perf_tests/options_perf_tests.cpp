@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_cmds.h"
+
 #include "opencl/source/helpers/array_count.h"
 
 namespace NEO {

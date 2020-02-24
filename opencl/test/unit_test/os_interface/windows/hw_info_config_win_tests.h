@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/hw_info_config.h"
+
 #include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include <memory>

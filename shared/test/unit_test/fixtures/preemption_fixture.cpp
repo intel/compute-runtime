@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_info.h"
+
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/enqueue_marker.h"

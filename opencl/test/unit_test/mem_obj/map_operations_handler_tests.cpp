@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+
 #include "opencl/source/mem_obj/map_operations_handler.h"
 #include "test.h"
 

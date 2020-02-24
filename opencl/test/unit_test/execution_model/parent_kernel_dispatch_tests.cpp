@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/perf_counter.h"

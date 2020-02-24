@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+
 #include "opencl/source/aub/aub_helper.h"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"

@@ -9,6 +9,7 @@
 #include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/reference_tracked_object.h"
+
 #include "opencl/source/api/dispatch.h"
 
 #include "CL/cl.h"

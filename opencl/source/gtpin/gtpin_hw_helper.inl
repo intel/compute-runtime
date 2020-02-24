@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/string.h"
+
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 

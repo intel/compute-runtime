@@ -8,6 +8,7 @@
 #include "opencl/source/command_stream/aub_subcapture.h"
 
 #include "shared/source/utilities/debug_settings_reader.h"
+
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/os_interface/ocl_reg_path.h"

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/hash.h"
+
 #include "offline_compiler/decoder/binary_encoder.h"
 
 #include "mock_iga_wrapper.h"

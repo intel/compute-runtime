@@ -9,6 +9,7 @@
 
 #include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/os_context.h"
+
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 using namespace NEO;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {

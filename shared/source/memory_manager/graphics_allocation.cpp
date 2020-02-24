@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
+
 #include "opencl/source/utilities/logger.h"
 
 namespace NEO {

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
+
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/mock_os_time_linux.h"
 #include "test.h"

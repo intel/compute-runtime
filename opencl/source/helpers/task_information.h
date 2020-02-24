@@ -13,6 +13,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/iflist.h"
+
 #include "opencl/source/helpers/properties_helper.h"
 
 #include <memory>

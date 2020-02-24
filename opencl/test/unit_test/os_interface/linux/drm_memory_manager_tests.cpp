@@ -22,9 +22,10 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
-#include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"

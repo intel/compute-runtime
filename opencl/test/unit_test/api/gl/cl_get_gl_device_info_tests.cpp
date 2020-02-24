@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 #include <cstring>

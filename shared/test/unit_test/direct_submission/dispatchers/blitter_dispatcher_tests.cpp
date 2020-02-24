@@ -7,6 +7,7 @@
 
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
+
 #include "test.h"
 
 using BlitterDispatcheTest = Test<DispatcherFixture>;

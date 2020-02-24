@@ -12,6 +12,7 @@
 #include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

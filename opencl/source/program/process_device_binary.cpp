@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"

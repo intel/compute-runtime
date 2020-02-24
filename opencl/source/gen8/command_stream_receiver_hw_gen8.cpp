@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
+
 #include "opencl/source/command_stream/device_command_stream.h"
 
 namespace NEO {

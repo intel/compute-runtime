@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm_types_converter.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"

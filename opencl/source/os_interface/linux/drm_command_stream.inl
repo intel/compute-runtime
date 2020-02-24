@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 #include <cstdlib>

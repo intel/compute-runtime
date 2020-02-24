@@ -11,6 +11,7 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/event/hw_timestamps.h"
 #include "opencl/source/helpers/base_object.h"

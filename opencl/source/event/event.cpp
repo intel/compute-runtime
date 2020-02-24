@@ -16,6 +16,7 @@
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"

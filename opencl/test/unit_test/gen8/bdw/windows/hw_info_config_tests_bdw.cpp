@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/windows/os_interface.h"
+
 #include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;

@@ -16,6 +16,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include <algorithm>

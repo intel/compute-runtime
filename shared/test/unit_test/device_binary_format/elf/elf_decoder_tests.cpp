@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
+
 #include "test.h"
 
 using namespace NEO::Elf;

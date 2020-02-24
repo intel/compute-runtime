@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/utilities/spinlock.h"
+
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/gen_common/aub_mapper.h"

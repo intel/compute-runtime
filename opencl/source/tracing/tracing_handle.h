@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/debug_helpers.h"
+
 #include "opencl/source/tracing/tracing_types.h"
 
 #include <bitset>

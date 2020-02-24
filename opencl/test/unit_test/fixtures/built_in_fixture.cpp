@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 
 #include "shared/source/device/device.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"

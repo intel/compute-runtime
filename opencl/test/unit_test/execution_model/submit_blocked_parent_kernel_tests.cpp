@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/hw_timestamps.h"

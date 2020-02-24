@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+
 #include "opencl/source/extensions/public/cl_ext_private.h"
 
 #include "memory_properties_flags.h"

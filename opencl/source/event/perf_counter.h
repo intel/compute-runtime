@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/event/hw_timestamps.h"
 
 namespace NEO {

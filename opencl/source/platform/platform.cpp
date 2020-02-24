@@ -20,6 +20,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/event/async_events_handler.h"

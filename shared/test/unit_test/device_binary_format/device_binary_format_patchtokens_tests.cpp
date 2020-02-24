@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+
 #include "test.h"
 
 TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryReturnTrue) {

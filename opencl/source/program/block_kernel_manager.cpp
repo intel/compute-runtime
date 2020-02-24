@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/debug_helpers.h"
+
 #include "opencl/source/program/kernel_info.h"
 
 namespace NEO {

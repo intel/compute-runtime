@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/kernel/kernel.h"

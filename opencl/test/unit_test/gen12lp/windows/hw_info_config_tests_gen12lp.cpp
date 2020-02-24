@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_cmds.h"
+
 #include "opencl/source/helpers/properties_helper.h"
 
 namespace NEO {

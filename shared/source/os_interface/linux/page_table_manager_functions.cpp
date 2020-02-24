@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+
 #include "opencl/source/platform/platform.h"
 
 #include "gmm_client_context.h"

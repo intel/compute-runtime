@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+
 #include "opencl/source/aub/aub_helper.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"

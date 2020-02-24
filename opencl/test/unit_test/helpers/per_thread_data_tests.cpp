@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
+
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/program/kernel_info.h"

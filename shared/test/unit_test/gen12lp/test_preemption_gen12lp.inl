@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
+
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"

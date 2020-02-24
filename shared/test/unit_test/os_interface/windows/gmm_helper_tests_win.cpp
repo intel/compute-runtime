@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"

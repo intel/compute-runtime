@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/ptr_math.h"
+
 #include "offline_compiler/offline_compiler.h"
 
 #include "helper.h"

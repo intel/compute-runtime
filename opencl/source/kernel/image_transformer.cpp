@@ -8,6 +8,7 @@
 #include "opencl/source/kernel/image_transformer.h"
 
 #include "shared/source/helpers/ptr_math.h"
+
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/program/kernel_info.h"
 

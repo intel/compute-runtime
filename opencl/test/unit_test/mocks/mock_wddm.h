@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
+
 #include "opencl/test/unit_test/mocks/wddm_mock_helpers.h"
 
 #include "gmock/gmock.h"

@@ -8,6 +8,7 @@
 #include "opencl/source/helpers/built_ins_helper.h"
 
 #include "shared/source/device/device.h"
+
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"

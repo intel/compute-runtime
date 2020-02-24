@@ -7,6 +7,7 @@
 
 #include "shared/source/gen11/hw_cmds_lkf.h"
 #include "shared/source/memory_manager/memory_constants.h"
+
 #include "opencl/source/aub_mem_dump/aub_services.h"
 
 #include "engine_node.h"

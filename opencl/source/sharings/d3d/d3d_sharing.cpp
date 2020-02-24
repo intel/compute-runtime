@@ -8,6 +8,7 @@
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/basic_math.h"
+
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
 namespace NEO {

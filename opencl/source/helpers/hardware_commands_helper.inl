@@ -15,6 +15,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"

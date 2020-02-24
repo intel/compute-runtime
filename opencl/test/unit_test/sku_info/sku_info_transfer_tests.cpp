@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
+
 #include "opencl/test/unit_test/sku_info/sku_info_base_reference.h"
 
 #include "gtest/gtest.h"

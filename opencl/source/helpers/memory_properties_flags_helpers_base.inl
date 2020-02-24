@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/bit_helpers.h"
+
 #include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 

@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 
 using namespace NEO;

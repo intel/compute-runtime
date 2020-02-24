@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "test.h"
 
 #include "gtest/gtest.h"

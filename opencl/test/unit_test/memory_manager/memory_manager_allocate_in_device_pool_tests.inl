@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

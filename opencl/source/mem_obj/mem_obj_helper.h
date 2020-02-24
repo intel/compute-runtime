@@ -9,6 +9,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+
 #include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/mem_properties_parser_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"

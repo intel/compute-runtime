@@ -10,10 +10,11 @@
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
-#include "shared/source/utilities/debug_settings_reader.h"
+
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/global_environment.h"

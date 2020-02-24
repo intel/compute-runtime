@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+
 #include "opencl/source/helpers/surface_formats.h"
 
 using namespace ::testing;

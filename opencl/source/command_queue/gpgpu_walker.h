@@ -14,6 +14,7 @@
 #include "shared/source/helpers/vec.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 

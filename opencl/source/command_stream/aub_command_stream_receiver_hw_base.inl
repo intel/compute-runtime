@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/os_context.h"
+
 #include "opencl/source/aub/aub_helper.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.inl"

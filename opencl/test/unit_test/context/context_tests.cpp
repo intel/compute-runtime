@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/device_queue/device_queue.h"

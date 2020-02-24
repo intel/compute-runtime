@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/utilities/base_object_utils.h"
+
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

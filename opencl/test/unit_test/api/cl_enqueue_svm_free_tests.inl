@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/device.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"

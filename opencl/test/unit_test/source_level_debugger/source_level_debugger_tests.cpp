@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
+
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"

@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
+
 #include "opencl/source/aub/aub_center.h"
 
 #include "hw_device_id.h"

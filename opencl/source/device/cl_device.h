@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/utilities/reference_tracked_object.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/device/device_info_map.h"
 #include "opencl/source/helpers/base_object.h"

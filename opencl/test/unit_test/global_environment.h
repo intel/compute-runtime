@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
+
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "gtest/gtest.h"

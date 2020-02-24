@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+
 #include "test.h"
 
 #include <sstream>

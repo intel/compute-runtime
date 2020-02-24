@@ -16,6 +16,7 @@
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/tag_allocator.h"
+
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"

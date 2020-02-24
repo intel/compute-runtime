@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/unified/unified_image.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"

@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/os_context.h"
+
 #include "opencl/source/device/driver_info.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

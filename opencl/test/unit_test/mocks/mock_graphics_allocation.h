@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {

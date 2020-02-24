@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_info.h"
+
 #include "opencl/source/device/device_info.h"
 #include "opencl/source/os_interface/performance_counters.h"
 

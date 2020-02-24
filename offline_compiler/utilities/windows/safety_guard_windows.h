@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/abort.h"
+
 #include "offline_compiler/utilities/windows/seh_exception.h"
 
 #include <setjmp.h>

@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/destructor_counted.h"
+
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

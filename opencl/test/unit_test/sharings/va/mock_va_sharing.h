@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+
 #include "opencl/source/sharings/va/va_sharing.h"
 
 namespace NEO {

@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/os_interface/linux/device_command_stream.inl"

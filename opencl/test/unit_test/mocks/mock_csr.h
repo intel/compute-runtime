@@ -15,6 +15,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 #include "gmock/gmock.h"

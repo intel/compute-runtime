@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/debug_helpers.h"
+
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/sharing.h"
 

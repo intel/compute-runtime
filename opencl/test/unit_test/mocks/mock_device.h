@@ -10,6 +10,7 @@
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"

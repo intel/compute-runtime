@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {

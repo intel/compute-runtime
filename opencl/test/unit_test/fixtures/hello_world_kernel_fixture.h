@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/file_io.h"
+
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"

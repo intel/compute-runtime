@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/error_mappers.h"

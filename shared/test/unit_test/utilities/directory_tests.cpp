@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/directory.h"
+
 #include "test.h"
 
 #include "gtest/gtest.h"
