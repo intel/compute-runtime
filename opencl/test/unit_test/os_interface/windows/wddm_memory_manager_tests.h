@@ -37,6 +37,7 @@ class WddmMemoryManagerFixture : public GdiDllFixture {
     }
 
     ExecutionEnvironment *executionEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     WddmMock *wddm;
 };
@@ -47,17 +48,18 @@ class MockWddmMemoryManagerFixture {
   public:
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         gdi = new MockGdi();
 
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddm->resetGdi(gdi);
         constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
         wddm->init();
 
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        rootDeviceEnvironment->osInterface.reset(new OSInterface());
+        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         executionEnvironment->initializeMemoryManager();
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
@@ -75,6 +77,7 @@ class MockWddmMemoryManagerFixture {
         osContext->decRefInternal();
     }
 
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> csr;

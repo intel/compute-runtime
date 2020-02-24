@@ -98,7 +98,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
     imgInfo.linearStorage = !hwHelper.tilingAllowed(false, Image::isImage1d(imageDesc), false);
-    auto queryGmm = MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
 
     //allocate host_ptr
     auto pixelSize = 4;
@@ -224,7 +224,7 @@ HWTEST_P(CopyHostPtrTest, imageWithDoubledRowPitchThatIsCreatedWithCopyHostPtrFl
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
 
-    MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
     auto lineWidth = imageDesc.image_width * elementSize;
     auto passedRowPitch = imgInfo.rowPitch * 2;
     imageDesc.image_row_pitch = passedRowPitch;
@@ -293,7 +293,7 @@ HWTEST_P(UseHostPtrTest, imageWithRowPitchCreatedWithUseHostPtrFlagCopiedActuall
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
-    MockGmm::queryImgParams(pDevice->getExecutionEnvironment()->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo);
     auto passedRowPitch = imgInfo.rowPitch + 32;
     imageDesc.image_row_pitch = passedRowPitch;
     unsigned char *pUseHostPtr = new unsigned char[passedRowPitch * imageDesc.image_height * elementSize];

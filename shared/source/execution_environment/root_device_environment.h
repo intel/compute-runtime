@@ -15,6 +15,8 @@
 namespace NEO {
 
 class AubCenter;
+class GmmClientContext;
+class GmmHelper;
 class ExecutionEnvironment;
 class GmmPageTableMngr;
 class MemoryOperationsHandler;
@@ -30,6 +32,8 @@ struct RootDeviceEnvironment {
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);
+    GmmHelper *getGmmHelper() const;
+    GmmClientContext *getGmmClientContext() const;
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;

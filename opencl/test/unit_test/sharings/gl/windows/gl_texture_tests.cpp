@@ -64,7 +64,7 @@ class GlSharingTextureTests : public ::testing::Test {
         mockGlSharingFunctions = glSharing->sharingFunctions.release();
         clContext->setSharingFunctions(mockGlSharingFunctions);
 
-        tempMM->forceGmm = MockGmm::queryImgParams(executionEnvironment->getGmmClientContext(), imgInfo);
+        tempMM->forceGmm = MockGmm::queryImgParams(device->getGmmClientContext(), imgInfo);
         tempMM->forceAllocationSize = textureSize;
         textureSize = imgInfo.size;
         textureId = 1;

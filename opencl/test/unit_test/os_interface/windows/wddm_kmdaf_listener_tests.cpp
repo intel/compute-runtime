@@ -40,7 +40,8 @@ class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*executionEnvironment->rootDeviceEnvironments[0].get(), new MockGdi()));
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*rootDeviceEnvironment, new MockGdi()));
         wddmWithKmDafMock->init();
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;
     }
@@ -49,6 +50,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
 
     std::unique_ptr<WddmWithKmDafMock> wddmWithKmDafMock;
     ExecutionEnvironment *executionEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListenerNotifyLockIsFedWithCorrectParams) {
@@ -75,7 +77,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListen
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDafListenerNotifyMapGpuVAIsFedWithCorrectParams) {
     uint64_t gpuPtr = 0u;
-    auto gmm = std::make_unique<Gmm>(executionEnvironment->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false);
 
     wddmWithKmDafMock->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddmWithKmDafMock->getGfxPartition().Standard.Base,
                                             wddmWithKmDafMock->getGfxPartition().Standard.Limit, 0u, gpuPtr);
@@ -128,7 +130,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyE
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
-    auto gmm = std::make_unique<Gmm>(executionEnvironment->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false);
     auto handle = 0u;
     auto ptr = reinterpret_cast<void *>(0x10000);
 
@@ -142,7 +144,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafList
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
-    auto gmm = std::make_unique<Gmm>(executionEnvironment->getGmmClientContext(), nullptr, 1, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false);
     auto handle = 0u;
 
     wddmWithKmDafMock->createAllocation64k(gmm.get(), handle);
@@ -157,7 +159,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafLi
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationsAndMapGpuVaIsCalledThenKmDafListenerNotifyWriteTargetAndMapGpuVAIsFedWithCorrectParams) {
     OsHandleStorage storage;
     OsHandle osHandle = {0};
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(executionEnvironment->getGmmClientContext(), nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false));
     storage.fragmentStorageData[0].osHandleStorage = &osHandle;
     storage.fragmentStorageData[0].fragmentSize = 100;
     storage.fragmentStorageData[0].osHandleStorage->gmm = gmm.get();

@@ -252,7 +252,7 @@ std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_
 }
 
 GmmHelper *Platform::peekGmmHelper() const {
-    return executionEnvironment.getGmmHelper();
+    return executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 }
 
 GmmClientContext *Platform::peekGmmClientContext() const {

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_info.h"
@@ -45,6 +46,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getInternalEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
+    GmmClientContext *getGmmClientContext() const;
     OSTime *getOSTime() const { return osTime.get(); };
     double getProfilingTimerResolution();
     double getPlatformHostTimerResolution() const;
@@ -129,7 +131,6 @@ inline MemoryManager *Device::getMemoryManager() const {
 }
 
 inline GmmHelper *Device::getGmmHelper() const {
-    return executionEnvironment->getGmmHelper();
+    return getRootDeviceEnvironment().getGmmHelper();
 }
-
 } // namespace NEO

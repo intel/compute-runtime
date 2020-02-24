@@ -136,7 +136,7 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
 
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(executionEnvironment.getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);
     rootDeviceEnvironment->pageTableManager.reset(gmmPageTableMngr);
     return gmmPageTableMngr;

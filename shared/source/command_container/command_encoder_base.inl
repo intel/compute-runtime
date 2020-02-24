@@ -222,7 +222,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
-    auto gmmHelper = container.getDevice()->getExecutionEnvironment()->getGmmHelper();
+    auto gmmHelper = container.getDevice()->getGmmHelper();
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(
         *container.getCommandStream(),

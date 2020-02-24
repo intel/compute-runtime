@@ -31,11 +31,12 @@ namespace NEO {
 struct WddmFixture : ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
+        rootDeviceEnvironemnt = executionEnvironment->rootDeviceEnvironments[0].get();
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironemnt));
+        rootDeviceEnvironemnt->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironemnt->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironemnt->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        osInterface = rootDeviceEnvironemnt->osInterface.get();
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
@@ -50,6 +51,7 @@ struct WddmFixture : ::testing::Test {
     OSInterface *osInterface;
     std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironemnt = nullptr;
 
     MockGdi *gdi = nullptr;
     MockWddmResidentAllocationsContainer *mockTemporaryResources;
@@ -58,14 +60,15 @@ struct WddmFixture : ::testing::Test {
 struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         GdiDllFixture::SetUp();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        osInterface = rootDeviceEnvironment->osInterface.get();
     }
 
     void init() {
@@ -88,13 +91,15 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
     WddmMockInterface20 *wddmMockInterface = nullptr;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
 struct WddmInstrumentationGmmFixture {
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get())));
-        gmmMem = new ::testing::NiceMock<GmockGmmMemory>(executionEnvironment->getGmmClientContext());
+        auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment)));
+        gmmMem = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
     }
     void TearDown() {

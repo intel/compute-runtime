@@ -47,7 +47,9 @@ MemObj::MemObj(Context *context,
     if (context) {
         context->incRefInternal();
         memoryManager = context->getMemoryManager();
-        executionEnvironment = context->getDevice(0)->getExecutionEnvironment();
+        auto device = context->getDevice(0);
+        executionEnvironment = device->getExecutionEnvironment();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
     }
 }
 

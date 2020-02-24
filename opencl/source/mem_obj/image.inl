@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -34,7 +34,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
     auto gmm = getGraphicsAllocation()->getDefaultGmm();
-    auto gmmHelper = executionEnvironment->getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     auto imageDescriptor = Image::convertDescriptor(getImageDesc());
     ImageInfo imgInfo;
@@ -133,7 +133,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
-    auto gmmHelper = executionEnvironment->getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     *surfaceState = GfxFamily::cmdInitMediaSurfaceState;
 

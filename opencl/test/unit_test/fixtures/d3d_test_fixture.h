@@ -75,7 +75,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         imgDesc.image_depth = 1;
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->getGmmClientContext(), imgInfo).release();
+        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo).release();
         mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
         mockMM->forceGmm = gmm;

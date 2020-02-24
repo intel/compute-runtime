@@ -48,8 +48,9 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         this->mock = mock;
         executionEnvironment = new MockExecutionEnvironment(*platformDevices);
         executionEnvironment->incRefInternal();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->get()->setDrm(mock);
 
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
         //assert we have memory manager
@@ -71,6 +72,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
   protected:
     ExecutionEnvironment *executionEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
     AllocationData allocationData;
 };

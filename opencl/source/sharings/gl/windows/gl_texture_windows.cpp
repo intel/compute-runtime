@@ -30,7 +30,7 @@ namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
-    auto clientContext = context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext();
+    auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
     auto memoryManager = context->getMemoryManager();
     cl_image_desc imgDesc = {};
     cl_image_format imgFormat = {};

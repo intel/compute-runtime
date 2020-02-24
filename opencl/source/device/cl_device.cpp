@@ -104,6 +104,7 @@ EngineControl &ClDevice::getDefaultEngine() { return device.getDefaultEngine(); 
 EngineControl &ClDevice::getInternalEngine() { return device.getInternalEngine(); }
 MemoryManager *ClDevice::getMemoryManager() const { return device.getMemoryManager(); }
 GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
+GmmClientContext *ClDevice::getGmmClientContext() const { return device.getGmmClientContext(); }
 double ClDevice::getProfilingTimerResolution() { return device.getProfilingTimerResolution(); }
 double ClDevice::getPlatformHostTimerResolution() const { return device.getPlatformHostTimerResolution(); }
 bool ClDevice::isSimulation() const { return device.isSimulation(); }

@@ -260,7 +260,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThe
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
     ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
-    auto gmmHelper = executionEnvironment.getGmmHelper();
+    auto gmmHelper = pDevice->getGmmHelper();
 
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
@@ -345,7 +345,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    allocation.setDefaultGmm(new Gmm(executionEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(executionEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
@@ -669,7 +669,7 @@ TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnab
 
 TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
-    auto gmmHelper = this->pDevice->getExecutionEnvironment()->getGmmHelper();
+    auto gmmHelper = this->pDevice->getGmmHelper();
     auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     auto expectedMocsForL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     auto expectedMocsForL3andL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;

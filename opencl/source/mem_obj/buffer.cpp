@@ -586,6 +586,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     pBuffer->offset = offset;
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
+    pBuffer->rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
     return pBuffer;
 }
 
@@ -605,7 +606,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) &&
                          isAligned<MemoryConstants::cacheLineSize>(bufferSize);
 
-    auto gmmHelper = executionEnvironment->getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     if (!disableL3Cache && !isMemObjUncacheableForSurfaceState() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
         return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     } else {

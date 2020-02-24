@@ -99,7 +99,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), info);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info);
 
     alloc->setDefaultGmm(gmm.release());
 
@@ -138,7 +138,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getExecutionEnvironment()->getGmmClientContext(), info);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info);
 
     alloc->setDefaultGmm(gmm.release());
 

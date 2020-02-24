@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -226,6 +227,10 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
 
 bool Device::getHostTimer(uint64_t *hostTimestamp) const {
     return getOSTime()->getCpuTime(hostTimestamp);
+}
+
+GmmClientContext *Device::getGmmClientContext() const {
+    return getGmmHelper()->getClientContext();
 }
 
 } // namespace NEO

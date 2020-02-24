@@ -22,6 +22,7 @@ namespace NEO {
 class Device;
 class ExecutionEnvironment;
 class GmmHelper;
+class GmmClientContext;
 class MemoryManager;
 class PerformanceCounters;
 class SourceLevelDebugger;
@@ -62,6 +63,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     EngineControl &getInternalEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
+    GmmClientContext *getGmmClientContext() const;
     double getProfilingTimerResolution();
     double getPlatformHostTimerResolution() const;
     bool isSimulation() const;

@@ -126,7 +126,7 @@ bool Wddm::init() {
         return false;
     }
     if (!gmmMemory) {
-        gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.executionEnvironment.getGmmClientContext()));
+        gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
 
     return configureDeviceAddressSpace();
@@ -638,7 +638,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     alloc->resourceHandle = OpenResource.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
-    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.executionEnvironment.getGmmClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
+    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
 }
@@ -675,7 +675,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
-    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.executionEnvironment.getGmmClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
+    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
 }

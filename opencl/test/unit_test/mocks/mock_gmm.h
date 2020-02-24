@@ -23,7 +23,7 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm() : Gmm(platform()->peekExecutionEnvironment()->getGmmClientContext(), nullptr, 1, false){};
+    MockGmm() : Gmm(platform()->peekGmmClientContext(), nullptr, 1, false){};
 
     static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo) {
         return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}));

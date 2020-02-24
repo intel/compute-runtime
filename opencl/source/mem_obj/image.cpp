@@ -130,7 +130,7 @@ Image *Image::create(Context *context,
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
     auto &hwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
-    auto clientContext = context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext();
+    auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
 
     do {
         size_t imageWidth = imageDesc->image_width;
@@ -675,7 +675,7 @@ cl_int Image::getImageParams(Context *context,
                              size_t *imageRowPitch,
                              size_t *imageSlicePitch) {
     cl_int retVal = CL_SUCCESS;
-    auto clientContext = context->getDevice(0)->getExecutionEnvironment()->getGmmClientContext();
+    auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
 
     ImageInfo imgInfo = {};
     cl_image_desc imageDescriptor = *imageDesc;

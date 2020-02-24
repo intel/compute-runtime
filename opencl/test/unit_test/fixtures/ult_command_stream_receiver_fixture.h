@@ -120,7 +120,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
-        auto gmmHelper = commandStreamReceiver.peekExecutionEnvironment().getGmmHelper();
+        auto gmmHelper = pDevice->getGmmHelper();
         auto mocsIndex = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex >> 1;
