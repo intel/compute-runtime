@@ -41,7 +41,7 @@ size_t PerThreadDataHelper::sendPerThreadData(
 }
 
 uint32_t PerThreadDataHelper::getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd, uint32_t grfSize) {
-    uint32_t multiplier = static_cast<uint32_t>(getGRFsPerThread(simd));
+    uint32_t multiplier = static_cast<uint32_t>(getGRFsPerThread(simd, grfSize));
     uint32_t threadPayloadSize = 0;
     threadPayloadSize = getNumLocalIdChannels(threadPayload) * multiplier * grfSize;
     threadPayloadSize += (threadPayload.HeaderPresent) ? grfSize : 0;

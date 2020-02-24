@@ -18,19 +18,26 @@
 
 using namespace NEO;
 
-TEST(LocalID, GivenSimd8WhenGettingGrfsPerThreadThenOneIsReturned) {
+using LocalIdTests = ::testing::Test;
+
+HWTEST_F(LocalIdTests, GivenSimd8WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 8;
-    EXPECT_EQ(1u, getGRFsPerThread(simd));
+    EXPECT_EQ(1u, getGRFsPerThread(simd, 32));
 }
 
-TEST(LocalID, GivenSimd16WhenGettingGrfsPerThreadThenOneIsReturned) {
+HWTEST_F(LocalIdTests, GivenSimd16WhenGettingGrfsPerThreadThenOneIsReturned) {
     uint32_t simd = 16;
-    EXPECT_EQ(1u, getGRFsPerThread(simd));
+    EXPECT_EQ(1u, getGRFsPerThread(simd, 32));
 }
 
-TEST(LocalID, GivenSimd32WhenGettingGrfsPerThreadThenTwoIsReturned) {
+HWTEST_F(LocalIdTests, GivenSimd32WhenGettingGrfsPerThreadThenTwoIsReturned) {
     uint32_t simd = 32;
-    EXPECT_EQ(2u, getGRFsPerThread(simd));
+    EXPECT_EQ(2u, getGRFsPerThread(simd, 32));
+}
+
+HWTEST_F(LocalIdTests, GivenSimd32AndNon32GrfSizeWhenGettingGrfsPerThreadThenTwoIsReturned) {
+    uint32_t simd = 32;
+    EXPECT_EQ(1u, getGRFsPerThread(simd, 33));
 }
 
 TEST(LocalID, GivenSimd32AndLws33WhenGettingThreadsPerWorkgroupThenTwoIsReturned) {

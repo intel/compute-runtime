@@ -14,8 +14,8 @@
 #include <cstdint>
 
 namespace NEO {
-inline uint32_t getGRFsPerThread(uint32_t simd) {
-    return simd == 32 ? 2 : 1;
+inline uint32_t getGRFsPerThread(uint32_t simd, uint32_t grfSize) {
+    return (simd == 32 && grfSize == 32) ? 2 : 1;
 }
 
 inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
@@ -36,7 +36,7 @@ inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
 }
 
 inline uint32_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t grfSize, uint32_t numChannels = 3) {
-    auto numGRFSPerThread = getGRFsPerThread(simd);
+    auto numGRFSPerThread = getGRFsPerThread(simd, grfSize);
     uint32_t returnSize = numGRFSPerThread * grfSize * (simd == 1 ? 1u : numChannels);
     returnSize = std::max(returnSize, grfSize);
     return returnSize;
