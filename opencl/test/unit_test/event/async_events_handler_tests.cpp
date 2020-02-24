@@ -85,7 +85,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventsWhenListIsProcessedThenUpdateExecutio
     EXPECT_TRUE(handler->peekIsListEmpty()); // auto-unregister when no callbacs
 }
 
-TEST_F(AsyncEventsHandlerTests, updateEventsRefInternalCount) {
+TEST_F(AsyncEventsHandlerTests, WhenProcessIsCompletedThenRefInternalCountIsDecremented) {
     event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
 
     handler->registerEvent(event1);
@@ -219,12 +219,12 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenAsyncExecutio
     event2->setStatus(CL_SUBMITTED);
 }
 
-TEST_F(AsyncEventsHandlerTests, dontCreateThreadByDefault) {
+TEST_F(AsyncEventsHandlerTests, WhenHandlerIsCreatedThenThreadIsNotCreatedByDefault) {
     MockHandler myHandler;
     EXPECT_EQ(nullptr, myHandler.thread.get());
 }
 
-TEST_F(AsyncEventsHandlerTests, createThreadOnFirstRegister) {
+TEST_F(AsyncEventsHandlerTests, WhenHandlerIsRegisteredThenThreadIsCreated) {
     event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
 
     EXPECT_FALSE(handler->openThreadCalled);
@@ -232,7 +232,7 @@ TEST_F(AsyncEventsHandlerTests, createThreadOnFirstRegister) {
     EXPECT_TRUE(handler->openThreadCalled);
 }
 
-TEST_F(AsyncEventsHandlerTests, processAsynchronously) {
+TEST_F(AsyncEventsHandlerTests, WhenProcessingAsynchronouslyThenBothThreadsCompelete) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
 
     event1->setTaskStamp(CompletionStamp::levelNotReady, 0);
@@ -258,7 +258,7 @@ TEST_F(AsyncEventsHandlerTests, processAsynchronously) {
     platform()->getAsyncEventsHandler()->closeThread();
 }
 
-TEST_F(AsyncEventsHandlerTests, callToWakeupAndDeletedWhenDestructed) {
+TEST_F(AsyncEventsHandlerTests, WhenThreadIsDestructedThenGetThreadReturnsNull) {
     handler->allowThreadCreating = true;
     handler->openThread();
 
@@ -356,7 +356,7 @@ TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWith
     event1->setStatus(CL_COMPLETE);
 }
 
-TEST_F(AsyncEventsHandlerTests, asyncProcessCallsProcessListBeforeReturning) {
+TEST_F(AsyncEventsHandlerTests, WhenReturningThenAsyncProcessWillCallProcessList) {
     Event *event = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     handler->registerEvent(event);
