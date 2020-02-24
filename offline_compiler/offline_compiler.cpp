@@ -578,7 +578,7 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     out << "};" << std::endl;
 
     out << std::endl
-        << "#include \"opencl/source/built_ins/registry/built_ins_registry.h\"\n"
+        << "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n"
         << std::endl;
     out << "namespace NEO {" << std::endl;
     out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;

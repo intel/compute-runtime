@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
@@ -16,7 +17,6 @@
 #include "shared/test/unit_test/utilities/destructor_counted.h"
 
 #include "opencl/source/aub/aub_center.h"
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"

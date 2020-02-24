@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_custom_target(builtins_vme_sources)
-set_target_properties(builtins_vme_sources PROPERTIES FOLDER "built_ins")
+add_custom_target(builtins)
+set_target_properties(builtins PROPERTIES FOLDER "built_ins")
 set(BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
-add_dependencies(${BUILTINS_BINARIES_LIB_NAME} builtins_vme_sources)
+add_dependencies(${BUILTINS_BINARIES_LIB_NAME} builtins)
 add_subdirectories()
 set(GENERATED_BUILTINS ${GENERATED_BUILTINS} PARENT_SCOPE)
 set(GENERATED_BUILTINS_STATELESS ${GENERATED_BUILTINS_STATELESS} PARENT_SCOPE)
@@ -95,7 +95,7 @@ macro(macro_for_each_gen)
         list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
         set(RUNTIME_GENERATED_${GENERATED_BUILTIN_STATELESS}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
       endforeach()
-      set(target_name builtins_${family_name_with_type}_vme)
+      set(target_name builtins_${family_name_with_type})
       add_custom_target(${target_name} DEPENDS ${BUILTINS_COMMANDS})
       add_dependencies(builtins ${target_name})
       set_target_properties(${target_name} PROPERTIES FOLDER "opencl/source/built_ins/${family_name_with_type}")

@@ -5,8 +5,9 @@
  *
  */
 
-#include "opencl/source/built_ins/sip.h"
+#include "shared/source/built_ins/sip.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -15,7 +16,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 

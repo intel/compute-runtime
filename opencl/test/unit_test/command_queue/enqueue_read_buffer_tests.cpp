@@ -5,12 +5,12 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"

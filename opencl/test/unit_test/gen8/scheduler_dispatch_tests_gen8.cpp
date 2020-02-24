@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/device_queue/device_queue.h"

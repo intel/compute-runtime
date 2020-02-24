@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_parent_kernel_fixture.h"

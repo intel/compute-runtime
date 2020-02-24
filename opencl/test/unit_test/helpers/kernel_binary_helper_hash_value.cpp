@@ -7,4 +7,4 @@
 
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 
-const std::string KernelBinaryHelper::BUILT_INS("7030307152995455603");
+const std::string KernelBinaryHelper::BUILT_INS("7206969092167061981");

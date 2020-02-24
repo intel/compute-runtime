@@ -161,7 +161,7 @@ target_include_directories(igdrcl_tests PRIVATE
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
-set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/opencl/source/built_ins")
+set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 
 function(neo_copy_test_files target product)
   set(outputdir "${TargetDir}/${product}")

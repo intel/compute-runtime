@@ -11,7 +11,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"
 
-#include "CL/cl.h"
 #include "built_in_ops.h"
 #include "compiler_options.h"
 
@@ -194,18 +193,6 @@ class BuiltIns {
     using ProgramsContainerT = std::array<std::pair<std::unique_ptr<Program>, std::once_flag>, static_cast<size_t>(EBuiltInOps::COUNT)>;
     ProgramsContainerT builtinPrograms;
     bool enableCacheing = true;
-};
-
-class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
-  public:
-    BuiltInOwnershipWrapper() = default;
-    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
-    ~BuiltInOwnershipWrapper();
-
-    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
-
-  protected:
-    BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
 template <EBuiltInOps::Type OpCode>

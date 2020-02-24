@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/built_ins/registry/built_ins_registry.h"
+#include "shared/source/built_ins/registry/built_ins_registry.h"
 
 #include <string>
 
@@ -17,7 +17,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_to_buffer.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_to_buffer.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
@@ -26,7 +26,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_to_buffer_stateless.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_to_buffer_stateless.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyBufferRectSrc(
@@ -35,7 +35,7 @@ static RegisterEmbeddedResource registerCopyBufferRectSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_rect.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_rect.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
@@ -44,7 +44,7 @@ static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_rect_stateless.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_rect_stateless.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerFillBufferSrc(
@@ -53,7 +53,7 @@ static RegisterEmbeddedResource registerFillBufferSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/fill_buffer.builtin_kernel"
+#include "shared/source/built_ins/kernels/fill_buffer.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerFillBufferStatelessSrc(
@@ -62,7 +62,7 @@ static RegisterEmbeddedResource registerFillBufferStatelessSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/fill_buffer_stateless.builtin_kernel"
+#include "shared/source/built_ins/kernels/fill_buffer_stateless.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
@@ -71,7 +71,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_to_image3d.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_to_image3d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
@@ -80,7 +80,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_buffer_to_image3d_stateless.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_buffer_to_image3d_stateless.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
@@ -89,7 +89,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_image3d_to_buffer.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_image3d_to_buffer.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
@@ -98,7 +98,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_image3d_to_buffer_stateless.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_image3d_to_buffer_stateless.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
@@ -107,7 +107,7 @@ static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_image_to_image1d.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_image_to_image1d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
@@ -116,7 +116,7 @@ static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_image_to_image2d.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_image_to_image2d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
@@ -125,7 +125,7 @@ static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/copy_image_to_image3d.builtin_kernel"
+#include "shared/source/built_ins/kernels/copy_image_to_image3d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerFillImage1dSrc(
@@ -134,7 +134,7 @@ static RegisterEmbeddedResource registerFillImage1dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/fill_image1d.builtin_kernel"
+#include "shared/source/built_ins/kernels/fill_image1d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerFillImage2dSrc(
@@ -143,7 +143,7 @@ static RegisterEmbeddedResource registerFillImage2dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/fill_image2d.builtin_kernel"
+#include "shared/source/built_ins/kernels/fill_image2d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerFillImage3dSrc(
@@ -152,7 +152,7 @@ static RegisterEmbeddedResource registerFillImage3dSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/fill_image3d.builtin_kernel"
+#include "shared/source/built_ins/kernels/fill_image3d.builtin_kernel"
         ));
 
 static RegisterEmbeddedResource registerAuxTranslationSrc(
@@ -161,7 +161,7 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
-#include "opencl/source/built_ins/kernels/aux_translation.builtin_kernel"
+#include "shared/source/built_ins/kernels/aux_translation.builtin_kernel"
         ));
 
 } // namespace NEO

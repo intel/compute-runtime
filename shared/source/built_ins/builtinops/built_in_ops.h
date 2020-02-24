@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "opencl/source/built_ins/built_in_ops_base.h"
+#include "shared/source/built_ins/built_in_ops_base.h"
 
 namespace NEO {
 namespace EBuiltInOps {

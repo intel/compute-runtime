@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/vec.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/kernel/kernel.h"
 
 #include "CL/cl.h"
@@ -107,6 +107,18 @@ class BuiltInDispatchBuilderOp {
     static BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
     std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device,
                                                                               std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
+};
+
+class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
+  public:
+    BuiltInOwnershipWrapper() = default;
+    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
+    ~BuiltInOwnershipWrapper();
+
+    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
+
+  protected:
+    BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
 } // namespace NEO

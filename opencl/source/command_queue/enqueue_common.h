@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -17,7 +18,6 @@
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/tag_allocator.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"
 #include "opencl/source/command_queue/command_queue_hw.h"

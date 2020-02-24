@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/memory_manager/memory_constants.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_rect_fixture.h"

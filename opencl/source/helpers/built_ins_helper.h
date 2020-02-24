@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/execution_environment/execution_environment.h"
-
-#include "opencl/source/built_ins/built_ins.h"
 
 namespace NEO {
 class Device;
@@ -18,6 +17,6 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,
                              std::vector<char> &binary,
                              size_t size,
-                             cl_int *errcodeRet,
+                             int *errcodeRet,
                              Device *device);
 } // namespace NEO

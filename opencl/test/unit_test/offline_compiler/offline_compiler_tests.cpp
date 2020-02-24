@@ -349,7 +349,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
                          familyNameWithType + "[10] = {\n"
                                               "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
                                               "    0x66097860, 0xff000000};\n\n"
-                                              "#include \"opencl/source/built_ins/registry/built_ins_registry.h\"\n\n"
+                                              "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n\n"
                                               "namespace NEO {\n"
                                               "static RegisterEmbeddedResource registerSchedulerBin(\n"
                                               "    \"" +

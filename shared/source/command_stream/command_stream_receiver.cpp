@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -25,8 +26,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/tag_allocator.h"
-
-#include "opencl/source/built_ins/built_ins.h"
 
 namespace NEO {
 

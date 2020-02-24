@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/kernel/kernel.h"
 
 #include <algorithm>

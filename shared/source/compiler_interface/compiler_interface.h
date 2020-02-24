@@ -6,13 +6,12 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
-
-#include "opencl/source/built_ins/sip.h"
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/code_type.h"

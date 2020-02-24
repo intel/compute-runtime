@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 namespace NEO {

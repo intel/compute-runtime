@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"

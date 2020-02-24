@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -15,7 +16,6 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/built_ins/vme_builtin.h"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"

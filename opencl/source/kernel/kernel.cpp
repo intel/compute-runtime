@@ -7,6 +7,7 @@
 
 #include "opencl/source/kernel/kernel.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -22,7 +23,6 @@
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

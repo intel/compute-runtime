@@ -787,6 +787,7 @@ endif()
 # Please keep alphabetical order
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
+include_directories(${NEO_CORE_DIRECTORY}/built_ins/builtinops${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_CORE_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_CORE_DIRECTORY}/compiler_interface/compiler_options${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_CORE_DIRECTORY}/debug_settings/definitions${BRANCH_DIR_SUFFIX})
@@ -795,7 +796,6 @@ include_directories(${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_
 include_directories(${NEO_CORE_DIRECTORY}/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_CORE_DIRECTORY}/memory_properties${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_CORE_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SOURCE_DIR}/opencl/source/built_ins/builtinops${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
@@ -832,6 +832,13 @@ else()
         set(NEO_CORE_MOCKABLE_LIB_NAME "neo_core_mockable")
     endif()
 endif()
+
+set(BIKSIM_LIB_NAME "biksim")
+set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
+set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
+set(BUILTINS_VME_LIB_NAME "builtins_vme")
+set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
+
 add_subdirectory_unique(shared/source)
 add_subdirectory_unique(shared/test/unit_test)
 
@@ -868,12 +875,6 @@ endmacro(generate_runtime_lib)
 
 set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll
 set(NEO_DLL_NAME_BASE "igdrcl")
-
-set(BIKSIM_LIB_NAME "biksim")
-set(BUILTINS_SOURCES_LIB_NAME "builtins_sources")
-set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
-set(BUILTINS_VME_LIB_NAME "builtins_vme")
-set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
 if(DONT_CARE_OF_VIRTUALS)
     message(STATUS "All targets will use virtuals")

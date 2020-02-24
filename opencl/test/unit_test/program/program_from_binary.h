@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"

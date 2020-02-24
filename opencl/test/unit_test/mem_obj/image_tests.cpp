@@ -5,13 +5,13 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"

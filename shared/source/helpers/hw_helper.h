@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_cmds.h"
 
-#include "opencl/source/built_ins/sip.h"
 #include "opencl/source/gen_common/aub_mapper.h"
 #include "opencl/source/mem_obj/buffer.h"
 

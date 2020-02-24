@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/built_ins.h"
+
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_copy_image.h"

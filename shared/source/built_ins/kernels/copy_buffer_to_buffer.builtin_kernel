@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) 2017-2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+R"===(
+__kernel void CopyBufferToBufferBytes(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes,
+    uint bytesToRead )
+{
+    pSrc += ( srcOffsetInBytes + get_global_id(0) );
+    pDst += ( dstOffsetInBytes + get_global_id(0) );
+    pDst[ 0 ] = pSrc[ 0 ];
+}
+
+__kernel void CopyBufferToBufferLeftLeftover(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
+{
+    unsigned int gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
+}
+
+__kernel void CopyBufferToBufferMiddle(
+    const __global uint* pSrc,
+    __global uint* pDst,
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
+{
+    unsigned int gid = get_global_id(0);
+    pDst += dstOffsetInBytes >> 2;
+    pSrc += srcOffsetInBytes >> 2;
+    uint4 loaded = vload4(gid, pSrc);
+    vstore4(loaded, gid, pDst);
+}
+
+__kernel void CopyBufferToBufferRightLeftover(
+    const __global uchar* pSrc,
+    __global uchar* pDst,
+    uint srcOffsetInBytes,
+    uint dstOffsetInBytes)
+{
+    unsigned int gid = get_global_id(0);
+    pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
+}
+
+__kernel void copyBufferToBufferBytesSingle(__global uchar *dst, const __global uchar *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = (uchar)(src[gid]);
+}
+__kernel void CopyBufferToBufferSideRegion(
+    __global uchar* pDst,
+    const __global uchar* pSrc,
+    unsigned int len,
+    uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    uint srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
+    )
+{
+    unsigned int gid = get_global_id(0);
+    __global uchar* pDstWithOffset = (__global uchar*)((__global uchar*)pDst + dstSshOffset);
+    __global uchar* pSrcWithOffset = (__global uchar*)((__global uchar*)pSrc + srcSshOffset);
+    if (gid < len) {
+        pDstWithOffset[ gid ] = pSrcWithOffset[ gid ];
+    }
+}
+
+__kernel void CopyBufferToBufferMiddleRegion(
+    __global uint* pDst,
+    const __global uint* pSrc,
+    unsigned int elems,
+    uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    uint srcSshOffset // Offset needed in case ptr has been adjusted for SSH alignment
+    )
+{
+    unsigned int gid = get_global_id(0);
+    __global uint* pDstWithOffset = (__global uint*)((__global uchar*)pDst + dstSshOffset);
+    __global uint* pSrcWithOffset = (__global uint*)((__global uchar*)pSrc + srcSshOffset);
+    if (gid < elems) {
+        uint4 loaded = vload4(gid, pSrcWithOffset);
+        vstore4(loaded, gid, pDstWithOffset);
+    }
+}
+)==="

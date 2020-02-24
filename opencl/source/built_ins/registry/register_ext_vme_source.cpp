@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/source/built_ins/registry/built_ins_registry.h"
+
 #include "opencl/source/built_ins/built_in_ops_vme.h"
-#include "opencl/source/built_ins/registry/built_ins_registry.h"
 
 #include <string>
 

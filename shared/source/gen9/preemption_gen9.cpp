@@ -5,11 +5,10 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
-
-#include "opencl/source/built_ins/built_ins.h"
 
 #include <cstring>
 

@@ -7,10 +7,10 @@
 
 #include "opencl/source/built_ins/vme_builtin.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/built_ins/built_in_ops_vme.h"
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/built_ins/populate_built_ins.inl"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"

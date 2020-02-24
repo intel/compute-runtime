@@ -7,14 +7,14 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
+#include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/built_ins/built_ins.inl"
-#include "opencl/source/built_ins/sip.h"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/built_ins_helper.h"
@@ -761,4 +761,25 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
     }
     return *operationBuilder.first;
 }
+
+BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+    takeOwnership(inputBuilder, context);
+}
+BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
+    if (builder) {
+        for (auto &kernel : builder->peekUsedKernels()) {
+            kernel->setContext(nullptr);
+            kernel->releaseOwnership();
+        }
+    }
+}
+void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+    UNRECOVERABLE_IF(builder);
+    builder = &inputBuilder;
+    for (auto &kernel : builder->peekUsedKernels()) {
+        kernel->takeOwnership();
+        kernel->setContext(context);
+    }
+}
+
 } // namespace NEO

@@ -7,6 +7,7 @@
 
 #include "opencl/source/context/context.h"
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -17,7 +18,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"

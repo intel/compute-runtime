@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -23,7 +24,6 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/source/built_ins/built_ins.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/user_event.h"
