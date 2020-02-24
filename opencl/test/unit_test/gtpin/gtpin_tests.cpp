@@ -65,8 +65,10 @@ bool returnNullResource = false;
 context_handle_t currContext = nullptr;
 
 std::deque<resource_handle_t> kernelResources;
+platform_info_t platformInfo;
 
 void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, igc_init_t **igcInit) {
+    ULT::platformInfo.gen_version = platformInfo->gen_version;
     currContext = context;
     kernelResources.clear();
     ContextCreateCallbackCount++;
@@ -667,6 +669,30 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallback
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrectVersionIsSet) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_device_id device = static_cast<cl_device_id>(pDevice);
+    cl_context context = nullptr;
+
+    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+    EXPECT_EQ(ULT::platformInfo.gen_version, static_cast<gtpin::GTPIN_GEN_VERSION>(gtpinHelper.getGenVersion()));
+
+    retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 

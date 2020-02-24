@@ -19,7 +19,7 @@ static const auto gfxFamily = IGFX_GEN12LP_CORE;
 
 template <>
 uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
-    return gtpin::GTPIN_GEN_INVALID;
+    return gtpin::GTPIN_GEN_12_1;
 }
 
 template class GTPinHwHelperHw<Family>;
