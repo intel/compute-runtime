@@ -47,11 +47,11 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         if (forcePinEnabled || validateHostPtrMemory) {
             memoryForPinBBs.push_back(alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize));
-            DEBUG_BREAK_IF(memoryForPinBBs.at(rootDeviceIndex) == nullptr);
-            pinBBs.push_back(allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs.at(rootDeviceIndex)), MemoryConstants::pageSize, 0, rootDeviceIndex));
-            if (!pinBBs.at(rootDeviceIndex)) {
-                alignedFreeWrapper(memoryForPinBBs.at(rootDeviceIndex));
-                memoryForPinBBs.at(rootDeviceIndex) = nullptr;
+            DEBUG_BREAK_IF(memoryForPinBBs[rootDeviceIndex] == nullptr);
+            pinBBs.push_back(allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex));
+            if (!pinBBs[rootDeviceIndex]) {
+                alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
+                memoryForPinBBs[rootDeviceIndex] = nullptr;
                 DEBUG_BREAK_IF(true);
                 UNRECOVERABLE_IF(validateHostPtrMemory);
             }
@@ -67,7 +67,6 @@ DrmMemoryManager::~DrmMemoryManager() {
             MemoryManager::alignedFreeWrapper(memoryForPinBB);
         }
     }
-    memoryForPinBBs.clear();
 }
 
 void DrmMemoryManager::commonCleanup() {
