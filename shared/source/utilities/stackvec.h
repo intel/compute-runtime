@@ -12,26 +12,45 @@
 #include <cinttypes>
 #include <cstddef>
 #include <iterator>
+#include <limits>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
-template <typename DataType, size_t OnStackCapacity>
+template <size_t OnStackCapacity>
+struct StackVecSize {
+    static constexpr size_t max32 = std::numeric_limits<uint32_t>::max();
+    static constexpr size_t max16 = std::numeric_limits<uint16_t>::max();
+    static constexpr size_t max8 = std::numeric_limits<uint8_t>::max();
+
+    using SizeT = std::conditional_t<(OnStackCapacity < max8), uint8_t,
+                                     std::conditional_t<(OnStackCapacity < max16), uint16_t,
+                                                        std::conditional_t<(OnStackCapacity < max32), uint32_t, size_t>>>;
+};
+
+template <typename DataType, size_t OnStackCapacity,
+          typename StackSizeT = typename StackVecSize<OnStackCapacity>::SizeT>
 class StackVec {
   public:
+    using SizeT = StackSizeT;
     using iterator = DataType *;
     using const_iterator = const DataType *;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    static const size_t onStackCaps = OnStackCapacity;
+    static constexpr SizeT onStackCaps = OnStackCapacity;
 
-    StackVec() = default;
+    StackVec() {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+    }
 
     template <typename ItType>
-    StackVec(ItType beginIt, ItType endIt)
-        : dynamicMem(nullptr) {
+    StackVec(ItType beginIt, ItType endIt) {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         size_t count = (endIt - beginIt);
         if (count > OnStackCapacity) {
             dynamicMem = new std::vector<DataType>(beginIt, endIt);
+            setUsesDynamicMem();
             return;
         }
 
@@ -39,13 +58,14 @@ class StackVec {
             push_back(*beginIt);
             ++beginIt;
         }
-        onStackSize = count;
+        onStackSize = static_cast<SizeT>(count);
     }
 
-    StackVec(const StackVec &rhs)
-        : dynamicMem(nullptr) {
+    StackVec(const StackVec &rhs) {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         if (onStackCaps < rhs.size()) {
             dynamicMem = new std::vector<DataType>(rhs.begin(), rhs.end());
+            setUsesDynamicMem();
             return;
         }
 
@@ -56,10 +76,12 @@ class StackVec {
 
     explicit StackVec(size_t initialSize)
         : StackVec() {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         resize(initialSize);
     }
 
     StackVec(std::initializer_list<DataType> init) {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         reserve(init.size());
         for (const auto &obj : init) {
             push_back(obj);
@@ -69,13 +91,14 @@ class StackVec {
     StackVec &operator=(const StackVec &rhs) {
         clear();
 
-        if (this->dynamicMem != nullptr) {
-            this->dynamicMem->insert(dynamicMem->end(), rhs.begin(), rhs.end());
+        if (usesDynamicMem()) {
+            this->dynamicMem->assign(rhs.begin(), rhs.end());
             return *this;
         }
 
         if (onStackCaps < rhs.size()) {
             this->dynamicMem = new std::vector<DataType>(rhs.begin(), rhs.end());
+            setUsesDynamicMem();
             return *this;
         }
 
@@ -86,48 +109,57 @@ class StackVec {
         return *this;
     }
 
-    StackVec(StackVec &&rhs)
-        : dynamicMem(nullptr) {
-        if (rhs.dynamicMem != nullptr) {
-            std::swap(this->dynamicMem, rhs.dynamicMem);
+    StackVec(StackVec &&rhs) {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        if (rhs.usesDynamicMem()) {
+            this->dynamicMem = rhs.dynamicMem;
+            setUsesDynamicMem();
+            rhs.onStackSize = 0U;
             return;
         }
 
         for (const auto &v : rhs) {
             push_back(v);
         }
+        rhs.clear();
     }
 
     StackVec &operator=(StackVec &&rhs) {
         clear();
 
-        if (rhs.dynamicMem != nullptr) {
-            std::swap(this->dynamicMem, rhs.dynamicMem);
+        if (rhs.usesDynamicMem()) {
+            if (usesDynamicMem()) {
+                delete this->dynamicMem;
+            }
+            this->dynamicMem = rhs.dynamicMem;
+            this->setUsesDynamicMem();
+            rhs.onStackSize = 0U;
             return *this;
         }
 
-        if (this->dynamicMem != nullptr) {
-            this->dynamicMem->insert(this->dynamicMem->end(), rhs.begin(), rhs.end());
+        if (usesDynamicMem()) {
+            this->dynamicMem->assign(rhs.begin(), rhs.end());
             return *this;
         }
 
         for (const auto &v : rhs) {
             push_back(v);
         }
+        rhs.clear();
 
         return *this;
     }
 
     ~StackVec() {
-        if (dynamicMem != nullptr) {
+        if (usesDynamicMem()) {
             delete dynamicMem;
             return;
         }
-        clear();
+        clearStackObjects();
     }
 
     size_t size() const {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->size();
         }
         return onStackSize;
@@ -138,7 +170,7 @@ class StackVec {
     }
 
     size_t capacity() const {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->capacity();
         }
         return OnStackCapacity;
@@ -152,7 +184,7 @@ class StackVec {
     }
 
     void clear() {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             dynamicMem->clear();
             return;
         }
@@ -164,35 +196,35 @@ class StackVec {
             ensureDynamicMem();
         }
 
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             dynamicMem->push_back(v);
             return;
         }
 
-        new (onStackMem + onStackSize) DataType(v);
+        new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(v);
         ++onStackSize;
     }
 
     DataType &operator[](std::size_t idx) {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return (*dynamicMem)[idx];
         }
-        return *(onStackMem + idx);
+        return *(reinterpret_cast<DataType *>(onStackMemRawBytes) + idx);
     }
 
     const DataType &operator[](std::size_t idx) const {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return (*dynamicMem)[idx];
         }
-        return *(onStackMem + idx);
+        return *(reinterpret_cast<const DataType *>(onStackMemRawBytes) + idx);
     }
 
     iterator begin() {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->data();
         }
 
-        return onStackMem;
+        return reinterpret_cast<DataType *>(onStackMemRawBytes);
     }
 
     reverse_iterator rbegin() {
@@ -204,19 +236,19 @@ class StackVec {
     }
 
     const_iterator begin() const {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->data();
         }
 
-        return onStackMem;
+        return reinterpret_cast<const DataType *>(onStackMemRawBytes);
     }
 
     iterator end() {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->data() + dynamicMem->size();
         }
 
-        return onStackMem + onStackSize;
+        return reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize;
     }
 
     reverse_iterator rend() {
@@ -228,11 +260,11 @@ class StackVec {
     }
 
     const_iterator end() const {
-        if (dynamicMem) {
+        if (usesDynamicMem()) {
             return dynamicMem->data() + dynamicMem->size();
         }
 
-        return onStackMem + onStackSize;
+        return reinterpret_cast<const DataType *>(onStackMemRawBytes) + onStackSize;
     }
 
     void resize(size_t newSize) {
@@ -243,7 +275,15 @@ class StackVec {
         resizeImpl(newSize, &value);
     }
 
+    bool usesDynamicMem() const {
+        return std::numeric_limits<decltype(onStackSize)>::max() == this->onStackSize;
+    }
+
   private:
+    void setUsesDynamicMem() {
+        this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();
+    }
+
     void resizeImpl(size_t newSize, const DataType *value) {
         // new size does not fit into internal mem
         if (newSize > onStackCaps) {
@@ -251,7 +291,7 @@ class StackVec {
         }
 
         // memory already backed by stl vector
-        if (dynamicMem != nullptr) {
+        if (usesDynamicMem()) {
             if (value != nullptr) {
                 dynamicMem->resize(newSize, *value);
             } else {
@@ -263,7 +303,7 @@ class StackVec {
         if (newSize <= onStackSize) {
             // trim elements
             clearStackObjects(newSize, onStackSize - newSize);
-            onStackSize = newSize;
+            onStackSize = static_cast<SizeT>(newSize);
             return;
         }
 
@@ -271,29 +311,31 @@ class StackVec {
         if (value != nullptr) {
             // copy-construct elements
             while (onStackSize < newSize) {
-                new (onStackMem + onStackSize) DataType(*value);
+                new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(*value);
                 ++onStackSize;
             }
         } else {
             // default-construct elements
             while (onStackSize < newSize) {
-                new (onStackMem + onStackSize) DataType();
+                new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType();
                 ++onStackSize;
             }
         }
     }
 
     void ensureDynamicMem() {
-        if (dynamicMem == nullptr) {
-            dynamicMem = new std::vector<DataType>();
-            if (onStackSize > 0) {
-                dynamicMem->reserve(onStackSize);
-                for (auto it = onStackMem, end = onStackMem + onStackSize; it != end; ++it) {
-                    dynamicMem->push_back(std::move(*it));
-                }
-                clearStackObjects();
-            }
+        if (usesDynamicMem()) {
+            return;
         }
+        dynamicMem = new std::vector<DataType>();
+        if (onStackSize > 0) {
+            dynamicMem->reserve(onStackSize);
+            for (auto it = reinterpret_cast<DataType *>(onStackMemRawBytes), end = reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize; it != end; ++it) {
+                dynamicMem->push_back(std::move(*it));
+            }
+            clearStackObjects();
+        }
+        setUsesDynamicMem();
     }
 
     void clearStackObjects() {
@@ -303,16 +345,25 @@ class StackVec {
 
     void clearStackObjects(size_t offset, size_t count) {
         UNRECOVERABLE_IF(offset + count > onStackSize);
-        for (auto it = onStackMem + offset, end = onStackMem + offset + count; it != end; ++it) {
+        for (auto it = reinterpret_cast<DataType *>(onStackMemRawBytes) + offset, end = reinterpret_cast<DataType *>(onStackMemRawBytes) + offset + count; it != end; ++it) {
             it->~DataType();
         }
     }
 
+    union {
+        std::vector<DataType> *dynamicMem;
+        DataType *onStackMem;
+    };
+
     alignas(alignof(DataType)) char onStackMemRawBytes[sizeof(DataType[onStackCaps])];
-    std::vector<DataType> *dynamicMem = nullptr;
-    DataType *const onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
-    size_t onStackSize = 0;
+    SizeT onStackSize = 0U;
 };
+
+namespace {
+static_assert(sizeof(StackVec<char, 1U>::SizeT) == 1u, "");
+static_assert(sizeof(StackVec<char, 7U>) <= 16u, "");
+static_assert(sizeof(StackVec<uint32_t, 3U>) <= 24u, "");
+} // namespace
 
 template <typename T, size_t LhsStackCaps, size_t RhsStackCaps>
 bool operator==(const StackVec<T, LhsStackCaps> &lhs,

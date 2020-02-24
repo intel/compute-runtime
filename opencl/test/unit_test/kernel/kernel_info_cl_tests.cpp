@@ -12,20 +12,20 @@
 
 TEST(AsClConvertersTest, whenConvertingAccessQualifiersThenProperEnumValuesAreReturned) {
     using namespace NEO::KernelArgMetadata;
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_NONE), NEO::asClKernelArgAccessQualifier(AccessQualifier::None));
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_ONLY), NEO::asClKernelArgAccessQualifier(AccessQualifier::ReadOnly));
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_WRITE_ONLY), NEO::asClKernelArgAccessQualifier(AccessQualifier::WriteOnly));
-    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_WRITE), NEO::asClKernelArgAccessQualifier(AccessQualifier::ReadWrite));
-    EXPECT_EQ(0U, NEO::asClKernelArgAccessQualifier(AccessQualifier::Unknown));
+    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_NONE), NEO::asClKernelArgAccessQualifier(AccessNone));
+    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_ONLY), NEO::asClKernelArgAccessQualifier(AccessReadOnly));
+    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_WRITE_ONLY), NEO::asClKernelArgAccessQualifier(AccessWriteOnly));
+    EXPECT_EQ(static_cast<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_READ_WRITE), NEO::asClKernelArgAccessQualifier(AccessReadWrite));
+    EXPECT_EQ(0U, NEO::asClKernelArgAccessQualifier(AccessUnknown));
 }
 
 TEST(AsClConvertersTest, whenConvertingAddressQualifiersThenProperEnumValuesAreReturned) {
     using namespace NEO::KernelArgMetadata;
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), NEO::asClKernelArgAddressQualifier(AddressSpaceQualifier::Global));
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_LOCAL), NEO::asClKernelArgAddressQualifier(AddressSpaceQualifier::Local));
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_PRIVATE), NEO::asClKernelArgAddressQualifier(AddressSpaceQualifier::Private));
-    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_CONSTANT), NEO::asClKernelArgAddressQualifier(AddressSpaceQualifier::Constant));
-    EXPECT_EQ(0U, NEO::asClKernelArgAddressQualifier(AddressSpaceQualifier::Unknown));
+    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_GLOBAL), NEO::asClKernelArgAddressQualifier(AddrGlobal));
+    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_LOCAL), NEO::asClKernelArgAddressQualifier(AddrLocal));
+    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_PRIVATE), NEO::asClKernelArgAddressQualifier(AddrPrivate));
+    EXPECT_EQ(static_cast<cl_kernel_arg_address_qualifier>(CL_KERNEL_ARG_ADDRESS_CONSTANT), NEO::asClKernelArgAddressQualifier(AddrConstant));
+    EXPECT_EQ(0U, NEO::asClKernelArgAddressQualifier(AddrUnknown));
 }
 
 TEST(AsClConvertersTest, whenConvertingTypeQualifiersThenProperBitfieldsAreSet) {

@@ -43,7 +43,7 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
 
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
-        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Global;
+        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrGlobal;
 
         pMockKernel = new MockKernel(pProgram, *pKernelInfo, *this->pClDevice);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
@@ -88,7 +88,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgTh
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
-    pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Local;
+    pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
 
     auto retVal = clSetKernelArgSVMPointer(
         pMockKernel, // cl_kernel kernel
@@ -148,7 +148,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndConstantAddressWhenSettingKerne
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
 
-        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Constant;
+        pKernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrConstant;
 
         auto retVal = clSetKernelArgSVMPointer(
             pMockKernel, // cl_kernel kernel

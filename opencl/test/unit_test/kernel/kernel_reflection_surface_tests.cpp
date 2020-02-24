@@ -95,7 +95,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithCorrectlyFilledImageArgum
 
     info.storeKernelArgument(&imageMemObjKernelArg);
     info.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
-    info.kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::ReadOnly;
+    info.kernelArgInfo[0].metadata.accessQualifier = NEO::KernelArgMetadata::AccessReadOnly;
     info.kernelArgInfo[0].metadataExtended->accessQualifier = "read_only";
     info.kernelArgInfo[0].isImage = true;
     info.kernelArgInfo[0].metadataExtended->argName = "img";

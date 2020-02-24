@@ -348,7 +348,7 @@ cl_int Kernel::initialize() {
 
             // set the argument handler
             auto &argInfo = kernelInfo.kernelArgInfo[i];
-            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddressSpaceQualifier::Local) {
+            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddrLocal) {
                 kernelArgHandlers[i] = &Kernel::setArgLocal;
             } else if (argInfo.isAccelerator) {
                 kernelArgHandlers[i] = &Kernel::setArgAccelerator;
@@ -528,13 +528,13 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
 
     switch (paramName) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
-        addressQualifier = asClKernelArgAddressQualifier(argInfo.metadata.addressQualifier);
+        addressQualifier = asClKernelArgAddressQualifier(argInfo.metadata.getAddressQualifier());
         srcSize = sizeof(addressQualifier);
         pSrc = &addressQualifier;
         break;
 
     case CL_KERNEL_ARG_ACCESS_QUALIFIER:
-        accessQualifier = asClKernelArgAccessQualifier(argInfo.metadata.accessQualifier);
+        accessQualifier = asClKernelArgAccessQualifier(argInfo.metadata.getAccessQualifier());
         srcSize = sizeof(accessQualifier);
         pSrc = &accessQualifier;
         break;
@@ -2307,8 +2307,8 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         if (pMemObj) {
             auto accessQualifier = getKernelInfo().kernelArgInfo[argIndex].metadata.accessQualifier;
             cl_mem_flags flags = pMemObj->getMemoryPropertiesFlags();
-            if ((accessQualifier == KernelArgMetadata::AccessQualifier::ReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
-                (accessQualifier == KernelArgMetadata::AccessQualifier::WriteOnly && ((flags | CL_MEM_READ_ONLY) == flags))) {
+            if ((accessQualifier == KernelArgMetadata::AccessReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
+                (accessQualifier == KernelArgMetadata::AccessWriteOnly && ((flags | CL_MEM_READ_ONLY) == flags))) {
                 return CL_INVALID_ARG_VALUE;
             }
         } else {

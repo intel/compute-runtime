@@ -179,7 +179,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
 
             auto &argInfo = kernel->getKernelInfo().kernelArgInfo[i];
 
-            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddressSpaceQualifier::Local) {
+            if (argInfo.metadata.addressQualifier == KernelArgMetadata::AddrLocal) {
                 type = "local";
             } else if (argInfo.isImage) {
                 type = "image";

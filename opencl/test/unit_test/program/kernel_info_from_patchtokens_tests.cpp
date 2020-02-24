@@ -32,8 +32,8 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithArgThenMetadataIsProperlyPop
     NEO::KernelInfo dst = {};
     NEO::populateKernelInfo(dst, src.kernels[0], 4);
     ASSERT_EQ(1U, dst.kernelArgInfo.size());
-    EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
-    EXPECT_EQ(NEO::KernelArgMetadata::AddressSpaceQualifier::Global, dst.kernelArgInfo[0].metadata.addressQualifier);
+    EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
+    EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, dst.kernelArgInfo[0].metadata.addressQualifier);
     NEO::KernelArgMetadata::TypeQualifiers typeQualifiers = {};
     typeQualifiers.constQual = true;
     EXPECT_EQ(typeQualifiers.packed, dst.kernelArgInfo[0].metadata.typeQualifiers.packed);
@@ -55,7 +55,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgThenArgAccessQualifi
     NEO::KernelInfo dst = {};
     NEO::populateKernelInfo(dst, src.kernels[0], 4);
     ASSERT_EQ(1U, dst.kernelArgInfo.size());
-    EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
+    EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
 }
 
 TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissingThenArgAccessQualifierIsPopulatedBasedOnImageArgWriteableFlag) {
@@ -69,7 +69,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissing
         NEO::KernelInfo dst = {};
         NEO::populateKernelInfo(dst, src.kernels[0], 4);
         ASSERT_EQ(1U, dst.kernelArgInfo.size());
-        EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadOnly, dst.kernelArgInfo[0].metadata.accessQualifier);
+        EXPECT_EQ(NEO::KernelArgMetadata::AccessReadOnly, dst.kernelArgInfo[0].metadata.accessQualifier);
     }
 
     {
@@ -77,7 +77,7 @@ TEST(KernelInfoFromPatchTokens, GivenValidKernelWithImageArgWhenArgInfoIsMissing
         NEO::KernelInfo dst = {};
         NEO::populateKernelInfo(dst, src.kernels[0], 4);
         ASSERT_EQ(1U, dst.kernelArgInfo.size());
-        EXPECT_EQ(NEO::KernelArgMetadata::AccessQualifier::ReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
+        EXPECT_EQ(NEO::KernelArgMetadata::AccessReadWrite, dst.kernelArgInfo[0].metadata.accessQualifier);
     }
 }
 

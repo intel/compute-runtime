@@ -18,13 +18,13 @@ constexpr cl_kernel_arg_access_qualifier asClKernelArgAccessQualifier(KernelArgM
     switch (accessQualifier) {
     default:
         return 0U;
-    case AccessQualifier::None:
+    case AccessNone:
         return CL_KERNEL_ARG_ACCESS_NONE;
-    case AccessQualifier::ReadOnly:
+    case AccessReadOnly:
         return CL_KERNEL_ARG_ACCESS_READ_ONLY;
-    case AccessQualifier::WriteOnly:
+    case AccessWriteOnly:
         return CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
-    case AccessQualifier::ReadWrite:
+    case AccessReadWrite:
         return CL_KERNEL_ARG_ACCESS_READ_WRITE;
     }
 }
@@ -34,13 +34,13 @@ constexpr cl_kernel_arg_address_qualifier asClKernelArgAddressQualifier(KernelAr
     switch (addressQualifier) {
     default:
         return 0U;
-    case AddressSpaceQualifier::Global:
+    case AddrGlobal:
         return CL_KERNEL_ARG_ADDRESS_GLOBAL;
-    case AddressSpaceQualifier::Local:
+    case AddrLocal:
         return CL_KERNEL_ARG_ADDRESS_LOCAL;
-    case AddressSpaceQualifier::Private:
+    case AddrPrivate:
         return CL_KERNEL_ARG_ADDRESS_PRIVATE;
-    case AddressSpaceQualifier::Constant:
+    case AddrConstant:
         return CL_KERNEL_ARG_ADDRESS_CONSTANT;
     }
 }

@@ -100,7 +100,7 @@ TEST(KernelInfo, decodeImageKernelArgument) {
     EXPECT_EQ(sizeof(cl_mem), static_cast<size_t>(argInfo.metadata.argByValSize));
     EXPECT_EQ(arg.Offset, argInfo.offsetHeap);
     EXPECT_TRUE(argInfo.isImage);
-    EXPECT_EQ(KernelArgMetadata::AccessQualifier::ReadWrite, argInfo.metadata.accessQualifier);
+    EXPECT_EQ(KernelArgMetadata::AccessReadWrite, argInfo.metadata.accessQualifier);
     EXPECT_TRUE(argInfo.metadata.typeQualifiers.empty());
 }
 
@@ -188,9 +188,9 @@ TEST(KernelInfo, decodeSamplerKernelArgument) {
 
 TEST(KernelInfo, whenStoringArgInfoThenMetadataIsProperlyPopulated) {
     KernelInfo kernelInfo;
-    NEO::ArgTypeMetadata metadata;
-    metadata.accessQualifier = NEO::KernelArgMetadata::AccessQualifier::WriteOnly;
-    metadata.addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::Global;
+    NEO::ArgTypeTraits metadata;
+    metadata.accessQualifier = NEO::KernelArgMetadata::AccessWriteOnly;
+    metadata.addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
     metadata.argByValSize = sizeof(void *);
     metadata.typeQualifiers.pipeQual = true;
     auto metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();

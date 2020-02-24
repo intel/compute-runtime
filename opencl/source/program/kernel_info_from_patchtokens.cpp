@@ -54,7 +54,7 @@ void populateKernelInfoArgMetadata(KernelInfo &dstKernelInfoArg, const SPatchKer
     metadataExtended->type = std::string(argTypeFull.data(), argTypeDelim).c_str();
     metadataExtended->typeQualifiers = parseLimitedString(inlineData.typeQualifiers.begin(), inlineData.typeQualifiers.size());
 
-    ArgTypeMetadata metadata = {};
+    ArgTypeTraits metadata = {};
     metadata.accessQualifier = KernelArgMetadata::parseAccessQualifier(metadataExtended->accessQualifier);
     metadata.addressQualifier = KernelArgMetadata::parseAddressSpace(metadataExtended->addressQualifier);
     metadata.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(metadataExtended->typeQualifiers);

@@ -3167,7 +3167,7 @@ TEST(KernelCreateTest, whenInitFailedThenReturnNull) {
     EXPECT_EQ(nullptr, ret);
 }
 
-TEST(ArgTypeMetadata, GivenDefaultInitializedArgTypeMetadataThenAddressSpaceIsGlobal) {
-    ArgTypeMetadata metadata;
-    EXPECT_EQ(NEO::KernelArgMetadata::AddressSpaceQualifier::Global, metadata.addressQualifier);
+TEST(ArgTypeTraits, GivenDefaultInitializedArgTypeMetadataThenAddressSpaceIsGlobal) {
+    ArgTypeTraits metadata;
+    EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, metadata.addressQualifier);
 }

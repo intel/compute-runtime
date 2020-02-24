@@ -526,7 +526,7 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsLocalBuffer) {
 
     kernelInfo->kernelArgInfo.resize(1);
     kernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
-    kernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddressSpaceQualifier::Local;
+    kernelInfo->kernelArgInfo[0].metadata.addressQualifier = KernelArgMetadata::AddrLocal;
 
     std::string testFile = "testfile";
     DebugVariables flags;

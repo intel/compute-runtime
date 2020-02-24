@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -86,13 +87,6 @@ struct WorkSizeInfo {
     void checkRatio(const size_t workItems[3]);
 };
 
-struct DebugData {
-    uint32_t vIsaSize = 0;
-    uint32_t genIsaSize = 0;
-    const char *vIsa = nullptr;
-    const char *genIsa = nullptr;
-};
-
 struct DeviceInfoKernelPayloadConstants {
     void *slmWindow = nullptr;
     uint32_t slmWindowSize = 0U;
@@ -107,7 +101,7 @@ struct KernelInfo {
     KernelInfo &operator=(const KernelInfo &) = delete;
     ~KernelInfo();
 
-    void storeArgInfo(uint32_t argNum, ArgTypeMetadata metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended);
+    void storeArgInfo(uint32_t argNum, ArgTypeTraits metadata, std::unique_ptr<ArgTypeMetadataExtended> metadataExtended);
     void storeKernelArgument(const SPatchDataParameterBuffer *pDataParameterKernelArg);
     void storeKernelArgument(const SPatchStatelessGlobalMemoryObjectKernelArgument *pStatelessGlobalKernelArg);
     void storeKernelArgument(const SPatchImageMemoryObjectKernelArgument *pImageMemObjKernelArg);

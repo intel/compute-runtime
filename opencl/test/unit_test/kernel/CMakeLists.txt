@@ -30,5 +30,11 @@ set(IGDRCL_SRCS_tests_kernel
   ${CMAKE_CURRENT_SOURCE_DIR}/parent_kernel_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/substitute_kernel_heap_tests.cpp
 )
+
+get_property(NEO_SHARED_KERNEL_TESTS GLOBAL PROPERTY NEO_SHARED_KERNEL_TESTS)
+list(APPEND IGDRCL_SRCS_tests_kernel
+   ${NEO_SHARED_KERNEL_TESTS}
+)
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_kernel})
 add_subdirectories()
