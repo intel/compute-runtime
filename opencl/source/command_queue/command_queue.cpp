@@ -75,7 +75,8 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
         auto hwInfo = device->getHardwareInfo();
         if (hwInfo.capabilityTable.blitterOperationsSupported) {
-            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo), false);
+            auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
+            bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), false);
         }
     }
 

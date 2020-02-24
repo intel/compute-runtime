@@ -44,6 +44,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
+    std::atomic<uint32_t> &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
@@ -118,6 +119,7 @@ class Device : public ReferenceTrackedObject<Device> {
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;
+    std::atomic<uint32_t> selectorCopyEngine{0};
 
     uintptr_t specializedDevice = reinterpret_cast<uintptr_t>(nullptr);
 };
@@ -133,4 +135,9 @@ inline MemoryManager *Device::getMemoryManager() const {
 inline GmmHelper *Device::getGmmHelper() const {
     return getRootDeviceEnvironment().getGmmHelper();
 }
+
+inline std::atomic<uint32_t> &Device::getSelectorCopyEngine() {
+    return selectorCopyEngine;
+}
+
 } // namespace NEO

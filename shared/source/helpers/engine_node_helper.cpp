@@ -17,7 +17,7 @@ bool isBcs(aub_stream::EngineType engineType) {
     return engineType == aub_stream::ENGINE_BCS;
 }
 
-aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo) {
+aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, std::atomic<uint32_t> &selectorCopyEngine) {
     return aub_stream::EngineType::ENGINE_BCS;
 }
 } // namespace EngineHelpers
