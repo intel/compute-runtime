@@ -29,7 +29,7 @@ struct CallbackData {
     }
 };
 
-TEST(EventCallbackTest, NestedCallbacksAreCalledForUserEvent) {
+TEST(EventCallbackTest, GivenUserEventWhenAddingCallbackThenNestedCallbacksCanBeCreated) {
 
     MockEvent<UserEvent> event(nullptr);
     uint32_t nestLevel = 0;
@@ -39,7 +39,7 @@ TEST(EventCallbackTest, NestedCallbacksAreCalledForUserEvent) {
     EXPECT_EQ(4u, nestLevel);
 }
 
-TEST(EventCallbackTest, NestedCallbacksAreCalledForEvent) {
+TEST(EventCallbackTest, GivenEventWhenAddingCallbackThenNestedCallbacksCanBeCreated) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
     MockCommandQueue queue(&context, device.get(), nullptr);
