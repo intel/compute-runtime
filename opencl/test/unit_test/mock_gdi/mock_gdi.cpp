@@ -122,17 +122,17 @@ NTSTATUS __stdcall D3DKMTDestroyContext(IN CONST D3DKMT_DESTROYCONTEXT *destroyC
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_CREATEALLOCATION *pallocation = nullptr;
+static D3DKMT_CREATEALLOCATION pallocation{};
 
 NTSTATUS __stdcall D3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
     D3DDDI_ALLOCATIONINFO *allocationInfo;
     int numOfAllocations;
     bool createResource;
     bool globalShare;
-    pallocation = allocation;
     if (allocation == nullptr || allocation->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
+    pallocation = *allocation;
     allocationInfo = allocation->pAllocationInfo;
     if (allocationInfo == NULL) {
         return STATUS_INVALID_PARAMETER;
@@ -452,7 +452,7 @@ void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
 }
 
 D3DKMT_CREATEALLOCATION *getMockAllocation() {
-    return pallocation;
+    return &pallocation;
 }
 
 ADAPTER_INFO *getAdapterInfoAddress() {

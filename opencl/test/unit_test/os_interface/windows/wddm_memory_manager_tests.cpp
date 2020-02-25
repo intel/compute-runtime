@@ -460,12 +460,12 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
     alignedFree(ptr);
 }
 
-TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenResourceHandleIsZero) {
+TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenSharedHandleIsZero) {
     auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto wddmAllocation = static_cast<WddmAllocation *>(gpuAllocation);
 
-    EXPECT_EQ(0u, wddmAllocation->resourceHandle);
+    EXPECT_EQ(0u, wddmAllocation->peekSharedHandle());
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }

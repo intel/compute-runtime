@@ -402,6 +402,48 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
+TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResourceFlagIsEnabled) {
+    init();
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true);
+    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize));
+    allocation.setDefaultGmm(gmm.get());
+    auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    auto passedCreateAllocation = getMockAllocationFcn();
+    EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateShared);
+    EXPECT_EQ(TRUE, passedCreateAllocation->Flags.CreateResource);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandleAndResourceHandleAreSet) {
+    init();
+    struct MockWddmMemoryManager : public WddmMemoryManager {
+        using WddmMemoryManager::createGpuAllocationsWithRetry;
+        using WddmMemoryManager::WddmMemoryManager;
+    };
+    MemoryManagerCreate<MockWddmMemoryManager> memoryManager(false, false, *executionEnvironment);
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true);
+    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize));
+    allocation.setDefaultGmm(gmm.get());
+    auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
+    EXPECT_TRUE(status);
+    EXPECT_NE(0u, allocation.resourceHandle);
+    EXPECT_NE(0u, allocation.peekSharedHandle());
+}
+
+TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true);
+    auto sharedHandleToModify = allocation.getSharedHandleToModify();
+    EXPECT_NE(nullptr, sharedHandleToModify);
+    *sharedHandleToModify = 1234u;
+    EXPECT_EQ(*sharedHandleToModify, allocation.peekSharedHandle());
+}
+
+TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {
+    WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false);
+    auto sharedHandleToModify = allocation.getSharedHandleToModify();
+    EXPECT_EQ(nullptr, sharedHandleToModify);
+}
+
 TEST_F(Wddm20Tests, makeResidentNonResident) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     WddmAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);

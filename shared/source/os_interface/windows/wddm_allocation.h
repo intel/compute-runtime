@@ -59,6 +59,13 @@ class WddmAllocation : public GraphicsAllocation {
         handles[0] = handle;
     }
 
+    D3DKMT_HANDLE *getSharedHandleToModify() {
+        if (shareable) {
+            return &sharingInfo.sharedHandle;
+        }
+        return nullptr;
+    }
+
     void setTrimCandidateListPosition(uint32_t osContextId, size_t position) {
         trimCandidateListPositions[osContextId] = position;
     }

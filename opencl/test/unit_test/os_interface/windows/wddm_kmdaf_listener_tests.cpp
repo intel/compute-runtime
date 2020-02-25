@@ -132,9 +132,10 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyE
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 1, false);
     auto handle = 0u;
+    auto resourceHandle = 0u;
     auto ptr = reinterpret_cast<void *>(0x10000);
 
-    wddmWithKmDafMock->createAllocation(ptr, gmm.get(), handle, false);
+    wddmWithKmDafMock->createAllocation(ptr, gmm.get(), handle, resourceHandle, nullptr);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);
