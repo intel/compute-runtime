@@ -16,7 +16,7 @@ cl_int Context::processExtraProperties(cl_context_properties propertyType, cl_co
     return CL_INVALID_PROPERTY;
 }
 
-BlitOperationResult Context::blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const {
+BlitOperationResult Context::blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const {
     return BlitOperationResult::Unsupported;
 }
 } // namespace NEO

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/vec.h"
 
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
@@ -136,7 +137,7 @@ class Context : public BaseObject<_cl_context> {
 
     ContextType peekContextType() { return this->contextType; }
 
-    MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const;
+    MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const;
 
     SchedulerKernel &getSchedulerKernel();
 

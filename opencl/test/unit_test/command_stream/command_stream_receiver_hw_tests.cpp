@@ -341,10 +341,27 @@ struct BcsTests : public CommandStreamReceiverHwTest {
 
 HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
     constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
-    uint64_t notAlignedBltSize = (3 * max2DBlitSize) + 1;
-    uint64_t alignedBltSize = (3 * max2DBlitSize);
+    size_t notAlignedBltSize = (3 * max2DBlitSize) + 1;
+    size_t alignedBltSize = (3 * max2DBlitSize);
     uint32_t alignedNumberOfBlts = 3;
     uint32_t notAlignedNumberOfBlts = 4;
+
+    auto expectedAlignedSize = sizeof(typename FamilyType::XY_COPY_BLT) * alignedNumberOfBlts;
+    auto expectedNotAlignedSize = sizeof(typename FamilyType::XY_COPY_BLT) * notAlignedNumberOfBlts;
+
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({alignedBltSize, 1, 1}, csrDependencies, false);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({notAlignedBltSize, 1, 1}, csrDependencies, false);
+
+    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
+    EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
+}
+
+HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAddAllRequiredCommands) {
+    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    Vec3<size_t> notAlignedBltSize = {(3 * max2DBlitSize) + 1, 4, 2};
+    Vec3<size_t> alignedBltSize = {(3 * max2DBlitSize), 4, 2};
+    size_t alignedNumberOfBlts = 3 * alignedBltSize.y * alignedBltSize.z;
+    size_t notAlignedNumberOfBlts = 4 * notAlignedBltSize.y * notAlignedBltSize.z;
 
     auto expectedAlignedSize = sizeof(typename FamilyType::XY_COPY_BLT) * alignedNumberOfBlts;
     auto expectedNotAlignedSize = sizeof(typename FamilyType::XY_COPY_BLT) * notAlignedNumberOfBlts;
@@ -370,8 +387,35 @@ HWTEST_F(BcsTests, whenAskingForCmdSizeForMiFlushDwWithMemoryWriteThenReturnCorr
 HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCalculateForAllAttachedProperites) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
-    const uint64_t bltSize = (3 * max2DBlitSize);
+    const size_t bltSize = (3 * max2DBlitSize);
     const uint32_t numberOfBlitOperations = 4;
+
+    auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    auto expectedBlitInstructionsSize = sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts;
+
+    auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
+        BlitProperties blitProperties;
+        blitProperties.copySize = {bltSize, 1, 1};
+        blitPropertiesContainer.push_back(blitProperties);
+
+        expectedAlignedSize += expectedBlitInstructionsSize;
+    }
+
+    expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
+
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo());
+
+    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
+}
+
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeForReadBufferRectThenCalculateForAllAttachedProperites) {
+    const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
+    const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
+    const size_t numberOfBlitOperations = 4 * bltSize.y * bltSize.z;
 
     auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedBlitInstructionsSize = sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts;
@@ -400,8 +444,8 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
-    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, true);
-    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, false);
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, true);
+    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -420,7 +464,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     size_t expectedSize = (sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts) +
                           TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies);
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, false);
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false);
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -434,7 +478,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    uint64_t bltSize = (2 * max2DBlitSize) + bltLeftover;
+    size_t bltSize = (2 * max2DBlitSize) + bltLeftover;
     uint32_t numberOfBlts = 3;
 
     cl_int retVal = CL_SUCCESS;
@@ -447,7 +491,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 csr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
                                                                                 buffer->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                0, 0, bltSize);
+                                                                                0, 0, {bltSize, 1, 1}, 0, 0, 0, 0);
 
     blitBuffer(&csr, blitProperties, true);
     EXPECT_EQ(newTaskCount, csr.taskCount);
@@ -517,6 +561,107 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 }
 
+HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForReadBufferRect) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
+
+    uint32_t bltLeftover = 17;
+    Vec3<size_t> bltSize = {(2 * max2DBlitSize) + bltLeftover, 2, 2};
+    size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(bltSize.x * bltSize.y * bltSize.z), nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    uint32_t newTaskCount = 19;
+    csr.taskCount = newTaskCount - 1;
+    EXPECT_EQ(0u, csr.recursiveLockCounter.load());
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                                csr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
+                                                                                buffer->getGraphicsAllocation()->getGpuAddress(), 0,
+                                                                                0, 0, bltSize, 0, 0, 0, 0);
+
+    blitBuffer(&csr, blitProperties, true);
+    EXPECT_EQ(newTaskCount, csr.taskCount);
+    EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
+    EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
+    EXPECT_EQ(newTaskCount, csr.latestSentTaskCountValueDuringFlush);
+    EXPECT_EQ(1u, csr.recursiveLockCounter.load());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream);
+    auto &cmdList = hwParser.cmdList;
+
+    auto cmdIterator = cmdList.begin();
+
+    uint64_t offset = 0;
+    for (uint32_t i = 0; i < numberOfBlts; i++) {
+        auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, bltCmd);
+
+        uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        if (i % 3 == 2) {
+            expectedWidth = bltLeftover;
+            expectedHeight = 1;
+        }
+        EXPECT_EQ(expectedWidth, bltCmd->getTransferWidth());
+        EXPECT_EQ(expectedHeight, bltCmd->getTransferHeight());
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
+        EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
+
+        auto dstAddr = NEO::BlitCommandsHelper<FamilyType>::calculateBlitCommandDestinationBaseAddress(blitProperties, offset, i % bltSize.y, i % bltSize.z);
+        auto srcAddr = NEO::BlitCommandsHelper<FamilyType>::calculateBlitCommandSourceBaseAddress(blitProperties, offset, i % bltSize.y, i % bltSize.z);
+
+        EXPECT_EQ(dstAddr, bltCmd->getDestinationBaseAddress());
+        EXPECT_EQ(srcAddr, bltCmd->getSourceBaseAddress());
+
+        offset = (i % 3 == 2) ? 0 : offset + (expectedWidth * expectedHeight);
+    }
+
+    if (UnitTestHelper<FamilyType>::isSynchronizationWArequired(pDevice->getHardwareInfo())) {
+        auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, miSemaphoreWaitCmd);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
+    }
+
+    auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
+
+    if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
+        uint64_t gpuAddress = 0x0;
+        uint64_t immData = 0;
+
+        EXPECT_NE(nullptr, miFlushCmd);
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, miFlushCmd->getPostSyncOperation());
+        EXPECT_EQ(gpuAddress, miFlushCmd->getDestinationAddress());
+        EXPECT_EQ(immData, miFlushCmd->getImmediateData());
+
+        miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
+    }
+
+    EXPECT_NE(cmdIterator, cmdList.end());
+    EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushCmd->getPostSyncOperation());
+    EXPECT_EQ(csr.getTagAllocation()->getGpuAddress(), miFlushCmd->getDestinationAddress());
+    EXPECT_EQ(newTaskCount, miFlushCmd->getImmediateData());
+
+    if (UnitTestHelper<FamilyType>::isSynchronizationWArequired(pDevice->getHardwareInfo())) {
+        auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, miSemaphoreWaitCmd);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
+    }
+
+    EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_BATCH_BUFFER_END *>(*(cmdIterator++)));
+
+    // padding
+    while (cmdIterator != cmdList.end()) {
+        EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_NOOP *>(*(cmdIterator++)));
+    }
+}
+
 HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaphoreAndAtomic) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -529,7 +674,7 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 csr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
                                                                                 buffer->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                0, 0, 1);
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
@@ -581,11 +726,11 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     auto blitProperties1 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  csr, buffer1->getGraphicsAllocation(), nullptr, hostPtr1,
                                                                                  buffer1->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
     auto blitProperties2 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  csr, buffer2->getGraphicsAllocation(), nullptr, hostPtr2,
                                                                                  buffer2->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp2(*csr.getTimestampPacketAllocator(), 1);
@@ -640,12 +785,12 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     auto blitProperties1 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  csr, buffer1->getGraphicsAllocation(), nullptr, hostPtr1,
                                                                                  buffer1->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     auto blitProperties2 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  csr, buffer2->getGraphicsAllocation(), nullptr, hostPtr2,
                                                                                  buffer2->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties1);
@@ -683,12 +828,12 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
     auto blitProperties1 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  *bcsCsr, buffer1->getGraphicsAllocation(), nullptr, hostPtr1,
                                                                                  buffer1->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     auto blitProperties2 = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                  *bcsCsr, buffer2->getGraphicsAllocation(), nullptr, hostPtr2,
                                                                                  buffer2->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                 0, 0, 1);
+                                                                                 0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties1);
@@ -723,7 +868,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 csr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
                                                                                 buffer->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                0, 0, 1);
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     blitBuffer(&csr, blitProperties, true);
 
@@ -774,7 +919,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
                                                                                 *myMockCsr, buffer->getGraphicsAllocation(), nullptr,
                                                                                 hostPtr,
                                                                                 buffer->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                0, 0, 1);
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     blitBuffer(myMockCsr.get(), blitProperties, false);
 
@@ -805,7 +950,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 bcsCsr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
                                                                                 buffer->getGraphicsAllocation()->getGpuAddress(), 0,
-                                                                                0, 0, 1);
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     blitBuffer(&bcsCsr, blitProperties, false);
 
@@ -840,7 +985,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                     nullptr, hostPtr,
                                                                                     subBuffer1->getGraphicsAllocation()->getGpuAddress() +
                                                                                         subBuffer1->getOffset(),
-                                                                                    0, hostPtrOffset, 0, 1);
+                                                                                    0, {hostPtrOffset, 0, 0}, 0, {1, 1, 1}, 0, 0, 0, 0);
 
         blitBuffer(&csr, blitProperties, true);
 
@@ -862,7 +1007,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                     nullptr, hostPtr,
                                                                                     subBuffer1->getGraphicsAllocation()->getGpuAddress() +
                                                                                         subBuffer1->getOffset(),
-                                                                                    0, hostPtrOffset, 0, 1);
+                                                                                    0, {hostPtrOffset, 0, 0}, 0, {1, 1, 1}, 0, 0, 0, 0);
 
         blitBuffer(&csr, blitProperties, true);
 
@@ -875,6 +1020,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         }
         EXPECT_EQ(subBuffer1->getGraphicsAllocation()->getGpuAddress() + subBuffer1Offset, bltCmd->getSourceBaseAddress());
     }
+
     {
         // Buffer to Buffer
         HardwareParse hwParser;
@@ -941,7 +1087,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                     mapAllocation, mapPtr,
                                                                                     buffer->getGraphicsAllocation()->getGpuAddress(),
                                                                                     castToUint64(mapPtr),
-                                                                                    hostPtrOffset, 0, 1);
+                                                                                    {hostPtrOffset, 0, 0}, 0, {1, 1, 1}, 0, 0, 0, 0);
 
         blitBuffer(&csr, blitProperties, true);
 
@@ -963,7 +1109,29 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                     csr, buffer->getGraphicsAllocation(),
                                                                                     mapAllocation, mapPtr,
                                                                                     buffer->getGraphicsAllocation()->getGpuAddress(),
-                                                                                    castToUint64(mapPtr), hostPtrOffset, 0, 1);
+                                                                                    castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+        blitBuffer(&csr, blitProperties, true);
+
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+        auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
+        EXPECT_NE(nullptr, bltCmd);
+        if (pDevice->isFullRangeSvm()) {
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
+        }
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddress(), bltCmd->getSourceBaseAddress());
+    }
+
+    {
+        // bufferRect to hostPtr
+        HardwareParse hwParser;
+        auto offset = csr.commandStream.getUsed();
+        auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                                    csr, buffer->getGraphicsAllocation(),
+                                                                                    mapAllocation, mapPtr,
+                                                                                    buffer->getGraphicsAllocation()->getGpuAddress(),
+                                                                                    castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, {4, 2, 1}, 0, 0, 0, 0);
 
         blitBuffer(&csr, blitProperties, true);
 
@@ -998,7 +1166,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         BuiltinOpParams builtinOpParams = {};
         builtinOpParams.dstMemObj = buffer.get();
         builtinOpParams.srcPtr = mapPtr;
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
         builtinOpParams.transferAllocation = mapAllocation;
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
@@ -1010,7 +1178,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
         BuiltinOpParams builtinOpParams = {};
         builtinOpParams.srcMemObj = buffer.get();
         builtinOpParams.dstPtr = mapPtr;
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
         builtinOpParams.transferAllocation = mapAllocation;
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
@@ -1040,7 +1208,7 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
         builtinOpParams.dstSvmAlloc = svmData->gpuAllocation;
         builtinOpParams.srcSvmAlloc = svmData->cpuAllocation;
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                     csr, builtinOpParams);
@@ -1053,7 +1221,7 @@ HWTEST_F(BcsTests, givenNonZeroCopySvmAllocationWhenConstructingBlitPropertiesFo
         builtinOpParams.srcSvmAlloc = svmData->gpuAllocation;
         builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress());
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
                                                                     csr, builtinOpParams);
@@ -1087,7 +1255,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         builtinOpParams.srcSvmAlloc = svmData->gpuAllocation;
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + srcOffset);
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + dstOffset);
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                     csr, builtinOpParams);
@@ -1111,7 +1279,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         builtinOpParams.dstSvmAlloc = svmData->cpuAllocation;
         builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation + dstOffset);
         builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->gpuAllocation + srcOffset);
-        builtinOpParams.size.x = 1;
+        builtinOpParams.size = {1, 1, 1};
 
         auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToHostPtr,
                                                                     csr, builtinOpParams);
@@ -1127,7 +1295,6 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
         EXPECT_EQ(castToUint64(builtinOpParams.dstPtr), bltCmd->getDestinationBaseAddress());
         EXPECT_EQ(castToUint64(builtinOpParams.srcPtr), bltCmd->getSourceBaseAddress());
     }
-
     svmAllocsManager.freeSVMAlloc(svmAlloc);
 }
 
@@ -1150,7 +1317,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                         csr, buffer1->getGraphicsAllocation(),
                                                                                         nullptr, hostPtr,
                                                                                         buffer1->getGraphicsAllocation()->getGpuAddress(),
-                                                                                        0, 0, buffer1Offset, 1);
+                                                                                        0, 0, {buffer1Offset, 0, 0}, {1, 1, 1}, 0, 0, 0, 0);
 
             blitBuffer(&csr, blitProperties, true);
 
@@ -1171,7 +1338,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                         csr, buffer1->getGraphicsAllocation(), nullptr,
                                                                                         hostPtr,
                                                                                         buffer1->getGraphicsAllocation()->getGpuAddress(),
-                                                                                        0, 0, buffer1Offset, 1);
+                                                                                        0, 0, {buffer1Offset, 0, 0}, {1, 1, 1}, 0, 0, 0, 0);
 
             blitBuffer(&csr, blitProperties, true);
 
@@ -1184,7 +1351,6 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             }
             EXPECT_EQ(ptrOffset(buffer1->getGraphicsAllocation()->getGpuAddress(), buffer1Offset), bltCmd->getSourceBaseAddress());
         }
-
         for (auto buffer2Offset : addressOffsets) {
             // Buffer to Buffer
             HardwareParse hwParser;
@@ -1238,6 +1404,12 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
         }
         EXPECT_EQ(1u, xyCopyBltCmdFound);
     }
+}
+
+HWTEST_F(BcsTests, givenInvalidBlitDirectionWhenConstructPropertiesThenExceptionIsThrow) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_THROW(ClBlitProperties::constructProperties(static_cast<BlitterConstants::BlitDirection>(7), csr, {}), std::exception);
 }
 
 struct MockScratchSpaceController : ScratchSpaceControllerBase {

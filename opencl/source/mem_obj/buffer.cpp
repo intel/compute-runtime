@@ -305,7 +305,7 @@ Buffer *Buffer::create(Context *context,
         bool gpuCopyRequired = (gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool());
 
         if (gpuCopyRequired) {
-            auto blitMemoryToAllocationResult = context->blitMemoryToAllocation(*pBuffer, memory, hostPtr, size);
+            auto blitMemoryToAllocationResult = context->blitMemoryToAllocation(*pBuffer, memory, hostPtr, {size, 1, 1});
 
             if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
                 auto cmdQ = context->getSpecialQueue();

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/vec.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -32,12 +33,12 @@ struct BlitAuxTranslationTests : public ::testing::Test {
             bcsCsr->initializeTagAllocation();
         }
 
-        BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
+        BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const override {
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                         *bcsCsr, memory, nullptr,
                                                                                         hostPtr,
                                                                                         memory->getGpuAddress(), 0,
-                                                                                        0, 0, size);
+                                                                                        0, 0, size, 0, 0, 0, 0);
 
             BlitPropertiesContainer container;
             container.push_back(blitProperties);
