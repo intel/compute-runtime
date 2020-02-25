@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -89,7 +89,7 @@ inline bool HwHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation
 }
 
 template <typename Family>
-void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
+void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                         void *surfaceStateBuffer,
                                                         size_t bufferSize,
                                                         uint64_t gpuVa,
@@ -103,7 +103,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    auto gmmHelper = executionEnvironment.getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateBuffer);
     *surfaceState = Family::cmdInitRenderSurfaceState;
     auto surfaceSize = alignUp(bufferSize, 4);

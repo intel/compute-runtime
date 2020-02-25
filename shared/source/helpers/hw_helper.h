@@ -19,8 +19,8 @@
 #include <type_traits>
 
 namespace NEO {
-class ExecutionEnvironment;
 class GraphicsAllocation;
+struct RootDeviceEnvironment;
 struct HardwareCapabilities;
 class GmmHelper;
 
@@ -52,7 +52,7 @@ class HwHelper {
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
-    virtual void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
+    virtual void setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                 void *surfaceStateBuffer,
                                                 size_t bufferSize,
                                                 uint64_t gpuVa,
@@ -161,7 +161,7 @@ class HwHelperHw : public HwHelper {
 
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
 
-    void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
+    void setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
                                         void *surfaceStateBuffer,
                                         size_t bufferSize,
                                         uint64_t gpuVa,
