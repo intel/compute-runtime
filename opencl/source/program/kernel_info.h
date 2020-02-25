@@ -39,6 +39,8 @@ struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
 
+extern bool useKernelDescriptor;
+
 extern std::map<std::string, size_t> typeSizeMap;
 
 struct WorkloadInfo {
@@ -212,6 +214,8 @@ struct KernelInfo {
     DebugData debugData;
     bool computeMode = false;
     const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
+
+    KernelDescriptor kernelDescriptor;
 };
 
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos);

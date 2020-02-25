@@ -222,3 +222,39 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgThenKernelInfoIsPr
     EXPECT_EQ(0U, kernelInfo.kernelArgInfo[1].kernelArgPatchInfoVector[0].size);
     EXPECT_EQ(globalMemArg.Offset, kernelInfo.kernelArgInfo[1].offsetHeap);
 }
+
+TEST(KernelInfoFromPatchTokens, GivenDefaultModeThenKernelDescriptorIsNotBeingPopulated) {
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 1;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(2);
+    kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
+}
+
+TEST(KernelInfoFromPatchTokens, WhenUseKernelDescriptorIsEnabledThenKernelDescriptorIsBeingPopulated) {
+    std::vector<uint8_t> storage;
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchGlobalMemoryObjectKernelArgument globalMemArg = {};
+    globalMemArg.Token = iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT;
+    globalMemArg.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
+    globalMemArg.ArgumentNumber = 1;
+    globalMemArg.Offset = 0x40;
+
+    kernelTokens.tokens.kernelArgs.resize(2);
+    kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
+    NEO::KernelInfo kernelInfo = {};
+    NEO::useKernelDescriptor = true;
+    NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
+    NEO::useKernelDescriptor = false;
+    EXPECT_FALSE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
+}

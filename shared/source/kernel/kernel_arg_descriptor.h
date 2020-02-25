@@ -126,6 +126,9 @@ struct ArgDescriptor final {
     }
 
     ArgDescriptor &operator=(const ArgDescriptor &rhs);
+    ArgDescriptor(const ArgDescriptor &rhs) {
+        *this = rhs;
+    }
 
     template <typename T>
     const T &as() const;

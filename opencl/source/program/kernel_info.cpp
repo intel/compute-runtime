@@ -27,6 +27,8 @@
 
 namespace NEO {
 
+bool useKernelDescriptor = false;
+
 struct KernelArgumentType {
     const char *argTypeQualifier;
     uint64_t argTypeQualifierValue;

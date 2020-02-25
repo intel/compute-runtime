@@ -298,8 +298,9 @@ TEST(ArgDescriptorCopyAssign, WhenCopyAssignedThenCopiesExtendedTypeInfo) {
     arg0.getExtendedTypeInfo().isAccelerator = true;
     arg0.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor = true;
 
+    NEO::ArgDescriptor arg1{arg0};
     NEO::ArgDescriptor arg2;
-    arg2 = arg0;
+    arg2 = arg1;
     EXPECT_EQ(arg0.getExtendedTypeInfo().packed, arg2.getExtendedTypeInfo().packed);
 }
 
