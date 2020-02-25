@@ -371,7 +371,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedRead
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
@@ -391,7 +391,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtr
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
@@ -411,7 +411,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPt
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     cl_int retVal = CL_SUCCESS;
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -430,7 +430,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesA
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     cl_int retVal = CL_SUCCESS;
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -449,7 +449,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopies
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndNonZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     cl_int retVal = CL_SUCCESS;
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -468,7 +468,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopies
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndNonZeroCopyWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     cl_int retVal = CL_SUCCESS;
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -523,7 +523,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferWithMa
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -551,7 +551,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInT
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedBufferThenDontCopyOnCpu) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -597,7 +597,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
 
 HWTEST_F(EnqueueReadBufferTypeTest, gicenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, true, executionEnvironment);

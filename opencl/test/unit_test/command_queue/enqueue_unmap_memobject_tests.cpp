@@ -217,7 +217,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
 
 HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThanFlagsChange) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     ASSERT_NE(nullptr, buffer);
     buffer->getGraphicsAllocation()->setAubWritable(false, GraphicsAllocation::defaultBank);

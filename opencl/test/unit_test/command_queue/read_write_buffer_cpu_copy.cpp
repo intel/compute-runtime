@@ -212,6 +212,32 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     alignedFree(alignedBufferPtr);
 }
 
+HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBufferCpuCopyAllowedIsCalledThenItReturnsFalse) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(false);
+
+    cl_int retVal;
+
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
+    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_ALLOC_HOST_PTR, MemoryConstants::pageSize, nullptr, retVal));
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+
+    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
+    EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+}
+
 TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInNonSystemMemoryPoolThenIsReadWriteOnCpuAllowedReturnsFalse) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());

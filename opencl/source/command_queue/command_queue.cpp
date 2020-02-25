@@ -555,9 +555,21 @@ size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &
 
 bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
                                         cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
+
+    auto debugVariableSet = false;
     // Requested by debug variable or allowed by Buffer
-    bool debugVariableSet = (CL_COMMAND_READ_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnReadBuffer.get()) ||
-                            (CL_COMMAND_WRITE_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnWriteBuffer.get());
+    if (CL_COMMAND_READ_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnReadBuffer.get() != -1) {
+        if (DebugManager.flags.DoCpuCopyOnReadBuffer.get() == 0) {
+            return false;
+        }
+        debugVariableSet = true;
+    }
+    if (CL_COMMAND_WRITE_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnWriteBuffer.get() != -1) {
+        if (DebugManager.flags.DoCpuCopyOnWriteBuffer.get() == 0) {
+            return false;
+        }
+        debugVariableSet = true;
+    }
 
     //if we are blocked by user events, we can't service the call on CPU
     if (Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList)) {
