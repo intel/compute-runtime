@@ -17,9 +17,9 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Installation Options
 
-To allow Neo accessing GPU device make sure user has permissions to files in /dev/dri directory. In first step /dev/dri/renderD* files are opened, if it fails, /dev/dri/card* files are used.
+To allow Neo accessing GPU device make sure user has permissions to files /dev/dri/renderD*.
 
-Under Ubuntu* or Centos* user must be in video group. In Fedora* all users by default have access to /dev/dri/renderD* files, but have to be in video group to access /dev/dri/card* files.
+Under Ubuntu* or Centos* user must be in video group. In Fedora* all users by default have access to /dev/dri/renderD* files.
 
 ### Via system package manager
 
