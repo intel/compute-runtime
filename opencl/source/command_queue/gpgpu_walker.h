@@ -156,7 +156,7 @@ class GpgpuWalkerHelper {
     static void addAluReadModifyWriteRegister(
         LinearStream *pCommandStream,
         uint32_t aluRegister,
-        uint32_t operation,
+        AluRegisters operation,
         uint32_t mask);
 };
 

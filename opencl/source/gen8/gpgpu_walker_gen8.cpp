@@ -17,7 +17,7 @@ void GpgpuWalkerHelper<BDWFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStr
     if (disablePerfMode) {
         if (kernel.getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, ALU_OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     } else {
         if (kernel.getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
@@ -27,7 +27,7 @@ void GpgpuWalkerHelper<BDWFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStr
             *pCmd = BDWFamily::cmdInitPipeControl;
             pCmd->setCommandStreamerStallEnable(true);
             // Clear bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, ALU_OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     }
 }

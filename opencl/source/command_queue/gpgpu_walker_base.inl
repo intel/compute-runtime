@@ -37,7 +37,7 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     LinearStream *pCommandStream,
     uint32_t aluRegister,
-    uint32_t operation,
+    AluRegisters operation,
     uint32_t mask) {
     // Load "Register" value into CS_GPR_R0
     typedef typename GfxFamily::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
@@ -66,27 +66,36 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(pCmd3);
 
     // Setup first operand of MI_MATH - load CS_GPR_R0 into register A
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
-    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCA;
-    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_0;
+    pAluParam->DW0.BitField.ALUOpcode =
+        static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+    pAluParam->DW0.BitField.Operand1 =
+        static_cast<uint32_t>(AluRegisters::R_SRCA);
+    pAluParam->DW0.BitField.Operand2 =
+        static_cast<uint32_t>(AluRegisters::R_0);
     pAluParam++;
 
     // Setup second operand of MI_MATH - load CS_GPR_R1 into register B
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
-    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCB;
-    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_1;
+    pAluParam->DW0.BitField.ALUOpcode =
+        static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+    pAluParam->DW0.BitField.Operand1 =
+        static_cast<uint32_t>(AluRegisters::R_SRCB);
+    pAluParam->DW0.BitField.Operand2 =
+        static_cast<uint32_t>(AluRegisters::R_1);
     pAluParam++;
 
     // Setup third operand of MI_MATH - "Operation" on registers A and B
-    pAluParam->DW0.BitField.ALUOpcode = operation;
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(operation);
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
 
     // Setup fourth operand of MI_MATH - store result into CS_GPR_R0
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_STORE;
-    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_0;
-    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_ACCU;
+    pAluParam->DW0.BitField.ALUOpcode =
+        static_cast<uint32_t>(AluRegisters::OPCODE_STORE);
+    pAluParam->DW0.BitField.Operand1 =
+        static_cast<uint32_t>(AluRegisters::R_0);
+    pAluParam->DW0.BitField.Operand2 =
+        static_cast<uint32_t>(AluRegisters::R_ACCU);
 
     // LOAD value of CS_GPR_R0 into "Register"
     auto pCmd4 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();

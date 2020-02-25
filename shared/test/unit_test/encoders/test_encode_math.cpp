@@ -20,30 +20,39 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     MI_MATH_ALU_INST_INLINE aluParam[5];
-    uint32_t regA = ALU_REGISTER_R_0;
-    uint32_t regB = ALU_REGISTER_R_1;
-    uint32_t finalResultRegister = ALU_REGISTER_R_2;
+    AluRegisters regA = AluRegisters::R_0;
+    AluRegisters regB = AluRegisters::R_1;
+    AluRegisters finalResultRegister = AluRegisters::R_2;
 
     memset(aluParam, 0, sizeof(MI_MATH_ALU_INST_INLINE) * 5);
 
     EncodeMathMMIO<FamilyType>::encodeAluAdd(aluParam, regA, regB,
                                              finalResultRegister);
 
-    EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
-    EXPECT_EQ(aluParam[0].DW0.BitField.Operand1, ALU_REGISTER_R_SRCA);
-    EXPECT_EQ(aluParam[0].DW0.BitField.Operand2, regA);
+    EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_LOAD));
+    EXPECT_EQ(aluParam[0].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_SRCA));
+    EXPECT_EQ(aluParam[0].DW0.BitField.Operand2, static_cast<uint32_t>(regA));
 
-    EXPECT_EQ(aluParam[1].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
-    EXPECT_EQ(aluParam[1].DW0.BitField.Operand1, ALU_REGISTER_R_SRCB);
-    EXPECT_EQ(aluParam[1].DW0.BitField.Operand2, regB);
+    EXPECT_EQ(aluParam[1].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_LOAD));
+    EXPECT_EQ(aluParam[1].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_SRCB));
+    EXPECT_EQ(aluParam[1].DW0.BitField.Operand2,
+              static_cast<uint32_t>(regB));
 
-    EXPECT_EQ(aluParam[2].DW0.BitField.ALUOpcode, ALU_OPCODE_ADD);
+    EXPECT_EQ(aluParam[2].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_ADD));
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand1, 0u);
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
-    EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_2);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_ACCU);
+    EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_STORE));
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_2));
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2,
+              static_cast<uint32_t>(AluRegisters::R_ACCU));
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
@@ -52,30 +61,40 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     MI_MATH_ALU_INST_INLINE aluParam[5];
-    uint32_t regA = ALU_REGISTER_R_0;
-    uint32_t regB = ALU_REGISTER_R_1;
-    uint32_t finalResultRegister = ALU_REGISTER_R_2;
+    AluRegisters regA = AluRegisters::R_0;
+    AluRegisters regB = AluRegisters::R_1;
+    AluRegisters finalResultRegister = AluRegisters::R_2;
 
     memset(aluParam, 0, sizeof(MI_MATH_ALU_INST_INLINE) * 5);
 
     EncodeMathMMIO<FamilyType>::encodeAluSubStoreCarry(aluParam, regA, regB,
                                                        finalResultRegister);
 
-    EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
-    EXPECT_EQ(aluParam[0].DW0.BitField.Operand1, ALU_REGISTER_R_SRCA);
-    EXPECT_EQ(aluParam[0].DW0.BitField.Operand2, regA);
+    EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_LOAD));
+    EXPECT_EQ(aluParam[0].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_SRCA));
+    EXPECT_EQ(aluParam[0].DW0.BitField.Operand2,
+              static_cast<uint32_t>(regA));
 
-    EXPECT_EQ(aluParam[1].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
-    EXPECT_EQ(aluParam[1].DW0.BitField.Operand1, ALU_REGISTER_R_SRCB);
-    EXPECT_EQ(aluParam[1].DW0.BitField.Operand2, regB);
+    EXPECT_EQ(aluParam[1].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_LOAD));
+    EXPECT_EQ(aluParam[1].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_SRCB));
+    EXPECT_EQ(aluParam[1].DW0.BitField.Operand2,
+              static_cast<uint32_t>(regB));
 
-    EXPECT_EQ(aluParam[2].DW0.BitField.ALUOpcode, ALU_OPCODE_SUB);
+    EXPECT_EQ(aluParam[2].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_SUB));
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand1, 0u);
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
-    EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_2);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_CF);
+    EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_STORE));
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1,
+              static_cast<uint32_t>(AluRegisters::R_2));
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand2,
+              static_cast<uint32_t>(AluRegisters::R_CF));
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
@@ -154,7 +173,8 @@ HWTEST_F(CommandEncoderMathTest, appendsAGreaterThanPredicate) {
     EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), CS_PREDICATE_RESULT);
 
     auto cmdALU = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmdMATH + 3);
-    EXPECT_EQ(cmdALU->DW0.BitField.ALUOpcode, ALU_OPCODE_SUB);
+    EXPECT_EQ(cmdALU->DW0.BitField.ALUOpcode,
+              static_cast<uint32_t>(AluRegisters::OPCODE_SUB));
 }
 
 HWTEST_F(CommandEncoderMathTest, setGroupSizeIndirect) {

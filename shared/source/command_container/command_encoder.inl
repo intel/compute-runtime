@@ -69,12 +69,12 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
     i = 0;
     while (i < logLws) {
         if (val & (1 << i)) {
-            EncodeMath<Family>::addition(container, ALU_REGISTER_R_1,
-                                         ALU_REGISTER_R_0, ALU_REGISTER_R_2);
+            EncodeMath<Family>::addition(container, AluRegisters::R_1,
+                                         AluRegisters::R_0, AluRegisters::R_2);
             EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R1, CS_GPR_R2);
         }
-        EncodeMath<Family>::addition(container, ALU_REGISTER_R_0,
-                                     ALU_REGISTER_R_0, ALU_REGISTER_R_2);
+        EncodeMath<Family>::addition(container, AluRegisters::R_0,
+                                     AluRegisters::R_0, AluRegisters::R_2);
         EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, CS_GPR_R2);
         i++;
     }
@@ -104,8 +104,8 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
     reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
     cmd++;
 
-    /* CS_GPR_R* registers map to ALU_REGISTER_R_* registers */
-    encodeAluSubStoreCarry(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd), ALU_REGISTER_R_0, ALU_REGISTER_R_1, ALU_REGISTER_R_2);
+    /* CS_GPR_R* registers map to AluRegisters::R_* registers */
+    encodeAluSubStoreCarry(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd), AluRegisters::R_0, AluRegisters::R_1, AluRegisters::R_2);
 
     EncodeSetMMIO<Family>::encodeREG(container, CS_PREDICATE_RESULT, CS_GPR_R2);
 }
@@ -122,33 +122,33 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
  * data from "postOperationStateRegister" will be copied.
  */
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t srcA, uint32_t srcB, uint32_t op, uint32_t finalResultRegister, uint32_t postOperationStateRegister) {
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
-    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCA;
-    pAluParam->DW0.BitField.Operand2 = srcA;
+void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters srcA, AluRegisters srcB, AluRegisters op, AluRegisters finalResultRegister, AluRegisters postOperationStateRegister) {
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+    pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCA);
+    pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(srcA);
     pAluParam++;
 
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
-    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCB;
-    pAluParam->DW0.BitField.Operand2 = srcB;
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+    pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
+    pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(srcB);
     pAluParam++;
 
     /* Order of operation: Operand1 <ALUOpcode> Operand2 */
-    pAluParam->DW0.BitField.ALUOpcode = op;
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(op);
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
 
-    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_STORE;
-    pAluParam->DW0.BitField.Operand1 = finalResultRegister;
-    pAluParam->DW0.BitField.Operand2 = postOperationStateRegister;
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_STORE);
+    pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(finalResultRegister);
+    pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(postOperationStateRegister);
     pAluParam++;
 }
 
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB, uint32_t finalResultRegister) {
+void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters regA, AluRegisters regB, AluRegisters finalResultRegister) {
     /* regB is subtracted from regA */
-    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_SUB, finalResultRegister, ALU_REGISTER_R_CF);
+    encodeAlu(pAluParam, regA, regB, AluRegisters::OPCODE_SUB, finalResultRegister, AluRegisters::R_CF);
 }
 
 template <typename Family>
@@ -167,9 +167,9 @@ uint32_t *EncodeMath<Family>::commandReserve(CommandContainer &container) {
 
 template <typename Family>
 void EncodeMath<Family>::addition(CommandContainer &container,
-                                  uint32_t firstOperandRegister,
-                                  uint32_t secondOperandRegister,
-                                  uint32_t finalResultRegister) {
+                                  AluRegisters firstOperandRegister,
+                                  AluRegisters secondOperandRegister,
+                                  AluRegisters finalResultRegister) {
     uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
     EncodeMath<Family>::MI_MATH_ALU_INST_INLINE *pAluParam =
         reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd);
@@ -181,10 +181,10 @@ void EncodeMath<Family>::addition(CommandContainer &container,
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
-                                          uint32_t firstOperandRegister,
-                                          uint32_t secondOperandRegister,
-                                          uint32_t finalResultRegister) {
-    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, ALU_OPCODE_ADD, finalResultRegister, ALU_REGISTER_R_ACCU);
+                                          AluRegisters firstOperandRegister,
+                                          AluRegisters secondOperandRegister,
+                                          AluRegisters finalResultRegister) {
+    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_ADD, finalResultRegister, AluRegisters::R_ACCU);
 }
 
 template <typename Family>

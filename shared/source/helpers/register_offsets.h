@@ -41,34 +41,36 @@ constexpr uint32_t CS_PREDICATE_RESULT = 0x2418;
 //Alu opcodes
 constexpr uint32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
-constexpr uint32_t ALU_OPCODE_LOAD = 0x080;
-constexpr uint32_t ALU_OPCODE_STORE = 0x180;
-constexpr uint32_t ALU_OPCODE_ADD = 0x100;
-constexpr uint32_t ALU_OPCODE_SUB = 0x101;
-constexpr uint32_t ALU_OPCODE_AND = 0x102;
-constexpr uint32_t ALU_OPCODE_OR = 0x103;
+enum class AluRegisters : uint32_t {
+    OPCODE_LOAD = 0x080,
+    OPCODE_STORE = 0x180,
+    OPCODE_ADD = 0x100,
+    OPCODE_SUB = 0x101,
+    OPCODE_AND = 0x102,
+    OPCODE_OR = 0x103,
 
-constexpr uint32_t ALU_REGISTER_R_0 = 0x0;
-constexpr uint32_t ALU_REGISTER_R_1 = 0x1;
-constexpr uint32_t ALU_REGISTER_R_2 = 0x2;
-constexpr uint32_t ALU_REGISTER_R_3 = 0x3;
-constexpr uint32_t ALU_REGISTER_R_4 = 0x4;
-constexpr uint32_t ALU_REGISTER_R_5 = 0x5;
-constexpr uint32_t ALU_REGISTER_R_6 = 0x6;
-constexpr uint32_t ALU_REGISTER_R_7 = 0x7;
-constexpr uint32_t ALU_REGISTER_R_8 = 0x8;
-constexpr uint32_t ALU_REGISTER_R_9 = 0x9;
-constexpr uint32_t ALU_REGISTER_R_10 = 0xA;
-constexpr uint32_t ALU_REGISTER_R_11 = 0xB;
-constexpr uint32_t ALU_REGISTER_R_12 = 0xC;
-constexpr uint32_t ALU_REGISTER_R_13 = 0xD;
-constexpr uint32_t ALU_REGISTER_R_14 = 0xE;
-constexpr uint32_t ALU_REGISTER_R_15 = 0xF;
+    R_0 = 0x0,
+    R_1 = 0x1,
+    R_2 = 0x2,
+    R_3 = 0x3,
+    R_4 = 0x4,
+    R_5 = 0x5,
+    R_6 = 0x6,
+    R_7 = 0x7,
+    R_8 = 0x8,
+    R_9 = 0x9,
+    R_10 = 0xA,
+    R_11 = 0xB,
+    R_12 = 0xC,
+    R_13 = 0xD,
+    R_14 = 0xE,
+    R_15 = 0xF,
 
-constexpr uint32_t ALU_REGISTER_R_SRCA = 0x20;
-constexpr uint32_t ALU_REGISTER_R_SRCB = 0x21;
-constexpr uint32_t ALU_REGISTER_R_ACCU = 0x31;
-constexpr uint32_t ALU_REGISTER_R_ZF = 0x32;
-constexpr uint32_t ALU_REGISTER_R_CF = 0x33;
+    R_SRCA = 0x20,
+    R_SRCB = 0x21,
+    R_ACCU = 0x31,
+    R_ZF = 0x32,
+    R_CF = 0x33
+};
 
 constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;

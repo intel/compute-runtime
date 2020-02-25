@@ -9,6 +9,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 
@@ -55,7 +56,10 @@ struct EncodeMath {
     using MI_MATH = typename GfxFamily::MI_MATH;
 
     static uint32_t *commandReserve(CommandContainer &container);
-    static void addition(CommandContainer &container, uint32_t firstOperandRegister, uint32_t secondOperandRegister, uint32_t finalResultRegister);
+    static void addition(CommandContainer &container,
+                         AluRegisters firstOperandRegister,
+                         AluRegisters secondOperandRegister,
+                         AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
@@ -70,14 +74,14 @@ struct EncodeMathMMIO {
 
     static void encodeGreaterThanPredicate(CommandContainer &container, uint64_t lhsVal, uint32_t rhsVal);
 
-    static void encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t srcA, uint32_t srcB, uint32_t op, uint32_t dest, uint32_t result);
+    static void encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters srcA, AluRegisters srcB, AluRegisters op, AluRegisters dest, AluRegisters result);
 
-    static void encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB, uint32_t finalResultRegister);
+    static void encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters regA, AluRegisters regB, AluRegisters finalResultRegister);
 
     static void encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
-                             uint32_t firstOperandRegister,
-                             uint32_t secondOperandRegister,
-                             uint32_t finalResultRegister);
+                             AluRegisters firstOperandRegister,
+                             AluRegisters secondOperandRegister,
+                             AluRegisters finalResultRegister);
 };
 
 template <typename GfxFamily>
