@@ -56,6 +56,10 @@ struct EncodeMath {
     using MI_MATH = typename GfxFamily::MI_MATH;
 
     static uint32_t *commandReserve(CommandContainer &container);
+    static void greaterThan(CommandContainer &container,
+                            AluRegisters firstOperandRegister,
+                            AluRegisters secondOperandRegister,
+                            AluRegisters finalResultRegister);
     static void addition(CommandContainer &container,
                          AluRegisters firstOperandRegister,
                          AluRegisters secondOperandRegister,

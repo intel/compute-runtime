@@ -91,21 +91,12 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
  */
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t firstOperand, uint32_t secondOperand) {
-    /* (*firstOperand) will be subtracted from secondOperand */
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R0, secondOperand);
-    EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R1, firstOperand);
-
-    size_t size = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
-
-    auto cmd = reinterpret_cast<uint32_t *>(container.getCommandStream()->getSpace(size));
-    reinterpret_cast<MI_MATH *>(cmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
-    cmd++;
+    EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R0, firstOperand);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, secondOperand);
 
     /* CS_GPR_R* registers map to AluRegisters::R_* registers */
-    encodeAluSubStoreCarry(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd), AluRegisters::R_0, AluRegisters::R_1, AluRegisters::R_2);
+    EncodeMath<Family>::greaterThan(container, AluRegisters::R_0,
+                                    AluRegisters::R_1, AluRegisters::R_2);
 
     EncodeSetMMIO<Family>::encodeREG(container, CS_PREDICATE_RESULT, CS_GPR_R2);
 }
@@ -163,6 +154,26 @@ uint32_t *EncodeMath<Family>::commandReserve(CommandContainer &container) {
     cmd++;
 
     return cmd;
+}
+
+/*
+ * greaterThan() tests if firstOperandRegister is greater than
+ * secondOperandRegister.
+ */
+template <typename Family>
+void EncodeMath<Family>::greaterThan(CommandContainer &container,
+                                     AluRegisters firstOperandRegister,
+                                     AluRegisters secondOperandRegister,
+                                     AluRegisters finalResultRegister) {
+    uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
+    MI_MATH_ALU_INST_INLINE *pAluParam =
+        reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd);
+
+    /* firstOperandRegister will be subtracted from secondOperandRegister */
+    EncodeMathMMIO<Family>::encodeAluSubStoreCarry(pAluParam,
+                                                   secondOperandRegister,
+                                                   firstOperandRegister,
+                                                   finalResultRegister);
 }
 
 template <typename Family>

@@ -145,19 +145,20 @@ HWTEST_F(CommandEncoderMathTest, appendsAGreaterThanPredicate) {
 
     auto itor = commands.begin();
 
-    itor = find<MI_LOAD_REGISTER_IMM *>(itor, commands.end());
-    ASSERT_NE(itor, commands.end());
-
-    auto cmdIMM = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(cmdIMM->getRegisterOffset(), CS_GPR_R0);
-    EXPECT_EQ(cmdIMM->getDataDword(), 17u);
-
     itor = find<MI_LOAD_REGISTER_MEM *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());
 
     auto cmdMEM = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmdMEM->getRegisterAddress(), CS_GPR_R1);
+    EXPECT_EQ(cmdMEM->getRegisterAddress(), CS_GPR_R0);
     EXPECT_EQ(cmdMEM->getMemoryAddress(), 0xDEADBEEFCAF0u);
+
+    itor = find<MI_LOAD_REGISTER_IMM *>(itor, commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto cmdIMM = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+    EXPECT_EQ(cmdIMM->getRegisterOffset(), CS_GPR_R1);
+    EXPECT_EQ(cmdIMM->getDataDword(), 17u);
+
 
     itor = find<MI_MATH *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());
