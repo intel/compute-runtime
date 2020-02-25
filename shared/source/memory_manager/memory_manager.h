@@ -232,7 +232,6 @@ class MemoryManager {
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
-    uint32_t getBanksCount();
 
     bool forceNonSvmForExternalHostPtr = false;
     bool force32bitAllocations = false;
@@ -249,7 +248,7 @@ class MemoryManager {
     uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
-    std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
+    std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> localMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
     std::unique_ptr<PageFaultManager> pageFaultManager;
 };
