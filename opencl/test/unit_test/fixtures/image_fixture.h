@@ -121,7 +121,7 @@ struct ImageClearColorFixture : ::testing::Test {
         NEO::platformsImpl.clear();
         NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-        NEO::platform()->peekExecutionEnvironment()->initGmm();
+        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->initGmm();
     }
 
     template <typename FamilyType>

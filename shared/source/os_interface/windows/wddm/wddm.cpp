@@ -111,7 +111,7 @@ bool Wddm::init() {
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
     rootDeviceEnvironment.executionEnvironment.setHwInfo(hardwareInfo.get());
-    rootDeviceEnvironment.executionEnvironment.initGmm();
+    rootDeviceEnvironment.initGmm();
 
     if (WddmVersion::WDDM_2_3 == getWddmVersion()) {
         wddmInterface = std::make_unique<WddmInterface23>(*this);

@@ -60,10 +60,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     };
 
     MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(*platformDevices))) {
-        mockExecutionEnvironment.reset(&executionEnvironment);
+        mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
     };
     MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(*platformDevices))) {
-        mockExecutionEnvironment.reset(&executionEnvironment);
+        mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
     }
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
@@ -126,7 +126,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
-    std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
+    std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
 };
 
 using AllocationData = MockMemoryManager::AllocationData;

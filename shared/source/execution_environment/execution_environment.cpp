@@ -32,12 +32,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     rootDeviceEnvironments.clear();
 }
 
-void ExecutionEnvironment::initGmm() {
-    if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(rootDeviceEnvironments[0]->osInterface.get(), hwInfo.get()));
-    }
-}
-
 void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     *this->hwInfo = *hwInfo;
 }
@@ -83,12 +77,6 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     }
 }
 
-GmmHelper *ExecutionEnvironment::getGmmHelper() const {
-    return gmmHelper.get();
-}
-GmmClientContext *ExecutionEnvironment::getGmmClientContext() const {
-    return gmmHelper->getClientContext();
-}
 CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
     if (this->compilerInterface.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);

@@ -56,6 +56,11 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
         }
         calculateMaxOsContextCount();
     }
+    void initGmm() {
+        for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
+            rootDeviceEnvironment->initGmm();
+        }
+    }
 };
 
 } // namespace NEO

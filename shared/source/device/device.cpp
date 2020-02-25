@@ -57,8 +57,7 @@ bool Device::createDeviceImpl() {
     }
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
-
-    executionEnvironment->initGmm();
+    executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initGmm();
 
     if (!createEngines()) {
         return false;

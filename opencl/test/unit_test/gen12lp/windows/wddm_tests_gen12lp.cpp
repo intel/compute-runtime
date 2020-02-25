@@ -23,8 +23,8 @@ struct Gen12LpWddmTest : public GdiDllFixture, ::testing::Test {
         GdiDllFixture::SetUp();
 
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-        executionEnvironment->initGmm();
-        rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->initGmm();
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment)));
         gmmMemory = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMemory);
@@ -35,7 +35,7 @@ struct Gen12LpWddmTest : public GdiDllFixture, ::testing::Test {
     }
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
-    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironment;
     std::unique_ptr<WddmMock> wddm;
     GmockGmmMemory *gmmMemory = nullptr;
 };

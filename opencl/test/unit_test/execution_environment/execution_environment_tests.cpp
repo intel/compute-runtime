@@ -153,19 +153,16 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) +
                                                   sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
-                                                  (is64bit ? 56 : 32),
+                                                  (is64bit ? 48 : 28),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
 
-    struct MockExecutionEnvironment : ExecutionEnvironment {
-        using ExecutionEnvironment::gmmHelper;
-    };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 7> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
     };
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 6> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 7> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
     };
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 5> {
@@ -190,7 +187,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setHwInfo(*platformDevices);
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);

@@ -14,6 +14,7 @@
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
@@ -31,8 +32,6 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         mock = new ::testing::NiceMock<DrmMockImpl>(mockFd);
 
-        executionEnvironment.setHwInfo(*platformDevices);
-        executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
 
@@ -75,14 +74,14 @@ class DrmCommandStreamTest : public ::testing::Test {
     const int mockFd = 33;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore dbgState;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<OsContextLinux> osContext;
 };
 
 class DrmCommandStreamEnhancedTest : public ::testing::Test {
   public:
     std::unique_ptr<DebugManagerStateRestore> dbgState;
-    ExecutionEnvironment *executionEnvironment;
+    MockExecutionEnvironment *executionEnvironment;
     DrmMockCustom *mock;
     CommandStreamReceiver *csr = nullptr;
 
@@ -91,10 +90,8 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
 
     template <typename GfxFamily>
     void SetUpT() {
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();
-        executionEnvironment->setHwInfo(*platformDevices);
-        executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
         //make sure this is disabled, we don't want to test this now

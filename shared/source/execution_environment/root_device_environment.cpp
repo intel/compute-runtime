@@ -30,9 +30,16 @@ const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {
 }
 
 GmmHelper *RootDeviceEnvironment::getGmmHelper() const {
-    return executionEnvironment.getGmmHelper();
+    return gmmHelper.get();
 }
 GmmClientContext *RootDeviceEnvironment::getGmmClientContext() const {
-    return executionEnvironment.getGmmClientContext();
+    return gmmHelper->getClientContext();
 }
+
+void RootDeviceEnvironment::initGmm() {
+    if (!gmmHelper) {
+        gmmHelper.reset(new GmmHelper(osInterface.get(), getHardwareInfo()));
+    }
+}
+
 } // namespace NEO
