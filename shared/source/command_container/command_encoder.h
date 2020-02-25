@@ -50,6 +50,15 @@ struct EncodeStates {
 };
 
 template <typename GfxFamily>
+struct EncodeMath {
+    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
+    using MI_MATH = typename GfxFamily::MI_MATH;
+
+    static uint32_t *commandReserve(CommandContainer &container);
+    static void addition(CommandContainer &container, uint32_t firstOperandRegister, uint32_t secondOperandRegister, uint32_t finalResultRegister);
+};
+
+template <typename GfxFamily>
 struct EncodeMathMMIO {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
@@ -65,7 +74,10 @@ struct EncodeMathMMIO {
 
     static void encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB, uint32_t finalResultRegister);
 
-    static void encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB);
+    static void encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
+                             uint32_t firstOperandRegister,
+                             uint32_t secondOperandRegister,
+                             uint32_t finalResultRegister);
 };
 
 template <typename GfxFamily>

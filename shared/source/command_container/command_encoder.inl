@@ -58,37 +58,24 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress) {
     int logLws = 0;
-    int addsCount = 0;
     int i = val;
     while (val >> logLws) {
-        if (val & (1 << logLws)) {
-            addsCount++;
-        }
         logLws++;
-        addsCount++;
     }
 
     EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, offset);
     EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, 0);
 
-    uint32_t length = NUM_ALU_INST_FOR_READ_MODIFY_WRITE * addsCount;
-
-    auto cmd2 = reinterpret_cast<uint32_t *>(container.getCommandStream()->getSpace(sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * length));
-    reinterpret_cast<MI_MATH *>(cmd2)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(cmd2)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(cmd2)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(cmd2)->DW0.BitField.DwordLength = length - 1;
-    cmd2++;
-
-    MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd2);
     i = 0;
     while (i < logLws) {
         if (val & (1 << i)) {
-            encodeAluAdd(pAluParam, ALU_REGISTER_R_1, ALU_REGISTER_R_0);
-            pAluParam += NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+            EncodeMath<Family>::addition(container, ALU_REGISTER_R_1,
+                                         ALU_REGISTER_R_0, ALU_REGISTER_R_2);
+            EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R1, CS_GPR_R2);
         }
-        encodeAluAdd(pAluParam, ALU_REGISTER_R_0, ALU_REGISTER_R_0);
-        pAluParam += NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+        EncodeMath<Family>::addition(container, ALU_REGISTER_R_0,
+                                     ALU_REGISTER_R_0, ALU_REGISTER_R_2);
+        EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, CS_GPR_R2);
         i++;
     }
     EncodeStoreMMIO<Family>::encode(container, CS_GPR_R1, dstAddress);
@@ -165,8 +152,39 @@ void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAl
 }
 
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam, uint32_t regA, uint32_t regB) {
-    encodeAlu(pAluParam, regA, regB, ALU_OPCODE_ADD, regA, ALU_REGISTER_R_ACCU);
+uint32_t *EncodeMath<Family>::commandReserve(CommandContainer &container) {
+    size_t size = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+
+    auto cmd = reinterpret_cast<uint32_t *>(container.getCommandStream()->getSpace(size));
+    reinterpret_cast<MI_MATH *>(cmd)->DW0.Value = 0x0;
+    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
+    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
+    reinterpret_cast<MI_MATH *>(cmd)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
+    cmd++;
+
+    return cmd;
+}
+
+template <typename Family>
+void EncodeMath<Family>::addition(CommandContainer &container,
+                                  uint32_t firstOperandRegister,
+                                  uint32_t secondOperandRegister,
+                                  uint32_t finalResultRegister) {
+    uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
+    EncodeMath<Family>::MI_MATH_ALU_INST_INLINE *pAluParam =
+        reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd);
+
+    EncodeMathMMIO<Family>::encodeAluAdd(pAluParam, firstOperandRegister,
+                                         secondOperandRegister,
+                                         finalResultRegister);
+}
+
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
+                                          uint32_t firstOperandRegister,
+                                          uint32_t secondOperandRegister,
+                                          uint32_t finalResultRegister) {
+    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, ALU_OPCODE_ADD, finalResultRegister, ALU_REGISTER_R_ACCU);
 }
 
 template <typename Family>

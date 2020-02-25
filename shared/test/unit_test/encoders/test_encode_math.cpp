@@ -22,10 +22,12 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
     MI_MATH_ALU_INST_INLINE aluParam[5];
     uint32_t regA = ALU_REGISTER_R_0;
     uint32_t regB = ALU_REGISTER_R_1;
+    uint32_t finalResultRegister = ALU_REGISTER_R_2;
 
     memset(aluParam, 0, sizeof(MI_MATH_ALU_INST_INLINE) * 5);
 
-    EncodeMathMMIO<FamilyType>::encodeAluAdd(aluParam, regA, regB);
+    EncodeMathMMIO<FamilyType>::encodeAluAdd(aluParam, regA, regB,
+                                             finalResultRegister);
 
     EXPECT_EQ(aluParam[0].DW0.BitField.ALUOpcode, ALU_OPCODE_LOAD);
     EXPECT_EQ(aluParam[0].DW0.BitField.Operand1, ALU_REGISTER_R_SRCA);
@@ -40,7 +42,7 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluAddHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[2].DW0.BitField.Operand2, 0u);
 
     EXPECT_EQ(aluParam[3].DW0.BitField.ALUOpcode, ALU_OPCODE_STORE);
-    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_0);
+    EXPECT_EQ(aluParam[3].DW0.BitField.Operand1, ALU_REGISTER_R_2);
     EXPECT_EQ(aluParam[3].DW0.BitField.Operand2, ALU_REGISTER_R_ACCU);
 
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
@@ -79,6 +81,33 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
 }
 
 using CommandEncoderMathTest = Test<DeviceFixture>;
+
+HWTEST_F(CommandEncoderMathTest, commandReserve) {
+    using MI_MATH = typename FamilyType::MI_MATH;
+    GenCmdList commands;
+    CommandContainer cmdContainer;
+
+    cmdContainer.initialize(pDevice);
+
+    EncodeMath<FamilyType>::commandReserve(cmdContainer);
+
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer.getCommandStream()->getUsed());
+
+    auto itor = commands.begin();
+    itor = find<MI_MATH *>(itor, commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto cmdMATH = genCmdCast<MI_MATH *>(*itor);
+
+    EXPECT_EQ(cmdMATH->DW0.BitField.InstructionType,
+              static_cast<uint32_t>(MI_MATH::COMMAND_TYPE_MI_COMMAND));
+    EXPECT_EQ(cmdMATH->DW0.BitField.InstructionOpcode,
+              static_cast<uint32_t>(MI_MATH::MI_COMMAND_OPCODE_MI_MATH));
+    EXPECT_EQ(cmdMATH->DW0.BitField.DwordLength,
+              static_cast<uint32_t>(NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1));
+}
 
 HWTEST_F(CommandEncoderMathTest, appendsAGreaterThanPredicate) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;

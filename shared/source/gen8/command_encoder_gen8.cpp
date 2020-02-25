@@ -18,6 +18,7 @@ using Family = BDWFamily;
 
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
+template struct EncodeMath<Family>;
 template struct EncodeMathMMIO<Family>;
 template struct EncodeIndirectParams<Family>;
 template struct EncodeSetMMIO<Family>;
