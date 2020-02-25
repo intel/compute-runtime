@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gmm_helper/gmm_types_converter.h"
+#include "opencl/source/helpers/gmm_types_converter.h"
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/surface_format_info.h"

@@ -32,7 +32,6 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
 add_subdirectories()
 add_subdirectory(instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
 include(enable_gens.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/core_files.cmake)
 
 # Enable SSE4/AVX2 options for files that need them
 if(MSVC)
@@ -148,7 +147,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_subdirectory(dll)
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_CORE_LIB} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_CORE_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_CORE_LIB} ${IGDRCL_EXTRA_LIBS})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}

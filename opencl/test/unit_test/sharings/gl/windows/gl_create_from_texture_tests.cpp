@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/source/gmm_helper/gmm_types_converter.h"
 #include "shared/source/helpers/get_info.h"
 
+#include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
