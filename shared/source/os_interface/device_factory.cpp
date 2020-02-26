@@ -71,7 +71,6 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
             maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
     }
 
-    executionEnvironment.initializeMemoryManager();
     return true;
 }
 
@@ -115,7 +114,6 @@ bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment
             maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
     }
 
-    executionEnvironment.initializeMemoryManager();
     return true;
 }
 
@@ -126,6 +124,7 @@ std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvir
     if (!status) {
         return devices;
     }
+    executionEnvironment.initializeMemoryManager();
     for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);
         if (device) {
