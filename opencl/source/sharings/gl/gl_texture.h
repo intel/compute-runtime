@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/gl_sharing.h"
 
 #include "CL/cl_gl.h"

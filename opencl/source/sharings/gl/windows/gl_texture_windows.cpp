@@ -15,9 +15,9 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
-#include "opencl/source/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"

@@ -17,12 +17,12 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event_tracker.h"
-#include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"

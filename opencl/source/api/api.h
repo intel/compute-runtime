@@ -5,9 +5,9 @@
  *
  */
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/api_enter.h"
 #include "opencl/source/api/dispatch.h"
-#include "opencl/source/extensions/public/cl_ext_private.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"

@@ -9,8 +9,8 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/memory_constants.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/context/context_type.h"
-#include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include "igfxfmid.h"

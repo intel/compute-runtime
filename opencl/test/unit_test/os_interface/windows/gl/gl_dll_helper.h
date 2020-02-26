@@ -10,7 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "opencl/source/extensions/public/cl_gl_private_intel.h"
+#include "opencl/extensions/public/cl_gl_private_intel.h"
 
 #include "Gl/gl.h"
 

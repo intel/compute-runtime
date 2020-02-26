@@ -18,10 +18,10 @@
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"

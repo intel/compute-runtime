@@ -12,9 +12,9 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/extensions/public/cl_ext_private.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
