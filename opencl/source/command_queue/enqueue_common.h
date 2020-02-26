@@ -202,7 +202,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
         size_t nodesCount = 0u;
-        if (blitEnqueue || isCacheFlushCommand(commandType)) {
+        if (blitEnqueue || obtainTimestampPacketForCacheFlush(isCacheFlushCommand(commandType))) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);

@@ -138,4 +138,9 @@ void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDis
         TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family>);
 }
 
+template <typename Family>
+bool CommandQueueHw<Family>::obtainTimestampPacketForCacheFlush(bool isCacheFlushCommand) const {
+    return isCacheFlushCommand;
+}
+
 } // namespace NEO
