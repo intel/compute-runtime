@@ -34,17 +34,17 @@
 #include <memory>
 #include <type_traits>
 
-TEST(Event, NonCopyable) {
+TEST(Event, GivenEventWhenCheckingTraitThenEventIsNotCopyable) {
     EXPECT_FALSE(std::is_move_constructible<Event>::value);
     EXPECT_FALSE(std::is_copy_constructible<Event>::value);
 }
 
-TEST(Event, NonAssignable) {
+TEST(Event, GivenEventWhenCheckingTraitThenEventIsNotAssignable) {
     EXPECT_FALSE(std::is_move_assignable<Event>::value);
     EXPECT_FALSE(std::is_copy_assignable<Event>::value);
 }
 
-TEST(Event, dontUpdateExecutionStatusOnNotReadyEvent) {
+TEST(Event, WhenPeekIsCalledThenExecutionIsNotUpdated) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx;
     MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0);
@@ -88,7 +88,7 @@ TEST(Event, givenEventWithHigherTaskCountWhenLowerTaskCountIsBeingSetThenTaskCou
     delete event;
 }
 
-TEST(Event_, testGetTaskLevel) {
+TEST(Event, WhenGettingTaskLevelThenCorrectTaskLevelIsReturned) {
     class TempEvent : public Event {
       public:
         TempEvent() : Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7){};
@@ -103,12 +103,12 @@ TEST(Event_, testGetTaskLevel) {
     EXPECT_EQ(5u, event.getTaskLevel());
 }
 
-TEST(Event_, testGetTaskCount) {
+TEST(Event, WhenGettingTaskCountThenCorrectValueIsReturned) {
     Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7);
     EXPECT_EQ(7u, event.getCompletionStamp());
 }
 
-TEST(Event_, testGetEventInfoReturnsTheCQ) {
+TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto ctx = std::unique_ptr<Context>(new MockContext());
     auto cmdQ = std::unique_ptr<CommandQueue>(new MockCommandQueue(ctx.get(), mockDevice.get(), 0));
@@ -159,7 +159,7 @@ TEST(Event, givenCommandQueueWhenEventIsCreatedWithoutCommandQueueThenCommandQue
     EXPECT_EQ(intitialRefCount, finalRefCount);
 }
 
-TEST(Event, waitForEventsFlushesAllQueues) {
+TEST(Event, WhenWaitingForEventsThenAllQueuesAreFlushed) {
     class MockCommandQueueWithFlushCheck : public MockCommandQueue {
       public:
         MockCommandQueueWithFlushCheck() = delete;
@@ -190,7 +190,7 @@ TEST(Event, waitForEventsFlushesAllQueues) {
     EXPECT_EQ(1u, cmdQ2->flushCounter);
 }
 
-TEST(Event, waitForEventsWithNotReadyEventDoesNotFlushQueue) {
+TEST(Event, GivenNotReadyEventWhenWaitingForEventsThenQueueIsNotFlushed) {
     class MockCommandQueueWithFlushCheck : public MockCommandQueue {
       public:
         MockCommandQueueWithFlushCheck() = delete;
@@ -232,7 +232,7 @@ TEST(Event, givenReadyEventsOnWaitlistWhenCheckingUserEventDependeciesThenFalseI
     EXPECT_FALSE(userEventDependencies);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_sizeReturned) {
+TEST_F(EventTest, WhenGettingClEventCommandExecutionStatusThenCorrectSizeIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
     cl_int eventStatus = -1;
     size_t sizeReturned = 0;
@@ -242,7 +242,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_sizeReturned) {
     EXPECT_EQ(sizeReturned, sizeof(eventStatus));
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBMITTED_HW_LT_Event) {
+TEST_F(EventTest, GivenTagCsLessThanTaskCountWhenGettingClEventCommandExecutionStatusThenClSubmittedIsReturned) {
     uint32_t tagHW = 4;
     uint32_t taskCount = 5;
     *pTagMemory = tagHW;
@@ -258,7 +258,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBM
     EXPECT_EQ(CL_SUBMITTED, eventStatus);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_COMPLETE_HW_EQ_Event) {
+TEST_F(EventTest, GivenTagCsEqualTaskCountWhenGettingClEventCommandExecutionStatusThenClCompleteIsReturned) {
     uint32_t tagHW = 5;
     uint32_t taskCount = 5;
     *pTagMemory = tagHW;
@@ -274,7 +274,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_COMP
     EXPECT_EQ(CL_COMPLETE, eventStatus);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBMITTED_HW_GT_Event) {
+TEST_F(EventTest, GivenTagCsGreaterThanTaskCountWhenGettingClEventCommandExecutionStatusThenClCompleteIsReturned) {
     uint32_t tagHW = 6;
     uint32_t taskCount = 5;
     *pTagMemory = tagHW;
@@ -286,11 +286,10 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBM
     auto result = clGetEventInfo(&event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(eventStatus), &eventStatus, &sizeReturned);
     ASSERT_EQ(CL_SUCCESS, result);
 
-    // If tagCS > taskCount, the event is not completed.
     EXPECT_EQ(CL_COMPLETE, eventStatus);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returnsSetStatus) {
+TEST_F(EventTest, WhenGettingClEventCommandExecutionStatusThenEventStatusIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
     cl_int eventStatus = -1;
 
@@ -300,7 +299,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returnsSetStatu
     EXPECT_EQ(-1, eventStatus);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_new_Event) {
+TEST_F(EventTest, GivenNewEventWhenGettingClEventReferenceCountThenOneIsReturned) {
     uint32_t tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
@@ -314,7 +313,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_new_Event) {
     EXPECT_EQ(1u, refCount);
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Event) {
+TEST_F(EventTest, GivenRetainedEventWhenGettingClEventReferenceCountThenTwoIsReturned) {
     uint32_t tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
@@ -331,7 +330,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Event) {
     event.release();
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Release_Event) {
+TEST_F(EventTest, GivenRetainAndReleaseEventWhenGettingClEventReferenceCountThenOneIsReturned) {
     uint32_t tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
@@ -355,7 +354,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Release_Event) {
     delete pEvent;
 }
 
-TEST_F(EventTest, GetEventInfo_CL_EVENT_CONTEXT) {
+TEST_F(EventTest, WhenGettingClEventContextThenCorrectValueIsReturned) {
     uint32_t tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
@@ -373,7 +372,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_CONTEXT) {
     delete pEvent;
 }
 
-TEST_F(EventTest, GetEventInfo_InvalidParam) {
+TEST_F(EventTest, GivenInvalidEventWhenGettingEventInfoThenInvalidValueErrorIsReturned) {
     uint32_t tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
@@ -383,7 +382,7 @@ TEST_F(EventTest, GetEventInfo_InvalidParam) {
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(EventTest, Event_Wait_NonBlocking) {
+TEST_F(EventTest, GivenNonBlockingEventWhenWaitingThenFalseIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, CompletionStamp::levelNotReady);
     auto result = event.wait(false, false);
     EXPECT_FALSE(result);
@@ -457,7 +456,7 @@ class SurfaceMock : public Surface {
     SurfaceMock(SurfaceMock *parent) : parent(parent){};
 };
 
-TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
+TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefApiCountAndRefInternalGetHandledCorrectly) {
     CommandQueue cmdQ(mockContext, pClDevice, nullptr);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -509,7 +508,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     EXPECT_FALSE(graphicsAllocation->isResident(csr.getOsContext().getContextId()));
 }
 
-TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
+TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefApiCountAndRefInternalGetHandledCorrectly) {
     CommandQueue cmdQ(mockContext, pClDevice, nullptr);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -596,7 +595,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     delete pPrintfSurface;
 }
 
-TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
+TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pClDevice, nullptr);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -617,7 +616,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
     buffer->decRefInternal();
 }
 
-TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) {
+TEST_F(InternalsEventTest, GivenMapOperationNonZeroCopyBufferWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pClDevice, nullptr);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -701,7 +700,7 @@ TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet
     EXPECT_FALSE(event.get()->isProfilingEnabled());
 }
 
-TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
+TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pClDevice, props);
 
@@ -728,7 +727,7 @@ TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
     delete pCmdQ;
 }
 
-TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
+TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pClDevice, props);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -769,7 +768,7 @@ TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMem
     EXPECT_EQ(currentBufferRefInternal, buffer->getRefInternalCount());
     buffer->decRefInternal();
 }
-TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer) {
+TEST_F(InternalsEventTest, GivenUnMapOperationNonZeroCopyBufferWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = std::make_unique<CommandQueue>(mockContext, pClDevice, props);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -882,7 +881,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     delete pCmdQ;
 }
 
-TEST_F(InternalsEventWithPerfCountersTest, IsPerfCounter_Enabled) {
+TEST_F(InternalsEventWithPerfCountersTest, GivenPerfCountersEnabledWhenEventIsCreatedThenProfilingEnabledAndPerfCountersEnabledAreTrue) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pClDevice, props);
     pCmdQ->setPerfCountersEnabled();
@@ -893,13 +892,13 @@ TEST_F(InternalsEventWithPerfCountersTest, IsPerfCounter_Enabled) {
     delete pCmdQ;
 }
 
-TEST(Event, GivenNoContextOnDeletionDeletesSelf) {
+TEST(Event, WhenReleasingEventThenEventIsNull) {
     UserEvent *ue = new UserEvent();
     auto autoptr = ue->release();
     ASSERT_TRUE(autoptr.isUnused());
 }
 
-HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCSROccurs) {
+HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
         using CommandComputeKernel::eventsWaitlist;
@@ -937,7 +936,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCSROccurs) {
     EXPECT_EQ(pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter, 2u);
 }
 
-HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWithoutCommandThenOneLockCSRNeeded) {
+HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWithoutCommandThenOneLockCsrNeeded) {
     class MockEvent : public Event {
       public:
         using Event::submitCommand;
@@ -1015,7 +1014,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     EXPECT_EQ(nullptr, commandUnMap->getCommandStream());
 }
 
-TEST(EventCallback, CallbackAfterStatusOverrideUsesNewStatus) {
+TEST(EventCallback, WhenOverridingStatusThenEventUsesNewStatus) {
     struct ClbFuncTempStruct {
         static void CL_CALLBACK ClbFuncT(cl_event e, cl_int status, void *retStatus) {
             *((cl_int *)retStatus) = status;
@@ -1035,7 +1034,7 @@ TEST(EventCallback, CallbackAfterStatusOverrideUsesNewStatus) {
     EXPECT_EQ(-1, retStatus);
 }
 
-TEST_F(EventTest, WhensetTimeStampThenCorrectValues) {
+TEST_F(EventTest, WhenSettingTimeStampThenCorrectValuesAreSet) {
     MyEvent ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     TimeStampData inTimeStamp = {1ULL, 2ULL};
     ev.setSubmitTimeStamp(&inTimeStamp);
@@ -1051,7 +1050,7 @@ TEST_F(EventTest, WhensetTimeStampThenCorrectValues) {
     EXPECT_EQ(4ULL, outtimeStamp.CPUTimeinNS);
 }
 
-TEST_F(EventTest, WhensetCPUTimeStampThenCorrectTimes) {
+TEST_F(EventTest, WhenSettingCpuTimeStampThenCorrectTimeIsSet) {
     MyEvent ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
 
     ev.setProfilingEnabled(true);
@@ -1078,7 +1077,7 @@ TEST_F(EventTest, WhensetCPUTimeStampThenCorrectTimes) {
     EXPECT_NE(0ULL, outCPUtimeStamp);
 }
 
-TEST_F(EventTest, GIVENNoQueueWhensetCPUTimeStampThenTimesNotSet) {
+TEST_F(EventTest, GivenNoQueueWhenSettingCpuTimeStampThenTimesIsNotSet) {
     MyEvent ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
 
     ev.setQueueTimeStamp();
@@ -1104,7 +1103,7 @@ TEST_F(EventTest, GIVENNoQueueWhensetCPUTimeStampThenTimesNotSet) {
     EXPECT_EQ(0ULL, outCPUtimeStamp);
 }
 
-TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
+TEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -1125,7 +1124,7 @@ TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
     ASSERT_EQ(timeStamps, timeStamps2);
 }
 
-TEST_F(EventTest, getHwTimeStampsAllocationReturnsValidPointer) {
+TEST_F(EventTest, WhenGetHwTimeStampsAllocationThenValidPointerIsReturned) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -1139,7 +1138,7 @@ TEST_F(EventTest, getHwTimeStampsAllocationReturnsValidPointer) {
     EXPECT_GT(memoryStorageSize, 0u);
 }
 
-TEST_F(EventTest, hwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
+TEST_F(EventTest, WhenEventIsCreatedThenHwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -1156,19 +1155,19 @@ TEST_F(EventTest, hwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
     EXPECT_LE(timeStamps + 1, ptrOffset(memoryStorage, graphicsAllocationSize));
 }
 
-TEST_F(EventTest, IsPerfCounter_DisabledByNullQueue) {
+TEST_F(EventTest, GivenNullQueueWhenEventIsCreatedThenProfilingAndPerfCountersAreDisabled) {
     Event ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
     EXPECT_FALSE(ev.isProfilingEnabled());
     EXPECT_FALSE(ev.isPerfCountersEnabled());
 }
 
-TEST_F(EventTest, IsPerfCounter_DisabledByNoProfiling) {
+TEST_F(EventTest, GivenProfilingDisabledWhenEventIsCreatedThenPerfCountersAreDisabled) {
     Event ev(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     EXPECT_FALSE(ev.isProfilingEnabled());
     EXPECT_FALSE(ev.isPerfCountersEnabled());
 }
 
-TEST_F(InternalsEventTest, IsPerfCounter_DisabledByNoPerfCounter) {
+TEST_F(InternalsEventTest, GivenOnlyProfilingEnabledWhenEventIsCreatedThenPerfCountersAreDisabled) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pClDevice, props);
 
@@ -1180,7 +1179,7 @@ TEST_F(InternalsEventTest, IsPerfCounter_DisabledByNoPerfCounter) {
     delete pCmdQ;
 }
 
-TEST_F(EventTest, GivenCL_SUBMITTEDWhenpeekIsSubmittedThenTrue) {
+TEST_F(EventTest, GivenClSubmittedWhenpeekIsSubmittedThenTrueIsReturned) {
     Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     int32_t executionStatusSnapshot = CL_SUBMITTED;
     bool executionStatus = ev.peekIsSubmitted(executionStatusSnapshot);
@@ -1202,7 +1201,7 @@ TEST_F(EventTest, GivenCompletedEventWhenQueryingExecutionStatusAfterFlushThenCs
     EXPECT_EQ(previousTaskLevel, csr.peekTaskLevel());
 }
 
-HWTEST_F(EventTest, submitCommandOnEventCreatedOnMapBufferWithoutCommandUpdatesTaskCount) {
+HWTEST_F(EventTest, GivenEventCreatedOnMapBufferWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
     MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
 
     EXPECT_EQ(CompletionStamp::levelNotReady, ev.peekTaskCount());
@@ -1210,7 +1209,7 @@ HWTEST_F(EventTest, submitCommandOnEventCreatedOnMapBufferWithoutCommandUpdatesT
     EXPECT_EQ(0u, ev.peekTaskCount());
 }
 
-HWTEST_F(EventTest, submitCommandOnEventCreatedOnMapImageWithoutCommandUpdatesTaskCount) {
+HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
     MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
 
     EXPECT_EQ(CompletionStamp::levelNotReady, ev.peekTaskCount());
@@ -1324,7 +1323,7 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
     }
 }
 
-TEST_F(EventTest, addChildForEventUncompleted) {
+TEST_F(EventTest, GivenNotCompletedEventWhenAddingChildThenNumEventsBlockingThisIsGreaterThanZero) {
     VirtualEvent virtualEvent(pCmdQ, &mockContext);
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -1368,7 +1367,7 @@ HWTEST_F(EventTest, givenEventWithNotReadyTaskLevelWhenUnblockedThenGetTaskLevel
     EXPECT_EQ(csr.taskLevel, childEvent1.getTaskLevel());
 }
 
-TEST_F(EventTest, addChildForEventCompleted) {
+TEST_F(EventTest, GivenCompletedEventWhenAddingChildThenNumEventsBlockingThisIsZero) {
     VirtualEvent virtualEvent(pCmdQ, &mockContext);
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
