@@ -287,7 +287,6 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices() {
                 auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*gdi, OpenAdapterDesc.AdapterLuid);
                 if (hwDeviceId) {
                     hwDeviceIds.push_back(std::move(hwDeviceId));
-                    break;
                 }
             }
         }

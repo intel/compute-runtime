@@ -39,6 +39,7 @@ namespace NEO {
 namespace SysCalls {
 extern const wchar_t *igdrclFilePath;
 }
+extern uint32_t numRootDevicesToEnum;
 } // namespace NEO
 
 using namespace NEO;
@@ -118,6 +119,13 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntCo
 
     auto hwDeviceIds = OSInterface::discoverDevices();
     EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST(WddmDiscoverDevices, WhenMultipleRootDevicesAreAvailableThenAllAreDiscovered) {
+    VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
+    numRootDevicesToEnum = 3u;
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(numRootDevicesToEnum, hwDeviceIds.size());
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathContainsDchDThenAdapterIsDiscovered) {
