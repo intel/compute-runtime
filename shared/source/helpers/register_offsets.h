@@ -74,3 +74,6 @@ enum class AluRegisters : uint32_t {
 };
 
 constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
+
+constexpr uint32_t REG_GLOBAL_TIMESTAMP_LDW = 0x2358;
+constexpr uint32_t REG_GLOBAL_TIMESTAMP_UN = 0x235c;

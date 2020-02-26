@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -152,7 +153,7 @@ struct EventPoolImp : public EventPool {
 
   protected:
     const uint32_t eventSize = 64u;
-    const uint32_t eventAlignment = 64u;
+    const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 
     const uint32_t numEventTimestampTypes = 4u;
 };

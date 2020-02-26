@@ -146,9 +146,6 @@ struct CommandListCoreFamily : CommandListImp {
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents);
-    static constexpr uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize * sizeof(uint8_t);
-
-    static constexpr uint32_t regGlobalTimestamp = 0x2358;
 
     ze_result_t appendLaunchFunctionWithParams(ze_kernel_handle_t hFunction,
                                                const ze_group_count_t *pThreadGroupDimensions,

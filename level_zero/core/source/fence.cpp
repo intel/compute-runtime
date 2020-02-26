@@ -8,6 +8,7 @@
 #include "level_zero/core/source/fence.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
@@ -63,8 +64,8 @@ Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
 
 bool FenceImp::initialize() {
     NEO::AllocationProperties properties(
-        cmdQueue->getDevice()->getRootDeviceIndex(), 64u, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
-    properties.alignment = 64u;
+        cmdQueue->getDevice()->getRootDeviceIndex(), MemoryConstants::cacheLineSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    properties.alignment = MemoryConstants::cacheLineSize;
     allocation = cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(allocation == nullptr);
 

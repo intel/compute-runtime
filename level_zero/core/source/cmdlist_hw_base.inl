@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -92,7 +93,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
     commandContainer.addToResidencyContainer(&event->getAllocation());
     if (beforeWalker) {
         timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_GLOBAL_START);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, regGlobalTimestamp, timeStampAddress);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, timeStampAddress);
 
         timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_CONTEXT_START);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
