@@ -323,7 +323,6 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices() {
         if (fileDescriptor >= 0) {
             if (Drm::isi915Version(fileDescriptor)) {
                 hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
-                break;
             } else {
                 SysCalls::close(fileDescriptor);
             }

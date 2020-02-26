@@ -59,6 +59,23 @@ int testOpen(const char *fullPath, int, ...) {
     return openRetVal;
 };
 
+int openCounter = 1;
+int openWithCounter(const char *fullPath, int, ...) {
+    if (openCounter > 0) {
+        openCounter--;
+        return 1023; // valid file descriptor for ULT
+    }
+    return -1;
+};
+
+TEST(DrmTest, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openFull = openWithCounter;
+    openCounter = 2;
+    auto hwDeviceIds = OSInterface::discoverDevices();
+    EXPECT_EQ(2u, hwDeviceIds.size());
+}
+
 TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234");
