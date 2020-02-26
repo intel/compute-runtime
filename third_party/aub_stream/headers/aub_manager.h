@@ -35,7 +35,8 @@ class AubManager {
     virtual void writePhysicalMemoryPages(const void *memory, std::vector<PageInfo> &pages, size_t size, int hint) = 0;
     virtual void freeMemory(uint64_t gfxAddress, size_t size) = 0;
 
-    static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode);
+    static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize,
+                              bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
 };
 
 } // namespace aub_stream

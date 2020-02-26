@@ -15,7 +15,7 @@ std::string tbxServerIp = "127.0.0.1";
 
 namespace aub_stream {
 
-AubManager *AubManager::create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, bool localMemorySupported, uint32_t streamMode) {
+AubManager *AubManager::create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace) {
     return nullptr;
 }
 

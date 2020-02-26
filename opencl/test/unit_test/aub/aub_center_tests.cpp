@@ -31,7 +31,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->platform.eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile);
+    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->platform.eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile, platformDevices[0]->capabilityTable.gpuAddressSpace);
     MockAubCenter mockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 

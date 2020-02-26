@@ -55,12 +55,13 @@ class MockAubManager : public aub_stream::AubManager {
 
   public:
     MockAubManager(){};
-    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode) {
+    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace) {
         mockAubManagerParams.productFamily = productFamily;
         mockAubManagerParams.devicesCount = devicesCount;
         mockAubManagerParams.memoryBankSize = memoryBankSize;
         mockAubManagerParams.localMemorySupported = localMemorySupported;
         mockAubManagerParams.streamMode = streamMode;
+        mockAubManagerParams.gpuAddressSpace = gpuAddressSpace;
     }
     ~MockAubManager() override {}
 
@@ -136,6 +137,7 @@ class MockAubManager : public aub_stream::AubManager {
         uint64_t memoryBankSize = 0;
         bool localMemorySupported = false;
         uint32_t streamMode = 0xFFFFFFFF;
+        uint64_t gpuAddressSpace = 0xFFFFFFFFFFFF;
     } mockAubManagerParams;
 
   protected:
