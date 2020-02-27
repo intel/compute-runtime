@@ -41,12 +41,8 @@ struct OclocWrapper::Impl {
 
     void loadOcloc() {
         OclocLibrary ocloc;
-        std::string oclocLibName = getPath() + OCLOC_LIB_NAME;
+        std::string oclocLibName = "";
         ocloc.library.reset(NEO::OsLibrary::load(oclocLibName));
-        if (nullptr == ocloc.library) {
-            std::cout << "Error! Couldn't find " << OCLOC_LIB_NAME << ".\n";
-            return;
-        }
         if (nullptr == (ocloc.invoke = reinterpret_cast<pOclocInvoke>(ocloc.library->getProcAddress("oclocInvoke")))) {
             std::cout << "Error! Couldn't find OclocInvoke function.\n";
             return;

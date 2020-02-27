@@ -110,6 +110,29 @@ set(CLOC_LIB_SRCS
 )
 add_library(ocloc_lib SHARED ${CLOC_LIB_SRCS})
 
+set(CLOC_SRCS
+   ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
+   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.h
+   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.cpp
+   ${NEO_SOURCE_DIR}/offline_compiler/utilities/get_path.h
+)
+if(WIN32)
+  list(APPEND CLOC_SRCS
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_path.cpp
+
+  )
+else()
+  list(APPEND CLOC_SRCS
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
+    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
+    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_path.cpp
+  )
+endif()
+
+add_executable(ocloc ${CLOC_SRCS} ${NEO_SOURCE_DIR}/offline_compiler/main.cpp ${CLOC_LIB_SRCS})
+
 add_subdirectories()
 
 create_project_source_tree(ocloc_lib)
@@ -132,38 +155,24 @@ target_compile_definitions(ocloc_lib PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(MSVC)
   target_link_libraries(ocloc_lib dbghelp)
+  target_link_libraries(ocloc dbghelp)
 endif()
 
 if(UNIX)
   target_link_libraries(ocloc_lib dl pthread)
+  target_link_libraries(ocloc dl pthread)
 endif()
 
 set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB} PARENT_SCOPE)
 
-set(CLOC_SRCS
-   ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
-   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.h
-   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.cpp
-   ${NEO_SOURCE_DIR}/offline_compiler/utilities/get_path.h
-)
-if(WIN32)
-  list(APPEND CLOC_SRCS
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_path.cpp
-
-  )
-else()
-  list(APPEND CLOC_SRCS
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_path.cpp
-  )
-endif()
-
-add_executable(ocloc ${CLOC_SRCS} ${NEO_SOURCE_DIR}/offline_compiler/main.cpp)
 add_dependencies(ocloc ocloc_lib)
-target_link_libraries(ocloc ocloc_lib)
+
+target_include_directories(ocloc BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
+target_include_directories(ocloc BEFORE PRIVATE ${IGA_INCLUDE_DIR})
+
+target_compile_definitions(ocloc PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} 
+                                        IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX} MOCKABLE_VIRTUAL=)
+target_compile_definitions(ocloc PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
 
 set(OCLOC_LIB_NAME "ocloc")
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)

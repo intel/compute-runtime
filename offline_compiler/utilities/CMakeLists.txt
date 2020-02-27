@@ -28,3 +28,4 @@ else()
 endif()
 
 target_sources(ocloc_lib PRIVATE ${CLOC_LIB_SRCS_UTILITIES})
+target_sources(ocloc PRIVATE ${CLOC_LIB_SRCS_UTILITIES})
