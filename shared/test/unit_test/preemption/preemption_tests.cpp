@@ -355,7 +355,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
         auto builtIns = new MockBuiltins();
 
         builtIns->overrideSipKernel(std::unique_ptr<NEO::SipKernel>(new NEO::SipKernel{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()}));
-        mockDevice->getExecutionEnvironment()->builtins.reset(builtIns);
+        mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->builtins.reset(builtIns);
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode, nullptr);
     }
     EXPECT_EQ(0U, cmdStream.getUsed());

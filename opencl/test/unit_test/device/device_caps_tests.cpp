@@ -228,9 +228,9 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedT
 
         auto executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->builtins.reset(builtIns);
+        executionEnvironment->rootDeviceEnvironments[0u]->builtins.reset(builtIns);
         auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(platformDevices[0], executionEnvironment, 0u));
-        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
+        ASSERT_EQ(builtIns, device->getBuiltIns());
         EXPECT_FALSE(MockSipData::called);
     }
 }

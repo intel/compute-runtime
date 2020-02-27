@@ -24,8 +24,9 @@ ExecutionEnvironment::ExecutionEnvironment() {
 
 ExecutionEnvironment::~ExecutionEnvironment() {
     debugger.reset();
-    compilerInterface.reset();
-    builtins.reset();
+    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
+        rootDeviceEnvironment->builtins.reset();
+    }
     if (memoryManager) {
         memoryManager->commonCleanup();
     }
@@ -75,27 +76,6 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
         MemoryManager::maxOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
     }
-}
-
-CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
-    if (this->compilerInterface.get() == nullptr) {
-        std::lock_guard<std::mutex> autolock(this->mtx);
-        if (this->compilerInterface.get() == nullptr) {
-            auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
-            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
-        }
-    }
-    return this->compilerInterface.get();
-}
-
-BuiltIns *ExecutionEnvironment::getBuiltIns() {
-    if (this->builtins.get() == nullptr) {
-        std::lock_guard<std::mutex> autolock(this->mtx);
-        if (this->builtins.get() == nullptr) {
-            this->builtins = std::make_unique<BuiltIns>();
-        }
-    }
-    return this->builtins.get();
 }
 
 bool ExecutionEnvironment::isFullRangeSvm() const {

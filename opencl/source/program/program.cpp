@@ -224,7 +224,7 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
     std::lock_guard<std::mutex> lock(mutex);
 
     if (!areSpecializationConstantsInitialized) {
-        auto pCompilerInterface = this->executionEnvironment.getCompilerInterface();
+        auto pCompilerInterface = this->pDevice->getCompilerInterface();
         if (nullptr == pCompilerInterface) {
             return CL_OUT_OF_HOST_MEMORY;
         }

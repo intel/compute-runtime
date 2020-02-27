@@ -10,10 +10,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace NEO {
 
+class BuiltIns;
+class CompilerInterface;
 class AubCenter;
 class GmmClientContext;
 class GmmHelper;
@@ -35,12 +38,20 @@ struct RootDeviceEnvironment {
     void initGmm();
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
+    MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
+    BuiltIns *getBuiltIns();
 
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
+
+    std::unique_ptr<BuiltIns> builtins;
+    std::unique_ptr<CompilerInterface> compilerInterface;
     ExecutionEnvironment &executionEnvironment;
+
+  private:
+    std::mutex mtx;
 };
 } // namespace NEO

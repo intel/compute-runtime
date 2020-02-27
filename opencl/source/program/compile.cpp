@@ -120,7 +120,7 @@ cl_int Program::compile(
 
         std::vector<uint8_t> compileData = elfEncoder.encode();
 
-        CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
+        CompilerInterface *pCompilerInterface = pDevice->getCompilerInterface();
         if (!pCompilerInterface) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;

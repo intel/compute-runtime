@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/destructor_counted.h"
@@ -150,20 +151,19 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     executionEnvironment->initializeMemoryManager();
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
-static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) +
-                                                  sizeof(std::unique_ptr<HardwareInfo>) +
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
-                                                  (is64bit ? 48 : 28),
+                                                  (is64bit ? 32 : 20),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
 
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
-        GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
-    };
     struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 7> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+    };
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
+        GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
     };
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 5> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -174,11 +174,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
-    struct BuiltinsMock : public DestructorCounted<BuiltIns, 2> {
-        BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
-    };
-    struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 1> {
+    struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 2> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+    };
+    struct BuiltinsMock : public DestructorCounted<BuiltIns, 1> {
+        BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct SourceLevelDebuggerMock : public DestructorCounted<SourceLevelDebugger, 0> {
         SourceLevelDebuggerMock(uint32_t &destructorId) : DestructorCounted(destructorId, nullptr) {}
@@ -192,8 +192,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId);
-    executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
-    executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
+    executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);

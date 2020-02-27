@@ -85,16 +85,14 @@ std::vector<const char *> KernelNames{
     "CopyBuffer",
 };
 
-class MockCompIfaceExecutionEnvironment : public ExecutionEnvironment {
+class NoCompilerInterfaceRootDeviceEnvironment : public RootDeviceEnvironment {
   public:
-    MockCompIfaceExecutionEnvironment(CompilerInterface *compilerInterface) : compilerInterface(compilerInterface) {}
-
-    CompilerInterface *getCompilerInterface() override {
-        return compilerInterface;
+    NoCompilerInterfaceRootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment) {
     }
 
-  protected:
-    CompilerInterface *compilerInterface;
+    CompilerInterface *getCompilerInterface() override {
+        return nullptr;
+    }
 };
 
 class FailingGenBinaryProgram : public MockProgram {
@@ -680,6 +678,7 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
 
 TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     KernelBinaryHelper kbHelper(BinaryFileName, true);
+    auto device = pPlatform->getClDevice(0);
 
     cl_device_id deviceList = {0};
     char data[4] = {0};
@@ -718,12 +717,16 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
 
     // fail build - CompilerInterface cannot be obtained
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
-    auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
+
+    auto executionEnvironment = device->getExecutionEnvironment();
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    auto p2 = std::make_unique<MockProgram>(*executionEnvironment);
+    p2->setDevice(&device->getDevice());
     retVal = p2->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
-    noCompilerInterfaceExecutionEnvironment.reset();
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     // fail build - any build error (here caused by specifying unrecognized option)
     retVal = pProgram->build(0, nullptr, "-invalid-option", nullptr, nullptr, false);
@@ -731,7 +734,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
 
     // fail build - linked code is corrupted and cannot be postprocessed
     auto p3 = std::make_unique<FailingGenBinaryProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
-    ClDevice *device = pPlatform->getClDevice(0);
     p3->setDevice(&device->getDevice());
     std::string testFile;
     size_t sourceSize;
@@ -985,12 +987,16 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     delete p3;
 
     // fail compilation - CompilerInterface cannot be obtained
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
-    auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
+    auto device = pContext->getDevice(0);
+    auto executionEnvironment = device->getExecutionEnvironment();
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    auto p2 = std::make_unique<MockProgram>(*executionEnvironment);
+    p2->setDevice(&device->getDevice());
     retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
-    noCompilerInterfaceExecutionEnvironment.reset();
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     // fail compilation - any compilation error (here caused by specifying unrecognized option)
     retVal = pProgram->compile(0, nullptr, "-invalid-option", 0, nullptr, nullptr, nullptr, nullptr);
@@ -1029,11 +1035,10 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
 };
 
 TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
-    auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
-    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
-    auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(*pDevice->getExecutionEnvironment());
     program->setDevice(&pDevice->getDevice());
     program->sourceCode = "__kernel mock() {}";
 
@@ -1214,8 +1219,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
-    auto p = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1233,9 +1236,16 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
     retVal = pProgram->link(0, nullptr, CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
+    auto device = pContext->getDevice(0);
+    auto executionEnvironment = device->getExecutionEnvironment();
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    auto failingProgram = std::make_unique<MockProgram>(*executionEnvironment);
+    failingProgram->setDevice(&device->getDevice());
     // fail library creation - CompilerInterface cannot be obtained
-    retVal = p->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
+    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 }
 
 class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
@@ -1901,11 +1911,12 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
-    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockCompIfaceExecutionEnvironment>(nullptr);
-    auto program = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
+    auto pDevice = pContext->getDevice(0);
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    auto program = std::make_unique<MockProgram>(*executionEnvironment);
     EXPECT_NE(nullptr, program);
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
     program->setDevice(&pDevice->getDevice());
 
     // Load a binary program file
@@ -1922,14 +1933,14 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
     // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
     retVal = program->rebuildProgramFromIr();
     EXPECT_NE(CL_SUCCESS, retVal);
+    std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 }
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
-    auto cip = std::make_unique<MockCompilerInterfaceCaptureBuildOptions>();
-    MockCompIfaceExecutionEnvironment executionEnvironment(cip.get());
-    auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
-    cl_device_id deviceId = pContext->getDevice(0);
-    ClDevice *pDevice = castToObject<ClDevice>(deviceId);
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(*pDevice->getExecutionEnvironment());
     program->setDevice(&pDevice->getDevice());
     program->sourceCode = "__kernel mock() {}";
     program->createdFrom = Program::CreatedFrom::SOURCE;
@@ -2472,7 +2483,7 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     compilerInterface->SetIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
     compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
-    pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
 
     std::string receivedInput;
     MockCompilerDebugVars debugVars = {};
@@ -2500,7 +2511,7 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     auto device = castToObject<ClDevice>(pContext->getDevice(0));
 
     auto compilerInterface = new MockCompilerInterface();
-    pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
     auto compilerMain = new MockCIFMain();
     compilerInterface->SetIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
@@ -2608,6 +2619,7 @@ class AdditionalOptionsMockProgram : public MockProgram {
 
 TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
     AdditionalOptionsMockProgram program;
+    program.setDevice(pDevice);
     cl_device_id device = pClDevice;
 
     program.build(1, &device, nullptr, nullptr, nullptr, false);
@@ -2673,8 +2685,8 @@ struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
     }
 };
 
-struct SpecializationConstantExecutionEnvironmentMock : public ExecutionEnvironment {
-    SpecializationConstantExecutionEnvironmentMock() {
+struct SpecializationConstantRootDeviceEnvironemnt : public RootDeviceEnvironment {
+    SpecializationConstantRootDeviceEnvironemnt(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment) {
         compilerInterface.reset(new SpecializationConstantCompilerInterfaceMock());
     }
     CompilerInterface *getCompilerInterface() override {
@@ -2684,18 +2696,20 @@ struct SpecializationConstantExecutionEnvironmentMock : public ExecutionEnvironm
 
 struct setProgramSpecializationConstantTests : public ::testing::Test {
     void SetUp() override {
-        mockProgram.reset(new SpecializationConstantProgramMock(executionEnvironment));
+        mockCompiler = new SpecializationConstantCompilerInterfaceMock();
+        auto rootDeviceEnvironment = device.getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+        mockProgram.reset(new SpecializationConstantProgramMock(*device.getExecutionEnvironment()));
         mockProgram->isSpirV = true;
-        mockProgram->SetDevice(&device.getDevice());
+        mockProgram->setDevice(&device);
 
         EXPECT_FALSE(mockProgram->areSpecializationConstantsInitialized);
         EXPECT_EQ(0, mockCompiler->counter);
     }
 
-    SpecializationConstantExecutionEnvironmentMock executionEnvironment;
-    SpecializationConstantCompilerInterfaceMock *mockCompiler = reinterpret_cast<SpecializationConstantCompilerInterfaceMock *>(executionEnvironment.getCompilerInterface());
+    SpecializationConstantCompilerInterfaceMock *mockCompiler = nullptr;
     std::unique_ptr<SpecializationConstantProgramMock> mockProgram;
-    MockClDevice device{new MockDevice};
+    MockDevice device;
 
     int specValue = 1;
 };
@@ -2715,7 +2729,7 @@ TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConsta
 }
 
 TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoReturnValueWhenSetProgramSpecializationConstantThenErrorIsReturned) {
-    reinterpret_cast<SpecializationConstantCompilerInterfaceMock *>(executionEnvironment.getCompilerInterface())->returnError();
+    mockCompiler->returnError();
 
     auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
 
@@ -2725,14 +2739,12 @@ TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoRe
 }
 
 TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWhenSetProgramSpecializationConstantThenErrorIsReturned) {
-    struct MockExecutionEnvironment : public ExecutionEnvironment {
-        CompilerInterface *getCompilerInterface() override {
-            return compilerInterface.get();
-        }
-    };
+    auto executionEnvironment = new MockExecutionEnvironment();
+    executionEnvironment->rootDeviceEnvironments[0] = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    MockDevice mockDevice(executionEnvironment, 0);
+    SpecializationConstantProgramMock mockProgram(*executionEnvironment);
+    mockProgram.setDevice(&mockDevice);
 
-    MockExecutionEnvironment executionEnvironment;
-    SpecializationConstantProgramMock mockProgram(executionEnvironment);
     mockProgram.isSpirV = true;
     int specValue = 1;
 

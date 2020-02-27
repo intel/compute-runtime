@@ -157,6 +157,7 @@ class MockClDevice : public ClDevice {
     }
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
+    BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
 
     MockDevice &device;
     DeviceInfo &deviceInfo;

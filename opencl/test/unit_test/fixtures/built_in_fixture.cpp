@@ -21,7 +21,7 @@ BuiltInFixture::BuiltInFixture() : pBuiltIns(nullptr) {
 
 void BuiltInFixture::SetUp(Device *pDevice) {
     // create an instance of the builtins
-    pBuiltIns = pDevice->getExecutionEnvironment()->getBuiltIns();
+    pBuiltIns = pDevice->getBuiltIns();
     pBuiltIns->setCacheingEnableState(false);
 
     // set mock compiler to return expected kernel...

@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 
@@ -113,7 +114,9 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
 
     auto builtIns = new MockBuiltins();
-    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
@@ -127,7 +130,9 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
 
     auto builtIns = new MockBuiltins();
-    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
@@ -141,7 +146,9 @@ TEST_F(PlatformTest, givenDisabledPreemptionInactiveSourceLevelDebuggerWhenIniti
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
 
     auto builtIns = new MockBuiltins();
-    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     auto sourceLevelDebugger = new MockSourceLevelDebugger();
     sourceLevelDebugger->setActive(false);
     pPlatform->peekExecutionEnvironment()->debugger.reset(sourceLevelDebugger);
@@ -158,7 +165,9 @@ TEST_F(PlatformTest, givenDisabledPreemptionActiveSourceLevelDebuggerWhenInitial
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
 
     auto builtIns = new MockBuiltins();
-    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    auto executionEnvironment = pPlatform->peekExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     pPlatform->peekExecutionEnvironment()->debugger.reset(new MockActiveSourceLevelDebugger());
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);

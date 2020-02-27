@@ -59,6 +59,8 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
     std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
     std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
 
+    auto &baseDevice = device->getDevice();
+
     mockCsr->flushTask(commandStream,
                        0,
                        *heap.get(),
@@ -66,10 +68,10 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        *heap.get(),
                        0,
                        dispatchFlags,
-                       device->getDevice());
+                       baseDevice);
 
-    auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
-    auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
+    auto sipType = SipKernel::getSipKernelType(baseDevice.getHardwareInfo().platform.eRenderCoreFamily, true);
+    auto sipAllocation = baseDevice.getBuiltIns()->getSipKernel(sipType, baseDevice).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {
@@ -109,7 +111,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            device->getDevice());
 
         auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
-        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
+        auto sipAllocation = device->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);
@@ -171,7 +173,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            device->getDevice());
 
         auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
-        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
+        auto sipAllocation = device->getBuiltIns()->getSipKernel(sipType, device->getDevice()).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);

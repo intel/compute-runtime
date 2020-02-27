@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/device_factory.h"
 
 namespace NEO {
 

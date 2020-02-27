@@ -100,7 +100,7 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
 }
 
 BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
-    auto &builtins = *device.getExecutionEnvironment()->getBuiltIns();
+    auto &builtins = *device.getBuiltIns();
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = builtins.BuiltinOpsBuilders[operationId];
     switch (operation) {

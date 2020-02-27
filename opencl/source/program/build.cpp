@@ -70,7 +70,7 @@ cl_int Program::build(
             extractInternalOptions(options);
             applyAdditionalOptions();
 
-            CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
+            CompilerInterface *pCompilerInterface = pDevice->getCompilerInterface();
             if (!pCompilerInterface) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;

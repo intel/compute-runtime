@@ -714,7 +714,7 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
 
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
-    auto kernelsLib = device.getExecutionEnvironment()->getBuiltIns();
+    auto kernelsLib = device.getBuiltIns();
     auto &operationBuilder = kernelsLib->BuiltinOpsBuilders[operationId];
     switch (operation) {
     case EBuiltInOps::CopyBufferToBuffer:

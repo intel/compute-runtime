@@ -41,7 +41,7 @@ class CompilerInterfaceTest : public DeviceFixture,
         this->pCompilerInterface = new MockCompilerInterface();
         bool initRet = pCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
         ASSERT_TRUE(initRet);
-        pDevice->getExecutionEnvironment()->compilerInterface.reset(pCompilerInterface);
+        pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
 
         std::string testFile;
 

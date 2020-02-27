@@ -137,10 +137,10 @@ inline GmmHelper *Device::getGmmHelper() const {
 }
 
 inline CompilerInterface *Device::getCompilerInterface() const {
-    return executionEnvironment->getCompilerInterface();
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
 }
 inline BuiltIns *Device::getBuiltIns() const {
-    return executionEnvironment->getBuiltIns();
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
 }
 
 inline std::atomic<uint32_t> &Device::getSelectorCopyEngine() {

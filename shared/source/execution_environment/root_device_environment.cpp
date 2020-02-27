@@ -7,6 +7,9 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include "shared/source/built_ins/built_ins.h"
+#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -42,4 +45,24 @@ void RootDeviceEnvironment::initGmm() {
     }
 }
 
+CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
+    if (this->compilerInterface.get() == nullptr) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        if (this->compilerInterface.get() == nullptr) {
+            auto cache = std::make_unique<CompilerCache>(getDefaultCompilerCacheConfig());
+            this->compilerInterface.reset(CompilerInterface::createInstance(std::move(cache), true));
+        }
+    }
+    return this->compilerInterface.get();
+}
+
+BuiltIns *RootDeviceEnvironment::getBuiltIns() {
+    if (this->builtins.get() == nullptr) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        if (this->builtins.get() == nullptr) {
+            this->builtins = std::make_unique<BuiltIns>();
+        }
+    }
+    return this->builtins.get();
+}
 } // namespace NEO
