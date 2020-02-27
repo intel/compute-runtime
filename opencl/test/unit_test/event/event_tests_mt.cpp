@@ -24,7 +24,7 @@ class SmallMockEvent : public Event {
     }
 };
 
-TEST(EventTestMt, waitForEventsDoesNotReturnUntilSetStatusCompletes) {
+TEST(EventTestMt, WhenWaitingForEventsThenDoNotReturnUntilAllStatusesSetToComplete) {
 
     for (uint32_t i = 0; i < 100; i++) {
         std::unique_ptr<UserEvent> userEvent = std::unique_ptr<UserEvent>(new UserEvent(nullptr));
