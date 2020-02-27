@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "offline_compiler/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 
 #include "helper.h"
 #include "iga_wrapper.h"

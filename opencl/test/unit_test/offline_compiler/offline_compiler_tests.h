@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "offline_compiler/multi_command.h"
-#include "offline_compiler/offline_compiler.h"
+#include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
 
 #include "gtest/gtest.h"
 #include <CL/cl.h>

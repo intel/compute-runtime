@@ -5,10 +5,9 @@
  *
  */
 
+#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/offline_compiler/source/utilities/linux/safety_guard_linux.h"
 #include "shared/source/os_interface/os_library.h"
-
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/linux/safety_guard_linux.h"
 
 using namespace NEO;
 

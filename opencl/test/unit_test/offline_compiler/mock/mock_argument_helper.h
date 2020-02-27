@@ -5,7 +5,7 @@
  *
  */
 
-#include "offline_compiler/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 
 #include <map>
 #include <string>

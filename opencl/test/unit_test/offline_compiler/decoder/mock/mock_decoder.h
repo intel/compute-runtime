@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "offline_compiler/decoder/binary_decoder.h"
+#include "shared/offline_compiler/source/decoder/binary_decoder.h"
 
 #include "mock_iga_wrapper.h"
 

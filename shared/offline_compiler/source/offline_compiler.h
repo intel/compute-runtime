@@ -7,11 +7,10 @@
 
 #pragma once
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
-
-#include "offline_compiler/ocloc_arg_helper.h"
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

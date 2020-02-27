@@ -18,9 +18,9 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/safety_guard_caller_windows.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
+    ${OCLOC_DIRECTORY}/source/utilities/windows/safety_guard_windows.h
+    ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.h
   )
 else()
   list(APPEND CLOC_SEGFAULT_TEST_SOURCES

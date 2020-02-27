@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "offline_compiler/decoder/iga_wrapper.h"
+#include "shared/offline_compiler/source/decoder/iga_wrapper.h"
 
 #include <map>
 #include <string>

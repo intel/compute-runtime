@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "offline_compiler/decoder/helper.h"
-#include "offline_compiler/decoder/iga_wrapper.h"
-#include "offline_compiler/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/decoder/helper.h"
+#include "shared/offline_compiler/source/decoder/iga_wrapper.h"
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 
 #include <memory>
 #include <string>

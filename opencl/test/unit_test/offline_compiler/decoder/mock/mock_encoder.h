@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/source/helpers/hash.h"
 
-#include "offline_compiler/decoder/binary_encoder.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
 #include "mock_iga_wrapper.h"

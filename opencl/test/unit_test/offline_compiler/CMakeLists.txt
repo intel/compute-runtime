@@ -8,10 +8,10 @@ project(ocloc_tests)
 
 
 set(IGDRCL_SRCS_cloc
-${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
-${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.cpp
-${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
-${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.cpp
+${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
+${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
+${OCLOC_DIRECTORY}/source/offline_compiler.cpp
+${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
 )
 
 set(IGDRCL_SRCS_offline_compiler_mock
@@ -24,23 +24,23 @@ ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
 )
 
 set(CLOC_LIB_SRCS_UTILITIES
-  ${NEO_SOURCE_DIR}/offline_compiler/utilities/safety_caller.h
-  ${NEO_SOURCE_DIR}/offline_compiler/utilities//get_current_dir.h
+  ${OCLOC_DIRECTORY}/source/utilities/safety_caller.h
+  ${OCLOC_DIRECTORY}/source/utilities//get_current_dir.h
 )
 
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_UTILITIES
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/safety_caller_windows.cpp
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_current_dir_windows.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/windows/safety_caller_windows.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/windows/safety_guard_windows.h
+    ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.h
+    ${OCLOC_DIRECTORY}/source/utilities/windows/get_current_dir_windows.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_UTILITIES
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/safety_caller_linux.cpp
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/safety_guard_linux.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_current_dir_linux.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/linux/safety_caller_linux.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/linux/safety_guard_linux.h
+    ${OCLOC_DIRECTORY}/source/utilities/linux/get_current_dir_linux.cpp
   )
 endif()
 

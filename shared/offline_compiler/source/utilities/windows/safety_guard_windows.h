@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/offline_compiler/source/utilities/windows/seh_exception.h"
 #include "shared/source/helpers/abort.h"
-
-#include "offline_compiler/utilities/windows/seh_exception.h"
 
 #include <setjmp.h>
 

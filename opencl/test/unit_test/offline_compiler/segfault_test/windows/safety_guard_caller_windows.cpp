@@ -5,7 +5,8 @@
  *
  */
 
-#include "offline_compiler/utilities/windows/safety_guard_windows.h"
+#include "shared/offline_compiler/source/utilities/windows/safety_guard_windows.h"
+
 #include "opencl/test/unit_test/offline_compiler/segfault_test/segfault_helper.h"
 
 void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper) {

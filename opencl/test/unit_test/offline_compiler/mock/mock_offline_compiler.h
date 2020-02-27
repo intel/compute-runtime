@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "offline_compiler/offline_compiler.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
 
 #include <string>
 

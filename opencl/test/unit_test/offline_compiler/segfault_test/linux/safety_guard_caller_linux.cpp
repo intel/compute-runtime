@@ -5,7 +5,7 @@
  *
  */
 
-#include "offline_compiler/utilities/linux/safety_guard_linux.h"
+#include "shared/offline_compiler/source/utilities/linux/safety_guard_linux.h"
 
 #include "../segfault_helper.h"
 

@@ -5,16 +5,14 @@
  *
  */
 
-#include "binary_decoder.h"
+#include "shared/offline_compiler/source/decoder/binary_decoder.h"
 
+#include "shared/offline_compiler/source/decoder/helper.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/ptr_math.h"
-
-#include "offline_compiler/offline_compiler.h"
-
-#include "helper.h"
 
 #include <cstring>
 #include <fstream>

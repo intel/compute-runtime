@@ -5,7 +5,7 @@
  *
  */
 
-#include "offline_compiler/multi_command.h"
+#include "shared/offline_compiler/source/multi_command.h"
 
 namespace NEO {
 int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &allArgs) {

@@ -5,11 +5,10 @@
  *
  */
 
-#include "offline_compiler/multi_command.h"
-#include "offline_compiler/offline_compiler.h"
-
-#include "decoder/binary_decoder.h"
-#include "decoder/binary_encoder.h"
+#include "shared/offline_compiler/source/decoder/binary_decoder.h"
+#include "shared/offline_compiler/source/decoder/binary_encoder.h"
+#include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
 
 using namespace NEO;
 

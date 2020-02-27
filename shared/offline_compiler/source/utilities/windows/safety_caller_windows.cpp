@@ -5,8 +5,8 @@
  *
  */
 
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/windows/safety_guard_windows.h"
+#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/offline_compiler/source/utilities/windows/safety_guard_windows.h"
 
 using namespace NEO;
 

@@ -5,9 +5,8 @@
  *
  */
 
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/source/helpers/hw_helper.h"
-
-#include "offline_compiler/ocloc_fatbinary.h"
 
 #include "gtest/gtest.h"
 

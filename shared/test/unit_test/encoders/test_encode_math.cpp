@@ -159,7 +159,6 @@ HWTEST_F(CommandEncoderMathTest, appendsAGreaterThanPredicate) {
     EXPECT_EQ(cmdIMM->getRegisterOffset(), CS_GPR_R1);
     EXPECT_EQ(cmdIMM->getDataDword(), 17u);
 
-
     itor = find<MI_MATH *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());
 

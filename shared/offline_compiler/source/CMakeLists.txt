@@ -22,27 +22,27 @@ set(CLOC_LIB_SRCS_LIB
   ${NEO_CORE_DIRECTORY}/helpers/debug_helpers.cpp
   ${NEO_CORE_DIRECTORY}/helpers/file_io.cpp
   ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.h
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.h
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/helper.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/helper.h
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.h
-  ${NEO_SOURCE_DIR}/offline_compiler/decoder/translate_platform_base.h
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_api.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_api.h
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_arg_helper.h
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_arg_helper.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/ocloc_fatbinary.h
-  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_helper.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler.h
-  ${NEO_SOURCE_DIR}/offline_compiler/multi_command.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/multi_command.h
-  ${NEO_SOURCE_DIR}/offline_compiler/offline_compiler_options.cpp
-  ${NEO_SOURCE_DIR}/offline_compiler/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
+  ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
+  ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
+  ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
+  ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.h
+  ${OCLOC_DIRECTORY}/source/decoder/helper.cpp
+  ${OCLOC_DIRECTORY}/source/decoder/helper.h
+  ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h
+  ${OCLOC_DIRECTORY}/source/decoder/translate_platform_base.h
+  ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_api.h
+  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
+  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
+  ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
+  ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
+  ${OCLOC_DIRECTORY}/source/offline_compiler.h
+  ${OCLOC_DIRECTORY}/source/multi_command.cpp
+  ${OCLOC_DIRECTORY}/source/multi_command.h
+  ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
+  ${OCLOC_DIRECTORY}/source/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
   ${NEO_CORE_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
   ${NEO_CORE_DIRECTORY}/compiler_interface/create_main.cpp
   ${NEO_CORE_DIRECTORY}/helpers/hw_info.cpp
@@ -52,12 +52,12 @@ set(CLOC_LIB_SRCS_LIB
 
 if(${IGA_HEADERS_AVAILABLE})
   set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}
-    ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_wrapper.cpp
-    ${NEO_SOURCE_DIR}/offline_compiler/decoder${BRANCH_DIR_SUFFIX}/translate_platform.cpp
+    ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.cpp
+    ${OCLOC_DIRECTORY}/source/decoder${BRANCH_DIR_SUFFIX}/translate_platform.cpp
   )
 else()
   set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB}
-    ${NEO_SOURCE_DIR}/offline_compiler/decoder/iga_stubs.cpp
+    ${OCLOC_DIRECTORY}/source/decoder/iga_stubs.cpp
   )
 endif()
 
@@ -112,26 +112,26 @@ add_library(ocloc_lib SHARED ${CLOC_LIB_SRCS})
 
 set(CLOC_SRCS
    ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
-   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.h
-   ${NEO_SOURCE_DIR}/offline_compiler/ocloc_wrapper.cpp
-   ${NEO_SOURCE_DIR}/offline_compiler/utilities/get_path.h
+   ${OCLOC_DIRECTORY}/source/ocloc_wrapper.h
+   ${OCLOC_DIRECTORY}/source/ocloc_wrapper.cpp
+   ${OCLOC_DIRECTORY}/source/utilities/get_path.h
 )
 if(WIN32)
   list(APPEND CLOC_SRCS
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/windows/get_path.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/windows/get_path.cpp
 
   )
 else()
   list(APPEND CLOC_SRCS
     ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
     ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
-    ${NEO_SOURCE_DIR}/offline_compiler/utilities/linux/get_path.cpp
+    ${OCLOC_DIRECTORY}/source/utilities/linux/get_path.cpp
   )
 endif()
 
-add_executable(ocloc ${CLOC_SRCS} ${NEO_SOURCE_DIR}/offline_compiler/main.cpp ${CLOC_LIB_SRCS})
+add_executable(ocloc ${CLOC_SRCS} ${OCLOC_DIRECTORY}/source/main.cpp ${CLOC_LIB_SRCS})
 
 add_subdirectories()
 

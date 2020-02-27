@@ -5,14 +5,13 @@
  *
  */
 
-#include "offline_compiler/ocloc_fatbinary.h"
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
+#include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/safety_caller.h"
 
 #include "compiler_options.h"
 #include "igfxfmid.h"

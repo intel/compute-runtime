@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/source/helpers/array_count.h"
 
-#include "offline_compiler/decoder/binary_decoder.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
 
 #include "gmock/gmock.h"

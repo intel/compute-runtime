@@ -109,6 +109,11 @@ set(NEO_RUNTIME_SOURCE_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_SUB_DIR}")
 set(NEO_RUNTIME_TESTS_SUB_DIR "opencl/test/unit_test")
 set(NEO_RUNTIME_TESTS_DIR "${NEO_SOURCE_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR}")
 
+# Set the ocloc directory
+if(NOT DEFINED OCLOC_DIRECTORY)
+  set(OCLOC_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shared/offline_compiler)
+endif()
+
 # Set the core source directory
 if(NOT DEFINED NEO_CORE_DIRECTORY)
   set(NEO_CORE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shared/source)
@@ -820,7 +825,7 @@ if(MSVC)
     endif()
 endif()
 
-add_subdirectory_unique(offline_compiler ${NEO_BUILD_DIR}/offline_compiler)
+add_subdirectory_unique(${OCLOC_DIRECTORY} ${NEO_BUILD_DIR}/offline_compiler)
 target_compile_definitions(ocloc_lib PRIVATE MOCKABLE_VIRTUAL=)
 
 if(DONT_CARE_OF_VIRTUALS)
