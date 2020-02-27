@@ -95,6 +95,7 @@ class TimestampPacketContainer : public NonCopyableClass {
 };
 
 struct TimestampPacketDependencies : public NonCopyableClass {
+    TimestampPacketContainer cacheFlushNodes;
     TimestampPacketContainer previousEnqueueNodes;
     TimestampPacketContainer barrierNodes;
     TimestampPacketContainer auxToNonAuxNodes;

@@ -208,9 +208,13 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
         }
 
-        if (blitEnqueue && !blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+        if (blitEnqueue) {
             auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
-            timestampPacketDependencies.barrierNodes.add(allocator->getTag());
+
+            timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+            if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+                timestampPacketDependencies.barrierNodes.add(allocator->getTag());
+            }
         }
 
         if (nodesCount > 0) {
@@ -461,12 +465,21 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
         eventsRequest.fillCsrDependencies(blitProperties.csrDependencies, *blitCommandStreamReceiver,
                                           CsrDependencies::DependenciesType::All);
 
+        blitProperties.csrDependencies.push_back(&timestampPacketDependencies.cacheFlushNodes);
         blitProperties.csrDependencies.push_back(&timestampPacketDependencies.previousEnqueueNodes);
         blitProperties.csrDependencies.push_back(&timestampPacketDependencies.barrierNodes);
     }
 
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
+
+    auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
+                                               offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+        commandStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        cacheFlushTimestampPacketGpuAddress, 0, true, device->getHardwareInfo());
+
     TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode);
 
     return blitProperties;
@@ -920,6 +933,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     if (timestampPacketContainer) {
         timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
         timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());
+        timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
     }
 
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
