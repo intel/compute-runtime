@@ -7,13 +7,17 @@
 Start with a patch (we prefer smaller self-contained incremental changes vs. large blobs of code).
 When adding new code, please also add corresponding unit level tests (ULT). Added ULTs should cover
 all the decision points introduced by the commit and should fail if executed without the code changes.
-Make sure it builds and passes _all_ ULT tests. For details about what compilers and build configurations we expect, 
-refer to instructions for [building](https://github.com/intel/compute-runtime/blob/master/BUILD.md) the driver.
-Make sure you adhere to our coding standard - this will be verified by clang-format and clang-tidy
+Make sure it builds and passes _all_ ULT tests. For details about what compilers
+and build configurations we expect, refer to instructions for
+[building](https://github.com/intel/compute-runtime/blob/master/BUILD.md) the driver.
+Make sure you adhere to our
+[coding standard](https://github.com/intel/compute-runtime/blob/master/GUIDELINES.md);
+this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
 
 ### 2. Certificate of origin
-In order to get a clear contribution chain of trust we use the [signed-off-by language](https://01.org/community/signed-process) used by the Linux kernel project. 
+In order to get a clear contribution chain of trust we use the
+[signed-off-by language](https://01.org/community/signed-process) used by the Linux kernel project.
 Please make sure your commit message adheres to this guideline.
 
 ### 3. Patch submission
@@ -27,7 +31,8 @@ the requirements above. Make sure your commit message follows these rules:
 
 ### 4. Initial (cursory) review
 
-One of NEO maintainers will do an initial (brief) review of your code. We will let you know if anything major is missing.
+One of NEO maintainers will do an initial (brief) review of your code.
+We will let you know if anything major is missing.
 
 ### 5. Verification
 
@@ -37,13 +42,15 @@ We'll double-check that your code meets all of our minimal quality expectations.
 * Pass ULTs for all supported platforms
 * Pass clang-format check with the configuration contained within repository
 * Pass clang-tidy check with the configuration contained within repository
-* Pass sanity testing (test content recommendation for the external community will be provided in the future)
- 
+* Pass sanity testing
+(test content recommendation for the external community will be provided in the future)
+
 When all the automated checks are confirmed to be passing, we will start actual code review process.
 
 ### 6. Code review
 
-We'll make sure that your code fits within the architecture and design of NEO, is readable and maintainable. Please make sure to address our questions and concerns. 
+We'll make sure that your code fits within the architecture and design of NEO, is readable
+and maintainable. Please make sure to address our questions and concerns.
 
 ### 7. Patch disposition
 
@@ -57,6 +64,7 @@ Your patch may be reverted later in case of major regression that was not detect
 
 ## Intel Employees
 
-If you are an Intel Employee *and* you want to contribute to NEO as part of your regular job duties, please:
+If you are an Intel Employee *and* you want to contribute to NEO as part of your regular job duties
+please:
 * Contact us in advance
 * Make sure your github account is linked to your intel.com email address
