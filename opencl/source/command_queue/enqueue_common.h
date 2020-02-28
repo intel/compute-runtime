@@ -211,7 +211,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (blitEnqueue) {
             auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
-            timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+            if (isCacheFlushForBcsRequired()) {
+                timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+            }
             if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
                 timestampPacketDependencies.barrierNodes.add(allocator->getTag());
             }
@@ -473,12 +475,14 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
-    auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
-                                               offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    if (isCacheFlushForBcsRequired()) {
+        auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
+                                                   offsetof(TimestampPacketStorage, packets[0].contextEnd);
 
-    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-        commandStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-        cacheFlushTimestampPacketGpuAddress, 0, true, device->getHardwareInfo());
+        MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            commandStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            cacheFlushTimestampPacketGpuAddress, 0, true, device->getHardwareInfo());
+    }
 
     TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode);
 

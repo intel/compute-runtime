@@ -17,6 +17,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/device/device_info.h"
@@ -209,12 +210,20 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+    size_t expectedSizeCS = 0;
+
     if (blitEnqueue) {
         auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
-        return TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>() +
-               MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
+
+        size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
+        if (commandQueueHw.isCacheFlushForBcsRequired()) {
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        }
+
+        return expectedSizeCS;
     }
-    size_t expectedSizeCS = 0;
+
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());

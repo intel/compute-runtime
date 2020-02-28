@@ -124,6 +124,11 @@ bool CommandQueueHw<Family>::forceStateless(size_t size) {
 }
 
 template <typename Family>
+bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
+    return true;
+}
+
+template <typename Family>
 void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo) {
     multiDispatchInfo.begin()->dispatchInitCommands.registerMethod(
         TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);

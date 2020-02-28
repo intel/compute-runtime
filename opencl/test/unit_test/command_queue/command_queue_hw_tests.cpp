@@ -99,6 +99,12 @@ HWTEST_F(CommandQueueHwTest, WhenEnqueuingBlockedMapUnmapOperationThenVirtualEve
     pHwQ->virtualEvent = nullptr;
 }
 
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
+    auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
+
+    EXPECT_TRUE(pHwQ->isCacheFlushForBcsRequired());
+}
+
 HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCommandThenItsRefCountIsBeingIncreased) {
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     MockBuffer buffer;
