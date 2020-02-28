@@ -49,7 +49,7 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrGpGpuThreadGroupLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
-            EXPECT_EQ(false, featureTable.ftrGpGpuMidThreadLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftr3dMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftr3dObjectLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrPerCtxtPreemptionGranularityControl);

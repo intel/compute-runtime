@@ -52,7 +52,7 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.ftrGpGpuThreadGroupLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.ftrVEBOX);
-            EXPECT_EQ(false, featureTable.ftrGpGpuMidThreadLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftr3dMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftr3dObjectLevelPreempt);
             EXPECT_EQ(setParamBool, featureTable.ftrPerCtxtPreemptionGranularityControl);
