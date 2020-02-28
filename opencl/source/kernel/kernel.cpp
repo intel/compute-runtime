@@ -2424,7 +2424,6 @@ uint64_t Kernel::getKernelStartOffset(
     if (kernelInfo.getGraphicsAllocation()) {
         kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
         if (localIdsGenerationByRuntime == false && kernelUsesLocalIds == true) {
-            DEBUG_BREAK_IF(kernelInfo.patchInfo.threadPayload->OffsetToSkipPerThreadDataLoad != 128);
             kernelStartOffset += kernelInfo.patchInfo.threadPayload->OffsetToSkipPerThreadDataLoad;
         }
     }
