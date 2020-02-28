@@ -38,7 +38,10 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
             deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
             deviceInfo.partitionType[2] = 0;
 
-            subDevices.push_back(std::make_unique<ClDevice>(coreSubDevice, platform));
+            auto pClSubDevice = std::make_unique<ClDevice>(coreSubDevice, platform);
+            pClSubDevice->incRefInternal();
+            pClSubDevice->decRefApi();
+            subDevices.push_back(std::move(pClSubDevice));
         }
     }
     if (device.getDeviceInfo().debuggerActive) {
@@ -72,18 +75,20 @@ unsigned int ClDevice::getEnabledClVersion() const { return device.getEnabledClV
 unsigned int ClDevice::getSupportedClVersion() const { return device.getSupportedClVersion(); }
 
 void ClDevice::retainApi() {
-    if (device.isReleasable()) {
-        auto pPlatform = castToObject<Platform>(platformId);
-        pPlatform->getClDevice(device.getRootDeviceIndex())->incRefInternal();
+    auto parentDeviceId = device.getDeviceInfo().parentDevice;
+    if (parentDeviceId) {
+        auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
+        pParentClDevice->incRefInternal();
         this->incRefApi();
     }
 };
 unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
-    if (!device.isReleasable()) {
+    auto parentDeviceId = device.getDeviceInfo().parentDevice;
+    if (!parentDeviceId) {
         return unique_ptr_if_unused<ClDevice>(this, false);
     }
-    auto pPlatform = castToObject<Platform>(platformId);
-    pPlatform->getClDevice(device.getRootDeviceIndex())->decRefInternal();
+    auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
+    pParentClDevice->decRefInternal();
     return this->decRefApi();
 }
 

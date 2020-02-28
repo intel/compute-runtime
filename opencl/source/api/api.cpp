@@ -306,7 +306,9 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
     }
 
     for (uint32_t i = 0; i < subDevicesCount; i++) {
-        outDevices[i] = pInDevice->getDeviceById(i);
+        auto pClDevice = pInDevice->getDeviceById(i);
+        pClDevice->retainApi();
+        outDevices[i] = pClDevice;
     }
 
     return CL_SUCCESS;

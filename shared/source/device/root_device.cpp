@@ -76,9 +76,6 @@ bool RootDevice::createDeviceImpl() {
     }
     return true;
 }
-bool RootDevice::isReleasable() {
-    return false;
-};
 DeviceBitfield RootDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(getNumAvailableDevices()))};
     return deviceBitfield;

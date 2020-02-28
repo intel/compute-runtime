@@ -15,7 +15,6 @@ class SubDevice : public Device {
     constexpr static uint32_t unspecifiedSubDeviceIndex = std::numeric_limits<uint32_t>::max();
 
     SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, RootDevice &rootDevice);
-    bool isReleasable() override;
     uint32_t getNumAvailableDevices() const override;
     uint32_t getRootDeviceIndex() const override;
     Device *getDeviceById(uint32_t deviceId) const override;

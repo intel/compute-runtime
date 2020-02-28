@@ -35,8 +35,6 @@ class Device : public ReferenceTrackedObject<Device> {
         return createDeviceInternals(device);
     }
 
-    virtual bool isReleasable() = 0;
-
     bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
     bool getHostTimer(uint64_t *hostTimestamp) const;
     const HardwareInfo &getHardwareInfo() const;

@@ -104,6 +104,23 @@ TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenSubDevi
     EXPECT_EQ(outDevices[1], outDevices2[1]);
 }
 
+TEST_F(clCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceApiReferenceCountIsIncreasedEveryTime) {
+    setup(2);
+
+    EXPECT_EQ(0, device->getDeviceById(0)->getRefApiCount());
+    EXPECT_EQ(0, device->getDeviceById(1)->getRefApiCount());
+
+    auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1, device->getDeviceById(0)->getRefApiCount());
+    EXPECT_EQ(1, device->getDeviceById(1)->getRefApiCount());
+
+    retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2, device->getDeviceById(0)->getRefApiCount());
+    EXPECT_EQ(2, device->getDeviceById(1)->getRefApiCount());
+}
+
 struct clCreateSubDevicesDeviceInfoTests : clCreateSubDevicesTests {
     void setup(int numberOfDevices) {
         clCreateSubDevicesTests::setup(numberOfDevices);

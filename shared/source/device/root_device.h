@@ -20,7 +20,6 @@ class RootDevice : public Device {
     uint32_t getNumAvailableDevices() const override;
     uint32_t getRootDeviceIndex() const override;
     Device *getDeviceById(uint32_t deviceId) const override;
-    bool isReleasable() override;
 
     uint32_t getNumSubDevices() const;
 

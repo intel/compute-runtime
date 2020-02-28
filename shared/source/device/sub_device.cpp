@@ -15,10 +15,6 @@ SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDev
     : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {
 }
 
-bool SubDevice::isReleasable() {
-    return true;
-};
-
 DeviceBitfield SubDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(subDeviceIndex);
