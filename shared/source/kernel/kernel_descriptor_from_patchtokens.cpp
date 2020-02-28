@@ -392,6 +392,7 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
         dst.kernelAttributes.flags.usesSamplers = true;
     } break;
     case PatchTokenBinary::ArgObjectType::Slm: {
+        markArgAsPatchable(dst, argNum);
         auto &asBufferArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
         asBufferArg.requiredSlmAlignment = src.metadata.slm.token->SourceOffset;
         asBufferArg.slmOffset = src.metadata.slm.token->Offset;
@@ -416,7 +417,9 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
     }
 
     for (auto &byValArg : src.byValMap) {
-        populateKernelArgDescriptor(dst, argNum, *byValArg);
+        if (PatchTokenBinary::ArgObjectType::Slm != src.objectType) {
+            populateKernelArgDescriptor(dst, argNum, *byValArg);
+        }
     }
 
     if (src.objectId) {

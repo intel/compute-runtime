@@ -1047,6 +1047,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSlmArgumentAndMetadataThenK
         slmDesc.SourceOffset = 64;
 
         kernelTokens.tokens.kernelArgs[0].metadata.slm.token = &slmDesc;
+        kernelTokens.tokens.kernelArgs[0].byValMap.push_back(&slmDesc);
         NEO::KernelDescriptor dst = {};
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
