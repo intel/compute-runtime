@@ -98,7 +98,6 @@ for more details.
 * [OpenCL on Linux guide](https://github.com/bashbaug/OpenCLPapers/blob/markdown/OpenCLOnLinux.md)
 * [Intel(R) GPU Compute Samples](https://github.com/intel/compute-samples)
 * [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/opencl/doc/FAQ.md)
-* [Known issues and limitations](https://github.com/intel/compute-runtime/blob/master/opencl/doc/LIMITATIONS.md)
 * [Interoperability with VTune](https://github.com/intel/compute-runtime/blob/master/opencl/doc/VTUNE.md)
 * [OpenCL Conformance Tests](https://github.com/KhronosGroup/OpenCL-CTS/)
 

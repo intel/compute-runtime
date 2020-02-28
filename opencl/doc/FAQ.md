@@ -18,6 +18,22 @@ Any platforms supporting OpenCL 2.1 are eligible for move to OpenCL 2.2.
 
 You can enable a higher version of OpenCL using the ForceOCLVersion debug flag.
 
+## Known Issues and Limitations
+
+OpenCL compliance of a driver built from open-source components should not be
+assumed by default. Intel will clearly designate / tag specific builds to
+indicate production quality including formal compliance. Other builds should be
+considered experimental.
+
+### What is the functional delta to the "Beignet" driver?
+
+Intel's former open-source [Beignet driver](https://01.org/beignet) provided
+sharing capabilities with MESA OpenGL driver. Our intention is to provide
+these capabilities in NEO in the future.
+
+NEO supports platforms starting with Gen8 graphics (formerly Broadwell).
+For earlier platforms, please use Beignet driver.
+
 ## Feature: cl_intel_va_api_media_sharing extension
 
 ### Where can I learn more about this extension?
