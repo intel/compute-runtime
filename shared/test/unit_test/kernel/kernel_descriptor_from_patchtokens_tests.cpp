@@ -25,6 +25,16 @@ TEST(KernelDescriptorFromPatchtokens, GivenEmptyInputKernelFromPatchtokensThenOn
     EXPECT_EQ(kernelDescriptor.kernelAttributes.gpuPointerSize, 8);
 }
 
+TEST(KernelDescriptorFromPatchtokens, GivenKernelFromPatchtokensWhenKernelNameIsSpecifiedThenItIsCopiedIntoKernelDescriptor) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelTokens.name = "awesome_kern0";
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
+    EXPECT_STREQ("awesome_kern0", kernelDescriptor.kernelMetadata.kernelName.c_str());
+}
+
 TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPartsOfDescriptor) {
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
     iOpenCL::SKernelBinaryHeaderCommon kernelHeader;

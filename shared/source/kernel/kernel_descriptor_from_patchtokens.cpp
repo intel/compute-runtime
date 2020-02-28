@@ -432,7 +432,7 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
 
 void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
-
+    dst.kernelMetadata.kernelName = std::string(src.name.begin(), src.name.end()).c_str();
     populateKernelDescriptorIfNotNull(dst, src.tokens.executionEnvironment);
     populateKernelDescriptorIfNotNull(dst, src.tokens.samplerStateArray);
     populateKernelDescriptorIfNotNull(dst, src.tokens.bindingTableState);
