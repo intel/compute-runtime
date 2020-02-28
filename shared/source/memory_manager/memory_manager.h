@@ -164,6 +164,7 @@ class MemoryManager {
 
     static uint32_t maxOsContextCount;
     virtual void commonCleanup(){};
+    virtual bool isCpuCopyRequired(const void *ptr) { return false; }
 
   protected:
     struct AllocationData {

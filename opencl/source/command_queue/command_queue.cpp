@@ -556,6 +556,10 @@ size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &
 bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
                                         cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
 
+    if (buffer->getMemoryManager() && buffer->getMemoryManager()->isCpuCopyRequired(ptr)) {
+        return true;
+    }
+
     auto debugVariableSet = false;
     // Requested by debug variable or allowed by Buffer
     if (CL_COMMAND_READ_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnReadBuffer.get() != -1) {
