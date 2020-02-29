@@ -102,8 +102,8 @@ docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-openc
 
 ## Building and installation
 
-* [Ubuntu*](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
-* [Centos* 8](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
+* [Ubuntu*](https://github.com/intel/compute-runtime/blob/master/BUILD.md)
+* [Centos* 8](https://github.com/intel/compute-runtime/blob/master/BUILD.md)
 * Scripts to build or download rpm (copr) and deb (github and ppa) packages are available in [neo-specs](https://github.com/JacekDanecki/neo-specs) repository.
 
 # NEO in other distributions
