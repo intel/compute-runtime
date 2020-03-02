@@ -47,10 +47,10 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     : numOutputs(numOutputs), nameOutputs(nameOutputs),
       dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr) {
     for (uint32_t i = 0; i < numSources; ++i) {
-        inputs.push_back(Source(dataSources[i], lenSources[i], nameSources[i]));
+        inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
     }
     for (uint32_t i = 0; i < numInputHeaders; ++i) {
-        headers.push_back(Source(dataInputHeaders[i], lenInputHeaders[i], nameInputHeaders[i]));
+        headers.push_back(Source(dataInputHeaders[i], static_cast<size_t>(lenInputHeaders[i]), nameInputHeaders[i]));
     }
 }
 
@@ -70,8 +70,9 @@ void OclocArgHelper::moveOutputs() {
     *dataOutputs = new uint8_t *[outputs.size()];
     *lenOutputs = new uint64_t[outputs.size()];
     for (size_t i = 0; i < outputs.size(); ++i) {
-        (*nameOutputs)[i] = new char[outputs[i]->name.length() + 1];
-        strncpy((*nameOutputs)[i], outputs[i]->name.c_str(), outputs[i]->name.length() + 1);
+        size_t size = outputs[i]->name.length() + 1;
+        (*nameOutputs)[i] = new char[size];
+        strncpy_s((*nameOutputs)[i], size, outputs[i]->name.c_str(), outputs[i]->name.length() + 1);
         (*dataOutputs)[i] = outputs[i]->data;
         (*lenOutputs)[i] = outputs[i]->size;
     }
@@ -121,9 +122,10 @@ std::vector<char> OclocArgHelper::readBinaryFile(const std::string &filename) {
 
 std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &filename, size_t &retSize) {
     if (Source *s = findSourceFile(filename)) {
-        std::unique_ptr<char[]> ret(new char[static_cast<unsigned int>(s->length)]());
-        memcpy(ret.get(), s->data, static_cast<size_t>(s->length));
-        retSize = static_cast<size_t>(s->length);
+        auto size = s->length;
+        std::unique_ptr<char[]> ret(new char[size]());
+        memcpy_s(ret.get(), size, s->data, s->length);
+        retSize = s->length;
         return ret;
     } else {
         return ::loadDataFromFile(filename.c_str(), retSize);

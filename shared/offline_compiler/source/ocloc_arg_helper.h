@@ -15,9 +15,9 @@
 
 struct Source {
     const uint8_t *data;
-    const uint64_t length;
+    const size_t length;
     const char *name;
-    Source(const uint8_t *data, const uint64_t length, const char *name)
+    Source(const uint8_t *data, const size_t length, const char *name)
         : data(data), length(length), name(name){};
     void toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs = false);
     inline std::vector<char> toBinaryVector() {
