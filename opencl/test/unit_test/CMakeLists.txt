@@ -6,8 +6,9 @@
 
 project(igdrcl_tests)
 
-set(TEST_PROJECTS_FOLDER "opencl runtime")
-set(PLATFORM_SPECIFIC_TARGETS_FOLDER "${TEST_PROJECTS_FOLDER}/test platforms")
+set(OPENCL_TEST_PROJECTS_FOLDER "opencl runtime")
+set(OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER "${OPENCL_TEST_PROJECTS_FOLDER}/test platforms")
+set(OPENCL_UNIT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # disable optimizations for ults
 if(UNIX)
@@ -180,7 +181,7 @@ function(neo_copy_test_files target product)
     DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
+  set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
 endfunction()
 
 add_dependencies(unit_tests
@@ -189,15 +190,15 @@ add_dependencies(unit_tests
   prepare_test_kernels
 )
 
-set_target_properties(igdrcl_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(igdrcl_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 if(UNIX)
   set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
 
-set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
@@ -418,48 +419,6 @@ list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/stateless_
 list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME}
 )
 
-function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
-  if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
-    add_custom_command(
-      TARGET run_${product}_unit_tests
-      POST_BUILD
-      COMMAND echo copying test verify.bat file from ${CMAKE_CURRENT_SOURCE_DIR} to ${TargetDir}
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} ${DST} ${CMAKE_CURRENT_SOURCE_DIR}/verify.bat ${TargetDir}/verify.bat
-      COMMAND WORKING_DIRECTORY ${TargetDir}
-      COMMAND echo Running igdrcl_tests with App Verifier
-      COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
-      COMMAND echo App Verifier returned: %errorLevel%
-    )
-  endif()
-endfunction()
-
-function(gen_run_unit_tests product slices subslices eu_per_ss)
-  add_custom_target(run_${product}_unit_tests ALL DEPENDS unit_tests)
-  neo_copy_test_files(copy_test_files_${product} ${product})
-  add_dependencies(unit_tests copy_test_files_${product})
-  set_target_properties(run_${product}_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
-  add_custom_command(
-    TARGET run_${product}_unit_tests
-    POST_BUILD
-    COMMAND WORKING_DIRECTORY ${TargetDir}
-    COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
-    COMMAND ${CMAKE_COMMAND} -E env GTEST_OUTPUT=xml:${GTEST_XML_OUTPUT_DIR}/test_details_${product}_${slices}_${subslices}_${eu_per_ss}.xml $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
-  )
-  add_dependencies(run_unit_tests run_${product}_unit_tests)
-endfunction()
-
-macro(macro_for_each_test_config)
-  gen_run_unit_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-  if(MSVC AND ${TESTED_WITH_APPVERIFIER})
-    gen_run_tests_with_appverifier(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-  endif()
-endmacro()
-
-macro(macro_for_each_platform)
-  PLATFORM_TESTED_WITH_APPVERIFIER(${GEN_TYPE} ${PLATFORM_IT} TESTED_WITH_APPVERIFIER)
-  apply_macro_for_each_test_config("UNIT_TESTS")
-endmacro()
-
 macro(macro_for_each_gen)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
@@ -511,11 +470,10 @@ macro(macro_for_each_gen)
         endif()
       endif()
       add_custom_target(prepare_test_kernels_${family_name_with_type} DEPENDS ${kernels_to_compile_${family_name_with_type}} copy_compiler_files)
-      set_target_properties(prepare_test_kernels_${family_name_with_type} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${family_name_with_type}")
+      set_target_properties(prepare_test_kernels_${family_name_with_type} PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}")
       add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type})
     endif()
   endforeach()
-  apply_macro_for_each_platform()
 endmacro()
 apply_macro_for_each_gen("TESTED")
 add_subdirectories()

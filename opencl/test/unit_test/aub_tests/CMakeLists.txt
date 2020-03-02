@@ -27,7 +27,7 @@ add_executable(igdrcl_aub_tests
   ${IGDRCL_AUB_TESTS__TARGET_OBJECTS}
 )
 
-set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 if(WIN32)
   set_target_properties(igdrcl_aub_tests PROPERTIES
@@ -36,7 +36,7 @@ if(WIN32)
 endif()
 
 add_custom_target(run_aub_tests)
-set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(run_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 if(WIN32)
   target_include_directories(igdrcl_aub_tests PRIVATE
@@ -96,8 +96,8 @@ macro(macro_for_each_test_config)
     endforeach()
     add_custom_target(run_${PLATFORM_IT_LOWER}_aub_tests ALL DEPENDS ${PLATFORM_IT_LOWER}_aub_tests)
     add_dependencies(run_aub_tests run_${PLATFORM_IT_LOWER}_aub_tests)
-    set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
-    set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
+    set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
+    set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
     add_custom_command(
       TARGET ${PLATFORM_IT_LOWER}_aub_tests
       POST_BUILD

@@ -48,6 +48,6 @@ add_custom_command(
 )
 add_dependencies(run_unit_tests run_windows_dll_tests)
 
-set_target_properties(igdrcl_windows_dll_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-set_target_properties(run_windows_dll_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(igdrcl_windows_dll_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(run_windows_dll_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 endif()

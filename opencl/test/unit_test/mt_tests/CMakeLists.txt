@@ -54,13 +54,13 @@ add_dependencies(igdrcl_mt_tests test_dynamic_lib)
 
 create_project_source_tree(igdrcl_mt_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
 
-set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${TSAN_FLAGS})
 if(NOT WIN32)
   set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
 
-set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
 function(run_mt_tests target slices subslices eu_per_ss)
   add_custom_target(run_${target}_mt_unit_tests DEPENDS igdrcl_mt_tests)
@@ -68,7 +68,7 @@ function(run_mt_tests target slices subslices eu_per_ss)
     add_dependencies(run_${target}_mt_unit_tests copy_test_files_${target})
   endif()
   add_dependencies(run_mt_unit_tests run_${target}_mt_unit_tests)
-  set_target_properties(run_${target}_mt_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${target}")
+  set_target_properties(run_${target}_mt_unit_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${target}")
 
   add_custom_command(
     TARGET run_${target}_mt_unit_tests

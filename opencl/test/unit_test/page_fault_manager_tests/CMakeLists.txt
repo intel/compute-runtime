@@ -54,5 +54,5 @@ add_custom_command(
 )
 add_dependencies(run_unit_tests run_page_fault_manager_tests)
 
-set_target_properties(neo_page_fault_manager_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-set_target_properties(run_page_fault_manager_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(neo_page_fault_manager_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_target_properties(run_page_fault_manager_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
