@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -39,7 +40,9 @@ uint32_t OSInterface::getDeviceHandle() const {
     return 0;
 }
 
-void OSInterface::setGmmInputArgs(void *args) {}
+void OSInterface::setGmmInputArgs(void *args) {
+    reinterpret_cast<GMM_INIT_IN_ARGS *>(args)->FileDescriptor = this->get()->getDrm()->getFileDescriptor();
+}
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
     Drm *drm = Drm::create(std::move(hwDeviceId), *this);
