@@ -386,6 +386,17 @@ TEST(PlatformInitTest, givenInitializedPlatformWhenInitializeIsCalledOneMoreTime
     EXPECT_TRUE(platform()->initialize(std::move(devices)));
 }
 
+TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDeviceVectorWhenInitializePlatformThenCreateOnlyOneClDevice) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(*platformDevices, false, 3);
+    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 2));
+    auto status = platform()->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    size_t expectedNumDevices = 1u;
+    EXPECT_EQ(expectedNumDevices, platform()->getNumDevices());
+    EXPECT_EQ(2u, platform()->getClDevice(0)->getRootDeviceIndex());
+}
+
 TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItEntersEndlessLoop) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.LoopAtPlatformInitialize.set(true);

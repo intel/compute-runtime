@@ -65,9 +65,7 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 Platform::~Platform() {
     asyncEventsHandler->closeThread();
     for (auto clDevice : this->clDevices) {
-        if (clDevice) {
-            clDevice->decRefInternal();
-        }
+        clDevice->decRefInternal();
     }
 
     gtpinNotifyPlatformShutdown();
@@ -144,13 +142,12 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
 
-    this->clDevices.resize(devices.size());
     for (auto &inputDevice : devices) {
         ClDevice *pClDevice = nullptr;
         auto pDevice = inputDevice.release();
         UNRECOVERABLE_IF(!pDevice);
         pClDevice = new ClDevice{*pDevice, this};
-        this->clDevices[pDevice->getRootDeviceIndex()] = pClDevice;
+        this->clDevices.push_back(pClDevice);
 
         this->platformInfo->extensions = pClDevice->getDeviceInfo().deviceExtensions;
 
@@ -176,7 +173,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     }
 
     this->fillGlobalDispatchTable();
-    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleRootDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
+    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
 }
