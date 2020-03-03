@@ -13,10 +13,9 @@
 
 using namespace NEO;
 
-TEST(TgllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
-    if (IGFX_TIGERLAKE_LP != productFamily) {
-        return;
-    }
+using TgllpHwInfoConfig = ::testing::Test;
+
+TGLLPTEST_F(TgllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
@@ -26,6 +25,25 @@ TEST(TgllpHwInfoConfig, givenHwInfoErrorneousConfigString) {
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
+}
+
+TGLLPTEST_F(TgllpHwInfoConfig, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
+    HardwareInfo hwInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+
+    uint64_t config = 0x100060010;
+
+    gtSystemInfo = {0};
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(6u, gtSystemInfo.DualSubSliceCount);
+
+    config = 0x100020010;
+
+    gtSystemInfo = {0};
+    hardwareInfoSetup[productFamily](&hwInfo, false, config);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
 }
 
 using TgllpHwInfo = ::testing::Test;
@@ -39,8 +57,8 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
     uint64_t configs[] = {
-        0x100060016,
-        0x100020016};
+        0x100060010,
+        0x100020010};
 
     for (auto &config : configs) {
         for (auto setParamBool : boolValue) {
@@ -82,7 +100,7 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
 TGLLPTEST_F(TgllpHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo;
 
-    uint64_t config = 0x100060016;
+    uint64_t config = 0x100060010;
     hardwareInfoSetup[productFamily](&hwInfo, false, config);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);

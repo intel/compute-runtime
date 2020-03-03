@@ -66,6 +66,7 @@ TEST_F(HwInfoConfigTest, givenHwInfoConfigSetHwInfoValuesFromConfigStringReturns
 
     success = parseHwInfoConfigString("2x4x16", hwInfoConfig);
     EXPECT_TRUE(success);
+    EXPECT_EQ(0x200040010u, hwInfoConfig);
     setHwInfoValuesFromConfig(hwInfoConfig, outHwInfo);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SliceCount, 2u);
     EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, 8u);

@@ -192,12 +192,12 @@ void TGLLP_1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 };
 
 const HardwareInfo TGLLP::hwInfo = TGLLP_1x6x16::hwInfo;
-const uint64_t TGLLP::defaultHardwareInfoConfig = 0x100060016;
+const uint64_t TGLLP::defaultHardwareInfoConfig = 0x100060010;
 
 void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    if (hwInfoConfig == 0x100060016) {
+    if (hwInfoConfig == 0x100060010) {
         TGLLP_1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
-    } else if (hwInfoConfig == 0x100020016) {
+    } else if (hwInfoConfig == 0x100020010) {
         TGLLP_1x2x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
