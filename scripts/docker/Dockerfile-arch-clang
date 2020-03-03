@@ -1,5 +1,5 @@
 FROM docker.io/archlinux/base
-MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
+LABEL maintainer="jacek.danecki@intel.com"
 
 COPY neo /root/neo
 COPY scripts/prepare-arch-clang.sh /root
