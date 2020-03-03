@@ -15,6 +15,9 @@ namespace NEO {
 struct DirectSubmissionProperties {
     bool engineSupported = false;
     bool submitOnInit = false;
+    bool useInternal = false;
+    bool useLowPriority = false;
+    bool useRootDevice = false;
 };
 
 using EngineDirectSubmissionInitVec = std::vector<std::pair<aub_stream::EngineType, DirectSubmissionProperties>>;

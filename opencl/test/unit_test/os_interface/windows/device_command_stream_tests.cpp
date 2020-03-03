@@ -67,7 +67,8 @@ class WddmCommandStreamFixture {
         executionEnvironment->memoryManager.reset(memoryManager);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
         osContext.reset(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
-                                          0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup, false));
+                                          0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                          false, false, false));
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
@@ -249,7 +250,8 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                           false, false, false);
     csr->setupContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -274,7 +276,8 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                           false, false, false);
     csr->setupContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -964,7 +967,8 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnBcsThenExpectFeatureA
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup, false));
+                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                      false, false, false));
 
     auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
@@ -978,7 +982,8 @@ TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupport
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup, false));
+                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                      false, false, false));
 
     auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = false;
@@ -986,4 +991,99 @@ TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupport
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionDisabledOnLowPriorityThenExpectFeatureNotAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      true, false, false));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = false;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionEnabledOnLowPriorityThenExpectFeatureAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      true, false, false));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = true;
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionDisabledOnInternalThenExpectFeatureNotAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      false, true, false));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = false;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionEnabledOnInternalThenExpectFeatureAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      false, true, false));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = true;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionDisabledOnRootDeviceThenExpectFeatureNotAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      false, false, true));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = false;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionEnabledOnRootDeviceThenExpectFeatureAvailable) {
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      false, false, true));
+
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = true;
+
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
 }

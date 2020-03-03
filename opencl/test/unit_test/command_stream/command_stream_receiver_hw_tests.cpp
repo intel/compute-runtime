@@ -312,7 +312,8 @@ struct BcsTests : public CommandStreamReceiverHwTest {
         auto contextId = engine->osContext->getContextId();
 
         delete engine->osContext;
-        engine->osContext = OsContext::create(nullptr, contextId, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled, false);
+        engine->osContext = OsContext::create(nullptr, contextId, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled,
+                                              false, false, false);
         engine->osContext->incRefInternal();
         csr.setupContext(*engine->osContext);
 
@@ -637,7 +638,8 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
 HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAllocationsResident) {
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
-    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                                                                     false, false, false));
     auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
     bcsCsr->setupContext(*bcsOsContext);
     bcsCsr->initializeTagAllocation();

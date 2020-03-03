@@ -14,16 +14,21 @@
 namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
+                             aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                             bool lowPriority, bool internalEngine, bool rootDevice) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+        return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, engineType, preemptionMode,
+                                lowPriority, internalEngine, rootDevice);
     }
-    return new OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+    return new OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice);
 }
 
 OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                           aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
-    : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), wddm(wddm), residencyController(wddm, contextId) {
+                           aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                           bool lowPriority, bool internalEngine, bool rootDevice)
+    : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice),
+      wddm(wddm),
+      residencyController(wddm, contextId) {
 
     auto wddmInterface = wddm.getWddmInterface();
     if (!wddm.createContext(*this)) {

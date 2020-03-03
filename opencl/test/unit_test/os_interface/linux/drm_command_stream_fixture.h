@@ -37,7 +37,8 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         auto hwInfo = executionEnvironment.getHardwareInfo();
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+                                                     PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                                                     false, false, false);
 
         csr = new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);

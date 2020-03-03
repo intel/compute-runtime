@@ -12,7 +12,9 @@ namespace NEO {
 class MockOsContext : public OsContext {
   public:
     MockOsContext(uint32_t contextId, DeviceBitfield deviceBitfield,
-                  aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
-        : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority) {}
+                  aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                  bool lowPriority, bool internalEngine, bool rootDevice)
+        : OsContext(contextId, deviceBitfield, engineType, preemptionMode,
+                    lowPriority, internalEngine, rootDevice) {}
 };
 } // namespace NEO

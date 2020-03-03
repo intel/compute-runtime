@@ -19,7 +19,8 @@ class OsContextLinux : public OsContext {
     OsContextLinux() = delete;
     ~OsContextLinux() override;
     OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                   aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
+                   aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                   bool lowPriority, bool internalEngine, bool rootDevice);
 
     unsigned int getEngineFlag() const { return engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }

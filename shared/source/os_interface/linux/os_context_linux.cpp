@@ -14,16 +14,21 @@
 namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
+                             aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                             bool lowPriority, bool internalEngine, bool rootDevice) {
     if (osInterface) {
-        return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+        return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, engineType, preemptionMode,
+                                  lowPriority, internalEngine, rootDevice);
     }
-    return new OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
+    return new OsContext(contextId, deviceBitfield, engineType, preemptionMode,
+                         lowPriority, internalEngine, rootDevice);
 }
 
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                               aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
-    : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), drm(drm) {
+                               aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                               bool lowPriority, bool internalEngine, bool rootDevice)
+    : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority, internalEngine, rootDevice),
+      drm(drm) {
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmContextId = drm.createDrmContext();

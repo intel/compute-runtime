@@ -66,7 +66,9 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     auto csr = std::make_unique<MockCsr<FamilyType>>(execStamp, *executionEnvironment, 0);
     auto hwInfo = *platformDevices[0];
     auto engine = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), engine, 1, PreemptionHelper::getDefaultPreemptionMode(hwInfo), false);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), engine, 1,
+                                                                                     PreemptionHelper::getDefaultPreemptionMode(hwInfo),
+                                                                                     false, false, false);
     csr->setupContext(*osContext);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,

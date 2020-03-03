@@ -89,7 +89,7 @@ bool DirectSubmissionHw<GfxFamily>::allocateResources() {
 }
 
 template <typename GfxFamily>
-void DirectSubmissionHw<GfxFamily>::cpuCachelineFlush(void *ptr, size_t size) {
+inline void DirectSubmissionHw<GfxFamily>::cpuCachelineFlush(void *ptr, size_t size) {
     if (disableCpuCacheFlush) {
         return;
     }
@@ -156,7 +156,7 @@ bool DirectSubmissionHw<GfxFamily>::stopRingBuffer() {
 }
 
 template <typename GfxFamily>
-void *DirectSubmissionHw<GfxFamily>::dispatchSemaphoreSection(uint32_t value) {
+inline void *DirectSubmissionHw<GfxFamily>::dispatchSemaphoreSection(uint32_t value) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -172,13 +172,13 @@ void *DirectSubmissionHw<GfxFamily>::dispatchSemaphoreSection(uint32_t value) {
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeSemaphoreSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeSemaphoreSection() {
     size_t semaphoreSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     return (semaphoreSize + prefetchSize);
 }
 
 template <typename GfxFamily>
-void DirectSubmissionHw<GfxFamily>::dispatchStartSection(uint64_t gpuStartAddress) {
+inline void DirectSubmissionHw<GfxFamily>::dispatchStartSection(uint64_t gpuStartAddress) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     auto bbufferStart = ringCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     *bbufferStart = GfxFamily::cmdInitBatchBufferStart;
@@ -188,14 +188,14 @@ void DirectSubmissionHw<GfxFamily>::dispatchStartSection(uint64_t gpuStartAddres
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeStartSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeStartSection() {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     size_t size = sizeof(MI_BATCH_BUFFER_START);
     return size;
 }
 
 template <typename GfxFamily>
-void DirectSubmissionHw<GfxFamily>::dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress) {
+inline void DirectSubmissionHw<GfxFamily>::dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     auto bbufferStart = ringCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
@@ -206,38 +206,38 @@ void DirectSubmissionHw<GfxFamily>::dispatchSwitchRingBufferSection(uint64_t nex
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeSwitchRingBufferSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeSwitchRingBufferSection() {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     return sizeof(MI_BATCH_BUFFER_START);
 }
 
 template <typename GfxFamily>
-void *DirectSubmissionHw<GfxFamily>::dispatchFlushSection() {
+inline void *DirectSubmissionHw<GfxFamily>::dispatchFlushSection() {
     void *currentPosition = ringCommandStream.getSpace(0);
     cmdDispatcher->dispatchCacheFlush(ringCommandStream, *hwInfo);
     return currentPosition;
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeFlushSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeFlushSection() {
     return cmdDispatcher->getSizeCacheFlush(*hwInfo);
 }
 
 template <typename GfxFamily>
-void *DirectSubmissionHw<GfxFamily>::dispatchTagUpdateSection(uint64_t address, uint64_t value) {
+inline void *DirectSubmissionHw<GfxFamily>::dispatchTagUpdateSection(uint64_t address, uint64_t value) {
     void *currentPosition = ringCommandStream.getSpace(0);
     cmdDispatcher->dispatchMonitorFence(ringCommandStream, address, value, *hwInfo);
     return currentPosition;
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeTagUpdateSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeTagUpdateSection() {
     size_t size = cmdDispatcher->getSizeMonitorFence(*hwInfo);
     return size;
 }
 
 template <typename GfxFamily>
-void DirectSubmissionHw<GfxFamily>::dispatchEndingSection() {
+inline void DirectSubmissionHw<GfxFamily>::dispatchEndingSection() {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
     auto bbufferEnd = ringCommandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();
@@ -245,13 +245,13 @@ void DirectSubmissionHw<GfxFamily>::dispatchEndingSection() {
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeEndingSection() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeEndingSection() {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     return sizeof(MI_BATCH_BUFFER_END);
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeDispatch() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeDispatch() {
     return getSizeStartSection() +
            getSizeFlushSection() +
            getSizeTagUpdateSection() +
@@ -259,13 +259,13 @@ size_t DirectSubmissionHw<GfxFamily>::getSizeDispatch() {
 }
 
 template <typename GfxFamily>
-size_t DirectSubmissionHw<GfxFamily>::getSizeEnd() {
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeEnd() {
     return getSizeEndingSection() +
            getSizeFlushSection();
 }
 
 template <typename GfxFamily>
-uint64_t DirectSubmissionHw<GfxFamily>::getCommandBufferPositionGpuAddress(void *position) {
+inline uint64_t DirectSubmissionHw<GfxFamily>::getCommandBufferPositionGpuAddress(void *position) {
     void *currentBase = ringCommandStream.getCpuBase();
 
     size_t offset = ptrDiff(position, currentBase);
@@ -325,7 +325,7 @@ bool DirectSubmissionHw<GfxFamily>::dispatchCommandBuffer(BatchBuffer &batchBuff
 }
 
 template <typename GfxFamily>
-void DirectSubmissionHw<GfxFamily>::setReturnAddress(void *returnCmd, uint64_t returnAddress) {
+inline void DirectSubmissionHw<GfxFamily>::setReturnAddress(void *returnCmd, uint64_t returnAddress) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     MI_BATCH_BUFFER_START *returnBBStart = static_cast<MI_BATCH_BUFFER_START *>(returnCmd);
@@ -333,7 +333,7 @@ void DirectSubmissionHw<GfxFamily>::setReturnAddress(void *returnCmd, uint64_t r
 }
 
 template <typename GfxFamily>
-GraphicsAllocation *DirectSubmissionHw<GfxFamily>::switchRingBuffersAllocations() {
+inline GraphicsAllocation *DirectSubmissionHw<GfxFamily>::switchRingBuffersAllocations() {
     GraphicsAllocation *nextAllocation = nullptr;
     if (currentRingBuffer == RingBufferUse::FirstBuffer) {
         nextAllocation = ringBuffer2;

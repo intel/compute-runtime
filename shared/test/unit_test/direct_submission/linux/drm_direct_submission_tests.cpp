@@ -19,7 +19,8 @@ struct DrmDirectSubmissionFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
 
-        osContext = std::make_unique<OsContextLinux>(drmMock, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup, false);
+        osContext = std::make_unique<OsContextLinux>(drmMock, 0u, 0u, aub_stream::ENGINE_RCS,
+                                                     PreemptionMode::ThreadGroup, false, false, false);
     }
 
     void TearDown() {

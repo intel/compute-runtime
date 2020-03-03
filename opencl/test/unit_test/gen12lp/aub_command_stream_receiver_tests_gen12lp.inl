@@ -23,8 +23,8 @@ using Gen12LPAubCommandStreamReceiverTests = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex()));
-    MockOsContext rcsOsContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
-    MockOsContext ccsOsContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false);
+    MockOsContext rcsOsContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    MockOsContext ccsOsContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false, false, false);
 
     aubCsr->setupContext(ccsOsContext);
     uint32_t headerCCS = aubCsr->getGUCWorkQueueItemHeader();
@@ -45,7 +45,7 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenGraphicsAlloctionWhenGe
 }
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_CCS, PreemptionMode::Disabled, false, false, false);
     AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     aubCsr.setupContext(osContext);
 
@@ -58,7 +58,7 @@ GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmi
 }
 
 GEN12LPTEST_F(Gen12LPAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
     AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     aubCsr.setupContext(osContext);
 

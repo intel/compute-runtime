@@ -1635,7 +1635,8 @@ class MockCsrWithFailingFlush : public CommandStreamReceiverHw<GfxFamily> {
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutIsCalledWhenFlushBatchedSubmissionsReturnsFailureThenItIsPropagated) {
     MockCsrWithFailingFlush<FamilyType> mockCsr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
     mockCsr.setupContext(osContext);
     mockCsr.latestSentTaskCount = 0;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);

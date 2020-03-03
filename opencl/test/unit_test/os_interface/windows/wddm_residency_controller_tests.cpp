@@ -56,8 +56,10 @@ class MockWddmResidencyController : public WddmResidencyController {
 class MockOsContextWin : public OsContextWin {
   public:
     MockOsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                     aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
-        : OsContextWin(wddm, contextId, deviceBitfield, engineType, preemptionMode, lowPriority),
+                     aub_stream::EngineType engineType, PreemptionMode preemptionMode,
+                     bool lowPriority, bool internalEngine, bool rootDevice)
+        : OsContextWin(wddm, contextId, deviceBitfield, engineType, preemptionMode,
+                       lowPriority, internalEngine, rootDevice),
           mockResidencyController(wddm, contextId) {}
 
     WddmResidencyController &getResidencyController() override { return mockResidencyController; };
@@ -73,7 +75,8 @@ struct WddmResidencyControllerTest : ::testing::Test {
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment)));
         wddm->init();
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS,
+                                                              PreemptionMode::Disabled, false, false, false);
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
     }
@@ -96,7 +99,8 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         wddm->resetGdi(gdi);
         wddm->init();
 
-        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+        mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, osContextId, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                                                              false, false, false);
         wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin);
         residencyController = &mockOsContextWin->mockResidencyController;
         residencyController->registerCallback();
@@ -129,7 +133,8 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         csr.reset(createCommandStream(*executionEnvironment, 0u));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0], 1, preemptionMode, false);
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0], 1, preemptionMode,
+                                                              false, false, false);
 
         osContext->incRefInternal();
         residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
@@ -167,7 +172,8 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
                                                               HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                                                              1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+                                                              1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
+                                                              false, false, false);
 
         osContext->incRefInternal();
 

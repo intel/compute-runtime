@@ -33,7 +33,9 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     wddm->init();
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
-    auto osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0], preemptionMode, false);
+    auto osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1,
+                                                    HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
+                                                    preemptionMode, false, false, false);
     EXPECT_TRUE(osContext->isInitialized());
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);

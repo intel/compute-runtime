@@ -173,7 +173,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubMana
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateHardwareContext) {
     uint32_t deviceIndex = 3;
 
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false, false, false);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -190,7 +190,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenDontCreateHardwareContext) {
-    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true, false, false);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -256,7 +256,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
 
     auto &hwInfo = pDevice->getHardwareInfo();
     auto engineInstance = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo)[0];
-    MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled, false, false, false);
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
@@ -823,7 +823,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenSetupIsCalledThenCreateMultipleHardwareContexts) {
-    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     aubCsr->setupContext(osContext);
 
@@ -1175,7 +1175,8 @@ using HardwareContextContainerTests = ::testing::Test;
 
 TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupportedThenInitialzeHwContextsWithValidIndexes) {
     MockAubManager aubManager;
-    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
 
     HardwareContextController hwContextControler(aubManager, osContext, 0);
     EXPECT_EQ(2u, hwContextControler.hardwareContexts.size());
@@ -1188,7 +1189,8 @@ TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupported
 
 TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCalledOnHwContextControllerThenSubmitIsCalled) {
     MockAubManager aubManager;
-    MockOsContext osContext(1, 0b1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
     EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
 
@@ -1206,7 +1208,8 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCall
 
 TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalledThenWholeMemoryBanksArePassed) {
     MockAubManager aubManager;
-    MockOsContext osContext(1, 0b1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
     EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
 
@@ -1220,7 +1223,8 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalle
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseAllContexts) {
     MockAubManager aubManager;
-    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 
@@ -1260,7 +1264,8 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {
     MockAubManager aubManager;
-    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(1, 0b11, aub_stream::ENGINE_RCS, PreemptionMode::Disabled,
+                            false, false, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 

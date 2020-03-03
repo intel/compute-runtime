@@ -124,7 +124,8 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csrWithAubDump,
                                                                                          getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), 1,
-                                                                                         PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo), false);
+                                                                                         PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo),
+                                                                                         false, false, false);
         csrWithAubDump->setupContext(*osContext);
     }
 
@@ -149,7 +150,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
-                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
+                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
 
     csrWithAubDump.setupContext(osContext);
     EXPECT_EQ(&osContext, &csrWithAubDump.getOsContext());

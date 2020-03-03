@@ -31,7 +31,8 @@ struct DirectSubmissionFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
 
-        osContext.reset(OsContext::create(nullptr, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup, false));
+        osContext.reset(OsContext::create(nullptr, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                          false, false, false));
     }
 
     std::unique_ptr<OsContext> osContext;

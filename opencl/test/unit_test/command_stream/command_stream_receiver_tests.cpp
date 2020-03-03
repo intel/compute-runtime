@@ -716,7 +716,9 @@ HWTEST_F(SimulatedCommandStreamReceiverTest, givenCsrWithOsContextWhenGetDeviceI
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b11, PreemptionMode::Disabled, false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS,
+                                                                                    0b11, PreemptionMode::Disabled,
+                                                                                    false, false, false);
 
     csr.setupContext(*osContext);
     EXPECT_EQ(1u, csr.getDeviceIndex());
@@ -727,7 +729,9 @@ HWTEST_F(SimulatedCommandStreamReceiverTest, givenOsContextWithNoDeviceBitfieldW
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
     MockSimulatedCsrHw<FamilyType> csr(executionEnvironment, 0);
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS, 0b00, PreemptionMode::Disabled, false);
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, aub_stream::EngineType::ENGINE_RCS,
+                                                                                    0b00, PreemptionMode::Disabled,
+                                                                                    false, false, false);
 
     csr.setupContext(*osContext);
     EXPECT_EQ(0u, csr.getDeviceIndex());

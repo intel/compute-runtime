@@ -161,7 +161,19 @@ bool WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(Device &device, 
         auto contextEngineType = osContext.getEngineType();
         const DirectSubmissionProperties &directSubmissionProperty =
             device.getHardwareInfo().capabilityTable.directSubmissionEngines.data[contextEngineType];
-        if (directSubmissionProperty.engineSupported) {
+
+        bool startDirect = true;
+        if (osContext.isLowPriority()) {
+            startDirect = directSubmissionProperty.useLowPriority;
+        }
+        if (osContext.isInternalEngine()) {
+            startDirect = directSubmissionProperty.useInternal;
+        }
+        if (osContext.isRootDevice()) {
+            startDirect = directSubmissionProperty.useRootDevice;
+        }
+
+        if (directSubmissionProperty.engineSupported && startDirect) {
             if (contextEngineType == ENGINE_TYPE_BCS) {
                 directSubmission = std::make_unique<WddmDirectSubmission<GfxFamily>>(device,
                                                                                      std::make_unique<BlitterDispatcher<GfxFamily>>(),

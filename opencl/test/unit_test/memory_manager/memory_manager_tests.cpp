@@ -200,7 +200,8 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
 
     memoryManager->createAndRegisterOsContext(csr,
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                              false, false, false);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, allocation);
@@ -1410,7 +1411,8 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                              false, false, false);
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto tagAddress = csr->getTagAddress();
@@ -1661,7 +1663,8 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                              false, false, false);
     EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
 }
@@ -1689,7 +1692,8 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                              deviceBitfield, preemptionMode, false);
+                                              deviceBitfield, preemptionMode,
+                                              false, false, false);
     EXPECT_EQ(2u, memoryManager->registeredEngines[0].osContext->getNumSupportedDevices());
     EXPECT_EQ(deviceBitfield, memoryManager->registeredEngines[0].osContext->getDeviceBitfield());
     EXPECT_EQ(preemptionMode, memoryManager->registeredEngines[0].osContext->getPreemptionMode());
@@ -1703,10 +1707,12 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u));
     memoryManager->createAndRegisterOsContext(csr.get(),
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                              false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(),
                                               HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[1],
-                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                              false, false, false);
     EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[0].osContext->getRefInternalCount());
     EXPECT_EQ(1, memoryManager->registeredEngines[1].osContext->getRefInternalCount());
@@ -1726,10 +1732,10 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     MockOsContext osContext(0u, 1,
                             HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                            PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                            PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
     MockOsContext osContext2(1u, 1,
                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[1],
-                             PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+                             PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
 
     auto lastFenceValue = 45llu;
     auto lastFenceValue2 = 23llu;

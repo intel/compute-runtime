@@ -98,7 +98,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), defaultEngineType,
-                                                                    getDeviceBitfield(), preemptionMode, false);
+                                                                    getDeviceBitfield(), preemptionMode, false, false, true);
 
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeTagAllocation();

@@ -273,7 +273,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                            false, false, false);
     mockCsr->setupContext(osContext);
 
     mockCsr->programVFEState(commandStream, flags, 10);
@@ -294,7 +295,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                            false, false, false);
     mockCsr->setupContext(osContext);
 
     mockCsr->programVFEState(commandStream, flags, 10);
@@ -313,7 +315,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr->requiredScratchSize = 0x200000;
-    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 8, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                            false, false, false);
     mockCsr->setupContext(osContext);
 
     mockCsr->programVFEState(commandStream, flags, 10);

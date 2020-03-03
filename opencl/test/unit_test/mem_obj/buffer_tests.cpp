@@ -655,7 +655,8 @@ struct BcsBufferTests : public ::testing::Test {
     class BcsMockContext : public MockContext {
       public:
         BcsMockContext(ClDevice *device) : MockContext(device) {
-            bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+            bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                                                 false, false, false));
             bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex()));
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
@@ -717,7 +718,8 @@ struct BcsBufferTests : public ::testing::Test {
 
         if (createBcsEngine) {
             auto &engine = device->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
-            bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+            bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                                                 false, false, false));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
         }
