@@ -977,6 +977,11 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetDefaultDeviceCommandQueue)(
     cl_command_queue commandQueue) CL_API_SUFFIX__VERSION_2_1;
 
 /*OpenCL2.2*/
+typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetProgramReleaseCallback)(
+    cl_program program,
+    void(CL_CALLBACK *pfnNotify)(cl_program program, void *userData),
+    void *userData) CL_API_SUFFIX__VERSION_2_2;
+
 typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetProgramSpecializationConstant)(
     cl_program program,
     cl_uint specIdd,
@@ -1248,6 +1253,7 @@ struct SDispatchTable {
     KHRpfn_clSetDefaultDeviceCommandQueue clSetDefaultDeviceCommandQueue;
 
     /* OpenCL 2.2 */
+    KHRpfn_clSetProgramReleaseCallback clSetProgramReleaseCallback;
     KHRpfn_clSetProgramSpecializationConstant clSetProgramSpecializationConstant;
 };
 

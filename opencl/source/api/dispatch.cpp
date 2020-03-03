@@ -181,6 +181,7 @@ SDispatchTable icdGlobalDispatchTable =
         clSetDefaultDeviceCommandQueue,
 
         /* OpenCL 2.2 */
+        nullptr, // clSetProgramReleaseCallback
         clSetProgramSpecializationConstant};
 
 SCRTDispatchTable crtGlobalDispatchTable = {
