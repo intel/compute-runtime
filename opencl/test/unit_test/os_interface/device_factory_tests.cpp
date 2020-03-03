@@ -60,7 +60,7 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
     size_t numDevices = 0;
 
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
-    const HardwareInfo *hwInfo = executionEnvironment->getHardwareInfo();
+    const HardwareInfo *hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
     EXPECT_TRUE((numDevices > 0) ? success : !success);
 
@@ -76,7 +76,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     size_t numDevices = 0;
 
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
-    auto hwInfo = executionEnvironment->getHardwareInfo();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     ASSERT_TRUE(success);
     auto refEnableKmdNotify = hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify;
     auto refDelayKmdNotifyMicroseconds = hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
@@ -96,7 +96,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
-    hwInfo = executionEnvironment->getHardwareInfo();
+    hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
     EXPECT_EQ(!refEnableKmdNotify, hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(refDelayKmdNotifyMicroseconds + 10, hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
@@ -119,7 +119,7 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
 
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
-    auto hwInfo = executionEnvironment->getHardwareInfo();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
     int32_t actualEngineType = static_cast<int32_t>(hwInfo->capabilityTable.defaultEngineType);
     EXPECT_EQ(debugEngineType, actualEngineType);
@@ -129,7 +129,7 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
-    auto hwInfo = executionEnvironment->getHardwareInfo();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
     EXPECT_EQ(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }
@@ -167,7 +167,7 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesIsCalledThenOverrideGpu
     bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
 }
 
 TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesForProductFamilyOverrideIsCalledThenOverrideGpuAddressSpace) {
@@ -178,7 +178,7 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesForProductFamilyOverrid
     bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, *executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
 }
 
 TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {

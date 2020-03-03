@@ -173,7 +173,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
 
     EXPECT_TRUE(success);
 
-    EXPECT_EQ(executionEnvironment.getHardwareInfo()->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+    EXPECT_EQ(rootDeviceEnvironment.getHardwareInfo()->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
@@ -187,7 +187,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
     bool success = wddm->init();
-    HardwareInfo outHwInfo = *executionEnvironment.getHardwareInfo();
+    HardwareInfo outHwInfo = *rootDeviceEnvironment->getHardwareInfo();
     EXPECT_TRUE(success);
 
     EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);

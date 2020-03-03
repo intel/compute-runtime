@@ -1186,8 +1186,8 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGr
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.setHwInfo(platformDevices[0]);
-    if ((!executionEnvironment.isFullRangeSvm() && !is32bit) || !executionEnvironment.getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled) {
-        return;
+    if ((!executionEnvironment.isFullRangeSvm() && !is32bit) || !platformDevices[0]->capabilityTable.hostPtrTrackingEnabled) {
+        GTEST_SKIP();
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hostPtr = reinterpret_cast<const void *>(0x5001);
@@ -2241,7 +2241,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     MockGmm gmm;
     allocation.setDefaultGmm(&gmm);
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
-    auto hwInfo = executionEnvironment->getHardwareInfo();
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
 
     EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo), mapped);
 }

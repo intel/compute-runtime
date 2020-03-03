@@ -20,7 +20,7 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     pDrm->StoredSSVal = 8;
 
     bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
-    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
     EXPECT_TRUE(success);
     EXPECT_EQ((int)numDevices, 1);

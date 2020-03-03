@@ -203,7 +203,7 @@ TEST_F(PageFaultManagerTest, givenTrackedPageFaultAddressWhenVerifyingThenProper
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledThenAllocIsAubWritable) {
     MockExecutionEnvironment executionEnvironment;
-    if (!executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm) {
+    if (!executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm) {
         GTEST_SKIP();
     }
 

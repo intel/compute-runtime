@@ -41,7 +41,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->init();
-        auto hwInfo = executionEnvironment->getHardwareInfo();
+        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false);
     }

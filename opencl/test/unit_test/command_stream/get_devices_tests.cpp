@@ -136,7 +136,7 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
     bool ret = getDevices(numDevices, *exeEnv);
 
     EXPECT_TRUE(ret);
-    EXPECT_EQ(productFamily, exeEnv->getHardwareInfo()->platform.eProductFamily);
+    EXPECT_EQ(productFamily, exeEnv->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 }
 
 HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {

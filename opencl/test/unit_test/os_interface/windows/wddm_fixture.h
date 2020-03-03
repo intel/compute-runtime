@@ -41,7 +41,7 @@ struct WddmFixture : ::testing::Test {
         wddm->resetGdi(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         wddm->init();
-        auto hwInfo = executionEnvironment->getHardwareInfo();
+        auto hwInfo = rootDeviceEnvironemnt->getHardwareInfo();
         auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1u, engine, preemptionMode, false);
         mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
@@ -77,7 +77,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
 
-        auto hwInfo = executionEnvironment->getHardwareInfo();
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, engine, preemptionMode, false);
     }
