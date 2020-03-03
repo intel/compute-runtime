@@ -1,0 +1,14 @@
+FROM docker.io/ubuntu:19.10
+LABEL maintainer="jacek.danecki@intel.com"
+
+COPY neo /root/neo
+RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg; \
+    echo "deb http://ppa.launchpad.net/ocl-dev/intel-opencl/ubuntu eoan main" >> /etc/apt/sources.list; \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C3086B78CC05B8B1; \
+    apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++ pkg-config ninja-build libigc-dev intel-gmmlib-dev
+RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+    -DSUPPORT_GEN8=1 -DSUPPORT_GEN9=0 -DSUPPORT_GEN11=0 -DSUPPORT_GEN12LP=0 \
+    ../neo; \
+    ninja -j `nproc`
+CMD ["/bin/bash"]
