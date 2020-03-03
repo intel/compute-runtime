@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/gen8/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
 
-#include "opencl/source/gen8/reg_configs.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 using namespace NEO;

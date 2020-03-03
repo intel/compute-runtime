@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/source/gen9/reg_configs.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/gen9/reg_configs.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"

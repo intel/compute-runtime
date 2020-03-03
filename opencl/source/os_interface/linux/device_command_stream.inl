@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/device_command_stream.h"
+
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 namespace NEO {

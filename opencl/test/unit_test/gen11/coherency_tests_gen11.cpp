@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/gen11/reg_configs.h"
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/source/gen11/reg_configs.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

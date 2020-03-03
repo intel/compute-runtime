@@ -6,9 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
-
-#include "opencl/source/command_stream/device_command_stream.h"
 
 #include "drm/i915_drm.h"
 

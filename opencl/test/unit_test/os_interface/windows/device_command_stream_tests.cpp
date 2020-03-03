@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -23,7 +24,6 @@
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"

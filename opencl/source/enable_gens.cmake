@@ -22,7 +22,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   aub_mem_dump
   buffer
   command_queue
-  command_stream_receiver_hw
   command_stream_receiver_simulated_common_hw
   experimental_command_buffer
   gpgpu_walker

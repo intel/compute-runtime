@@ -1,27 +1,50 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds.h"
+
+using Family = NEO::TGLLPFamily;
+
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
-#include "shared/source/gen9/hw_cmds.h"
+#include "shared/source/command_stream/command_stream_receiver_hw_tgllp_plus.inl"
+#include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
 
-#include "opencl/source/command_stream/device_command_stream.h"
-
 namespace NEO {
-typedef SKLFamily Family;
-static auto gfxCore = IGFX_GEN9_CORE;
+static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
+void CommandStreamReceiverHw<Family>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
+}
+
+template <>
+size_t CommandStreamReceiverHw<Family>::getCmdSizeForL3Config() const {
     return 0;
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
+size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
+    if (!csrSizeRequestFlags.hasSharedHandles) {
+        for (const auto &allocation : this->getResidencyAllocations()) {
+            if (allocation->peekSharedHandle()) {
+                csrSizeRequestFlags.hasSharedHandles = true;
+                break;
+            }
+        }
+    }
+
+    size_t size = 0;
+    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged) {
+        size += sizeof(typename Family::STATE_COMPUTE_MODE);
+        if (csrSizeRequestFlags.hasSharedHandles) {
+            size += sizeof(typename Family::PIPE_CONTROL);
+        }
+    }
+    return size;
 }
 
 template <>
@@ -40,6 +63,7 @@ const Family::MEDIA_STATE_FLUSH Family::cmdInitMediaStateFlush = Family::MEDIA_S
 const Family::MI_BATCH_BUFFER_START Family::cmdInitBatchBufferStart = Family::MI_BATCH_BUFFER_START::sInit();
 const Family::MI_BATCH_BUFFER_END Family::cmdInitBatchBufferEnd = Family::MI_BATCH_BUFFER_END::sInit();
 const Family::PIPE_CONTROL Family::cmdInitPipeControl = Family::PIPE_CONTROL::sInit();
+const Family::STATE_COMPUTE_MODE Family::cmdInitStateComputeMode = Family::STATE_COMPUTE_MODE::sInit();
 const Family::MI_SEMAPHORE_WAIT Family::cmdInitMiSemaphoreWait = Family::MI_SEMAPHORE_WAIT::sInit();
 const Family::RENDER_SURFACE_STATE Family::cmdInitRenderSurfaceState = Family::RENDER_SURFACE_STATE::sInit();
 const Family::MI_LOAD_REGISTER_IMM Family::cmdInitLoadRegisterImm = Family::MI_LOAD_REGISTER_IMM::sInit();

@@ -7,16 +7,16 @@
 
 #pragma once
 #ifdef SUPPORT_GEN8
-#include "opencl/source/gen8/reg_configs.h"
+#include "shared/source/gen8/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN9
-#include "opencl/source/gen9/reg_configs.h"
+#include "shared/source/gen9/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN11
-#include "opencl/source/gen11/reg_configs.h"
+#include "shared/source/gen11/reg_configs.h"
 #endif
 #ifdef SUPPORT_GEN12LP
-#include "opencl/source/gen12lp/reg_configs.h"
+#include "shared/source/gen12lp/reg_configs.h"
 #endif
 #include <cstdint>
 

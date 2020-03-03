@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "opencl/source/command_stream/device_command_stream.h"
+#include "shared/source/command_stream/device_command_stream.h"
 
 struct COMMAND_BUFFER_HEADER_REC;
 

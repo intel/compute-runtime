@@ -9,10 +9,10 @@
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
+#include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/helpers/hw_cmds.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "opencl/source/command_stream/device_command_stream.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 

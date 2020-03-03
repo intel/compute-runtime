@@ -17,6 +17,7 @@ set(NEO_CORE_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_deps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/command_stream_receiver_hw_ext.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.inl

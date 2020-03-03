@@ -6,14 +6,13 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_plus.inl"
-#include "shared/source/gen8/hw_cmds.h"
+#include "shared/source/command_stream/device_command_stream.h"
+#include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/blit_commands_helper_bdw_plus.inl"
 
-#include "opencl/source/command_stream/device_command_stream.h"
-
 namespace NEO {
-typedef BDWFamily Family;
-static auto gfxCore = IGFX_GEN8_CORE;
+typedef SKLFamily Family;
+static auto gfxCore = IGFX_GEN9_CORE;
 
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
@@ -26,13 +25,8 @@ void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, D
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
-    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
+    extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::addClearSLMWorkAround(Family::PIPE_CONTROL *pCmd) {
-    pCmd->setProtectedMemoryDisable(1);
 }
 
 template class CommandStreamReceiverHw<Family>;
