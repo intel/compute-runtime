@@ -13,8 +13,6 @@
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Reads raw data blob from metric tracer object.
 ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                       uint8_t *pRawData) {
     UNRECOVERABLE_IF(rawReportSize == 0);
@@ -44,8 +42,6 @@ ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataS
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Stops measurements and destroys metric tracer object.
 ze_result_t MetricTracerImp::close() {
     const auto result = stopMeasurements();
     if (result == ZE_RESULT_SUCCESS) {
@@ -65,8 +61,6 @@ ze_result_t MetricTracerImp::close() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Initializes metric tracer object.
 ze_result_t MetricTracerImp::initialize(ze_device_handle_t hDevice,
                                         zet_metric_group_handle_t hMetricGroup) {
     this->hDevice = hDevice;
@@ -78,8 +72,6 @@ ze_result_t MetricTracerImp::initialize(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric tracer object and starts measurements.
 ze_result_t MetricTracerImp::startMeasurements(uint32_t &notifyEveryNReports,
                                                uint32_t &samplingPeriodNs,
                                                ze_event_handle_t hNotificationEvent) {
@@ -103,8 +95,6 @@ ze_result_t MetricTracerImp::startMeasurements(uint32_t &notifyEveryNReports,
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Stops measurements and destroys metric tracer object.
 ze_result_t MetricTracerImp::stopMeasurements() {
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
 
@@ -116,15 +106,11 @@ ze_result_t MetricTracerImp::stopMeasurements() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Converts OA buffer size in 'notifyEveryNReports' format to size in bytes.
 uint32_t MetricTracerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
     // Notification is on half full buffer, hence multiplication by 2.
     return notifyEveryNReports * rawReportSize * 2;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Converts OA buffer size in bytes to 'notifyEveryNReports' format.
 uint32_t MetricTracerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) const {
     // Notification is on half full buffer, hence division by 2.
     return rawReportSize
@@ -132,8 +118,6 @@ uint32_t MetricTracerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) co
                : 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns a metric tracer state that can be used by associated notification event.
 Event::State MetricTracerImp::getNotificationState() {
 
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
@@ -144,8 +128,6 @@ Event::State MetricTracerImp::getNotificationState() {
                : Event::State::STATE_INITIAL;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns required buffer size for tracer reports during read.
 uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) const {
     UNRECOVERABLE_IF(rawReportSize == 0);
     uint32_t maxOaBufferReportCount = oaBufferSize / rawReportSize;
@@ -155,8 +137,6 @@ uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) c
                                                    : maxReportCount * rawReportSize;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric tracer object and start measurements.
 MetricTracer *MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                  zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent) {
     auto pDevice = Device::fromHandle(hDevice);
@@ -190,7 +170,6 @@ MetricTracer *MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_h
         delete pMetricTracer;
         pMetricTracer = nullptr;
     }
-    // #TODO_tracer_P1 Query shouldn't be available when stream is running? Where to return error, onExecute?
 
     return pMetricTracer;
 }

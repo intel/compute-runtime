@@ -15,24 +15,16 @@
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Static const field initialization.
 const char *MetricEnumeration::oaConcurrentGroupName = "OA";
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric enumeration constructor.
 MetricEnumeration::MetricEnumeration(MetricContext &metricContextInput)
     : metricContext(metricContextInput) {}
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric enumeration destructor.
 MetricEnumeration::~MetricEnumeration() {
     cleanupMetricsDiscovery();
     initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Return metric group handles and their count.
 ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
                                               zet_metric_group_handle_t *phMetricGroups) {
     if (initialize() != ZE_RESULT_SUCCESS) {
@@ -58,12 +50,8 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns enumeration object initialization state.
 bool MetricEnumeration::isInitialized() { return initializationState == ZE_RESULT_SUCCESS; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Initializes metric enumeration object.
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
         if (metricContext.isInitialized() &&
@@ -79,8 +67,6 @@ ze_result_t MetricEnumeration::initialize() {
     return initializationState;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Loads Metrics Discovery API library and its functions.
 ze_result_t MetricEnumeration::loadMetricsDiscovery() {
     // Load library.
     hMetricsDiscovery.reset(NEO::OsLibrary::load(getMetricsDiscoveryFilename()));
@@ -106,10 +92,7 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Opens Metrics Discovery APIs MetricDevice.
 ze_result_t MetricEnumeration::openMetricsDiscovery() {
-    // #TODO_P1 reset MDAPI/instrumentation state - call close multiple times?
     UNRECOVERABLE_IF(openMetricsDevice == nullptr);
     UNRECOVERABLE_IF(closeMetricsDevice == nullptr);
 
@@ -121,10 +104,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Closes Metrics Discovery APIs MetricDevice and unloads its library.
 ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
-
     for (uint32_t i = 0; i < metricGroups.size(); ++i) {
         delete metricGroups[i];
     }
@@ -147,10 +127,7 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Caches metric group / metric information for later use.
 ze_result_t MetricEnumeration::cacheMetricInformation() {
-    // #TODO_val keep checks, e.g. metricsDevice, deviceParams?
     UNRECOVERABLE_IF(pMetricsDevice == nullptr);
 
     MetricsDiscovery::TMetricsDeviceParams_1_2 *pMetricsDeviceParams = pMetricsDevice->GetParams();
@@ -178,7 +155,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
             pConcurrentGroup->GetParams();
         UNRECOVERABLE_IF(pConcurrentGroupParams == nullptr);
 
-        // 2. Find "OA" concurrent group. // #TODO_P2 other groups than OA?
+        // 2. Find "OA" concurrent group.
         if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0) {
             // Reserve memory for metric groups
             metricGroups.reserve(pConcurrentGroupParams->MetricSetsCount);
@@ -199,8 +176,6 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates and caches metric groups, mapping metric sets from Metrics Discovery.
 ze_result_t
 MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                     MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -244,8 +219,6 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metrics, mapping metrics from Metrics Discovery.
 ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                              std::vector<Metric *> &metrics) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
@@ -283,8 +256,6 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
 
     // Map information to level zero format and add them to 'metrics' vector (as metrics).
     for (uint32_t i = 0; i < pMetricSetParams->InformationCount; ++i) {
-        // #TODO_P1 not every information is needed? e.g. PTBR, reportCount, etc. shouldn't be
-        // available #TODO_P2 split e.g. report_reason to separate flags?
         MetricsDiscovery::IInformation_1_0 *pSourceInformation = metricSet.GetInformation(i);
         UNRECOVERABLE_IF(pSourceInformation == nullptr);
 
@@ -302,10 +273,10 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
                  pSourceInformationParams->GroupName);
         snprintf(properties.resultUnits, sizeof(properties.resultUnits), "%s",
                  pSourceInformationParams->InfoUnits);
-        properties.tierNumber = 1; // #TODO_P2 default tier for information?
+        properties.tierNumber = 1;
         properties.metricType = getMetricType(pSourceInformationParams->InfoType);
-        properties.resultType =
-            ZET_VALUE_TYPE_UINT64; // MetricsDiscovery information are always UINT64
+        // MetricsDiscovery information are always UINT64
+        properties.resultType = ZET_VALUE_TYPE_UINT64;
 
         auto pMetric = Metric::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
@@ -315,8 +286,6 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Maps Metrics Discovery metric usage flags to level zero format (tier numbers).
 uint32_t MetricEnumeration::getMetricTierNumber(const uint32_t sourceUsageFlagsMask) const {
     uint32_t tierNumber = 0;
     if (sourceUsageFlagsMask & MetricsDiscovery::USAGE_FLAG_TIER_1) {
@@ -334,8 +303,6 @@ uint32_t MetricEnumeration::getMetricTierNumber(const uint32_t sourceUsageFlagsM
     return tierNumber;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Maps Metrics Discovery metric types to level zero format.
 zet_metric_type_t
 MetricEnumeration::getMetricType(const MetricsDiscovery::TMetricType sourceMetricType) const {
     switch (sourceMetricType) {
@@ -361,8 +328,6 @@ MetricEnumeration::getMetricType(const MetricsDiscovery::TMetricType sourceMetri
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Maps Metrics Discovery information types to level zero format.
 zet_metric_type_t MetricEnumeration::getMetricType(
     const MetricsDiscovery::TInformationType sourceInformationType) const {
 
@@ -384,8 +349,6 @@ zet_metric_type_t MetricEnumeration::getMetricType(
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Maps Metrics Discovery metric result types to level zero format.
 zet_value_type_t MetricEnumeration::getMetricResultType(
     const MetricsDiscovery::TMetricResultType sourceMetricResultType) const {
 
@@ -404,8 +367,6 @@ zet_value_type_t MetricEnumeration::getMetricResultType(
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric group destructor.
 MetricGroupImp ::~MetricGroupImp() {
 
     for (uint32_t i = 0; i < metrics.size(); ++i) {
@@ -415,16 +376,12 @@ MetricGroupImp ::~MetricGroupImp() {
     metrics.clear();
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric group properties (copies data to user).
 ze_result_t MetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
     UNRECOVERABLE_IF(pProperties->version > ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric group properties.
 zet_metric_group_properties_t MetricGroup::getProperties(const zet_metric_group_handle_t handle) {
     auto metricGroup = MetricGroup::fromHandle(handle);
     UNRECOVERABLE_IF(!metricGroup);
@@ -435,8 +392,6 @@ zet_metric_group_properties_t MetricGroup::getProperties(const zet_metric_group_
     return properties;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric handles and their count.
 ze_result_t MetricGroupImp::getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
     if (*pCount == 0) {
         *pCount = static_cast<uint32_t>(metrics.size());
@@ -457,8 +412,6 @@ ze_result_t MetricGroupImp::getMetric(uint32_t *pCount, zet_metric_handle_t *phM
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Activates metric group in the kernel.
 bool MetricGroupImp::activate() {
     UNRECOVERABLE_IF(pReferenceMetricSet == nullptr);
     const bool result = pReferenceMetricSet->Activate() == MetricsDiscovery::CC_OK;
@@ -466,24 +419,18 @@ bool MetricGroupImp::activate() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Deactivates metric group in the kernel.
 bool MetricGroupImp::deactivate() {
     UNRECOVERABLE_IF(pReferenceMetricSet == nullptr);
     const bool result = pReferenceMetricSet->Deactivate() == MetricsDiscovery::CC_OK;
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics discovery api filtering type
-///        for a given metric group sampling type.
 uint32_t MetricGroupImp::getApiMask(const zet_metric_group_sampling_type_t samplingType) {
 
     switch (samplingType) {
     case ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED:
         return MetricsDiscovery::API_TYPE_IOSTREAM;
     case ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED:
-        // #TODO Expose ocl metric sets from open source metrics discovery.
         return MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
     default:
         UNRECOVERABLE_IF(true);
@@ -491,34 +438,27 @@ uint32_t MetricGroupImp::getApiMask(const zet_metric_group_sampling_type_t sampl
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Opens metrics discovery io stream.
 ze_result_t MetricGroupImp::openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) {
     const auto openResult = pReferenceConcurrentGroup->OpenIoStream(pReferenceMetricSet, 0,
                                                                     &timerPeriodNs, &oaBufferSize);
     return (openResult == MetricsDiscovery::CC_OK) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Checks if metric tracer reports are available.
 ze_result_t MetricGroupImp::waitForReports(const uint32_t timeoutMs) {
     return (pReferenceConcurrentGroup->WaitForReports(timeoutMs) == MetricsDiscovery::TCompletionCode::CC_OK)
                ? ZE_RESULT_SUCCESS
                : ZE_RESULT_NOT_READY;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Reads raw data from metrics discovery io stream.
 ze_result_t MetricGroupImp::readIoStream(uint32_t &reportCount, uint8_t &reportData) {
     char *castedReportData = reinterpret_cast<char *>(&reportData);
 
-    // #TODO_tracer_P2 use IO_READ_FLAG_DROP_OLD_REPORTS flag?
     const auto readResult =
         pReferenceConcurrentGroup->ReadIoStream(&reportCount, castedReportData, 0);
 
     switch (readResult) {
     case MetricsDiscovery::CC_OK:
-    case MetricsDiscovery::CC_READ_PENDING: // #TODO_tracer_P1 what about pending?
+    case MetricsDiscovery::CC_READ_PENDING:
         return ZE_RESULT_SUCCESS;
 
     default:
@@ -526,15 +466,11 @@ ze_result_t MetricGroupImp::readIoStream(uint32_t &reportCount, uint8_t &reportD
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Closes metrics discovery io stream.
 ze_result_t MetricGroupImp::closeIoStream() {
     const auto closeResult = pReferenceConcurrentGroup->CloseIoStream();
     return (closeResult == MetricsDiscovery::CC_OK) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Calculates raw data, returns metric values.
 ze_result_t MetricGroupImp::calculateMetricValues(size_t rawDataSize,
                                                   const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                   zet_typed_value_t *pMetricValues) {
@@ -546,8 +482,6 @@ ze_result_t MetricGroupImp::calculateMetricValues(size_t rawDataSize,
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns calculated metric value count for a given raw data.
 bool MetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
                                               uint32_t &metricValueCount) {
     uint32_t rawReportSize = getRawReportSize();
@@ -565,8 +499,6 @@ bool MetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns calculated metric values for a given raw data.
 bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const uint8_t *pRawData,
                                                uint32_t &metricValueCount,
                                                zet_typed_value_t *pCalculatedData) {
@@ -600,7 +532,7 @@ bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const u
         // Adjust copied reports to buffer provided by the user.
         metricValueCount = std::min<uint32_t>(metricValueCount, calculatedReportCount * properties.metricCount);
 
-        // Translate metrics from metrics discovery to one api format.
+        // Translate metrics from metrics discovery to oneAPI format.
         for (size_t i = 0; i < metricValueCount; ++i) {
             copyValue(calculatedMetrics[i], pCalculatedData[i]);
         }
@@ -609,8 +541,6 @@ bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const u
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Initializes metric group object.
 ze_result_t MetricGroupImp::initialize(const zet_metric_group_properties_t &sourceProperties,
                                        MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                        MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -622,8 +552,6 @@ ze_result_t MetricGroupImp::initialize(const zet_metric_group_properties_t &sour
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns size of raw reports produced by this metric group.
 uint32_t MetricGroupImp::getRawReportSize() {
     auto pMetricSetParams = pReferenceMetricSet->GetParams();
 
@@ -632,8 +560,6 @@ uint32_t MetricGroupImp::getRawReportSize() {
                : pMetricSetParams->QueryReportSize;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Copies metric group properties from 'source' to 'destination'.
 void MetricGroupImp::copyProperties(const zet_metric_group_properties_t &source,
                                     zet_metric_group_properties_t &destination) {
     UNRECOVERABLE_IF(source.version < destination.version);
@@ -644,8 +570,6 @@ void MetricGroupImp::copyProperties(const zet_metric_group_properties_t &source,
              source.description, sizeof(destination.description));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Translates metrics discovery typed value into one api format.
 void MetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
                                zet_typed_value_t &destination) const {
 
@@ -680,23 +604,17 @@ void MetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric properties (copies data to user).
 ze_result_t MetricImp::getProperties(zet_metric_properties_t *pProperties) {
     UNRECOVERABLE_IF(pProperties->version > ZET_METRIC_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Initializes metric object.
 ze_result_t MetricImp::initialize(const zet_metric_properties_t &sourceProperties) {
     copyProperties(sourceProperties, properties);
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Copies metric properties from 'source' to 'destination'.
 void MetricImp::copyProperties(const zet_metric_properties_t &source,
                                zet_metric_properties_t &destination) {
     UNRECOVERABLE_IF(source.version < destination.version);
@@ -711,8 +629,6 @@ void MetricImp::copyProperties(const zet_metric_properties_t &source,
              source.resultUnits, sizeof(destination.resultUnits));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric group object.
 MetricGroup *MetricGroup::create(zet_metric_group_properties_t &properties,
                                  MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                  MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -723,8 +639,6 @@ MetricGroup *MetricGroup::create(zet_metric_group_properties_t &properties,
     return pMetricGroup;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric object.
 Metric *Metric::create(zet_metric_properties_t &properties) {
     auto pMetric = new MetricImp();
     UNRECOVERABLE_IF(pMetric == nullptr);

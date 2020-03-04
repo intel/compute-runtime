@@ -23,15 +23,10 @@ using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric library constructor.
 MetricsLibrary::MetricsLibrary(MetricContext &metricContextInput)
     : metricContext(metricContextInput) {}
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric library destructor.
 MetricsLibrary::~MetricsLibrary() {
-
     // Deactivate all metric group configurations.
     for (auto &configuration : configurations) {
         deactivateConfiguration(configuration.second);
@@ -46,10 +41,7 @@ MetricsLibrary::~MetricsLibrary() {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics library initialization state.
 bool MetricsLibrary::isInitialized() {
-
     // Try to initialize metrics library only once.
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
         initialize();
@@ -58,8 +50,6 @@ bool MetricsLibrary::isInitialized() {
     return initializationState == ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metrics library metric query object.
 bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                                        NEO::GraphicsAllocation *&pAllocation) {
     // Validate metrics library state.
@@ -109,8 +99,6 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Destroys metrics library metric query object.
 bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
     UNRECOVERABLE_IF(!query.IsValid());
 
@@ -119,10 +107,7 @@ bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query report size.
 bool MetricsLibrary::getMetricQueryReportSize(size_t &rawDataSize) {
-
     ValueType valueType = ValueType::Last;
     TypedValue_1_0 value = {};
 
@@ -132,8 +117,6 @@ bool MetricsLibrary::getMetricQueryReportSize(size_t &rawDataSize) {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query report.
 bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const size_t rawDataSize,
                                           uint8_t *pData) {
 
@@ -150,10 +133,7 @@ bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const size_t r
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Initializes metric library.
 void MetricsLibrary::initialize() {
-
     auto &metricsEnumeration = metricContext.getMetricEnumeration();
 
     // Function should be called only once.
@@ -168,10 +148,7 @@ void MetricsLibrary::initialize() {
     UNRECOVERABLE_IF(initializationState != ZE_RESULT_SUCCESS);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Loads metric library.
 bool MetricsLibrary::load() {
-
     // Load library.
     handle = NEO::OsLibrary::load(getFilename());
 
@@ -189,10 +166,7 @@ bool MetricsLibrary::load() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metrics library context associated with xe device.
 bool MetricsLibrary::createContext() {
-
     auto &device = metricContext.getDevice();
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
@@ -236,15 +210,11 @@ bool MetricsLibrary::createContext() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics library gen type.
 ClientGen MetricsLibrary::getGenType(const uint32_t gen) const {
     auto &hwHelper = NEO::HwHelper::get(static_cast<GFXCORE_FAMILY>(gen));
     return static_cast<MetricsLibraryApi::ClientGen>(hwHelper.getMetricsLibraryGenId());
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns gpu commands size for a given object.
 uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer) {
     CommandBufferSize_1_0 commandBufferSize = {};
 
@@ -260,8 +230,6 @@ uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer
     return result ? commandBufferSize.GpuMemorySize : 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes gpu commands into command buffer.
 bool MetricsLibrary::getGpuCommands(CommandList &commandList,
                                     CommandBufferData_1_0 &commandBuffer) {
 
@@ -294,12 +262,9 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metrics library configuration for a given metric group.
 ConfigurationHandle_1_0
 MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupHandle,
                                     const zet_metric_group_properties_t properties) {
-
     // Metric group internal data.
     auto metricGroup = MetricGroup::fromHandle(metricGroupHandle);
     UNRECOVERABLE_IF(!metricGroup);
@@ -330,8 +295,6 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
     return validActivate ? handle : nullptr;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric library configuration handle for a given metric group.
 ConfigurationHandle_1_0 MetricsLibrary::getConfiguration(zet_metric_group_handle_t handle) {
 
     auto iter = configurations.find(handle);
@@ -341,10 +304,7 @@ ConfigurationHandle_1_0 MetricsLibrary::getConfiguration(zet_metric_group_handle
     return configuration;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Adds metric library configuration handle for a given metric group.
 ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle_t handle) {
-
     ConfigurationHandle_1_0 libraryHandle = {};
     UNRECOVERABLE_IF(!handle);
 
@@ -363,8 +323,6 @@ ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle
     return libraryHandle;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric query pool object.
 ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
                                   zet_metric_query_pool_handle_t *phMetricQueryPool) {
     // Create metric query pool
@@ -374,8 +332,6 @@ ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_
     return (*phMetricQueryPool != nullptr) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric query pool object.
 MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
                                          zet_metric_group_handle_t hMetricGroup,
                                          const zet_metric_query_pool_desc_t &desc) {
@@ -390,8 +346,6 @@ MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
     return metricPoolImp;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric query pool constructor.
 MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
                                        zet_metric_group_handle_t hEventMetricGroupInput,
                                        const zet_metric_query_pool_desc_t &poolDescription)
@@ -399,10 +353,7 @@ MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
       description(poolDescription),
       hMetricGroup(hEventMetricGroupInput) {}
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric query pool.
 bool MetricQueryPoolImp::create() {
-
     switch (description.flags) {
     case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
         return createMetricQueryPool();
@@ -413,10 +364,7 @@ bool MetricQueryPoolImp::create() {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Destroys metric query pool.
 bool MetricQueryPoolImp::destroy() {
-
     bool result = false;
 
     switch (description.flags) {
@@ -435,10 +383,7 @@ bool MetricQueryPoolImp::destroy() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates performance metric query pool.
 bool MetricQueryPoolImp::createMetricQueryPool() {
-
     // Validate metric group query - only event based is supported.
     auto metricGroupProperites = MetricGroup::getProperties(hMetricGroup);
     const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
@@ -457,47 +402,33 @@ bool MetricQueryPoolImp::createMetricQueryPool() {
     return metricsLibrary.createMetricQuery(description.count, query, pAllocation);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-/// @brief Destroys metric query pool object.
 ze_result_t metricQueryPoolDestroy(zet_metric_query_pool_handle_t hMetricQueryPool) {
     MetricQueryPool::fromHandle(hMetricQueryPool)->destroy();
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query pool from handle.
 MetricQueryPool *MetricQueryPool::fromHandle(zet_metric_query_pool_handle_t handle) {
     return static_cast<MetricQueryPool *>(handle);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query pool handle.
 zet_metric_query_pool_handle_t MetricQueryPool::toHandle() { return this; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric query from the pool.
-// clang-format off
 ze_result_t MetricQueryPoolImp::createMetricQuery(uint32_t index,
-                                               zet_metric_query_handle_t *phMetricQuery) {
+                                                  zet_metric_query_handle_t *phMetricQuery) {
     *phMetricQuery = (index < description.count)
-        ? &(pool[index])
-        : nullptr;
+                         ? &(pool[index])
+                         : nullptr;
 
     return (*phMetricQuery != nullptr)
-        ? ZE_RESULT_SUCCESS
-        : ZE_RESULT_ERROR_INVALID_ARGUMENT;
+               ? ZE_RESULT_SUCCESS
+               : ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
-// clang-format on
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric query constructor.
 MetricQueryImp::MetricQueryImp(MetricContext &metricContextInput, MetricQueryPoolImp &poolInput,
                                const uint32_t slotInput)
     : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
       pool(poolInput), slot(slotInput) {}
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes metric query gpu commands to command list.
 ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
 
     switch (pool.description.flags) {
@@ -510,8 +441,6 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes metric query gpu commands to command list.
 ze_result_t MetricQueryImp::appendEnd(CommandList &commandList,
                                       ze_event_handle_t hCompletionEvent) {
     switch (pool.description.flags) {
@@ -524,8 +453,6 @@ ze_result_t MetricQueryImp::appendEnd(CommandList &commandList,
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query raw report.
 ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
 
     const bool calculateSizeOnly = *pRawDataSize == 0;
@@ -538,23 +465,16 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
                : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Resets metric query.
 ze_result_t MetricQueryImp::reset() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Destroys metric query.
 ze_result_t MetricQueryImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes performance metrics into a command buffer.
 ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList,
                                              ze_event_handle_t hCompletionEvent, const bool begin) {
-
     // Make gpu allocation visible.
     commandList.commandContainer.addToResidencyContainer(pool.pAllocation);
 
@@ -582,10 +502,7 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList,
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes gpu commands to flush all read/write caches.
 ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
-
     auto &metricContext = commandList.device->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();
 
@@ -601,8 +518,6 @@ ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
                                                                      : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes gpu commands to trigger oa report in oa buffer with user's marker.
 ze_result_t MetricQuery::appendTracerMarker(CommandList &commandList,
                                             zet_metric_tracer_handle_t hMetricTracer,
                                             uint32_t value) {
@@ -622,13 +537,10 @@ ze_result_t MetricQuery::appendTracerMarker(CommandList &commandList,
                                                                      : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query object for a given handle.
 MetricQuery *MetricQuery::fromHandle(zet_metric_query_handle_t handle) {
     return static_cast<MetricQuery *>(handle);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric query handle.
 zet_metric_query_handle_t MetricQuery::toHandle() { return this; }
+
 } // namespace L0

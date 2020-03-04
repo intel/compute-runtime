@@ -23,8 +23,6 @@
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric groups associated with device domains (for example oa unit).
 struct MetricGroupDomains {
 
   public:
@@ -46,8 +44,6 @@ struct MetricGroupDomains {
     std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric context object that implements MetricContext interface.
 struct MetricContextImp : public MetricContext {
   public:
     MetricContextImp(Device &device);
@@ -82,8 +78,6 @@ struct MetricContextImp : public MetricContext {
     bool useCcs = false;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric context constructor.
 MetricContextImp::MetricContextImp(Device &deviceInput)
     : device(deviceInput),
       metricEnumeration(std::unique_ptr<MetricEnumeration>(new (std::nothrow) MetricEnumeration(*this))),
@@ -91,15 +85,11 @@ MetricContextImp::MetricContextImp(Device &deviceInput)
       metricGroupDomains(*this) {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric context destructor.
 MetricContextImp::~MetricContextImp() {
     metricsLibrary.reset();
     metricEnumeration.reset();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Loads all metric context dependencies.
 bool MetricContextImp::loadDependencies() {
     bool result = true;
     if (metricEnumeration->loadMetricsDiscovery() != ZE_RESULT_SUCCESS) {
@@ -116,68 +106,44 @@ bool MetricContextImp::loadDependencies() {
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric context object initialization state.
 bool MetricContextImp::isInitialized() {
     return initializationState == ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Sets metric context object initialization state.
 void MetricContextImp::setInitializationState(const ze_result_t state) {
     initializationState = state;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns device associated with metric context.
 Device &MetricContextImp::getDevice() { return device; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics library associated with metric context.
 MetricsLibrary &MetricContextImp::getMetricsLibrary() { return *metricsLibrary; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric enumeration object associated with metric context.
 MetricEnumeration &MetricContextImp::getMetricEnumeration() { return *metricEnumeration; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric tracer object associated with metric context.
 MetricTracer *MetricContextImp::getMetricTracer() { return pMetricTracer; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates metric tracer object with metric context.
 void MetricContextImp::setMetricTracer(MetricTracer *pMetricTracer) {
     this->pMetricTracer = pMetricTracer;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates metrics library implementation with metric context.
 void MetricContextImp::setMetricsLibrary(MetricsLibrary &metricsLibrary) {
     this->metricsLibrary.release();
     this->metricsLibrary.reset(&metricsLibrary);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates metric enumeration implementation with metric context.
 void MetricContextImp::setMetricEnumeration(MetricEnumeration &metricEnumeration) {
     this->metricEnumeration.release();
     this->metricEnumeration.reset(&metricEnumeration);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates using compute command streamer with metric context.
 void MetricContextImp::setUseCcs(const bool useCcs) {
     this->useCcs = useCcs;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns if compute command streamer is used with metric context.
 bool MetricContextImp::isCcsUsed() {
     return useCcs;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates metrics groups with device.
 ze_result_t
 MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
                                                zet_metric_group_handle_t *phMetricGroups) {
@@ -188,18 +154,12 @@ MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
                           : metricGroupDomains.deactivate();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns true if the given metric group was previously activated, false otherwise.
 bool MetricContextImp::isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) {
     return metricGroupDomains.isActivated(hMetricGroup);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Activates metrics groups by writing them to gpu.
 ze_result_t MetricContextImp::activateMetricGroups() { return metricGroupDomains.activate(); }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context objects for each core device.
 void MetricContext::enableMetricApi(ze_result_t &result) {
     if (!getenv_tobool("ZE_ENABLE_METRICS")) {
         result = ZE_RESULT_SUCCESS;
@@ -236,16 +196,12 @@ void MetricContext::enableMetricApi(ze_result_t &result) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context object.
 std::unique_ptr<MetricContext> MetricContext::create(Device &device) {
     auto metricContextImp = new (std::nothrow) MetricContextImp(device);
     std::unique_ptr<MetricContext> metricContext{metricContextImp};
     return metricContext;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context object.
 bool MetricContext::isMetricApiAvailable() {
 
     std::unique_ptr<NEO::OsLibrary> library = nullptr;
@@ -265,13 +221,9 @@ bool MetricContext::isMetricApiAvailable() {
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric group domains constructor.
 MetricGroupDomains::MetricGroupDomains(MetricContext &metricContext)
     : metricsLibrary(metricContext.getMetricsLibrary()) {}
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates metric groups with the device domain (for example oa).
 ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
                                                  zet_metric_group_handle_t *phMetricGroups) {
     // For each metric group:
@@ -287,8 +239,6 @@ ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Associates a single metric group with the domain.
 bool MetricGroupDomains::activateMetricGroupDeffered(const zet_metric_group_handle_t hMetricGroup) {
 
     const auto properites = MetricGroup::getProperties(hMetricGroup);
@@ -316,8 +266,6 @@ bool MetricGroupDomains::activateMetricGroupDeffered(const zet_metric_group_hand
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Activates metric groups by writing to gpu.
 ze_result_t MetricGroupDomains::activate() {
 
     // For each domain.
@@ -345,10 +293,7 @@ ze_result_t MetricGroupDomains::activate() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Activates event based metric group by writing to gpu.
 bool MetricGroupDomains::activateEventMetricGroup(const zet_metric_group_handle_t hMetricGroup) {
-
     // Obtain metric group configuration handle from metrics library.
     auto hConfiguration = metricsLibrary.getConfiguration(hMetricGroup);
 
@@ -361,15 +306,11 @@ bool MetricGroupDomains::activateEventMetricGroup(const zet_metric_group_handle_
     // Write metric group configuration to gpu.
     const bool result = metricsLibrary.activateConfiguration(hConfiguration);
 
-    // Validate result.
     UNRECOVERABLE_IF(!result);
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Deactivates metric groups associated with domains.
 ze_result_t MetricGroupDomains::deactivate() {
-
     // Deactivate metric group for each domain.
     for (auto &domain : domains) {
 
@@ -395,8 +336,6 @@ ze_result_t MetricGroupDomains::deactivate() {
     return ZE_RESULT_SUCCESS;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns true if the given metric group was previously activated, false otherwise.
 bool MetricGroupDomains::isActivated(const zet_metric_group_handle_t hMetricGroup) {
     auto metricGroupProperties = MetricGroup::getProperties(hMetricGroup);
 
@@ -410,23 +349,17 @@ bool MetricGroupDomains::isActivated(const zet_metric_group_handle_t hMetricGrou
     return domain->second.first == hMetricGroup;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric group handles and their count.
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
     auto device = Device::fromHandle(hDevice);
     return device->getMetricContext().getMetricEnumeration().metricGroupGet(*pCount,
                                                                             phMetricGroups);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric handles and their count.
 ze_result_t metricGet(zet_metric_group_handle_t hMetricGroup, uint32_t *pCount, zet_metric_handle_t *phMetrics) {
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
     return metricGroup->getMetric(pCount, phMetrics);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Starts tracer measurements.
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer) {

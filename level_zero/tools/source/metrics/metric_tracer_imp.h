@@ -13,16 +13,12 @@ struct Event;
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric tracer object implementation.
 struct MetricTracerImp : MetricTracer {
     ~MetricTracerImp() override{};
 
-    // API.
     ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) override;
     ze_result_t close() override;
 
-    // Non-API.
     ze_result_t initialize(ze_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup);
     ze_result_t startMeasurements(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs, ze_event_handle_t hNotificationEvent);
     Event::State getNotificationState() override;

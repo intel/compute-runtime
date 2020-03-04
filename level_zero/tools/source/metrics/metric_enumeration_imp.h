@@ -29,31 +29,23 @@
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric enumeration object implementation.
 struct MetricEnumeration {
     MetricEnumeration(MetricContext &metricContext);
     virtual ~MetricEnumeration();
 
-    // API (called from static API functions).
     ze_result_t metricGroupGet(uint32_t &count, zet_metric_group_handle_t *phMetricGroups);
 
-    // Non-API.
     virtual bool isInitialized();
 
-    // Initialization.
     virtual ze_result_t loadMetricsDiscovery();
     static const char *getMetricsDiscoveryFilename();
 
   protected:
-    // Initialization.
     ze_result_t initialize();
 
-    // Metrics Discovery.
     virtual ze_result_t openMetricsDiscovery();
     virtual ze_result_t cleanupMetricsDiscovery();
 
-    // Metric caching.
     ze_result_t cacheMetricInformation();
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                  MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
@@ -82,7 +74,6 @@ struct MetricEnumeration {
     MetricsDiscovery::OpenMetricsDeviceFromFile_fn openMetricsDeviceFromFile = nullptr;
     MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
 
-    // Public due to unit tests.
   public:
     // Metrics Discovery version should be at least 1.5.
     static const uint32_t requiredMetricsDiscoveryMajorVersion = 1;
@@ -90,19 +81,15 @@ struct MetricEnumeration {
     static const char *oaConcurrentGroupName;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric group object implementation.
 struct MetricGroupImp : MetricGroup {
     ~MetricGroupImp() override;
 
-    // API.
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t calculateMetricValues(size_t rawDataSize, const uint8_t *pRawData,
                                       uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pCalculatedData) override;
 
-    // Non-API.
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
                            MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -110,7 +97,6 @@ struct MetricGroupImp : MetricGroup {
 
     uint32_t getRawReportSize() override;
 
-    // Activation.
     bool activate() override;
     bool deactivate() override;
 
@@ -145,15 +131,11 @@ struct MetricGroupImp : MetricGroup {
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric object implementation.
 struct MetricImp : Metric {
     ~MetricImp() override{};
 
-    // API.
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
 
-    // Non-API.
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 
   protected:

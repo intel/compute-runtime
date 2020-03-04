@@ -43,39 +43,27 @@ ze_result_t MetricQuery::appendTracerMarker(CommandList &commandList,
 
 MetricQuery *MetricQuery::fromHandle(zet_metric_query_handle_t handle) { return nullptr; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context objects for each core device.
 void MetricContext::enableMetricApi(ze_result_t &result) {
     result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     return;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context object.
 std::unique_ptr<MetricContext> MetricContext::create(Device &device) {
     return nullptr;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Creates metric context object.
 bool MetricContext::isMetricApiAvailable() {
     return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric group handles and their count.
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metric handles and their count.
 ze_result_t metricGet(zet_metric_group_handle_t hMetricGroup, uint32_t *pCount, zet_metric_handle_t *phMetrics) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Starts tracer measurements.
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer) {

@@ -13,8 +13,6 @@
 #include <map>
 #include <vector>
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Forward declaration.
 using MetricsLibraryApi::ClientCallbacks_1_0;
 using MetricsLibraryApi::ClientGen;
 using MetricsLibraryApi::CommandBufferData_1_0;
@@ -39,8 +37,6 @@ class GraphicsAllocation;
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric library implementation.
 struct MetricsLibrary {
   public:
     MetricsLibrary(MetricContext &metricContext);
@@ -90,24 +86,20 @@ struct MetricsLibrary {
     ContextHandle_1_0 context = {};
     ContextCreateFunction_1_0 contextCreateFunction = nullptr;
     ContextDeleteFunction_1_0 contextDeleteFunction = nullptr;
-    std::map<zet_metric_group_handle_t, ConfigurationHandle_1_0> configurations; // MetricGroup configurations
+    // MetricGroup configurations
+    std::map<zet_metric_group_handle_t, ConfigurationHandle_1_0> configurations;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric query object implementation.
 struct MetricQueryImp : MetricQuery {
   public:
     MetricQueryImp(MetricContext &metricContext, struct MetricQueryPoolImp &pool,
                    const uint32_t slot);
 
-    // Begin/end gpu commands.
     ze_result_t appendBegin(CommandList &commandList) override;
     ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hCompletionEvent) override;
 
-    // Query results.
     ze_result_t getData(size_t *pRawDataSize, uint8_t *pRawData) override;
 
-    // Query reset/destroy.
     ze_result_t reset() override;
     ze_result_t destroy() override;
 
@@ -122,8 +114,6 @@ struct MetricQueryImp : MetricQuery {
     uint32_t slot;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric query pool implementation.
 struct MetricQueryPoolImp : MetricQueryPool {
   public:
     MetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
