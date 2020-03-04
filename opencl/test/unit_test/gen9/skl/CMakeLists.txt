@@ -18,7 +18,7 @@ if(TESTS_SKL)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen9_skl})
   add_subdirectories()
-  set(appverified_allowed TRUE)
+  set(appverified_allowed ${APPVERIFIER_ALLOWED})
   set(unit_test_config "skl/1/3/8")
   include(${OPENCL_UNIT_TEST_DIR}/cmake/run_ult_target.cmake)
 endif()

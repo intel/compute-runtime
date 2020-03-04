@@ -23,7 +23,7 @@ add_custom_command(
 )
 add_dependencies(run_unit_tests run_${product}_unit_tests)
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND DEFINED appverified_allowed)
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND appverified_allowed)
   add_custom_command(
     TARGET run_${product}_unit_tests
     POST_BUILD
