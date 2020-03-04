@@ -4015,6 +4015,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clCreateProgramWithILKHR);
     RETURN_FUNC_PTR_IF_EXIST(clCreateCommandQueueWithPropertiesKHR);
 
+    RETURN_FUNC_PTR_IF_EXIST(clSetProgramSpecializationConstant);
+
     ret = getAdditionalExtensionFunctionAddress(funcName);
     TRACING_EXIT(clGetExtensionFunctionAddress, &ret);
     return ret;

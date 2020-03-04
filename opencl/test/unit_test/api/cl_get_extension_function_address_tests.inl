@@ -177,4 +177,9 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueNDCountKernelINTELWhenG
     auto retVal = clGetExtensionFunctionAddress("clEnqueueNDCountKernelINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueNDCountKernelINTEL));
 }
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenCSlSetProgramSpecializationConstantWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clSetProgramSpecializationConstant");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetProgramSpecializationConstant));
+}
 } // namespace ULT
