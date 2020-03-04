@@ -80,11 +80,11 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 return retVal;
             }
         } else if (numArgs > 1 && (!strcmp(argv[1], "multi") || !strcmp(argv[1], "-multi"))) {
-            int retValue = CL_SUCCESS;
+            int retValue = ErrorCode::SUCCESS;
             auto pMulti = std::unique_ptr<MultiCommand>(MultiCommand::create(allArgs, retValue));
             return retValue;
         } else {
-            int retVal = CL_SUCCESS;
+            int retVal = ErrorCode::SUCCESS;
             std::vector<std::string> allArgs;
             if (numArgs > 1) {
                 allArgs.assign(argv, argv + numArgs);
@@ -92,7 +92,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
 
             OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal, std::move(helper));
 
-            if (retVal == CL_SUCCESS) {
+            if (retVal == ErrorCode::SUCCESS) {
                 retVal = buildWithSafetyGuard(pCompiler);
 
                 std::string buildLog = pCompiler->getBuildLog();
@@ -100,7 +100,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                     printf("%s\n", buildLog.c_str());
                 }
 
-                if (retVal == CL_SUCCESS) {
+                if (retVal == ErrorCode::SUCCESS) {
                     if (!pCompiler->isQuiet())
                         printf("Build succeeded.\n");
                 } else {

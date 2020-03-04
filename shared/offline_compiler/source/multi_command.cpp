@@ -9,10 +9,10 @@
 
 namespace NEO {
 int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &allArgs) {
-    int retVal = CL_SUCCESS;
+    int retVal = ErrorCode::SUCCESS;
     std::string buildLog;
     OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal);
-    if (retVal == CL_SUCCESS) {
+    if (retVal == ErrorCode::SUCCESS) {
         retVal = buildWithSafetyGuard(pCompiler);
 
         buildLog = pCompiler->getBuildLog();
@@ -20,7 +20,7 @@ int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &al
             printf("%s\n", buildLog.c_str());
         }
 
-        if (retVal == CL_SUCCESS) {
+        if (retVal == ErrorCode::SUCCESS) {
             if (!pCompiler->isQuiet())
                 printf("Build succeeded.\n");
         } else {
@@ -36,7 +36,7 @@ int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &al
     if (outputFileList != "") {
         std::ofstream myfile(outputFileList, std::fstream::app);
         if (myfile.is_open()) {
-            if (retVal == CL_SUCCESS)
+            if (retVal == ErrorCode::SUCCESS)
                 myfile << getCurrentDirectoryOwn(outDirForBuilds) + OutFileName + ".bin";
             else
                 myfile << "Unsuccesful build";
@@ -61,14 +61,14 @@ void MultiCommand::deleteBuildsWithWarnigs() {
 }
 
 MultiCommand *MultiCommand::create(const std::vector<std::string> &argv, int &retVal) {
-    retVal = CL_SUCCESS;
+    retVal = ErrorCode::SUCCESS;
     auto pMultiCommand = new MultiCommand();
 
     if (pMultiCommand) {
         retVal = pMultiCommand->initialize(argv);
     }
 
-    if (retVal != CL_SUCCESS) {
+    if (retVal != ErrorCode::SUCCESS) {
         delete pMultiCommand;
         pMultiCommand = nullptr;
     }
@@ -113,7 +113,7 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
 }
 
 int MultiCommand::initialize(const std::vector<std::string> &allArgs) {
-    int retVal = CL_SUCCESS;
+    int retVal = ErrorCode::SUCCESS;
     size_t numArgs = allArgs.size();
 
     for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
@@ -154,7 +154,7 @@ int MultiCommand::initialize(const std::vector<std::string> &allArgs) {
 
             singleLineWithArguments.push_back(allArgs[0]);
             retVal = splitLineInSeparateArgs(singleLineWithArguments, lines[i], i);
-            if (retVal != CL_SUCCESS) {
+            if (retVal != ErrorCode::SUCCESS) {
                 retValues.push_back(retVal);
                 continue;
             }
@@ -235,7 +235,7 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
         printf("One of the quotes is open in build number %d\n", numberOfBuild + 1);
         return INVALID_COMMAND_LINE;
     }
-    return CL_SUCCESS;
+    return ErrorCode::SUCCESS;
 }
 
 void MultiCommand::openFileWithBuildsArguments() {
@@ -260,11 +260,11 @@ void MultiCommand::openFileWithBuildsArguments() {
 }
 
 int MultiCommand::showResults() {
-    int retValue = CL_SUCCESS;
+    int retValue = ErrorCode::SUCCESS;
     int indexRetVal = 0;
     for (int retVal : retValues) {
-        if (retVal != CL_SUCCESS) {
-            if (retValue == CL_SUCCESS)
+        if (retVal != ErrorCode::SUCCESS) {
+            if (retValue == ErrorCode::SUCCESS)
                 retValue = retVal;
             if (!quiet)
                 printf("Build %d: failed. Error code: %d\n", indexRetVal, retVal);

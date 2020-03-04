@@ -74,7 +74,7 @@ OfflineCompiler::~OfflineCompiler() {
 }
 
 OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal) {
-    retVal = CL_SUCCESS;
+    retVal = SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
@@ -82,7 +82,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
-    if (retVal != CL_SUCCESS) {
+    if (retVal != SUCCESS) {
         delete pOffCompiler;
         pOffCompiler = nullptr;
     }
@@ -91,7 +91,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
 }
 
 OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, std::unique_ptr<OclocArgHelper> helper) {
-    retVal = CL_SUCCESS;
+    retVal = SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
@@ -99,7 +99,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
-    if (retVal != CL_SUCCESS) {
+    if (retVal != SUCCESS) {
         delete pOffCompiler;
         pOffCompiler = nullptr;
     }
@@ -108,11 +108,11 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
 }
 
 int OfflineCompiler::buildSourceCode() {
-    int retVal = CL_SUCCESS;
+    int retVal = SUCCESS;
 
     do {
         if (strcmp(sourceCode.c_str(), "") == 0) {
-            retVal = CL_INVALID_PROGRAM;
+            retVal = INVALID_PROGRAM;
             break;
         }
         UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
@@ -133,7 +133,7 @@ int OfflineCompiler::buildSourceCode() {
 
             if (false == NEO::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
                                             fclTranslationCtx.get(), igcTranslationCtx.get())) {
-                retVal = CL_OUT_OF_HOST_MEMORY;
+                retVal = OUT_OF_HOST_MEMORY;
                 break;
             }
 
@@ -141,7 +141,7 @@ int OfflineCompiler::buildSourceCode() {
                                                           fclInternalOptions.get(), nullptr, 0);
 
             if (fclOutput == nullptr) {
-                retVal = CL_OUT_OF_HOST_MEMORY;
+                retVal = OUT_OF_HOST_MEMORY;
                 break;
             }
 
@@ -150,7 +150,7 @@ int OfflineCompiler::buildSourceCode() {
 
             if (fclOutput->Successful() == false) {
                 updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-                retVal = CL_BUILD_PROGRAM_FAILURE;
+                retVal = BUILD_PROGRAM_FAILURE;
                 break;
             }
 
@@ -170,7 +170,7 @@ int OfflineCompiler::buildSourceCode() {
             igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
         }
         if (igcOutput == nullptr) {
-            retVal = CL_OUT_OF_HOST_MEMORY;
+            retVal = OUT_OF_HOST_MEMORY;
             break;
         }
         UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
@@ -183,18 +183,18 @@ int OfflineCompiler::buildSourceCode() {
         if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
             storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
         }
-        retVal = igcOutput->Successful() ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
+        retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
     } while (0);
 
     return retVal;
 }
 
 int OfflineCompiler::build() {
-    int retVal = CL_SUCCESS;
+    int retVal = SUCCESS;
 
     retVal = buildSourceCode();
 
-    if (retVal == CL_SUCCESS) {
+    if (retVal == SUCCESS) {
         generateElfBinary();
         if (dumpFiles) {
             writeOutAllFiles();
@@ -220,7 +220,7 @@ std::string &OfflineCompiler::getBuildLog() {
 }
 
 int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
-    int retVal = CL_INVALID_DEVICE;
+    int retVal = INVALID_DEVICE;
 
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
         if (hardwarePrefix[productId] && (0 == strcmp(pDeviceName, hardwarePrefix[productId]))) {
@@ -229,7 +229,7 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
                 familyNameWithType.clear();
                 familyNameWithType.append(familyName[hwInfo->platform.eRenderCoreFamily]);
                 familyNameWithType.append(hwInfo->capabilityTable.platformType);
-                retVal = CL_SUCCESS;
+                retVal = SUCCESS;
                 break;
             }
         }
@@ -256,13 +256,13 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 
 int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles) {
     this->dumpFiles = dumpFiles;
-    int retVal = CL_SUCCESS;
+    int retVal = SUCCESS;
     const char *source = nullptr;
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
 
     retVal = parseCommandLine(numArgs, allArgs);
-    if (retVal != CL_SUCCESS) {
+    if (retVal != SUCCESS) {
         return retVal;
     }
 
@@ -285,7 +285,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
                 retVal = parseCommandLine(tokens.size(), tokens);
-                if (retVal != CL_SUCCESS) {
+                if (retVal != SUCCESS) {
                     return retVal;
                 }
             }
@@ -332,33 +332,33 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
         if (fclLibFile == nullptr) {
             printf("Error: Failed to load %s\n", Os::frontEndDllName);
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         this->fclLib.reset(fclLibFile);
         if (this->fclLib == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         auto fclCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->fclLib->getProcAddress(CIF::CreateCIFMainFuncName));
         if (fclCreateMain == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         this->fclMain = CIF::RAII::UPtr(createMainNoSanitize(fclCreateMain));
         if (this->fclMain == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         if (false == this->fclMain->IsCompatible<IGC::FclOclDeviceCtx>()) {
             printf("Incompatible interface in FCL : %s\n", CIF::InterfaceIdCoder::Dec(this->fclMain->FindIncompatible<IGC::FclOclDeviceCtx>()).c_str());
             DEBUG_BREAK_IF(true);
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         this->fclDeviceCtx = this->fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
         if (this->fclDeviceCtx == nullptr) {
-            return CL_OUT_OF_HOST_MEMORY;
+            return OUT_OF_HOST_MEMORY;
         }
 
         fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
@@ -372,42 +372,42 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     this->igcLib.reset(OsLibrary::load(Os::igcDllName));
     if (this->igcLib == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
 
     auto igcCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->igcLib->getProcAddress(CIF::CreateCIFMainFuncName));
     if (igcCreateMain == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
 
     this->igcMain = CIF::RAII::UPtr(createMainNoSanitize(igcCreateMain));
     if (this->igcMain == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
 
     std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
     if (false == this->igcMain->IsCompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)) {
         printf("Incompatible interface in IGC : %s\n", CIF::InterfaceIdCoder::Dec(this->igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)).c_str());
         DEBUG_BREAK_IF(true);
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
 
     CIF::Version_t verMin = 0, verMax = 0;
     if (false == this->igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax)) {
         printf("Patchtoken interface is missing");
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
 
     this->igcDeviceCtx = this->igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
     if (this->igcDeviceCtx == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
     this->igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo->capabilityTable.defaultProfilingTimerResolution));
     auto igcPlatform = this->igcDeviceCtx->GetPlatformHandle();
     auto igcGtSystemInfo = this->igcDeviceCtx->GetGTSystemInfoHandle();
     auto igcFeWa = this->igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
     if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFeWa == nullptr)) {
-        return CL_OUT_OF_HOST_MEMORY;
+        return OUT_OF_HOST_MEMORY;
     }
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo->platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo->gtSystemInfo);
@@ -447,7 +447,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 }
 
 int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
-    int retVal = CL_SUCCESS;
+    int retVal = SUCCESS;
     bool compile32 = false;
     bool compile64 = false;
 
@@ -515,7 +515,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
-    if (retVal == CL_SUCCESS) {
+    if (retVal == SUCCESS) {
         if (compile32 && compile64) {
             printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
             retVal = INVALID_COMMAND_LINE;
@@ -530,7 +530,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             retVal = INVALID_FILE;
         } else {
             retVal = getHardwareInfo(deviceName.c_str());
-            if (retVal != CL_SUCCESS) {
+            if (retVal != SUCCESS) {
                 printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
                 std::string extensionsList = getExtensionsList(*hwInfo);

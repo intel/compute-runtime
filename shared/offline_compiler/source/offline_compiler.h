@@ -28,6 +28,11 @@ class OsLibrary;
 std::string convertToPascalCase(const std::string &inString);
 
 enum ErrorCode {
+    SUCCESS = 0,
+    OUT_OF_HOST_MEMORY = -6,
+    BUILD_PROGRAM_FAILURE = -11,
+    INVALID_DEVICE = -33,
+    INVALID_PROGRAM = -44,
     INVALID_COMMAND_LINE = -5150,
     INVALID_FILE = -5151,
     PRINT_USAGE = -5152,

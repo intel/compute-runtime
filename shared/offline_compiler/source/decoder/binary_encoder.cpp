@@ -149,7 +149,7 @@ int BinaryEncoder::encode() {
     std::stringstream deviceBinary; //(pathToDump + "device_binary.bin", std::ios::binary);
     int retVal = processBinary(ptmFile, deviceBinary);
     argHelper->saveOutput(pathToDump + "device_binary.bin", deviceBinary.str().c_str(), deviceBinary.str().length());
-    if (retVal != CL_SUCCESS) {
+    if (retVal != 0) {
         return retVal;
     }
 
