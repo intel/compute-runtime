@@ -50,7 +50,7 @@ apt-get install intel-opencl-icd
 ```
 
 Procedures for other
-[distributions](https://github.com/intel/compute-runtime/blob/master/documentation/DISTRIBUTIONS.md).
+[distributions](https://github.com/intel/compute-runtime/blob/master/DISTRIBUTIONS.md).
 
 ## Linking applications
 
