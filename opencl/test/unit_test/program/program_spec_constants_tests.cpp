@@ -32,42 +32,59 @@ struct UpdateSpecConstantsTest : public ::testing::Test {
         mockProgram->specConstantsSizes.reset(new MockCIFBuffer());
         mockProgram->specConstantsValues.reset(new MockCIFBuffer());
 
-        mockProgram->specConstantsIds->PushBackRawCopy(1);
-        mockProgram->specConstantsIds->PushBackRawCopy(2);
-        mockProgram->specConstantsIds->PushBackRawCopy(3);
+        uint32_t id1 = 1u, id2 = 2u, id3 = 3u;
+        mockProgram->specConstantsIds->PushBackRawCopy(id1);
+        mockProgram->specConstantsIds->PushBackRawCopy(id2);
+        mockProgram->specConstantsIds->PushBackRawCopy(id3);
 
-        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(char));
-        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(uint16_t));
-        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(int));
+        uint32_t size1 = sizeof(char), size2 = sizeof(uint16_t), size3 = sizeof(int);
+        mockProgram->specConstantsSizes->PushBackRawCopy(size1);
+        mockProgram->specConstantsSizes->PushBackRawCopy(size2);
+        mockProgram->specConstantsSizes->PushBackRawCopy(size3);
 
-        mockProgram->specConstantsValues->PushBackRawCopy(&val1);
-        mockProgram->specConstantsValues->PushBackRawCopy(&val2);
-        mockProgram->specConstantsValues->PushBackRawCopy(&val3);
+        val1 = new char;
+        val2 = new uint16_t;
 
-        values = mockProgram->specConstantsValues->GetMemory<const void *>();
+        *val1 = 5;
+        *val2 = 50;
 
-        EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
-        EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
-        EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
+        mockProgram->specConstantsValues->PushBackRawCopy(val1);
+        mockProgram->specConstantsValues->PushBackRawCopy(val2);
+        mockProgram->specConstantsValues->PushBackRawCopy(val3);
+
+        values = mockProgram->specConstantsValues->GetMemoryWriteable<void *>();
+
+        EXPECT_EQ(val1, reinterpret_cast<char *>(values[0]));
+        EXPECT_EQ(val2, reinterpret_cast<uint16_t *>(values[1]));
+        EXPECT_EQ(val3, reinterpret_cast<int *>(values[2]));
     }
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockProgram> mockProgram;
 
-    char val1 = 5;
-    uint16_t val2 = 50;
-    int val3 = 500;
-    const void *const *values;
+    char *val1 = nullptr;
+    uint16_t *val2 = nullptr;
+    int *val3 = nullptr;
+    void **values;
 };
 
-TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWhenUpdateSpecializationConstantThenProperValueIsUpdated) {
+TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWhenUpdateSpecializationConstantThenProperValueIsCopiedAndUpdated) {
     int newSpecConstVal3 = 5000;
 
     auto ret = mockProgram->updateSpecializationConstant(3, sizeof(int), &newSpecConstVal3);
 
     EXPECT_EQ(CL_SUCCESS, ret);
-    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
-    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
-    EXPECT_EQ(newSpecConstVal3, *reinterpret_cast<const int *>(values[2]));
+    EXPECT_EQ(val1, reinterpret_cast<char *>(values[0]));
+    EXPECT_EQ(val2, reinterpret_cast<uint16_t *>(values[1]));
+    EXPECT_EQ(newSpecConstVal3, *reinterpret_cast<int *>(values[2]));
+    EXPECT_NE(&newSpecConstVal3, values[2]);
+    EXPECT_NE(val3, values[2]);
+
+    newSpecConstVal3 = 50000;
+    EXPECT_NE(newSpecConstVal3, *reinterpret_cast<int *>(values[2]));
+
+    ret = mockProgram->updateSpecializationConstant(3, sizeof(int), &newSpecConstVal3);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_EQ(newSpecConstVal3, *reinterpret_cast<int *>(values[2]));
 }
 
 TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperSizeWhenUpdateSpecializationConstantThenErrorIsReturned) {
@@ -76,9 +93,9 @@ TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperSizeWhenUpdate
     auto ret = mockProgram->updateSpecializationConstant(3, 10 * sizeof(int), &newSpecConstVal3);
 
     EXPECT_EQ(CL_INVALID_VALUE, ret);
-    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
-    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
-    EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
+    EXPECT_EQ(val1, reinterpret_cast<char *>(values[0]));
+    EXPECT_EQ(val2, reinterpret_cast<uint16_t *>(values[1]));
+    EXPECT_EQ(val3, reinterpret_cast<int *>(values[2]));
 }
 
 TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperIdAndSizeWhenUpdateSpecializationConstantThenErrorIsReturned) {
@@ -87,7 +104,7 @@ TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperIdAndSizeWhenU
     auto ret = mockProgram->updateSpecializationConstant(4, sizeof(int), &newSpecConstVal3);
 
     EXPECT_EQ(CL_INVALID_SPEC_ID, ret);
-    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
-    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
-    EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
+    EXPECT_EQ(val1, reinterpret_cast<char *>(values[0]));
+    EXPECT_EQ(val2, reinterpret_cast<uint16_t *>(values[1]));
+    EXPECT_EQ(val3, reinterpret_cast<int *>(values[2]));
 }

@@ -258,6 +258,8 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
         return TranslationOutput::ErrorCode::UnknownError;
     }
 
+    output.valuesBuffer->Resize(output.idsBuffer->GetSize<uint32_t>() * sizeof(void *));
+
     return TranslationOutput::ErrorCode::Success;
 }
 
