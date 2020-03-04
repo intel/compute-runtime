@@ -8,12 +8,13 @@
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
-struct CommandQueueMock : public CommandQueue {
+struct CommandQueueMock : public MockCommandQueue {
     cl_int enqueueSVMUnmap(void *svmPtr,
                            cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                            cl_event *event, bool externalAppCall) override {

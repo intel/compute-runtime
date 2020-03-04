@@ -33,9 +33,9 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
         .Times(1)
         .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockBufferDesc));
 
-    class MockCmdQ : public CommandQueue {
+    class MockCmdQ : public MockCommandQueue {
       public:
-        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -61,9 +61,9 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
 TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice) {
     this->context->setInteropUserSyncEnabled(false);
 
-    class MockCmdQ : public CommandQueue {
+    class MockCmdQ : public MockCommandQueue {
       public:
-        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -94,9 +94,9 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
         .Times(1)
         .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockBufferDesc));
 
-    class MockCmdQ : public CommandQueue {
+    class MockCmdQ : public MockCommandQueue {
       public:
-        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;
@@ -122,9 +122,9 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
 TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDoExplicitFinishOnce) {
     this->context->setInteropUserSyncEnabled(true);
 
-    class MockCmdQ : public CommandQueue {
+    class MockCmdQ : public MockCommandQueue {
       public:
-        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : CommandQueue(context, device, properties){};
+        MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties){};
         cl_int finish() override {
             finishCalled++;
             return CL_SUCCESS;

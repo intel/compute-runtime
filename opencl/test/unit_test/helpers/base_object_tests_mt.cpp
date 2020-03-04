@@ -8,13 +8,14 @@
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "gtest/gtest.h"
 
 namespace NEO {
 
 TEST(BaseObjectTestsMt, givenObjectOwnershipForEachThreadWhenIncrementingNonAtomicValueThenNoDataRacesAreExpected) {
-    CommandQueue *object = new CommandQueue;
+    MockCommandQueue *object = new MockCommandQueue;
     object->takeOwnership();
     uint32_t counter = 0;
     const uint32_t loopCount = 50;

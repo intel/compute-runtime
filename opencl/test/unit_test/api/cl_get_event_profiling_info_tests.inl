@@ -262,7 +262,7 @@ class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
         cl_int retVal = CL_SUCCESS;
         context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1),
                                                                         nullptr, nullptr, retVal));
-        commandQueue = std::make_unique<CommandQueue>(context.get(), device.get(), nullptr);
+        commandQueue = std::make_unique<MockCommandQueue>(context.get(), device.get(), nullptr);
         event = std::make_unique<Event>(commandQueue.get(), 0, 0, 0);
         event->setStatus(CL_COMPLETE);
         commandQueue->getPerfCounters()->getApiReport(0, nullptr, &param_value_size, true);

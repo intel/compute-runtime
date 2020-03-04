@@ -11,6 +11,7 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
@@ -86,7 +87,7 @@ CommandQueue *CommandQueueFixture::createCommandQueue(
     ClDevice *device,
     cl_command_queue_properties properties) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
-    return new CommandQueue(
+    return new MockCommandQueue(
         context,
         device,
         props);

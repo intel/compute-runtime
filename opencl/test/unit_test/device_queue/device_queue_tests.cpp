@@ -320,7 +320,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, dispatchScheduler) {
     DeviceQueue devQueue;
     MockContext context;
     MockProgram program(*device->getExecutionEnvironment());
-    CommandQueue cmdQ(nullptr, nullptr, 0);
+    MockCommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
     LinearStream cmdStream;

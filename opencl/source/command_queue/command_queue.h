@@ -64,7 +64,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                 bool internalUsage,
                                 cl_int &errcodeRet);
 
-    CommandQueue();
+    CommandQueue() = delete;
 
     CommandQueue(Context *context, ClDevice *device,
                  const cl_queue_properties *properties);
@@ -75,44 +75,19 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ~CommandQueue() override;
 
     // API entry points
-    virtual cl_int
-    enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t srcOrigin[3],
-                     const size_t dstOrigin[3], const size_t region[3],
-                     cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueCopyImage(Image *srcImage, Image *dstImage, const size_t srcOrigin[3], const size_t dstOrigin[3],
+                                    const size_t region[3], cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueFillImage(Image *image, const void *fillColor,
-                                    const size_t *origin, const size_t *region,
-                                    cl_uint numEventsInWaitList,
-                                    const cl_event *eventWaitList,
-                                    cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueFillImage(Image *image, const void *fillColor, const size_t *origin, const size_t *region,
+                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueFillBuffer(Buffer *buffer, const void *pattern,
-                                     size_t patternSize, size_t offset,
-                                     size_t size, cl_uint numEventsInWaitList,
-                                     const cl_event *eventWaitList,
-                                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueFillBuffer(Buffer *buffer, const void *pattern, size_t patternSize, size_t offset,
+                                     size_t size, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueKernel(cl_kernel kernel, cl_uint workDim,
-                                 const size_t *globalWorkOffset,
-                                 const size_t *globalWorkSize,
-                                 const size_t *localWorkSize,
-                                 cl_uint numEventsInWaitList,
-                                 const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueKernel(cl_kernel kernel, cl_uint workDim, const size_t *globalWorkOffset, const size_t *globalWorkSize,
+                                 const size_t *localWorkSize, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueBarrierWithWaitList(cl_uint numEventsInWaitList,
-                                              const cl_event *eventWaitList,
-                                              cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueBarrierWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
     MOCKABLE_VIRTUAL void *enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
                                             cl_map_flags mapFlags, size_t offset,
@@ -129,166 +104,74 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL cl_int enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList,
                                                   const cl_event *eventWaitList, cl_event *event);
 
-    virtual cl_int enqueueSVMMap(cl_bool blockingMap, cl_map_flags mapFlags,
-                                 void *svmPtr, size_t size,
-                                 cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                 cl_event *event, bool externalAppCall) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueSVMMap(cl_bool blockingMap, cl_map_flags mapFlags, void *svmPtr, size_t size,
+                                 cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool externalAppCall) = 0;
 
-    virtual cl_int enqueueSVMUnmap(void *svmPtr,
-                                   cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                   cl_event *event, bool externalAppCall) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueSVMUnmap(void *svmPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                                   cl_event *event, bool externalAppCall) = 0;
 
-    virtual cl_int enqueueSVMFree(cl_uint numSvmPointers,
-                                  void *svmPointers[],
+    virtual cl_int enqueueSVMFree(cl_uint numSvmPointers, void *svmPointers[],
                                   void(CL_CALLBACK *pfnFreeFunc)(cl_command_queue queue,
                                                                  cl_uint numSvmPointers,
                                                                  void *svmPointers[],
                                                                  void *userData),
-                                  void *userData,
-                                  cl_uint numEventsInWaitList,
-                                  const cl_event *eventWaitList,
-                                  cl_event *event) {
-        return CL_SUCCESS;
-    }
+                                  void *userData, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueSVMMemcpy(cl_bool blockingCopy,
-                                    void *dstPtr,
-                                    const void *srcPtr,
-                                    size_t size,
-                                    cl_uint numEventsInWaitList,
-                                    const cl_event *eventWaitList,
-                                    cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueSVMMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_uint numEventsInWaitList,
+                                    const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueSVMMemFill(void *svmPtr,
-                                     const void *pattern,
-                                     size_t patternSize,
-                                     size_t size,
-                                     cl_uint numEventsInWaitList,
-                                     const cl_event *eventWaitList,
-                                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueSVMMemFill(void *svmPtr, const void *pattern, size_t patternSize,
+                                     size_t size, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList,
-                                             const cl_event *eventWaitList,
-                                             cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueMigrateMemObjects(cl_uint numMemObjects,
-                                            const cl_mem *memObjects,
-                                            cl_mem_migration_flags flags,
-                                            cl_uint numEventsInWaitList,
-                                            const cl_event *eventWaitList,
-                                            cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueMigrateMemObjects(cl_uint numMemObjects, const cl_mem *memObjects, cl_mem_migration_flags flags,
+                                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueSVMMigrateMem(cl_uint numSvmPointers,
-                                        const void **svmPointers,
-                                        const size_t *sizes,
-                                        const cl_mem_migration_flags flags,
-                                        cl_uint numEventsInWaitList,
-                                        const cl_event *eventWaitList,
-                                        cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueSVMMigrateMem(cl_uint numSvmPointers, const void **svmPointers, const size_t *sizes,
+                                        const cl_mem_migration_flags flags, cl_uint numEventsInWaitList,
+                                        const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueCopyBuffer(Buffer *srcBuffer, Buffer *dstBuffer,
-                                     size_t srcOffset, size_t dstOffset,
-                                     size_t size, cl_uint numEventsInWaitList,
-                                     const cl_event *eventWaitList,
-                                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueCopyBuffer(Buffer *srcBuffer, Buffer *dstBuffer, size_t srcOffset, size_t dstOffset,
+                                     size_t size, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead,
-                                     size_t offset, size_t size, void *ptr,
-                                     GraphicsAllocation *mapAllocation,
-                                     cl_uint numEventsInWaitList,
-                                     const cl_event *eventWaitList,
-                                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t size, void *ptr,
+                                     GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                     const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead,
-                                    const size_t *origin, const size_t *region,
-                                    size_t rowPitch, size_t slicePitch, void *ptr,
-                                    GraphicsAllocation *mapAllocation,
-                                    cl_uint numEventsInWaitList,
-                                    const cl_event *eventWaitList,
-                                    cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region,
+                                    size_t rowPitch, size_t slicePitch, void *ptr, GraphicsAllocation *mapAllocation,
+                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite,
-                                      size_t offset, size_t cb, const void *ptr,
-                                      GraphicsAllocation *mapAllocation,
-                                      cl_uint numEventsInWaitList,
-                                      const cl_event *eventWaitList,
-                                      cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb,
+                                      const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                      const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite,
-                                     const size_t *origin, const size_t *region,
-                                     size_t inputRowPitch, size_t inputSlicePitch,
-                                     const void *ptr, GraphicsAllocation *mapAllocation,
-                                     cl_uint numEventsInWaitList,
-                                     const cl_event *eventWaitList,
-                                     cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite, const size_t *origin,
+                                     const size_t *region, size_t inputRowPitch, size_t inputSlicePitch,
+                                     const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                     const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int
-    enqueueCopyBufferRect(Buffer *srcBuffer, Buffer *dstBuffer,
-                          const size_t *srcOrigin, const size_t *dstOrigin,
-                          const size_t *region, size_t srcRowPitch,
-                          size_t srcSlicePitch, size_t dstRowPitch,
-                          size_t dstSlicePitch, cl_uint numEventsInWaitList,
-                          const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueCopyBufferRect(Buffer *srcBuffer, Buffer *dstBuffer, const size_t *srcOrigin, const size_t *dstOrigin,
+                                         const size_t *region, size_t srcRowPitch, size_t srcSlicePitch, size_t dstRowPitch, size_t dstSlicePitch,
+                                         cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueWriteBufferRect(
-        Buffer *buffer, cl_bool blockingWrite, const size_t *bufferOrigin,
-        const size_t *hostOrigin, const size_t *region, size_t bufferRowPitch,
-        size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-        const void *ptr, cl_uint numEventsInWaitList,
-        const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueWriteBufferRect(Buffer *buffer, cl_bool blockingWrite, const size_t *bufferOrigin,
+                                          const size_t *hostOrigin, const size_t *region, size_t bufferRowPitch,
+                                          size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
+                                          const void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int enqueueReadBufferRect(
-        Buffer *buffer, cl_bool blockingRead, const size_t *bufferOrigin,
-        const size_t *hostOrigin, const size_t *region, size_t bufferRowPitch,
-        size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
-        void *ptr, cl_uint numEventsInWaitList,
-        const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueReadBufferRect(Buffer *buffer, cl_bool blockingRead, const size_t *bufferOrigin,
+                                         const size_t *hostOrigin, const size_t *region, size_t bufferRowPitch,
+                                         size_t bufferSlicePitch, size_t hostRowPitch, size_t hostSlicePitch,
+                                         void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int
-    enqueueCopyBufferToImage(Buffer *srcBuffer, Image *dstImage, size_t srcOffset,
-                             const size_t *dstOrigin, const size_t *region,
-                             cl_uint numEventsInWaitList,
-                             const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueCopyBufferToImage(Buffer *srcBuffer, Image *dstImage, size_t srcOffset,
+                                            const size_t *dstOrigin, const size_t *region,
+                                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int
-    enqueueCopyImageToBuffer(Image *srcImage, Buffer *dstBuffer,
-                             const size_t *srcOrigin, const size_t *region,
-                             size_t dstOffset, cl_uint numEventsInWaitList,
-                             const cl_event *eventWaitList, cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueCopyImageToBuffer(Image *srcImage, Buffer *dstBuffer, const size_t *srcOrigin, const size_t *region,
+                                            size_t dstOffset, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
     cl_int enqueueAcquireSharedObjects(cl_uint numObjects,
                                        const cl_mem *memObjects,
@@ -306,22 +189,14 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal);
 
-    virtual cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier,
-                                          cl_uint numEventsInWaitList,
-                                          const cl_event *eventWaitList,
-                                          cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier, cl_uint numEventsInWaitList,
+                                          const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int finish() { return CL_SUCCESS; }
-    virtual cl_int enqueueInitDispatchGlobals(DispatchGlobalsArgs *dispatchGlobalsArgs,
-                                              cl_uint numEventsInWaitList,
-                                              const cl_event *eventWaitList,
-                                              cl_event *event) {
-        return CL_SUCCESS;
-    }
+    virtual cl_int finish() = 0;
+    virtual cl_int enqueueInitDispatchGlobals(DispatchGlobalsArgs *dispatchGlobalsArgs, cl_uint numEventsInWaitList,
+                                              const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int flush() { return CL_SUCCESS; }
+    virtual cl_int flush() = 0;
 
     MOCKABLE_VIRTUAL void updateFromCompletionStamp(const CompletionStamp &completionStamp);
 

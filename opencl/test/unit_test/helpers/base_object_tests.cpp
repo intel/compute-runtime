@@ -21,6 +21,7 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gmock/gmock.h"
@@ -99,7 +100,7 @@ typedef ::testing::Types<
     //Kernel,
     //Sampler
     //others...
-    CommandQueue,
+    MockCommandQueue,
     DeviceQueue>
     BaseObjectTypes;
 
@@ -109,7 +110,7 @@ typedef ::testing::Types<
     Context,
     Program,
     Buffer,
-    CommandQueue,
+    MockCommandQueue,
     DeviceQueue>
     BaseObjectTypesForCastInvalidMagicTest;
 

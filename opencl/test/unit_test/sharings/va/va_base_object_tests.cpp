@@ -10,6 +10,7 @@
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
@@ -33,7 +34,7 @@ typedef ::testing::Types<
     //Kernel,
     //Sampler
     //others...
-    CommandQueue,
+    MockCommandQueue,
     DeviceQueue>
     BaseObjectTypes;
 

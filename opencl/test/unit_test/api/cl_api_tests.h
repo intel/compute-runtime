@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
@@ -48,7 +49,7 @@ struct ApiFixture : PlatformFixture {
         pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
         EXPECT_EQ(retVal, CL_SUCCESS);
 
-        pCommandQueue = new CommandQueue(pContext, pDevice, nullptr);
+        pCommandQueue = new MockCommandQueue(pContext, pDevice, nullptr);
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, &pDevice->getDevice());
 

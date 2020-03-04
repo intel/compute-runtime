@@ -585,7 +585,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParam
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
-    struct MockedCommandQueue : public CommandQueue {
+    struct MockedCommandQueue : public MockCommandQueue {
         cl_int enqueueSVMMemFill(void *svmPtr,
                                  const void *pattern,
                                  size_t patternSize,
@@ -627,7 +627,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperPara
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
-    struct MockedCommandQueue : public CommandQueue {
+    struct MockedCommandQueue : public MockCommandQueue {
         cl_int enqueueSVMMemFill(void *svmPtr,
                                  const void *pattern,
                                  size_t patternSize,
@@ -669,7 +669,7 @@ TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopi
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
     auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
-    struct MockedCommandQueue : public CommandQueue {
+    struct MockedCommandQueue : public MockCommandQueue {
         cl_int enqueueSVMMemcpy(cl_bool blockingCopy,
                                 void *dstPtr,
                                 const void *srcPtr,
@@ -705,7 +705,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithWrongQu
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperParametersThenSuccessIsReturned) {
-    CommandQueue cmdQ;
+    MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMigrateMemINTEL(&cmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, nullptr);
@@ -718,7 +718,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithWrongQue
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperParametersThenSuccessIsReturned) {
-    CommandQueue cmdQ;
+    MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMemAdviseINTEL(&cmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, nullptr);

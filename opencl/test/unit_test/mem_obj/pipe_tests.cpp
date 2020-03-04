@@ -10,6 +10,7 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
@@ -90,7 +91,7 @@ TEST_F(PipeTest, givenPipeWhenEnqueueWriteForUnmapIsCalledThenReturnError) {
     ASSERT_NE(nullptr, pipe);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
-    CommandQueue cmdQ;
+    MockCommandQueue cmdQ;
     errCode = clEnqueueUnmapMemObject(&cmdQ, pipe.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, errCode);
 }

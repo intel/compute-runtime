@@ -7,6 +7,7 @@
 
 #include "cl_api_tests.h"
 
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
@@ -23,7 +24,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     EXPECT_EQ(CL_SUCCESS, retVal);
     Context *ctxPtr = reinterpret_cast<Context *>(context);
 
-    commandQueue = new CommandQueue(context, device, 0);
+    commandQueue = new MockCommandQueue(context, device, 0);
 
     program = new MockProgram(*device->getExecutionEnvironment(), ctxPtr, false, &device->getDevice());
     Program *prgPtr = reinterpret_cast<Program *>(program);

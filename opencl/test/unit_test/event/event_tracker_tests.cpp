@@ -10,6 +10,7 @@
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/event_tracker.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "event_fixture.h"
 
@@ -78,7 +79,7 @@ TEST(EventsTracker, whenCallLabelFunctionWhenEventIsNotInMapThenGetStringWithout
 }
 
 TEST(EventsTracker, whenCallLabelFunctionThenGetStringWithProperCmdqId) {
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
 
     std::string expect = "cq" + std::to_string(reinterpret_cast<uintptr_t>(&cmdq));
 
@@ -86,7 +87,7 @@ TEST(EventsTracker, whenCallLabelFunctionThenGetStringWithProperCmdqId) {
 }
 
 TEST(EventsTracker, givenNullptrCmdqThenNotDumping) {
-    CommandQueue *cmdq_ptr = nullptr;
+    MockCommandQueue *cmdq_ptr = nullptr;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
@@ -97,7 +98,7 @@ TEST(EventsTracker, givenNullptrCmdqThenNotDumping) {
 }
 
 TEST(EventsTracker, givenAlreadyDumpedCmdqThenNotDumping) {
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
@@ -109,7 +110,7 @@ TEST(EventsTracker, givenAlreadyDumpedCmdqThenNotDumping) {
 }
 
 TEST(EventsTracker, givenCmqdWithTaskCountAndLevelNotReadyThenDumpingCmdqWithNotReadyLabels) {
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
     cmdq.taskCount = CompletionStamp::levelNotReady;
     cmdq.taskLevel = CompletionStamp::levelNotReady;
 
@@ -125,7 +126,7 @@ TEST(EventsTracker, givenCmqdWithTaskCountAndLevelNotReadyThenDumpingCmdqWithNot
 }
 
 TEST(EventsTracker, whenCallDumpQueueThenDumpingCmdqWithProperCountTaskAndLevelValues) {
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
     cmdq.taskCount = 3;
     cmdq.taskLevel = 1;
 
@@ -228,7 +229,7 @@ TEST(EventsTracker, givenEventAndUserEventThenDumpingNodeWithProperLabels) {
 
 TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingWithProperLabels) {
     MockContext ctx;
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
     vEvent.updateTaskCount(1);
@@ -391,7 +392,7 @@ TEST(EventsTracker, givenAlreadyDumpedEventThenNotDumpingGraph) {
 
 TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingProperGraph) {
     MockContext ctx;
-    CommandQueue cmdq;
+    MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
     vEvent.updateTaskCount(1);
