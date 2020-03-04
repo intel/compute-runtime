@@ -19,4 +19,19 @@ TEST_F(clSVMFreeTests, GivenNullPtrWhenFreeingSvmThenNoAction) {
         nullptr  // void *svm_pointer
     );
 }
+
+TEST_F(clSVMFreeTests, GivenContextWithDeviceNotSupportingSvmWhenFreeingSvmThenNoAction) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.ftrSvm = false;
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    cl_device_id deviceId = clDevice.get();
+    auto context = clUniquePtr(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    clSVMFree(
+        context.get(),
+        reinterpret_cast<void *>(0x1234));
+}
+
 } // namespace ULT

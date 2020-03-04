@@ -4056,7 +4056,6 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         TRACING_EXIT(clSVMAlloc, &pAlloc);
         return pAlloc;
     }
-    auto pDevice = pContext->getDevice(0);
 
     if (flags == 0) {
         flags = CL_MEM_READ_WRITE;
@@ -4077,6 +4076,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         return pAlloc;
     }
 
+    auto pDevice = pContext->getDevice(0);
     if ((size == 0) || (size > pDevice->getDeviceInfo().maxMemAllocSize)) {
         TRACING_EXIT(clSVMAlloc, &pAlloc);
         return pAlloc;
@@ -4112,10 +4112,23 @@ void CL_API_CALL clSVMFree(cl_context context,
     TRACING_ENTER(clSVMFree, &context, &svmPointer);
     DBG_LOG_INPUTS("context", context,
                    "svmPointer", svmPointer);
+
     Context *pContext = nullptr;
-    if (validateObject(WithCastToInternal(context, &pContext)) == CL_SUCCESS) {
-        pContext->getSVMAllocsManager()->freeSVMAlloc(svmPointer);
+    cl_int retVal = validateObjects(
+        WithCastToInternal(context, &pContext));
+
+    if (retVal != CL_SUCCESS) {
+        TRACING_EXIT(clSVMFree, nullptr);
+        return;
     }
+
+    auto pClDevice = pContext->getDevice(0);
+    if (!pClDevice->getHardwareInfo().capabilityTable.ftrSvm) {
+        TRACING_EXIT(clSVMFree, nullptr);
+        return;
+    }
+
+    pContext->getSVMAllocsManager()->freeSVMAlloc(svmPointer);
     TRACING_EXIT(clSVMFree, nullptr);
 }
 
