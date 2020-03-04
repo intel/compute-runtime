@@ -6,7 +6,7 @@
 
 project(igdrcl_aub_tests)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
+set(OPENCL_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
@@ -82,53 +82,4 @@ else()
 endif()
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
-macro(macro_for_each_test_config)
-  if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)
-    add_custom_target(${PLATFORM_IT_LOWER}_aub_tests
-      DEPENDS igdrcl_aub_tests
-      DEPENDS copy_test_files_${PLATFORM_IT_LOWER}
-    )
-    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-      if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-        add_dependencies(${PLATFORM_IT_LOWER}_aub_tests prepare_test_kernels_${family_name_with_type})
-      endif()
-    endforeach()
-    add_custom_target(run_${PLATFORM_IT_LOWER}_aub_tests ALL DEPENDS ${PLATFORM_IT_LOWER}_aub_tests)
-    add_dependencies(run_aub_tests run_${PLATFORM_IT_LOWER}_aub_tests)
-    set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
-    set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
-    add_custom_command(
-      TARGET ${PLATFORM_IT_LOWER}_aub_tests
-      POST_BUILD
-      COMMAND WORKING_DIRECTORY ${TargetDir}
-      COMMAND echo Creating output directory for ${PLATFORM_IT_LOWER} AUBs generation...
-      COMMAND ${CMAKE_COMMAND} -E make_directory "${TargetDir}/${PLATFORM_IT_LOWER}_aub/aub_out"
-    )
-    if(WIN32)
-      add_dependencies(${PLATFORM_IT_LOWER}_aub_tests mock_gdi)
-    endif()
-  endif()
-
-  set(AUB_TESTS_OPTIONS "")
-  if (NOT ${AUB_DUMP_BUFFER_FORMAT} STREQUAL "")
-    list(APPEND AUB_TESTS_OPTIONS --dump_buffer_format)
-    list(APPEND AUB_TESTS_OPTIONS ${AUB_DUMP_BUFFER_FORMAT})
-  endif()
-  if (NOT ${AUB_DUMP_IMAGE_FORMAT} STREQUAL "")
-    list(APPEND AUB_TESTS_OPTIONS --dump_image_format)
-    list(APPEND AUB_TESTS_OPTIONS ${AUB_DUMP_IMAGE_FORMAT})
-  endif()
-  neo_run_aub_target(${PLATFORM_IT_LOWER} "${PLATFORM_IT} ${SLICES}x${SUBSLICES}x${EU_PER_SS}" ${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS} "${AUB_TESTS_OPTIONS}")
-endmacro()
-
-macro(macro_for_each_platform)
-  apply_macro_for_each_test_config("AUB_TESTS")
-endmacro()
-
-macro(macro_for_each_gen)
-  apply_macro_for_each_platform()
-endmacro()
-
-apply_macro_for_each_gen("TESTED")
-create_project_source_tree(igdrcl_aub_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
+create_project_source_tree(igdrcl_aub_tests)
