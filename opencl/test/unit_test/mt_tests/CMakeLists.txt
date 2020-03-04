@@ -6,6 +6,15 @@
 
 project(igdrcl_mt_tests)
 
+set(OPENCL_MT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
+
+if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
+  set(igdrcl_mt_tests_LISTENER_OPTION "--disable_default_listener")
+endif()
+
+add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
@@ -19,7 +28,11 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 
-target_include_directories(igdrcl_mt_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(igdrcl_mt_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
+  ${NEO_SOURCE_DIR}/opencl/source/gen_common
+)
 
 add_subdirectories()
 
@@ -38,17 +51,10 @@ else()
   )
 endif()
 
-option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
-
-if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
-  set(igdrcl_mt_tests_LISTENER_OPTION "--disable_default_listener")
-endif()
-
 if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)
 endif()
 
-add_custom_target(run_mt_unit_tests)
 
 add_dependencies(igdrcl_mt_tests test_dynamic_lib)
 
@@ -62,43 +68,3 @@ endif()
 
 set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
-function(run_mt_tests target slices subslices eu_per_ss)
-  add_custom_target(run_${target}_mt_unit_tests DEPENDS igdrcl_mt_tests)
-  if(NOT WIN32)
-    add_dependencies(run_${target}_mt_unit_tests copy_test_files_${target})
-  endif()
-  add_dependencies(run_mt_unit_tests run_${target}_mt_unit_tests)
-  set_target_properties(run_${target}_mt_unit_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${target}")
-
-  add_custom_command(
-    TARGET run_${target}_mt_unit_tests
-    POST_BUILD
-    COMMAND WORKING_DIRECTORY ${TargetDir}
-    COMMAND echo "Running igdrcl_mt_tests ${target} ${slices}x${subslices}x${eu_per_ss}"
-    COMMAND igdrcl_mt_tests --product ${target} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${igdrcl_mt_tests_LISTENER_OPTION}
-  )
-endfunction()
-
-target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/gen_common)
-
-macro(macro_for_each_test_config)
-  run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-  if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-      if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-        add_dependencies(run_${PLATFORM_IT_LOWER}_mt_unit_tests prepare_test_kernels_${family_name_with_type})
-      endif()
-    endforeach()
-  endif()
-endmacro()
-
-macro(macro_for_each_platform)
-  apply_macro_for_each_test_config("MT_TESTS")
-endmacro()
-
-macro(macro_for_each_gen)
-  apply_macro_for_each_platform()
-endmacro()
-
-apply_macro_for_each_gen("TESTED")

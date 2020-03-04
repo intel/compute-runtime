@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -75,17 +75,6 @@ macro(apply_macro_for_each_platform)
   foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
     string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
     macro_for_each_platform()
-  endforeach()
-endmacro()
-
-macro(apply_macro_for_each_test_config type)
-  GET_TEST_CONFIGURATIONS_FOR_PLATFORM(${type} ${GEN_TYPE} ${PLATFORM_IT} PLATFORM_CONFIGURATIONS)
-  foreach(PLATFORM_CONFIGURATION ${PLATFORM_CONFIGURATIONS})
-    string(REPLACE "/" ";" CONFIGURATION_PARAMS ${PLATFORM_CONFIGURATION})
-    list(GET CONFIGURATION_PARAMS 1 SLICES)
-    list(GET CONFIGURATION_PARAMS 2 SUBSLICES)
-    list(GET CONFIGURATION_PARAMS 3 EU_PER_SS)
-    macro_for_each_test_config()
   endforeach()
 endmacro()
 
