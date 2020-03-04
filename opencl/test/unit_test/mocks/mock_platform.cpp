@@ -17,6 +17,7 @@ bool initPlatform() {
     return pPlatform->initialize(DeviceFactory::createDevices(*pPlatform->peekExecutionEnvironment()));
 }
 bool MockPlatform::initializeWithNewDevices() {
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
     return Platform::initialize(DeviceFactory::createDevices(executionEnvironment));
 }
 } // namespace NEO

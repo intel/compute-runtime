@@ -89,7 +89,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupNoWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
 
-    pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
@@ -121,7 +121,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
 
-    pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
@@ -252,7 +252,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
@@ -329,7 +329,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    pDevice->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
@@ -454,7 +454,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidBatch) {
 GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
-    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
     EXPECT_EQ(expectedSize, size);
 }
@@ -463,7 +463,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
-    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
     EXPECT_EQ(expectedSize, size);
 }
@@ -471,7 +471,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
 GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidThread);
-    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
     EXPECT_EQ(expectedSize, size);
 }
@@ -480,7 +480,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::MidThread);
-    device->getExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
     EXPECT_EQ(expectedSize, size);
 }

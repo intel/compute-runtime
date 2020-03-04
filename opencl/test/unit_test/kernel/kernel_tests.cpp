@@ -468,8 +468,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
-        executionEnvironment.setHwInfo(platformDevices[0]);
         executionEnvironment.prepareRootDeviceEnvironments(1);
+        executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
         executionEnvironment.initializeMemoryManager();
     }
 
@@ -2676,7 +2676,7 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableAuxTranslation.set(false);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &capabilityTable = hwInfo->capabilityTable;
     auto context = clUniquePtr(new MockContext(device.get()));
     context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;

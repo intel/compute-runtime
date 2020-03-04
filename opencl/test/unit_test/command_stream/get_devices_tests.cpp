@@ -65,47 +65,49 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
 
             const auto ret = getDevices(numDevices, *exeEnv);
-            hwInfo = exeEnv->getHardwareInfo();
+            for (auto i = 0u; i < expectedDevices; i++) {
+                hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
 
-            switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
-                EXPECT_TRUE(ret);
-                EXPECT_NE(nullptr, hwInfo);
-                EXPECT_EQ(expectedDevices, numDevices);
-                break;
-            case CSR_AUB:
-            case CSR_TBX:
-            case CSR_TBX_WITH_AUB: {
-                EXPECT_TRUE(ret);
-                EXPECT_NE(nullptr, hwInfo);
-                EXPECT_EQ(expectedDevices, numDevices);
-                for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
-                    auto hardwareInfo = hardwareInfoTable[i];
-                    if (hardwareInfo == nullptr)
-                        continue;
-                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
-                        break;
+                switch (csrType) {
+                case CSR_HW:
+                case CSR_HW_WITH_AUB:
+                    EXPECT_TRUE(ret);
+                    EXPECT_NE(nullptr, hwInfo);
+                    EXPECT_EQ(expectedDevices, numDevices);
+                    break;
+                case CSR_AUB:
+                case CSR_TBX:
+                case CSR_TBX_WITH_AUB: {
+                    EXPECT_TRUE(ret);
+                    EXPECT_NE(nullptr, hwInfo);
+                    EXPECT_EQ(expectedDevices, numDevices);
+                    for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                        auto hardwareInfo = hardwareInfoTable[i];
+                        if (hardwareInfo == nullptr)
+                            continue;
+                        if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
+                            break;
+                    }
+                    EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+                    ASSERT_NE(nullptr, hardwarePrefix[i]);
+
+                    HardwareInfo hwInfoFromTable = *hardwareInfoTable[i];
+                    hwInfoFromTable.featureTable = {};
+                    hwInfoFromTable.workaroundTable = {};
+                    hwInfoFromTable.gtSystemInfo = {};
+                    hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0);
+                    HwInfoConfig *hwConfig = HwInfoConfig::get(hwInfoFromTable.platform.eProductFamily);
+                    hwInfoFromTable.featureTable.ftrE2ECompression = 0;
+                    hwConfig->configureHardwareCustom(&hwInfoFromTable, nullptr);
+                    EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
+                    EXPECT_EQ(0, memcmp(&hwInfoFromTable.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
+
+                    EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
+                    break;
                 }
-                EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
-                ASSERT_NE(nullptr, hardwarePrefix[i]);
-
-                HardwareInfo hwInfoFromTable = *hardwareInfoTable[i];
-                hwInfoFromTable.featureTable = {};
-                hwInfoFromTable.workaroundTable = {};
-                hwInfoFromTable.gtSystemInfo = {};
-                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0);
-                HwInfoConfig *hwConfig = HwInfoConfig::get(hwInfoFromTable.platform.eProductFamily);
-                hwInfoFromTable.featureTable.ftrE2ECompression = 0;
-                hwConfig->configureHardwareCustom(&hwInfoFromTable, nullptr);
-                EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
-                EXPECT_EQ(0, memcmp(&hwInfoFromTable.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-
-                EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
-                break;
-            }
-            default:
-                break;
+                default:
+                    break;
+                }
             }
         }
     }
@@ -151,44 +153,46 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
 
         auto ret = getDevices(numDevices, *exeEnv);
-        hwInfo = exeEnv->getHardwareInfo();
+        for (auto i = 0u; i < expectedDevices; i++) {
+            hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
 
-        switch (csrType) {
-        case CSR_HW:
-        case CSR_HW_WITH_AUB:
-            EXPECT_TRUE(ret);
-            EXPECT_EQ(expectedDevices, numDevices);
-            break;
-        case CSR_AUB:
-        case CSR_TBX:
-        case CSR_TBX_WITH_AUB: {
-            EXPECT_TRUE(ret);
-            EXPECT_NE(nullptr, hwInfo);
-            EXPECT_EQ(expectedDevices, numDevices);
-            for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
-                auto hardwareInfo = hardwareInfoTable[i];
-                if (hardwareInfo == nullptr)
-                    continue;
-                if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
-                    break;
+            switch (csrType) {
+            case CSR_HW:
+            case CSR_HW_WITH_AUB:
+                EXPECT_TRUE(ret);
+                EXPECT_EQ(expectedDevices, numDevices);
+                break;
+            case CSR_AUB:
+            case CSR_TBX:
+            case CSR_TBX_WITH_AUB: {
+                EXPECT_TRUE(ret);
+                EXPECT_NE(nullptr, hwInfo);
+                EXPECT_EQ(expectedDevices, numDevices);
+                for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                    auto hardwareInfo = hardwareInfoTable[i];
+                    if (hardwareInfo == nullptr)
+                        continue;
+                    if (hardwareInfoTable[i]->platform.eProductFamily == hwInfo->platform.eProductFamily)
+                        break;
+                }
+                EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+                ASSERT_NE(nullptr, hardwarePrefix[i]);
+                HardwareInfo defaultHwInfo = DEFAULT_PLATFORM::hwInfo;
+                defaultHwInfo.featureTable = {};
+                defaultHwInfo.workaroundTable = {};
+                defaultHwInfo.gtSystemInfo = {};
+                hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, 0x0);
+                HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
+                defaultHwInfo.featureTable.ftrE2ECompression = 0;
+                hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
+                EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
+                EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
+
+                break;
             }
-            EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
-            ASSERT_NE(nullptr, hardwarePrefix[i]);
-            HardwareInfo defaultHwInfo = DEFAULT_PLATFORM::hwInfo;
-            defaultHwInfo.featureTable = {};
-            defaultHwInfo.workaroundTable = {};
-            defaultHwInfo.gtSystemInfo = {};
-            hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, 0x0);
-            HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
-            defaultHwInfo.featureTable.ftrE2ECompression = 0;
-            hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
-            EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
-            EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-
-            break;
-        }
-        default:
-            break;
+            default:
+                break;
+            }
         }
     }
 }

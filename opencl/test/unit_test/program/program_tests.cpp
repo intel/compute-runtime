@@ -1914,6 +1914,7 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
     auto pDevice = pContext->getDevice(0);
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    rootDeviceEnvironment->setHwInfo(&pDevice->getHardwareInfo());
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     auto program = std::make_unique<MockProgram>(*executionEnvironment);
     EXPECT_NE(nullptr, program);
@@ -2752,6 +2753,7 @@ TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoRe
 TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWhenSetProgramSpecializationConstantThenErrorIsReturned) {
     auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0] = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
     MockDevice mockDevice(executionEnvironment, 0);
     SpecializationConstantProgramMock mockProgram(*executionEnvironment);
     mockProgram.setDevice(&mockDevice);

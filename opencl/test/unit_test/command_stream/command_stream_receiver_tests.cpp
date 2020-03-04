@@ -480,7 +480,8 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        executionEnvironment->setHwInfo(&hwInfo);
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));

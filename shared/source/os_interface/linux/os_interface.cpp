@@ -53,7 +53,7 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
     memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
     osInterface.reset(new OSInterface());
     osInterface->get()->setDrm(drm);
-    auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
+    auto hardwareInfo = getMutableHardwareInfo();
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, osInterface.get())) {
         return false;

@@ -56,7 +56,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     }
 
     void SetUp() override {
-        skipVmeTest = !platform()->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.supportsVme;
+        skipVmeTest = !platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.supportsVme;
         if (skipVmeTest) {
             GTEST_SKIP();
         }

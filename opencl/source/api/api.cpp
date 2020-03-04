@@ -85,8 +85,10 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if (platformsImpl.empty()) {
-            auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+            auto executionEnvironment = new ExecutionEnvironment();
+            executionEnvironment->incRefInternal();
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
+            executionEnvironment->decRefInternal();
             if (allDevices.empty()) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
@@ -94,7 +96,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             auto groupedDevices = Platform::groupDevices(std::move(allDevices));
             for (auto &deviceVector : groupedDevices) {
 
-                auto pPlatform = Platform::createFunc(*executionEnvironment.release());
+                auto pPlatform = Platform::createFunc(*executionEnvironment);
                 if (!pPlatform || !pPlatform->initialize(std::move(deviceVector))) {
                     retVal = CL_OUT_OF_HOST_MEMORY;
                     break;

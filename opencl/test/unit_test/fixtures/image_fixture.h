@@ -119,8 +119,8 @@ struct ImageClearColorFixture : ::testing::Test {
         hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
 
         NEO::platformsImpl.clear();
-        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hardwareInfo);
-        NEO::platform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
+        NEO::constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
+        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->initGmm();
     }
 

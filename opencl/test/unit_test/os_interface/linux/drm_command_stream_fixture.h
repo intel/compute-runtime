@@ -35,7 +35,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
 
-        auto hwInfo = executionEnvironment.getHardwareInfo();
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
                                                      false, false, false);

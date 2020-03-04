@@ -303,7 +303,8 @@ TEST_F(ContextTest, givenContextWhenSharingTableIsNotEmptyThenReturnsSharingFunc
 
 TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreated) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    auto hwInfo = executionEnvironment->getMutableHardwareInfo();
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, executionEnvironment, 0));

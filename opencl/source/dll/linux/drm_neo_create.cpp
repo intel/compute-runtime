@@ -66,7 +66,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
             return nullptr;
         }
         drmObject->setGtType(eGtType);
-        rootDeviceEnvironment.executionEnvironment.setHwInfo(device->pHwInfo);
+        rootDeviceEnvironment.setHwInfo(device->pHwInfo);
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);

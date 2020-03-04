@@ -18,7 +18,7 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     referencedHwInfo = *platformDevices[0];
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setHwInfo(*platformDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 }

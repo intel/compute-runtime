@@ -182,7 +182,7 @@ template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setHwInfo(*platformDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
     executionEnvironment->initializeMemoryManager();

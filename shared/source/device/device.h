@@ -59,7 +59,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     bool isFullRangeSvm() const {
-        return executionEnvironment->isFullRangeSvm();
+        return getRootDeviceEnvironment().isFullRangeSvm();
     }
     bool areSharedSystemAllocationsAllowed() const {
         return this->deviceInfo.sharedSystemMemCapabilities != 0u;

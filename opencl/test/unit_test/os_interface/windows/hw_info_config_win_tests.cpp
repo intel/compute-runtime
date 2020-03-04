@@ -69,7 +69,7 @@ void HwInfoConfigTestWindows::SetUp() {
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
     wddm->init();
-    outHwInfo = *executionEnvironment->getHardwareInfo();
+    outHwInfo = *rootDeviceEnvironment->getHardwareInfo();
 }
 
 void HwInfoConfigTestWindows::TearDown() {

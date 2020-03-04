@@ -1167,8 +1167,8 @@ using OsAgnosticMemoryManagerWithParams = ::testing::TestWithParam<bool>;
 TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.setHwInfo(platformDevices[0]);
-    if (executionEnvironment.isFullRangeSvm() || is32bit) {
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
+    if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() || is32bit) {
         return;
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -1186,8 +1186,8 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocat
 TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.setHwInfo(platformDevices[0]);
-    if ((!executionEnvironment.isFullRangeSvm() && !is32bit) || !platformDevices[0]->capabilityTable.hostPtrTrackingEnabled) {
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
+    if ((!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit) || !platformDevices[0]->capabilityTable.hostPtrTrackingEnabled) {
         GTEST_SKIP();
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -1212,8 +1212,8 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
 
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(*platformDevices);
-    executionEnvironment.setHwInfo(platformDevices[0]);
-    if (!executionEnvironment.isFullRangeSvm()) {
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
+    if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
         return;
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -2230,10 +2230,10 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNo
     DebugManager.flags.EnableHostPtrTracking.set(1);
 
     auto result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, 0u);
-    EXPECT_EQ(!executionEnvironment->isFullRangeSvm() && !is32bit, result);
+    EXPECT_EQ(!executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit, result);
 
     result = memoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::MAP_ALLOCATION, 0u);
-    EXPECT_EQ(!executionEnvironment->isFullRangeSvm() && !is32bit, result);
+    EXPECT_EQ(!executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit, result);
 }
 
 using PageTableManagerTest = ::testing::Test;
@@ -2241,6 +2241,9 @@ using PageTableManagerTest = ::testing::Test;
 HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhenMapAuxGpuVAIsCalledThenItReturnsTrue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     MockGraphicsAllocation allocation(1u, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);

@@ -513,6 +513,19 @@ bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {
     return (peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
 
+bool MemoryManager::useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
+    bool isExternalHostPtrAlloc = (allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    bool isMapAlloc = (allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+
+    if (forceNonSvmForExternalHostPtr && isExternalHostPtrAlloc) {
+        return true;
+    }
+
+    bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm() || !isHostPointerTrackingEnabled(rootDeviceIndex)) & !is32bit);
+
+    return isNonSvmPtrCapable && (isExternalHostPtrAlloc || isMapAlloc);
+}
+
 bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
     if (!hostPtr) {
         return false;

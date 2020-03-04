@@ -344,11 +344,11 @@ int main(int argc, char **argv) {
 }
 
 TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
-    auto oldHwInfo = executionEnvironment.getMutableHardwareInfo();
+    auto oldHwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
     *oldHwInfo = {};
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
-    auto currentHwInfo = executionEnvironment.getHardwareInfo();
+    auto currentHwInfo = rootDeviceEnvironment->getHardwareInfo();
     EXPECT_NE(IGFX_UNKNOWN, currentHwInfo->platform.eProductFamily);
     EXPECT_NE(IGFX_UNKNOWN_CORE, currentHwInfo->platform.eRenderCoreFamily);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.EUCount);

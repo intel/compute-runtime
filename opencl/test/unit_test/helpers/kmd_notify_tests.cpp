@@ -26,7 +26,7 @@ using namespace NEO;
 struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+        hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
         cmdQ->getGpgpuCommandStreamReceiver().waitForFlushStamp(flushStampToWait);

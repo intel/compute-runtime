@@ -94,7 +94,7 @@ class MockDevice : public RootDevice {
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
-        executionEnvironment->setHwInfo(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(pHwInfo);
         T *device = new T(executionEnvironment, rootDeviceIndex);
         executionEnvironment->memoryManager = std::move(device->mockMemoryManager);
         return createDeviceInternals(device);
@@ -106,7 +106,9 @@ class MockDevice : public RootDevice {
         auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
-        executionEnvironment->setHwInfo(pHwInfo);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+        }
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
 
@@ -175,7 +177,7 @@ inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const Hardw
     executionEnvironment->prepareRootDeviceEnvironments(1);
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     auto hwInfo = pHwInfo ? pHwInfo : *platformDevices;
-    executionEnvironment->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
     executionEnvironment->initializeMemoryManager();
     return Device::create<RootDevice>(executionEnvironment, 0u);
 }

@@ -13,5 +13,6 @@
 #include <cstdint>
 
 namespace NEO {
+struct HardwareInfo;
 ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_t rootDeviceEnvironments);
 } // namespace NEO

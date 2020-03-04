@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -20,7 +21,10 @@
 
 namespace NEO {
 
-RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {}
+RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {
+    hwInfo = std::make_unique<HardwareInfo>();
+}
+
 RootDeviceEnvironment::~RootDeviceEnvironment() = default;
 
 void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
@@ -29,7 +33,19 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
     }
 }
 const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {
-    return executionEnvironment.getHardwareInfo();
+    return hwInfo.get();
+}
+
+HardwareInfo *RootDeviceEnvironment::getMutableHardwareInfo() const {
+    return hwInfo.get();
+}
+
+void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
+    *this->hwInfo = *hwInfo;
+}
+
+bool RootDeviceEnvironment::isFullRangeSvm() const {
+    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue(47);
 }
 
 GmmHelper *RootDeviceEnvironment::getGmmHelper() const {

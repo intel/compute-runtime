@@ -37,39 +37,39 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     uint64_t hwInfoConfig = 0x0;
     DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
 
-    auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
-    *hardwareInfo = *hwInfoConst;
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+        *hardwareInfo = *hwInfoConst;
 
-    if (hwInfoConfigStr == "default") {
-        hwInfoConfig = defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
-    } else if (!parseHwInfoConfigString(hwInfoConfigStr, hwInfoConfig)) {
-        return false;
-    }
-    setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
+        if (hwInfoConfigStr == "default") {
+            hwInfoConfig = defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
+        } else if (!parseHwInfoConfigString(hwInfoConfigStr, hwInfoConfig)) {
+            return false;
+        }
+        setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
 
-    hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
+        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    hardwareInfo->featureTable.ftrE2ECompression = 0;
-    hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
+        HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
+        hardwareInfo->featureTable.ftrE2ECompression = 0;
+        hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
-    executionEnvironment.calculateMaxOsContextCount();
-    numDevices = numRootDevices;
-    auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
-    if (csrType > 0) {
-        auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
-        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hardwareInfo);
-        for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
+        if (csrType > 0) {
+            auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
+            auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hardwareInfo);
             executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
             auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
             executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
         }
+
+        if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+        }
     }
 
-    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-        executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
-    }
+    executionEnvironment.calculateMaxOsContextCount();
+    numDevices = numRootDevices;
 
     return true;
 }
@@ -104,15 +104,15 @@ bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment
             return false;
         }
 
+        if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
+                maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+        }
+
         rootDeviceIndex++;
     }
 
     executionEnvironment.calculateMaxOsContextCount();
-
-    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-        executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
-    }
 
     return true;
 }

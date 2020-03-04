@@ -18,9 +18,7 @@
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
-ExecutionEnvironment::ExecutionEnvironment() {
-    hwInfo = std::make_unique<HardwareInfo>();
-};
+ExecutionEnvironment::ExecutionEnvironment() = default;
 
 ExecutionEnvironment::~ExecutionEnvironment() {
     debugger.reset();
@@ -31,10 +29,6 @@ ExecutionEnvironment::~ExecutionEnvironment() {
         memoryManager->commonCleanup();
     }
     rootDeviceEnvironments.clear();
-}
-
-void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
-    *this->hwInfo = *hwInfo;
 }
 
 void ExecutionEnvironment::initializeMemoryManager() {
@@ -63,7 +57,7 @@ void ExecutionEnvironment::initializeMemoryManager() {
 }
 
 void ExecutionEnvironment::initDebugger() {
-    debugger = Debugger::create(hwInfo.get());
+    debugger = Debugger::create(rootDeviceEnvironments[0]->getMutableHardwareInfo());
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {
@@ -76,10 +70,6 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
         MemoryManager::maxOsContextCount += static_cast<uint32_t>(osContextCount * subDevicesCount + hasRootCsr);
     }
-}
-
-bool ExecutionEnvironment::isFullRangeSvm() const {
-    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue(47);
 }
 
 void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices) {

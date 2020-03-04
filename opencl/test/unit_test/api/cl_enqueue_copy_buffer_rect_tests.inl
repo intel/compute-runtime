@@ -14,7 +14,14 @@
 
 using namespace NEO;
 
-typedef api_tests clEnqueueCopyBufferRectTests;
+struct clEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
+    void SetUp() override {
+        ApiFixture::SetUp();
+    }
+    void TearDown() override {
+        ApiFixture::TearDown();
+    }
+};
 
 namespace ULT {
 

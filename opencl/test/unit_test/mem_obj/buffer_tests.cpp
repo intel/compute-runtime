@@ -475,7 +475,8 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-        hwInfo = executionEnvironment->getMutableHardwareInfo();
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
         context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
@@ -597,7 +598,8 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
 struct RenderCompressedBuffersSvmTests : public RenderCompressedBuffersTests {
     void SetUp() override {
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-        hwInfo = executionEnvironment->getMutableHardwareInfo();
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
         RenderCompressedBuffersTests::SetUp();
     }
@@ -712,7 +714,7 @@ struct BcsBufferTests : public ::testing::Test {
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        auto &capabilityTable = device->getExecutionEnvironment()->getMutableHardwareInfo()->capabilityTable;
+        auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
         capabilityTable.blitterOperationsSupported = true;
 
@@ -763,7 +765,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     bufferForBlt0->forceDisallowCPUCopy = true;
     bufferForBlt1->forceDisallowCPUCopy = true;
-    auto *hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto *hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
     hwInfo->capabilityTable.blitterOperationsSupported = false;

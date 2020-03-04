@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -22,7 +23,7 @@ ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_
     size_t numDevicesReturned = 0;
     hwInfo = nullptr;
     DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);
-    hwInfo = executionEnvironment->getMutableHardwareInfo();
+    hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     executionEnvironment->initializeMemoryManager();
 
     return executionEnvironment;

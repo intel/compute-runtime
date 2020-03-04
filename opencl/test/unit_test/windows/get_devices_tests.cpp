@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 
@@ -29,7 +30,8 @@ HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFi
     auto executionEnvironment = new ExecutionEnvironment();
     platformsImpl.push_back(std::make_unique<Platform>(*executionEnvironment));
     size_t numDevicesReturned = 0;
-    auto hwInfo = executionEnvironment->getMutableHardwareInfo();
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
     hwInfo->platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
 

@@ -511,6 +511,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWhenHandleFenceCompletionThenCall
 TEST(DrmMemoryManagerTest2, givenDrmMemoryManagerWhengetSystemSharedMemoryIsCalledThenContextGetParamIsCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(4u);
+    for (auto i = 0u; i < 4u; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
     for (auto i = 0u; i < 4u; i++) {
@@ -540,6 +543,9 @@ TEST_F(DrmMemoryManagerTest, getMaxApplicationAddress) {
 TEST(DrmMemoryManagerTest2, getMinimumSystemSharedMemory) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(4u);
+    for (auto i = 0u; i < 4u; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
     for (auto i = 0u; i < 4u; i++) {
         auto mock = new DrmMockCustom();
@@ -3156,7 +3162,7 @@ TEST_F(DrmMemoryManagerBasic, ifLimitedRangeAllocatorAvailableWhenAskedForAlloca
 }
 
 TEST_F(DrmMemoryManagerBasic, givenSpecificAddressSpaceWhenInitializingMemoryManagerThenSetCorrectHeaps) {
-    executionEnvironment.getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
     TestedDrmMemoryManager memoryManager(false, false, false, executionEnvironment);
 
     auto gfxPartition = memoryManager.getGfxPartition(0);
@@ -3250,6 +3256,9 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenReservingAddressRangeTh
 TEST(DrmMemoryManagerWithExplicitExpectationsTest2, whenObtainFdFromHandleIsCalledThenProperFdHandleIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(4u);
+    for (auto i = 0u; i < 4u; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
     for (auto i = 0u; i < 4u; i++) {
         auto mock = new DrmMockCustom();

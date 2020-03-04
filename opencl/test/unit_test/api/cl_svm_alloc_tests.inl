@@ -120,7 +120,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(SVMAllocValidFlags));
 
 TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
-    HardwareInfo *pHwInfo = pPlatform->peekExecutionEnvironment()->getMutableHardwareInfo();
+    HardwareInfo *pHwInfo = pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
 
     cl_mem_flags flags = GetParam();
     void *SVMPtr = nullptr;

@@ -245,7 +245,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    executionEnvironment->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
@@ -271,7 +271,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    executionEnvironment->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
@@ -298,7 +298,7 @@ TEST(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStream
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    executionEnvironment->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
     auto commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0);
     auto commandHeader = commandStreamReceiver->commandBufferHeader;
     auto header = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -309,7 +309,7 @@ TEST(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStr
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    executionEnvironment->setHwInfo(hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
     auto commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0);
     auto commandHeader = commandStreamReceiver->commandBufferHeader;
     auto header = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -945,7 +945,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionDisabledThenExpectNoFeatureAva
 TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureAvailable) {
     DebugManager.flags.EnableDirectSubmission.set(1);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
@@ -956,7 +956,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureA
 TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupportsRcsThenExpectFeatureNotAvailable) {
     DebugManager.flags.EnableDirectSubmission.set(1);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = false;
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
@@ -972,7 +972,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnBcsThenExpectFeatureA
                                       false, false, false));
     osContext->setDefaultContext(true);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
@@ -988,7 +988,7 @@ TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupport
                                       false, false, false));
     osContext->setDefaultContext(true);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = false;
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
@@ -1004,7 +1004,7 @@ TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionDisable
                                       true, false, false));
     osContext->setDefaultContext(true);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = false;
 
@@ -1020,7 +1020,7 @@ TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionEnabled
                                       0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       true, false, false));
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = true;
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
@@ -1036,7 +1036,7 @@ TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionDisabledOn
                                       false, true, false));
     osContext->setDefaultContext(true);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = false;
 
@@ -1052,7 +1052,7 @@ TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionEnabledOnI
                                       0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, true, false));
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useInternal = true;
 
@@ -1069,7 +1069,7 @@ TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionDisabled
                                       false, false, true));
     osContext->setDefaultContext(true);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = false;
 
@@ -1085,7 +1085,7 @@ TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionEnabledO
                                       0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, true));
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = true;
 
@@ -1102,7 +1102,7 @@ TEST_F(WddmCommandStreamTest, givenNonDefaultContextWhenDirectSubmissionDisabled
                                       false, false, false));
     osContext->setDefaultContext(false);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useNonDefault = false;
 
@@ -1119,7 +1119,7 @@ TEST_F(WddmCommandStreamTest, givenNonDefaultContextContextWhenDirectSubmissionE
                                       false, false, false));
     osContext->setDefaultContext(false);
 
-    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useNonDefault = true;
 

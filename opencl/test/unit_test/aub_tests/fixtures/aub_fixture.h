@@ -37,7 +37,8 @@ class AUBFixture : public CommandQueueHwFixture {
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
         executionEnvironment = platform()->peekExecutionEnvironment();
-        executionEnvironment->setHwInfo(&hwInfo);
+        executionEnvironment->prepareRootDeviceEnvironments(1u);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
         } else {

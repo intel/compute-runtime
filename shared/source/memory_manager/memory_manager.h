@@ -205,18 +205,7 @@ class MemoryManager {
     }
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
-    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
-        bool isExternalHostPtrAlloc = (allocationType == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
-        bool isMapAlloc = (allocationType == GraphicsAllocation::AllocationType::MAP_ALLOCATION);
-
-        if (forceNonSvmForExternalHostPtr && isExternalHostPtrAlloc) {
-            return true;
-        }
-
-        bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().isFullRangeSvm() || !isHostPointerTrackingEnabled(rootDeviceIndex)) & !is32bit);
-
-        return isNonSvmPtrCapable && (isExternalHostPtrAlloc || isMapAlloc);
-    }
+    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;

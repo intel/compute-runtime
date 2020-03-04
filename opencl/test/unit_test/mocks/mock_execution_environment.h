@@ -47,13 +47,14 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
             auto rootDeviceEnvironment = new MockRootDeviceEnvironment(*this);
             rootDeviceEnvironment->useMockAubCenter = useMockAubCenter;
             rootDeviceEnvironments[rootDeviceIndex].reset(rootDeviceEnvironment);
+
+            if (hwInfo) {
+                rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(hwInfo);
+            } else {
+                rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(platformDevices[0]);
+            }
         }
 
-        if (hwInfo) {
-            setHwInfo(hwInfo);
-        } else {
-            setHwInfo(platformDevices[0]);
-        }
         calculateMaxOsContextCount();
     }
     void initGmm() {

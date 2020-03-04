@@ -1388,7 +1388,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 1;
     localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 2;
 
-    pDevice->executionEnvironment->setHwInfo(&localHwInfo);
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&localHwInfo);
 
     auto csr = new ::testing::NiceMock<MyCsr>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
@@ -1416,7 +1416,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 1;
     localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 2;
 
-    pDevice->executionEnvironment->setHwInfo(&localHwInfo);
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&localHwInfo);
 
     auto csr = new ::testing::NiceMock<MyCsr>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);

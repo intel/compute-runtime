@@ -347,6 +347,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSingleEngineRegister
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForEachEngine) {
     executionEnvironment->prepareRootDeviceEnvironments(2u);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 1u));
 
     auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
@@ -377,6 +380,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForTheseEngines) {
     executionEnvironment->prepareRootDeviceEnvironments(2u);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, 1u));
 
     auto wddm2 = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
@@ -1411,7 +1417,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
-    if (executionEnvironment->isFullRangeSvm()) {
+    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
         EXPECT_NE(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
     } else {
         EXPECT_EQ(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
@@ -1438,6 +1444,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitio
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
     executionEnvironment->prepareRootDeviceEnvironments(3u);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     executionEnvironment->initializeMemoryManager();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));
@@ -1460,6 +1469,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
     executionEnvironment->prepareRootDeviceEnvironments(3u);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     executionEnvironment->initializeMemoryManager();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         auto wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[i].get()));
@@ -1802,7 +1814,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getDriverAllocatedCpuPtr());
     //limited platforms will not use heap HeapIndex::HEAP_SVM
-    if (executionEnvironment->isFullRangeSvm()) {
+    if (executionEnvironment->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
         EXPECT_EQ(alignUp(allocation->getReservedAddressPtr(), size), reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
     EXPECT_EQ((2 * size), allocation->getReservedAddressSize());
@@ -1822,7 +1834,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIs
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_NE(nullptr, reinterpret_cast<void *>(allocation->getGpuAddress()));
 
-    if (executionEnvironment->isFullRangeSvm()) {
+    if (executionEnvironment->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
         EXPECT_EQ(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
 
@@ -1834,7 +1846,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMul
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToSvmHeap) {
-    if (executionEnvironment->isFullRangeSvm()) {
+    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
         GTEST_SKIP();
     }
 

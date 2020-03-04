@@ -64,7 +64,7 @@ TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseS
 }
 
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
-    HardwareInfo *hwInfo = pDevice->executionEnvironment->getMutableHardwareInfo();
+    HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     hwInfo->platform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 

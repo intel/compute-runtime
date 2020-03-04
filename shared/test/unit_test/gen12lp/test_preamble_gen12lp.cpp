@@ -125,7 +125,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAddi
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     DebugManagerStateRestore restorer;
-    auto pHwInfo = pPlatform->getDevice(0)->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto pHwInfo = pPlatform->getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(linearStream.getSpace(sizeof(MEDIA_VFE_STATE)));
     *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
     auto &waTable = pHwInfo->workaroundTable;

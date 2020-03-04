@@ -53,8 +53,10 @@ void GlobalMockSipProgram::resetAllocationState() {
 void GlobalMockSipProgram::initSipProgram() {
     cl_int retVal = 0;
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
-    executionEnvironment.setHwInfo(*platformDevices);
     executionEnvironment.prepareRootDeviceEnvironments(maxRootDeviceCount);
+    for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
+        executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+    }
     executionEnvironment.calculateMaxOsContextCount();
     sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
                                                                     nullptr,

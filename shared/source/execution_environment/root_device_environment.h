@@ -28,10 +28,18 @@ struct HardwareInfo;
 class HwDeviceId;
 
 struct RootDeviceEnvironment {
+  protected:
+    std::unique_ptr<HardwareInfo> hwInfo;
+
+  public:
     RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment);
     RootDeviceEnvironment(RootDeviceEnvironment &) = delete;
     MOCKABLE_VIRTUAL ~RootDeviceEnvironment();
+
     MOCKABLE_VIRTUAL const HardwareInfo *getHardwareInfo() const;
+    HardwareInfo *getMutableHardwareInfo() const;
+    void setHwInfo(const HardwareInfo *hwInfo);
+    bool isFullRangeSvm() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);
