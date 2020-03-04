@@ -216,6 +216,7 @@ template <typename GfxFamily>
 struct EncodeMiFlushDW {
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
     static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData);
+    static void programMiFlushDwWA(LinearStream &commandStream);
     static void appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd);
 };
 } // namespace NEO

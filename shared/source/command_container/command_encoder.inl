@@ -394,6 +394,8 @@ void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &of
 
 template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData) {
+    programMiFlushDwWA(commandStream);
+
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
     *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
     miFlushDwCmd->setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
@@ -401,5 +403,8 @@ void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, u
     miFlushDwCmd->setImmediateData(immediateData);
     appendMiFlushDw(miFlushDwCmd);
 }
+
+template <typename GfxFamily>
+void EncodeMiFlushDW<GfxFamily>::programMiFlushDwWA(LinearStream &commandStream) {}
 
 } // namespace NEO
