@@ -299,7 +299,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     info.heapInfo.pKernelHeader = &kernelHeader;
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.pKernelHeader->KernelHeapSize);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
 
@@ -342,7 +342,7 @@ TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebugg
     info.heapInfo.pKernelHeader = &kernelHeader;
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.pKernelHeader->KernelHeapSize);
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 
@@ -371,7 +371,7 @@ TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebu
     info.heapInfo.pKernelHeader = &kernelHeader;
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, isa, sizeof(isa));
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 
@@ -387,7 +387,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDeb
 
     debugger.setActive(false);
     KernelInfo info;
-    debugger.notifyKernelDebugData(&info);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, nullptr, 0);
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 

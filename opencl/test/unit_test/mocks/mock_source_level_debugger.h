@@ -73,7 +73,7 @@ class MockActiveSourceLevelDebugger : public SourceLevelDebugger {
         filename = sourceCodeFilename;
         return true;
     }
-    bool notifyKernelDebugData(const KernelInfo *kernelInfo) const override {
+    bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const override {
         return false;
     }
     bool initialize(bool useLocalMemory) override {
@@ -98,7 +98,7 @@ class GMockSourceLevelDebugger : public SourceLevelDebugger {
     }
 
     MOCK_METHOD0(notifyDeviceDestruction, bool(void));
-    MOCK_CONST_METHOD1(notifyKernelDebugData, bool(const KernelInfo *));
+    MOCK_CONST_METHOD4(notifyKernelDebugData, bool(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize));
     MOCK_CONST_METHOD0(isOptimizationDisabled, bool());
     MOCK_METHOD1(notifyNewDevice, bool(uint32_t));
     MOCK_CONST_METHOD3(notifySourceCode, bool(const char *, size_t, std::string &));

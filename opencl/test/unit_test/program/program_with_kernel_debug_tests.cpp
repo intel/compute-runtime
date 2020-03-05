@@ -207,7 +207,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 
         EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(1);
         EXPECT_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).Times(1);
-        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_)).Times(1);
+        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
         pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
@@ -226,7 +226,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 
         EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(2);
         EXPECT_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).Times(1);
-        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_)).Times(1);
+        EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
         pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);

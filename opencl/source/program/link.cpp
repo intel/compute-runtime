@@ -16,6 +16,7 @@
 #include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/source_level_debugger/source_level_debugger.h"
 
@@ -143,7 +144,10 @@ cl_int Program::link(
                 auto clDevice = this->getDevice().getSpecializedDevice<ClDevice>();
                 UNRECOVERABLE_IF(clDevice == nullptr);
                 for (auto kernelInfo : kernelInfoArray) {
-                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
+                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
+                                                                              kernelInfo->name,
+                                                                              kernelInfo->heapInfo.pKernelHeap,
+                                                                              kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
                 }
             }
         } else {

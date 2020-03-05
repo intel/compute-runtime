@@ -151,7 +151,10 @@ cl_int Program::build(
             UNRECOVERABLE_IF(clDevice == nullptr);
             if (clDevice->getSourceLevelDebugger()) {
                 for (auto kernelInfo : kernelInfoArray) {
-                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
+                    clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
+                                                                              kernelInfo->name,
+                                                                              kernelInfo->heapInfo.pKernelHeap,
+                                                                              kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
                 }
             }
         }

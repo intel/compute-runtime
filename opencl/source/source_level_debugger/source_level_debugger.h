@@ -13,7 +13,7 @@
 #include <string>
 
 namespace NEO {
-struct KernelInfo;
+struct DebugData;
 
 class SourceLevelDebugger : public Debugger {
   public:
@@ -28,7 +28,7 @@ class SourceLevelDebugger : public Debugger {
     MOCKABLE_VIRTUAL bool notifyDeviceDestruction();
     MOCKABLE_VIRTUAL bool notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const;
     MOCKABLE_VIRTUAL bool isOptimizationDisabled() const;
-    MOCKABLE_VIRTUAL bool notifyKernelDebugData(const KernelInfo *kernelInfo) const;
+    MOCKABLE_VIRTUAL bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const;
     MOCKABLE_VIRTUAL bool initialize(bool useLocalMemory);
 
   protected:

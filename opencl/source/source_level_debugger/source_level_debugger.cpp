@@ -9,9 +9,8 @@
 
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "opencl/source/program/kernel_info.h"
 
 #include "igfx_debug_interchange_types.h"
 #include "lib_names.h"
@@ -179,21 +178,21 @@ bool SourceLevelDebugger::isOptimizationDisabled() const {
     return false;
 }
 
-bool SourceLevelDebugger::notifyKernelDebugData(const KernelInfo *kernelInfo) const {
-    if (isActive && kernelInfo->debugData.vIsa && kernelInfo->debugData.genIsa) {
+bool SourceLevelDebugger::notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const {
+    if (isActive && debugData->vIsa && debugData->genIsa) {
         GfxDbgKernelDebugData kernelDebugData;
         kernelDebugData.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         kernelDebugData.version = IGFXDBG_CURRENT_VERSION;
         kernelDebugData.hProgram = reinterpret_cast<GenRtProgramHandle>(0);
 
-        kernelDebugData.kernelName = kernelInfo->name.c_str();
-        kernelDebugData.kernelBinBuffer = const_cast<void *>(kernelInfo->heapInfo.pKernelHeap);
-        kernelDebugData.KernelBinSize = kernelInfo->heapInfo.pKernelHeader->KernelHeapSize;
+        kernelDebugData.kernelName = name.c_str();
+        kernelDebugData.kernelBinBuffer = const_cast<void *>(isa);
+        kernelDebugData.KernelBinSize = static_cast<uint32_t>(isaSize);
 
-        kernelDebugData.dbgVisaBuffer = kernelInfo->debugData.vIsa;
-        kernelDebugData.dbgVisaSize = kernelInfo->debugData.vIsaSize;
-        kernelDebugData.dbgGenIsaBuffer = kernelInfo->debugData.genIsa;
-        kernelDebugData.dbgGenIsaSize = kernelInfo->debugData.genIsaSize;
+        kernelDebugData.dbgVisaBuffer = debugData->vIsa;
+        kernelDebugData.dbgVisaSize = debugData->vIsaSize;
+        kernelDebugData.dbgGenIsaBuffer = debugData->genIsa;
+        kernelDebugData.dbgGenIsaSize = debugData->genIsaSize;
 
         int result = sourceLevelDebuggerInterface->notifyKernelDebugDataFunc(&kernelDebugData);
         DEBUG_BREAK_IF(static_cast<IgfxdbgRetVal>(result) != IgfxdbgRetVal::IGFXDBG_SUCCESS);
