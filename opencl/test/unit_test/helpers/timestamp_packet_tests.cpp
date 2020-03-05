@@ -303,7 +303,12 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
     EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
 
     auto tag = csr.getTimestampPacketAllocator()->getTag();
-    memset(tag->tagForCpuAccess->packets, 0, sizeof(TimestampPacketStorage::Packet) * TimestampPacketSizeControl::preferredPacketCount);
+    for (auto &packet : tag->tagForCpuAccess->packets) {
+        packet.contextStart = 0;
+        packet.globalStart = 0;
+        packet.contextEnd = 0;
+        packet.globalEnd = 0;
+    }
     EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
     EXPECT_FALSE(tag->canBeReleased());
 }

@@ -265,7 +265,12 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
         CsrT csr(std::forward<Args>(args)...);
         auto allocator = csr.getTimestampPacketAllocator();
         auto tag = allocator->getTag();
-        memset(tag->tagForCpuAccess->packets, 0, sizeof(TimestampPacketStorage::Packet) * TimestampPacketSizeControl::preferredPacketCount);
+        for (auto &packet : tag->tagForCpuAccess->packets) {
+            packet.contextStart = 0;
+            packet.globalStart = 0;
+            packet.contextEnd = 0;
+            packet.globalEnd = 0;
+        }
         EXPECT_TRUE(tag->tagForCpuAccess->isCompleted());
 
         bool canBeReleased = tag->canBeReleased();
