@@ -64,7 +64,7 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
     EXPECT_TRUE(__GMM_NO_CUBE_MAP == GmmTypesConverter::getCubeFaceIndex(maxVal));
 }
 
-TEST_F(GmmTests, resourceCreation) {
+TEST_F(GmmTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, false));
@@ -78,7 +78,7 @@ TEST_F(GmmTests, resourceCreation) {
     mm->freeSystemMemory(pSysMem);
 }
 
-TEST_F(GmmTests, resourceCreationUncacheable) {
+TEST_F(GmmTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
@@ -94,17 +94,6 @@ TEST_F(GmmTests, resourceCreationUncacheable) {
     mm->freeSystemMemory(pSysMem);
 }
 
-TEST_F(GmmTests, resourceCleanupOnDelete) {
-    std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
-    void *pSysMem = mm->allocateSystemMemory(4096, 4096);
-
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, false));
-
-    ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
-
-    mm->freeSystemMemory(pSysMem);
-}
-
 TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedItHasTheSameAddress) {
     uintptr_t addressWithHighestBitSet = 0xffff0000;
     auto address = reinterpret_cast<void *>(addressWithHighestBitSet);
@@ -114,7 +103,7 @@ TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedItHasTheSameAd
     EXPECT_EQ(gmm->resourceParams.pExistingSysMem, expectedAddress);
 }
 
-TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
+TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmmResourceIsCreatedWithNoRestrictionsFlag) {
     auto maxSize = static_cast<size_t>(GmmHelper::maxPossiblePitch);
 
     MemoryManager *mm = new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
@@ -130,6 +119,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMM
     delete gmmRes;
     delete mm;
 }
+
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
@@ -150,7 +140,7 @@ TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm
     delete gmmRes2;
 }
 
-TEST_F(GmmTests, invalidImageTypeQuery) {
+TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown) {
     cl_image_desc imgDesc{};
     imgDesc.image_width = 10;
     imgDesc.image_type = 0; // invalid
@@ -159,7 +149,7 @@ TEST_F(GmmTests, invalidImageTypeQuery) {
     EXPECT_THROW(MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo), std::exception);
 }
 
-TEST_F(GmmTests, validImageTypeQuery) {
+TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
     const HardwareInfo *hwinfo = *platformDevices;
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
@@ -239,7 +229,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItH
     EXPECT_EQ(imgDesc.image_row_pitch, queryGmm->gmmResourceInfo->getRenderPitch());
 }
 
-TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitchIsOverridedThenItHasDesiredPitchAndSize) {
+TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitchIsOverridenThenItHasDesiredPitchAndSize) {
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imgDesc.image_width = 329;
@@ -260,7 +250,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
     EXPECT_EQ(imgDesc.image_row_pitch, queryGmm->gmmResourceInfo->getRenderPitch());
 }
 
-TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUVOffsetIsQueried) {
+TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried) {
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imgDesc.image_width = 4;
@@ -345,7 +335,7 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
     EXPECT_EQ(imgInfo.rowPitch, expectedRowPitch);
 }
 
-TEST_F(GmmTests, canonize) {
+TEST_F(GmmTests, WhenCanonizingThenCorrectAddressIsReturned) {
     auto hwInfo = *platformDevices[0];
 
     // 48 bit - canonize to 48 bit
@@ -368,7 +358,7 @@ TEST_F(GmmTests, canonize) {
     EXPECT_EQ(GmmHelper::canonize(testAddr2), goodAddr2);
 }
 
-TEST_F(GmmTests, decanonize) {
+TEST_F(GmmTests, WhenDecanonizingThenCorrectAddressIsReturned) {
     auto hwInfo = *platformDevices[0];
 
     // 48 bit - decanonize to 48 bit
