@@ -61,7 +61,7 @@ class ZeroSizeEnqueueHandlerTestZeroGws : public ZeroSizeEnqueueHandlerTest {
 };
 
 HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClAtLeast21WhenEnqueingKernelThenCommandMarkerShouldBeEnqueued) {
-    pDevice->enabledClVersion = 21;
+    pClDevice->enabledClVersion = 21;
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
@@ -81,7 +81,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpe
 HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndOpenClIs20OrOlderWhenEnqueingKernelThenErrorIsReturned) {
     int oclVersionsToTest[] = {12, 20};
     for (auto oclVersion : oclVersionsToTest) {
-        pDevice->enabledClVersion = oclVersion;
+        pClDevice->enabledClVersion = oclVersion;
 
         auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
@@ -110,12 +110,12 @@ HWTEST_F(ZeroSizeEnqueueHandlerTestZeroGws, GivenZeroSizeEnqueueIsDetectedAndLoc
     size_t lws[1] = {1};
 
     EXPECT_NO_THROW(retVal = mockCmdQ->enqueueKernel(mockKernel.mockKernel, workDim, nullptr, gws, lws, 0, nullptr, nullptr));
-    auto expected = (pDevice->getEnabledClVersion() < 21 ? CL_INVALID_GLOBAL_WORK_SIZE : CL_SUCCESS);
+    auto expected = (pClDevice->getEnabledClVersion() < 21 ? CL_INVALID_GLOBAL_WORK_SIZE : CL_SUCCESS);
     EXPECT_EQ(expected, retVal);
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenEnqueingKernelThenEventCommandTypeShoudBeUnchanged) {
-    if (pDevice->getEnabledClVersion() < 21) {
+    if (pClDevice->getEnabledClVersion() < 21) {
         return;
     }
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));

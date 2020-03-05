@@ -13,8 +13,9 @@
 
 namespace NEO {
 
-void ClDevice::initializeCaps() {
-    device.appendOSExtensions("cl_intel_simultaneous_sharing ");
+void ClDevice::initializeExtraCaps() {
+    deviceExtensions += "cl_intel_simultaneous_sharing ";
+    deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     simultaneousInterops = {CL_GL_CONTEXT_KHR,
                             CL_WGL_HDC_KHR,

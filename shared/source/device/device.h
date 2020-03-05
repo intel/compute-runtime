@@ -16,7 +16,6 @@
 #include "opencl/source/os_interface/performance_counters.h"
 
 namespace NEO {
-class DriverInfo;
 class OSTime;
 
 class Device : public ReferenceTrackedObject<Device> {
@@ -25,9 +24,7 @@ class Device : public ReferenceTrackedObject<Device> {
     Device(const Device &) = delete;
     ~Device() override;
 
-    unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
-    void appendOSExtensions(const std::string &newExtensions);
 
     template <typename DeviceT, typename... ArgsT>
     static DeviceT *create(ArgsT &&... args) {
@@ -62,7 +59,7 @@ class Device : public ReferenceTrackedObject<Device> {
         return getRootDeviceEnvironment().isFullRangeSvm();
     }
     bool areSharedSystemAllocationsAllowed() const {
-        return this->deviceInfo.sharedSystemMemCapabilities != 0u;
+        return this->deviceInfo.sharedSystemAllocationsSupport;
     }
     template <typename SpecializedDeviceT>
     void setSpecializedDevice(SpecializedDeviceT *specializedDevice) {
@@ -87,7 +84,6 @@ class Device : public ReferenceTrackedObject<Device> {
     Device(ExecutionEnvironment *executionEnvironment);
 
     MOCKABLE_VIRTUAL void initializeCaps();
-    void setupFp64Flags();
 
     template <typename T>
     static T *createDeviceInternals(T *device) {
@@ -103,16 +99,10 @@ class Device : public ReferenceTrackedObject<Device> {
     bool createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
 
-    unsigned int enabledClVersion = 0u;
-    std::string deviceExtensions;
-    std::string exposedBuiltinKernels = "";
-
     DeviceInfo deviceInfo = {};
 
-    std::string name;
     HardwareCapabilities hardwareCapabilities = {};
     std::unique_ptr<OSTime> osTime;
-    std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;

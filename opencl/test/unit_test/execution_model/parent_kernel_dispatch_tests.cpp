@@ -28,7 +28,7 @@ static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
 typedef ExecutionModelKernelTest ParentKernelDispatchTest;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDeviceQueueDSHIsUsed) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
         KernelOperation *blockedCommandsData = nullptr;
@@ -65,7 +65,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenDynamicStateHeapIsRequestedThenDeviceQueueHeapIsReturned) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
@@ -77,7 +77,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenDynam
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenIndirectObjectHeapIsRequestedThenDeviceQueueDSHIsReturned) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
@@ -89,7 +89,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenIndir
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDefaultCmdQIOHIsNotUsed) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
@@ -117,7 +117,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSHSizeAccountForsBlocksSurfaceStates) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
@@ -151,7 +151,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};

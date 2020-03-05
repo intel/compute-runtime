@@ -279,8 +279,8 @@ cl_int Context::getSupportedImageFormats(
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
-    const bool nv12ExtensionEnabled = device->getDeviceInfo().nv12Extension;
-    const bool packedYuvExtensionEnabled = device->getDeviceInfo().packedYuvExtension;
+    const bool nv12ExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().nv12Extension;
+    const bool packedYuvExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().packedYuvExtension;
 
     auto appendImageFormats = [&](ArrayRef<const ClSurfaceFormatInfo> formats) {
         if (imageFormats) {

@@ -192,6 +192,7 @@ TEST_F(MidThreadPreemptionTests, allowMidThreadPreemptionDeviceSupportPreemption
     PreemptionFlags flags = {};
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->deviceInfo.vmeAvcSupportsPreemption = true;
+    device->device.deviceInfo.vmeAvcSupportsPreemption = true;
     kernelInfo->isVmeWorkload = true;
     kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
@@ -219,6 +220,7 @@ TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByVmeKernel) {
     PreemptionFlags flags = {};
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->deviceInfo.vmeAvcSupportsPreemption = false;
+    device->device.deviceInfo.vmeAvcSupportsPreemption = false;
     kernelInfo->isVmeWorkload = true;
     kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
@@ -247,6 +249,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByVmeKernel) {
     PreemptionFlags flags = {};
     kernelInfo->isVmeWorkload = true;
     device->deviceInfo.vmeAvcSupportsPreemption = false;
+    device->device.deviceInfo.vmeAvcSupportsPreemption = false;
     kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
@@ -270,6 +273,7 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionAllowDeviceSupportsPreemptionOnVm
     kernelInfo->isVmeWorkload = true;
     kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     device->deviceInfo.vmeAvcSupportsPreemption = true;
+    device->device.deviceInfo.vmeAvcSupportsPreemption = true;
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);

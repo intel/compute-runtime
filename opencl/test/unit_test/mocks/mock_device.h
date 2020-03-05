@@ -37,19 +37,15 @@ class MockDevice : public RootDevice {
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
-    using Device::deviceExtensions;
     using Device::deviceInfo;
-    using Device::enabledClVersion;
     using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
-    using Device::name;
     using RootDevice::createEngines;
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);
     void setDriverInfo(DriverInfo *driverInfo);
-    bool hasDriverInfo();
 
     static bool createSingleDevice;
     bool createDeviceImpl() override;
@@ -127,15 +123,20 @@ class MockDevice : public RootDevice {
 class MockClDevice : public ClDevice {
   public:
     using ClDevice::ClDevice;
+    using ClDevice::deviceExtensions;
+    using ClDevice::deviceInfo;
+    using ClDevice::enabledClVersion;
+    using ClDevice::initializeCaps;
+    using ClDevice::name;
     using ClDevice::simultaneousInterops;
 
     explicit MockClDevice(MockDevice *pMockDevice);
 
+    void setDriverInfo(DriverInfo *driverInfo);
+    bool hasDriverInfo();
+
     bool createEngines() { return device.createEngines(); }
     void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }
-    void setDriverInfo(DriverInfo *driverInfo) { device.setDriverInfo(driverInfo); }
-    bool hasDriverInfo() { return device.hasDriverInfo(); }
-    bool createDeviceImpl() { return device.createDeviceImpl(); }
     bool getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }
     void setPreemptionMode(PreemptionMode mode) { device.setPreemptionMode(mode); }
     void injectMemoryManager(MemoryManager *pMemoryManager) { device.injectMemoryManager(pMemoryManager); }
@@ -161,8 +162,12 @@ class MockClDevice : public ClDevice {
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
 
+    void setDebuggerActive(bool active) {
+        this->deviceInfo.debuggerActive = active;
+        device.deviceInfo.debuggerActive = active;
+    }
+
     MockDevice &device;
-    DeviceInfo &deviceInfo;
     ExecutionEnvironment *&executionEnvironment;
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;

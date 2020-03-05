@@ -134,7 +134,7 @@ class EnqueueReadBufferTest : public api_tests {
     }
 };
 TEST_F(EnqueueReadBufferTest, GivenSvmPtrWhenReadingBufferThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(testedRootDeviceIndex)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(testedRootDeviceIndex)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto data = clSVMAlloc(pContext, CL_MEM_READ_WRITE, bufferSize, 64);
         auto retVal = clEnqueueReadBuffer(pCommandQueue, buffer, CL_TRUE, bufferSize, 0, data, 0, nullptr, nullptr);

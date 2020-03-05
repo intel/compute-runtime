@@ -552,7 +552,7 @@ HWTEST_F(EnqueueKernelTest, givenEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedI
     size_t gws[3] = {0, 0, 0};
     MockKernelWithInternals mockKernel(*pClDevice);
     auto ret = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    auto expected = (pDevice->getEnabledClVersion() < 21 ? CL_INVALID_GLOBAL_WORK_SIZE : CL_SUCCESS);
+    auto expected = (pClDevice->getEnabledClVersion() < 21 ? CL_INVALID_GLOBAL_WORK_SIZE : CL_SUCCESS);
     EXPECT_EQ(expected, ret);
 }
 

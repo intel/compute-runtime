@@ -17,13 +17,13 @@ LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
 }
 
 LKFTEST_F(LkfTest, givenLKFWhenCheckedOCLVersionThen21IsReported) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 }
 
 LKFTEST_F(LkfTest, givenLKFWhenCheckedSvmSupportThenNoSvmIsReported) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(caps.svmCapabilities, 0u);
 }
 
@@ -33,7 +33,7 @@ LKFTEST_F(LkfTest, givenLkfWhenDoublePrecissionIsCheckedThenFalseIsReturned) {
 }
 
 LKFTEST_F(LkfTest, givenLkfWhenExtensionStringIsCheckedThenFP64IsNotReported) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
     EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));

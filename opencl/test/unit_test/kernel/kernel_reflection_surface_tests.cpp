@@ -35,7 +35,7 @@ typedef ExecutionModelKernelFixture KernelReflectionSurfaceTest;
 typedef ExecutionModelKernelTest KernelReflectionSurfaceWithQueueTest;
 
 TEST_P(KernelReflectionSurfaceTest, CreatedKernelHasNullKernelReflectionSurface) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_EQ(nullptr, pKernel->getKernelReflectionSurface());
     }
 }
@@ -484,7 +484,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithoutLocalMemoryParameterWh
 }
 
 TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsSortedVector) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -522,7 +522,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsSortedVector) {
 }
 
 TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsVectorWithExpectedParamTypes) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -575,7 +575,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsVectorWithExpectedParam
 }
 
 TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -757,7 +757,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQ
 }
 
 TEST_P(KernelReflectionSurfaceTest, CreateKernelReflectionSurface) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -1028,7 +1028,7 @@ INSTANTIATE_TEST_CASE_P(KernelReflectionSurfaceTest,
                             ::testing::ValuesIn(KernelNames)));
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatchesBlocksCurbe) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
         size_t blockCount = blockManager->getCount();
@@ -1100,7 +1100,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelRe
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfaceSetsParentImageAndSamplersParams) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
         size_t blockCount = blockManager->getCount();

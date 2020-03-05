@@ -13,7 +13,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> KblDeviceCaps;
 
 KBLTEST_F(KblDeviceCaps, reportsOcl21) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }

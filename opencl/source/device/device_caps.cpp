@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
+#include "opencl/source/device/cl_device.h"
 #include "opencl/source/device/driver_info.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
@@ -45,7 +46,7 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
 
 bool releaseFP64Override();
 
-void Device::setupFp64Flags() {
+void ClDevice::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
 
     if (releaseFP64Override() || DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
@@ -71,13 +72,164 @@ void Device::setupFp64Flags() {
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto addressing32bitAllowed = is64bit;
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    deviceInfo.ilVersion = "";
+    auto enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
+    if (DebugManager.flags.ForceOCLVersion.get() != 0) {
+        enabledClVersion = DebugManager.flags.ForceOCLVersion.get();
+    }
+    switch (enabledClVersion) {
+    case 21:
+        deviceInfo.ilVersion = spirvVersion;
+        addressing32bitAllowed = false;
+        break;
+    case 20:
+        addressing32bitAllowed = false;
+        break;
+    }
+
+    deviceInfo.vendorId = 0x8086;
+    deviceInfo.maxReadImageArgs = 128;
+    deviceInfo.maxWriteImageArgs = 128;
+    deviceInfo.maxParameterSize = 1024;
+
+    deviceInfo.addressBits = 64;
+
+    //copy system info to prevent misaligned reads
+    const auto systemInfo = hwInfo.gtSystemInfo;
+
+    deviceInfo.globalMemCachelineSize = 64;
+
+    deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
+                                   ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex())
+                                   : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
+    deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, getMemoryManager()->getMaxApplicationAddress() + 1);
+    deviceInfo.globalMemSize = static_cast<uint64_t>(static_cast<double>(deviceInfo.globalMemSize) * 0.8);
+
+    if (DebugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
+        deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * GB * 0.8));
+        deviceInfo.addressBits = 32;
+        deviceInfo.force32BitAddressess = is64bit;
+    }
+
+    deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
+
+    deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
+    deviceInfo.outProfilingTimerResolution = static_cast<size_t>(deviceInfo.profilingTimerResolution);
+
+    deviceInfo.maxOnDeviceQueues = 1;
+
+    // OpenCL 1.2 requires 128MB minimum
+    deviceInfo.maxMemAllocSize = std::min(std::max(deviceInfo.globalMemSize / 2, static_cast<uint64_t>(128llu * MB)), this->hardwareCapabilities.maxMemAllocSize);
+
+    static const int maxPixelSize = 16;
+    deviceInfo.imageMaxBufferSize = static_cast<size_t>(deviceInfo.maxMemAllocSize / maxPixelSize);
+
+    deviceInfo.maxNumEUsPerSubSlice = 0;
+    deviceInfo.numThreadsPerEU = 0;
+    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : hwHelper.getMinimalSIMDSize();
+
+    deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.ftrPooledEuEnabled == 0)
+                                          ? (systemInfo.EUCount / systemInfo.SubSliceCount)
+                                          : systemInfo.EuCountPerPoolMin;
+    deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
+    auto maxWS = hwHelper.getMaxThreadsForWorkgroup(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice)) * simdSizeUsed;
+
+    maxWS = Math::prevPowerOfTwo(maxWS);
+    deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
+
+    if (DebugManager.flags.OverrideMaxWorkgroupSize.get() != -1) {
+        deviceInfo.maxWorkGroupSize = DebugManager.flags.OverrideMaxWorkgroupSize.get();
+    }
+
+    deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
+    deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
+    deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
+    deviceInfo.maxSamplers = 16;
+
+    deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
+    deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);
+
+    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
+
+    deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
+    deviceInfo.image2DMaxWidth = 16384;
+    deviceInfo.image2DMaxHeight = 16384;
+    deviceInfo.image3DMaxDepth = 2048;
+    deviceInfo.imageMaxArraySize = 2048;
+
+    deviceInfo.printfBufferSize = 4 * 1024 * 1024;
+    deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
+
+    deviceInfo.maxSubGroups = hwHelper.getDeviceSubGroupSizes();
+
+    deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
+
+    deviceInfo.debuggerActive = (executionEnvironment->debugger) ? executionEnvironment->debugger->isDebuggerActive() : false;
+    if (deviceInfo.debuggerActive) {
+        this->preemptionMode = PreemptionMode::Disabled;
+    }
+
+    deviceInfo.sharedSystemAllocationsSupport = hwInfoConfig->getSharedSystemMemCapabilities();
+    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        deviceInfo.sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    }
+}
+
+void ClDevice::copyCommonCapsFromDevice() {
+    auto &sourceDeviceInfo = device.getDeviceInfo();
+
+    deviceInfo.maxSubGroups = sourceDeviceInfo.maxSubGroups;
+    deviceInfo.debuggerActive = sourceDeviceInfo.debuggerActive;
+    deviceInfo.errorCorrectionSupport = sourceDeviceInfo.errorCorrectionSupport;
+    deviceInfo.force32BitAddressess = sourceDeviceInfo.force32BitAddressess;
+    deviceInfo.imageSupport = sourceDeviceInfo.imageSupport;
+    deviceInfo.vmeAvcSupportsPreemption = sourceDeviceInfo.vmeAvcSupportsPreemption;
+    deviceInfo.ilVersion = sourceDeviceInfo.ilVersion;
+    deviceInfo.profilingTimerResolution = sourceDeviceInfo.profilingTimerResolution;
+    deviceInfo.addressBits = sourceDeviceInfo.addressBits;
+    deviceInfo.computeUnitsUsedForScratch = sourceDeviceInfo.computeUnitsUsedForScratch;
+    deviceInfo.globalMemCachelineSize = sourceDeviceInfo.globalMemCachelineSize;
+    deviceInfo.maxClockFrequency = sourceDeviceInfo.maxClockFrequency;
+    deviceInfo.maxFrontEndThreads = sourceDeviceInfo.maxFrontEndThreads;
+    deviceInfo.maxOnDeviceQueues = sourceDeviceInfo.maxOnDeviceQueues;
+    deviceInfo.maxReadImageArgs = sourceDeviceInfo.maxReadImageArgs;
+    deviceInfo.maxSamplers = sourceDeviceInfo.maxSamplers;
+    deviceInfo.maxWriteImageArgs = sourceDeviceInfo.maxWriteImageArgs;
+    deviceInfo.numThreadsPerEU = sourceDeviceInfo.numThreadsPerEU;
+    deviceInfo.vendorId = sourceDeviceInfo.vendorId;
+    deviceInfo.globalMemSize = sourceDeviceInfo.globalMemSize;
+    deviceInfo.image2DMaxHeight = static_cast<size_t>(sourceDeviceInfo.image2DMaxHeight);
+    deviceInfo.image2DMaxWidth = static_cast<size_t>(sourceDeviceInfo.image2DMaxWidth);
+    deviceInfo.image3DMaxDepth = static_cast<size_t>(sourceDeviceInfo.image3DMaxDepth);
+    deviceInfo.imageMaxArraySize = static_cast<size_t>(sourceDeviceInfo.imageMaxArraySize);
+    deviceInfo.imageMaxBufferSize = static_cast<size_t>(sourceDeviceInfo.imageMaxBufferSize);
+    deviceInfo.localMemSize = sourceDeviceInfo.localMemSize;
+    deviceInfo.maxMemAllocSize = sourceDeviceInfo.maxMemAllocSize;
+    deviceInfo.maxNumEUsPerSubSlice = static_cast<size_t>(sourceDeviceInfo.maxNumEUsPerSubSlice);
+    deviceInfo.maxParameterSize = static_cast<size_t>(sourceDeviceInfo.maxParameterSize);
+    deviceInfo.maxWorkGroupSize = static_cast<size_t>(sourceDeviceInfo.maxWorkGroupSize);
+    deviceInfo.maxWorkItemSizes[0] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[0]);
+    deviceInfo.maxWorkItemSizes[1] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[1]);
+    deviceInfo.maxWorkItemSizes[2] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[2]);
+    deviceInfo.outProfilingTimerResolution = static_cast<size_t>(sourceDeviceInfo.outProfilingTimerResolution);
+    deviceInfo.printfBufferSize = static_cast<size_t>(sourceDeviceInfo.printfBufferSize);
+}
+
+void ClDevice::initializeCaps() {
+    copyCommonCapsFromDevice();
+
+    auto &hwInfo = getHardwareInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
-    // Add our graphics family name to the device name
-    auto addressing32bitAllowed = is64bit;
 
     driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
+    // Add our graphics family name to the device name
     name += "Intel(R) ";
     name += familyName[hwInfo.platform.eRenderCoreFamily];
     name += " HD Graphics NEO";
@@ -96,7 +248,6 @@ void Device::initializeCaps() {
 
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
-    deviceInfo.ilVersion = "";
     enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
         enabledClVersion = DebugManager.flags.ForceOCLVersion.get();
@@ -105,13 +256,10 @@ void Device::initializeCaps() {
     case 21:
         deviceInfo.clVersion = "OpenCL 2.1 NEO ";
         deviceInfo.clCVersion = "OpenCL C 2.0 ";
-        deviceInfo.ilVersion = spirvVersion;
-        addressing32bitAllowed = false;
         break;
     case 20:
         deviceInfo.clVersion = "OpenCL 2.0 NEO ";
         deviceInfo.clCVersion = "OpenCL C 2.0 ";
-        addressing32bitAllowed = false;
         break;
     case 12:
     default:
@@ -205,7 +353,6 @@ void Device::initializeCaps() {
     deviceInfo.builtInKernels = exposedBuiltinKernels.c_str();
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
-    deviceInfo.vendorId = 0x8086;
     deviceInfo.endianLittle = 1;
     deviceInfo.hostUnifiedMemory = (false == hwHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
@@ -236,43 +383,20 @@ void Device::initializeCaps() {
     deviceInfo.nativeVectorWidthFloat = 1;
     deviceInfo.nativeVectorWidthDouble = 1;
     deviceInfo.nativeVectorWidthHalf = 8;
-    deviceInfo.maxReadImageArgs = 128;
-    deviceInfo.maxWriteImageArgs = 128;
     deviceInfo.maxReadWriteImageArgs = 128;
-    deviceInfo.maxParameterSize = 1024;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
-
-    deviceInfo.addressBits = 64;
 
     //copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
-    deviceInfo.globalMemCachelineSize = 64;
     deviceInfo.globalMemCacheSize = systemInfo.L3BankCount * 128 * KB;
     deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
-    deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
-                                   ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex())
-                                   : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
-    deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, (cl_ulong)(getMemoryManager()->getMaxApplicationAddress() + 1));
-    deviceInfo.globalMemSize = (cl_ulong)((double)deviceInfo.globalMemSize * 0.8);
-
-    if (DebugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
-        deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, (uint64_t)(4 * GB * 0.8));
-        deviceInfo.addressBits = 32;
-        deviceInfo.force32BitAddressess = is64bit;
-    }
-
-    deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
-
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;
-    deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
-    deviceInfo.outProfilingTimerResolution = static_cast<size_t>(deviceInfo.profilingTimerResolution);
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
 
     deviceInfo.maxOnDeviceEvents = 1024;
-    deviceInfo.maxOnDeviceQueues = 1;
     deviceInfo.queueOnDeviceMaxSize = 64 * MB;
     deviceInfo.queueOnDevicePreferredSize = 128 * KB;
     deviceInfo.queueOnDeviceProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
@@ -280,46 +404,24 @@ void Device::initializeCaps() {
     deviceInfo.preferredInteropUserSync = 1u;
 
     // OpenCL 1.2 requires 128MB minimum
-    deviceInfo.maxMemAllocSize = std::min(std::max(deviceInfo.globalMemSize / 2, static_cast<uint64_t>(128llu * MB)), this->hardwareCapabilities.maxMemAllocSize);
 
     deviceInfo.maxConstantBufferSize = deviceInfo.maxMemAllocSize;
-
-    static const int maxPixelSize = 16;
-    deviceInfo.imageMaxBufferSize = static_cast<size_t>(deviceInfo.maxMemAllocSize / maxPixelSize);
 
     deviceInfo.maxWorkItemDimensions = 3;
 
     deviceInfo.maxComputUnits = systemInfo.EUCount;
     deviceInfo.maxConstantArgs = 8;
-    deviceInfo.maxNumEUsPerSubSlice = 0;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
-    deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : hwHelper.getMinimalSIMDSize();
-
-    deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.featureTable.ftrPooledEuEnabled == 0)
-                                          ? (systemInfo.EUCount / systemInfo.SubSliceCount)
-                                          : systemInfo.EuCountPerPoolMin;
-    deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-    auto maxWS = hwHelper.getMaxThreadsForWorkgroup(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice)) * simdSizeUsed;
-
-    maxWS = Math::prevPowerOfTwo(maxWS);
-    deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
-
-    if (DebugManager.flags.OverrideMaxWorkgroupSize.get() != -1) {
-        deviceInfo.maxWorkGroupSize = DebugManager.flags.OverrideMaxWorkgroupSize.get();
-    }
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
     deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize / simdSizeUsed);
 
-    deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxSamplers = 16;
-
     deviceInfo.singleFpConfig |= defaultFpFlags;
 
     deviceInfo.halfFpConfig = defaultFpFlags;
+
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
 
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
                      systemInfo.EUCount,
@@ -328,21 +430,10 @@ void Device::initializeCaps() {
                      systemInfo.MaxSlicesSupported,
                      systemInfo.MaxSubSlicesSupported);
 
-    deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
-    deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);
-
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
-
     deviceInfo.localMemType = CL_LOCAL;
-    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
 
-    deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
-    deviceInfo.image2DMaxWidth = 16384;
-    deviceInfo.image2DMaxHeight = 16384;
-    deviceInfo.image3DMaxWidth = this->hardwareCapabilities.image3DMaxWidth;
-    deviceInfo.image3DMaxHeight = this->hardwareCapabilities.image3DMaxHeight;
-    deviceInfo.image3DMaxDepth = 2048;
-    deviceInfo.imageMaxArraySize = 2048;
+    deviceInfo.image3DMaxWidth = this->getHardwareCapabilities().image3DMaxWidth;
+    deviceInfo.image3DMaxHeight = this->getHardwareCapabilities().image3DMaxHeight;
 
     // cl_khr_image2d_from_buffer
     deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);
@@ -352,11 +443,6 @@ void Device::initializeCaps() {
     deviceInfo.pipeMaxActiveReservations = 1;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
-    deviceInfo.printfBufferSize = 4 * 1024 * 1024;
-    deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
-
-    deviceInfo.maxSubGroups = hwHelper.getDeviceSubGroupSizes();
-
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(
@@ -364,12 +450,11 @@ void Device::initializeCaps() {
         (CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS));
     deviceInfo.preemptionSupported = false;
     deviceInfo.maxGlobalVariableSize = 64 * 1024;
-    deviceInfo.globalVariablePreferredTotalSize = (size_t)deviceInfo.maxMemAllocSize;
+    deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(deviceInfo.maxMemAllocSize);
 
     deviceInfo.planarYuvMaxWidth = 16384;
     deviceInfo.planarYuvMaxHeight = 16352;
 
-    deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
     if (hwInfo.capabilityTable.supportsVme) {
         deviceInfo.vmeAvcVersion = CL_AVC_ME_VERSION_1_INTEL;
@@ -383,11 +468,6 @@ void Device::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.debuggerActive = (executionEnvironment->debugger) ? executionEnvironment->debugger->isDebuggerActive() : false;
-    if (deviceInfo.debuggerActive) {
-        this->preemptionMode = PreemptionMode::Disabled;
-    }
-
     deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities();
     deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
     deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
@@ -400,6 +480,8 @@ void Device::initializeCaps() {
             deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
         }
     }
+
+    initializeExtraCaps();
 }
 
 } // namespace NEO

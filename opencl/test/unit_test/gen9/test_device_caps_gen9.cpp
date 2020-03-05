@@ -15,7 +15,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> Gen9DeviceCaps;
 
 GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
     if (pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
         EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
@@ -27,7 +27,7 @@ GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
 }
 
 GEN9TEST_F(Gen9DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 

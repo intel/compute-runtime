@@ -13,7 +13,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> Gen9DeviceCaps;
 
 GLKTEST_F(Gen9DeviceCaps, GlkProfilingTimerResolution) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
 
@@ -22,7 +22,7 @@ GLKTEST_F(Gen9DeviceCaps, givenGlkDeviceWhenAskedForDoubleSupportThenTrueIsRetur
 }
 
 GLKTEST_F(Gen9DeviceCaps, GlkClVersionSupport) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 }

@@ -28,8 +28,6 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 Device::Device(ExecutionEnvironment *executionEnvironment)
     : executionEnvironment(executionEnvironment) {
-    deviceExtensions.reserve(1000);
-    name.reserve(100);
     this->executionEnvironment->incRefInternal();
 }
 
@@ -80,7 +78,6 @@ bool Device::createDeviceImpl() {
     if (!osTime) {
         osTime = OSTime::create(osInterface);
     }
-    driverInfo.reset(DriverInfo::create(osInterface));
 
     initializeCaps();
 
@@ -173,11 +170,6 @@ double Device::getProfilingTimerResolution() {
 
 unsigned int Device::getSupportedClVersion() const {
     return getHardwareInfo().capabilityTable.clVersionSupport;
-}
-
-void Device::appendOSExtensions(const std::string &newExtensions) {
-    deviceExtensions += newExtensions;
-    deviceInfo.deviceExtensions = deviceExtensions.c_str();
 }
 
 bool Device::isSimulation() const {

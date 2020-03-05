@@ -36,8 +36,4 @@ Device *SubDevice::getDeviceById(uint32_t deviceId) const {
     return const_cast<SubDevice *>(this);
 }
 
-DeviceInfo &SubDevice::getMutableDeviceInfo() {
-    return deviceInfo;
-}
-
 } // namespace NEO

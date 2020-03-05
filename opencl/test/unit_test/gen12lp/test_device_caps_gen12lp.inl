@@ -15,13 +15,13 @@ using namespace NEO;
 typedef Test<DeviceFixture> Gen12LpDeviceCaps;
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, reportsOcl21) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }
 
 TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
     EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
@@ -29,13 +29,13 @@ TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
 }
 
 TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
 }
 
 TGLLPTEST_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
@@ -44,7 +44,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, defaultPreemptionMode) {
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, profilingTimerResolution) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 

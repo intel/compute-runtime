@@ -17,7 +17,7 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
         pKernel->maxKernelWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize / 2);
         maxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_LE(8u, maxSimdSize);
-        maxWorkDim = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkItemDimensions);
+        maxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(3u, maxWorkDim);
         maxWorkGroupSize = static_cast<size_t>(pKernel->maxKernelWorkGroupSize);
         ASSERT_GE(1024u, maxWorkGroupSize);
@@ -91,7 +91,7 @@ INSTANTIATE_TEST_CASE_P(wgs,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         WorkSizeParam workSize;
         size_t workDim;
         std::tie(workSize, workDim) = GetParam();
@@ -145,7 +145,7 @@ INSTANTIATE_TEST_CASE_P(wgs,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         WorkSizeParam workSize;
         size_t workDim;
         std::tie(workSize, workDim) = GetParam();
@@ -201,7 +201,7 @@ INSTANTIATE_TEST_CASE_P(sgn,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         size_t subGroupsNum;
         size_t workDim;
         std::tie(subGroupsNum, workDim) = GetParam();
@@ -240,7 +240,7 @@ TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocal
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnMaxNumberTest;
 
 TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNumSubGroupsThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
             pClDevice,
@@ -260,7 +260,7 @@ TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNu
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileNumberTest;
 
 TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileNumSubGroupThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
             pClDevice,
@@ -280,7 +280,7 @@ TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileN
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;
 
 TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSubGroupSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
             pClDevice,
@@ -308,7 +308,7 @@ TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSub
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalidKernelErrorIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             nullptr,
             pClDevice,
@@ -324,7 +324,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalid
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoThenInvalidDeviceErrorIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
             nullptr,
@@ -340,7 +340,7 @@ TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoThenInvalid
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenInvalidParamNameWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         retVal = clGetKernelSubGroupInfo(
             pKernel,
             pClDevice,
@@ -376,6 +376,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
     if (requireOpenCL21) {
         DebugManager.flags.ForceOCLVersion.set(20);
         pDevice->initializeCaps();
+        pClDevice->initializeCaps();
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
@@ -391,11 +392,12 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
 
         DebugManager.flags.ForceOCLVersion.set(0);
         pDevice->initializeCaps();
+        pClDevice->initializeCaps();
     }
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
@@ -415,7 +417,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInf
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenIndivisibleWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
@@ -439,7 +441,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenIndivisibleWorkDimWhenGettingSubG
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimGreaterThanMaxWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
@@ -463,7 +465,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimGreaterThanMaxWorkDimWhenG
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenInputValueIsNullWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
                             (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
@@ -487,7 +489,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenInputValueIsNullWhenGettingSubGro
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenParamValueSizeZeroWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
 
         retVal = clGetKernelSubGroupInfo(
             pKernel,
@@ -504,7 +506,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenParamValueSizeZeroWhenGettingSubG
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenUnalignedParamValueSizeWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
         retVal = clGetKernelSubGroupInfo(
@@ -522,7 +524,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenUnalignedParamValueSizeWhenGettin
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenTooLargeParamValueSizeWhenGettingSubGroupInfoThenCorrectRetValIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
         size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
@@ -542,7 +544,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenTooLargeParamValueSizeWhenGetting
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenNullPtrForReturnWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
-    if (std::string(pDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 
         retVal = clGetKernelSubGroupInfo(

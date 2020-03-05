@@ -2207,7 +2207,7 @@ TEST_F(KernelExecutionEnvironmentTest, getMaxSimdReturns1WhenLargestCompilledSim
 }
 
 TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWorkGroupSizeIsZero) {
-    auto maxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
+    auto maxWorkGroupSize = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
     auto oldRequiredWorkGroupSizeX = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
     auto oldRequiredWorkGroupSizeY = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
     auto oldRequiredWorkGroupSizeZ = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;
@@ -2224,7 +2224,7 @@ TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWo
 }
 
 TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWorkGroupSizeIsLowerThanMaxWorkGroupSize) {
-    auto maxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
+    auto maxWorkGroupSize = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
     auto oldRequiredWorkGroupSizeX = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
     auto oldRequiredWorkGroupSizeY = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
     auto oldRequiredWorkGroupSizeZ = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;
@@ -2241,7 +2241,7 @@ TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWo
 }
 
 TEST_F(KernelExecutionEnvironmentTest, getMaxRequiredWorkGroupSizeWhenCompiledWorkGroupSizeIsGreaterThanMaxWorkGroupSize) {
-    auto maxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
+    auto maxWorkGroupSize = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
     auto oldRequiredWorkGroupSizeX = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
     auto oldRequiredWorkGroupSizeY = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
     auto oldRequiredWorkGroupSizeZ = this->pKernelInfo->patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;

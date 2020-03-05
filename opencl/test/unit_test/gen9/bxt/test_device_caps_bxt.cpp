@@ -13,7 +13,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> BxtDeviceCaps;
 
 BXTTEST_F(BxtDeviceCaps, reportsOcl12) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 }
@@ -24,7 +24,7 @@ BXTTEST_F(BxtDeviceCaps, BxtProfilingTimerResolution) {
 }
 
 BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 
@@ -39,7 +39,7 @@ BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {
 }
 
 BXTTEST_F(BxtDeviceCaps, BxtSvmCapabilities) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.svmCapabilities);
 }
 

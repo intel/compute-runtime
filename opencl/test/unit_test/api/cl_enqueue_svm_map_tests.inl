@@ -47,7 +47,7 @@ TEST_F(clEnqueueSVMMapTests, GivenNullSVMPointerWhenMappingSVMThenInvalidValueEr
 }
 
 TEST_F(clEnqueueSVMMapTests, GivenRegionSizeZeroWhenMappingSVMThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -99,7 +99,7 @@ TEST_F(clEnqueueSVMMapTests, GivenNonNullEventWaitListAndZeroNumEventsWhenMappin
 }
 
 TEST_F(clEnqueueSVMMapTests, GivenValidParametersWhenMappingSVMThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);

@@ -18,8 +18,9 @@
 #include <cstdint>
 
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
-    MockDevice device;
-    if (0 == device.getDeviceInfo().svmCapabilities) {
+    auto &device = *(new MockDevice);
+    MockClDevice clDevice{&device};
+    if (0 == clDevice.getDeviceInfo().svmCapabilities) {
         return;
     }
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
@@ -64,8 +65,9 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
 }
 
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsSvmAllocation) {
-    MockDevice device;
-    if (0 == device.getDeviceInfo().svmCapabilities) {
+    auto &device = *(new MockDevice);
+    MockClDevice clDevice{&device};
+    if (0 == clDevice.getDeviceInfo().svmCapabilities) {
         return;
     }
     MockMemoryManager memoryManager;

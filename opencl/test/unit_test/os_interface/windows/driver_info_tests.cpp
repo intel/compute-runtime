@@ -63,19 +63,17 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateDriverInfo) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
-    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
 
     EXPECT_TRUE(device->hasDriverInfo());
-    delete device;
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDontCreateDriverInfo) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = false;
-    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
 
     EXPECT_FALSE(device->hasDriverInfo());
-    delete device;
 }
 
 class RegistryReaderMock : public SettingsReader {

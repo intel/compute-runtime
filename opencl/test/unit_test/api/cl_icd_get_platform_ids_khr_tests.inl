@@ -70,7 +70,7 @@ TEST_F(clIcdGetPlatformIDsKHRTests, checkDeviceId) {
 }
 
 TEST_F(clIcdGetPlatformIDsKHRTests, checkExtensionString) {
-    const DeviceInfo &caps = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &caps = pPlatform->getClDevice(0)->getDeviceInfo();
     EXPECT_NE(std::string::npos, std::string(caps.deviceExtensions).find("cl_khr_icd"));
 }
 } // namespace ULT

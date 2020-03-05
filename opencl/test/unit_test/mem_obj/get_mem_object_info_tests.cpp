@@ -185,7 +185,7 @@ TEST_F(GetMemObjectInfo, MEM_USES_SVM_POINTER_FALSE) {
 }
 
 TEST_F(GetMemObjectInfo, MEM_USES_SVM_POINTER_TRUE) {
-    const DeviceInfo &devInfo = pDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto hostPtr = clSVMAlloc(BufferDefaults::context, CL_MEM_READ_WRITE, BufferUseHostPtr<>::sizeInBytes, 64);
         ASSERT_NE(nullptr, hostPtr);
@@ -328,7 +328,7 @@ class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {
 };
 
 TEST_F(GetMemObjectInfoLocalMemory, givenLocalMemoryEnabledWhenNoZeroCopySvmAllocationUsedThenBufferAllocationInheritsZeroCopyFlag) {
-    const DeviceInfo &devInfo = pDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto hostPtr = clSVMAlloc(BufferDefaults::context, CL_MEM_READ_WRITE, BufferUseHostPtr<>::sizeInBytes, 64);
         ASSERT_NE(nullptr, hostPtr);

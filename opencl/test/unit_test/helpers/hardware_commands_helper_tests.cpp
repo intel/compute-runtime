@@ -1178,7 +1178,7 @@ typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         size_t totalSize = 0;

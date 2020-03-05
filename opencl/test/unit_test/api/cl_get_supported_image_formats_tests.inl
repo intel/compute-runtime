@@ -97,7 +97,7 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformWithoutDevicesWhenClGetSupport
     executionEnvironment->initializeMemoryManager();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0u), platform());
-    const DeviceInfo &devInfo = device->getDeviceInfo();
+    const ClDeviceInfo &devInfo = device->getDeviceInfo();
     if (!devInfo.imageSupport) {
         GTEST_SKIP();
     }

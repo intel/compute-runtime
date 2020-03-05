@@ -41,11 +41,9 @@ TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhen
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
     executionEnvironment->debugger.reset(gmock);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
-    std::unique_ptr<MockClDevice> pClDevice(new MockClDevice{device.get()});
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
 
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
-    device.release();
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {

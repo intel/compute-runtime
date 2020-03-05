@@ -33,7 +33,7 @@ GEN8TEST_F(Gen8DeviceCaps, compression) {
 }
 
 GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(2048u, caps.image3DMaxWidth);
     EXPECT_EQ(2048u, caps.image3DMaxDepth);
     EXPECT_EQ(2048u, caps.image3DMaxHeight);

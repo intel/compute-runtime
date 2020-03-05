@@ -182,7 +182,7 @@ TEST_F(PerformanceHintTest, GivenAlignedHostPtrWhenSubbufferIsCreatingThenContex
 
 TEST_F(PerformanceHintTest, GivenContextWhenSVMAllocIsCreatingThenContextProvidesHintAboutAlignment) {
 
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flg = CL_MEM_READ_WRITE;
 

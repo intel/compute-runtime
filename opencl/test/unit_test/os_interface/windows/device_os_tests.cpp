@@ -17,22 +17,6 @@
 using namespace ::testing;
 
 namespace NEO {
-TEST(DeviceOsTest, GivenDefaultDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
-    auto hwInfo = *platformDevices;
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
-
-    std::string extensionString(pDevice->getDeviceInfo().deviceExtensions);
-
-    EXPECT_THAT(extensionString, Not(HasSubstr(std::string("cl_intel_va_api_media_sharing "))));
-    EXPECT_THAT(extensionString, HasSubstr(std::string("cl_intel_dx9_media_sharing ")));
-    EXPECT_THAT(extensionString, HasSubstr(std::string("cl_khr_dx9_media_sharing ")));
-    EXPECT_THAT(extensionString, HasSubstr(std::string("cl_khr_d3d10_sharing ")));
-    EXPECT_THAT(extensionString, HasSubstr(std::string("cl_khr_d3d11_sharing ")));
-    EXPECT_THAT(extensionString, HasSubstr(std::string("cl_intel_d3d11_nv12_media_sharing ")));
-    EXPECT_THAT(extensionString, Not(HasSubstr(std::string("cl_intel_simultaneous_sharing "))));
-
-    delete pDevice;
-}
 
 TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
     auto hwInfo = *platformDevices;

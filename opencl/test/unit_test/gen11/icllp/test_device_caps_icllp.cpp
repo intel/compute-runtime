@@ -25,7 +25,7 @@ ICLLPTEST_F(IcllpTest, shouldPassOnIcllp) {
 }
 
 ICLLPTEST_F(IcllpTest, lpSkusDontSupportFP64) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
     EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
@@ -33,7 +33,7 @@ ICLLPTEST_F(IcllpTest, lpSkusDontSupportFP64) {
 }
 
 ICLLPTEST_F(IcllpTest, lpSkusDontSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 

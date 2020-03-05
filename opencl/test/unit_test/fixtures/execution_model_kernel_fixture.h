@@ -29,7 +29,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         PlatformFixture::SetUp();
 
         std::string temp;
-        temp.assign(pPlatform->getDevice(0)->getDeviceInfo().clVersion);
+        temp.assign(pPlatform->getClDevice(0)->getDeviceInfo().clVersion);
 
         if (temp.find("OpenCL 1.2") != std::string::npos) {
             pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
@@ -70,7 +70,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         }
 
         std::string temp;
-        temp.assign(pPlatform->getDevice(0)->getDeviceInfo().clVersion);
+        temp.assign(pPlatform->getClDevice(0)->getDeviceInfo().clVersion);
 
         ProgramFromBinaryTest::TearDown();
         PlatformFixture::TearDown();

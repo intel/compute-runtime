@@ -16,7 +16,7 @@ struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory
         ParentClass::SetUp();
         MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_GE(MaxSimdSize, 8u);
-        MaxWorkDim = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkItemDimensions);
+        MaxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(MaxWorkDim, 3u);
     }
 

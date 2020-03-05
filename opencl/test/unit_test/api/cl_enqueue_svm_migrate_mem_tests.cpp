@@ -50,7 +50,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSvmPointersWhenMigratingSvmThenInva
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNumSvmPointersIsZeroWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -93,7 +93,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSvmPointerIsHostPtrWhenMigratingSvmThen
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocationWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -123,7 +123,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocati
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenUnsupportedFlagsWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -176,7 +176,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonNullEventWaitListAndZeroNumEventsWhe
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenDifferentContextCommandQueueAndEventsWhenMigratingSvmThenInvalidContextErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -202,7 +202,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenDifferentContextCommandQueueAndEventsWh
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSizesWhenMigratingSvmThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -225,7 +225,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSizesWhenMigratingSvmThenSuccessIsR
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenSizeZeroWhenMigratingSvmThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -249,7 +249,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSizeZeroWhenMigratingSvmThenSuccessIsRe
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeWhenMigratingSvmThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -273,7 +273,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeWhenMigratingSvmThenSuccessI
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenSameContextCommandQueueAndEventsWhenMigratingSvmThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);

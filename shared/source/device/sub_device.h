@@ -18,7 +18,6 @@ class SubDevice : public Device {
     uint32_t getNumAvailableDevices() const override;
     uint32_t getRootDeviceIndex() const override;
     Device *getDeviceById(uint32_t deviceId) const override;
-    DeviceInfo &getMutableDeviceInfo();
 
     uint32_t getSubDeviceIndex() const;
 

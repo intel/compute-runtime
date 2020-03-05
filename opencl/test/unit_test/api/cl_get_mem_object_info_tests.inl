@@ -82,7 +82,7 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
 }
 
 TEST_F(clGetMemObjectInfoTests, GivenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         size_t bufferSize = 64;
         cl_mem buffer = nullptr;

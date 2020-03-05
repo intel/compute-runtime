@@ -201,7 +201,7 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
 }
 
 TEST_P(ParentKernelFromBinaryTest, getInstructionHeapSizeForExecutionModelReturnsNonZeroForParentKernel) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         EXPECT_LT(0u, pKernel->getInstructionHeapSizeForExecutionModel());

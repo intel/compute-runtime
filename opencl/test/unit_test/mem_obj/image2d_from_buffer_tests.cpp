@@ -219,7 +219,7 @@ TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndTooLargeRowPitchSpeci
 }
 
 TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlignmentWhenValidatingSurfaceFormatThenReturnError) {
-    static_cast<MockDevice *>(&context.getDevice(0)->getDevice())->deviceInfo.imagePitchAlignment = 128;
+    static_cast<MockClDevice *>(context.getDevice(0))->deviceInfo.imagePitchAlignment = 128;
     imageDesc.image_width = 64;
     imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
@@ -232,7 +232,7 @@ TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlign
 }
 
 TEST_F(Image2dFromBufferTest, ExtensionString) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto hwInfo = device->getHardwareInfo();
     const auto &caps = device->getDeviceInfo();
     std::string extensions = caps.deviceExtensions;

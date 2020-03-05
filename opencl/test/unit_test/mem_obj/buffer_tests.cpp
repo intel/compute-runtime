@@ -1750,7 +1750,7 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
 }
 
 TEST_P(ValidHostPtr, SvmHostPtr) {
-    const DeviceInfo &devInfo = pDevice->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto ptr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 64, {});
 

@@ -13,7 +13,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> SklDeviceCaps;
 
 SKLTEST_F(SklDeviceCaps, reportsOcl21) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }
@@ -24,7 +24,7 @@ SKLTEST_F(SklDeviceCaps, SklProfilingTimerResolution) {
 }
 
 SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturned) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 
@@ -34,7 +34,7 @@ SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturn
 }
 
 SKLTEST_F(SklDeviceCaps, SklSvmCapabilities) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     cl_device_svm_capabilities expectedCaps = (CL_DEVICE_SVM_COARSE_GRAIN_BUFFER |
                                                CL_DEVICE_SVM_FINE_GRAIN_BUFFER |
                                                CL_DEVICE_SVM_ATOMICS);

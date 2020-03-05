@@ -514,7 +514,7 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSetiingIUpIndirectStateThenDshIsNotUsed) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         pKernel->createReflectionSurface();
@@ -545,7 +545,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSetiingIUpIndirectState
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenCorrectStartBlockIdIsSet) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         pKernel->createReflectionSurface();
@@ -574,7 +574,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateT
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenDshValuesAreSetCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
         pKernel->createReflectionSurface();
@@ -609,7 +609,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, GivenHasBarriersSetWhenCall
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         pKernel->createReflectionSurface();
 
         MockContext mockContext;

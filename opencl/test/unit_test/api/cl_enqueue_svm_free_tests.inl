@@ -48,7 +48,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNullSVMPointersWhen
 }
 
 TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -101,7 +101,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfEventsAndNonNullEventListWhenFreeing
 }
 
 TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -124,7 +124,7 @@ TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNonNullSVMPointersW
 }
 
 TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMFree(
             pCommandQueue, // cl_command_queue command_queue

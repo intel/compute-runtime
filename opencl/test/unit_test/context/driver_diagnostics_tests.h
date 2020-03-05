@@ -114,8 +114,8 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
         PerformanceHintTest::SetUp();
         std::tie(profilingEnabled, preemptionSupported) = GetParam();
         device = new MockDevice;
-        device->deviceInfo.preemptionSupported = preemptionSupported;
         clDevice = new MockClDevice{device};
+        clDevice->deviceInfo.preemptionSupported = preemptionSupported;
     }
 
     void TearDown() override {
@@ -124,7 +124,7 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
         PerformanceHintTest::TearDown();
     }
     MockDevice *device;
-    ClDevice *clDevice;
+    MockClDevice *clDevice;
     cl_command_queue cmdQ;
     bool profilingEnabled;
     bool preemptionSupported;

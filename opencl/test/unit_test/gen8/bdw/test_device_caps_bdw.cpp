@@ -15,13 +15,13 @@ using namespace NEO;
 typedef Test<DeviceFixture> BdwDeviceCaps;
 
 BDWTEST_F(BdwDeviceCaps, givenBdwDeviceWhenAskedForClVersionThenReport21) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }
 
 BDWTEST_F(BdwDeviceCaps, skuSpecificCaps) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
     EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
@@ -29,7 +29,7 @@ BDWTEST_F(BdwDeviceCaps, skuSpecificCaps) {
 }
 
 BDWTEST_F(BdwDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 

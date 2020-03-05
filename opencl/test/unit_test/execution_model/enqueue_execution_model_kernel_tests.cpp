@@ -37,7 +37,7 @@ typedef ExecutionModelKernelTest ParentKernelEnqueueTest;
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDSHHasCorrectlyFilledInterfaceDesriptorTables) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -94,7 +94,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.executionEnvironment);
             ASSERT_NE(nullptr, pBlockInfo->patchInfo.threadPayload);
 
-            auto grfSize = pPlatform->getDevice(0)->getDeviceInfo().grfSize;
+            auto grfSize = pPlatform->getClDevice(0)->getDeviceInfo().grfSize;
 
             const uint32_t sizeCrossThreadData = pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize / grfSize;
 
@@ -253,7 +253,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenParentKernelWithBlocks
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedSecondTimeThenDeviceQueueDSHIsResetToInitialOffset) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -286,7 +286,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
@@ -352,7 +352,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
@@ -365,7 +365,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueIsNotReset) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
@@ -391,7 +391,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParent
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueDSHAddressIsProgrammedInStateBaseAddressAndDSHIsMadeResident) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         ASSERT_NE(nullptr, pDevQueueHw);
 

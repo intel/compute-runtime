@@ -33,7 +33,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenInvalidCommandQueueWhenCopyingSVMMemoryThen
 }
 
 TEST_F(clEnqueueSVMMemcpyTests, GivenNullDstPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pSrcSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, pSrcSvm);
@@ -55,7 +55,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNullDstPtrWhenCopyingSVMMemoryThenInvalidVa
 }
 
 TEST_F(clEnqueueSVMMemcpyTests, GivenNullSrcPtrWhenCopyingSVMMemoryThenInvalidValueErrorIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, pDstSvm);
@@ -107,7 +107,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenZeroEventsAndNonNullEventListWhenCopyingSVM
 }
 
 TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, pDstSvm);
@@ -132,7 +132,7 @@ TEST_F(clEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessI
 }
 
 TEST_F(clEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
-    const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, pDstSvm);

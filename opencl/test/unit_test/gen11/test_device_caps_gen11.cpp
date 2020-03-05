@@ -66,7 +66,7 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingImageSupportThenReturnTrue) {
 }
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckExtensionsThenSubgroupLocalBlockIOIsSupported) {
-    const auto &caps = pDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
 }

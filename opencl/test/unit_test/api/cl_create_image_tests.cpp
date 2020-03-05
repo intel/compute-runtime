@@ -67,7 +67,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledImageThenInvalidOperationErrorIsReturned) {
-    auto device = static_cast<MockDevice *>(&pContext->getDevice(0)->getDevice());
+    auto device = static_cast<MockClDevice *>(pContext->getDevice(0));
     device->deviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
     auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
@@ -94,7 +94,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTiledImageThenCreate) {
-    auto device = static_cast<MockDevice *>(&pContext->getDevice(0)->getDevice());
+    auto device = static_cast<MockClDevice *>(pContext->getDevice(0));
     device->deviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
     auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);

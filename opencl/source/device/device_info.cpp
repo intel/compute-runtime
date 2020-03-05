@@ -26,16 +26,16 @@ template <cl_device_info Param>
 inline void ClDevice::getStr(const void *&src,
                              size_t &size,
                              size_t &retSize) {
-    src = Map<Param>::getValue(device.getDeviceInfo());
-    retSize = size = strlen(Map<Param>::getValue(device.getDeviceInfo())) + 1;
+    src = Map<Param>::getValue(deviceInfo);
+    retSize = size = strlen(Map<Param>::getValue(deviceInfo)) + 1;
 }
 
 template <>
 inline void ClDevice::getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES>(const void *&src,
                                                             size_t &size,
                                                             size_t &retSize) {
-    src = device.getDeviceInfo().maxWorkItemSizes;
-    retSize = size = sizeof(device.getDeviceInfo().maxWorkItemSizes);
+    src = deviceInfo.maxWorkItemSizes;
+    retSize = size = sizeof(deviceInfo.maxWorkItemSizes);
 }
 
 template <>
@@ -184,7 +184,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     default:
-        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !device.getDeviceInfo().imageSupport) {
+        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !deviceInfo.imageSupport) {
             src = &value;
             break;
         }
@@ -243,14 +243,14 @@ bool ClDevice::getDeviceInfoForImage(cl_device_info paramName,
         getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(src, srcSize, retSize);
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
-        if (getDeviceInfo().nv12Extension) {
+        if (deviceInfo.nv12Extension) {
             getCap<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL>(src, srcSize, retSize);
             break;
         }
         retVal = false;
         break;
     case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
-        if (getDeviceInfo().nv12Extension) {
+        if (deviceInfo.nv12Extension) {
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
             break;
         }

@@ -20,11 +20,11 @@
 
 using namespace NEO;
 
-TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReporstClGlSharingExtension) {
+TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReportsClGlSharingExtension) {
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.AddClGlSharing.set(true);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         const auto &caps = device->getDeviceInfo();
 
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_gl_sharing ")));
