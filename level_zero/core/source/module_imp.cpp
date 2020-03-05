@@ -31,10 +31,10 @@
 
 namespace L0 {
 
-namespace ZeBuildOptions {
+namespace BuildOptions {
 ConstStringRef optDisable = "-ze-opt-disable";
 ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
-} // namespace ZeBuildOptions
+} // namespace BuildOptions
 
 struct ModuleTranslationUnit {
     ModuleTranslationUnit(L0::Device *device)
@@ -361,8 +361,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         std::string buildFlags(pBuildFlags);
 
         apiOptions = pBuildFlags;
-        moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, ZeBuildOptions::optDisable);
-        moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, ZeBuildOptions::greaterThan4GbRequired);
+        moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
+        moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
 }

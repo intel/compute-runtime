@@ -59,7 +59,7 @@ struct CommandQueueImp : public CommandQueue {
         NEO::CSRequirements::csOverfetchSize;
 
     CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
-        : device(device), csr(csr), desc(*desc), commandStream(nullptr) {
+        : device(device), csr(csr), desc(*desc) {
         std::atomic_init(&commandQueuePerThreadScratchSize, 0u);
     }
 
@@ -86,10 +86,10 @@ struct CommandQueueImp : public CommandQueue {
 
     void printFunctionsPrintfOutput();
 
-    Device *device;
-    NEO::CommandStreamReceiver *csr;
+    Device *device = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
     const ze_command_queue_desc_t desc;
-    NEO::LinearStream *commandStream;
+    NEO::LinearStream *commandStream = nullptr;
     uint32_t taskCount = 0;
     std::vector<Kernel *> printfFunctionContainer;
     bool gsbaInit = false;

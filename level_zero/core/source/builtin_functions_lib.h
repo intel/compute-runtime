@@ -19,23 +19,23 @@ struct Kernel;
 
 enum class Builtin : uint32_t {
     CopyBufferBytes = 0u,
-    CopyBufferToBufferSide,
-    CopyBufferToBufferMiddle,
-    CopyImageRegion,
-    FillBufferImmediate,
-    FillBufferSSHOffset,
     CopyBufferRectBytes2d,
     CopyBufferRectBytes3d,
-    CopyBufferToImage3dBytes,
+    CopyBufferToBufferMiddle,
+    CopyBufferToBufferSide,
+    CopyBufferToImage3d16Bytes,
     CopyBufferToImage3d2Bytes,
     CopyBufferToImage3d4Bytes,
     CopyBufferToImage3d8Bytes,
-    CopyBufferToImage3d16Bytes,
-    CopyImage3dToBufferBytes,
+    CopyBufferToImage3dBytes,
+    CopyImage3dToBuffer16Bytes,
     CopyImage3dToBuffer2Bytes,
     CopyImage3dToBuffer4Bytes,
     CopyImage3dToBuffer8Bytes,
-    CopyImage3dToBuffer16Bytes,
+    CopyImage3dToBufferBytes,
+    CopyImageRegion,
+    FillBufferImmediate,
+    FillBufferSSHOffset,
     COUNT
 };
 

@@ -41,15 +41,16 @@ struct CommandQueue : _ze_command_queue_handle_t {
                                         ze_fence_handle_t hFence) = 0;
     virtual ze_result_t synchronize(uint32_t timeout) = 0;
 
-    static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc);
+    static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
+                                const ze_command_queue_desc_t *desc);
 
     static CommandQueue *fromHandle(ze_command_queue_handle_t handle) {
         return static_cast<CommandQueue *>(handle);
     }
 
-    inline ze_command_queue_handle_t toHandle() { return this; }
+    ze_command_queue_handle_t toHandle() { return this; }
 
-    inline void setCommandQueuePreemptionMode(NEO::PreemptionMode newPreemptionMode) {
+    void setCommandQueuePreemptionMode(NEO::PreemptionMode newPreemptionMode) {
         commandQueuePreemptionMode = newPreemptionMode;
     }
 
@@ -58,7 +59,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     NEO::PreemptionMode commandQueuePreemptionMode = NEO::PreemptionMode::Initial;
 };
 
-using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc);
+using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,
+                                                  const ze_command_queue_desc_t *desc);
 extern CommandQueueAllocatorFn commandQueueFactory[];
 
 template <uint32_t productFamily, typename CommandQueueType>

@@ -23,13 +23,15 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     CommandListCoreFamilyImmediate() {}
     CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock) : CommandListCoreFamily<gfxCoreFamily>(numIddsPerBlock) {}
 
-    ze_result_t appendLaunchFunction(
-        ze_kernel_handle_t hFunction, const ze_group_count_t *pThreadGroupDimensions,
-        ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendLaunchFunction(ze_kernel_handle_t hFunction,
+                                     const ze_group_count_t *pThreadGroupDimensions,
+                                     ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                     ze_event_handle_t *phWaitEvents) override;
 
-    ze_result_t appendLaunchFunctionIndirect(
-        ze_kernel_handle_t hFunction, const ze_group_count_t *pDispatchArgumentsBuffer,
-        ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendLaunchFunctionIndirect(ze_kernel_handle_t hFunction,
+                                             const ze_group_count_t *pDispatchArgumentsBuffer,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
@@ -60,7 +62,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
 
-    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) override;
+    ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr,
+                                    size_t size, bool flushHost) override;
 
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) override;
 

@@ -50,7 +50,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
-    uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration) {
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    ze_fence_handle_t hFence,
+    bool performMigration) {
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;

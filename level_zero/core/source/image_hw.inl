@@ -130,7 +130,9 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
-        NEO::setImageSurfaceState<GfxFamily>(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets, desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
+        NEO::setImageSurfaceState<GfxFamily>(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
+                                             this->allocation->getGpuAddress(), surfaceOffsets,
+                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
 
         NEO::setImageSurfaceStateDimensions<GfxFamily>(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType);
         surfaceState.setSurfaceMinLod(0u);
@@ -166,14 +168,18 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         imgInfoRedescirebed.qPitch = imgInfo.qPitch;
         redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
-        NEO::setImageSurfaceState<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper, __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets, desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
+        NEO::setImageSurfaceState<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
+                                             __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets,
+                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
 
         NEO::setImageSurfaceStateDimensions<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType);
         redescribedSurfaceState.setSurfaceMinLod(0u);
         redescribedSurfaceState.setMipCountLod(0u);
         NEO::setMipTailStartLod<GfxFamily>(&redescribedSurfaceState, gmm);
 
-        if (imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE || imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE || imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R32_UINT_TYPE) {
+        if (imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE ||
+            imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE ||
+            imgInfoRedescirebed.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_R32_UINT_TYPE) {
             redescribedSurfaceState.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
             redescribedSurfaceState.setShaderChannelSelectGreen(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
             redescribedSurfaceState.setShaderChannelSelectBlue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);

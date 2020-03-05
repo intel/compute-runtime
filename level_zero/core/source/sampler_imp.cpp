@@ -32,7 +32,11 @@ Sampler *Sampler::create(uint32_t productFamily, Device *device, const ze_sample
     SamplerImp *sampler = nullptr;
     if (allocator) {
         sampler = static_cast<SamplerImp *>((*allocator)());
-        sampler->initialize(device, desc);
+        if (sampler->initialize(device, desc)) {
+            delete sampler;
+            DEBUG_BREAK_IF(true);
+            return nullptr;
+        }
     }
 
     return sampler;

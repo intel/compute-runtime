@@ -31,7 +31,7 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
                                               ze_ipc_memory_flag_t flags, void **ptr) {
     uint64_t handle = *(pIpcHandle.data);
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
-    NEO::AllocationProperties unifiedMemoryProperties{static_cast<Device *>(hDevice)->getRootDeviceIndex(),
+    NEO::AllocationProperties unifiedMemoryProperties{Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::GraphicsAllocation::AllocationType::BUFFER};
     NEO::GraphicsAllocation *alloc =
@@ -95,6 +95,7 @@ ze_result_t DriverHandleImp::getMemAddressRange(const void *ptr, void **pBase, s
 
         return ZE_RESULT_SUCCESS;
     }
+    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
@@ -126,7 +127,7 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_devic
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
     void *usmPtr =
-        svmAllocsManager->createUnifiedMemoryAllocation(static_cast<Device *>(hDevice)->getRootDeviceIndex(),
+        svmAllocsManager->createUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                         size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -146,7 +147,7 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_devic
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
 
     auto usmPtr =
-        svmAllocsManager->createSharedUnifiedMemoryAllocation(static_cast<Device *>(hDevice)->getRootDeviceIndex(),
+        svmAllocsManager->createSharedUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                               size,
                                                               unifiedMemoryProperties,
                                                               static_cast<void *>(L0::Device::fromHandle(hDevice)));

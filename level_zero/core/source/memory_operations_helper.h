@@ -30,6 +30,7 @@ static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperatio
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
     default:
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 }

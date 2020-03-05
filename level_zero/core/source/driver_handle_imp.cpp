@@ -71,6 +71,7 @@ inline ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
 ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
     *pfunc = this->osLibrary->getProcAddress(std::string(pFuncName));
     if (*pfunc == nullptr) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;

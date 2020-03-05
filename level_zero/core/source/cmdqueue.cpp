@@ -84,15 +84,14 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint32_t timeout) 
 
 void CommandQueueImp::printFunctionsPrintfOutput() {
     size_t size = this->printfFunctionContainer.size();
-    if (size) {
-        for (size_t i = 0; i < size; i++) {
-            this->printfFunctionContainer[i]->printPrintfOutput();
-        }
-        this->printfFunctionContainer.clear();
+    for (size_t i = 0; i < size; i++) {
+        this->printfFunctionContainer[i]->printPrintfOutput();
     }
+    this->printfFunctionContainer.clear();
 }
 
-CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) {
+CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
+                                   const ze_command_queue_desc_t *desc) {
     CommandQueueAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandQueueFactory[productFamily];

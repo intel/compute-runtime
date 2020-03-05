@@ -28,7 +28,8 @@ struct KernelHw : public KernelImp {
         uintptr_t baseAddress = static_cast<uintptr_t>(alloc->getGpuAddress());
         auto sshAlignmentMask = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignmentMask();
 
-        baseAddress &= sshAlignmentMask; // chop-off misalligned bytes, it into account in bufferOffset patch token
+        // Remove misalligned bytes, accounted for in in bufferOffset patch token
+        baseAddress &= sshAlignmentMask;
 
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t sizeTillEndOfSurface = alloc->getUnderlyingBufferSize() - offset;

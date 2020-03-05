@@ -73,14 +73,18 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(
-    ze_kernel_handle_t hFunction, const ze_group_count_t *pThreadGroupDimensions,
-    ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(ze_kernel_handle_t hFunction,
+                                                                       const ze_group_count_t *pThreadGroupDimensions,
+                                                                       ze_event_handle_t hEvent,
+                                                                       uint32_t numWaitEvents,
+                                                                       ze_event_handle_t *phWaitEvents) {
+
     if (addEventsToCmdList(hEvent, numWaitEvents, phWaitEvents) == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_result_t ret = appendLaunchFunctionWithParams(hFunction, pThreadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, false, false);
+    ze_result_t ret = appendLaunchFunctionWithParams(hFunction, pThreadGroupDimensions, hEvent,
+                                                     numWaitEvents, phWaitEvents, false, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -94,18 +98,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
                                                                                 ze_event_handle_t hSignalEvent,
                                                                                 uint32_t numWaitEvents,
                                                                                 ze_event_handle_t *phWaitEvents) {
+
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionIndirect(
-    ze_kernel_handle_t hFunction, const ze_group_count_t *pDispatchArgumentsBuffer,
-    ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionIndirect(ze_kernel_handle_t hFunction,
+                                                                               const ze_group_count_t *pDispatchArgumentsBuffer,
+                                                                               ze_event_handle_t hEvent,
+                                                                               uint32_t numWaitEvents,
+                                                                               ze_event_handle_t *phWaitEvents) {
+
     if (addEventsToCmdList(hEvent, numWaitEvents, phWaitEvents) == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_result_t ret = appendLaunchFunctionWithParams(hFunction, pDispatchArgumentsBuffer, nullptr, 0, nullptr, true, false);
+    ze_result_t ret = appendLaunchFunctionWithParams(hFunction, pDispatchArgumentsBuffer,
+                                                     nullptr, 0, nullptr, true, false);
 
     if (hEvent) {
         appendSignalEventPostWalker(hEvent);
@@ -122,6 +131,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleFunctionsI
                                                                                         ze_event_handle_t hEvent,
                                                                                         uint32_t numWaitEvents,
                                                                                         ze_event_handle_t *phWaitEvents) {
+
     if (addEventsToCmdList(hEvent, numWaitEvents, phWaitEvents) == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -163,6 +173,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
                                                                 uint32_t numWaitEvents,
                                                                 ze_event_handle_t *phWaitEvents) {
+
     if (addEventsToCmdList(hSignalEvent, numWaitEvents, phWaitEvents) == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -177,9 +188,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(
-    uint32_t numRanges, const size_t *pRangeSizes, const void **pRanges,
-    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint32_t numRanges,
+                                                                            const size_t *pRangeSizes,
+                                                                            const void **pRanges,
+                                                                            ze_event_handle_t hSignalEvent,
+                                                                            uint32_t numWaitEvents,
+                                                                            ze_event_handle_t *phWaitEvents) {
+
     if (addEventsToCmdList(hSignalEvent, numWaitEvents, phWaitEvents) == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -246,7 +261,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         break;
     }
 
-    builtinKernel->setArgBufferWithAlloc(0u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr), allocationStruct.alloc);
+    builtinKernel->setArgBufferWithAlloc(0u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr),
+                                         allocationStruct.alloc);
     builtinKernel->setArgRedescribedImage(1u, hDstImage);
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
@@ -258,7 +274,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
     auto srcRowPitch = pDstRegion->width * bytesPerPixel;
-    auto srcSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
+    auto srcSlicePitch =
+        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
 
     uint32_t pitch[] = {
         srcRowPitch,
@@ -269,19 +286,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     uint32_t groupSizeY = pDstRegion->height;
     uint32_t groupSizeZ = pDstRegion->depth;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (pDstRegion->width % groupSizeX || pDstRegion->height % groupSizeY || pDstRegion->depth % groupSizeZ) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_group_count_t functionArgs{pDstRegion->width / groupSizeX, pDstRegion->height / groupSizeY, pDstRegion->depth / groupSizeZ};
+    ze_group_count_t functionArgs{pDstRegion->width / groupSizeX, pDstRegion->height / groupSizeY,
+                                  pDstRegion->depth / groupSizeZ};
 
     return this->appendLaunchFunction(builtinKernel->toHandle(), &functionArgs,
                                       hEvent, numWaitEvents, phWaitEvents);
@@ -336,7 +358,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     }
 
     builtinKernel->setArgRedescribedImage(0u, hSrcImage);
-    builtinKernel->setArgBufferWithAlloc(1u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr), allocationStruct.alloc);
+    builtinKernel->setArgBufferWithAlloc(1u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr),
+                                         allocationStruct.alloc);
 
     uint32_t origin[] = {
         static_cast<uint32_t>(pSrcRegion->originX),
@@ -348,7 +371,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
     auto srcRowPitch = pSrcRegion->width * bytesPerPixel;
-    auto srcSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * srcRowPitch;
+    auto srcSlicePitch =
+        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * srcRowPitch;
 
     uint32_t pitch[] = {
         srcRowPitch,
@@ -359,19 +383,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     uint32_t groupSizeY = pSrcRegion->height;
     uint32_t groupSizeZ = pSrcRegion->depth;
 
-    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    if (builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                        &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (pSrcRegion->width % groupSizeX || pSrcRegion->height % groupSizeY || pSrcRegion->depth % groupSizeZ) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_group_count_t functionArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY, pSrcRegion->depth / groupSizeZ};
+    ze_group_count_t functionArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY,
+                                  pSrcRegion->depth / groupSizeZ};
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(builtinKernel->toHandle(), &functionArgs,
                                                                           hEvent, numWaitEvents, phWaitEvents);
@@ -433,19 +462,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     uint32_t groupSizeY = srcRegion.height;
     uint32_t groupSizeZ = srcRegion.depth;
 
-    if (function->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    if (function->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
+                                   &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (function->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (srcRegion.width % groupSizeX || srcRegion.height % groupSizeY || srcRegion.depth % groupSizeZ) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_group_count_t functionArgs{srcRegion.width / groupSizeX, srcRegion.height / groupSizeY, srcRegion.depth / groupSizeZ};
+    ze_group_count_t functionArgs{srcRegion.width / groupSizeX, srcRegion.height / groupSizeY,
+                                  srcRegion.depth / groupSizeZ};
 
     function->setArgRedescribedImage(0, hSrcImage);
     function->setArgRedescribedImage(1, hDstImage);
@@ -464,6 +498,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopy(ze_image_handl
                                                                   ze_event_handle_t hEvent,
                                                                   uint32_t numWaitEvents,
                                                                   ze_event_handle_t *phWaitEvents) {
+
     return this->appendImageCopyRegion(hDstImage, hSrcImage, nullptr, nullptr, hEvent,
                                        numWaitEvents, phWaitEvents);
 }
@@ -472,20 +507,31 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_handle_t hDevice,
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
+
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
     if (allocData) {
         if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             return ZE_RESULT_SUCCESS;
         } else {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
+    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(
-    void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc, uint64_t dstOffset, void *srcPtr, NEO::GraphicsAllocation *srcPtrAlloc, uint64_t srcOffset, uint32_t size, uint32_t elementSize, Builtin builtin) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(void *dstPtr,
+                                                                               NEO::GraphicsAllocation *dstPtrAlloc,
+                                                                               uint64_t dstOffset,
+                                                                               void *srcPtr,
+                                                                               NEO::GraphicsAllocation *srcPtrAlloc,
+                                                                               uint64_t srcOffset,
+                                                                               uint32_t size,
+                                                                               uint32_t elementSize,
+                                                                               Builtin builtin) {
+
     auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
     uint32_t groupSizeX = builtinFunction->getImmutableData()
@@ -495,6 +541,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(
     uint32_t groupSizeZ = 1u;
 
     if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ)) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -510,13 +557,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(
     uint32_t groups = (size + ((groupSizeX * elementSize) - 1)) / (groupSizeX * elementSize);
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(builtinFunction->toHandle(), &dispatchFuncArgs, nullptr, 0,
-                                                                      nullptr);
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(builtinFunction->toHandle(), &dispatchFuncArgs,
+                                                                      nullptr, 0, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(
-    NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
+                                                                      NEO::GraphicsAllocation *srcptr,
+                                                                      size_t size, bool flushHost) {
 
     auto builtinFunction = device->getBuiltinFunctionsLib()->getPageFaultFunction();
 
@@ -527,6 +575,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(
     uint32_t groupSizeZ = 1u;
 
     if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ)) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -592,8 +641,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
         ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                           dstAllocationStruct.alloc, dstAllocationStruct.offset, reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                           srcAllocationStruct.alloc, srcAllocationStruct.offset, static_cast<uint32_t>(leftSize), 1,
+                                           dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                           srcAllocationStruct.alloc, srcAllocationStruct.offset,
+                                           static_cast<uint32_t>(leftSize), 1,
                                            Builtin::CopyBufferToBufferSide);
     }
 
@@ -637,6 +688,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          uint32_t srcPitch,
                                                                          uint32_t srcSlicePitch,
                                                                          ze_event_handle_t hSignalEvent) {
+
     uintptr_t destinationPtr = reinterpret_cast<uintptr_t>(dstPtr);
     size_t dstOffset = 0;
     NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(destinationPtr, dstOffset);
@@ -729,19 +781,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(const
     uint32_t groupSizeY = srcRegion->height;
     uint32_t groupSizeZ = srcRegion->depth;
 
-    if (builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    if (builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ,
+                                          &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY || srcRegion->depth % groupSizeZ) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_group_count_t dispatchFuncArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY, srcRegion->depth / groupSizeZ};
+    ze_group_count_t dispatchFuncArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY,
+                                      srcRegion->depth / groupSizeZ};
 
     uint srcOrigin[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
     uint dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (srcRegion->originZ)};
@@ -779,15 +836,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(const
     uint32_t groupSizeY = srcRegion->height;
     uint32_t groupSizeZ = 1u;
 
-    if (builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+    if (builtinFunction->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
+                                          &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -803,7 +864,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(const
     builtinFunction->setArgumentValue(4, sizeof(srcPitch), &srcPitch);
     builtinFunction->setArgumentValue(5, sizeof(dstPitch), &dstPitch);
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(builtinFunction->toHandle(),
+                                                                      &dispatchFuncArgs, hSignalEvent,
+                                                                      numWaitEvents,
                                                                       phWaitEvents);
 }
 
@@ -815,16 +878,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
         if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             return ZE_RESULT_SUCCESS;
         } else {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
+    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr, const void *pattern,
-                                                                   size_t patternSize, size_t size,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
+                                                                   const void *pattern,
+                                                                   size_t patternSize,
+                                                                   size_t size,
                                                                    ze_event_handle_t hEvent) {
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     bool hostPointerNeedsFlush = false;
 
@@ -855,6 +923,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr, co
 
         groupSizeX = builtinFunction->getImmutableData()->getDescriptor().kernelAttributes.simdSize;
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -870,6 +939,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr, co
                                                                                         reinterpret_cast<void *>(srcPtr),
                                                                                         srcOffset + patternSize, this);
         if (patternAlloc == nullptr) {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -877,6 +947,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr, co
 
         groupSizeX = static_cast<uint32_t>(patternSize);
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
@@ -900,6 +971,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr, co
     uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
     if (groupRemainderSizeX) {
         if (builtinFunction->setGroupSize(groupRemainderSizeX, 1u, 1u)) {
+            DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
@@ -938,7 +1010,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region) {
+inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::ImageType imageType,
+                                                                         uint64_t bytesPerPixel,
+                                                                         const ze_image_region_t *region) {
+
     switch (imageType) {
     default:
         UNRECOVERABLE_IF(true);
@@ -954,9 +1029,13 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize) {
+inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(Device *device,
+                                                                                        const void *buffer,
+                                                                                        uint64_t bufferSize) {
+
     NEO::SvmAllocationData *allocData = nullptr;
-    bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(buffer), bufferSize, &allocData);
+    bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(buffer),
+                                                                               bufferSize, &allocData);
     NEO::GraphicsAllocation *alloc = nullptr;
 
     uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(const_cast<void *>(buffer));
@@ -985,7 +1064,10 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(ze_event_handle_t hEvent,
+                                                                            uint32_t numWaitEvents,
+                                                                            ze_event_handle_t *phWaitEvents) {
+
     if (numWaitEvents > 0) {
         if (phWaitEvents) {
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents);
@@ -1018,6 +1100,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents,
                                                                      ze_event_handle_t *phEvent) {
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
@@ -1079,16 +1162,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
         auto alloc = allocData->gpuAllocation;
         commandContainer.addToResidencyContainer(alloc);
 
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX, ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountX)));
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMY, ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountY)));
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMZ, ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountZ)));
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX,
+                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountX)));
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMY,
+                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountY)));
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMZ,
+                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountZ)));
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGroupSizeIndirect(uint32_t offsets[3], void *crossThreadAddress, uint32_t lws[3]) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGroupSizeIndirect(uint32_t offsets[3],
+                                                                       void *crossThreadAddress,
+                                                                       uint32_t lws[3]) {
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     NEO::EncodeIndirectParams<GfxFamily>::setGroupSizeIndirect(commandContainer, offsets, crossThreadAddress, lws);

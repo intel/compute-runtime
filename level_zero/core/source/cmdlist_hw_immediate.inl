@@ -15,7 +15,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchFunction(
     ze_kernel_handle_t hFunction, const ze_group_count_t *pThreadGroupDimensions,
     ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(hFunction, pThreadGroupDimensions, hEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(hFunction, pThreadGroupDimensions,
+                                                                          hEvent, numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
@@ -26,7 +27,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchFunctionI
     ze_kernel_handle_t hFunction, const ze_group_count_t *pDispatchArgumentsBuffer,
     ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionIndirect(hFunction, pDispatchArgumentsBuffer, hEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionIndirect(hFunction, pDispatchArgumentsBuffer,
+                                                                                  hEvent, numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
@@ -34,9 +36,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchFunctionI
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
-                                                                         uint32_t numWaitEvents,
-                                                                         ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
@@ -46,31 +49,36 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
-                                                                            const void *srcptr,
-                                                                            size_t size,
-                                                                            ze_event_handle_t hSignalEvent,
-                                                                            uint32_t numWaitEvents,
-                                                                            ze_event_handle_t *phWaitEvents) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
+    void *dstptr,
+    const void *srcptr,
+    size_t size,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
+                                                                      numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
     return ret;
 }
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegion(void *dstPtr,
-                                                                                  const ze_copy_region_t *dstRegion,
-                                                                                  uint32_t dstPitch,
-                                                                                  uint32_t dstSlicePitch,
-                                                                                  const void *srcPtr,
-                                                                                  const ze_copy_region_t *srcRegion,
-                                                                                  uint32_t srcPitch,
-                                                                                  uint32_t srcSlicePitch,
-                                                                                  ze_event_handle_t hSignalEvent) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegion(
+    void *dstPtr,
+    const ze_copy_region_t *dstRegion,
+    uint32_t dstPitch,
+    uint32_t dstSlicePitch,
+    const void *srcPtr,
+    const ze_copy_region_t *srcRegion,
+    uint32_t srcPitch,
+    uint32_t srcSlicePitch,
+    ze_event_handle_t hSignalEvent) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch, srcPtr, srcRegion, srcPitch, srcSlicePitch, hSignalEvent);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
+                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
+                                                                            hSignalEvent);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
@@ -124,13 +132,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemory(ze_image_handle_t hDstImage,
-                                                                                     const void *srcPtr,
-                                                                                     const ze_image_region_t *pDstRegion,
-                                                                                     ze_event_handle_t hEvent,
-                                                                                     uint32_t numWaitEvents,
-                                                                                     ze_event_handle_t *phWaitEvents) {
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hEvent, numWaitEvents, phWaitEvents);
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemory(
+    ze_image_handle_t hDstImage,
+    const void *srcPtr,
+    const ze_image_region_t *pDstRegion,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hEvent,
+                                                                               numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
@@ -138,13 +149,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemory(void *dstPtr,
-                                                                                   ze_image_handle_t hSrcImage,
-                                                                                   const ze_image_region_t *pSrcRegion,
-                                                                                   ze_event_handle_t hEvent,
-                                                                                   uint32_t numWaitEvents,
-                                                                                   ze_event_handle_t *phWaitEvents) {
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hEvent, numWaitEvents, phWaitEvents);
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemory(
+    void *dstPtr,
+    ze_image_handle_t hSrcImage,
+    const ze_image_region_t *pSrcRegion,
+    ze_event_handle_t hEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hEvent,
+                                                                             numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }

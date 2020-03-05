@@ -39,26 +39,6 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             builtinName = "copyBufferToBufferBytesSingle";
             builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
             break;
-        case Builtin::CopyBufferToBufferSide:
-            builtinName = "CopyBufferToBufferSideRegion";
-            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-            break;
-        case Builtin::CopyBufferToBufferMiddle:
-            builtinName = "CopyBufferToBufferMiddleRegion";
-            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-            break;
-        case Builtin::CopyImageRegion:
-            builtinName = "CopyImageToImage3d";
-            builtin = NEO::EBuiltInOps::CopyImageToImage3d;
-            break;
-        case Builtin::FillBufferImmediate:
-            builtinName = "FillBufferImmediate";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
-        case Builtin::FillBufferSSHOffset:
-            builtinName = "FillBufferSSHOffset";
-            builtin = NEO::EBuiltInOps::FillBuffer;
-            break;
         case Builtin::CopyBufferRectBytes2d:
             builtinName = "CopyBufferRectBytes2d";
             builtin = NEO::EBuiltInOps::CopyBufferRect;
@@ -67,8 +47,16 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             builtinName = "CopyBufferRectBytes3d";
             builtin = NEO::EBuiltInOps::CopyBufferRect;
             break;
-        case Builtin::CopyBufferToImage3dBytes:
-            builtinName = "CopyBufferToImage3dBytes";
+        case Builtin::CopyBufferToBufferMiddle:
+            builtinName = "CopyBufferToBufferMiddleRegion";
+            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+            break;
+        case Builtin::CopyBufferToBufferSide:
+            builtinName = "CopyBufferToBufferSideRegion";
+            builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+            break;
+        case Builtin::CopyBufferToImage3d16Bytes:
+            builtinName = "CopyBufferToImage3d16Bytes";
             builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
             break;
         case Builtin::CopyBufferToImage3d2Bytes:
@@ -83,12 +71,12 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             builtinName = "CopyBufferToImage3d8Bytes";
             builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
             break;
-        case Builtin::CopyBufferToImage3d16Bytes:
-            builtinName = "CopyBufferToImage3d16Bytes";
+        case Builtin::CopyBufferToImage3dBytes:
+            builtinName = "CopyBufferToImage3dBytes";
             builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
             break;
-        case Builtin::CopyImage3dToBufferBytes:
-            builtinName = "CopyImage3dToBufferBytes";
+        case Builtin::CopyImage3dToBuffer16Bytes:
+            builtinName = "CopyImage3dToBuffer16Bytes";
             builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
             break;
         case Builtin::CopyImage3dToBuffer2Bytes:
@@ -103,9 +91,21 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             builtinName = "CopyImage3dToBuffer8Bytes";
             builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
             break;
-        case Builtin::CopyImage3dToBuffer16Bytes:
-            builtinName = "CopyImage3dToBuffer16Bytes";
+        case Builtin::CopyImage3dToBufferBytes:
+            builtinName = "CopyImage3dToBufferBytes";
             builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+            break;
+        case Builtin::CopyImageRegion:
+            builtinName = "CopyImageToImage3d";
+            builtin = NEO::EBuiltInOps::CopyImageToImage3d;
+            break;
+        case Builtin::FillBufferImmediate:
+            builtinName = "FillBufferImmediate";
+            builtin = NEO::EBuiltInOps::FillBuffer;
+            break;
+        case Builtin::FillBufferSSHOffset:
+            builtinName = "FillBufferSSHOffset";
+            builtin = NEO::EBuiltInOps::FillBuffer;
             break;
         default:
             continue;

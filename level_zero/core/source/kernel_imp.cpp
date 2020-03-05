@@ -235,6 +235,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
 
     if (itemsInGroup > module->getMaxGroupSize()) {
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     auto grfSize = kernelImmData->getDescriptor().kernelAttributes.grfSize;
