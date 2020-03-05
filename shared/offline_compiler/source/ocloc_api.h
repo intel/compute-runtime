@@ -8,6 +8,7 @@
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/offline_compiler/source/multi_command.h"
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 using namespace NEO;
