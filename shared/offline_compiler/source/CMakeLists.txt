@@ -151,7 +151,7 @@ target_include_directories(ocloc_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
 target_compile_definitions(ocloc_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM} 
                                         IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
-target_compile_definitions(ocloc_lib PRIVATE ${NEO__IGC_COMPILE_DEFINITIONS})
+target_compile_definitions(ocloc_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(MSVC)
   target_link_libraries(ocloc_lib dbghelp)

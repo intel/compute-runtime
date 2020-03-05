@@ -10,6 +10,16 @@ set(IGDRCL_SRCS_tests_compiler_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers.h
 )
+if(WIN32)
+  list(APPEND IGDRCL_SRCS_tests_compiler_mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_compilers_windows.cpp
+  )
+else()
+  list(APPEND IGDRCL_SRCS_tests_compiler_mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_compilers_linux.cpp
+  )
+endif()
+message(STATUS "IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks}")
 
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks})
 
