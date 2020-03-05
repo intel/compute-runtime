@@ -1,27 +1,36 @@
-# Intel(R) Graphics Compute Runtime for OpenCL(TM)
+# Intel(R) Graphics Compute Runtime for oneAPI Level Zero and OpenCL(TM) Driver
 
 ## Introduction
 
-The Intel(R) Graphics Compute Runtime for OpenCL(TM) is an open source project to
-converge Intel's development efforts on OpenCL(TM) compute stacks supporting the
-GEN graphics hardware architecture.
+The Intel(R) Graphics Compute Runtime for oneAPI Level Zero and OpenCL(TM) Driver
+is an open source project providing compute API support (Level Zero, OpenCL)
+for Intel graphics hardware architectures (HD Graphics, Xe).
 
-Please refer to http://01.org/compute-runtime for additional details regarding Intel's
-motivation and intentions wrt OpenCL support in open source.
+## What is NEO?
+
+NEO is the shorthand name for Compute Runtime contained within this repository.
+It is also a development mindset that we adopted when we first started the
+implementation effort for OpenCL.
+
+The project evolved beyond a single API and NEO no longer implies a specific API.
+When talking about a specific API, we will mention it by name (e.g. Level Zero, OpenCL).
 
 ## License
 
-The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MIT License.
+The Intel(R) Graphics Compute Runtime for oneAPI Level Zero and OpenCL(TM) Driver
+is distributed under the MIT License.
 
 You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-* Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1
-* Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1
-* Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2
-* Intel Core Processors with Gen11 graphics devices (formerly Ice Lake) - OpenCL 2.1
-* Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake) - OpenCL 2.1
+|Platform|OpenCL|Level Zero|
+|--------|:----:|:--------:|
+|Intel Core Processors with Gen8 graphics devices (formerly Broadwell)| 2.1 | - |
+|Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 2.1 | Y |
+|Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 1.2 | - |
+|Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 2.1 | Y |
+|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake)| 2.1 | Y |
 
 ## Release cadence
 
@@ -33,10 +42,7 @@ the format yy.ww.bbbb (yy - year, ww - work week, bbbb - incremental build numbe
 
 ## Installation Options
 
-To allow NEO accessing GPU device make sure user has permissions to files /dev/dri/renderD*.
-
-Under Ubuntu* or Centos* user must be in video group.
-In Fedora* all users by default have access to /dev/dri/renderD* files.
+To allow NEO access to GPU device make sure user has permissions to files /dev/dri/renderD*.
 
 ### Via system package manager
 
@@ -52,29 +58,21 @@ apt-get install intel-opencl-icd
 Procedures for other
 [distributions](https://github.com/intel/compute-runtime/blob/master/DISTRIBUTIONS.md).
 
-## Linking applications
-
-When building applications, they should link with ICD loader library (ocl-icd).
-Directly linking to the runtime library (igdrcl) is not supported.
-
 ### Manual download
 
 .deb packages for Ubuntu are provided along with installation instructions and
 Release Notes on the [release page](https://github.com/intel/compute-runtime/releases)
 
+## Linking applications
+
+Directly linking to the runtime library is not supported:
+* Level Zero applications should link with [Level Zero loader](https://github.com/oneapi-src/level-zero)
+* OpenCL applications should link with [ICD loader library (ocl-icd)](https://github.com/OCL-dev/ocl-icd)
+
 ## Dependencies
 
 * GmmLib - https://github.com/intel/gmmlib
 * Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler
-
-## Optional dependencies
-
-To enable
-[cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt)
-extension, the following packages are required:
-
-* libdrm - https://anongit.freedesktop.org/git/mesa/drm.git
-* libva - https://github.com/intel/libva.git
 
 ## How to provide feedback
 
@@ -82,16 +80,21 @@ By default, please submit an issue using native github.com [interface](https://g
 
 ## How to contribute
 
-Create a pull request on github.com with your patch. Make sure your change is cleanly building and passing ULTs.
-A maintainer will contact you if there are questions or concerns.
+Create a pull request on github.com with your patch. Make sure your change is cleanly building
+and passing ULTs. A maintainer will contact you if there are questions or concerns.
 See
-[contribution guidelines](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIBUTING.md)
+[contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 for more details.
 
 ## See also
 
-* [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIBUTING.md)
+* [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 * [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/FAQ.md)
+
+### Level Zero specific
+* [oneAPI Level Zero specification](https://spec.oneapi.com/versions/latest/elements/l0/source/index.html)
+* [Intel(R) OneApi Level Zero Specification API C/C++ header files](https://github.com/oneapi-src/level-zero/)
+* [oneAPI Level Zero tests](https://github.com/oneapi-src/level-zero-tests/)
 
 ### OpenCL specific
 
