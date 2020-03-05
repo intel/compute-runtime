@@ -15,72 +15,59 @@
 
 #include "event_fixture.h"
 
-TEST(UserEvent, testInitialStatusOfUserEventCmdQueue) {
+TEST(UserEvent, GivenUserEventWhenGettingEventCommandTypeThenClCommandUserIsReturned) {
     UserEvent uEvent;
     size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_QUEUE, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    cl_int retValue;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_QUEUE, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_command_queue), retSize);
     auto cmdQueue = reinterpret_cast<cl_command_queue>(static_cast<uintptr_t>(0xdeadbeaf));
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_QUEUE, retSize, &cmdQueue, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_QUEUE, retSize, &cmdQueue, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(nullptr, cmdQueue);
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_event_info), retSize);
-    auto cmd_type = CL_COMMAND_SVM_UNMAP;
-    clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, retSize, &cmd_type, 0);
-    EXPECT_EQ(CL_COMMAND_USER, cmd_type);
+    auto cmdType = CL_COMMAND_SVM_UNMAP;
+    clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, retSize, &cmdType, 0);
+    EXPECT_EQ(CL_COMMAND_USER, cmdType);
 }
 
-TEST(UserEvent, testInitialStatusOfUserEventCmdType) {
-    UserEvent uEvent;
-    size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
-    EXPECT_EQ(sizeof(cl_event_info), retSize);
-    auto cmd_type = CL_COMMAND_SVM_UNMAP;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_TYPE, retSize, &cmd_type, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
-    EXPECT_EQ(CL_COMMAND_USER, cmd_type);
-}
-
-TEST(UserEvent, testInitialStatusOfUserEventContext) {
+TEST(UserEvent, WhenGettingEventContextThenCorrectContextIsReturned) {
     MockContext mc;
     cl_context dummyContext = &mc;
     UserEvent uEvent(&mc);
     size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    cl_int retValue;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_context), retSize);
     cl_context context;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, retSize, &context, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, retSize, &context, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     ASSERT_EQ(context, dummyContext);
 }
 
-TEST(UserEvent, testInitialStatusOfUserEventContextIsNull) {
+TEST(UserEvent, GivenInitialStatusOfUserEventWhenGettingEventContextThenNullIsReturned) {
     UserEvent uEvent;
     cl_context context;
-    auto RetValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, sizeof(cl_context), &context, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    auto retValue = clGetEventInfo(&uEvent, CL_EVENT_CONTEXT, sizeof(cl_context), &context, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     ASSERT_EQ(context, nullptr);
 }
 
-TEST(UserEvent, testInitialStatusOfUserEventExecStatus) {
+TEST(UserEvent, GivenInitialStatusOfUserEventWhenGettingCommandExecutionStatusThenClSubmittedIsReturned) {
     UserEvent uEvent;
     size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    cl_int retValue;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_int), retSize);
-    auto cmd_status = CL_COMPLETE;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, retSize, &cmd_status, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
-    EXPECT_EQ(CL_SUBMITTED, cmd_status);
+    auto cmdStatus = CL_COMPLETE;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, retSize, &cmdStatus, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
+    EXPECT_EQ(CL_SUBMITTED, cmdStatus);
 }
 
 TEST(UserEvent, givenUserEventWhenItIsQueriedForExecutionStatusThenClQueueIsReturned) {
@@ -99,50 +86,50 @@ TEST(UserEvent, givenUserEventWhenItIsCreatedAndSetThenItIsNotInInitialState) {
     EXPECT_FALSE(uEvent.isInitialEventStatus());
 }
 
-TEST(UserEvent, testInitialStatusOfUserEventRefCount) {
+TEST(UserEvent, GivenUserEventWhenGettingEventReferenceCountThenOneIsReturned) {
     UserEvent uEvent;
     size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_REFERENCE_COUNT, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    cl_int retValue;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_REFERENCE_COUNT, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_uint), retSize);
-    auto RefCount = 100;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_REFERENCE_COUNT, retSize, &RefCount, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
-    EXPECT_EQ(1, RefCount);
+    auto refCount = 100;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_REFERENCE_COUNT, retSize, &refCount, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
+    EXPECT_EQ(1, refCount);
 }
 
-TEST(UserEvent, testUserEventSetUserEventStatus) {
+TEST(UserEvent, GivenSetCompleteStatusWhenGettingEventCommandExecutionStatusThenClCompleteIsReturned) {
     UserEvent uEvent;
     uEvent.setStatus(CL_COMPLETE);
     size_t retSize;
-    cl_int RetValue;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, 0, nullptr, &retSize);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
+    cl_int retValue;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, 0, nullptr, &retSize);
+    ASSERT_EQ(CL_SUCCESS, retValue);
     EXPECT_EQ(sizeof(cl_int), retSize);
-    auto cmd_status = CL_COMPLETE;
-    RetValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, retSize, &cmd_status, 0);
-    ASSERT_EQ(CL_SUCCESS, RetValue);
-    EXPECT_EQ(CL_COMPLETE, cmd_status);
+    auto cmdStatus = CL_COMPLETE;
+    retValue = clGetEventInfo(&uEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, retSize, &cmdStatus, 0);
+    ASSERT_EQ(CL_SUCCESS, retValue);
+    EXPECT_EQ(CL_COMPLETE, cmdStatus);
 }
 
-TEST(UserEvent, initialUserEventDependantCountIsZero) {
+TEST(UserEvent, GivenInitialUserEventWhenGettingCommandsThenNullIsReturned) {
     UserEvent uEvent;
     EXPECT_EQ(nullptr, uEvent.peekCommand());
 }
 
-TEST(UserEvent, initialUserEventStateIsNotReadyForSubmission) {
+TEST(UserEvent, GivenInitialUserEventStateWhenCheckingReadyForSubmissionThenFalseIsReturned) {
     UserEvent uEvent;
     EXPECT_FALSE(uEvent.isReadyForSubmission());
 }
 
-TEST(UserEvent, GIVENUserEventWHENgetTaskLevelTHENSuccess) {
+TEST(UserEvent, GivenUserEventWhenGettingTaskLevelThenZeroIsReturned) {
     MyUserEvent uEvent;
     EXPECT_EQ(0U, uEvent.getTaskLevel());
     EXPECT_FALSE(uEvent.wait(false, false));
 }
 
-TEST(UserEvent, userEventAfterSetingStatusIsReadyForSubmission) {
+TEST(UserEvent, WhenSettingStatusThenReadyForSubmissionisTrue) {
     UserEvent uEvent;
     uEvent.setStatus(0);
     EXPECT_TRUE(uEvent.isReadyForSubmission());
@@ -166,7 +153,7 @@ TEST(UserEvent, givenUserEventWhenStatusIsCompletedThenReturnZeroTaskLevel) {
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
-TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventIsNotSubmittedToCSR) {
+TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEventThenDoNotSubmitToCsr) {
     uEvent = make_releaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
@@ -198,7 +185,7 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNotSubmittedToCSR) {
+TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEventThenDoNotSubmitToCsr) {
     uEvent = make_releaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
@@ -241,7 +228,7 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNo
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, userEventInjectsCountOnReturnEventAndCreatesConnection) {
+TEST_F(MockEventTests, WhenAddingChildEventThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
     uEvent = make_releaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
@@ -280,7 +267,7 @@ TEST_F(EventTests, givenNormalEventThatHasParentUserEventWhenUserEventIsUnblocke
     EXPECT_EQ(CL_COMPLETE, event.peekExecutionStatus());
 }
 
-TEST_F(MockEventTests, twoUserEventInjectsCountOnReturnEventAndCreatesConnection) {
+TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
     uEvent = make_releaseable<UserEvent>();
     auto uEvent2 = make_releaseable<UserEvent>();
     cl_event retEvent = nullptr;
@@ -310,9 +297,9 @@ TEST_F(MockEventTests, twoUserEventInjectsCountOnReturnEventAndCreatesConnection
     //make sure that proper event is set as child
     EXPECT_EQ(childEvent, uEvent2->peekChildEvents()->ref);
 
-    //signal one user event, child event after this operation isn't be ready for submission
+    //signal one user event, child event after this operation isn't ready for submission
     uEvent->setStatus(0);
-    //check if user event knows his childs
+    //check if user event knows his children
     EXPECT_FALSE(uEvent->peekHasChildEvents());
     EXPECT_EQ(1U, returnEvent->peekNumEventsBlockingThis());
     EXPECT_FALSE(returnEvent->isReadyForSubmission());
@@ -323,7 +310,7 @@ TEST_F(MockEventTests, twoUserEventInjectsCountOnReturnEventAndCreatesConnection
     uEvent2->setStatus(-1);
 }
 
-TEST_F(MockEventTests, twoUserEventInjectsCountOnNDR1whichIsPropagatedToNDR2viaVirtualEvent) {
+TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropagatedToNdr2viaVirtualEvent) {
     uEvent = make_releaseable<UserEvent>(context);
     auto uEvent2 = make_releaseable<UserEvent>(context);
 
@@ -393,7 +380,7 @@ TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledT
     pCmdQ->virtualEvent = nullptr;
 }
 
-TEST_F(MockEventTests, finishDoesntBlockAfterUserEventSignaling) {
+TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocked) {
     uEvent = make_releaseable<UserEvent>(context);
     auto uEvent2 = make_releaseable<UserEvent>(context);
 
@@ -411,7 +398,7 @@ TEST_F(MockEventTests, finishDoesntBlockAfterUserEventSignaling) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, userEventStatusPropagatedToNormalEvent) {
+TEST_F(MockEventTests, WhenCompletingUserEventThenStatusPropagatedToNormalEvent) {
     uEvent = make_releaseable<UserEvent>();
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
@@ -423,7 +410,7 @@ TEST_F(MockEventTests, userEventStatusPropagatedToNormalEvent) {
     //set user event status
     uEvent->setStatus(CL_COMPLETE);
 
-    //wait for returend event, this should return with success.
+    //wait for returned event
     auto retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -431,7 +418,7 @@ TEST_F(MockEventTests, userEventStatusPropagatedToNormalEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EventTests, userEventObtainsProperTaskLevelAfterSignaling) {
+HWTEST_F(EventTests, WhenSignalingThenUserEventObtainsProperTaskLevel) {
     UserEvent uEvent(context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto taskLevel = csr.peekTaskLevel();
@@ -448,7 +435,7 @@ HWTEST_F(EventTests, userEventObtainsProperTaskLevelAfterSignaling) {
     EXPECT_EQ(0u, uEvent.taskLevel);
 }
 
-TEST_F(MockEventTests, normalEventsBasingOnUserEventHasProperTaskLevel) {
+TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpdatedCorrectly) {
     uEvent = make_releaseable<UserEvent>(context);
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
@@ -477,7 +464,7 @@ TEST_F(MockEventTests, normalEventsBasingOnUserEventHasProperTaskLevel) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, waitForEventThatWaitsOnSignaledUserEvent) {
+TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreComplete) {
     uEvent = make_releaseable<UserEvent>(context);
 
     cl_event retEvent = nullptr;
@@ -502,7 +489,7 @@ TEST_F(MockEventTests, waitForEventThatWaitsOnSignaledUserEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EventTests, waitForAbortedUserEventReturnsFailure) {
+TEST_F(EventTests, WhenStatusIsAbortedWhenWaitingForEventsThenErrorIsReturned) {
     UserEvent uEvent(context);
     cl_event eventWaitList[] = {&uEvent};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -514,7 +501,7 @@ TEST_F(EventTests, waitForAbortedUserEventReturnsFailure) {
     EXPECT_EQ(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST, retVal);
 }
 
-TEST_F(MockEventTests, enqueueWithAbortedUserEventDoesntFlushToCSR) {
+TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) {
     uEvent = make_releaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
@@ -547,7 +534,7 @@ TEST_F(MockEventTests, enqueueWithAbortedUserEventDoesntFlushToCSR) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, childEventDestructorDoesntProcessBlockedCommandsWhenParentEventWasAborted) {
+TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProcessBlockedCommands) {
     uEvent = make_releaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
@@ -587,7 +574,7 @@ TEST_F(MockEventTests, childEventDestructorDoesntProcessBlockedCommandsWhenParen
     EXPECT_EQ(taskCount, taskCountAfter);
 }
 
-TEST_F(MockEventTests, waitForEventDependingOnAbortedUserEventReturnsFailure) {
+TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturned) {
     uEvent = make_releaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
@@ -610,7 +597,7 @@ TEST_F(MockEventTests, waitForEventDependingOnAbortedUserEventReturnsFailure) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, waitForEventDependingOnAbortedUserEventReturnsFailureTwoInputEvents) {
+TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenErrorIsReturned) {
     uEvent = make_releaseable<UserEvent>(context);
     auto uEvent2 = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
@@ -634,7 +621,7 @@ TEST_F(MockEventTests, waitForEventDependingOnAbortedUserEventReturnsFailureTwoI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, finishReturnsSuccessAfterQueueIsAborted) {
+TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
     uEvent = make_releaseable<UserEvent>(context);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -657,7 +644,7 @@ TEST_F(MockEventTests, finishReturnsSuccessAfterQueueIsAborted) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, userEventRecordsDependantPacket) {
+TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -671,7 +658,7 @@ TEST_F(MockEventTests, userEventRecordsDependantPacket) {
     EXPECT_FALSE(pCmdQ->virtualEvent->peekIsCmdSubmitted());
 }
 
-TEST_F(MockEventTests, userEventDependantCommandPacketContainsValidCommandStream) {
+TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidCommandStream) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -685,7 +672,7 @@ TEST_F(MockEventTests, userEventDependantCommandPacketContainsValidCommandStream
     EXPECT_NE(0u, cmd->getCommandStream()->getUsed());
 }
 
-TEST_F(MockEventTests, unblockingEventSendsBlockedPackets) {
+TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
@@ -714,7 +701,7 @@ TEST_F(MockEventTests, unblockingEventSendsBlockedPackets) {
     EXPECT_EQ(csr.peekTaskLevel(), 1u);
 }
 
-TEST_F(MockEventTests, virtualEventObtainedFromReturnedEventCannotBeReleasedByIsQueueBlocked) {
+TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturnsSuccess) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -817,7 +804,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     event1->release();
 }
 
-TEST_F(EventTests, CallBackAfterEnqueue) {
+TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
@@ -848,7 +835,7 @@ TEST_F(EventTests, CallBackAfterEnqueue) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EventTests, CallBackAfterEnqueueWithoutWait) {
+TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1(context);
@@ -876,7 +863,7 @@ TEST_F(EventTests, CallBackAfterEnqueueWithoutWait) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, enqueueReadImageBlockedOnUserEvent) {
+TEST_F(MockEventTests, GivenEnqueueReadImageWhenWaitingforEventThenSuccessIsReturned) {
     cl_event retEvent;
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
@@ -908,7 +895,7 @@ TEST_F(MockEventTests, enqueueReadImageBlockedOnUserEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
+TEST_F(EventTests, WhenWaitingForEventsThenTemporaryAllocationsAreDestroyed) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto memoryManager = pCmdQ->getDevice().getMemoryManager();
 
@@ -930,13 +917,13 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 }
 
-TEST_F(EventTest, UserEvent_Wait_NonBlocking) {
+TEST_F(EventTest, WhenUserEventIsCreatedThenWaitIsNonBlocking) {
     UserEvent event;
     auto result = event.wait(false, false);
     EXPECT_FALSE(result);
 }
 
-TEST_F(EventTest, UserEvent_Wait_Single) {
+TEST_F(EventTest, GivenSingleUserEventWhenWaitingForEventsThenSuccessIsReturned) {
     UserEvent event1;
     event1.setStatus(CL_COMPLETE);
 
@@ -945,7 +932,7 @@ TEST_F(EventTest, UserEvent_Wait_Single) {
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
-TEST_F(EventTest, UserEvent_Wait_Multiple_OutOfOrder_Callbacks) {
+TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
@@ -966,7 +953,7 @@ TEST_F(EventTest, UserEvent_Wait_Multiple_OutOfOrder_Callbacks) {
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
-TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackExecutionPassesCorrectExecutionStatus) {
+TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectExecutionStatus) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     struct HelperClb {
@@ -1002,7 +989,7 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackExecutionPassesCorrectExecu
     clReleaseEvent(retEvent);
 }
 
-TEST_F(EventTests, eventOnQueryReturnsCorrentNumberOfBlockerEvents) {
+TEST_F(EventTests, GivenMultipleEventsWhenEventsAreCompletedThenCorrectNumberOfBlockingEventsIsReported) {
     UserEvent uEvent1(context);
     UserEvent uEvent2(context);
     UserEvent uEvent3(context);
@@ -1041,7 +1028,7 @@ TEST_F(EventTests, eventOnQueryReturnsCorrentNumberOfBlockerEvents) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeDoesntRetainCommandQueue) {
+TEST_F(EventTests, WhenPassingBlockedUserEventToEnqueueNdRangeThenCommandQueueIsNotRetained) {
     auto userEvent = clCreateUserEvent(pContext, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
