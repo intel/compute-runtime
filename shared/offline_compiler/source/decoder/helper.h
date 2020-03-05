@@ -12,6 +12,7 @@
 
 #include <exception>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,7 @@ class MessagePrinter {
         if (!suppressMessages) {
             ::printf("%s", message);
         }
+        ss << std::string(message);
     }
 
     template <typename... Args>
@@ -41,8 +43,26 @@ class MessagePrinter {
         if (!suppressMessages) {
             ::printf(format, std::forward<Args>(args)...);
         }
+        ss << stringFormat(format, std::forward<Args>(args)...);
+    }
+
+    const std::ostream &getLog() {
+        return ss;
     }
 
   private:
+    template <typename... Args>
+    std::string stringFormat(const std::string &format, Args... args) {
+        std::string outputString;
+        size_t size = static_cast<size_t>(snprintf(nullptr, 0, format.c_str(), args...) + 1);
+        if (size <= 0) {
+            return outputString;
+        }
+        outputString.resize(size);
+        snprintf(&*outputString.begin(), size, format.c_str(), args...);
+        return outputString;
+    }
+
+    std::stringstream ss;
     bool suppressMessages = false;
 };

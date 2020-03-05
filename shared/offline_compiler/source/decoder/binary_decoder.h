@@ -35,11 +35,10 @@ class BinaryDecoder {
     BinaryDecoder(const std::string &file, const std::string &patch, const std::string &dump)
         : binaryFile(file), pathToPatch(patch), pathToDump(dump){};
     BinaryDecoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
-        iga->setMessagePrinter(messagePrinter);
+        iga->setMessagePrinter(argHelper->getPrinterRef());
     };
     int decode();
     int validateInput(const std::vector<std::string> &args);
-    void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
     OclocArgHelper *argHelper = nullptr;
@@ -49,7 +48,6 @@ class BinaryDecoder {
     std::unique_ptr<IgaWrapper> iga;
     PTMap patchTokens;
     std::string binaryFile, pathToPatch, pathToDump;
-    MessagePrinter messagePrinter;
 
     void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);

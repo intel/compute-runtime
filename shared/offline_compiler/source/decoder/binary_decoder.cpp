@@ -26,10 +26,6 @@
 #define MakeDirectory(dir) mkdir(dir, 0777)
 #endif
 
-void BinaryDecoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
-    this->messagePrinter = messagePrinter;
-}
-
 template <typename T>
 T readUnaligned(const void *ptr) {
     T retVal = 0;
@@ -46,7 +42,7 @@ int BinaryDecoder::decode() {
     std::stringstream ptmFile;
     auto devBinPtr = getDevBinary();
     if (devBinPtr == nullptr) {
-        messagePrinter.printf("Error! Device Binary section was not found.\n");
+        argHelper->printf("Error! Device Binary section was not found.\n");
         exit(1);
     }
     return processBinary(devBinPtr, ptmFile);
@@ -76,7 +72,7 @@ void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std:
         break;
     }
     default:
-        messagePrinter.printf("Error! Unknown size.\n");
+        argHelper->printf("Error! Unknown size.\n");
         exit(1);
     }
     binaryPtr = ptrOffset(binaryPtr, field.size);
@@ -125,7 +121,7 @@ uint8_t BinaryDecoder::getSize(const std::string &typeStr) {
     } else if (typeStr == "uint64_t") {
         return 8;
     } else {
-        messagePrinter.printf("Unhandled type : %s\n", typeStr.c_str());
+        argHelper->printf("Unhandled type : %s\n", typeStr.c_str());
         exit(1);
     }
 }
@@ -136,7 +132,7 @@ std::vector<std::string> BinaryDecoder::loadPatchList() {
     } else {
         std::vector<std::string> patchList;
         if (pathToPatch.empty()) {
-            messagePrinter.printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
+            argHelper->printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
             patchList = {
                 "struct SProgramBinaryHeader",
                 "{",
@@ -205,22 +201,22 @@ void BinaryDecoder::parseTokens() {
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
     if (pos == patchList.size()) {
-        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.");
+        argHelper->printf("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.");
         exit(1);
     }
     pos = findPos(patchList, "enum PATCH_TOKEN");
     if (pos == patchList.size()) {
-        messagePrinter.printf("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.");
+        argHelper->printf("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.");
         exit(1);
     }
     pos = findPos(patchList, "struct SKernelBinaryHeader");
     if (pos == patchList.size()) {
-        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.");
+        argHelper->printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.");
         exit(1);
     }
     pos = findPos(patchList, "struct SKernelBinaryHeaderCommon :");
     if (pos == patchList.size()) {
-        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.");
+        argHelper->printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.");
         exit(1);
     }
 
@@ -280,7 +276,7 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    messagePrinter.printf(R"===(Disassembles Intel Compute GPU device binary files.
+    argHelper->printf(R"===(Disassembles Intel Compute GPU device binary files.
 Output of such operation is a set of files that can be later used to
 reassemble back a valid Intel Compute GPU device binary (using ocloc 'asm'
 command). This set of files contains:
@@ -329,7 +325,7 @@ Examples:
   Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
-                          NEO::getDevicesTypes().c_str());
+                      NEO::getDevicesTypes().c_str());
 }
 
 int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
@@ -346,7 +342,7 @@ int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
         dumpField(ptr, v, ptmFile);
     }
     if (numberOfKernels == 0) {
-        messagePrinter.printf("Warning! Number of Kernels is 0.\n");
+        argHelper->printf("Warning! Number of Kernels is 0.\n");
     }
 
     readPatchTokens(ptr, patchListSize, ptmFile);
@@ -386,7 +382,7 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     }
 
     if (KernelNameSize == 0) {
-        messagePrinter.printf("Error! KernelNameSize was 0.\n");
+        argHelper->printf("Error! KernelNameSize was 0.\n");
         exit(1);
     }
 
@@ -396,7 +392,7 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     ptr = ptrOffset(ptr, KernelNameSize);
 
     std::string fileName = pathToDump + kernelName + "_KernelHeap";
-    messagePrinter.printf("Trying to disassemble %s.krn\n", kernelName.c_str());
+    argHelper->printf("Trying to disassemble %s.krn\n", kernelName.c_str());
     std::string disassembledKernel;
     if (iga->tryDisassembleGenISA(ptr, KernelHeapUnpaddedSize, disassembledKernel)) {
         argHelper->saveOutput(fileName + ".asm", disassembledKernel.data(), disassembledKernel.size());
@@ -410,7 +406,7 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     ptr = ptrOffset(ptr, KernelHeapSize);
 
     if (GeneralStateHeapSize != 0) {
-        messagePrinter.printf("Warning! GeneralStateHeapSize wasn't 0.\n");
+        argHelper->printf("Warning! GeneralStateHeapSize wasn't 0.\n");
         fileName = pathToDump + kernelName + "_GeneralStateHeap.bin";
         argHelper->saveOutput(fileName, ptr, DynamicStateHeapSize);
         ptr = ptrOffset(ptr, GeneralStateHeapSize);
@@ -425,7 +421,7 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
     ptr = ptrOffset(ptr, SurfaceStateHeapSize);
 
     if (KernelPatchListSize == 0) {
-        messagePrinter.printf("Warning! Kernel's patch list size was 0.\n");
+        argHelper->printf("Warning! Kernel's patch list size was 0.\n");
     }
     readPatchTokens(ptr, KernelPatchListSize, ptmFile);
 }
@@ -528,25 +524,25 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         } else if ("-ignore_isa_padding" == currArg) {
             ignoreIsaPadding = true;
         } else if ("-q" == currArg) {
-            this->messagePrinter = MessagePrinter{true};
-            iga->setMessagePrinter(this->messagePrinter);
+            argHelper->getPrinterRef() = MessagePrinter(true);
+            iga->setMessagePrinter(argHelper->getPrinterRef());
         } else {
-            messagePrinter.printf("Unknown argument %s\n", currArg.c_str());
+            argHelper->printf("Unknown argument %s\n", currArg.c_str());
             printHelp();
             return -1;
         }
     }
     if (binaryFile.find(".bin") == std::string::npos) {
-        messagePrinter.printf(".bin extension is expected for binary file.\n");
+        argHelper->printf(".bin extension is expected for binary file.\n");
         printHelp();
         return -1;
     }
     if (false == iga->isKnownPlatform()) {
-        messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+        argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
     }
     if (!argHelper->outputEnabled()) {
         if (pathToDump.empty()) {
-            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
             pathToDump = std::string("dump/");
         }
         MakeDirectory(pathToDump.c_str());

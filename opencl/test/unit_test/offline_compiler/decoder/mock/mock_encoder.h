@@ -21,9 +21,9 @@ struct MockEncoder : public BinaryEncoder {
     MockEncoder(const std::string &dump, const std::string &elf)
         : BinaryEncoder(dump, elf) {
         this->iga.reset(new MockIgaWrapper);
-        setMessagePrinter(MessagePrinter{true});
-        uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-        argHelper = uniqueHelper.get();
+        oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
+        argHelper = oclocArgHelperWithoutInput.get();
+        argHelper->getPrinterRef() = MessagePrinter(true);
     };
 
     std::map<std::string, std::string> filesMap;
@@ -52,7 +52,7 @@ struct MockEncoder : public BinaryEncoder {
     using BinaryEncoder::write;
     using BinaryEncoder::writeDeviceBinary;
 
-    std::unique_ptr<OclocArgHelper> uniqueHelper;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 
     MockIgaWrapper *getMockIga() const {
         return static_cast<MockIgaWrapper *>(iga.get());

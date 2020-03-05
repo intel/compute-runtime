@@ -5,12 +5,13 @@
  *
  */
 
-#include "shared/offline_compiler/source/ocloc_fatbinary.h"
+#include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
+
 #include "shared/source/helpers/hw_helper.h"
 
-#include "gtest/gtest.h"
-
 #include <unordered_set>
+
+namespace NEO {
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
@@ -126,14 +127,14 @@ TEST(OclocFatBinaryAppendPlatformsForGfxCore, GivenCoreIdThenAppendsEnabledProdu
     EXPECT_EQ(2 * appendedPlatformsSet.size(), appendedPlatforms.size());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenAsterixThenReturnAllEnabledPlatforms) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenAsterixThenReturnAllEnabledPlatforms) {
     auto allEnabledPlatformsIds = NEO::getAllSupportedTargetPlatforms();
     auto expected = NEO::toProductNames(allEnabledPlatformsIds);
-    auto got = NEO::getTargetPlatformsForFatbinary("*");
+    auto got = NEO::getTargetPlatformsForFatbinary("*", oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenThenReturnAllEnabledPlatformsThatMatch) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     auto platform0 = allEnabledPlatforms[0];
     auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
@@ -143,11 +144,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenThenReturnAllEnabledP
     std::vector<PRODUCT_FAMILY> platformsForGen;
     NEO::appendPlatformsForGfxCore(gfxCore0, allEnabledPlatforms, platformsForGen);
     auto expected = NEO::toProductNames(platformsForGen);
-    auto got = NEO::getTargetPlatformsForFatbinary(genName);
+    auto got = NEO::getTargetPlatformsForFatbinary(genName, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenMutiplePlatformThenReturnThosePlatforms) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenMutiplePlatformThenReturnThosePlatforms) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     if (allEnabledPlatforms.size() < 2) {
         return;
@@ -158,11 +159,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenMutiplePlatformThenRetur
     std::string platform1Name = NEO::hardwarePrefix[platform1];
 
     std::vector<ConstStringRef> expected{platform0Name, platform1Name};
-    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + "," + platform1Name);
+    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + "," + platform1Name, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeFromThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeFromThenReturnAllEnabledPlatformsThatMatch) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     if (allEnabledPlatforms.size() < 3) {
         return;
@@ -174,11 +175,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeFromThe
     auto platformFrom = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platform0);
     expectedPlatforms.insert(expectedPlatforms.end(), platformFrom, allEnabledPlatforms.end());
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(platformName + "-");
+    auto got = NEO::getTargetPlatformsForFatbinary(platformName + "-", oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeToThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeToThenReturnAllEnabledPlatformsThatMatch) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     if (allEnabledPlatforms.size() < 3) {
         return;
@@ -190,11 +191,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeToThenR
     auto platformTo = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platform0);
     expectedPlatforms.insert(expectedPlatforms.end(), allEnabledPlatforms.begin(), platformTo + 1);
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary("-" + platformName);
+    auto got = NEO::getTargetPlatformsForFatbinary("-" + platformName, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeThenReturnAllEnabledPlatformsThatMatch) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     if (allEnabledPlatforms.size() < 4) {
         return;
@@ -207,10 +208,10 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeThenR
     std::vector<PRODUCT_FAMILY> expectedPlatforms;
     expectedPlatforms.insert(expectedPlatforms.end(), allEnabledPlatforms.begin() + 1, allEnabledPlatforms.begin() + allEnabledPlatforms.size() - 1);
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(platformNameFrom + "-" + platformNameTo);
+    auto got = NEO::getTargetPlatformsForFatbinary(platformNameFrom + "-" + platformNameTo, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 
-    got = NEO::getTargetPlatformsForFatbinary(platformNameTo + "-" + platformNameFrom); // swap min with max implicitly
+    got = NEO::getTargetPlatformsForFatbinary(platformNameTo + "-" + platformNameFrom, oclocArgHelperWithoutInput.get()); // swap min with max implicitly
     EXPECT_EQ(expected, got);
 }
 
@@ -224,7 +225,7 @@ std::vector<GFXCORE_FAMILY> getEnabledCores() {
     return ret;
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromThenReturnAllEnabledPlatformsThatMatch) {
     auto allSupportedPlatforms = NEO::getAllSupportedTargetPlatforms();
 
     auto allEnabledCores = getEnabledCores();
@@ -243,11 +244,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromThenRetu
     }
 
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(genName + "-");
+    auto got = NEO::getTargetPlatformsForFatbinary(genName + "-", oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToThenReturnAllEnabledPlatformsThatMatch) {
     auto allSupportedPlatforms = NEO::getAllSupportedTargetPlatforms();
 
     auto allEnabledCores = getEnabledCores();
@@ -267,11 +268,11 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToThenReturn
     }
 
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary("-" + genName);
+    auto got = NEO::getTargetPlatformsForFatbinary("-" + genName, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeThenReturnAllEnabledPlatformsThatMatch) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeThenReturnAllEnabledPlatformsThatMatch) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     auto allEnabledCores = getEnabledCores();
     if (allEnabledCores.size() < 4) {
@@ -292,69 +293,70 @@ TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeThenReturn
     }
 
     auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(genNameFrom + "-" + genNameTo);
+    auto got = NEO::getTargetPlatformsForFatbinary(genNameFrom + "-" + genNameTo, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(expected, got);
 
-    got = NEO::getTargetPlatformsForFatbinary(genNameTo + "-" + genNameFrom); // swap min with max implicitly
+    got = NEO::getTargetPlatformsForFatbinary(genNameTo + "-" + genNameFrom, oclocArgHelperWithoutInput.get()); // swap min with max implicitly
     EXPECT_EQ(expected, got);
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenUnkownGenThenReturnEmptyList) {
-    auto got = NEO::getTargetPlatformsForFatbinary("gen0");
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenUnkownGenThenReturnEmptyList) {
+    auto got = NEO::getTargetPlatformsForFatbinary("gen0", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenMutiplePlatformWhenAnyOfPlatformsIsUnknownThenReturnEmptyList) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenMutiplePlatformWhenAnyOfPlatformsIsUnknownThenReturnEmptyList) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     auto platform0 = allEnabledPlatforms[0];
     std::string platform0Name = NEO::hardwarePrefix[platform0];
 
-    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + ",unk");
+    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + ",unk", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeFromWhenPlatformsIsUnkownThenReturnEmptyList) {
-    auto got = NEO::getTargetPlatformsForFatbinary("unk-");
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeFromWhenPlatformsIsUnkownThenReturnEmptyList) {
+    auto got = NEO::getTargetPlatformsForFatbinary("unk-", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeToWhenPlatformsIsUnkownThenReturnEmptyList) {
-    auto got = NEO::getTargetPlatformsForFatbinary("-unk");
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformOpenRangeToWhenPlatformsIsUnkownThenReturnEmptyList) {
+    auto got = NEO::getTargetPlatformsForFatbinary("-unk", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeWhenAnyOfPlatformsIsUnkownThenReturnEmptyList) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenPlatformClosedRangeWhenAnyOfPlatformsIsUnkownThenReturnEmptyList) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     auto platform0 = allEnabledPlatforms[0];
     std::string platform0Name = NEO::hardwarePrefix[platform0];
 
-    auto got = NEO::getTargetPlatformsForFatbinary("unk-" + platform0Name);
+    auto got = NEO::getTargetPlatformsForFatbinary("unk-" + platform0Name, oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 
-    got = NEO::getTargetPlatformsForFatbinary(platform0Name + "-unk");
-    EXPECT_TRUE(got.empty());
-}
-
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromWhenGenIsUnknownTheReturnEmptyList) {
-    auto got = NEO::getTargetPlatformsForFatbinary("gen2-");
+    got = NEO::getTargetPlatformsForFatbinary(platform0Name + "-unk", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToWhenGenIsUnknownTheReturnEmptyList) {
-    auto got = NEO::getTargetPlatformsForFatbinary("-gen2");
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeFromWhenGenIsUnknownTheReturnEmptyList) {
+    auto got = NEO::getTargetPlatformsForFatbinary("gen2-", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
 
-TEST(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeWhenAnyOfGensIsUnknownThenReturnEmptyList) {
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenOpenRangeToWhenGenIsUnknownTheReturnEmptyList) {
+    auto got = NEO::getTargetPlatformsForFatbinary("-gen2", oclocArgHelperWithoutInput.get());
+    EXPECT_TRUE(got.empty());
+}
+
+TEST_F(OclocFatBinaryGetTargetPlatformsForFatbinary, GivenGenClosedRangeWhenAnyOfGensIsUnknownThenReturnEmptyList) {
     auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
     auto platform0 = allEnabledPlatforms[0];
     auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
     std::string genName = NEO::familyName[gfxCore0];
     genName[0] = 'g'; // ocloc uses lower case
 
-    auto got = NEO::getTargetPlatformsForFatbinary("gen2-" + genName);
+    auto got = NEO::getTargetPlatformsForFatbinary("gen2-" + genName, oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 
-    got = NEO::getTargetPlatformsForFatbinary(genName + "-gen2");
+    got = NEO::getTargetPlatformsForFatbinary(genName + "-gen2", oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
 }
+} // namespace NEO

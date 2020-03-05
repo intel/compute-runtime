@@ -259,7 +259,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             std::string oclocOptionsFromFile;
             bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName, argHelper);
             if (oclocOptionsRead && !isQuiet()) {
-                printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+                argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
             }
 
             if (oclocOptionsRead) {
@@ -278,7 +278,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
             bool optionsRead = readOptionsFromFile(options, optionsFileName, argHelper);
             if (optionsRead && !isQuiet()) {
-                printf("Building with options:\n%s\n", options.c_str());
+                argHelper->printf("Building with options:\n%s\n", options.c_str());
             }
 
             std::string internalOptionsFileName = inputFile.substr(0, ext_start);
@@ -287,7 +287,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             std::string internalOptionsFromFile;
             bool internalOptionsRead = readOptionsFromFile(internalOptionsFromFile, internalOptionsFileName, argHelper);
             if (internalOptionsRead && !isQuiet()) {
-                printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
+                argHelper->printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
             }
             CompilerOptions::concatenateAppend(internalOptions, internalOptionsFromFile);
         }
@@ -314,7 +314,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
         auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
         if (fclLibFile == nullptr) {
-            printf("Error: Failed to load %s\n", Os::frontEndDllName);
+            argHelper->printf("Error: Failed to load %s\n", Os::frontEndDllName);
             return OUT_OF_HOST_MEMORY;
         }
 
@@ -334,7 +334,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
 
         if (false == this->fclMain->IsCompatible<IGC::FclOclDeviceCtx>()) {
-            printf("Incompatible interface in FCL : %s\n", CIF::InterfaceIdCoder::Dec(this->fclMain->FindIncompatible<IGC::FclOclDeviceCtx>()).c_str());
+            argHelper->printf("Incompatible interface in FCL : %s\n", CIF::InterfaceIdCoder::Dec(this->fclMain->FindIncompatible<IGC::FclOclDeviceCtx>()).c_str());
             DEBUG_BREAK_IF(true);
             return OUT_OF_HOST_MEMORY;
         }
@@ -348,7 +348,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
     } else {
         if (!isQuiet()) {
-            printf("Compilation from IR - skipping loading of FCL\n");
+            argHelper->printf("Compilation from IR - skipping loading of FCL\n");
         }
         preferredIntermediateRepresentation = IGC::CodeType::spirV;
     }
@@ -370,14 +370,14 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
     if (false == this->igcMain->IsCompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)) {
-        printf("Incompatible interface in IGC : %s\n", CIF::InterfaceIdCoder::Dec(this->igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)).c_str());
+        argHelper->printf("Incompatible interface in IGC : %s\n", CIF::InterfaceIdCoder::Dec(this->igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)).c_str());
         DEBUG_BREAK_IF(true);
         return OUT_OF_HOST_MEMORY;
     }
 
     CIF::Version_t verMin = 0, verMax = 0;
     if (false == this->igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax)) {
-        printf("Patchtoken interface is missing");
+        argHelper->printf("Patchtoken interface is missing");
         return OUT_OF_HOST_MEMORY;
     }
 
@@ -485,6 +485,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             outputDirectory = argv[argIndex + 1];
             argIndex++;
         } else if ("-q" == currArg) {
+            argHelper->getPrinterRef() = MessagePrinter(true);
             quiet = true;
         } else if ("-output_no_suffix" == currArg) {
             outputNoSuffix = true;
@@ -492,7 +493,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             printUsage();
             retVal = PRINT_USAGE;
         } else {
-            printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
+            argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
             break;
         }
@@ -500,21 +501,21 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
 
     if (retVal == SUCCESS) {
         if (compile32 && compile64) {
-            printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
+            argHelper->printf("Error: Cannot compile for 32-bit and 64-bit, please choose one.\n");
             retVal = INVALID_COMMAND_LINE;
         } else if (inputFile.empty()) {
-            printf("Error: Input file name missing.\n");
+            argHelper->printf("Error: Input file name missing.\n");
             retVal = INVALID_COMMAND_LINE;
         } else if (deviceName.empty()) {
-            printf("Error: Device name missing.\n");
+            argHelper->printf("Error: Device name missing.\n");
             retVal = INVALID_COMMAND_LINE;
         } else if (!argHelper->fileExists(inputFile)) {
-            printf("Error: Input file %s missing.\n", inputFile.c_str());
+            argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
             retVal = INVALID_FILE;
         } else {
             retVal = getHardwareInfo(deviceName.c_str());
             if (retVal != SUCCESS) {
-                printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
+                argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
                 std::string extensionsList = getExtensionsList(*hwInfo);
                 CompilerOptions::concatenateAppend(internalOptions, convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
@@ -622,7 +623,7 @@ std::string getDevicesTypes() {
 }
 
 void OfflineCompiler::printUsage() {
-    printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
+    argHelper->printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
@@ -731,7 +732,7 @@ Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
-           NEO::getDevicesTypes().c_str());
+                      NEO::getDevicesTypes().c_str());
 }
 
 void OfflineCompiler::storeBinary(

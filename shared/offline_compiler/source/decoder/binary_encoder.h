@@ -20,18 +20,15 @@ class BinaryEncoder {
     BinaryEncoder(const std::string &dump, const std::string &elf)
         : pathToDump(dump), elfName(elf){};
     BinaryEncoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
-        iga->setMessagePrinter(messagePrinter);
+        iga->setMessagePrinter(argHelper->getPrinterRef());
     }
     int encode();
     int validateInput(const std::vector<std::string> &args);
-
-    void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
     OclocArgHelper *argHelper = nullptr;
     bool ignoreIsaPadding = false;
     std::string pathToDump, elfName;
-    MessagePrinter messagePrinter;
     std::unique_ptr<IgaWrapper> iga;
     void calculatePatchListSizes(std::vector<std::string> &ptmFile);
     MOCKABLE_VIRTUAL bool copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength);

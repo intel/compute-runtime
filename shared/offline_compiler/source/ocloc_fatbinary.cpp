@@ -79,7 +79,7 @@ void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FA
     }
 }
 
-std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg) {
+std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper) {
     std::vector<PRODUCT_FAMILY> allSupportedPlatforms = getAllSupportedTargetPlatforms();
     if (deviceArg == "*") {
         return toProductNames(allSupportedPlatforms);
@@ -93,7 +93,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
         if (set.contains("-")) {
             auto range = CompilerOptions::tokenize(deviceArg, '-');
             if (range.size() > 2) {
-                printf("Invalid range : %s - should be from-to or -to or from-\n", set.str().c_str());
+                argHelper->printf("Invalid range : %s - should be from-to or -to or from-\n", set.str().c_str());
                 return {};
             }
 
@@ -102,7 +102,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                 if (range[0].contains("gen")) {
                     auto coreId = asGfxCoreId(range[0]);
                     if (IGFX_UNKNOWN_CORE == coreId) {
-                        printf("Unknown device : %s\n", set.str().c_str());
+                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if ('-' == set[0]) {
@@ -124,7 +124,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                 } else {
                     auto prodId = asProductId(range[0], allSupportedPlatforms);
                     if (IGFX_UNKNOWN == prodId) {
-                        printf("Unknown device : %s\n", range[0].str().c_str());
+                        argHelper->printf("Unknown device : %s\n", range[0].str().c_str());
                         return {};
                     }
                     auto prodIt = std::find(allSupportedPlatforms.begin(), allSupportedPlatforms.end(), prodId);
@@ -140,17 +140,17 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
             } else {
                 if (range[0].contains("gen")) {
                     if (false == range[1].contains("gen")) {
-                        printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
+                        argHelper->printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
                         return {};
                     }
                     auto coreFrom = asGfxCoreId(range[0]);
                     auto coreTo = asGfxCoreId(range[1]);
                     if (IGFX_UNKNOWN_CORE == coreFrom) {
-                        printf("Unknown device : %s\n", set.str().c_str());
+                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if (IGFX_UNKNOWN_CORE == coreTo) {
-                        printf("Unknown device : %s\n", set.str().c_str());
+                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if (coreFrom > coreTo) {
@@ -164,11 +164,11 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                     auto platformFrom = asProductId(range[0], allSupportedPlatforms);
                     auto platformTo = asProductId(range[1], allSupportedPlatforms);
                     if (IGFX_UNKNOWN == platformFrom) {
-                        printf("Unknown device : %s\n", set.str().c_str());
+                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if (IGFX_UNKNOWN == platformTo) {
-                        printf("Unknown device : %s\n", set.str().c_str());
+                        argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if (platformFrom > platformTo) {
@@ -182,11 +182,11 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
             }
         } else if (set.contains("gen")) {
             if (set.size() == genArg.size()) {
-                printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
+                argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
             } else {
                 auto coreId = asGfxCoreId(set);
                 if (IGFX_UNKNOWN_CORE == coreId) {
-                    printf("Unknown device : %s\n", set.str().c_str());
+                    argHelper->printf("Unknown device : %s\n", set.str().c_str());
                     return {};
                 }
                 appendPlatformsForGfxCore(coreId, allSupportedPlatforms, requestedPlatforms);
@@ -194,7 +194,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
         } else {
             auto prodId = asProductId(set, allSupportedPlatforms);
             if (IGFX_UNKNOWN == prodId) {
-                printf("Unknown device : %s\n", set.str().c_str());
+                argHelper->printf("Unknown device : %s\n", set.str().c_str());
                 return {};
             }
             requestedPlatforms.push_back(prodId);
@@ -203,7 +203,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
     return toProductNames(requestedPlatforms);
 }
 
-int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
+int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
     std::string pointerSizeInBits = (sizeof(void *) == 4) ? "32" : "64";
     int deviceArgIndex = -1;
     std::string inputFileName = "";
@@ -238,9 +238,9 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
     }
 
     std::vector<ConstStringRef> targetPlatforms;
-    targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(argv[deviceArgIndex], strlen(argv[deviceArgIndex])));
+    targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(argv[deviceArgIndex], strlen(argv[deviceArgIndex])), argHelper);
     if (targetPlatforms.empty()) {
-        printf("Failed to parse target devices from : %s\n", argv[deviceArgIndex]);
+        argHelper->printf("Failed to parse target devices from : %s\n", argv[deviceArgIndex]);
         return 1;
     }
 
@@ -249,29 +249,31 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
     for (auto targetPlatform : targetPlatforms) {
         int retVal = 0;
         argsCopy[deviceArgIndex] = targetPlatform.str();
-        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal, helper)};
+
+        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal, argHelper)};
         if (ErrorCode::SUCCESS != retVal) {
-            printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
+            argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
             return retVal;
         }
+
         auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
         if (retVal == 0) {
             retVal = buildWithSafetyGuard(pCompiler.get());
 
             std::string buildLog = pCompiler->getBuildLog();
             if (buildLog.empty() == false) {
-                printf("%s\n", buildLog.c_str());
+                argHelper->printf("%s\n", buildLog.c_str());
             }
 
             if (retVal == 0) {
                 if (!pCompiler->isQuiet())
-                    printf("Build succeeded for : %s.\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str());
+                    argHelper->printf("Build succeeded for : %s.\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str());
             } else {
-                printf("Build failed for : %s with error code: %d\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str(), retVal);
-                printf("Command was:");
+                argHelper->printf("Build failed for : %s with error code: %d\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str(), retVal);
+                argHelper->printf("Command was:");
                 for (auto i = 0; i < argc; ++i)
-                    printf(" %s", argv[i]);
-                printf("\n");
+                    argHelper->printf(" %s", argv[i]);
+                argHelper->printf("\n");
             }
         }
 
@@ -290,7 +292,7 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
     if (false == outputDirectory.empty()) {
         fatbinaryFileName = outputDirectory + "/" + outputFileName;
     }
-    helper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
+    argHelper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
 
     return 0;
 }

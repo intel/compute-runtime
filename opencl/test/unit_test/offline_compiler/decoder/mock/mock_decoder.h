@@ -16,9 +16,9 @@ struct MockDecoder : public BinaryDecoder {
     MockDecoder(const std::string &file, const std::string &patch, const std::string &dump)
         : BinaryDecoder(file, patch, dump) {
         this->iga.reset(new MockIgaWrapper);
-        setMessagePrinter(MessagePrinter{true});
-        uniqueHelper = std::make_unique<OclocArgHelper>();
-        argHelper = uniqueHelper.get();
+        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+        argHelper = oclocArgHelperWithoutInput.get();
+        argHelper->getPrinterRef() = MessagePrinter(true);
     };
     using BinaryDecoder::binaryFile;
     using BinaryDecoder::decode;
@@ -35,7 +35,7 @@ struct MockDecoder : public BinaryDecoder {
     using BinaryDecoder::readPatchTokens;
     using BinaryDecoder::readStructFields;
 
-    std::unique_ptr<OclocArgHelper> uniqueHelper;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 
     MockIgaWrapper *getMockIga() const {
         return static_cast<MockIgaWrapper *>(iga.get());

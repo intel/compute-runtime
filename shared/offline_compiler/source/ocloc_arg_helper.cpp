@@ -10,10 +10,9 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 
-#include "decoder/helper.h"
-
 #include <cstring>
 #include <sstream>
+
 void Source::toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs) {
     std::string line;
     const char *file = reinterpret_cast<const char *>(data);
@@ -56,6 +55,7 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
 
 OclocArgHelper::~OclocArgHelper() {
     if (outputEnabled()) {
+        saveOutput(oclocStdoutLogName, messagePrinter.getLog());
         moveOutputs();
     }
 }
@@ -140,7 +140,7 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
     }
 }
 
-void OclocArgHelper::saveOutput(const std::string &filename, std::ostream &stream) {
+void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream &stream) {
     std::stringstream ss;
     ss << stream.rdbuf();
     if (outputEnabled()) {

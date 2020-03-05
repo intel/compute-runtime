@@ -6,6 +6,7 @@
  */
 
 #include <cstdint>
+
 #ifdef _WIN32
 #define SIGNATURE __declspec(dllexport) int __cdecl
 #else

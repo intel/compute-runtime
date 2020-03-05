@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/offline_compiler/source/decoder/helper.h"
+
 #include <cctype>
 #include <fstream>
 #include <memory>
@@ -12,6 +14,8 @@
 #include <vector>
 
 #pragma once
+
+static constexpr auto *oclocStdoutLogName = "stdout.log";
 
 struct Source {
     const uint8_t *data;
@@ -42,7 +46,7 @@ class OclocArgHelper {
     uint64_t **lenOutputs = nullptr;
     bool hasOutput = false;
     void moveOutputs();
-
+    MessagePrinter messagePrinter;
     Source *findSourceFile(const std::string &filename);
     bool sourceFileExists(const std::string &filename) const;
 
@@ -71,5 +75,14 @@ class OclocArgHelper {
     inline bool outputEnabled() { return hasOutput; }
     inline bool hasHeaders() { return headers.size() > 0; }
     void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
-    void saveOutput(const std::string &filename, std::ostream &stream);
+    void saveOutput(const std::string &filename, const std::ostream &stream);
+
+    MessagePrinter &getPrinterRef() { return messagePrinter; }
+    void printf(const char *message) {
+        messagePrinter.printf(message);
+    }
+    template <typename... Args>
+    void printf(const char *format, Args... args) {
+        messagePrinter.printf(format, std::forward<Args>(args)...);
+    }
 };

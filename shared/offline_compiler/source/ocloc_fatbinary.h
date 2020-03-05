@@ -18,13 +18,13 @@ namespace NEO {
 
 bool requestedFatBinary(int argc, const char *argv[]);
 
-int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper);
+int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper);
 
 std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms();
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
 GFXCORE_FAMILY asGfxCoreId(ConstStringRef core);
 void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out);
-std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg);
+std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
 
 } // namespace NEO

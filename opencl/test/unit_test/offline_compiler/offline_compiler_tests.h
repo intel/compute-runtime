@@ -10,7 +10,6 @@
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 #include "gtest/gtest.h"
-#include <CL/cl.h>
 
 #include <cstdint>
 #include <memory>
@@ -19,21 +18,31 @@ namespace NEO {
 
 class OfflineCompilerTests : public ::testing::Test {
   public:
-    OfflineCompiler *pOfflineCompiler = nullptr;
-    int retVal = CL_SUCCESS;
-    std::unique_ptr<OclocArgHelper> uniqueHelper = std::make_unique<OclocArgHelper>();
+    OfflineCompilerTests() : pOfflineCompiler(nullptr),
+                             retVal(SUCCESS) {
+        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+        // ctor
+    }
+
+    OfflineCompiler *pOfflineCompiler;
+    int retVal;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 };
 
 class MultiCommandTests : public ::testing::Test {
   public:
+    MultiCommandTests() : pMultiCommand(nullptr),
+                          retVal(SUCCESS) {
+        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+    }
     void createFileWithArgs(const std::vector<std::string> &, int numOfBuild);
     void deleteFileWithArgs();
     void deleteOutFileList();
     MultiCommand *pMultiCommand = nullptr;
     std::string nameOfFileWithArgs;
     std::string outFileList;
-    int retVal = CL_SUCCESS;
-    std::unique_ptr<OclocArgHelper> uniqueHelper = std::make_unique<OclocArgHelper>();
+    int retVal;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 };
 
 void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {

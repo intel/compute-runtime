@@ -17,8 +17,7 @@
 
 using namespace NEO;
 
-void printHelp() {
-    printf(R"===(ocloc is a tool for managing Intel Compute GPU device binary format.
+const char *help = R"===(ocloc is a tool for managing Intel Compute GPU device binary format.
 It can be used for generation (as part of 'compile' command) as well as
 manipulation (decoding/modifying - as part of 'disasm'/'asm' commands) of such
 binary files.
@@ -51,8 +50,7 @@ Examples:
 
   Assemble to Intel Compute GPU device binary (after above disasm)
     ocloc asm -out reassembled.bin
-)===");
-}
+)===";
 
 extern "C" {
 int oclocInvoke(unsigned int numArgs, const char *argv[],
@@ -69,10 +67,10 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
     }
 
     try {
-        if (numArgs == 1 || (numArgs > 1 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")))) {
-            printHelp();
+        if (numArgs == 1 || (numArgs > 1 && (ConstStringRef("-h") == allArgs[1] || ConstStringRef("--help") == allArgs[1]))) {
+            helper->printf("%s", help);
             return ErrorCode::SUCCESS;
-        } else if (numArgs > 1 && !strcmp(argv[1], "disasm")) {
+        } else if (numArgs > 1 && ConstStringRef("disasm") == allArgs[1]) {
             BinaryDecoder disasm(helper.get());
             int retVal = disasm.validateInput(allArgs);
             if (retVal == 0) {
@@ -80,7 +78,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             } else {
                 return retVal;
             }
-        } else if (numArgs > 1 && !strcmp(argv[1], "asm")) {
+        } else if (numArgs > 1 && ConstStringRef("asm") == allArgs[1]) {
             BinaryEncoder assembler(helper.get());
             int retVal = assembler.validateInput(allArgs);
             if (retVal == 0) {
@@ -88,7 +86,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             } else {
                 return retVal;
             }
-        } else if (numArgs > 1 && (!strcmp(argv[1], "multi") || !strcmp(argv[1], "-multi"))) {
+        } else if (numArgs > 1 && (ConstStringRef("multi") == allArgs[1] || ConstStringRef("-multi") == allArgs[1])) {
             int retValue = ErrorCode::SUCCESS;
             std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(allArgs, retValue, helper.get()))};
             return retValue;
@@ -103,20 +101,20 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
 
                 std::string buildLog = pCompiler->getBuildLog();
                 if (buildLog.empty() == false) {
-                    printf("%s\n", buildLog.c_str());
+                    helper->printf("%s\n", buildLog.c_str());
                 }
 
                 if (retVal == ErrorCode::SUCCESS) {
                     if (!pCompiler->isQuiet())
-                        printf("Build succeeded.\n");
+                        helper->printf("Build succeeded.\n");
                 } else {
-                    printf("Build failed with error code: %d\n", retVal);
+                    helper->printf("Build failed with error code: %d\n", retVal);
                 }
             }
             return retVal;
         }
     } catch (const std::exception &e) {
-        printf("%s\n", e.what());
+        helper->printf("%s\n", e.what());
         return -1;
     }
     return -1;

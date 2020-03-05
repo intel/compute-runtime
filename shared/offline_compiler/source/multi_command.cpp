@@ -20,14 +20,14 @@ int MultiCommand::singleBuild(const std::vector<std::string> &allArgs) {
 
         std::string &buildLog = pCompiler->getBuildLog();
         if (buildLog.empty() == false) {
-            printf("%s\n", buildLog.c_str());
+            argHelper->printf("%s\n", buildLog.c_str());
         }
 
         if (retVal == ErrorCode::SUCCESS) {
             if (!pCompiler->isQuiet())
-                printf("Build succeeded.\n");
+                argHelper->printf("Build succeeded.\n");
         } else {
-            printf("Build failed with error code: %d\n", retVal);
+            argHelper->printf("Build failed with error code: %d\n", retVal);
         }
     }
 
@@ -99,7 +99,7 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         } else if (ConstStringRef("-q") == currArg) {
             quiet = true;
         } else {
-            printf("Invalid option (arg %zu): %s\n", argIndex, currArg.c_str());
+            argHelper->printf("Invalid option (arg %zu): %s\n", argIndex, currArg.c_str());
             printHelp();
             return INVALID_COMMAND_LINE;
         }
@@ -109,11 +109,11 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
     if (argHelper->fileExists(pathToCommandFile)) {
         argHelper->readFileToVectorOfStrings(pathToCommandFile, lines);
         if (lines.empty()) {
-            printf("Command file was empty.\n");
+            argHelper->printf("Command file was empty.\n");
             return INVALID_FILE;
         }
     } else {
-        printf("Could not find/open file with builds argument.s\n");
+        argHelper->printf("Could not find/open file with builds argument.s\n");
         return INVALID_FILE;
     }
 
@@ -136,7 +136,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
         }
 
         if (!quiet) {
-            printf("Command numer %zu: \n", i + 1);
+            argHelper->printf("Command numer %zu: \n", i + 1);
         }
 
         addAdditionalOptionsToSingleCommandLine(args, i);
@@ -146,7 +146,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
 }
 
 void MultiCommand::printHelp() {
-    printf(R"===(Compiles multiple files using a config file.
+    argHelper->printf(R"===(Compiles multiple files using a config file.
 
 Usage: ocloc multi <file_name>
   <file_name>   Input file containing a list of arguments for subsequent
@@ -181,7 +181,7 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
             end = (end == std::string::npos) ? commandsLine.length() : end;
         }
         if (end == std::string::npos) {
-            printf("One of the quotes is open in build number %zu\n", numberOfBuild + 1);
+            argHelper->printf("One of the quotes is open in build number %zu\n", numberOfBuild + 1);
             return INVALID_FILE;
         }
         argLen = end - start;
@@ -198,9 +198,9 @@ int MultiCommand::showResults() {
         retValue |= retVal;
         if (!quiet) {
             if (retVal != SUCCESS) {
-                printf("Build %d: failed. Error code: %d\n", indexRetVal, retVal);
+                argHelper->printf("Build %d: failed. Error code: %d\n", indexRetVal, retVal);
             } else {
-                printf("Build %d: successful\n", indexRetVal);
+                argHelper->printf("Build %d: successful\n", indexRetVal);
             }
         }
         indexRetVal++;
