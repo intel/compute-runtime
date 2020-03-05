@@ -38,7 +38,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         int retVal = 0;
 
         std::vector<char> sipBinary;
-        auto compilerInteface = device.getExecutionEnvironment()->getCompilerInterface();
+        auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
 
         auto ret = compilerInteface->getSipKernelBinary(device, type, sipBinary);

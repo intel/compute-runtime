@@ -96,7 +96,7 @@ SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingA
 
 GraphicsAllocation *SipKernel::getSipKernelAllocation(Device &device) {
     auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, device.isDebuggerActive());
-    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
+    return device.getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
 }
 
 } // namespace NEO

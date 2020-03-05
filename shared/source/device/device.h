@@ -72,6 +72,8 @@ class Device : public ReferenceTrackedObject<Device> {
     SpecializedDeviceT *getSpecializedDevice() const {
         return reinterpret_cast<SpecializedDeviceT *>(specializedDevice);
     }
+    CompilerInterface *getCompilerInterface() const;
+    BuiltIns *getBuiltIns() const;
 
     virtual uint32_t getRootDeviceIndex() const = 0;
     virtual uint32_t getNumAvailableDevices() const = 0;
@@ -132,6 +134,13 @@ inline MemoryManager *Device::getMemoryManager() const {
 
 inline GmmHelper *Device::getGmmHelper() const {
     return getRootDeviceEnvironment().getGmmHelper();
+}
+
+inline CompilerInterface *Device::getCompilerInterface() const {
+    return executionEnvironment->getCompilerInterface();
+}
+inline BuiltIns *Device::getBuiltIns() const {
+    return executionEnvironment->getBuiltIns();
 }
 
 inline std::atomic<uint32_t> &Device::getSelectorCopyEngine() {
