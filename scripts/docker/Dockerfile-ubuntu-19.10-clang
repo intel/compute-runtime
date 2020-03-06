@@ -3,10 +3,10 @@ LABEL maintainer="jacek.danecki@intel.com"
 
 COPY neo /root/neo
 
-RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg wget; \
+RUN apt-get -y update ; apt-get --no-install-recommends install -y --allow-unauthenticated gpg dirmngr gpg-agent; \
     echo "deb http://ppa.launchpad.net/ocl-dev/intel-opencl/ubuntu eoan main" >> /etc/apt/sources.list; \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C3086B78CC05B8B1; \
-    apt-get -y update ; apt-get install -y --allow-unauthenticated cmake pkg-config ninja-build libigc-dev intel-gmmlib-dev clang
+    apt-get -y update ; apt-get --no-install-recommends install -y --allow-unauthenticated cmake pkg-config ninja-build libigc-dev intel-gmmlib-dev clang
 RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
     -DDO_NOT_RUN_AUB_TESTS=1 -DDONT_CARE_OF_VIRTUALS=1 ../neo ; ninja -j `nproc`
