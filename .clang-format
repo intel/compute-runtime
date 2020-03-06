@@ -56,6 +56,8 @@ IncludeCategories:
     Priority:        2
   - Regex:           '^"test\.h"$'
     Priority:        2
+  - Regex:           '^.(level_zero)/'
+    Priority:        3
   - Regex:           '(d3d9types|d3d10_1)\.h'
     Priority:        4
   - Regex:           '(gfxEscape|windows)\.h'

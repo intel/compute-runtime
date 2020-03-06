@@ -14,7 +14,7 @@ components:
   infra:
     branch: infra
     dest_dir: infra
-    revision: 56a2754fb5cdefca46b33ebda0b1047d60144606
+    revision: cdc6d2425df03ec424ca8c3ab906f262673d94e3
     type: git
   internal:
     branch: master
@@ -32,6 +32,12 @@ components:
     branch: libva
     revision: c9bb65b
     repository: https://github.com/intel/libva.git
+  level_zero:
+    dest_dir: level_zero
+    type: git
+    branch: master
+    revision: v0.91
+    repository: https://github.com/oneapi-src/level-zero
   wdk:
     dest_dir: wdk
     type: git
