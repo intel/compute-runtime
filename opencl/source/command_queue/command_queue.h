@@ -327,6 +327,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(cl_command_type cmdType) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
+    virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
 
     Context *context = nullptr;
     ClDevice *device = nullptr;

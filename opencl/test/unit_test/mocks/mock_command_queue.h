@@ -167,6 +167,8 @@ class MockCommandQueue : public CommandQueue {
 
     cl_int flush() override { return CL_SUCCESS; }
 
+    bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override { return isCacheFlushRequired; }
+
     bool releaseIndirectHeapCalled = false;
 
     cl_int writeBufferRetValue = CL_SUCCESS;

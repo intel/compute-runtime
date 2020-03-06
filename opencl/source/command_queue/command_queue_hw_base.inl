@@ -144,8 +144,8 @@ void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDis
 }
 
 template <typename Family>
-bool CommandQueueHw<Family>::obtainTimestampPacketForCacheFlush(bool isCacheFlushCommand) const {
-    return isCacheFlushCommand;
+bool CommandQueueHw<Family>::obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const {
+    return isCacheFlushRequired;
 }
 
 } // namespace NEO

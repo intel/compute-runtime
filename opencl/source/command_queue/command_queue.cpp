@@ -544,7 +544,7 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
 size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const {
     size_t nodesCount = dispatchInfo.size();
     auto mainKernel = dispatchInfo.peekMainKernel();
-    if (mainKernel->requiresCacheFlushCommand(*this)) {
+    if (obtainTimestampPacketForCacheFlush(mainKernel->requiresCacheFlushCommand(*this))) {
         nodesCount++;
     }
     return nodesCount;
