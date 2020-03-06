@@ -11,6 +11,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#include "hw_helpers.h"
+
 namespace L0 {
 
 struct FenceImp : public Fence {
@@ -88,6 +90,8 @@ ze_result_t FenceImp::hostSynchronize(uint32_t timeout) {
     if (cmdQueue->getCsr()->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
         return ZE_RESULT_SUCCESS;
     }
+
+    waitForTaskCountWithKmdNotifyFallbackHelper(cmdQueue->getCsr(), cmdQueue->getTaskCount(), 0, false, false);
 
     if (timeout == 0) {
         return queryStatus();
