@@ -46,9 +46,6 @@ include(GNUInstallDirs)
 # define global property where we will collect component list to package
 define_property(GLOBAL PROPERTY NEO_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
 set(GLOBAL PROPERTY NEO_COMPONENTS_LIST "")
-if(NOT DEFINED NEO_BUILD_PACKAGE)
-    set(NEO_BUILD_PACKAGE TRUE)
-endif()
 
 set(BRANCH_TYPE "")
 set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
@@ -148,6 +145,9 @@ set(CMAKE_NINJA_FORCE_RESPONSE_FILE 1)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${NEO_BINARY_DIR}/lib)
+
+# determine Neo version
+include(version.cmake)
 
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
@@ -572,9 +572,6 @@ add_definitions(-DGMM_OCL)
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# determine Neo version
-include(version.cmake)
-
 # Get available platfroms
 include(platforms.cmake)
 
@@ -922,6 +919,4 @@ configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 hide_subdir(${NEO_RUNTIME_SUB_DIR})
 add_subdirectories()
 
-if(NEO_BUILD_PACKAGE)
-    include(package.cmake)
-endif()
+include(package.cmake)

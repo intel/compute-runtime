@@ -29,7 +29,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         endif()
     endif()
 
-    project(intel-level-zero-gpu VERSION 0.4.1)
+    project(level-zero-gpu VERSION 0.4.1)
     include(cmake/source_tree.cmake)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/platforms.cmake AND NOT SKIP_L0_UNIT_TESTS)
         include(cmake/${BRANCH_TYPE}/platforms.cmake)
@@ -382,62 +382,10 @@ endif()
 
     add_subdirectories()
 
-    if(UNIX AND (NOT NEO_BUILD_PACKAGE))
+    if(UNIX)
         message(STATUS "Building LevelZero package")
-        if(DEFINED L0_CPACK_GENERATOR)
-            set(CPACK_GENERATOR ${L0_CPACK_GENERATOR})
-        else()
-            # If generators list was not define build native package for current distro
-            if(EXISTS "/etc/debian_version")
-                set(CPACK_GENERATOR "DEB")
 
-                set(file_path "/etc/lsb-release")
-                if(EXISTS "${file_path}")
-                    file(STRINGS "${file_path}" data_list REGEX "^(DISTRIB_ID|DISTRIB_CODENAME)=")
-
-                    # Look for lines like "DISTRIB_ID="..." and DISTRIB_CODENAME="..."
-                    foreach(_var ${data_list})
-                        if("${_var}" MATCHES "^(DISTRIB_ID)=(.*)$")
-                            set(DEB_DISTRIB_ID "${CMAKE_MATCH_2}")
-                        elseif("${_var}" MATCHES "^(DISTRIB_CODENAME)=(.*)$")
-                            set(DEB_DISTRIB_CODENAME "${CMAKE_MATCH_2}")
-                        endif()
-                    endforeach()
-                endif()
-
-            elseif(EXISTS "/etc/redhat-release")
-              set(CPACK_GENERATOR "RPM")
-            else()
-              set(CPACK_GENERATOR "TXZ")
-            endif()
-        endif()
-
-        set(CPACK_PACKAGE_CONTACT "Intel Corporation")
-        set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-        set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-        set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-        if(NOT DEFINED L0_VERSION_BUILD)
-          set(L0_VERSION_BUILD 0)
-        endif()
-        set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Level Zero driver written for Intel GPU devices.")
-
-        set(CPACK_DEB_COMPONENT_INSTALL ON)
-        set(CPACK_RPM_COMPONENT_INSTALL ON)
-        set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-
-        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-        set(CPACK_DEBIAN_PACKAGE_RELEASE ${L0_VERSION_BUILD})
-        set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-
-        set(CPACK_RPM_COMPRESSION_TYPE "xz")
-        set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
-        set(CPACK_RPM_PACKAGE_AUTOREQ OFF)
-        set(CPACK_RPM_PACKAGE_GROUP "System Environment/Libraries")
-        set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-        set(CPACK_RPM_PACKAGE_RELEASE ${L0_VERSION_BUILD})
-        set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
-
-        set_property(GLOBAL APPEND PROPERTY L0_COMPONENTS_LIST ${PROJECT_NAME})
+        set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST ${PROJECT_NAME})
 
         set(L0_PACKAGE_VERSION_DEB "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
         set(L0_PACKAGE_VERSION_RPM "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
@@ -458,23 +406,6 @@ endif()
             list(APPEND _external_package_dependencies_rpm "intel-igc-opencl")
         endif()
 
-        list(APPEND _external_package_dependencies_deb "level-zero")
-        list(APPEND _external_package_dependencies_rpm "level-zero")
-
-        # Consecutive build number
-        if(NOT DEFINED NEO_VERSION_BUILD)
-            set(PACKAGE_VERSION_BUILD ${BUILD_VERSION})
-        else()
-            set(PACKAGE_VERSION_BUILD ${NEO_VERSION_BUILD})
-        endif()
-
-        set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-
-        include("os_release_info.cmake")
-        get_os_release_info(os_name os_version os_codename)
-        #Pick only first character of os_name
-        string(SUBSTRING "${os_name}" 0 1 os_name)
-
         find_program(GIT_EXE NAMES "git")
         if(GIT_EXE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
             if(MSVC)
@@ -491,44 +422,16 @@ endif()
         endif()
         string(STRIP "${VERSION_SUFFIX}" VERSION_SUFFIX)
 
-        if(NOT DEFINED ${PACKAGE_VERSION_BUILD})
-            set(PACKAGE_RELEASE_VERSION ${VERSION_SUFFIX})
-        else()
-            set(PACKAGE_RELEASE_VERSION ${PACKAGE_VERSION_BUILD})
-        endif()
-
         string(REPLACE ";" ", " CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_DEPENDS "${_external_package_dependencies_deb}")
         string(REPLACE ";" ", " CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_REQUIRES "${_external_package_dependencies_rpm}")
-        set(CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_DEPENDS ${CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_DEPENDS} PARENT_SCOPE)
-        set(CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_REQUIRES ${CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_REQUIRES} PARENT_SCOPE)
+        set(CPACK_DEBIAN_LEVEL-ZERO-GPU_PACKAGE_DEPENDS ${CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_DEPENDS} PARENT_SCOPE)
+        set(CPACK_RPM_LEVEL-ZERO-GPU_PACKAGE_REQUIRES ${CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_REQUIRES} PARENT_SCOPE)
 
-        set(CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_NAME ${PROJECT_NAME})
-        if("${BUILD_TYPE}" STREQUAL "debug")
-            set(CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_FILE_NAME  "${PROJECT_NAME}_${L0_PACKAGE_VERSION_DEB}-${PACKAGE_RELEASE_VERSION}+${os_name}${os_version}-dbg_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
-        else()
-            set(CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_FILE_NAME  "${PROJECT_NAME}_${L0_PACKAGE_VERSION_DEB}-${PACKAGE_RELEASE_VERSION}+${os_name}${os_version}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
-        endif()
-
-        set(CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_NAME ${PROJECT_NAME})
-        set(CPACK_RPM_INTEL-LEVEL-ZERO-GPU_FILE_NAME "${PROJECT_NAME}-${L0_PACKAGE_VERSION_RPM}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
+        set(CPACK_RPM_LEVEL-ZERO-GPU_FILE_NAME "intel-level-zero-gpu-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm" PARENT_SCOPE)
 
         if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
             include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
         endif()
 
-        set(CPACK_SOURCE_GENERATOR "TGZ")
-        set(CPACK_SOURCE_IGNORE_FILES
-            /.git/
-            /.gitignore
-            /build/
-            /manifests/
-        )
-        set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}_${L0_PACKAGE_VERSION_DEB}-${PACKAGE_RELEASE_VERSION}_${BUILD_TYPE}")
-
-        get_property(CPACK_COMPONENTS_ALL GLOBAL PROPERTY L0_COMPONENTS_LIST)
-        set(CPACK_PROPERTIES_FILE "${NEO_SOURCE_DIR}/package_config.cmake")
-        set(CPACK_LD_LIBRARY_PATH "${NEO__GMM_LIBRARY_PATH}")
-
-        include(CPack)
     endif()
 endif()
