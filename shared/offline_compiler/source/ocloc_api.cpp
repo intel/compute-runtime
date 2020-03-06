@@ -63,6 +63,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
     try {
         if (numArgs == 1 || (numArgs > 1 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")))) {
             printHelp();
+            return ErrorCode::SUCCESS;
         } else if (numArgs > 1 && !strcmp(argv[1], "disasm")) {
             BinaryDecoder disasm(std::move(helper));
             int retVal = disasm.validateInput(allArgs);
