@@ -7,7 +7,7 @@ Instructions have been tested on Ubuntu* and CentOS*. They assume a clean instal
 Example (Ubuntu):
 
 ```shell
-sudo apt-get install cmake g++ git pkg-config
+sudo apt-get --no-install-recommends install cmake g++ git pkg-config
 ```
 
 Example (CentOS):

@@ -46,7 +46,7 @@ and can be installed via the distro's package manager.
 For example on Ubuntu* 19.04, 19.10:
 
 ```
-apt-get install intel-opencl-icd
+apt-get --no-install-recommends install intel-opencl-icd
 ```
 
 Procedures for other
