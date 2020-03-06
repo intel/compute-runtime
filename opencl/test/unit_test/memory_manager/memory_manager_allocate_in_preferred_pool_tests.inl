@@ -738,3 +738,93 @@ TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToSystemThen
     EXPECT_EQ(0u, allocationData.flags.requiresCpuAccess);
     EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
 }
+
+using MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;
+
+TEST_P(MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest, givenAllocationTypesHaveToBeForcedTo48BitThenAllocationDataResource48BitIsSet) {
+    GraphicsAllocation::AllocationType allocationType;
+    bool propertiesFlag48Bit;
+
+    std::tie(allocationType, propertiesFlag48Bit) = GetParam();
+
+    AllocationProperties properties(0, true, 0, allocationType, false);
+    properties.flags.resource48Bit = propertiesFlag48Bit;
+
+    AllocationData allocationData;
+    MockMemoryManager mockMemoryManager;
+    MockMemoryManager::getAllocationData(allocationData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocationData.flags.resource48Bit);
+}
+
+using MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;
+
+TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocationTypesHaveNotToBeForcedTo48BitThenAllocationDataResource48BitIsSetProperly) {
+    GraphicsAllocation::AllocationType allocationType;
+    bool propertiesFlag48Bit;
+
+    std::tie(allocationType, propertiesFlag48Bit) = GetParam();
+
+    AllocationProperties properties(0, true, 0, allocationType, false);
+    properties.flags.resource48Bit = propertiesFlag48Bit;
+
+    AllocationData allocationData;
+    MockMemoryManager mockMemoryManager;
+    MockMemoryManager::getAllocationData(allocationData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(allocationData.flags.resource48Bit, propertiesFlag48Bit);
+}
+
+static const GraphicsAllocation::AllocationType allocationHaveToBeForcedTo48Bit[] = {
+    GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
+    GraphicsAllocation::AllocationType::IMAGE,
+    GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP,
+    GraphicsAllocation::AllocationType::INSTRUCTION_HEAP,
+    GraphicsAllocation::AllocationType::INTERNAL_HEAP,
+    GraphicsAllocation::AllocationType::KERNEL_ISA,
+    GraphicsAllocation::AllocationType::LINEAR_STREAM,
+    GraphicsAllocation::AllocationType::MCS,
+    GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
+    GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE,
+    GraphicsAllocation::AllocationType::SHARED_IMAGE,
+    GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY,
+    GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP,
+    GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
+};
+
+static const GraphicsAllocation::AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
+    GraphicsAllocation::AllocationType::BUFFER,
+    GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+    GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+    GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
+    GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+    GraphicsAllocation::AllocationType::FILL_PATTERN,
+    GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+    GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+    GraphicsAllocation::AllocationType::PIPE,
+    GraphicsAllocation::AllocationType::PREEMPTION,
+    GraphicsAllocation::AllocationType::PRINTF_SURFACE,
+    GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
+    GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER,
+    GraphicsAllocation::AllocationType::SHARED_BUFFER,
+    GraphicsAllocation::AllocationType::SVM_CPU,
+    GraphicsAllocation::AllocationType::SVM_GPU,
+    GraphicsAllocation::AllocationType::SVM_ZERO_COPY,
+    GraphicsAllocation::AllocationType::TAG_BUFFER,
+    GraphicsAllocation::AllocationType::GLOBAL_FENCE,
+    GraphicsAllocation::AllocationType::WRITE_COMBINED,
+    GraphicsAllocation::AllocationType::RING_BUFFER,
+    GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER,
+};
+
+INSTANTIATE_TEST_CASE_P(ForceTo48Bit,
+                        MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest,
+                        ::testing::Combine(
+                            ::testing::ValuesIn(allocationHaveToBeForcedTo48Bit),
+                            ::testing::Bool()));
+
+INSTANTIATE_TEST_CASE_P(NotForceTo48Bit,
+                        MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest,
+                        ::testing::Combine(
+                            ::testing::ValuesIn(allocationHaveNotToBeForcedTo48Bit),
+                            ::testing::Bool()));

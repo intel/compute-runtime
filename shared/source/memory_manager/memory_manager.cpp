@@ -299,6 +299,27 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
+    switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
+    case GraphicsAllocation::AllocationType::IMAGE:
+    case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
+    case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case GraphicsAllocation::AllocationType::MCS:
+    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
+    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
+    case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+    case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
+    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+        allocationData.flags.resource48Bit = true;
+        break;
+    default:
+        allocationData.flags.resource48Bit = properties.flags.resource48Bit;
+    }
+
     allocationData.flags.shareable = properties.flags.shareable;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
@@ -323,7 +344,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
-    allocationData.flags.resource48Bit = properties.flags.resource48Bit;
 
     return true;
 }
