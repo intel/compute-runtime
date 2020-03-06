@@ -313,7 +313,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
 
-    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * this->numSubDevices;
+    pDeviceProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount * ((this->numSubDevices > 0) ? this->numSubDevices : 1);
 
     pDeviceProperties->timerResolution = static_cast<uint64_t>(DeviceInfoTable::Map<CL_DEVICE_PROFILING_TIMER_RESOLUTION>::getValue(this->neoDevice->getDeviceInfo()));
 
