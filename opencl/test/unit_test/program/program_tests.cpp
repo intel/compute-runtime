@@ -2676,8 +2676,10 @@ struct SpecializationConstantProgramMock : public MockProgram {
 struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
     TranslationOutput::ErrorCode retVal = TranslationOutput::ErrorCode::Success;
     int counter = 0;
+    const char *spirV = nullptr;
     TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) override {
         counter++;
+        spirV = srcSpirV.begin();
         return retVal;
     }
     void returnError() {
@@ -2713,6 +2715,15 @@ struct setProgramSpecializationConstantTests : public ::testing::Test {
 
     int specValue = 1;
 };
+
+TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConstantThenBinarySourceIsUsed) {
+    auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
+
+    EXPECT_EQ(1, mockCompiler->counter);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockProgram->areSpecializationConstantsInitialized);
+    EXPECT_EQ(mockProgram->irBinary.get(), mockCompiler->spirV);
+}
 
 TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConstantMultipleTimesThenSpecializationConstantsAreInitializedOnce) {
     auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
