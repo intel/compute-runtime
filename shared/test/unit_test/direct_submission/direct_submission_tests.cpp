@@ -617,6 +617,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
 HWTEST_F(DirectSubmissionTest, whenInitDirectSubmissionFailThenEngineIsNotCreated) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrFailInitDirectSubmission = true;
-    bool ret = pDevice->createEngine(0u, aub_stream::ENGINE_RCS);
-    EXPECT_FALSE(ret);
+    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
+    EXPECT_EQ(nullptr, device);
 }

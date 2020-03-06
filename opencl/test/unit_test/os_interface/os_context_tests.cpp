@@ -27,3 +27,11 @@ TEST(OSContext, givenLowPriorityRootDeviceInternalAreTrueWhenCreatingDefaultOsCo
     EXPECT_TRUE(osContext->isRootDevice());
     delete osContext;
 }
+
+TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueReturned) {
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_FALSE(osContext->isDefaultContext());
+    osContext->setDefaultContext(true);
+    EXPECT_TRUE(osContext->isDefaultContext());
+    delete osContext;
+}

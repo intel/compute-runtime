@@ -62,6 +62,17 @@ bool Device::createDeviceImpl() {
     if (!createEngines()) {
         return false;
     }
+
+    getDefaultEngine().osContext->setDefaultContext(true);
+
+    for (auto &engine : engines) {
+        auto commandStreamReceiver = engine.commandStreamReceiver;
+        auto osContext = engine.osContext;
+        if (!commandStreamReceiver->initDirectSubmission(*this, *osContext)) {
+            return false;
+        }
+    }
+
     executionEnvironment->memoryManager->setDefaultEngineIndex(defaultEngineIndex);
 
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
@@ -141,10 +152,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     }
 
     if ((preemptionMode == PreemptionMode::MidThread || isDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
-        return false;
-    }
-
-    if (!commandStreamReceiver->initDirectSubmission(*this, *osContext)) {
         return false;
     }
 

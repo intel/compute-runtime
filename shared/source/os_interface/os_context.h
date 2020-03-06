@@ -33,6 +33,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isInternalEngine() const { return internalEngine; }
     bool isRootDevice() const { return rootDevice; }
     virtual bool isInitialized() const { return true; }
+    bool isDefaultContext() const { return defaultContext; }
+    void setDefaultContext(bool value) { defaultContext = value; }
 
   protected:
     OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode,
@@ -54,5 +56,6 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const bool lowPriority = false;
     const bool internalEngine = false;
     const bool rootDevice = false;
+    bool defaultContext = false;
 };
 } // namespace NEO

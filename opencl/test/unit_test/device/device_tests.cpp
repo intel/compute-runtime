@@ -353,3 +353,10 @@ TEST(DeviceGenEngineTest, whenCreateDeviceThenInternalEngineHasDefaultType) {
     auto defaultEngineType = getChosenEngineType(device->getHardwareInfo());
     EXPECT_EQ(defaultEngineType, internalEngineType);
 }
+
+TEST(DeviceGenEngineTest, givenCreatedDeviceWhenRetrievingDefaultEngineThenOsContextHasDefaultFieldSet) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+
+    auto &defaultEngine = device->getDefaultEngine();
+    EXPECT_TRUE(defaultEngine.osContext->isDefaultContext());
+}

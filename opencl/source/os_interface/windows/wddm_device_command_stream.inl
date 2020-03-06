@@ -163,6 +163,9 @@ bool WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(Device &device, 
             device.getHardwareInfo().capabilityTable.directSubmissionEngines.data[contextEngineType];
 
         bool startDirect = true;
+        if (!osContext.isDefaultContext()) {
+            startDirect = directSubmissionProperty.useNonDefault;
+        }
         if (osContext.isLowPriority()) {
             startDirect = directSubmissionProperty.useLowPriority;
         }
