@@ -10,8 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
 std::unique_ptr<Debugger> Debugger::create(HardwareInfo *hwInfo) {

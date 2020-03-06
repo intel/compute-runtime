@@ -124,6 +124,10 @@ else()
   target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
 endif()
 
+target_include_directories(igdrcl_libult PRIVATE
+  ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+)
+
 target_include_directories(igdrcl_libult_env PRIVATE
   $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}

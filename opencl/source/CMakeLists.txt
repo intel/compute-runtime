@@ -66,7 +66,6 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
   ${NEO__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
   ${NEO__GMM_INCLUDE_DIR}
-  ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC

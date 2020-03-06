@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/program/program.h"
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/helpers/kernel_filename_helper.h"

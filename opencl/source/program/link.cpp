@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/device/cl_device.h"
@@ -18,7 +19,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
 #include "compiler_options.h"
 

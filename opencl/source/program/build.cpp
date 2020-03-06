@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/device/cl_device.h"
@@ -17,7 +18,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
 #include "opencl/source/utilities/logger.h"
 
 #include "compiler_options.h"

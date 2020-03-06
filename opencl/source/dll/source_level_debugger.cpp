@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 using namespace std;
 

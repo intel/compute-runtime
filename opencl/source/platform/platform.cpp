@@ -20,6 +20,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/device/cl_device.h"
@@ -29,7 +30,6 @@
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
 
 #include "CL/cl_ext.h"
 #include "gmm_client_context.h"

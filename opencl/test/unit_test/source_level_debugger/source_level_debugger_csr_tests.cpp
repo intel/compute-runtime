@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/source/source_level_debugger/source_level_debugger.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/source_level_debugger/source_level_debugger.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
