@@ -1106,6 +1106,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     uint64_t gpuAddr = 0;
+    constexpr uint32_t eventStateClear = static_cast<uint32_t>(-1);
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
@@ -1113,12 +1114,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         gpuAddr = event->getGpuAddress();
         if (event->isTimestampEvent) {
-            gpuAddr += event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_CONTEXT_END);
+            gpuAddr += event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
         }
 
         NEO::HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(*(commandContainer.getCommandStream()),
                                                                        gpuAddr,
-                                                                       Event::STATE_CLEARED,
+                                                                       eventStateClear,
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
         bool dcFlushEnable = (event->waitScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;

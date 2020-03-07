@@ -30,10 +30,18 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t reset() = 0;
     virtual ze_result_t getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) = 0;
 
-    enum State : uint32_t {
+    enum State : uint64_t {
         STATE_SIGNALED = 0u,
-        STATE_CLEARED = static_cast<uint32_t>(-1),
+        STATE_CLEARED = static_cast<uint64_t>(-1),
         STATE_INITIAL = STATE_CLEARED
+    };
+
+    enum EventTimestampRegister : uint32_t {
+        GLOBAL_START_LOW = 0u,
+        GLOBAL_START_HIGH,
+        GLOBAL_END,
+        CONTEXT_START,
+        CONTEXT_END
     };
 
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
@@ -45,7 +53,7 @@ struct Event : _ze_event_handle_t {
     NEO::GraphicsAllocation &getAllocation();
 
     uint64_t getGpuAddress() { return gpuAddress; }
-    uint64_t getOffsetOfProfilingEvent(uint32_t profileEventType);
+    uint64_t getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg);
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
@@ -92,7 +100,7 @@ struct EventPool : _ze_event_pool_handle_t {
     NEO::GraphicsAllocation &getAllocation() { return *eventPoolAllocation; }
 
     virtual uint32_t getEventSize() = 0;
-    virtual uint32_t getNumEventTimestampTypes() = 0;
+    virtual uint32_t getNumEventTimestampsToRead() = 0;
 
     bool isEventPoolUsedForTimestamp = false;
 

@@ -90,19 +90,20 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
 
     commandContainer.addToResidencyContainer(&event->getAllocation());
     if (beforeWalker) {
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_GLOBAL_START);
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START_LOW);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, timeStampAddress);
 
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_CONTEXT_START);
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START_HIGH);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, REG_GLOBAL_TIMESTAMP_UN, timeStampAddress);
+
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_START);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
     } else {
 
-        // Local Context End SRM
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_CONTEXT_END);
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
 
-        // Global End PC
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfProfilingEvent(ZE_EVENT_TIMESTAMP_GLOBAL_END);
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
         bool dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
 
         NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
