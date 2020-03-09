@@ -134,8 +134,10 @@ if(UNIX)
 
   string(REPLACE ";" ", " CPACK_DEBIAN_OPENCL_PACKAGE_DEPENDS "${_external_package_dependencies_debian}")
   string(REPLACE ";" ", " CPACK_DEBIAN_OCLOC_PACKAGE_DEPENDS "${_igc_package_dependencies_debian}")
+  string(REPLACE ";" ", " CPACK_DEBIAN_INTEL-LEVEL-ZERO-GPU_PACKAGE_DEPENDS "${_external_package_dependencies_deb}")
   string(REPLACE ";" ", " CPACK_RPM_OPENCL_PACKAGE_REQUIRES "${_external_package_dependencies_rpm}")
   string(REPLACE ";" ", " CPACK_RPM_OCLOC_PACKAGE_REQUIRES "${_igc_package_dependencies_rpm}")
+  string(REPLACE ";" ", " CPACK_RPM_INTEL-LEVEL-ZERO-GPU_PACKAGE_REQUIRES "${_external_package_dependencies_rpm}")
 
   set(CPACK_DEBIAN_LEVEL-ZERO-GPU_PACKAGE_RECOMMENDS "level-zero")
   set(CPACK_DEBIAN_LEVEL-ZERO-GPU_PACKAGE_SUGGESTS "level-zero")
