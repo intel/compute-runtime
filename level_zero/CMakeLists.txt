@@ -41,13 +41,6 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
       return()
     endif()
 
-    execute_process (
-        COMMAND git rev-parse --short=4 origin/integration
-        OUTPUT_VARIABLE L0_GIT_HEAD_COMMIT_SHA
-    )
-
-    string(STRIP "${L0_GIT_HEAD_COMMIT_SHA}" L0_GIT_HEAD_COMMIT_SHA)
-
     add_definitions( -DL0_PROJECT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}" )
     add_definitions( -DL0_PROJECT_VERSION_MINOR="${PROJECT_VERSION_MINOR}" )
 
