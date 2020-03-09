@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
 
@@ -135,35 +134,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 template <>
 void MemorySynchronizationCommands<Family>::setExtraCacheFlushFields(Family::PIPE_CONTROL *pipeControl) {
     pipeControl->setHdcPipelineFlush(true);
-}
-
-template <>
-void MemorySynchronizationCommands<Family>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isLocalMemoryEnabled(hwInfo)) {
-        auto miSemaphoreWait = static_cast<MI_SEMAPHORE_WAIT *>(commandStream.getSpace(sizeof(MI_SEMAPHORE_WAIT)));
-        EncodeSempahore<Family>::programMiSemaphoreWait(miSemaphoreWait,
-                                                        gpuAddress,
-                                                        EncodeSempahore<Family>::invalidHardwareTag,
-                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    }
-}
-
-template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForSingleSynchronization(const HardwareInfo &hwInfo) {
-    auto size = 0u;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isLocalMemoryEnabled(hwInfo)) {
-        size += sizeof(typename Family::MI_SEMAPHORE_WAIT);
-    }
-    return size;
-}
-
-template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
-    return 2 * getSizeForSingleSynchronization(hwInfo);
 }
 
 template class AubHelperHw<Family>;
