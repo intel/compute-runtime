@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -137,19 +138,37 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
     static void programSemaphoreWithImplicitDependencyForAuxTranslation(LinearStream &cmdStream,
-                                                                        const TimestampPacketDependencies *timestampPacketDependencies) {
+                                                                        const TimestampPacketDependencies *timestampPacketDependencies,
+                                                                        const HardwareInfo &hwInfo) {
         auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
                               ? timestampPacketDependencies->auxToNonAuxNodes
                               : timestampPacketDependencies->nonAuxToAuxNodes;
+
+        // cache flush after NDR, before NonAuxToAux
+        if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && timestampPacketDependencies->cacheFlushNodes.peekNodes().size() > 0) {
+            UNRECOVERABLE_IF(timestampPacketDependencies->cacheFlushNodes.peekNodes().size() != 1);
+            auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies->cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
+                                                       offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+            MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+                cmdStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                cacheFlushTimestampPacketGpuAddress, 0, true, hwInfo);
+        }
 
         for (auto &node : container.peekNodes()) {
             TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node);
         }
     }
 
-    template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count) {
-        return count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
+    template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
+    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count, const HardwareInfo &hwInfo, bool cacheFlushForBcsRequired) {
+        size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
+
+        if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && cacheFlushForBcsRequired) {
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+        }
+
+        return size;
     }
 
     template <typename GfxFamily>

@@ -198,8 +198,11 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
+    bool enqueueWithBlitAuxTranslation = HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
+
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+        auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
         if (blitEnqueue || isCacheFlushCommand(commandType)) {
@@ -208,15 +211,12 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
         }
 
-        if (blitEnqueue) {
-            auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+        if (isCacheFlushForBcsRequired() && (blitEnqueue || enqueueWithBlitAuxTranslation)) {
+            timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+        }
 
-            if (isCacheFlushForBcsRequired()) {
-                timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
-            }
-            if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
-                timestampPacketDependencies.barrierNodes.add(allocator->getTag());
-            }
+        if (blitEnqueue && !blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+            timestampPacketDependencies.barrierNodes.add(allocator->getTag());
         }
 
         if (nodesCount > 0) {
@@ -673,6 +673,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (timestampPacketContainer) {
         timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
         timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());
+        timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
     }
 
     bool anyUncacheableArgs = false;

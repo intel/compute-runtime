@@ -188,6 +188,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
   public:
     using BaseClass::bcsEngine;
     using BaseClass::bcsTaskCount;
+    using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
     using BaseClass::obtainCommandStream;
@@ -199,6 +200,15 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MockCommandQueueHw(Context *context,
                        ClDevice *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
+    }
+
+    void setOoqEnabled() {
+        commandQueueProperties |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    }
+
+    LinearStream &getCS(size_t minRequiredSize) override {
+        requestedCmdStreamSize = minRequiredSize;
+        return CommandQueue::getCS(minRequiredSize);
     }
 
     UltCommandStreamReceiver<GfxFamily> &getUltCommandStreamReceiver() {
@@ -276,6 +286,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MultiDispatchInfo storedMultiDispatchInfo;
     size_t EnqueueWriteImageCounter = 0;
     size_t EnqueueWriteBufferCounter = 0;
+    size_t requestedCmdStreamSize = 0;
     bool blockingWriteBuffer = false;
     bool storeMultiDispatchInfo = false;
     bool notifyEnqueueReadBufferCalled = false;

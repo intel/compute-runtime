@@ -26,8 +26,8 @@ struct TimestampPacketDependencies;
 class DispatchInfo {
 
   public:
-    using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies);
-    using EstimateCommandsMethodT = size_t(size_t);
+    using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies, const HardwareInfo &);
+    using EstimateCommandsMethodT = size_t(size_t, const HardwareInfo &, bool);
 
     DispatchInfo() = default;
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)

@@ -134,13 +134,13 @@ void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDis
         TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.begin()->dispatchInitCommands.registerCommandsSizeEstimationMethod(
-        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family>);
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::AuxToNonAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerMethod(
         TimestampPacketHelper::programSemaphoreWithImplicitDependencyForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerCommandsSizeEstimationMethod(
-        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family>);
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::NonAuxToAux>);
 }
 
 template <typename Family>

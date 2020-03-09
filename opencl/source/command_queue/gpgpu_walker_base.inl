@@ -211,11 +211,10 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
+    auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
+    auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
 
     if (blitEnqueue) {
-        auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
-        auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
-
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
         if (commandQueueHw.isCacheFlushForBcsRequired()) {
             expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
@@ -228,8 +227,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
         size_t memObjAuxCount = multiDispatchInfo.getMemObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getMemObjsForAuxTranslation()->size() : 0;
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(memObjAuxCount);
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(memObjAuxCount);
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(memObjAuxCount, hwInfo, commandQueueHw.isCacheFlushForBcsRequired());
     }
     if (parentKernel) {
         SchedulerKernel &scheduler = commandQueue.getContext().getSchedulerKernel();

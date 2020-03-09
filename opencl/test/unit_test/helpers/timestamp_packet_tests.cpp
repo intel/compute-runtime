@@ -319,14 +319,15 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
+    auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
+    auto sizeWithDisabled = mockCmdQHw->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
+    auto sizeWithEnabled = mockCmdQHw->requestedCmdStreamSize;
 
     auto extendedSize = sizeWithDisabled + sizeof(typename FamilyType::PIPE_CONTROL);
     EXPECT_EQ(sizeWithEnabled, extendedSize);
@@ -334,12 +335,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimatingStreamSizeDontDontAddAdditionalSize) {
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel}));
-    mockCmdQ->setOoqEnabled();
+    auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    mockCmdQHw->setOoqEnabled();
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, CsrDependencies(), false, false,
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false,
                                                             false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
+    auto sizeWithDisabled = mockCmdQHw->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -349,15 +351,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
     MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
     MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
-    Event event1(mockCmdQ, 0, 0, 0);
+    Event event1(mockCmdQHw.get(), 0, 0, 0);
     event1.addTimestampPacketNodes(timestamp1);
-    Event event2(mockCmdQ, 0, 0, 0);
+    Event event2(mockCmdQHw.get(), 0, 0, 0);
     event2.addTimestampPacketNodes(timestamp2);
-    Event event3(mockCmdQ, 0, 0, 0);
+    Event event3(mockCmdQHw.get(), 0, 0, 0);
     event3.addTimestampPacketNodes(timestamp3);
-    Event event4(mockCmdQ, 0, 0, 0);
+    Event event4(mockCmdQHw.get(), 0, 0, 0);
     event4.addTimestampPacketNodes(timestamp4);
-    Event event5(mockCmdQ, 0, 0, 0);
+    Event event5(mockCmdQHw.get(), 0, 0, 0);
     event5.addTimestampPacketNodes(timestamp5);
 
     const cl_uint numEventsOnWaitlist = 5;
@@ -368,8 +370,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
     eventsRequest.fillCsrDependencies(
         csrDeps, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
+    auto sizeWithEnabled = mockCmdQHw->requestedCmdStreamSize;
 
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : csrDeps) {
@@ -385,10 +387,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeWithWaitlistThenAddSizeForSemaphores) {
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
+    auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0);
+    auto sizeWithDisabled = mockCmdQHw->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -398,15 +401,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
     MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
-    Event event1(mockCmdQ, 0, 0, 0);
+    Event event1(mockCmdQHw.get(), 0, 0, 0);
     event1.addTimestampPacketNodes(timestamp1);
-    Event event2(mockCmdQ, 0, 0, 0);
+    Event event2(mockCmdQHw.get(), 0, 0, 0);
     event2.addTimestampPacketNodes(timestamp2);
-    Event event3(mockCmdQ, 0, 0, 0);
+    Event event3(mockCmdQHw.get(), 0, 0, 0);
     event3.addTimestampPacketNodes(timestamp3);
-    Event event4(mockCmdQ, 0, 0, 0);
+    Event event4(mockCmdQHw.get(), 0, 0, 0);
     event4.addTimestampPacketNodes(timestamp4);
-    Event event5(mockCmdQ, 0, 0, 0);
+    Event event5(mockCmdQHw.get(), 0, 0, 0);
     event5.addTimestampPacketNodes(timestamp5);
 
     const cl_uint numEventsOnWaitlist = 5;
@@ -416,8 +419,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     CsrDependencies csrDeps;
     eventsRequest.fillCsrDependencies(csrDeps, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
-    auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
+    auto sizeWithEnabled = mockCmdQHw->requestedCmdStreamSize;
 
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : csrDeps) {

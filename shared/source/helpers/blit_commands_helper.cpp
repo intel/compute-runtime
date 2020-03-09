@@ -119,6 +119,7 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
     }
 
     // wait for NDR before NonAuxToAux
+    blitPropertiesContainer[numObjects].csrDependencies.push_back(&timestampPacketDependencies.cacheFlushNodes);
     blitPropertiesContainer[numObjects].csrDependencies.push_back(&kernelTimestamps);
 }
 

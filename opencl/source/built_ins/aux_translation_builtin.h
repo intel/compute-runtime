@@ -64,12 +64,12 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     using RegisteredMethodDispatcherT = RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT,
                                                                    DispatchInfo::EstimateCommandsMethodT>;
     template <typename GfxFamily, bool dcFlush>
-    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *) {
+    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &) {
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, dcFlush);
     }
 
     template <typename GfxFamily>
-    static size_t getSizeForSinglePipeControl(size_t) {
+    static size_t getSizeForSinglePipeControl(size_t, const HardwareInfo &, bool) {
         return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
     }
 

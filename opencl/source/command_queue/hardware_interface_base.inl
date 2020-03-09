@@ -83,7 +83,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies);
+        dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
         bool isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
         dispatchKernelCommands(commandQueue, dispatchInfo, commandType, *commandStream, isMainKernel,
@@ -91,7 +91,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                offsetInterfaceDescriptorTable, *dsh, *ioh, *ssh);
 
         currentDispatchIndex++;
-        dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies);
+        dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
     }
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;
