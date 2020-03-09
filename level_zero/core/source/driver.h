@@ -9,6 +9,8 @@
 
 #include <level_zero/ze_api.h>
 
+#include <memory>
+
 namespace L0 {
 struct Driver {
     virtual ze_result_t driverInit(_ze_init_flag_t) = 0;
@@ -23,5 +25,5 @@ ze_result_t init(_ze_init_flag_t);
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
 
 extern uint32_t driverCount;
-extern ze_driver_handle_t GlobalDrivers[1];
+extern std::unique_ptr<_ze_driver_handle_t> GlobalDriver;
 } // namespace L0

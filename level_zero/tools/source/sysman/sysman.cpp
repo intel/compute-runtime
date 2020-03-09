@@ -24,7 +24,7 @@ void SysmanHandleContext::init(ze_init_flag_t flag) {
 }
 
 SysmanHandleContext::SysmanHandleContext() {
-    DriverHandle *dH = L0::DriverHandle::fromHandle(GlobalDrivers[0]);
+    DriverHandle *dH = L0::DriverHandle::fromHandle(GlobalDriver.get());
     uint32_t count = 0;
     dH->getDevice(&count, nullptr);
     std::vector<ze_device_handle_t> devices(count);

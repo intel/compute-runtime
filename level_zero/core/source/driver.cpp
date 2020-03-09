@@ -15,11 +15,12 @@
 #include "level_zero/core/source/driver_handle.h"
 #include "level_zero/core/source/driver_imp.h"
 
+#include <memory>
 #include <thread>
 
 namespace L0 {
 
-ze_driver_handle_t GlobalDrivers[1];
+std::unique_ptr<_ze_driver_handle_t> GlobalDriver;
 uint32_t driverCount = 1;
 
 void DriverImp::initialize(bool *result) {
@@ -32,8 +33,8 @@ void DriverImp::initialize(bool *result) {
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!devices.empty()) {
-        GlobalDrivers[0] = DriverHandle::create(std::move(devices));
-        if (GlobalDrivers[0]) {
+        GlobalDriver.reset(DriverHandle::create(std::move(devices)));
+        if (GlobalDriver != nullptr) {
             *result = true;
         }
     }
@@ -65,7 +66,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = GlobalDrivers[i];
+        phDriverHandles[i] = GlobalDriver.get();
     }
 
     return ZE_RESULT_SUCCESS;

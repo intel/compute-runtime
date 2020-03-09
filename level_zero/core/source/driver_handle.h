@@ -12,7 +12,9 @@
 #include "level_zero/core/source/device.h"
 #include <level_zero/ze_api.h>
 
-struct _ze_driver_handle_t {};
+struct _ze_driver_handle_t {
+    virtual ~_ze_driver_handle_t() = default;
+};
 
 namespace L0 {
 struct Device;
@@ -61,8 +63,6 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
-
-    virtual ~DriverHandle() = default;
 
     DriverHandle &operator=(const DriverHandle &) = delete;
     DriverHandle &operator=(DriverHandle &&) = delete;
