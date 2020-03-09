@@ -1144,6 +1144,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
 
                 stallingPipeControlFound = true;
                 EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+                EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
                 break;
             }
         }

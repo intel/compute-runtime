@@ -529,7 +529,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBar
 
         stallingPipeControlCmd = MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
             cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            barrierTimestampPacketGpuAddress, 0, false, peekHwInfo());
+            barrierTimestampPacketGpuAddress, 0, true, peekHwInfo());
 
         dispatchFlags.barrierTimestampPacketNodes->makeResident(*this);
     } else {
