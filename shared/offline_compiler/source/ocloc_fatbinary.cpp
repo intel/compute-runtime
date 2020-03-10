@@ -7,6 +7,7 @@
 
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
@@ -202,7 +203,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
     return toProductNames(requestedPlatforms);
 }
 
-int buildFatbinary(int argc, const char *argv[]) {
+int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
     std::string pointerSizeInBits = (sizeof(void *) == 4) ? "32" : "64";
     int deviceArgIndex = -1;
     std::string inputFileName = "";
@@ -248,7 +249,7 @@ int buildFatbinary(int argc, const char *argv[]) {
     for (auto targetPlatform : targetPlatforms) {
         int retVal = 0;
         argsCopy[deviceArgIndex] = targetPlatform.str();
-        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal)};
+        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal, helper)};
         auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
         if (retVal == 0) {
             retVal = buildWithSafetyGuard(pCompiler.get());
@@ -285,7 +286,7 @@ int buildFatbinary(int argc, const char *argv[]) {
     if (false == outputDirectory.empty()) {
         fatbinaryFileName = outputDirectory + "/" + outputFileName;
     }
-    writeDataToFile(fatbinaryFileName.c_str(), fatbinaryData.data(), fatbinaryData.size());
+    helper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
 
     return 0;
 }

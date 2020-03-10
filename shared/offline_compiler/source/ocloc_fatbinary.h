@@ -13,11 +13,12 @@
 
 #include <vector>
 
+class OclocArgHelper;
 namespace NEO {
 
 bool requestedFatBinary(int argc, const char *argv[]);
 
-int buildFatbinary(int argc, const char *argv[]);
+int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper);
 
 std::vector<PRODUCT_FAMILY> getAllSupportedTargetPlatforms();
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);

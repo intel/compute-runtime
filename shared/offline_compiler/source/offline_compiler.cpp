@@ -73,29 +73,12 @@ OfflineCompiler::~OfflineCompiler() {
     delete[] genBinary;
 }
 
-OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal) {
+OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper) {
     retVal = SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
-        pOffCompiler->argHelper = std::make_unique<OclocArgHelper>();
-        retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
-    }
-
-    if (retVal != SUCCESS) {
-        delete pOffCompiler;
-        pOffCompiler = nullptr;
-    }
-
-    return pOffCompiler;
-}
-
-OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, std::unique_ptr<OclocArgHelper> helper) {
-    retVal = SUCCESS;
-    auto pOffCompiler = new OfflineCompiler();
-
-    if (pOffCompiler) {
-        pOffCompiler->argHelper = std::move(helper);
+        pOffCompiler->argHelper = helper;
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
@@ -884,7 +867,7 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 }
 
-bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, std::unique_ptr<OclocArgHelper> &helper) {
+bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, OclocArgHelper *helper) {
     if (!helper->fileExists(file)) {
         return false;
     }

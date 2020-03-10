@@ -72,6 +72,4 @@ class OclocArgHelper {
     inline bool hasHeaders() { return headers.size() > 0; }
     void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
     void saveOutput(const std::string &filename, std::ostream &stream);
-
-    void addInput(const std::string &filename, std::stringstream &stream);
 };

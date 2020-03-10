@@ -7,15 +7,18 @@
 
 #include "shared/offline_compiler/source/multi_command.h"
 
-namespace NEO {
-int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &allArgs) {
-    int retVal = ErrorCode::SUCCESS;
-    std::string buildLog;
-    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal);
-    if (retVal == ErrorCode::SUCCESS) {
-        retVal = buildWithSafetyGuard(pCompiler);
+#include "shared/source/utilities/const_stringref.h"
 
-        buildLog = pCompiler->getBuildLog();
+#include <memory>
+
+namespace NEO {
+int MultiCommand::singleBuild(const std::vector<std::string> &allArgs) {
+    int retVal = SUCCESS;
+    std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(allArgs.size(), allArgs, true, retVal, argHelper)};
+    if (retVal == SUCCESS) {
+        retVal = buildWithSafetyGuard(pCompiler.get());
+
+        std::string &buildLog = pCompiler->getBuildLog();
         if (buildLog.empty() == false) {
             printf("%s\n", buildLog.c_str());
         }
@@ -27,45 +30,24 @@ int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &al
             printf("Build failed with error code: %d\n", retVal);
         }
     }
-    if (buildLog.empty() == false) {
-        singleBuilds.push_back(pCompiler);
-    } else {
-        delete pCompiler;
-    }
 
-    if (outputFileList != "") {
-        std::ofstream myfile(outputFileList, std::fstream::app);
-        if (myfile.is_open()) {
-            if (retVal == ErrorCode::SUCCESS)
-                myfile << getCurrentDirectoryOwn(outDirForBuilds) + OutFileName + ".bin";
-            else
-                myfile << "Unsuccesful build";
-            myfile << std::endl;
-            myfile.close();
-        } else
-            printf("Unable to open outputFileList\n");
+    if (retVal == SUCCESS) {
+        outputFile << getCurrentDirectoryOwn(outDirForBuilds) + outFileName + ".bin";
+    } else {
+        outputFile << "Unsuccesful build";
     }
+    outputFile << '\n';
 
     return retVal;
 }
-MultiCommand::MultiCommand() = default;
 
-MultiCommand::~MultiCommand() {
-    deleteBuildsWithWarnigs();
-}
-
-void MultiCommand::deleteBuildsWithWarnigs() {
-    for (OfflineCompiler *pSingle : singleBuilds)
-        delete pSingle;
-    singleBuilds.clear();
-}
-
-MultiCommand *MultiCommand::create(const std::vector<std::string> &argv, int &retVal) {
+MultiCommand *MultiCommand::create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper) {
     retVal = ErrorCode::SUCCESS;
     auto pMultiCommand = new MultiCommand();
 
     if (pMultiCommand) {
-        retVal = pMultiCommand->initialize(argv);
+        pMultiCommand->argHelper = helper;
+        retVal = pMultiCommand->initialize(args);
     }
 
     if (retVal != ErrorCode::SUCCESS) {
@@ -76,103 +58,90 @@ MultiCommand *MultiCommand::create(const std::vector<std::string> &argv, int &re
     return pMultiCommand;
 }
 
-std::string MultiCommand::eraseExtensionFromPath(std::string &filePath) {
-    size_t extPos = filePath.find_last_of(".", filePath.size());
-    if (extPos == std::string::npos) {
-        extPos = filePath.size();
-    }
-    std::string fileName;
-    std::string fileTrunk = filePath.substr(0, extPos);
-
-    return fileTrunk;
-}
-
-void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &singleLineWithArguments, int buildId) {
+void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &singleLineWithArguments, size_t buildId) {
     bool hasOutDir = false;
-    bool hasSpecificName = false;
-    for (auto arg : singleLineWithArguments) {
-        if (arg == "-out_dir") {
+    bool hasOutName = false;
+    for (const auto &arg : singleLineWithArguments) {
+        if (ConstStringRef("-out_dir") == arg) {
             hasOutDir = true;
-        }
-        if (arg == "-output") {
-            hasSpecificName = true;
+        } else if (ConstStringRef("-output") == arg) {
+            hasOutName = true;
         }
     }
+
     if (!hasOutDir) {
         singleLineWithArguments.push_back("-out_dir");
-        outDirForBuilds = eraseExtensionFromPath(pathToCMD);
+        outDirForBuilds = OfflineCompiler::getFileNameTrunk(pathToCommandFile);
         singleLineWithArguments.push_back(outDirForBuilds);
     }
-    if (!hasSpecificName) {
+    if (!hasOutName) {
         singleLineWithArguments.push_back("-output");
-        OutFileName = "build_no_" + std::to_string(buildId + 1);
-        singleLineWithArguments.push_back(OutFileName);
+        outFileName = "build_no_" + std::to_string(buildId + 1);
+        singleLineWithArguments.push_back(outFileName);
     }
     if (quiet)
         singleLineWithArguments.push_back("-q");
 }
 
-int MultiCommand::initialize(const std::vector<std::string> &allArgs) {
-    int retVal = ErrorCode::SUCCESS;
-    size_t numArgs = allArgs.size();
+int MultiCommand::initialize(const std::vector<std::string> &args) {
+    if (args[args.size() - 1] == "--help") {
+        printHelp();
+        return -1;
+    }
 
-    for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
-        if (allArgs[argIndex] == "-multi") {
-            if (numArgs > argIndex + 1)
-                pathToCMD = allArgs[argIndex + 1];
-            else {
-                printHelp();
-                return INVALID_COMMAND_LINE;
-            }
-            argIndex++;
-        } else if (allArgs[argIndex] == "-q") {
+    for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
+        if (hasMoreArgs && ConstStringRef("-multi") == currArg) {
+            pathToCommandFile = args[++argIndex];
+        } else if (hasMoreArgs && ConstStringRef("-output_file_list") == currArg) {
+            outputFileList = args[++argIndex];
+        } else if (ConstStringRef("-q") == currArg) {
             quiet = true;
-        } else if (allArgs[argIndex] == "-output_file_list") {
-            if (numArgs > argIndex + 1)
-                outputFileList = allArgs[argIndex + 1];
-            else {
-                printHelp();
-                return INVALID_COMMAND_LINE;
-            }
-            argIndex++;
-        } else if (allArgs[argIndex] == "--help") {
-            printHelp();
-            return PRINT_USAGE;
         } else {
-            printf("Invalid option (arg %d): %s\n", argIndex, allArgs[argIndex].c_str());
+            printf("Invalid option (arg %zu): %s\n", argIndex, currArg.c_str());
+            printHelp();
             return INVALID_COMMAND_LINE;
-            break;
         }
     }
 
     //save file with builds arguments to vector of strings, line by line
-    openFileWithBuildsArguments();
-    if (!lines.empty()) {
-        for (unsigned int i = 0; i < lines.size(); i++) {
-            std::vector<std::string> singleLineWithArguments;
-            unsigned int numberOfArg;
+    if (argHelper->fileExists(pathToCommandFile)) {
+        argHelper->readFileToVectorOfStrings(pathToCommandFile, lines);
+        if (lines.empty()) {
+            printf("Command file was empty.\n");
+            return INVALID_FILE;
+        }
+    } else {
+        printf("Could not find/open file with builds argument.s\n");
+        return INVALID_FILE;
+    }
 
-            singleLineWithArguments.push_back(allArgs[0]);
-            retVal = splitLineInSeparateArgs(singleLineWithArguments, lines[i], i);
-            if (retVal != ErrorCode::SUCCESS) {
-                retValues.push_back(retVal);
-                continue;
-            }
+    runBuilds(args[0]);
 
-            addAdditionalOptionsToSingleCommandLine(singleLineWithArguments, i);
+    if (outputFileList != "") {
+        argHelper->saveOutput(outputFileList, outputFile);
+    }
+    return showResults();
+}
 
-            numberOfArg = static_cast<unsigned int>(singleLineWithArguments.size());
+void MultiCommand::runBuilds(const std::string &argZero) {
+    for (size_t i = 0; i < lines.size(); ++i) {
+        std::vector<std::string> args = {argZero};
 
-            if (!quiet)
-                printf("\nCommand number %d: ", i + 1);
-            retVal = singleBuild(numberOfArg, singleLineWithArguments);
+        int retVal = splitLineInSeparateArgs(args, lines[i], i);
+        if (retVal != SUCCESS) {
             retValues.push_back(retVal);
+            continue;
         }
 
-        return showResults();
-    } else {
-        printHelp();
-        return INVALID_COMMAND_LINE;
+        if (!quiet) {
+            printf("Command numer %zu: \n", i + 1);
+        }
+
+        addAdditionalOptionsToSingleCommandLine(args, i);
+        retVal = singleBuild(args);
+        retValues.push_back(retVal);
     }
 }
 
@@ -194,83 +163,45 @@ Usage: ocloc multi <file_name>
 )===");
 }
 
-int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, int numberOfBuild) {
-    unsigned int len = static_cast<unsigned int>(command.length());
-
-    bool qot = false, sqot = false;
-    int arglen;
-
-    for (unsigned int i = 0; i < len; i++) {
-        int start = i;
-        if (command[i] == '\"') {
-            qot = true;
-        } else if (command[i] == '\'')
-            sqot = true;
-
-        if (qot) {
-            i++;
-            start++;
-            while (i < len && command[i] != '\"')
-                i++;
-            if (i < len)
-                qot = false;
-            arglen = i - start;
-            i++;
-        } else if (sqot) {
-            i++;
-            while (i < len && command[i] != '\'')
-                i++;
-            if (i < len)
-                sqot = false;
-            arglen = i - start;
-            i++;
+int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &commandsLine, size_t numberOfBuild) {
+    size_t start, end, argLen;
+    for (size_t i = 0; i < commandsLine.length(); ++i) {
+        const char &currChar = commandsLine[i];
+        if ('\"' == currChar) {
+            start = i + 1;
+            end = commandsLine.find('\"', start);
+        } else if ('\'' == currChar) {
+            start = i + 1;
+            end = commandsLine.find('\'', start);
+        } else if (' ' == currChar) {
+            continue;
         } else {
-            while (i < len && command[i] != ' ')
-                i++;
-            arglen = i - start;
+            start = i;
+            end = commandsLine.find(" ", start);
+            end = (end == std::string::npos) ? commandsLine.length() : end;
         }
-        qargs.push_back(command.substr(start, arglen));
-    }
-    if (qot || sqot) {
-        printf("One of the quotes is open in build number %d\n", numberOfBuild + 1);
-        return INVALID_COMMAND_LINE;
-    }
-    return ErrorCode::SUCCESS;
-}
-
-void MultiCommand::openFileWithBuildsArguments() {
-    std::fstream multiCmdFile;
-    std::stringstream fileContent;
-    multiCmdFile.open(pathToCMD, std::fstream::in);
-
-    if (multiCmdFile.is_open()) {
-        std::string param;
-        fileContent << multiCmdFile.rdbuf();
-        multiCmdFile.close();
-        while (std::getline(fileContent, param, '\n')) {
-            param.erase(param.find_last_not_of(" \r\t") + 1);
-            param.erase(0, param.find_first_not_of(" \r\t"));
-            if (!param.empty()) {
-                lines.push_back(param);
-            }
+        if (end == std::string::npos) {
+            printf("One of the quotes is open in build number %zu\n", numberOfBuild + 1);
+            return INVALID_FILE;
         }
-    } else {
-        printf("Can not open file with builds arguments\n");
+        argLen = end - start;
+        i = end;
+        qargs.push_back(commandsLine.substr(start, argLen));
     }
+    return SUCCESS;
 }
 
 int MultiCommand::showResults() {
-    int retValue = ErrorCode::SUCCESS;
+    int retValue = SUCCESS;
     int indexRetVal = 0;
     for (int retVal : retValues) {
-        if (retVal != ErrorCode::SUCCESS) {
-            if (retValue == ErrorCode::SUCCESS)
-                retValue = retVal;
-            if (!quiet)
+        retValue |= retVal;
+        if (!quiet) {
+            if (retVal != SUCCESS) {
                 printf("Build %d: failed. Error code: %d\n", indexRetVal, retVal);
-        } else {
-            if (!quiet)
+            } else {
                 printf("Build %d: successful\n", indexRetVal);
+            }
         }
         indexRetVal++;
     }

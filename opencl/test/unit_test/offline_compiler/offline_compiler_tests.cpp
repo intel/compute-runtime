@@ -62,7 +62,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, uniqueHelper.get()));
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -87,7 +87,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, uniqueHelper.get()));
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -97,11 +97,6 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
         EXPECT_TRUE(compilerOutputExists(outFileName, "bc") || compilerOutputExists(outFileName, "spv"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "gen"));
         EXPECT_TRUE(compilerOutputExists(outFileName, "bin"));
-    }
-
-    for (OfflineCompiler *pSingle : pMultiCommand->singleBuilds) {
-        std::string buildLog = pSingle->getBuildLog();
-        EXPECT_STREQ(buildLog.c_str(), "");
     }
 
     deleteFileWithArgs();
@@ -126,7 +121,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    pMultiCommand = MultiCommand::create(argv, retVal);
+    pMultiCommand = MultiCommand::create(argv, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -151,12 +146,12 @@ TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
     };
 
     testing::internal::CaptureStdout();
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, uniqueHelper.get()));
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pMultiCommand);
-    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+    EXPECT_EQ(INVALID_FILE, retVal);
     DebugManager.flags.PrintDebugMessages.set(false);
 }
 TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
@@ -177,7 +172,7 @@ TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
     testing::internal::CaptureStdout();
-    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal));
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, uniqueHelper.get()));
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_STRNE(output.c_str(), "");
@@ -207,7 +202,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithOutputFileListFlag) {
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
 
-    pMultiCommand = MultiCommand::create(argv, retVal);
+    pMultiCommand = MultiCommand::create(argv, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pMultiCommand);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -233,7 +228,7 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -262,7 +257,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -290,7 +285,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
         gEnvironment->devicePrefix.c_str(),
         "-llvm_text"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -328,7 +323,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
     // clang-format off
     uint8_t binary[] = {
         0x02, 0x23, 0x3, 0x40, 0x56, 0x7, 0x80, 0x90, 0x1, 0x03,
@@ -372,7 +367,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
         gEnvironment->devicePrefix.c_str(),
         "-cpp_file"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -396,7 +391,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
         "-out_dir",
         "offline_compiler_test"};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -415,7 +410,7 @@ TEST_F(OfflineCompilerTests, PrintUsage) {
         "--help"};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STRNE("", output.c_str());
@@ -433,7 +428,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -451,7 +446,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -467,7 +462,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     };
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA, true, retVal, uniqueHelper.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 
@@ -482,7 +477,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
         "test_files/ImANaughtyFile.cl",
         "-device"};
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB, true, retVal, uniqueHelper.get());
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -500,7 +495,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErro
         "foobar"};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device foobar.\n");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -515,7 +510,7 @@ TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, uniqueHelper.get());
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1052,7 +1047,7 @@ TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadO
     ASSERT_FALSE(fileExists(file.c_str()));
 
     auto helper = std::make_unique<OclocArgHelper>();
-    bool result = OfflineCompiler::readOptionsFromFile(options, file, helper);
+    bool result = OfflineCompiler::readOptionsFromFile(options, file, helper.get());
 
     EXPECT_FALSE(result);
 }

@@ -14,41 +14,39 @@
 
 #include <CL/cl.h>
 
-#include <fstream>
 #include <iostream>
+#include <sstream>
 
 namespace NEO {
 
 class MultiCommand {
   public:
-    static MultiCommand *create(const std::vector<std::string> &argv, int &retVal);
-    void deleteBuildsWithWarnigs();
-
-    std::vector<OfflineCompiler *> singleBuilds;
-
     MultiCommand &operator=(const MultiCommand &) = delete;
     MultiCommand(const MultiCommand &) = delete;
-    ~MultiCommand();
+    ~MultiCommand() = default;
+
+    static MultiCommand *create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper);
 
     std::string outDirForBuilds;
-    std::string outputFileList = "";
+    std::string outputFileList;
 
   protected:
-    int splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, int numberOfBuild);
-    void openFileWithBuildsArguments();
-    void addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &, int);
-    void printHelp();
-    int initialize(const std::vector<std::string> &allArgs);
+    MultiCommand() = default;
+
+    int initialize(const std::vector<std::string> &args);
+    int splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, size_t numberOfBuild);
     int showResults();
-    int singleBuild(size_t numArgs, const std::vector<std::string> &allArgs);
-    std::string eraseExtensionFromPath(std::string &filePath);
-    std::string OutFileName;
+    int singleBuild(const std::vector<std::string> &args);
+    void addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &, size_t buildId);
+    void printHelp();
+    void runBuilds(const std::string &argZero);
 
+    OclocArgHelper *argHelper = nullptr;
     std::vector<int> retValues;
-    std::string pathToCMD;
     std::vector<std::string> lines;
+    std::string outFileName;
+    std::string pathToCommandFile;
+    std::stringstream outputFile;
     bool quiet = false;
-
-    MultiCommand();
 };
 } // namespace NEO

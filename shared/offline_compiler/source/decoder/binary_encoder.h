@@ -17,13 +17,9 @@
 
 class BinaryEncoder {
   public:
-    BinaryEncoder() : iga(new IgaWrapper) {
-        iga->setMessagePrinter(messagePrinter);
-        argHelper = std::make_unique<OclocArgHelper>();
-    }
     BinaryEncoder(const std::string &dump, const std::string &elf)
         : pathToDump(dump), elfName(elf){};
-    BinaryEncoder(std::unique_ptr<OclocArgHelper> helper) : argHelper(std::move(helper)), iga(new IgaWrapper) {
+    BinaryEncoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
         iga->setMessagePrinter(messagePrinter);
     }
     int encode();
@@ -32,7 +28,7 @@ class BinaryEncoder {
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
-    std::unique_ptr<OclocArgHelper> argHelper = nullptr;
+    OclocArgHelper *argHelper = nullptr;
     bool ignoreIsaPadding = false;
     std::string pathToDump, elfName;
     MessagePrinter messagePrinter;

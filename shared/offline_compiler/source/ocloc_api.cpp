@@ -65,7 +65,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             printHelp();
             return ErrorCode::SUCCESS;
         } else if (numArgs > 1 && !strcmp(argv[1], "disasm")) {
-            BinaryDecoder disasm(std::move(helper));
+            BinaryDecoder disasm(helper.get());
             int retVal = disasm.validateInput(allArgs);
             if (retVal == 0) {
                 return disasm.decode();
@@ -73,7 +73,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 return retVal;
             }
         } else if (numArgs > 1 && !strcmp(argv[1], "asm")) {
-            BinaryEncoder assembler(std::move(helper));
+            BinaryEncoder assembler(helper.get());
             int retVal = assembler.validateInput(allArgs);
             if (retVal == 0) {
                 return assembler.encode();
@@ -82,21 +82,16 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             }
         } else if (numArgs > 1 && (!strcmp(argv[1], "multi") || !strcmp(argv[1], "-multi"))) {
             int retValue = ErrorCode::SUCCESS;
-            auto pMulti = std::unique_ptr<MultiCommand>(MultiCommand::create(allArgs, retValue));
+            std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(allArgs, retValue, helper.get()))};
             return retValue;
         } else if (requestedFatBinary(numArgs, argv)) {
-            return buildFatbinary(numArgs, argv);
+            return buildFatbinary(numArgs, argv, helper.get());
         } else {
             int retVal = ErrorCode::SUCCESS;
-            std::vector<std::string> allArgs;
-            if (numArgs > 1) {
-                allArgs.assign(argv, argv + numArgs);
-            }
 
-            OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, true, retVal, std::move(helper));
-
+            std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(numArgs, allArgs, true, retVal, helper.get())};
             if (retVal == ErrorCode::SUCCESS) {
-                retVal = buildWithSafetyGuard(pCompiler);
+                retVal = buildWithSafetyGuard(pCompiler.get());
 
                 std::string buildLog = pCompiler->getBuildLog();
                 if (buildLog.empty() == false) {
@@ -110,7 +105,6 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                     printf("Build failed with error code: %d\n", retVal);
                 }
             }
-            delete pCompiler;
             return retVal;
         }
     } catch (const std::exception &e) {

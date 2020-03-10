@@ -31,8 +31,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler() : OfflineCompiler() {
-        argHelper.reset(new OclocArgHelper(
-            0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr));
+        uniqueHelper = std::make_unique<OclocArgHelper>();
+        argHelper = uniqueHelper.get();
     }
 
     int initialize(size_t numArgs, const std::vector<std::string> &argv) {
@@ -90,5 +90,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     size_t getGenBinarySize() {
         return genBinarySize;
     }
+
+    std::unique_ptr<OclocArgHelper> uniqueHelper;
 };
 } // namespace NEO

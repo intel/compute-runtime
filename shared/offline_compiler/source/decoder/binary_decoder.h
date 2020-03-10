@@ -32,15 +32,9 @@ using PTMap = std::unordered_map<uint8_t, std::unique_ptr<PatchToken>>;
 
 class BinaryDecoder {
   public:
-    BinaryDecoder() : iga(new IgaWrapper) {
-        iga->setMessagePrinter(messagePrinter);
-        if (nullptr == argHelper) {
-            argHelper = std::make_unique<OclocArgHelper>();
-        }
-    }
     BinaryDecoder(const std::string &file, const std::string &patch, const std::string &dump)
         : binaryFile(file), pathToPatch(patch), pathToDump(dump){};
-    BinaryDecoder(std::unique_ptr<OclocArgHelper> helper) : argHelper(std::move(helper)), iga(new IgaWrapper) {
+    BinaryDecoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
         iga->setMessagePrinter(messagePrinter);
     };
     int decode();
@@ -48,7 +42,7 @@ class BinaryDecoder {
     void setMessagePrinter(const MessagePrinter &messagePrinter);
 
   protected:
-    std::unique_ptr<OclocArgHelper> argHelper = nullptr;
+    OclocArgHelper *argHelper = nullptr;
     bool ignoreIsaPadding = false;
     BinaryHeader programHeader, kernelHeader;
     std::vector<char> binary;
