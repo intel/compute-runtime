@@ -97,7 +97,6 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                     hwInfoFromTable.gtSystemInfo = {};
                     hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0);
                     HwInfoConfig *hwConfig = HwInfoConfig::get(hwInfoFromTable.platform.eProductFamily);
-                    hwInfoFromTable.featureTable.ftrE2ECompression = 0;
                     hwConfig->configureHardwareCustom(&hwInfoFromTable, nullptr);
                     EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
                     EXPECT_EQ(0, memcmp(&hwInfoFromTable.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
@@ -183,11 +182,9 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
                 defaultHwInfo.gtSystemInfo = {};
                 hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, 0x0);
                 HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
-                defaultHwInfo.featureTable.ftrE2ECompression = 0;
                 hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
                 EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
                 EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-
                 break;
             }
             default:

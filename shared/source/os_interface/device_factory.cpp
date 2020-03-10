@@ -51,7 +51,6 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
         HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-        hardwareInfo->featureTable.ftrE2ECompression = 0;
         hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
