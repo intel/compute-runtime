@@ -177,6 +177,48 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAlloca
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationAndWithPropertiesThenProperValueIsReturned) {
+    MockContext mockContext;
+    cl_int retVal = CL_INVALID_VALUE;
+    size_t paramValueSize = sizeof(void *);
+    size_t paramValueSizeRet = 0;
+
+    {
+        void *paramValue = reinterpret_cast<void *>(0xfeedbac);
+        retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_BASE_PTR_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(void *), paramValueSizeRet);
+        EXPECT_EQ(static_cast<void *>(nullptr), paramValue);
+    }
+    {
+        size_t paramValue = 1;
+        retVal = CL_INVALID_VALUE;
+        paramValueSize = sizeof(size_t);
+        retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_SIZE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
+        EXPECT_EQ(static_cast<size_t>(0u), paramValue);
+    }
+    {
+        cl_device_id paramValue = mockContext.getDevice(0);
+        retVal = CL_INVALID_VALUE;
+        paramValueSize = sizeof(cl_device_id);
+        retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_DEVICE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(cl_device_id), paramValueSizeRet);
+        EXPECT_EQ(static_cast<cl_device_id>(nullptr), paramValue);
+    }
+    {
+        cl_mem_alloc_flags_intel paramValue = 1;
+        retVal = CL_INVALID_VALUE;
+        paramValueSize = sizeof(cl_mem_properties_intel);
+        retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_FLAGS_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(cl_mem_properties_intel), paramValueSizeRet);
+        EXPECT_EQ(static_cast<cl_mem_alloc_flags_intel>(0u), paramValue);
+    }
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutSVMAllocationThenInvalidValueIsReturned) {
     MockContext mockContext;
     delete mockContext.svmAllocsManager;

@@ -3618,12 +3618,9 @@ cl_int clGetMemAllocInfoINTEL(
         return CL_INVALID_VALUE;
     }
 
-    auto unifiedMemoryAllocation = allocationsManager->getSVMAlloc(ptr);
-    if (!unifiedMemoryAllocation && paramName != CL_MEM_ALLOC_TYPE_INTEL) {
-        return CL_INVALID_VALUE;
-    }
-
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
+    auto unifiedMemoryAllocation = allocationsManager->getSVMAlloc(ptr);
+
     switch (paramName) {
     case CL_MEM_ALLOC_TYPE_INTEL: {
         if (!unifiedMemoryAllocation) {
@@ -3642,20 +3639,28 @@ cl_int clGetMemAllocInfoINTEL(
         break;
     }
     case CL_MEM_ALLOC_BASE_PTR_INTEL: {
-        retVal = changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress()));
-        return retVal;
+        if (!unifiedMemoryAllocation) {
+            return changeGetInfoStatusToCLResultType(info.set<void *>(nullptr));
+        }
+        return changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress()));
     }
     case CL_MEM_ALLOC_SIZE_INTEL: {
-        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(unifiedMemoryAllocation->size));
-        return retVal;
+        if (!unifiedMemoryAllocation) {
+            return changeGetInfoStatusToCLResultType(info.set<size_t>(0u));
+        }
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(unifiedMemoryAllocation->size));
     }
     case CL_MEM_ALLOC_FLAGS_INTEL: {
-        retVal = changeGetInfoStatusToCLResultType(info.set<cl_mem_alloc_flags_intel>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags));
-        return retVal;
+        if (!unifiedMemoryAllocation) {
+            return changeGetInfoStatusToCLResultType(info.set<cl_mem_alloc_flags_intel>(0u));
+        }
+        return changeGetInfoStatusToCLResultType(info.set<cl_mem_alloc_flags_intel>(unifiedMemoryAllocation->allocationFlagsProperty.allAllocFlags));
     }
     case CL_MEM_ALLOC_DEVICE_INTEL: {
-        retVal = changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device)));
-        return retVal;
+        if (!unifiedMemoryAllocation) {
+            return changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(nullptr)));
+        }
+        return changeGetInfoStatusToCLResultType(info.set<cl_device_id>(static_cast<cl_device_id>(unifiedMemoryAllocation->device)));
     }
 
     default: {
