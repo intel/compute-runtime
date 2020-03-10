@@ -8,5 +8,5 @@ RUN /root/prepare-arch.sh
 RUN cd /root/build ; cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
     -DDO_NOT_RUN_AUB_TESTS=1 ../neo ; \
-    ninja -j 2
+    ninja -j 1
 CMD ["/bin/bash"]
