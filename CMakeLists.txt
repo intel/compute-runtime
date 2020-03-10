@@ -304,6 +304,8 @@ if(NOT IGC__IGC_TARGETS)
             if(DEFINED IGC_DIR AND IS_DIRECTORY "${IGC_DIR}/${__tmp_LIBDIR}/pkgconfig/")
                 string(REPLACE "${NEO__IGC_INCLUDEDIR}" "${IGC_DIR}/include/igc" NEO__IGC_INCLUDE_DIRS "${NEO__IGC_INCLUDE_DIRS}")
             endif()
+            set(NEO__IGC_LIBRARY_PATH ${NEO__IGC_LIBDIR})
+            message(STATUS "IGC library dir: ${NEO__IGC_LIBDIR}")
 
             set(NEO__IGC_INCLUDE_DIR ${NEO__IGC_INCLUDE_DIRS})
             message(STATUS "IGC include dirs: ${NEO__IGC_INCLUDE_DIR}")
