@@ -273,7 +273,9 @@ std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
         auto platformId = platformsMap[productFamily];
         outDevices[platformId].push_back(std::move(device));
     }
-    std::reverse(outDevices.begin(), outDevices.end());
+    std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
+        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily;
+    });
     return outDevices;
 }
 

@@ -107,15 +107,18 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                 break;
             }
         }
+        cl_uint numPlatformsToExpose = std::min(numEntries, static_cast<cl_uint>(platformsImpl.size()));
+        if (numEntries == 0) {
+            numPlatformsToExpose = static_cast<cl_uint>(platformsImpl.size());
+        }
         if (platforms) {
-            // we only have one platform so we can program that directly
-            platforms[0] = platformsImpl[0].get();
+            for (auto i = 0u; i < numPlatformsToExpose; i++) {
+                platforms[i] = platformsImpl[i].get();
+            }
         }
 
-        // we only have a single platform at this time, so return 1 if num_platforms
-        // is non-nullptr
         if (numPlatforms) {
-            *numPlatforms = 1;
+            *numPlatforms = numPlatformsToExpose;
         }
     } while (false);
     TRACING_EXIT(clGetPlatformIDs, &retVal);
