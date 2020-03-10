@@ -41,9 +41,9 @@ struct CommandQueueHwFixture {
 struct OOQueueFixture : public CommandQueueHwFixture {
     typedef CommandQueueHwFixture BaseClass;
 
-    virtual void SetUp(ClDevice *_pDevice, cl_command_queue_properties _properties) override {
-        ASSERT_NE(nullptr, _pDevice);
-        BaseClass::pCmdQ = BaseClass::createCommandQueue(_pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override {
+        ASSERT_NE(nullptr, pDevice);
+        BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
         ASSERT_NE(nullptr, BaseClass::pCmdQ);
     }
 };

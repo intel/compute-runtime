@@ -92,7 +92,7 @@ struct CmdParse : public T {
     static size_t getCommandLengthHwSpecific(void *cmd);
     static size_t getAdditionalCommandLength(void *cmd);
 
-    static bool parseCommandBuffer(GenCmdList &_cmds, void *_buffer, size_t _length);
+    static bool parseCommandBuffer(GenCmdList &cmds, void *buffer, size_t length);
 
     template <typename CmdType>
     static void validateCommand(GenCmdList::iterator itorBegin, GenCmdList::iterator itorEnd);

@@ -46,7 +46,7 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         lockStreamCalled = true;
         return AUBCommandStreamReceiver::AubFileStream::lockStream();
     }
-    void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+    void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) override {
         mmioRegisterFromExpectMMIO = mmioRegister;
         expectedValueFromExpectMMIO = expectedValue;
     }

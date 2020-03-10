@@ -84,16 +84,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
-    virtual ~UltCommandStreamReceiver() override {
-    }
-
     UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : BaseClass(executionEnvironment, rootDeviceIndex), recursiveLockCounter(0),
                                                                                                      recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
     static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
         return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex);
     }
 
-    virtual GmmPageTableMngr *createPageTableManager() override {
+    GmmPageTableMngr *createPageTableManager() override {
         createPageTableManagerCalled = true;
         return nullptr;
     }

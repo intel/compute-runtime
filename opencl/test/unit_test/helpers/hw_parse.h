@@ -20,17 +20,7 @@
 namespace NEO {
 
 struct HardwareParse {
-    HardwareParse() : previousCS(nullptr),
-                      startCS(0),
-                      startCSRCS(0),
-                      sizeUsed(0),
-                      cmdInterfaceDescriptorData(nullptr),
-                      cmdMediaInterfaceDescriptorLoad(nullptr),
-                      cmdMediaVfeState(nullptr),
-                      cmdPipelineSelect(nullptr),
-                      cmdStateBaseAddress(nullptr),
-                      cmdWalker(nullptr),
-                      cmdGpgpuCsrBaseAddress(nullptr) {
+    HardwareParse() {
         itorMediaInterfaceDescriptorLoad = cmdList.end();
         itorMediaVfeState = cmdList.end();
         itorPipelineSelect = cmdList.end();
@@ -193,11 +183,11 @@ struct HardwareParse {
 
     // The starting point of parsing commandBuffers.  This is important
     // because as buffers get reused, we only want to parse the deltas.
-    LinearStream *previousCS;
-    size_t startCS;
-    size_t startCSRCS;
+    LinearStream *previousCS = nullptr;
+    size_t startCS = 0u;
+    size_t startCSRCS = 0u;
 
-    size_t sizeUsed;
+    size_t sizeUsed = 0u;
     GenCmdList cmdList;
     GenCmdList lriList;
     GenCmdList::iterator itorMediaInterfaceDescriptorLoad;
@@ -208,14 +198,14 @@ struct HardwareParse {
     GenCmdList::iterator itorBBStartAfterWalker;
     GenCmdList::iterator itorGpgpuCsrBaseAddress;
 
-    void *cmdInterfaceDescriptorData;
-    void *cmdMediaInterfaceDescriptorLoad;
-    void *cmdMediaVfeState;
-    void *cmdPipelineSelect;
-    void *cmdStateBaseAddress;
-    void *cmdWalker;
-    void *cmdBBStartAfterWalker;
-    void *cmdGpgpuCsrBaseAddress;
+    void *cmdInterfaceDescriptorData = nullptr;
+    void *cmdMediaInterfaceDescriptorLoad = nullptr;
+    void *cmdMediaVfeState = nullptr;
+    void *cmdPipelineSelect = nullptr;
+    void *cmdStateBaseAddress = nullptr;
+    void *cmdWalker = nullptr;
+    void *cmdBBStartAfterWalker = nullptr;
+    void *cmdGpgpuCsrBaseAddress = nullptr;
 };
 
 } // namespace NEO
