@@ -2426,7 +2426,7 @@ struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
     }
 };
 
-HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseEnqueueWriteBuffer) {
+HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBlockingEnqueueWriteBuffer) {
     MockContext context(pClDevice);
     MockCommandQueueHw<FamilyType> cmdQ(&context, pClDevice, nullptr);
 
@@ -2445,7 +2445,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseEnque
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(1u, cmdQ.EnqueueWriteBufferCounter);
-    EXPECT_TRUE(cmdQ.blockingWriteBuffer);
+    EXPECT_FALSE(cmdQ.blockingWriteBuffer);
 }
 
 HWTEST_F(BufferUnmapTest, givenBufferWithoutSharingHandlerWhenUnmappingThenDontUseEnqueueWriteBuffer) {
