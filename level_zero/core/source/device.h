@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -22,6 +23,7 @@ struct DeviceInfo;
 namespace NEO {
 class Device;
 class MemoryManager;
+class SourceLevelDebugger;
 } // namespace NEO
 
 namespace L0 {
@@ -109,6 +111,10 @@ struct Device : _ze_device_handle_t {
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const DeviceInfo &getDeviceInfo() const = 0;
     virtual NEO::Device *getNEODevice() = 0;
+
+    NEO::SourceLevelDebugger *getSourceLevelDebugger() {
+        return getNEODevice() ? reinterpret_cast<NEO::SourceLevelDebugger *>(getNEODevice()->getDebugger()) : nullptr;
+    }
 };
 
 } // namespace L0

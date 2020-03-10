@@ -72,6 +72,7 @@ struct ModuleImp : public Module {
     uint32_t maxGroupSize = 0U;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
+    bool debugEnabled = false;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName);

@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/device/device_info.h"
 #include "opencl/source/device/device_info_map.h"
@@ -570,6 +571,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
                 device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true);
     }
 
+    if (neoDevice->getDeviceInfo().debuggerActive) {
+        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+        device->getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
+    }
+
     return device;
 }
 
@@ -583,6 +589,11 @@ DeviceImp::~DeviceImp() {
     }
     metricContext.reset();
     builtins.reset();
+
+    if (neoDevice->getDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
+        getSourceLevelDebugger()->notifyDeviceDestruction();
+    }
+
     if (neoDevice) {
         neoDevice->decRefInternal();
     }
@@ -599,5 +610,4 @@ const DeviceInfo &DeviceImp::getDeviceInfo() const {
 NEO::Device *DeviceImp::getNEODevice() {
     return neoDevice;
 }
-
 } // namespace L0

@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/program/kernel_info.h"
 
@@ -24,6 +25,7 @@
 #include "level_zero/core/source/module_build_log.h"
 
 #include "compiler_options.h"
+#include "program_debug_data.h"
 
 #include <memory>
 
@@ -68,6 +70,11 @@ struct ModuleTranslationUnit {
 
         std::string options = buildOptions;
         std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, NEO::CompilerOptions::hasBufferOffsetArg);
+
+        if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
+            options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
+            internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::debugKernelEnable);
+        }
 
         NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
 
@@ -153,6 +160,8 @@ struct ModuleTranslationUnit {
             return false;
         }
 
+        processDebugData();
+
         size_t slmNeeded = NEO::getMaxInlineSlmNeeded(programInfo);
         size_t slmAvailable = 0U;
         NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
@@ -194,6 +203,7 @@ struct ModuleTranslationUnit {
         singleDeviceBinary.targetDevice.stepping = stepping;
         singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
         singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
+        singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->debugData.get()), this->debugDataSize);
         std::string packWarnings;
         std::string packErrors;
         auto packedDeviceBinary = NEO::packDeviceBinary(singleDeviceBinary, packErrors, packWarnings);
@@ -215,6 +225,39 @@ struct ModuleTranslationUnit {
         buildLog += newLogEntry.c_str();
         if ('\n' != *buildLog.rbegin()) {
             buildLog.append("\n");
+        }
+    }
+
+    void processDebugData() {
+        if (this->debugData != nullptr) {
+            iOpenCL::SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<iOpenCL::SProgramDebugDataHeaderIGC *>(debugData.get());
+
+            DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != programInfo.kernelInfos.size());
+
+            const iOpenCL::SKernelDebugDataHeaderIGC *kernelDebugHeader = reinterpret_cast<iOpenCL::SKernelDebugDataHeaderIGC *>(
+                ptrOffset(programDebugHeader, sizeof(iOpenCL::SProgramDebugDataHeaderIGC)));
+
+            const char *kernelName = nullptr;
+            const char *kernelDebugData = nullptr;
+
+            for (uint32_t i = 0; i < programDebugHeader->NumberOfKernels; i++) {
+                kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(iOpenCL::SKernelDebugDataHeaderIGC)));
+
+                auto kernelInfo = programInfo.kernelInfos[i];
+                UNRECOVERABLE_IF(kernelInfo->name.compare(0, kernelInfo->name.size(), kernelName) != 0);
+
+                kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
+
+                kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
+
+                kernelInfo->kernelDescriptor.external.debugData->vIsa = kernelDebugData;
+                kernelInfo->kernelDescriptor.external.debugData->genIsa = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
+                kernelInfo->kernelDescriptor.external.debugData->vIsaSize = kernelDebugHeader->SizeVisaDbgInBytes;
+                kernelInfo->kernelDescriptor.external.debugData->genIsaSize = kernelDebugHeader->SizeGenIsaDbgInBytes;
+
+                kernelDebugData = ptrOffset(kernelDebugData, static_cast<size_t>(kernelDebugHeader->SizeVisaDbgInBytes) + kernelDebugHeader->SizeGenIsaDbgInBytes);
+                kernelDebugHeader = reinterpret_cast<const iOpenCL::SKernelDebugDataHeaderIGC *>(kernelDebugData);
+            }
         }
     }
 
@@ -273,7 +316,18 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         return false;
     }
 
+    debugEnabled = this->translationUnit->debugDataSize > 0;
+
     this->updateBuildLog(neoDevice);
+
+    if (debugEnabled && device->getNEODevice()->isDebuggerActive()) {
+        for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+            device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
+                                                                    kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
+                                                                    kernelInfo->heapInfo.pKernelHeap,
+                                                                    kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
+        }
+    }
 
     if (false == success) {
         return false;
