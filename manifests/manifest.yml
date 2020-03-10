@@ -26,22 +26,22 @@ components:
     dest_dir: kmdaf
     revision: 710b620b08792ba0367bcabd54c479ede7518603
     type: git
+  level_zero:
+    branch: master
+    dest_dir: level_zero
+    repository: https://github.com/oneapi-src/level-zero
+    revision: v0.91
+    type: git
   libva:
     dest_dir: libva
     type: git
     branch: libva
     revision: c9bb65b
     repository: https://github.com/intel/libva.git
-  level_zero:
-    dest_dir: level_zero
-    type: git
-    branch: master
-    revision: v0.91
-    repository: https://github.com/oneapi-src/level-zero
   wdk:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 39ec79c0ca347796daa7b07fbb81dd1bf45ccad5-1355
-converter: M-1371
+    revision: a8173734bcadfb652dee6fef242e7634de9220d8-1390
+converter: M-1390
 version: '1'
