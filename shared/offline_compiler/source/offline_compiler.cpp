@@ -639,7 +639,7 @@ std::string getDevicesTypes() {
 }
 
 void OfflineCompiler::printUsage() {
-    printf(R"===(Compiles input file to Intel OpenCL GPU device binary (*.bin).
+    printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
@@ -648,7 +648,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -file <filename>              The input file to be compiled
                                 (by default input source format is
                                 OpenCL C kernel language).
-                                
+
   -device <device_type>         Target device.
                                 <device_type> can be: %s
                                 If multiple target devices are provided, ocloc
@@ -689,7 +689,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -32                           Forces target architecture to 32-bit pointers.
                                 Default pointer size is inherited from
-                                ocloc's pointer size.         
+                                ocloc's pointer size.
                                 This option is exclusive with -64.
 
   -64                           Forces target architecture to 64-bit pointers.
@@ -738,14 +738,14 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -q                            Will silence most of output messages.
 
   -cpp_file                     Will generate c++ file with C-array
-                                containing Intel OpenCL device binary.
+                                containing Intel Compute device binary.
 
   -output_no_suffix             Prevents ocloc from adding family name suffix.
 
   --help                        Print this usage message.
 
 Examples :
-  Compile file to Intel OpenCL GPU device binary (out = source_file_Gen9core.bin)
+  Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
            NEO::getDevicesTypes().c_str());

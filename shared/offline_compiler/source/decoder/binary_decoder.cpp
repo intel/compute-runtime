@@ -280,9 +280,9 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    messagePrinter.printf(R"===(Disassembles Intel OpenCL GPU device binary files.
+    messagePrinter.printf(R"===(Disassembles Intel Compute GPU device binary files.
 Output of such operation is a set of files that can be later used to
-reassemble back a valid Intel OpenCL GPU device binary (using ocloc 'asm'
+reassemble back a valid Intel Compute GPU device binary (using ocloc 'asm'
 command). This set of files contains:
 Program-scope data :
   - spirv.bin (optional) - spirV representation of the program from which
@@ -300,17 +300,17 @@ Kernel-scope data (<kname> is replaced by corresponding kernel's name):
 
 Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>] [-ignore_isa_padding]
   -file <file>              Input file to be disassembled.
-                            This file should be an Intel OpenCL GPU device binary.
+                            This file should be an Intel Compute GPU device binary.
 
-  -patch <patchtokens_dir>  Optional path to the directory containing 
-                            patchtoken definitions (patchlist.h, etc.) 
+  -patch <patchtokens_dir>  Optional path to the directory containing
+                            patchtoken definitions (patchlist.h, etc.)
                             as defined in intel-graphics-compiler (IGC) repo,
                             IGC subdirectory :
                             IGC/AdaptorOCL/ocl_igc_shared/executable_format
                             By default (when patchtokens_dir is not provided)
                             patchtokens won't be decoded.
 
-  -dump <dump_dir>          Optional path for files representing decoded binary. 
+  -dump <dump_dir>          Optional path for files representing decoded binary.
                             Default is './dump'.
 
   -device <device_type>     Optional target device of input binary
@@ -326,7 +326,7 @@ Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [
   --help                    Print this usage message.
 
 Examples:
-  Disassemble Intel OpenCL GPU device binary
+  Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
                           NEO::getDevicesTypes().c_str());
