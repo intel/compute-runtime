@@ -19,6 +19,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_win.cpp

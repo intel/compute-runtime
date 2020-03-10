@@ -19,7 +19,6 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/debugger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices.cpp
-
   ${NEO_CORE_DIRECTORY}/dll/options_dll.cpp
   ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
   ${NEO_CORE_DIRECTORY}/gmm_helper/page_table_mngr.cpp
@@ -52,11 +51,11 @@ set(RUNTIME_SRCS_DLL_LINUX
 
 set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/create_wddm_memory_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows/environment_variables.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/options_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
-  ${NEO_CORE_DIRECTORY}/os_interface/windows/sys_calls.cpp
+  ${NEO_CORE_DIRECTORY}/dll/windows/environment_variables.cpp
   ${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+  ${NEO_CORE_DIRECTORY}/os_interface/windows/sys_calls.cpp
   ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
   ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
 )

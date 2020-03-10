@@ -224,7 +224,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
                 ${NEO_CORE_DIRECTORY}/os_interface/windows/os_interface.cpp
                 ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
                 ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-                ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/environment_variables.cpp
+                ${NEO_CORE_DIRECTORY}/dll/windows/environment_variables.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/options_windows.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/os_interface.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/create_wddm_memory_manager.cpp
