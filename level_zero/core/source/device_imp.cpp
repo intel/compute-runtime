@@ -527,6 +527,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
     UNRECOVERABLE_IF(device == nullptr);
 
     device->setDriverHandle(driverHandle);
+    neoDevice->setSpecializedDevice(device);
 
     device->neoDevice = neoDevice;
     neoDevice->incRefInternal();
