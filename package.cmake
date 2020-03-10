@@ -137,6 +137,10 @@ if(UNIX)
   string(REPLACE ";" ", " CPACK_RPM_OPENCL_PACKAGE_REQUIRES "${_external_package_dependencies_rpm}")
   string(REPLACE ";" ", " CPACK_RPM_OCLOC_PACKAGE_REQUIRES "${_igc_package_dependencies_rpm}")
 
+  set(CPACK_DEBIAN_LEVEL-ZERO-GPU_PACKAGE_RECOMMENDS "level-zero")
+  set(CPACK_DEBIAN_LEVEL-ZERO-GPU_PACKAGE_SUGGESTS "level-zero")
+  set(CPACK_RPM_LEVEL-ZERO-GPU_PACKAGE_SUGGESTS "level-zero")
+
   set(CPACK_PROPERTIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package_config.cmake")
   set(CPACK_LD_LIBRARY_PATH "${NEO__GMM_LIBRARY_PATH}")
   include(CPack)
