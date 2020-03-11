@@ -53,7 +53,7 @@ TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsC
         MockPlatform platform(*executionEnvironment);
         platform.initializeWithNewDevices();
 
-        EXPECT_NE(nullptr, executionEnvironment->debugger);
+        EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
     }
 }
 
@@ -527,7 +527,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
     EXPECT_FALSE(interceptor.newDeviceCalled);
 }
 
-TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenNotCreatingNewSourceLevelDebugger) {
+TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
     if (platformDevices[0]->capabilityTable.debuggerSupported) {
@@ -548,11 +548,11 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenNotCreatingN
         interceptor.initCalled = false;
         auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
-        EXPECT_FALSE(interceptor.initCalled);
+        EXPECT_TRUE(interceptor.initCalled);
     }
 }
 
-TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReuseTheSameSourceLevelDebugger) {
+TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyUseDedicatedSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
     if (platformDevices[0]->capabilityTable.debuggerSupported) {
@@ -567,6 +567,6 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReuse
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getDebugger();
         auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
-        EXPECT_EQ(sourceLevelDebugger, device2->getDebugger());
+        EXPECT_NE(sourceLevelDebugger, device2->getDebugger());
     }
 }

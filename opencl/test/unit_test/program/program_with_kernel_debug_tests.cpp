@@ -102,7 +102,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
@@ -117,7 +117,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
@@ -157,7 +157,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -170,7 +170,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -182,7 +182,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -210,7 +210,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
         EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -229,7 +229,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
         EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
-        pDevice->executionEnvironment->debugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,

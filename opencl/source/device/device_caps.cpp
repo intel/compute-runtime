@@ -168,7 +168,7 @@ void Device::initializeCaps() {
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
 
-    deviceInfo.debuggerActive = (executionEnvironment->debugger) ? executionEnvironment->debugger->isDebuggerActive() : false;
+    deviceInfo.debuggerActive = (getRootDeviceEnvironment().debugger.get()) ? getRootDeviceEnvironment().debugger->isDebuggerActive() : false;
     if (deviceInfo.debuggerActive) {
         this->preemptionMode = PreemptionMode::Disabled;
     }

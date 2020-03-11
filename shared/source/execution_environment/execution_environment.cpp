@@ -7,12 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/default_cache_config.h"
-#include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
@@ -21,10 +16,6 @@ namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 
 ExecutionEnvironment::~ExecutionEnvironment() {
-    debugger.reset();
-    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
-        rootDeviceEnvironment->builtins.reset();
-    }
     if (memoryManager) {
         memoryManager->commonCleanup();
     }
@@ -54,10 +45,6 @@ void ExecutionEnvironment::initializeMemoryManager() {
         break;
     }
     DEBUG_BREAK_IF(!this->memoryManager);
-}
-
-void ExecutionEnvironment::initDebugger() {
-    debugger = Debugger::create(rootDeviceEnvironments[0]->getMutableHardwareInfo());
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {

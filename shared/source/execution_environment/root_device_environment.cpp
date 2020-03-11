@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -32,6 +33,11 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
         aubCenter.reset(new AubCenter(getHardwareInfo(), localMemoryEnabled, aubFileName, csrType));
     }
 }
+
+void RootDeviceEnvironment::initDebugger() {
+    debugger = Debugger::create(hwInfo.get());
+}
+
 const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {
     return hwInfo.get();
 }

@@ -33,7 +33,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
     void SetUp() override {
         ProgramSimpleFixture::SetUp();
         device = pClDevice;
-        pDevice->executionEnvironment->debugger.reset(new SourceLevelDebugger(nullptr));
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(new SourceLevelDebugger(nullptr));
 
         if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             pDevice->deviceInfo.debuggerActive = true;

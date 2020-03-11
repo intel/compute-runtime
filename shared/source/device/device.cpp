@@ -51,7 +51,7 @@ bool Device::createDeviceImpl() {
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
     if (!getDebugger()) {
-        this->executionEnvironment->initDebugger();
+        this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);

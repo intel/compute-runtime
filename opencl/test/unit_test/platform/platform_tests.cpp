@@ -151,7 +151,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionInactiveSourceLevelDebuggerWhenIniti
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     auto sourceLevelDebugger = new MockSourceLevelDebugger();
     sourceLevelDebugger->setActive(false);
-    pPlatform->peekExecutionEnvironment()->debugger.reset(sourceLevelDebugger);
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(sourceLevelDebugger);
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
@@ -168,7 +168,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionActiveSourceLevelDebuggerWhenInitial
     auto executionEnvironment = pPlatform->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    pPlatform->peekExecutionEnvironment()->debugger.reset(new MockActiveSourceLevelDebugger());
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger());
 
     EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);

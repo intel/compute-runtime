@@ -15,17 +15,18 @@
 
 namespace NEO {
 
+class AubCenter;
 class BuiltIns;
 class CompilerInterface;
-class AubCenter;
+class Debugger;
+class ExecutionEnvironment;
 class GmmClientContext;
 class GmmHelper;
-class ExecutionEnvironment;
 class GmmPageTableMngr;
+class HwDeviceId;
 class MemoryOperationsHandler;
 class OSInterface;
 struct HardwareInfo;
-class HwDeviceId;
 
 struct RootDeviceEnvironment {
   protected:
@@ -44,6 +45,7 @@ struct RootDeviceEnvironment {
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);
     void initGmm();
+    void initDebugger();
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
@@ -55,8 +57,9 @@ struct RootDeviceEnvironment {
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
 
-    std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
+    std::unique_ptr<BuiltIns> builtins;
+    std::unique_ptr<Debugger> debugger;
     ExecutionEnvironment &executionEnvironment;
 
   private:
