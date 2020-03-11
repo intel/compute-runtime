@@ -12,7 +12,7 @@ list(GET aub_test_config 3 eu_per_ss)
 
 add_custom_target(run_${product}_aub_tests ALL DEPENDS copy_test_files_${product} prepare_test_kernels)
 add_dependencies(run_aub_tests run_${product}_aub_tests)
-set_target_properties(run_${product}_aub_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
+set_target_properties(run_${product}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
 
 if(WIN32)
   add_dependencies(run_${product}_aub_tests mock_gdi)
