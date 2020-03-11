@@ -49,7 +49,7 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
     return true;
 }
 
-void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties) {
+void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo) {
     fillCachePolicyInProperties(allocationProperties,
                                 memoryProperties.flags.locallyUncachedResource,
                                 memoryProperties.flags.readOnly,

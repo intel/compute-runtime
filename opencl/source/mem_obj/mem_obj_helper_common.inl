@@ -67,9 +67,9 @@ bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryPropertiesFlags 
     return validateExtraMemoryProperties(memoryProperties, flags, flagsIntel);
 }
 
-AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties) {
+AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo) {
     AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
-    MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties);
+    MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
     return allocationProperties;
 }
 

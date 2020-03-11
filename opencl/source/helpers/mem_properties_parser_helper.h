@@ -27,13 +27,13 @@ class MemoryPropertiesParser {
                                       cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags, ObjType objectType);
 
     static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryPropertiesFlags memoryProperties, bool allocateMemory,
-                                                        size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {
+                                                        size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo) {
         AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource);
-        fillPoliciesInProperties(allocationProperties, memoryProperties);
+        fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
         return allocationProperties;
     }
 
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties);
+    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
                                             bool deviceOnlyVisibilty) {

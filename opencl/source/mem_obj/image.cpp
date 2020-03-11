@@ -268,7 +268,7 @@ Image *Image::create(Context *context,
             if (memoryProperties.flags.useHostPtr) {
 
                 if (!context->isSharedContext) {
-                    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, false, memoryProperties);
+                    AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, false, memoryProperties, context->getDevice(0)->getHardwareInfo());
 
                     memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -292,7 +292,7 @@ Image *Image::create(Context *context,
                     mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
                 }
             } else {
-                AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, true, memoryProperties);
+                AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, true, memoryProperties, context->getDevice(0)->getHardwareInfo());
                 memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
                 if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
