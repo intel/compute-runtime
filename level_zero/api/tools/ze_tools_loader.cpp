@@ -552,4 +552,5 @@ zetGetDebugProcAddrTable(
     pDdiTable->pfnWriteState = (zet_pfnDebugWriteState_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zetDebugWriteState");
     return result;
 }
-};
+
+} // extern C
