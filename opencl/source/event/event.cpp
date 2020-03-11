@@ -621,7 +621,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     }
 
     if (peekHasCallbacks() && !isUserEvent() && DebugManager.flags.EnableAsyncEventsHandler.get()) {
-        platform()->getAsyncEventsHandler()->registerEvent(this);
+        platformsImpl[0]->getAsyncEventsHandler()->registerEvent(this);
     }
 
     decRefInternal();
