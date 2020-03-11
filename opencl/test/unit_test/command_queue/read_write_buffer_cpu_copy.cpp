@@ -256,11 +256,7 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
     //read write on CPU is allowed, but not preffered. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
-    if (is32bit) {
-        EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
-    } else {
-        EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
-    }
+    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }
 
 TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluatedThenTrueIsReturned) {
@@ -304,10 +300,7 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhen
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, nullptr, 0u, nullptr));
 }
 
-TEST(ReadWriteBufferOnCpu, given32BitApplicationWhenLocalMemoryPoolAllocationIsAskedForPreferenceThenCpuIsChoosen) {
-    if (is64bit) {
-        GTEST_SKIP();
-    }
+TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThenCpuIsNotChoosen) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());
 
@@ -317,22 +310,5 @@ TEST(ReadWriteBufferOnCpu, given32BitApplicationWhenLocalMemoryPoolAllocationIsA
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::LocalMemory);
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
-}
-
-TEST(ReadWriteBufferOnCpu, given32BitAppAndLocalMemoryBufferWhenAskedForCpuTransferPreferenceThenTrueIsReturned) {
-    if (is64bit) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(true);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockContext ctx(device.get());
-
-    cl_int retVal = 0;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
-    ASSERT_NE(nullptr, buffer.get());
-
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }

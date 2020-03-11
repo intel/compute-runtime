@@ -531,13 +531,7 @@ bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
         return true;
     }
 
-    //if we are not in System Memory Pool, it is more beneficial to do the transfer on GPU
-    //for 32 bit applications, utilize CPU transfers here.
-    if (is64bit) {
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
 Buffer *Buffer::createBufferHw(Context *context,
