@@ -19,7 +19,7 @@ add_executable(igdrcl_${target_name}
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
-  ${NEO_CORE_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+  ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/drm_neo_create.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
@@ -32,11 +32,11 @@ if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
 endif()
 
-target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gmock-gtest)
+target_link_libraries(igdrcl_${target_name} ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gmock-gtest)
 
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
   ${CMAKE_CURRENT_SOURCE_DIR}

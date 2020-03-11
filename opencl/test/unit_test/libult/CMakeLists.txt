@@ -6,25 +6,25 @@
 
 macro(macro_for_each_gen)
   list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-    ${NEO_CORE_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
-    ${NEO_CORE_TEST_DIRECTORY}/unit_test/libult/${GEN_TYPE_LOWER}.cpp
-    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
-    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
-    ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${GEN_TYPE_LOWER}.cpp
+    ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
+    ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp
     ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
   )
 
-  if(EXISTS "${NEO_CORE_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_CORE_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
-    include_directories(${NEO_CORE_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
+  if(EXISTS "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
+    include_directories(${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/)
   endif()
 endmacro()
 
 apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
-  ${NEO_CORE_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/debugger.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
@@ -42,10 +42,10 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_aub_command_stream_receiver.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/ult_command_stream_receiver.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.cpp
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/helpers/memory_management.h
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.h
 )
 
 set(IGDRCL_SRCS_LIB_ULT_WINDOWS

@@ -91,7 +91,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
-  ${NEO_CORE_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
+  ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
   ${IGDRCL_SRCS_tests_compiler_mocks}
 )
 
@@ -117,7 +117,7 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/page_table_manager_functions.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/page_table_manager_functions.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.h
   )

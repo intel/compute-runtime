@@ -30,14 +30,14 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 
 target_include_directories(igdrcl_mt_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
   ${NEO_SOURCE_DIR}/opencl/source/gen_common
 )
 
 add_subdirectories()
 
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
-target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_mt_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 

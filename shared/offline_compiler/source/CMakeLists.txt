@@ -7,21 +7,21 @@
 project(ocloc_lib)
 
 set(CLOC_LIB_SRCS_LIB
-  ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_decoder.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
-  ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_encoder.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/ar/ar_encoder.cpp
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/elf.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/elf_decoder.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/elf_decoder.cpp
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/elf_encoder.h
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/elf_encoder.cpp
-  ${NEO_CORE_DIRECTORY}/device_binary_format/elf/ocl_elf.h
-  ${NEO_CORE_DIRECTORY}/helpers/abort.cpp
-  ${NEO_CORE_DIRECTORY}/helpers/debug_helpers.cpp
-  ${NEO_CORE_DIRECTORY}/helpers/file_io.cpp
-  ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_encoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_encoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_decoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_decoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
+  ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
+  ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
   ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
   ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
   ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
@@ -43,9 +43,9 @@ set(CLOC_LIB_SRCS_LIB
   ${OCLOC_DIRECTORY}/source/multi_command.h
   ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
   ${OCLOC_DIRECTORY}/source/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
-  ${NEO_CORE_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
-  ${NEO_CORE_DIRECTORY}/compiler_interface/create_main.cpp
-  ${NEO_CORE_DIRECTORY}/helpers/hw_info.cpp
+  ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
+  ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
   ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
   ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
 )
@@ -63,14 +63,14 @@ endif()
 
 if(WIN32)
   list(APPEND CLOC_LIB_SRCS_LIB
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
     ${NEO_SOURCE_DIR}/opencl/source/dll/windows/options_windows.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
     ${NEO_SOURCE_DIR}/opencl/source/dll/linux/options_linux.cpp
   )
 endif()
@@ -99,7 +99,7 @@ macro(macro_for_each_gen)
   endforeach()
   apply_macro_for_each_platform()
   
-  list(APPEND CLOC_LIB_SRCS_LIB ${NEO_CORE_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
+  list(APPEND CLOC_LIB_SRCS_LIB ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp)
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")
@@ -111,22 +111,22 @@ set(CLOC_LIB_SRCS
 add_library(ocloc_lib SHARED ${CLOC_LIB_SRCS})
 
 set(CLOC_SRCS
-   ${NEO_CORE_DIRECTORY}/os_interface/os_library.h
+   ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
    ${OCLOC_DIRECTORY}/source/ocloc_wrapper.h
    ${OCLOC_DIRECTORY}/source/ocloc_wrapper.cpp
    ${OCLOC_DIRECTORY}/source/utilities/get_path.h
 )
 if(WIN32)
   list(APPEND CLOC_SRCS
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/os_library_win.h
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
     ${OCLOC_DIRECTORY}/source/utilities/windows/get_path.cpp
 
   )
 else()
   list(APPEND CLOC_SRCS
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.cpp
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/os_library_linux.h
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
     ${OCLOC_DIRECTORY}/source/utilities/linux/get_path.cpp
   )
 endif()

@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(NOT DEFINED NEO_CORE_RELEASE_LIB_NAME)
+if(NOT DEFINED NEO_SHARED_RELEASE_LIB_NAME)
   MESSAGE(FATAL_ERROR "NEO Core library name undefined!")
 endif()
 
 include(enable_gens.cmake)
 
-function(generate_core_lib LIB_NAME MOCKABLE)
+function(generate_shared_lib LIB_NAME MOCKABLE)
   add_library(${LIB_NAME} STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
@@ -124,11 +124,11 @@ if(NOT MSVC)
 endif()
 
 if(DONT_CARE_OF_VIRTUALS)
-  generate_core_lib(${NEO_CORE_RELEASE_LIB_NAME} TRUE)
+  generate_shared_lib(${NEO_SHARED_RELEASE_LIB_NAME} TRUE)
 else()
-  generate_core_lib(${NEO_CORE_RELEASE_LIB_NAME} FALSE)
+  generate_shared_lib(${NEO_SHARED_RELEASE_LIB_NAME} FALSE)
   if(NOT SKIP_UNIT_TESTS)
-    generate_core_lib(${NEO_CORE_MOCKABLE_LIB_NAME} TRUE)
+    generate_shared_lib(${NEO_SHARED_MOCKABLE_LIB_NAME} TRUE)
   endif()
 endif()
 

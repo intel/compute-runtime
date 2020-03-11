@@ -47,20 +47,20 @@ endif()
 target_include_directories(igdrcl_aub_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(igdrcl_aub_tests PRIVATE
-  ${NEO_CORE_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
-  ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/page_fault_manager/default_asan_options.cpp
+  ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
-    ${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_CORE_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
@@ -69,7 +69,7 @@ copy_gmm_dll_for(igdrcl_aub_tests)
 add_subdirectories()
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_CORE_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_aub_tests ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 if(UNIX)
@@ -77,9 +77,9 @@ if(UNIX)
 else()
   add_dependencies(igdrcl_aub_tests ${GMM_TARGET_NAME})
   target_sources(igdrcl_aub_tests PRIVATE
-    ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_CORE_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
 create_project_source_tree(igdrcl_aub_tests)

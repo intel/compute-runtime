@@ -193,14 +193,14 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
     add_library(${TARGET_NAME_L0}
       SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-        ${NEO_CORE_DIRECTORY}/dll/options_dll.cpp
-        ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
-        ${NEO_CORE_DIRECTORY}/utilities/cpuintrinsics.cpp
-        ${NEO_CORE_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
-        ${NEO_CORE_DIRECTORY}/gmm_helper/page_table_mngr.cpp
-        ${NEO_CORE_DIRECTORY}/gmm_helper/resource_info.cpp
-        ${NEO_CORE_DIRECTORY}/helpers/abort.cpp
-        ${NEO_CORE_DIRECTORY}/helpers/debug_helpers.cpp
+        ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
+        ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
+        ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
+        ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
+        ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
+        ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
+        ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+        ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     )
 
     target_sources(${TARGET_NAME_L0}
@@ -218,13 +218,13 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
     if(WIN32)
         target_sources(${TARGET_NAME_L0}
             PRIVATE
-                ${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
-                ${NEO_CORE_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-                ${NEO_CORE_DIRECTORY}/os_interface/windows/sys_calls.cpp
-                ${NEO_CORE_DIRECTORY}/os_interface/windows/os_interface.cpp
-                ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
-                ${NEO_CORE_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
-                ${NEO_CORE_DIRECTORY}/dll/windows/environment_variables.cpp
+                ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
+                ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
+                ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_interface.cpp
+                ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
+                ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+                ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/options_windows.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/os_interface.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/windows/create_wddm_memory_manager.cpp
@@ -236,7 +236,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
     else()
         target_sources(${TARGET_NAME_L0}
             PRIVATE
-                ${NEO_CORE_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+                ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/allocator_helper.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/create_drm_memory_manager.cpp
                 ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
@@ -280,7 +280,7 @@ target_sources(${TARGET_NAME_L0} PRIVATE ${L0_SRCS_DLL})
 if(UNIX)
     target_sources(${TARGET_NAME_L0}
         PRIVATE
-            ${NEO_CORE_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
+            ${NEO_SHARED_DIRECTORY}/os_interface/linux/gmm_interface_linux.cpp
             ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/drm_neo_create.cpp
     )
     set(OS_SPECIFIC_LIBS dl pthread rt)
@@ -311,15 +311,12 @@ else()
     )
     add_dependencies(${TARGET_NAME_L0} ${GMM_TARGET_NAME})
     target_sources(${TARGET_NAME_L0} PRIVATE
-      ${NEO_CORE_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
+      ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
     )
 endif()
 
 target_link_libraries(${TARGET_NAME_L0}
-    ${NEO_RELEASE_LIB_NAME}
-    ${NEO_CORE_RELEASE_LIB_NAME}
-    ${NEO_RELEASE_LIB_NAME}
-    ${NEO_CORE_RELEASE_LIB_NAME}
+    ${NEO_STATICALLY_LINKED_LIBRARIES}
     ${OS_SPECIFIC_LIBS}
 )
 if(UNIX)
