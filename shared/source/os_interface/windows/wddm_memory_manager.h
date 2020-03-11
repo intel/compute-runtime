@@ -59,6 +59,7 @@ class WddmMemoryManager : public MemoryManager {
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
     void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) override;
+    bool isCpuCopyRequired(const void *ptr) override;
 
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

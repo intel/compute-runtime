@@ -30,6 +30,7 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
 #include <algorithm>
+#include <emmintrin.h>
 
 namespace NEO {
 
@@ -557,6 +558,72 @@ void *WddmMemoryManager::reserveCpuAddressRange(size_t size, uint32_t rootDevice
 
 void WddmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) {
     getWddm(rootDeviceIndex).releaseReservedAddress(reserved);
+}
+
+bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
+    //check if any device support local memory
+    if (std::all_of(this->localMemorySupported.begin(), this->localMemorySupported.end(), [](bool value) { return !value; })) {
+        return false;
+    }
+
+    //function checks what is the delta between reading from cachead memory
+    //compare to reading from provided pointer
+    //if value is above threshold, it means that pointer is uncached.
+    constexpr auto slownessFactor = 50u;
+    static int64_t meassurmentOverhead = std::numeric_limits<int64_t>::max();
+    static int64_t fastestLocalRead = std::numeric_limits<int64_t>::max();
+
+    //local variable that we will read for comparison
+    int cacheable = 1;
+    volatile int *localVariablePointer = &cacheable;
+    volatile const int *volatileInputPtr = static_cast<volatile const int *>(ptr);
+
+    int64_t timestamp0, timestamp1, localVariableReadDelta, inputPointerReadDelta;
+
+    //compute timing overhead
+    _mm_lfence();
+    timestamp0 = __rdtsc();
+    _mm_lfence();
+    timestamp1 = __rdtsc();
+    _mm_lfence();
+
+    if (timestamp1 - timestamp0 < meassurmentOverhead) {
+        meassurmentOverhead = timestamp1 - timestamp0;
+    }
+
+    //dummy read
+    cacheable = *localVariablePointer;
+
+    _mm_lfence();
+    timestamp0 = __rdtsc();
+    _mm_lfence();
+    //do read
+    cacheable = *localVariablePointer;
+    _mm_lfence();
+    timestamp1 = __rdtsc();
+    _mm_lfence();
+    localVariableReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
+    if (localVariableReadDelta < 0) {
+        localVariableReadDelta = 1;
+    }
+    if (localVariableReadDelta < fastestLocalRead) {
+        fastestLocalRead = localVariableReadDelta;
+    }
+    //dummy read
+    cacheable = *volatileInputPtr;
+
+    _mm_lfence();
+    timestamp0 = __rdtsc();
+    _mm_lfence();
+    cacheable = *volatileInputPtr;
+    _mm_lfence();
+    timestamp1 = __rdtsc();
+    _mm_lfence();
+    inputPointerReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
+    if (inputPointerReadDelta < 0) {
+        inputPointerReadDelta = 1;
+    }
+    return inputPointerReadDelta > slownessFactor * fastestLocalRead;
 }
 
 } // namespace NEO
