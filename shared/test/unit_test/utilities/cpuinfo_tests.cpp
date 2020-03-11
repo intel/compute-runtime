@@ -62,6 +62,8 @@ TEST(CpuInfoTest, giveFunctionIsNotAvailableWhenFeatureIsNotSupportedThenMaskBit
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
+    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
+    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
@@ -96,6 +98,8 @@ TEST(CpuInfoTest, giveFunctionIsAvailableWhenFeatureIsNotSupportedThenMaskBitIsO
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
+    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
+    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
@@ -130,6 +134,8 @@ TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
     EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
+    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
+    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }

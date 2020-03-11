@@ -49,6 +49,8 @@ struct CpuInfo {
     static const uint64_t featureSha = 0x800000000ULL;
     static const uint64_t featureMpx = 0x1000000000ULL;
     static const uint64_t featureClflush = 0x2000000000ULL;
+    static const uint64_t featureTsc = 0x4000000000ULL;
+    static const uint64_t featureRdtscp = 0x8000000000ULL;
 
     CpuInfo() : features(featureNone) {
     }
@@ -75,7 +77,15 @@ struct CpuInfo {
             }
 
             {
+                features |= cpuInfo[3] & BIT(4) ? featureTsc : featureNone;
+            }
+
+            {
                 features |= cpuInfo[3] & BIT(15) ? featureCmov : featureNone;
+            }
+
+            {
+                features |= cpuInfo[3] & BIT(19) ? featureClflush : featureNone;
             }
 
             {
@@ -141,10 +151,6 @@ struct CpuInfo {
             {
                 features |= cpuInfo[2] & BIT(30) ? featureRdrnd : featureNone;
             }
-
-            {
-                features |= cpuInfo[3] & BIT(19) ? featureClflush : featureNone;
-            }
         }
 
         if (numFunctionIds >= 7u) {
@@ -174,6 +180,10 @@ struct CpuInfo {
             cpuid(cpuInfo, 0x80000001);
             {
                 features |= cpuInfo[2] & BIT(5) ? featureLzcnt : featureNone;
+            }
+
+            {
+                features |= cpuInfo[3] & BIT(27) ? featureRdtscp : featureNone;
             }
         }
     }
