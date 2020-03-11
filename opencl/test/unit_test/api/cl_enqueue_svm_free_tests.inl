@@ -10,6 +10,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
 
@@ -34,17 +35,20 @@ TEST_F(clEnqueueSVMFreeTests, GivenInvalidCommandQueueWhenFreeingSVMThenInvalidC
 }
 
 TEST_F(clEnqueueSVMFreeTests, GivenNonZeroNumOfSVMPointersAndNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
-    auto retVal = clEnqueueSVMFree(
-        pCommandQueue, // cl_command_queue command_queue
-        1,             // cl_uint num_svm_pointers
-        nullptr,       // void *svm_pointers[]
-        nullptr,       // (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
-        nullptr,       // void *user_data
-        0,             // cl_uint num_events_in_wait_list
-        nullptr,       // const cl_event *event_wait_list
-        nullptr        // cl_event *event
-    );
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        auto retVal = clEnqueueSVMFree(
+            pCommandQueue, // cl_command_queue command_queue
+            1,             // cl_uint num_svm_pointers
+            nullptr,       // void *svm_pointers[]
+            nullptr,       // (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
+            nullptr,       // void *user_data
+            0,             // cl_uint num_events_in_wait_list
+            nullptr,       // const cl_event *event_wait_list
+            nullptr        // cl_event *event
+        );
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 }
 
 TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNonNullSVMPointersWhenFreeingSVMThenInvalidValueErrorIsReturned) {
@@ -139,4 +143,27 @@ TEST_F(clEnqueueSVMFreeTests, GivenZeroNumOfSVMPointersAndNullSVMPointersWhenFre
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 }
+
+TEST_F(clEnqueueSVMFreeTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMFreeThenInvalidOperationErrorIsReturned) {
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.ftrSvm = false;
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    cl_device_id deviceId = pDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr);
+
+    auto retVal = clEnqueueSVMFree(
+        pCommandQueue.get(), // cl_command_queue command_queue
+        0,                   // cl_uint num_svm_pointers
+        nullptr,             // void *svm_pointers[]
+        nullptr,             // (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
+        nullptr,             // void *user_data
+        0,                   // cl_uint num_events_in_wait_list
+        nullptr,             // const cl_event *event_wait_list
+        nullptr              // cl_event *event
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 } // namespace ULT

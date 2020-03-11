@@ -9,6 +9,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
 
@@ -33,17 +34,20 @@ TEST_F(clEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThe
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
-    auto retVal = clEnqueueSVMMemFill(
-        pCommandQueue, // cl_command_queue command_queue
-        nullptr,       // void *svm_ptr
-        nullptr,       // const void *pattern
-        0,             // size_t pattern_size
-        256,           // size_t size
-        0,             // cl_uint num_events_in_wait_list
-        nullptr,       // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
-    );
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        auto retVal = clEnqueueSVMMemFill(
+            pCommandQueue, // cl_command_queue command_queue
+            nullptr,       // void *svm_ptr
+            nullptr,       // const void *pattern
+            0,             // size_t pattern_size
+            256,           // size_t size
+            0,             // cl_uint num_events_in_wait_list
+            nullptr,       // cl_evebt *event_wait_list
+            nullptr        // cL_event *event
+        );
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
@@ -119,4 +123,27 @@ TEST_F(clEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuc
         clSVMFree(pContext, ptrSvm);
     }
 }
+
+TEST_F(clEnqueueSVMMemFillTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemFillThenInvalidOperationErrorIsReturned) {
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.ftrSvm = false;
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    cl_device_id deviceId = pDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr);
+
+    auto retVal = clEnqueueSVMMemFill(
+        pCommandQueue.get(), // cl_command_queue command_queue
+        nullptr,             // void *svm_ptr
+        nullptr,             // const void *pattern
+        0,                   // size_t pattern_size
+        256,                 // size_t size
+        0,                   // cl_uint num_events_in_wait_list
+        nullptr,             // cl_evebt *event_wait_list
+        nullptr              // cL_event *event
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 } // namespace ULT

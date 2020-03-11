@@ -581,11 +581,16 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithoutIncorrec
 
 TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
     auto mockContext = std::make_unique<MockContext>();
+    const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
+        using MockCommandQueue::MockCommandQueue;
         cl_int enqueueSVMMemFill(void *svmPtr,
                                  const void *pattern,
                                  size_t patternSize,
@@ -606,7 +611,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParam
         void *expectedDstPtr = nullptr;
     };
 
-    MockedCommandQueue queue;
+    MockedCommandQueue queue{*mockContext};
     queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
     cl_int setValue = 12u;
 
@@ -623,11 +628,16 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithoutIncorre
 
 TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
     auto mockContext = std::make_unique<MockContext>();
+    const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
+        using MockCommandQueue::MockCommandQueue;
         cl_int enqueueSVMMemFill(void *svmPtr,
                                  const void *pattern,
                                  size_t patternSize,
@@ -648,7 +658,7 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperPara
         void *expectedDstPtr = nullptr;
     };
 
-    MockedCommandQueue queue;
+    MockedCommandQueue queue{*mockContext};
     queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
     cl_int setValue = 12u;
 
@@ -664,12 +674,17 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueT
 TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParamtersArePassed) {
 
     auto mockContext = std::make_unique<MockContext>();
+    const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
     auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
 
     struct MockedCommandQueue : public MockCommandQueue {
+        using MockCommandQueue::MockCommandQueue;
         cl_int enqueueSVMMemcpy(cl_bool blockingCopy,
                                 void *dstPtr,
                                 const void *srcPtr,
@@ -689,7 +704,7 @@ TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopi
         void *expectedDstPtr = nullptr;
         const void *expectedSrcPtr = nullptr;
     };
-    MockedCommandQueue queue;
+    MockedCommandQueue queue{*mockContext};
     queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
     queue.expectedSrcPtr = unfiedMemorySharedAllocation;
 
@@ -762,6 +777,10 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithE
 }
 
 TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemoryDst = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
@@ -779,6 +798,10 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEven
 }
 
 TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);
@@ -794,6 +817,10 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEven
 }
 
 TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+    const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(this->context, this->context->getDevice(0u), nullptr, 400, 0, &retVal);

@@ -4173,6 +4173,13 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         return retVal;
     }
 
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMFree, &retVal);
+        return retVal;
+    }
+
     if (((svmPointers != nullptr) && (numSvmPointers == 0)) ||
         ((svmPointers == nullptr) && (numSvmPointers != 0))) {
         retVal = CL_INVALID_VALUE;
@@ -4221,6 +4228,13 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                    "event", NEO::FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
+        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        return retVal;
+    }
+
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
         return retVal;
     }
@@ -4276,6 +4290,13 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
         return retVal;
     }
 
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        return retVal;
+    }
+
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
@@ -4325,6 +4346,13 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         return retVal;
     }
 
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        return retVal;
+    }
+
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clEnqueueSVMMap, &retVal);
@@ -4368,6 +4396,13 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
                    "event", NEO::FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
+        TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+        return retVal;
+    }
+
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
         return retVal;
     }
@@ -5027,6 +5062,13 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         return retVal;
     }
 
+    auto &device = pCommandQueue->getDevice();
+    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+        return retVal;
+    }
+
     if (numSvmPointers == 0 || svmPointers == nullptr) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
@@ -5041,12 +5083,9 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
         return retVal;
     }
-    auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
 
-    if (pSvmAllocMgr == nullptr) {
-        retVal = CL_INVALID_VALUE;
-        return retVal;
-    }
+    auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
+    UNRECOVERABLE_IF(pSvmAllocMgr == nullptr);
 
     for (uint32_t i = 0; i < numSvmPointers; i++) {
         auto svmData = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
