@@ -110,6 +110,14 @@ struct EventPoolImp : public EventPool {
     ze_result_t closeIpcHandle() override;
 
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override {
+        if (desc->index > (this->getPoolSize() - 1)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        if ((this->getPoolUsedCount() + 1) > this->getPoolSize()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         *phEvent = Event::create(this, desc, this->getDevice());
 
         return ZE_RESULT_SUCCESS;
@@ -367,28 +375,5 @@ ze_result_t EventPoolImp::destroy() {
 
     return ZE_RESULT_SUCCESS;
 }
-
-ze_result_t eventPoolOpenIpcHandle(ze_driver_handle_t hDriver, ze_ipc_event_pool_handle_t hIpc,
-                                   ze_event_pool_handle_t *phEventPool) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t eventCreate(ze_event_pool_handle_t hEventPool, const ze_event_desc_t *desc,
-                        ze_event_handle_t *phEvent) {
-    EventPool *eventPool = EventPool::fromHandle(hEventPool);
-    UNRECOVERABLE_IF(eventPool == nullptr);
-
-    if (desc->index > (eventPool->getPoolSize() - 1)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if ((eventPool->getPoolUsedCount() + 1) > eventPool->getPoolSize()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    return eventPool->createEvent(desc, phEvent);
-}
-
-ze_result_t eventDestroy(ze_event_handle_t hEvent) { return Event::fromHandle(hEvent)->destroy(); }
 
 } // namespace L0

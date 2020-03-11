@@ -291,4 +291,9 @@ ze_result_t DriverHandleImp::createEventPool(const ze_event_pool_desc_t *desc,
     return device->createEventPool(desc, phEventPool);
 }
 
+ze_result_t DriverHandleImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+                                                    ze_event_pool_handle_t *phEventPool) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0

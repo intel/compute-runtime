@@ -118,8 +118,4 @@ ze_result_t FenceImp::hostSynchronize(uint32_t timeout) {
     return ret;
 }
 
-ze_result_t fenceDestroy(ze_fence_handle_t phFence) {
-    return Fence::fromHandle(phFence)->destroy();
-}
-
 } // namespace L0

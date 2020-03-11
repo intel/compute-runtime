@@ -36,6 +36,4 @@ struct ModuleBuildLog : _ze_module_build_log_handle_t {
     inline ze_module_build_log_handle_t toHandle() { return this; }
 };
 
-ze_result_t moduleBuildLogDestroy(ze_module_build_log_handle_t hModuleBuildLog);
-
 } // namespace L0

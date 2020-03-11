@@ -100,12 +100,4 @@ struct EventPool : _ze_event_pool_handle_t {
     NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
 };
 
-ze_result_t eventPoolOpenIpcHandle(ze_driver_handle_t hDriver, ze_ipc_event_pool_handle_t hIpc,
-                                   ze_event_pool_handle_t *phEventPool);
-
-ze_result_t eventCreate(ze_event_pool_handle_t hEventPool, const ze_event_desc_t *desc,
-                        ze_event_handle_t *phEvent);
-
-ze_result_t eventDestroy(ze_event_handle_t hEvent);
-
 } // namespace L0

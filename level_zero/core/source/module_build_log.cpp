@@ -65,8 +65,4 @@ ModuleBuildLog *ModuleBuildLog::create() {
     return moduleBuildLog;
 }
 
-ze_result_t moduleBuildLogDestroy(ze_module_build_log_handle_t hModuleBuildLog) {
-    return ModuleBuildLog::fromHandle(hModuleBuildLog)->destroy();
-}
-
 } // namespace L0

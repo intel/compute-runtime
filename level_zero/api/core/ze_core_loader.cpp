@@ -812,4 +812,5 @@ zeGetSamplerProcAddrTable(
     }
     return result;
 }
-}
+
+} // extern "C"

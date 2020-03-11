@@ -106,7 +106,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
                                          uint32_t globalSizeZ, uint32_t *groupSizeX,
                                          uint32_t *groupSizeY, uint32_t *groupSizeZ) = 0;
 
-    virtual uint32_t suggestMaxCooperativeGroupCount() = 0;
+    virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) = 0;
 
     virtual const KernelImmutableData *getImmutableData() const = 0;
     virtual std::unique_ptr<Kernel> clone() const = 0;

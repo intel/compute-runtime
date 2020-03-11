@@ -70,9 +70,4 @@ struct CommandQueuePopulateFactory {
     }
 };
 
-ze_result_t fenceCreate(ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc,
-                        ze_fence_handle_t *phFence);
-
-ze_result_t fenceDestroy(ze_fence_handle_t hFence);
-
 } // namespace L0

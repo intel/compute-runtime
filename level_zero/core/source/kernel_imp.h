@@ -53,7 +53,7 @@ struct KernelImp : Kernel {
                                  uint32_t *groupSizeX, uint32_t *groupSizeY,
                                  uint32_t *groupSizeZ) override;
 
-    uint32_t suggestMaxCooperativeGroupCount() override;
+    ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) override;
 
     const uint8_t *getCrossThreadData() const override { return crossThreadData.get(); }
     uint32_t getCrossThreadDataSize() const override { return crossThreadDataSize; }

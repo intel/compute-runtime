@@ -318,7 +318,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t KernelImp::suggestMaxCooperativeGroupCount() {
+ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount) {
     UNRECOVERABLE_IF(0 == groupSize[0]);
     UNRECOVERABLE_IF(0 == groupSize[1]);
     UNRECOVERABLE_IF(0 == groupSize[2]);
@@ -339,15 +339,16 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount() {
     auto usesBarriers = descriptor.kernelAttributes.flags.usesBarriers;
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
-    return NEO::KernelHelper::getMaxWorkGroupCount(descriptor.kernelAttributes.simdSize,
-                                                   availableThreadCount,
-                                                   dssCount,
-                                                   dssCount * KB * hardwareInfo.capabilityTable.slmSize,
-                                                   hwHelper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize),
-                                                   static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                                   hwHelper.getBarriersCountFromHasBarriers(usesBarriers),
-                                                   workDim,
-                                                   localWorkSize);
+    *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(descriptor.kernelAttributes.simdSize,
+                                                               availableThreadCount,
+                                                               dssCount,
+                                                               dssCount * KB * hardwareInfo.capabilityTable.slmSize,
+                                                               hwHelper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize),
+                                                               static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
+                                                               hwHelper.getBarriersCountFromHasBarriers(usesBarriers),
+                                                               workDim,
+                                                               localWorkSize);
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t KernelImp::setAttribute(ze_kernel_attribute_t attr, uint32_t size, const void *pValue) {

@@ -106,12 +106,6 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     return commandQueue;
 }
 
-ze_result_t fenceCreate(ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc,
-                        ze_fence_handle_t *phFence) {
-    auto commandQueue = static_cast<CommandQueueImp *>(CommandQueue::fromHandle(hCommandQueue));
-    return commandQueue->createFence(desc, phFence);
-}
-
 ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() {
     return desc.mode;
 }

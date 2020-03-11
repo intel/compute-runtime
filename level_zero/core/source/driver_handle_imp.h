@@ -46,6 +46,7 @@ struct DriverHandleImp : public DriverHandle {
                                 uint32_t numDevices,
                                 ze_device_handle_t *phDevices,
                                 ze_event_pool_handle_t *phEventPool) override;
+    ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) override;
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> devices);

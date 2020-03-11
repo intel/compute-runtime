@@ -51,6 +51,4 @@ struct Fence : _ze_fence_handle_t {
     NEO::GraphicsAllocation *allocation = nullptr;
 };
 
-ze_result_t fenceDestroy(ze_fence_handle_t *phFence);
-
 } // namespace L0
