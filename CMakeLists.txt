@@ -427,14 +427,16 @@ else()
       if(DEFINED __tmp_LIBDIR)
         string(REPLACE "${NEO__GMM_INCLUDEDIR}" "${GMM_DIR}/include/igdgmm" NEO__GMM_INCLUDE_DIRS "${NEO__GMM_INCLUDE_DIRS}")
         string(REPLACE "${NEO__GMM_LIBDIR}" "${GMM_DIR}/${__tmp_LIBDIR}" NEO__GMM_LIBDIR "${NEO__GMM_LIBDIR}")
-        set(NEO__GMM_LIBRARY_PATH "${NEO__GMM_LIBDIR}")
       endif()
 
       set(GMM_TARGET_NAME "igfx_gmmumd_dll")
       set(GMM_LINK_NAME ${NEO__GMM_LIBRARIES})
 
       set(NEO__GMM_INCLUDE_DIR ${NEO__GMM_INCLUDE_DIRS})
+      set(NEO__GMM_LIBRARY_PATH "${NEO__GMM_LIBDIR}")
+
       message(STATUS "GmmLib include dirs: ${NEO__GMM_INCLUDE_DIR}")
+      message(STATUS "GmmLib lib dirs: ${NEO__GMM_LIBDIR}")
     else()
       message(FATAL_ERROR "GmmLib not found!")
     endif()
