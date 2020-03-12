@@ -32,7 +32,7 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, false);
     EXPECT_EQ(expectedOffset, offset);
 
-    const_cast<HardwareInfo &>(device->getHardwareInfo()).platform.usRevId = REVISION_B;
+    const_cast<HardwareInfo &>(device->getHardwareInfo()).platform.usRevId = REVISION_A0 + 1;
 
     expectedOffset = blockInfo->getGraphicsAllocation()->getGpuAddressToPatch();
     offset = MockDeviceQueueHw<FamilyType>::getBlockKernelStartPointer(device->getDevice(), blockInfo, true);

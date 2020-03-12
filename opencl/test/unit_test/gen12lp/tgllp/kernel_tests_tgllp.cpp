@@ -21,7 +21,7 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
     threadPayload.OffsetToSkipSetFFIDGP = additionalOffsetDueToFfid;
     auto hwInfo = *platformDevices[0];
 
-    unsigned short steppings[] = {REVISION_A0, REVISION_A1, REVISION_A3, REVISION_B};
+    unsigned short steppings[] = {REVISION_A0, REVISION_A0 + 1};
     for (auto stepping : steppings) {
 
         hwInfo.platform.usRevId = stepping;
@@ -32,7 +32,7 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
         for (auto isCcsUsed : ::testing::Bool()) {
             uint64_t kernelStartOffset = mockKernelWithInternals.mockKernel->getKernelStartOffset(false, false, isCcsUsed);
 
-            if (stepping < REVISION_B && isCcsUsed) {
+            if (stepping == REVISION_A0 && isCcsUsed) {
                 EXPECT_EQ(defaultKernelStartOffset + additionalOffsetDueToFfid, kernelStartOffset);
             } else {
                 EXPECT_EQ(defaultKernelStartOffset, kernelStartOffset);
