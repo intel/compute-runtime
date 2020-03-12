@@ -130,7 +130,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual size_t getDynamicStateHeapDataSize() const = 0;
 
     virtual UnifiedMemoryControls getUnifiedMemoryControls() const = 0;
-    virtual bool hasIndirectAllocationsAllowed() = 0;
+    virtual bool hasIndirectAllocationsAllowed() const = 0;
 
     virtual NEO::GraphicsAllocation *getPrintfBufferAllocation() = 0;
     virtual void printPrintfOutput() = 0;

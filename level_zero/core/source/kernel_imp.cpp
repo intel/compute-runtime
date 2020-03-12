@@ -651,7 +651,7 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
     return function;
 }
 
-bool KernelImp::hasIndirectAllocationsAllowed() {
+bool KernelImp::hasIndirectAllocationsAllowed() const {
     return (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
             unifiedMemoryControls.indirectHostAllocationsAllowed ||
             unifiedMemoryControls.indirectSharedAllocationsAllowed);
