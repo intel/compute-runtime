@@ -274,14 +274,34 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
-    buffer->forceDisallowCPUCopy = true;
 
     ASSERT_NE(nullptr, buffer.get());
     auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
 
+    EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
+    memoryManager->cpuCopyRequired = true;
+    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
+}
+
+TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhenCpuCopyIsEvaluatedThenFalseIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+
+    buffer->forceDisallowCPUCopy = true;
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, nullptr, 0u, nullptr));
     memoryManager->cpuCopyRequired = true;
-    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, nullptr, 0u, nullptr));
+    EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, nullptr, 0u, nullptr));
 }
 
 TEST(ReadWriteBufferOnCpu, given32BitApplicationWhenLocalMemoryPoolAllocationIsAskedForPreferenceThenCpuIsChoosen) {
