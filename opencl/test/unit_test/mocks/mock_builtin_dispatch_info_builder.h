@@ -42,7 +42,7 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         failingArgIndex = index;
     }
 
-    virtual bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const override {
+    bool setExplicitArg(uint32_t argIndex, size_t argSize, const void *argVal, cl_int &err) const override {
         err = (withFailureInjection && argIndex == failingArgIndex) ? CL_INVALID_ARG_VALUE : CL_SUCCESS;
         return false;
     }

@@ -24,14 +24,14 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
                              dstImage(nullptr) {
     }
 
-    virtual void SetUp(void) override {
+    void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         context = new MockContext(pClDevice);
         srcImage = Image2dHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete dstImage;
         delete srcImage;
         delete context;
@@ -63,7 +63,7 @@ struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
         context = new MockContext(pClDevice);
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete context;
         CommandEnqueueFixture::TearDown();
     }

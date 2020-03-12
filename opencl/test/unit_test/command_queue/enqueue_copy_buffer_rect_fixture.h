@@ -61,7 +61,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         static const size_t sizeInBytes;
     };
 
-    virtual void SetUp(void) override {
+    void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext;
 
@@ -69,7 +69,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         dstBuffer = BufferHelper<BufferRect>::create();
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete srcBuffer;
         delete dstBuffer;
         delete BufferDefaults::context;

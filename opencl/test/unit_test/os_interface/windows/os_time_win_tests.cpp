@@ -28,11 +28,11 @@ BOOL WINAPI QueryPerformanceCounterMock(
 
 struct OSTimeWinTest : public ::testing::Test {
   public:
-    virtual void SetUp() override {
+    void SetUp() override {
         osTime = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(nullptr));
     }
 
-    virtual void TearDown() override {
+    void TearDown() override {
     }
     std::unique_ptr<MockOSTimeWin> osTime;
 };

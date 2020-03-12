@@ -99,7 +99,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
       public:                                                                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
         () {}                                                                                                                                             \
-        virtual void TestBody() override;                                                                                                                 \
+        void TestBody() override;                                                                                                                         \
                                                                                                                                                           \
       private:                                                                                                                                            \
         static int AddToRegistry() {                                                                                                                      \
@@ -493,7 +493,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <typename FamilyType>                                                                                                                    \
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
-        virtual void TestBody() override {                                                                                                                \
+        void TestBody() override {                                                                                                                        \
             FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                               \
         }                                                                                                                                                 \
                                                                                                                                                           \

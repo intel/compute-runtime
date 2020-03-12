@@ -39,10 +39,10 @@ struct api_fixture : public PlatformFixture,
 
 struct api_tests : public api_fixture,
                    public ::testing::Test {
-    virtual void SetUp() override {
+    void SetUp() override {
         api_fixture::SetUp();
     }
-    virtual void TearDown() override {
+    void TearDown() override {
         api_fixture::TearDown();
     }
 };

@@ -26,7 +26,7 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
                              srcImage(nullptr) {
     }
 
-    virtual void SetUp(void) override {
+    void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
 
         context = new MockContext(pClDevice);
@@ -35,7 +35,7 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
         dstPtr = new float[imageDesc.image_width * imageDesc.image_height];
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete srcImage;
         delete[] dstPtr;
         delete context;

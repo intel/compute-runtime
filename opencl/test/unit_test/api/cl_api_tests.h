@@ -85,10 +85,10 @@ struct ApiFixture : PlatformFixture {
 
 struct api_tests : public ApiFixture<>,
                    public ::testing::Test {
-    virtual void SetUp() override {
+    void SetUp() override {
         ApiFixture::SetUp();
     }
-    virtual void TearDown() override {
+    void TearDown() override {
         ApiFixture::TearDown();
     }
 };

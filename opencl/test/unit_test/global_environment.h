@@ -21,9 +21,9 @@ class TestEnvironment : public ::testing::Environment {
   public:
     TestEnvironment();
 
-    virtual void SetUp() override;
+    void SetUp() override;
 
-    virtual void TearDown() override;
+    void TearDown() override;
 
     virtual void fclPushDebugVars(
         MockCompilerDebugVars &newDebugVars);

@@ -24,7 +24,7 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
                                      dstBuffer(nullptr) {
     }
 
-    virtual void SetUp(void) override {
+    void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
@@ -32,7 +32,7 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
         dstBuffer = BufferHelper<>::create(context);
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete srcImage;
         delete dstBuffer;
         delete BufferDefaults::context;
@@ -63,14 +63,14 @@ struct EnqueueCopyImageToBufferMipMapTest : public CommandEnqueueFixture,
     EnqueueCopyImageToBufferMipMapTest() : dstBuffer(nullptr) {
     }
 
-    virtual void SetUp(void) override {
+    void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
         dstBuffer = BufferHelper<>::create(context);
     }
 
-    virtual void TearDown(void) override {
+    void TearDown(void) override {
         delete dstBuffer;
         delete BufferDefaults::context;
         delete context;
