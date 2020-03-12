@@ -54,6 +54,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     std::vector<GraphicsAllocation *> &getDeallocationContainer() { return deallocationContainer; }
 
     void addToResidencyContainer(GraphicsAllocation *alloc);
+    void removeDuplicatesFromResidencyContainer();
 
     LinearStream *getCommandStream() { return commandStream.get(); }
 

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include <algorithm>
@@ -43,11 +44,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionWithParams
         prepareIndirectParams(pThreadGroupDimensions);
     }
 
-    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-
-    UnifiedMemoryControls unifiedMemoryControls = function->getUnifiedMemoryControls();
     if (function->hasIndirectAllocationsAllowed()) {
-        device->getDriverHandle()->getSvmAllocsManager()->makeInternalAllocationsResident(*csr, unifiedMemoryControls.generateMask());
+        UnifiedMemoryControls unifiedMemoryControls = function->getUnifiedMemoryControls();
+        auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+        auto &residencyContainer = commandContainer.getResidencyContainer();
+
+        svmAllocsManager->addInternalAllocationsToResidencyContainer(residencyContainer, unifiedMemoryControls.generateMask());
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,

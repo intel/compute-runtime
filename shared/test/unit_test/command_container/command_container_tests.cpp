@@ -164,7 +164,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidenc
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), size);
 }
 
-TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAleradyAddedAllocationThenNothingIsAdded) {
+TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAllocationAndDuplicatesRemovedThenExpectedSizeIsReturned) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     MockGraphicsAllocation mockAllocation;
@@ -179,7 +179,12 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAleradyAddedAlloc
     cmdContainer.addToResidencyContainer(&mockAllocation);
     auto sizeAfterSecondAdd = cmdContainer.getResidencyContainer().size();
 
-    EXPECT_EQ(sizeAfterFirstAdd, sizeAfterSecondAdd);
+    EXPECT_NE(sizeAfterFirstAdd, sizeAfterSecondAdd);
+
+    cmdContainer.removeDuplicatesFromResidencyContainer();
+    auto sizeAfterDuplicatesRemoved = cmdContainer.getResidencyContainer().size();
+
+    EXPECT_EQ(sizeAfterFirstAdd, sizeAfterDuplicatesRemoved);
 }
 
 TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenExistingAllocationIsReturned) {

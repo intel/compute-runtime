@@ -91,13 +91,13 @@ void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
     if (alloc == nullptr) {
         return;
     }
-    auto end = this->residencyContainer.end();
-    bool isUnique = (end == std::find(this->residencyContainer.begin(), end, alloc));
-    if (isUnique == false) {
-        return;
-    }
 
     this->residencyContainer.push_back(alloc);
+}
+
+void CommandContainer::removeDuplicatesFromResidencyContainer() {
+    std::sort(this->residencyContainer.begin(), this->residencyContainer.end());
+    this->residencyContainer.erase(std::unique(this->residencyContainer.begin(), this->residencyContainer.end()), this->residencyContainer.end());
 }
 
 void CommandContainer::reset() {
