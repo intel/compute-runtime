@@ -125,13 +125,15 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
     return r;
 }
 
-uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, bool specificBitness, uint32_t rootDeviceIndex) {
+uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, bool specificBitness, uint32_t rootDeviceIndex, bool requiresStandard64KBHeap) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     if (specificBitness && this->force32bitAllocations) {
         return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_EXTERNAL, size));
-    } else {
-        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
     }
+    if (requiresStandard64KBHeap) {
+        return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD64KB, size));
+    }
+    return GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
 }
 
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
@@ -204,7 +206,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     }
 
     if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
-        gpuAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex);
+        gpuAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex, false);
         if (!gpuAddress) {
             bo->close();
             delete bo;
@@ -247,7 +249,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex);
+    auto gpuVirtualAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex, false);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
@@ -285,7 +287,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationData &allocationData) {
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, false);
     size_t bufferSize = allocationData.size;
-    uint64_t gpuRange = acquireGpuRange(bufferSize, false, allocationData.rootDeviceIndex);
+    uint64_t gpuRange = acquireGpuRange(bufferSize, false, allocationData.rootDeviceIndex, true);
 
     drm_i915_gem_create create = {0, 0, 0};
     create.size = bufferSize;
@@ -315,7 +317,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
         return alloc;
     }
 
-    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, false, allocationData.rootDeviceIndex);
+    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, false, allocationData.rootDeviceIndex, false);
 
     drm_i915_gem_create create = {0, 0, 0};
     create.size = allocationData.imgInfo->size;
@@ -427,7 +429,7 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle)
 BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness, uint32_t rootDeviceIndex) {
     uint64_t gpuRange = 0llu;
 
-    gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex);
+    gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex, false);
 
     auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, rootDeviceIndex);
     if (!bo) {
@@ -501,7 +503,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     uint64_t gpuRange = 0llu;
 
     auto rootDeviceIndex = inputGraphicsAllocation->getRootDeviceIndex();
-    gpuRange = acquireGpuRange(sizeWithPadding, false, rootDeviceIndex);
+    gpuRange = acquireGpuRange(sizeWithPadding, false, rootDeviceIndex, false);
 
     auto srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
     auto srcSize = inputGraphicsAllocation->getUnderlyingBufferSize();

@@ -30,6 +30,7 @@ class DrmGemCloseWorker;
 
 class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
   public:
+    using DrmMemoryManager::acquireGpuRange;
     using DrmMemoryManager::allocateGraphicsMemory;
     using DrmMemoryManager::allocateGraphicsMemory64kb;
     using DrmMemoryManager::allocateGraphicsMemoryForImage;

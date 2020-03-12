@@ -62,7 +62,7 @@ class DrmMemoryManager : public MemoryManager {
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
-    uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness, uint32_t rootDeviceIndex);
+    uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness, uint32_t rootDeviceIndex, bool requiresStandard64KBHeap);
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId() const;
