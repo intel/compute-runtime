@@ -10,6 +10,7 @@
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
@@ -137,6 +138,27 @@ struct BlitAuxTranslationTests : public ::testing::Test {
 
             ++commandItor;
         } while (!stallingWrite);
+
+        return --commandItor;
+    }
+
+    template <typename Family>
+    GenCmdList::iterator expectMiFlush(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {
+        Family *miFlushCmd = nullptr;
+        GenCmdList::iterator commandItor = itorStart;
+        bool miFlushWithMemoryWrite = false;
+
+        do {
+            commandItor = find<Family *>(commandItor, itorEnd);
+            if (itorEnd == commandItor) {
+                EXPECT_TRUE(false);
+                return itorEnd;
+            }
+            miFlushCmd = genCmdCast<Family *>(*commandItor);
+            miFlushWithMemoryWrite = miFlushCmd->getDestinationAddress() != 0;
+
+            ++commandItor;
+        } while (!miFlushWithMemoryWrite);
 
         return --commandItor;
     }
@@ -357,21 +379,21 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 
         auto cmdFound = expectCommand<XY_COPY_BLT>(cmdListBcs.begin(), cmdListBcs.end());
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         auto miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         auxToNonAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         auxToNonAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
 
         cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdListBcs.end());
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
     }
@@ -728,21 +750,21 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 
         auto cmdFound = expectCommand<XY_COPY_BLT>(cmdListBcs.begin(), cmdListBcs.end());
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         auto miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         auxToNonAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         auxToNonAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
 
         cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdListBcs.end());
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[0] = miflushDwCmd->getDestinationAddress();
 
-        cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
+        cmdFound = expectMiFlush<MI_FLUSH_DW>(++cmdFound, cmdListBcs.end());
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
     }

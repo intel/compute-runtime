@@ -51,6 +51,8 @@ struct UnitTestHelper {
     static const AuxTranslationMode requiredAuxTranslationMode;
 
     static const bool useFullRowForLocalIdsGeneration;
+
+    static const bool additionalMiFlushDwRequired;
 };
 
 } // namespace NEO

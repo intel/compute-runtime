@@ -87,4 +87,7 @@ const AuxTranslationMode UnitTestHelper<GfxFamily>::requiredAuxTranslationMode =
 template <typename GfxFamily>
 const bool UnitTestHelper<GfxFamily>::useFullRowForLocalIdsGeneration = false;
 
+template <typename GfxFamily>
+const bool UnitTestHelper<GfxFamily>::additionalMiFlushDwRequired = false;
+
 } // namespace NEO

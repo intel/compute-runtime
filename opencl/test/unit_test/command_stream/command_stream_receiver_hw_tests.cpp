@@ -472,6 +472,20 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
+
+    if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
+        uint64_t gpuAddress = 0x0;
+        uint64_t immData = 0;
+
+        EXPECT_NE(nullptr, miFlushCmd);
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, miFlushCmd->getPostSyncOperation());
+        EXPECT_EQ(gpuAddress, miFlushCmd->getDestinationAddress());
+        EXPECT_EQ(immData, miFlushCmd->getImmediateData());
+
+        miFlushCmd++;
+        *(cmdIterator++);
+    }
+
     EXPECT_NE(nullptr, miFlushCmd);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushCmd->getPostSyncOperation());
     EXPECT_EQ(csr.getTagAllocation()->getGpuAddress(), miFlushCmd->getDestinationAddress());

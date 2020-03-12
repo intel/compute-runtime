@@ -1247,17 +1247,31 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenP
     for (auto &cmd : hwParser.cmdList) {
         if (auto miFlushDwCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
             EXPECT_TRUE(blitCmdFound);
-            EXPECT_EQ(miFlushDwCmdsCount == 0,
-                      timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
-            EXPECT_EQ(miFlushDwCmdsCount == 0,
-                      0u == miFlushDwCmd->getImmediateData());
+            if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
+                miFlushDwCmd++;
+                if (miFlushDwCmdsCount % 2 == 0) {
+                    EXPECT_EQ(miFlushDwCmdsCount == 0,
+                              timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
+                    EXPECT_EQ(miFlushDwCmdsCount == 0,
+                              0u == miFlushDwCmd->getImmediateData());
+                }
+            } else {
+                EXPECT_EQ(miFlushDwCmdsCount == 0,
+                          timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
+                EXPECT_EQ(miFlushDwCmdsCount == 0,
+                          0u == miFlushDwCmd->getImmediateData());
+            }
             miFlushDwCmdsCount++;
         } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
             blitCmdFound = true;
             EXPECT_EQ(0u, miFlushDwCmdsCount);
         }
     }
-    EXPECT_EQ(2u, miFlushDwCmdsCount);
+    if (UnitTestHelper<FamilyType>::additionalMiFlushDwRequired) {
+        EXPECT_EQ(4u, miFlushDwCmdsCount);
+    } else {
+        EXPECT_EQ(2u, miFlushDwCmdsCount);
+    }
     EXPECT_TRUE(blitCmdFound);
 }
 

@@ -404,7 +404,4 @@ void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, u
     appendMiFlushDw(miFlushDwCmd);
 }
 
-template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::programMiFlushDwWA(LinearStream &commandStream) {}
-
 } // namespace NEO
