@@ -52,14 +52,14 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     }
 
     template <typename FamilyType>
-    void enqueueWriteBuffer(bool Blocking, void *InputData, int size) {
+    void enqueueWriteBuffer(bool blocking, void *inputData, int size) {
         auto retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(
             pCmdQ,
             srcBuffer.get(),
-            Blocking,
+            blocking,
             0,
             size,
-            InputData);
+            inputData);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 

@@ -29,7 +29,7 @@ struct CommandQueueHwFixture {
         const cl_command_queue_properties *properties);
 
     virtual void SetUp();
-    virtual void SetUp(ClDevice *_pDevice, cl_command_queue_properties properties);
+    virtual void SetUp(ClDevice *pDevice, cl_command_queue_properties properties);
 
     virtual void TearDown();
 

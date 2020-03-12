@@ -35,7 +35,7 @@ class ProgramFixture {
 
     void CreateProgramWithSource(cl_context pContext,
                                  cl_device_id *pDeviceList,
-                                 const std::string &SourceFileName);
+                                 const std::string &sourceFileName);
 
   protected:
     virtual void SetUp() {

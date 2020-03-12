@@ -348,7 +348,7 @@ struct EnqueueMapBufferHelper {
                                   cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                   const cl_event *eventWaitList = Traits::eventWaitList,
                                   cl_event *event = Traits::event,
-                                  cl_int *errcode_ret = Traits::errcodeRet) {
+                                  cl_int *errcodeRet = Traits::errcodeRet) {
 
         size = size == static_cast<size_t>(-1) ? buffer->getSize() : size;
 
@@ -364,8 +364,8 @@ struct EnqueueMapBufferHelper {
                                               event,
                                               retCode);
 
-        if (errcode_ret) {
-            *errcode_ret = retCode;
+        if (errcodeRet) {
+            *errcodeRet = retCode;
         }
         return retPtr;
     }

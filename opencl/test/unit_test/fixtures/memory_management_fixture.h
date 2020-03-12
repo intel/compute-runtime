@@ -27,14 +27,14 @@ struct MemoryManagementFixture {
     void clearFailingAllocation(void);
 
     ::testing::AssertionResult assertLeak(
-        const char *leak_expr,
+        const char *leakExpr,
         size_t leakIndex);
 
     void checkForLeaks(void);
 
     typedef std::function<void(size_t)> InjectedFunction;
     void injectFailures(InjectedFunction &method, uint32_t maxIndex = 0);
-    void injectFailureOnIndex(InjectedFunction &method, uint32_t Index);
+    void injectFailureOnIndex(InjectedFunction &method, uint32_t index);
 
     // Used to keep track of # of allocations prior at SetUp time
     // Gets compared to # at TearDown time

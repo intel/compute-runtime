@@ -25,7 +25,7 @@ int ioctl(int fd, unsigned long int request, ...) throw();
 
 extern int (*c_open)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
-extern int (*c_ioctl)(int __fd, unsigned long int __request, ...);
+extern int (*c_ioctl)(int fd, unsigned long int request, ...);
 
 extern int drmOtherRequests(unsigned long int request, va_list vl);
 

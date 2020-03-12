@@ -29,38 +29,38 @@ class CCustomEventListener : public ::testing::TestEventListener {
     }
 
   private:
-    void OnTestProgramStart(const ::testing::UnitTest &unit_test) override {
+    void OnTestProgramStart(const ::testing::UnitTest &unitTest) override {
     }
 
     void OnTestIterationStart(
-        const ::testing::UnitTest &unit_test,
+        const ::testing::UnitTest &unitTest,
         int iteration) override {
         if (::testing::GTEST_FLAG(shuffle)) {
-            std::cout << "Iteration: " << iteration + 1 << ". random_seed: " << unit_test.random_seed() << std::endl;
+            std::cout << "Iteration: " << iteration + 1 << ". random_seed: " << unitTest.random_seed() << std::endl;
         } else {
             std::cout << "Iteration: " << iteration + 1 << std::endl;
-            std::cout << "Iteration: " << iteration + 1 << ". random_seed: " << unit_test.random_seed() << std::endl;
+            std::cout << "Iteration: " << iteration + 1 << ". random_seed: " << unitTest.random_seed() << std::endl;
         }
-        this->currentSeed = unit_test.random_seed();
+        this->currentSeed = unitTest.random_seed();
     }
 
-    void OnTestIterationEnd(const ::testing::UnitTest &unit_test,
+    void OnTestIterationEnd(const ::testing::UnitTest &unitTest,
                             int iteration) override {
         this->currentSeed = -1;
     }
 
-    void OnEnvironmentsSetUpStart(const ::testing::UnitTest &unit_test) override {
+    void OnEnvironmentsSetUpStart(const ::testing::UnitTest &unitTest) override {
     }
 
-    void OnEnvironmentsSetUpEnd(const ::testing::UnitTest &unit_test) override {
+    void OnEnvironmentsSetUpEnd(const ::testing::UnitTest &unitTest) override {
     }
 
-    void OnTestCaseStart(const ::testing::TestCase &test_case) override {
+    void OnTestCaseStart(const ::testing::TestCase &testCase) override {
     }
 
-    void OnTestStart(const ::testing::TestInfo &test_case) override {
+    void OnTestStart(const ::testing::TestInfo &testCase) override {
         std::stringstream ss;
-        ss << test_case.test_case_name() << "." << test_case.name();
+        ss << testCase.test_case_name() << "." << testCase.name();
         lastTest = ss.str();
     }
 
@@ -71,33 +71,33 @@ class CCustomEventListener : public ::testing::TestEventListener {
         _listener->OnTestPartResult(test_part_result);
     }
 
-    void OnTestEnd(const ::testing::TestInfo &test_case) override {
-        if (test_case.result()->Failed()) {
+    void OnTestEnd(const ::testing::TestInfo &testCase) override {
+        if (testCase.result()->Failed()) {
             std::stringstream ss;
-            ss << test_case.test_case_name() << "." << test_case.name();
+            ss << testCase.test_case_name() << "." << testCase.name();
             testFailures.push_back(std::make_pair(ss.str(), currentSeed));
-            std::cout << "[  FAILED  ][ " << hardwarePrefix << " ][ " << currentSeed << " ] " << test_case.test_case_name() << "." << test_case.name() << std::endl;
+            std::cout << "[  FAILED  ][ " << hardwarePrefix << " ][ " << currentSeed << " ] " << testCase.test_case_name() << "." << testCase.name() << std::endl;
         }
     }
 
-    void OnTestCaseEnd(const ::testing::TestCase &test_case) override {
+    void OnTestCaseEnd(const ::testing::TestCase &testCase) override {
     }
 
-    void OnEnvironmentsTearDownStart(const ::testing::UnitTest &test_case) override {
+    void OnEnvironmentsTearDownStart(const ::testing::UnitTest &testCase) override {
     }
 
-    void OnEnvironmentsTearDownEnd(const ::testing::UnitTest &test_case) override {
+    void OnEnvironmentsTearDownEnd(const ::testing::UnitTest &testCase) override {
     }
 
-    void OnTestProgramEnd(const ::testing::UnitTest &unit_test) override {
-        int testsRun = unit_test.test_to_run_count();
-        int testsPassed = unit_test.successful_test_count();
-        int testsSkipped = unit_test.skipped_test_count();
-        int testsFailed = unit_test.failed_test_count();
-        int testsDisabled = unit_test.disabled_test_count();
-        auto timeElapsed = static_cast<int>(unit_test.elapsed_time());
+    void OnTestProgramEnd(const ::testing::UnitTest &unitTest) override {
+        int testsRun = unitTest.test_to_run_count();
+        int testsPassed = unitTest.successful_test_count();
+        int testsSkipped = unitTest.skipped_test_count();
+        int testsFailed = unitTest.failed_test_count();
+        int testsDisabled = unitTest.disabled_test_count();
+        auto timeElapsed = static_cast<int>(unitTest.elapsed_time());
 
-        if (unit_test.Failed()) {
+        if (unitTest.Failed()) {
             fprintf(
                 stdout,
                 "\n"
@@ -133,7 +133,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
             fprintf(
                 stdout,
                 "[  FAILED  ][ %s ][ %u ] %s\n", hardwarePrefix.c_str(), failure.second, failure.first.c_str());
-        if (unit_test.Failed())
+        if (unitTest.Failed())
             fprintf(
                 stdout,
                 "\n");
