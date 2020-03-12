@@ -109,27 +109,8 @@ void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERT
 }
 
 void LinuxSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
-    std::string output, command, strVal, driver;
-    //First get the driver name
-    ze_result_t result = pSysfsAccess->readSymLink(driverFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        std::copy(unknown.begin(), unknown.end(), driverVersion);
-        driverVersion[unknown.size()] = '\0';
-        return;
-    }
-    const auto loc = strVal.find_last_of('/');
-    driver = strVal.substr(loc + 1);
-    //create the command like: modinfo -F vermagic i915
-    command = "modinfo -F vermagic " + driver;
-    result = pLinuxSysmanImp->systemCmd(command, output);
-    if (ZE_RESULT_SUCCESS != result) {
-        std::copy(unknown.begin(), unknown.end(), driverVersion);
-        driverVersion[unknown.size()] = '\0';
-        return;
-    }
-
-    //After below copy Not appending null in driverVersion, as output is null terminated
-    std::copy(output.begin(), output.end(), driverVersion);
+    std::copy(unknown.begin(), unknown.end(), driverVersion);
+    driverVersion[unknown.size()] = '\0';
 }
 
 LinuxSysmanDeviceImp::LinuxSysmanDeviceImp(OsSysman *pOsSysman) {
