@@ -104,6 +104,7 @@ struct KernelImp : Kernel {
     const KernelImmutableData *getImmutableData() const override { return kernelImmData; }
 
     UnifiedMemoryControls getUnifiedMemoryControls() const override { return unifiedMemoryControls; }
+    bool hasIndirectAllocationsAllowed() override;
 
     bool hasBarriers() override;
     uint32_t getSlmTotalSize() override;

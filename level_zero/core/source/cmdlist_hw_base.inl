@@ -46,9 +46,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionWithParams
     auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     UnifiedMemoryControls unifiedMemoryControls = function->getUnifiedMemoryControls();
-    if (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-        unifiedMemoryControls.indirectHostAllocationsAllowed ||
-        unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+    if (function->hasIndirectAllocationsAllowed()) {
         device->getDriverHandle()->getSvmAllocsManager()->makeInternalAllocationsResident(*csr, unifiedMemoryControls.generateMask());
     }
 

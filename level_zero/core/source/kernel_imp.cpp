@@ -651,6 +651,12 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
     return function;
 }
 
+bool KernelImp::hasIndirectAllocationsAllowed() {
+    return (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+            unifiedMemoryControls.indirectHostAllocationsAllowed ||
+            unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
 bool KernelImp::hasBarriers() {
     return getImmutableData()->getDescriptor().kernelAttributes.flags.usesBarriers;
 }
