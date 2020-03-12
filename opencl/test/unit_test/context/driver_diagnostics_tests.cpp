@@ -711,7 +711,7 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
     mediaVFEstate.PerThreadScratchSpace = size;
 
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
-    size *= pDevice->getDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+    size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
 
     mockKernel.mockKernel->initialize();
 
@@ -733,7 +733,7 @@ TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
     allocateStatelessPrivateMemorySurface.DataParamSize = 8;
 
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrivateSurface = &allocateStatelessPrivateMemorySurface;
-    size *= pDevice->getDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+    size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
 
     mockKernel.mockKernel->initialize();
 

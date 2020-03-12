@@ -511,7 +511,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
     EXPECT_THAT(this->pProgram->getInternalOptions(),
                 testing::HasSubstr(std::string(NEO::CompilerOptions::greaterThan4gbBuffersRequired)));
 
-    if (this->device->getDeviceInfo().force32BitAddressess) {
+    if (this->device->getSharedDeviceInfo().force32BitAddressess) {
         EXPECT_THAT(this->pProgram->getInternalOptions(),
                     testing::HasSubstr(std::string(NEO::CompilerOptions::arch32bit)));
     }

@@ -41,6 +41,10 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
         return static_cast<MockCsrHw2<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     }
 
+    void TearDown() override {
+        device->setSourceLevelDebuggerActive(false);
+    }
+
     std::unique_ptr<MockClDevice> device;
     ExecutionEnvironment *executionEnvironment = nullptr;
     HardwareInfo *hwInfo = nullptr;

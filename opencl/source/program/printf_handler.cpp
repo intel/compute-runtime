@@ -38,7 +38,7 @@ PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo,
 }
 
 void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) {
-    auto printfSurfaceSize = device.getDeviceInfo().printfBufferSize;
+    auto printfSurfaceSize = device.getSharedDeviceInfo().printfBufferSize;
     if (printfSurfaceSize == 0) {
         return;
     }

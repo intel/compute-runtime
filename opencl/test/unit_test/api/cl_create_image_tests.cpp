@@ -67,15 +67,17 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledImageThenInvalidOperationErrorIsReturned) {
-    auto device = static_cast<MockClDevice *>(pContext->getDevice(0));
-    device->deviceInfo.imageSupport = CL_FALSE;
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0], 0)};
+    MockContext mockContext{&mockClDevice};
+
+    mockClDevice.sharedDeviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
-    auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    auto status = clGetDeviceInfo(&mockClDevice, CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     cl_bool expectedValue = CL_FALSE;
     EXPECT_EQ(expectedValue, imageSupportInfo);
     auto image = clCreateImage(
-        pContext,
+        &mockContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
@@ -94,10 +96,12 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTiledImageThenCreate) {
-    auto device = static_cast<MockClDevice *>(pContext->getDevice(0));
-    device->deviceInfo.imageSupport = CL_FALSE;
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0], 0)};
+    MockContext mockContext{&mockClDevice};
+
+    mockClDevice.sharedDeviceInfo.imageSupport = CL_FALSE;
     cl_bool imageSupportInfo = CL_TRUE;
-    auto status = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    auto status = clGetDeviceInfo(&mockClDevice, CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     cl_bool expectedValue = CL_FALSE;
     EXPECT_EQ(expectedValue, imageSupportInfo);
@@ -106,7 +110,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTil
     imageDesc.image_height = 1;
 
     auto image = clCreateImage(
-        pContext,
+        &mockContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,

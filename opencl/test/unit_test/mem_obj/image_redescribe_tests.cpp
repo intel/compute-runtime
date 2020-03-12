@@ -146,6 +146,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
+    const auto &sharedCaps = device->getSharedDeviceInfo();
 
     auto memoryManager = (OsAgnosticMemoryManager *)context.getMemoryManager();
     memoryManager->turnOnFakingBigAllocations();
@@ -164,14 +165,14 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:
         imageWidth = 16384;
-        maxImageWidth = static_cast<size_t>(caps.maxMemAllocSize);
+        maxImageWidth = static_cast<size_t>(sharedCaps.maxMemAllocSize);
         maxImageHeight = 1;
         break;
     case CL_MEM_OBJECT_IMAGE2D:
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
         imageHeight = 16384;
-        maxImageWidth = caps.image2DMaxWidth;
-        maxImageHeight = caps.image2DMaxHeight;
+        maxImageWidth = sharedCaps.image2DMaxWidth;
+        maxImageHeight = sharedCaps.image2DMaxHeight;
         break;
     case CL_MEM_OBJECT_IMAGE3D:
         imageHeight = 16384;

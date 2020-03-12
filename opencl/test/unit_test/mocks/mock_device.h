@@ -161,11 +161,11 @@ class MockClDevice : public ClDevice {
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
 
     void setDebuggerActive(bool active) {
-        this->deviceInfo.debuggerActive = active;
-        device.deviceInfo.debuggerActive = active;
+        sharedDeviceInfo.debuggerActive = active;
     }
 
     MockDevice &device;
+    DeviceInfo &sharedDeviceInfo;
     ExecutionEnvironment *&executionEnvironment;
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;

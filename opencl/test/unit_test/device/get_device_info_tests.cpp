@@ -44,7 +44,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParamete
 
 TEST(GetDeviceInfo, GivenPlanarYuvExtensionDisabledAndSupportImageEnabledWhenGettingPlanarYuvMaxWidthHeightThenInvalidValueErrorIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     device->deviceInfo.nv12Extension = false;
     uint32_t value;
 
@@ -67,7 +67,7 @@ TEST(GetDeviceInfo, GivenPlanarYuvExtensionDisabledAndSupportImageEnabledWhenGet
 
 TEST(GetDeviceInfo, GivenPlanarYuvExtensionEnabledAndSupportImageEnabledWhenGettingPlanarYuvMaxWidthHeightThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     device->deviceInfo.nv12Extension = true;
     size_t value = 0;
 
@@ -92,7 +92,7 @@ TEST(GetDeviceInfo, GivenPlanarYuvExtensionEnabledAndSupportImageEnabledWhenGett
 
 TEST(GetDeviceInfo, GivenPlanarYuvExtensionDisabledAndSupportImageDisabledWhenGettingPlanarYuvMaxWidthHeightThenInvalidValueErrorIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
     device->deviceInfo.nv12Extension = false;
     uint32_t value;
 
@@ -115,7 +115,7 @@ TEST(GetDeviceInfo, GivenPlanarYuvExtensionDisabledAndSupportImageDisabledWhenGe
 
 TEST(GetDeviceInfo, GivenPlanarYuvExtensionEnabledAndSupportImageDisabledWhenGettingPlanarYuvMaxWidthHeightThenZeroIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
     device->deviceInfo.nv12Extension = true;
     size_t value = 0;
 
@@ -141,7 +141,7 @@ TEST(GetDeviceInfo, GivenPlanarYuvExtensionEnabledAndSupportImageDisabledWhenGet
 TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImage2dMaxWidthHeightThenZeroIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -166,7 +166,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImage2dMaxWidthHeightThe
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImage2dMaxWidthHeightThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -190,7 +190,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImage3dMaxWidthHeightDep
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t value = 0;
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
 
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_IMAGE3D_MAX_WIDTH,
@@ -223,7 +223,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImage3dMaxWidthHeightDep
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImage3dMaxWidthHeightDepthThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -254,7 +254,7 @@ TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImage3dMaxWidthHeightDept
 TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxArgsThenZeroIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
     uint32_t value;
 
     auto retVal = device->getDeviceInfo(
@@ -288,7 +288,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxArgsThenZeroIsRe
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImageMaxArgsThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -320,7 +320,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageBaseAddressAlignmen
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t value = 0;
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
 
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,
@@ -335,7 +335,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageBaseAddressAlignmen
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImageBaseAddressAlignmentThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -351,7 +351,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxArraySizeThenZer
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t value = 0;
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
 
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_IMAGE_MAX_ARRAY_SIZE,
@@ -366,7 +366,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxArraySizeThenZer
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImageMaxArraySizeThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -382,7 +382,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxBufferSizeThenZe
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t value = 0;
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
 
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
@@ -397,7 +397,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxBufferSizeThenZe
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImageMaxBufferSizeThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(
@@ -413,7 +413,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImagePitchAlignmentThenZ
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t value = 0;
 
-    device->deviceInfo.imageSupport = false;
+    device->sharedDeviceInfo.imageSupport = false;
 
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_IMAGE_PITCH_ALIGNMENT,
@@ -428,7 +428,7 @@ TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImagePitchAlignmentThenZ
 TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImagePitchAlignmentThenCorrectValuesAreReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    device->deviceInfo.imageSupport = true;
+    device->sharedDeviceInfo.imageSupport = true;
     size_t value = 0;
 
     auto retVal = device->getDeviceInfo(

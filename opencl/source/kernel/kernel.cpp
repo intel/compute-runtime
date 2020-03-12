@@ -105,7 +105,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDev
     program->retain();
     imageTransformer.reset(new ImageTransformer);
 
-    maxKernelWorkGroupSize = static_cast<uint32_t>(device.getDeviceInfo().maxWorkGroupSize);
+    maxKernelWorkGroupSize = static_cast<uint32_t>(device.getSharedDeviceInfo().maxWorkGroupSize);
 }
 
 Kernel::~Kernel() {
@@ -276,7 +276,7 @@ cl_int Kernel::initialize() {
                                  : 0;
 
         if (privateSurfaceSize) {
-            privateSurfaceSize *= device.getDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
+            privateSurfaceSize *= device.getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
             DEBUG_BREAK_IF(privateSurfaceSize == 0);
             if ((is32Bit() || device.getMemoryManager()->peekForce32BitAllocations()) && (privateSurfaceSize > std::numeric_limits<uint32_t>::max())) {
                 retVal = CL_OUT_OF_RESOURCES;
@@ -2215,7 +2215,7 @@ void Kernel::provideInitializationHints() {
     }
     if (patchInfo.mediavfestate) {
         auto scratchSize = patchInfo.mediavfestate->PerThreadScratchSpace;
-        scratchSize *= device.getDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
+        scratchSize *= device.getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
         if (scratchSize > 0) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,
                                             kernelInfo.name.c_str(), scratchSize);

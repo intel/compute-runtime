@@ -25,16 +25,17 @@ BXTTEST_F(BxtDeviceCaps, BxtProfilingTimerResolution) {
 
 BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {
     const auto &caps = pClDevice->getDeviceInfo();
+    const auto &sharedCaps = pDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 
     auto memoryManager = pDevice->getMemoryManager();
     if (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());
-        EXPECT_TRUE(caps.force32BitAddressess);
+        EXPECT_TRUE(sharedCaps.force32BitAddressess);
     } else {
         EXPECT_FALSE(memoryManager->peekForce32BitAllocations());
-        EXPECT_FALSE(caps.force32BitAddressess);
+        EXPECT_FALSE(sharedCaps.force32BitAddressess);
     }
 }
 

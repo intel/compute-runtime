@@ -44,7 +44,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, defaultPreemptionMode) {
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, profilingTimerResolution) {
-    const auto &caps = pClDevice->getDeviceInfo();
+    const auto &caps = pClDevice->getSharedDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 

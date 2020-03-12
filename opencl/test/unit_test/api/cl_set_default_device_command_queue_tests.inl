@@ -64,7 +64,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
                                         0};
     auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
 
-    if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
+    if (pDevice->getSharedDeviceInfo().maxOnDeviceQueues > 1) {
         auto newDeviceQueue = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], properties, &retVal);
         ASSERT_NE(nullptr, newDeviceQueue);
         ASSERT_EQ(CL_SUCCESS, retVal);

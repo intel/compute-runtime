@@ -633,7 +633,7 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
     auto threadsPerEu = platformDevices[0]->gtSystemInfo.ThreadCount / platformDevices[0]->gtSystemInfo.EUCount;
     auto euPerSubSlice = platformDevices[0]->gtSystemInfo.ThreadCount / platformDevices[0]->gtSystemInfo.MaxEuPerSubSlice;
 
-    auto &deviceInfo = device.deviceInfo;
+    auto &deviceInfo = device.sharedDeviceInfo;
     deviceInfo.maxNumEUsPerSubSlice = euPerSubSlice;
     deviceInfo.numThreadsPerEU = threadsPerEu;
 

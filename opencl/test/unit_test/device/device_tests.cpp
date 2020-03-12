@@ -106,49 +106,6 @@ TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
     ASSERT_EQ(1, pClDevice->getReference());
 }
 
-TEST_F(DeviceTest, WhenCreatingClDeviceThenDeviceInfoIsCopiedFromDevice) {
-    auto &deviceInfo = pDevice->getDeviceInfo();
-    auto &clDeviceInfo = pClDevice->getDeviceInfo();
-
-    EXPECT_EQ(deviceInfo.maxSubGroups, clDeviceInfo.maxSubGroups);
-    EXPECT_EQ(deviceInfo.debuggerActive, clDeviceInfo.debuggerActive);
-    EXPECT_EQ(deviceInfo.errorCorrectionSupport, clDeviceInfo.errorCorrectionSupport);
-    EXPECT_EQ(deviceInfo.force32BitAddressess, clDeviceInfo.force32BitAddressess);
-    EXPECT_EQ(deviceInfo.imageSupport, clDeviceInfo.imageSupport);
-    EXPECT_EQ(deviceInfo.vmeAvcSupportsPreemption, clDeviceInfo.vmeAvcSupportsPreemption);
-    EXPECT_EQ(deviceInfo.ilVersion, clDeviceInfo.ilVersion);
-    EXPECT_EQ(deviceInfo.profilingTimerResolution, clDeviceInfo.profilingTimerResolution);
-    EXPECT_EQ(deviceInfo.addressBits, clDeviceInfo.addressBits);
-    EXPECT_EQ(deviceInfo.computeUnitsUsedForScratch, clDeviceInfo.computeUnitsUsedForScratch);
-    EXPECT_EQ(deviceInfo.globalMemCachelineSize, clDeviceInfo.globalMemCachelineSize);
-    EXPECT_EQ(deviceInfo.maxClockFrequency, clDeviceInfo.maxClockFrequency);
-    EXPECT_EQ(deviceInfo.maxFrontEndThreads, clDeviceInfo.maxFrontEndThreads);
-    EXPECT_EQ(deviceInfo.maxOnDeviceQueues, clDeviceInfo.maxOnDeviceQueues);
-    EXPECT_EQ(deviceInfo.maxReadImageArgs, clDeviceInfo.maxReadImageArgs);
-    EXPECT_EQ(deviceInfo.maxSamplers, clDeviceInfo.maxSamplers);
-    EXPECT_EQ(deviceInfo.maxWriteImageArgs, clDeviceInfo.maxWriteImageArgs);
-    EXPECT_EQ(deviceInfo.numThreadsPerEU, clDeviceInfo.numThreadsPerEU);
-    EXPECT_EQ(deviceInfo.vendorId, clDeviceInfo.vendorId);
-    EXPECT_EQ(deviceInfo.globalMemSize, clDeviceInfo.globalMemSize);
-    EXPECT_EQ(deviceInfo.image2DMaxHeight, clDeviceInfo.image2DMaxHeight);
-    EXPECT_EQ(deviceInfo.image2DMaxWidth, clDeviceInfo.image2DMaxWidth);
-    EXPECT_EQ(deviceInfo.image3DMaxDepth, clDeviceInfo.image3DMaxDepth);
-    EXPECT_EQ(deviceInfo.imageMaxArraySize, clDeviceInfo.imageMaxArraySize);
-    EXPECT_EQ(deviceInfo.imageMaxBufferSize, clDeviceInfo.imageMaxBufferSize);
-    EXPECT_EQ(deviceInfo.localMemSize, clDeviceInfo.localMemSize);
-    EXPECT_EQ(deviceInfo.maxMemAllocSize, clDeviceInfo.maxMemAllocSize);
-    EXPECT_EQ(deviceInfo.maxNumEUsPerSubSlice, clDeviceInfo.maxNumEUsPerSubSlice);
-    EXPECT_EQ(deviceInfo.maxParameterSize, clDeviceInfo.maxParameterSize);
-    EXPECT_EQ(deviceInfo.maxWorkGroupSize, clDeviceInfo.maxWorkGroupSize);
-    EXPECT_EQ(deviceInfo.maxWorkItemSizes[0], clDeviceInfo.maxWorkItemSizes[0]);
-    EXPECT_EQ(deviceInfo.maxWorkItemSizes[1], clDeviceInfo.maxWorkItemSizes[1]);
-    EXPECT_EQ(deviceInfo.maxWorkItemSizes[2], clDeviceInfo.maxWorkItemSizes[2]);
-    EXPECT_EQ(deviceInfo.outProfilingTimerResolution, clDeviceInfo.outProfilingTimerResolution);
-    EXPECT_EQ(deviceInfo.printfBufferSize, clDeviceInfo.printfBufferSize);
-
-    EXPECT_EQ(deviceInfo.sharedSystemAllocationsSupport, (clDeviceInfo.sharedSystemMemCapabilities != 0));
-}
-
 HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
     HardwareInfo hwInfo = *platformDevices[0];
     if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {

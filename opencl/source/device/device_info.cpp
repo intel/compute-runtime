@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/os_time.h"
 
 #include "opencl/source/device/cl_device.h"
+#include "opencl/source/device/cl_device_get_cap.inl"
 #include "opencl/source/device/cl_device_vector.h"
 #include "opencl/source/device/device_info_map.h"
 #include "opencl/source/helpers/cl_device_helpers.h"
@@ -26,16 +27,16 @@ template <cl_device_info Param>
 inline void ClDevice::getStr(const void *&src,
                              size_t &size,
                              size_t &retSize) {
-    src = Map<Param>::getValue(deviceInfo);
-    retSize = size = strlen(Map<Param>::getValue(deviceInfo)) + 1;
+    src = Map<Param>::getValue(*this);
+    retSize = size = strlen(Map<Param>::getValue(*this)) + 1;
 }
 
 template <>
 inline void ClDevice::getCap<CL_DEVICE_MAX_WORK_ITEM_SIZES>(const void *&src,
                                                             size_t &size,
                                                             size_t &retSize) {
-    src = deviceInfo.maxWorkItemSizes;
-    retSize = size = sizeof(deviceInfo.maxWorkItemSizes);
+    src = getSharedDeviceInfo().maxWorkItemSizes;
+    retSize = size = sizeof(getSharedDeviceInfo().maxWorkItemSizes);
 }
 
 template <>
@@ -50,8 +51,8 @@ template <>
 inline void ClDevice::getCap<CL_DEVICE_SUB_GROUP_SIZES_INTEL>(const void *&src,
                                                               size_t &size,
                                                               size_t &retSize) {
-    src = device.getDeviceInfo().maxSubGroups.begin();
-    retSize = size = (device.getDeviceInfo().maxSubGroups.size() * sizeof(size_t));
+    src = getSharedDeviceInfo().maxSubGroups.begin();
+    retSize = size = (getSharedDeviceInfo().maxSubGroups.size() * sizeof(size_t));
 }
 
 cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
@@ -184,7 +185,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     default:
-        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !deviceInfo.imageSupport) {
+        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;
             break;
         }

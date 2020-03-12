@@ -52,6 +52,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmd
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());
     EXPECT_EQ(this->cmdList.end(), itorStateSip);
+    pDevice->setDebuggerActive(false);
 }
 
 GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {

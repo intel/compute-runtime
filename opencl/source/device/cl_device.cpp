@@ -50,7 +50,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
             subDevices.push_back(std::move(pClSubDevice));
         }
     }
-    if (deviceInfo.debuggerActive) {
+    if (getSharedDeviceInfo().debuggerActive) {
         auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
         getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
     }
@@ -58,7 +58,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
 
 ClDevice::~ClDevice() {
 
-    if (deviceInfo.debuggerActive) {
+    if (getSharedDeviceInfo().debuggerActive) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
     }
 
@@ -95,6 +95,10 @@ unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
     auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
     pParentClDevice->decRefInternal();
     return this->decRefApi();
+}
+
+const DeviceInfo &ClDevice::getSharedDeviceInfo() const {
+    return device.getDeviceInfo();
 }
 
 ClDevice *ClDevice::getDeviceById(uint32_t deviceId) {

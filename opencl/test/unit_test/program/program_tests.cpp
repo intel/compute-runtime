@@ -1653,7 +1653,7 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
 
 TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProgramIsCompiledThenItForcesStatelessCompilation) {
     pClDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
-    pClDevice->device.deviceInfo.sharedSystemAllocationsSupport = true;
+    pClDevice->sharedDeviceInfo.sharedSystemAllocationsSupport = true;
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
     EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions().c_str(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
 }
@@ -2655,8 +2655,7 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenItsDeviceIsProperlySet) {
     EXPECT_FALSE(wasValidClDeviceUsed(programWithDeviceWithInvalidSpecializedDevice));
 
     MockClDevice validClDevice{new MockDevice};
-    validClDevice.deviceInfo.force32BitAddressess = true;
-    validClDevice.device.deviceInfo.force32BitAddressess = true;
+    validClDevice.sharedDeviceInfo.force32BitAddressess = true;
     MockProgram programWithDeviceWithValidSpecializedDevice{executionEnvironment, nullptr, false, &validClDevice.getDevice()};
     EXPECT_TRUE(wasValidClDeviceUsed(programWithDeviceWithValidSpecializedDevice));
 }

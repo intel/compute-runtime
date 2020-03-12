@@ -179,51 +179,10 @@ void Device::initializeCaps() {
     }
 }
 
-void ClDevice::copyCommonCapsFromDevice() {
-    auto &sourceDeviceInfo = device.getDeviceInfo();
-
-    deviceInfo.maxSubGroups = sourceDeviceInfo.maxSubGroups;
-    deviceInfo.debuggerActive = sourceDeviceInfo.debuggerActive;
-    deviceInfo.errorCorrectionSupport = sourceDeviceInfo.errorCorrectionSupport;
-    deviceInfo.force32BitAddressess = sourceDeviceInfo.force32BitAddressess;
-    deviceInfo.imageSupport = sourceDeviceInfo.imageSupport;
-    deviceInfo.vmeAvcSupportsPreemption = sourceDeviceInfo.vmeAvcSupportsPreemption;
-    deviceInfo.ilVersion = sourceDeviceInfo.ilVersion;
-    deviceInfo.profilingTimerResolution = sourceDeviceInfo.profilingTimerResolution;
-    deviceInfo.addressBits = sourceDeviceInfo.addressBits;
-    deviceInfo.computeUnitsUsedForScratch = sourceDeviceInfo.computeUnitsUsedForScratch;
-    deviceInfo.globalMemCachelineSize = sourceDeviceInfo.globalMemCachelineSize;
-    deviceInfo.maxClockFrequency = sourceDeviceInfo.maxClockFrequency;
-    deviceInfo.maxFrontEndThreads = sourceDeviceInfo.maxFrontEndThreads;
-    deviceInfo.maxOnDeviceQueues = sourceDeviceInfo.maxOnDeviceQueues;
-    deviceInfo.maxReadImageArgs = sourceDeviceInfo.maxReadImageArgs;
-    deviceInfo.maxSamplers = sourceDeviceInfo.maxSamplers;
-    deviceInfo.maxWriteImageArgs = sourceDeviceInfo.maxWriteImageArgs;
-    deviceInfo.numThreadsPerEU = sourceDeviceInfo.numThreadsPerEU;
-    deviceInfo.vendorId = sourceDeviceInfo.vendorId;
-    deviceInfo.globalMemSize = sourceDeviceInfo.globalMemSize;
-    deviceInfo.image2DMaxHeight = static_cast<size_t>(sourceDeviceInfo.image2DMaxHeight);
-    deviceInfo.image2DMaxWidth = static_cast<size_t>(sourceDeviceInfo.image2DMaxWidth);
-    deviceInfo.image3DMaxDepth = static_cast<size_t>(sourceDeviceInfo.image3DMaxDepth);
-    deviceInfo.imageMaxArraySize = static_cast<size_t>(sourceDeviceInfo.imageMaxArraySize);
-    deviceInfo.imageMaxBufferSize = static_cast<size_t>(sourceDeviceInfo.imageMaxBufferSize);
-    deviceInfo.localMemSize = sourceDeviceInfo.localMemSize;
-    deviceInfo.maxMemAllocSize = sourceDeviceInfo.maxMemAllocSize;
-    deviceInfo.maxNumEUsPerSubSlice = static_cast<size_t>(sourceDeviceInfo.maxNumEUsPerSubSlice);
-    deviceInfo.maxParameterSize = static_cast<size_t>(sourceDeviceInfo.maxParameterSize);
-    deviceInfo.maxWorkGroupSize = static_cast<size_t>(sourceDeviceInfo.maxWorkGroupSize);
-    deviceInfo.maxWorkItemSizes[0] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[0]);
-    deviceInfo.maxWorkItemSizes[1] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[1]);
-    deviceInfo.maxWorkItemSizes[2] = static_cast<size_t>(sourceDeviceInfo.maxWorkItemSizes[2]);
-    deviceInfo.outProfilingTimerResolution = static_cast<size_t>(sourceDeviceInfo.outProfilingTimerResolution);
-    deviceInfo.printfBufferSize = static_cast<size_t>(sourceDeviceInfo.printfBufferSize);
-}
-
 void ClDevice::initializeCaps() {
-    copyCommonCapsFromDevice();
-
     auto &hwInfo = getHardwareInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
 
@@ -405,7 +364,7 @@ void ClDevice::initializeCaps() {
 
     // OpenCL 1.2 requires 128MB minimum
 
-    deviceInfo.maxConstantBufferSize = deviceInfo.maxMemAllocSize;
+    deviceInfo.maxConstantBufferSize = sharedDeviceInfo.maxMemAllocSize;
 
     deviceInfo.maxWorkItemDimensions = 3;
 
@@ -415,13 +374,13 @@ void ClDevice::initializeCaps() {
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : hwHelper.getMinimalSIMDSize();
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
-    deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize / simdSizeUsed);
+    deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
 
     deviceInfo.singleFpConfig |= defaultFpFlags;
 
     deviceInfo.halfFpConfig = defaultFpFlags;
 
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", sharedDeviceInfo.computeUnitsUsedForScratch);
 
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
                      systemInfo.EUCount,
@@ -450,7 +409,7 @@ void ClDevice::initializeCaps() {
         (CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS));
     deviceInfo.preemptionSupported = false;
     deviceInfo.maxGlobalVariableSize = 64 * 1024;
-    deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(deviceInfo.maxMemAllocSize);
+    deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);
 
     deviceInfo.planarYuvMaxWidth = 16384;
     deviceInfo.planarYuvMaxHeight = 16352;

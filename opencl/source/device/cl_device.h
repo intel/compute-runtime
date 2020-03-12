@@ -10,7 +10,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
-#include "opencl/source/device/device_info_map.h"
+#include "opencl/source/device/device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
 #include "engine_node.h"
@@ -108,12 +108,12 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     Device &getDevice() const noexcept { return device; }
     const ClDeviceInfo &getDeviceInfo() const { return deviceInfo; }
+    const DeviceInfo &getSharedDeviceInfo() const;
     ClDevice *getDeviceById(uint32_t deviceId);
     const std::string &peekCompilerExtensions() const;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
 
   protected:
-    void copyCommonCapsFromDevice();
     void initializeCaps();
     void initializeExtraCaps();
     void setupFp64Flags();
@@ -133,13 +133,5 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops = {0};
     std::string compilerExtensions;
 };
-
-template <cl_device_info Param>
-inline void ClDevice::getCap(const void *&src,
-                             size_t &size,
-                             size_t &retSize) {
-    src = &DeviceInfoTable::Map<Param>::getValue(deviceInfo);
-    retSize = size = DeviceInfoTable::Map<Param>::size;
-}
 
 } // namespace NEO

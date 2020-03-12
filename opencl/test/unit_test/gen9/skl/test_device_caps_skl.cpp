@@ -25,12 +25,13 @@ SKLTEST_F(SklDeviceCaps, SklProfilingTimerResolution) {
 
 SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturned) {
     const auto &caps = pClDevice->getDeviceInfo();
+    const auto &sharedCaps = pDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 
     auto memoryManager = pDevice->getMemoryManager();
     EXPECT_FALSE(memoryManager->peekForce32BitAllocations());
-    EXPECT_FALSE(caps.force32BitAddressess);
+    EXPECT_FALSE(sharedCaps.force32BitAddressess);
 }
 
 SKLTEST_F(SklDeviceCaps, SklSvmCapabilities) {

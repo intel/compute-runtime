@@ -23,6 +23,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/device/cl_device.h"
+#include "opencl/source/device/cl_device_get_cap.inl"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
@@ -198,7 +199,7 @@ Image *Image::create(Context *context,
                                                                                        *context, true);
         imgInfo.preferRenderCompression &= !Image::isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
-        if (!context->getDevice(0)->getDeviceInfo().imageSupport && !imgInfo.linearStorage) {
+        if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
             errcodeRet = CL_INVALID_OPERATION;
             return nullptr;
         }

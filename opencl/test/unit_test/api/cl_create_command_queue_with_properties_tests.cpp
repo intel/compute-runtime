@@ -276,7 +276,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto cmdq2 = clCreateCommandQueueWithProperties(pContext, devices[testedRootDeviceIndex], odq, &retVal);
-    if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
+    if (pDevice->getSharedDeviceInfo().maxOnDeviceQueues > 1) {
         EXPECT_NE(nullptr, cmdq2);
         EXPECT_EQ(retVal, CL_SUCCESS);
     } else {

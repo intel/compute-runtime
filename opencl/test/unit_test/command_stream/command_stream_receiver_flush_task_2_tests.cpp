@@ -583,13 +583,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 
     auto deviceInfo = pClDevice->getDeviceInfo();
-    if (deviceInfo.force32BitAddressess) {
+    auto sharedDeviceInfo = pDevice->getDeviceInfo();
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_FALSE(commandStreamReceiver->getGSBAFor32BitProgrammed());
     }
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_TRUE(commandStreamReceiver->getGSBAFor32BitProgrammed());
     }
 
@@ -611,7 +612,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     // Get address ( offset in 32 bit addressing ) of sratch
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
-    if (deviceInfo.force32BitAddressess && is64bit) {
+    if (sharedDeviceInfo.force32BitAddressess && is64bit) {
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
@@ -627,7 +628,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     uint64_t scratchBaseLowPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointer();
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
-    if (is64bit && !deviceInfo.force32BitAddressess) {
+    if (is64bit && !sharedDeviceInfo.force32BitAddressess) {
         uint64_t expectedAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         EXPECT_EQ(expectedAddress, scratchBaseLowPart);
         EXPECT_EQ(0u, scratchBaseHighPart);
@@ -636,7 +637,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
         EXPECT_EQ(highPartGraphicsAddress, scratchBaseHighPart);
     }
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex()), GSHaddress);
     } else {
         if (is64bit) {
@@ -658,7 +659,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     itorCmdForStateBase = find<STATE_BASE_ADDRESS *>(itorWalker, cmdList.end());
 
     // In 32 Bit addressing sba shouldn't be reprogrammed
-    if (pDevice->getDeviceInfo().force32BitAddressess == true) {
+    if (sharedDeviceInfo.force32BitAddressess == true) {
         EXPECT_EQ(itorCmdForStateBase, cmdList.end());
     }
 
@@ -670,7 +671,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     uint64_t oldScratchAddr = ((uint64_t)scratchBaseHighPart << 32u) | scratchBaseLowPart;
     uint64_t newScratchAddr = ((uint64_t)cmdMediaVfeStateSecond->getScratchSpaceBasePointerHigh() << 32u) | cmdMediaVfeStateSecond->getScratchSpaceBasePointer();
 
-    if (pDevice->getDeviceInfo().force32BitAddressess == true) {
+    if (sharedDeviceInfo.force32BitAddressess == true) {
         EXPECT_NE(oldScratchAddr, newScratchAddr);
     }
 }
@@ -697,13 +698,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 
     auto deviceInfo = pClDevice->getDeviceInfo();
-    if (deviceInfo.force32BitAddressess) {
+    auto sharedDeviceInfo = pDevice->getDeviceInfo();
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_FALSE(commandStreamReceiver->getGSBAFor32BitProgrammed());
     }
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_TRUE(commandStreamReceiver->getGSBAFor32BitProgrammed());
     }
 
@@ -725,7 +727,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     // Get address ( offset in 32 bit addressing ) of sratch
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
-    if (deviceInfo.force32BitAddressess && is64bit) {
+    if (sharedDeviceInfo.force32BitAddressess && is64bit) {
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
@@ -741,7 +743,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     uint64_t scratchBaseLowPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointer();
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
-    if (is64bit && !deviceInfo.force32BitAddressess) {
+    if (is64bit && !sharedDeviceInfo.force32BitAddressess) {
         lowPartGraphicsAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         highPartGraphicsAddress = 0u;
     }
@@ -749,7 +751,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     EXPECT_EQ(lowPartGraphicsAddress, scratchBaseLowPart);
     EXPECT_EQ(highPartGraphicsAddress, scratchBaseHighPart);
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(graphicsAllocationScratch->getRootDeviceIndex()), GSHaddress);
     } else {
         if (is64bit) {
@@ -772,7 +774,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
 
     itorCmdForStateBase = find<STATE_BASE_ADDRESS *>(itorWalker, cmdList.end());
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         EXPECT_NE(itorWalker, itorCmdForStateBase);
 
         if (itorCmdForStateBase != cmdList.end()) {
@@ -783,14 +785,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
             EXPECT_NE(sba, sba2);
             EXPECT_EQ(0u, GSHaddress2);
 
-            if (deviceInfo.force32BitAddressess) {
+            if (sharedDeviceInfo.force32BitAddressess) {
                 EXPECT_FALSE(commandStreamReceiver->getGSBAFor32BitProgrammed());
             }
         }
     }
     delete buffer;
 
-    if (deviceInfo.force32BitAddressess) {
+    if (sharedDeviceInfo.force32BitAddressess) {
         // Asserts placed after restoring old CSR to avoid heap corruption
         ASSERT_NE(itorCmdForStateBase, cmdList.end());
     }

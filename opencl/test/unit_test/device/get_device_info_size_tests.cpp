@@ -130,7 +130,7 @@ struct GetDeviceInfoForImage : public GetDeviceInfoSize {};
 
 TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
     auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
-    if (!device->getDeviceInfo().imageSupport) {
+    if (!device->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
     size_t sizeReturned = 0;
@@ -148,7 +148,7 @@ TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
 
 TEST_P(GetDeviceInfoForImage, whenImageAreNotSupportedThenClSuccessAndSizeofCluintIsReturned) {
     auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
-    if (device->getDeviceInfo().imageSupport) {
+    if (device->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
     size_t sizeReturned = 0;

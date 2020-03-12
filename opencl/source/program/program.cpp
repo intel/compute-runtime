@@ -72,7 +72,7 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         } else if (strstr(paramValue, "1.2")) {
             internalOptions = "-ocl-version=120 ";
         }
-        force32BitAddressess = pClDevice->getDeviceInfo().force32BitAddressess;
+        force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
 
         if (force32BitAddressess) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);

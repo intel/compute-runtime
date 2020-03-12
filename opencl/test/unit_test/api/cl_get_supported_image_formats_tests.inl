@@ -18,7 +18,7 @@ using namespace NEO;
 typedef api_tests clGetSupportedImageFormatsTests;
 
 TEST_F(clGetSupportedImageFormatsTests, GivenValidParamsWhenGettingSupportImageFormatsThenNumImageFormatsIsGreaterThanZero) {
-    if (!pContext->getDevice(0)->getDeviceInfo().imageSupport) {
+    if (!pContext->getDevice(0)->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }
     cl_uint numImageFormats = 0;
@@ -97,7 +97,7 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformWithoutDevicesWhenClGetSupport
     executionEnvironment->initializeMemoryManager();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0u), platform());
-    const ClDeviceInfo &devInfo = device->getDeviceInfo();
+    const DeviceInfo &devInfo = device->getSharedDeviceInfo();
     if (!devInfo.imageSupport) {
         GTEST_SKIP();
     }

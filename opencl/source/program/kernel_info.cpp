@@ -134,8 +134,9 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
     this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().platform.eRenderCoreFamily;
-    this->numThreadsPerSubSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxNumEUsPerSubSlice * dispatchInfo.getKernel()->getDevice().getDeviceInfo().numThreadsPerEU;
-    this->localMemSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().localMemSize;
+    this->numThreadsPerSubSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().maxNumEUsPerSubSlice *
+                                  dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().numThreadsPerEU;
+    this->localMemSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getSharedDeviceInfo().localMemSize;
     setIfUseImg(dispatchInfo.getKernel());
     setMinWorkGroupSize();
 }
