@@ -2628,6 +2628,39 @@ TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
     EXPECT_EQ(1u, program.applyAdditionalOptionsCalled);
 }
 
+TEST_F(ProgramTests, WhenProgramIsCreatedThenItsDeviceIsProperlySet) {
+    auto wasValidClDeviceUsed = [](MockProgram &program) -> bool {
+        return (program.getInternalOptions().find(CompilerOptions::arch32bit) != std::string::npos);
+    };
+
+    MockExecutionEnvironment executionEnvironment;
+    MockDevice mockDevice;
+    mockDevice.deviceInfo.force32BitAddressess = true;
+    auto pContextMockDevice = new MockDevice;
+    MockClDevice contextMockClDevice{pContextMockDevice};
+    MockContext mockContext{&contextMockClDevice};
+
+    MockProgram programWithDeviceGiven{executionEnvironment, &mockContext, false, &mockDevice};
+    EXPECT_EQ(&mockDevice, programWithDeviceGiven.pDevice);
+
+    MockProgram programWithDeviceFromContext{executionEnvironment, &mockContext, false, nullptr};
+    EXPECT_EQ(pContextMockDevice, programWithDeviceFromContext.pDevice);
+
+    MockProgram programWithDeviceWithoutSpecializedDevice{executionEnvironment, nullptr, false, &mockDevice};
+    EXPECT_FALSE(wasValidClDeviceUsed(programWithDeviceWithoutSpecializedDevice));
+
+    MockDevice invalidClDevice;
+    mockDevice.setSpecializedDevice(&invalidClDevice);
+    MockProgram programWithDeviceWithInvalidSpecializedDevice{executionEnvironment, nullptr, false, &mockDevice};
+    EXPECT_FALSE(wasValidClDeviceUsed(programWithDeviceWithInvalidSpecializedDevice));
+
+    MockClDevice validClDevice{new MockDevice};
+    validClDevice.deviceInfo.force32BitAddressess = true;
+    validClDevice.device.deviceInfo.force32BitAddressess = true;
+    MockProgram programWithDeviceWithValidSpecializedDevice{executionEnvironment, nullptr, false, &validClDevice.getDevice()};
+    EXPECT_TRUE(wasValidClDeviceUsed(programWithDeviceWithValidSpecializedDevice));
+}
+
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);

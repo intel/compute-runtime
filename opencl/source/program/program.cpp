@@ -46,16 +46,25 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         this->context->incRefInternal();
     }
     blockKernelManager = new BlockKernelManager();
-    auto clDevice = context != nullptr ? context->getDevice(0) : (device != nullptr) ? device->getSpecializedDevice<ClDevice>() : nullptr;
-    if (pDevice == nullptr && context != nullptr) {
-        pDevice = &context->getDevice(0)->getDevice();
+    ClDevice *pClDevice = nullptr;
+    if (context != nullptr) {
+        pClDevice = context->getDevice(0);
+        if (pDevice == nullptr) {
+            pDevice = &pClDevice->getDevice();
+        }
+    } else if (pDevice != nullptr) {
+        auto pSpecializedDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
+        if (pSpecializedDevice != nullptr) {
+            pClDevice = pSpecializedDevice;
+        }
     }
+
     numDevices = 1;
     char paramValue[32] = {};
     bool force32BitAddressess = false;
 
-    if (clDevice) {
-        clDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, nullptr);
+    if (pClDevice) {
+        pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, nullptr);
         if (strstr(paramValue, "2.1")) {
             internalOptions = "-ocl-version=210 ";
         } else if (strstr(paramValue, "2.0")) {
@@ -63,13 +72,13 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         } else if (strstr(paramValue, "1.2")) {
             internalOptions = "-ocl-version=120 ";
         }
-        force32BitAddressess = clDevice->getDeviceInfo().force32BitAddressess;
+        force32BitAddressess = pClDevice->getDeviceInfo().force32BitAddressess;
 
         if (force32BitAddressess) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
         }
 
-        if (clDevice->areSharedSystemAllocationsAllowed() ||
+        if (pClDevice->areSharedSystemAllocationsAllowed() ||
             DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
         }
@@ -82,9 +91,9 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         }
 
-        kernelDebugEnabled = clDevice->isDebuggerActive();
+        kernelDebugEnabled = pClDevice->isDebuggerActive();
 
-        auto enableStatelessToStatefullWithOffset = clDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
+        auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
         if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
             enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
         }
@@ -93,8 +102,8 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
         }
 
-        auto &hwHelper = HwHelper::get(clDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper.isForceEmuInt32DivRemSPWARequired(clDevice->getHardwareInfo())) {
+        auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        if (hwHelper.isForceEmuInt32DivRemSPWARequired(pClDevice->getHardwareInfo())) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
         }
     }
