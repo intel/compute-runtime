@@ -603,7 +603,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     timestamp1 = __rdtsc();
     _mm_lfence();
     localVariableReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
-    if (localVariableReadDelta < 0) {
+    if (localVariableReadDelta <= 0) {
         localVariableReadDelta = 1;
     }
     if (localVariableReadDelta < fastestLocalRead) {
@@ -620,7 +620,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     timestamp1 = __rdtsc();
     _mm_lfence();
     inputPointerReadDelta = timestamp1 - timestamp0 - meassurmentOverhead;
-    if (inputPointerReadDelta < 0) {
+    if (inputPointerReadDelta <= 0) {
         inputPointerReadDelta = 1;
     }
     return inputPointerReadDelta > slownessFactor * fastestLocalRead;
