@@ -258,9 +258,9 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
         return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    output.valuesBuffer->Resize(output.idsBuffer->GetSize<uint32_t>() * sizeof(void *));
-    for (uint32_t i = 0; i < output.valuesBuffer->GetSize<void *>(); i++) {
-        output.valuesBuffer->GetMemoryWriteable<void *>()[i] = nullptr;
+    output.valuesBuffer->Resize(output.idsBuffer->GetSizeRaw() * 2);
+    for (uint32_t i = 0; i < output.valuesBuffer->GetSize<uint64_t>(); i++) {
+        output.valuesBuffer->GetMemoryWriteable<void *>()[i] = 0u;
     }
 
     return TranslationOutput::ErrorCode::Success;

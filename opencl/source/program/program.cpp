@@ -130,15 +130,6 @@ Program::~Program() {
     if (context && !isBuiltIn) {
         context->decRefInternal();
     }
-
-    if (specConstantsValues.get() != nullptr) {
-        for (auto i = 0u; i < specConstantsValues->GetSize<void *>(); i++) {
-            auto specConstPtr = specConstantsValues->GetMemory<void *>()[i];
-            if (specConstPtr != nullptr) {
-                delete[] reinterpret_cast<char *>(specConstPtr);
-            }
-        }
-    }
 }
 
 cl_int Program::createProgramFromBinary(
@@ -250,12 +241,9 @@ cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, co
     for (uint32_t i = 0; i < specConstantsIds->GetSize<uint32_t>(); i++) {
         if (specConstantsIds->GetMemory<uint32_t>()[i] == specId) {
             if (specConstantsSizes->GetMemory<uint32_t>()[i] == static_cast<uint32_t>(specSize)) {
-                auto specConstPtr = specConstantsValues->GetMemoryWriteable<void *>()[i];
-                if (specConstPtr == nullptr) {
-                    specConstPtr = new char[specSize];
-                }
-                memcpy_s(specConstPtr, specSize, specValue, specSize);
-                specConstantsValues->GetMemoryWriteable<void *>()[i] = specConstPtr;
+                uint64_t specConstValue = 0u;
+                memcpy_s(&specConstValue, sizeof(uint64_t), specValue, specSize);
+                specConstantsValues->GetMemoryWriteable<uint64_t>()[i] = specConstValue;
                 return CL_SUCCESS;
             } else {
                 return CL_INVALID_VALUE;
