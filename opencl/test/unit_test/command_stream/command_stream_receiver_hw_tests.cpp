@@ -494,7 +494,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_EQ(immData, miFlushCmd->getImmediateData());
 
         miFlushCmd++;
-        *(cmdIterator++);
+        cmdIterator++;
     }
 
     EXPECT_NE(nullptr, miFlushCmd);
