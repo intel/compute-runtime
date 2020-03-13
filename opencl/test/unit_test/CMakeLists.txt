@@ -202,13 +202,15 @@ set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FO
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
 
-if(WIN32)
-  set(cloc_cmd_prefix ocloc)
-else()
-  if(DEFINED NEO__IGC_LIBRARY_PATH)
-    set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+if(NOT DEFINED cloc_cmd_prefix)
+  if(WIN32)
+    set(cloc_cmd_prefix ocloc)
   else()
-    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+    if(DEFINED NEO__IGC_LIBRARY_PATH)
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+    else()
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+    endif()
   endif()
 endif()
 
