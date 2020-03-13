@@ -67,6 +67,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     void overrideGfxPartition(GfxPartition *newGfxPartition);
 
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
-    ~TestedDrmMemoryManager();
+    ~TestedDrmMemoryManager() override;
 };
 } // namespace NEO

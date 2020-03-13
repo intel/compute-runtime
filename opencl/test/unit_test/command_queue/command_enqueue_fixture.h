@@ -26,7 +26,7 @@ struct CommandDeviceFixture : public DeviceFixture,
         CommandQueueHwFixture::SetUp(pClDevice, cmdQueueProperties);
     }
 
-    void TearDown() {
+    void TearDown() override {
         CommandQueueHwFixture::TearDown();
         DeviceFixture::TearDown();
     }
@@ -42,7 +42,7 @@ struct CommandEnqueueBaseFixture : CommandDeviceFixture,
         HardwareParse::SetUp();
     }
 
-    void TearDown() {
+    void TearDown() override {
         HardwareParse::TearDown();
         IndirectHeapFixture::TearDown();
         CommandDeviceFixture::TearDown();
@@ -56,7 +56,7 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
         CommandStreamFixture::SetUp(pCmdQ);
     }
 
-    void TearDown() {
+    void TearDown() override {
         CommandEnqueueBaseFixture::TearDown();
         CommandStreamFixture::TearDown();
     }

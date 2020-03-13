@@ -68,7 +68,7 @@ class MockProgram : public Program {
     MockProgram(T &&... args) : Program(std::forward<T>(args)...) {
     }
 
-    ~MockProgram() {
+    ~MockProgram() override {
         if (contextSet)
             context = nullptr;
     }

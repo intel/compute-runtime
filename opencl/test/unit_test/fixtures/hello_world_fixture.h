@@ -58,7 +58,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     }
 
   public:
-    virtual void SetUp() {
+    void SetUp() override {
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         CommandQueueFixture::SetUp(pClDevice, 0);
@@ -96,7 +96,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         pKernel->setArg(1, destBuffer);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         pCmdQ->flush();
 
         srcBuffer->release();

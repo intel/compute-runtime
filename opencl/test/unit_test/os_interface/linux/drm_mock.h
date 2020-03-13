@@ -38,7 +38,7 @@ class DrmMock : public Drm {
     }
     DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
 
-    ~DrmMock() {
+    ~DrmMock() override {
         if (sysFsDefaultGpuPathToRestore != nullptr) {
             sysFsDefaultGpuPath = sysFsDefaultGpuPathToRestore;
         }

@@ -95,7 +95,7 @@ class MockKernel : public Kernel {
         : Kernel(programArg, kernelInfoArg, deviceArg, scheduler) {
     }
 
-    ~MockKernel() {
+    ~MockKernel() override {
         // prevent double deletion
         if (Kernel::crossThreadData == mockCrossThreadData.data()) {
             Kernel::crossThreadData = nullptr;
@@ -564,7 +564,7 @@ class MockParentKernel : public Kernel {
     MockParentKernel(Program *programArg, const KernelInfo &kernelInfoArg, const ClDevice &deviceArg) : Kernel(programArg, kernelInfoArg, deviceArg) {
     }
 
-    ~MockParentKernel() {
+    ~MockParentKernel() override {
         delete kernelInfo.patchInfo.executionEnvironment;
         delete kernelInfo.patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
         delete kernelInfo.patchInfo.pAllocateStatelessEventPoolSurface;

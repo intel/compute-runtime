@@ -118,7 +118,7 @@ struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTag
 struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
     using MockCIF<IGC::IgcOclTranslationCtxTagOCL>::TranslateImpl;
     MockIgcOclTranslationCtx();
-    ~MockIgcOclTranslationCtx();
+    ~MockIgcOclTranslationCtx() override;
 
     IGC::OclTranslationOutputBase *TranslateImpl(
         CIF::Version_t outVersion,
@@ -237,7 +237,7 @@ struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
 
 struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
     MockFclOclDeviceCtx();
-    ~MockFclOclDeviceCtx();
+    ~MockFclOclDeviceCtx() override;
 
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version);
     void SetOclApiVersion(uint32_t version) override {

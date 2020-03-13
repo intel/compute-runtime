@@ -84,7 +84,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void initProgrammingFlags() override {
         initProgrammingFlagsCalled = true;
     }
-    void initializeEngine() {
+    void initializeEngine() override {
         AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine();
         initializeEngineCalled = true;
     }
@@ -106,18 +106,18 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
     }
-    void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+    void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) override {
         AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryEqual(gfxAddress, srcAddress, length);
         expectMemoryEqualCalled = true;
     }
-    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) override {
         AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(gfxAddress, srcAddress, length);
         expectMemoryNotEqualCalled = true;
     }
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         return true;
     }
-    void addAubComment(const char *message) {
+    void addAubComment(const char *message) override {
         AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(message);
         addAubCommentCalled = true;
     }

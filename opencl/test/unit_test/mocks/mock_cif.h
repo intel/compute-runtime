@@ -94,8 +94,6 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
     static std::map<CIF::InterfaceId_t, CreatorFuncT> globalCreators;
 
     MockCIFMain();
-    ~MockCIFMain() {
-    }
 
     CIF::Version_t GetBinaryVersion() const override {
         return 1;

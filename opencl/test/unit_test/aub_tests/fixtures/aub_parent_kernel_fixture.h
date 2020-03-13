@@ -19,7 +19,7 @@ class AUBParentKernelFixture : public CommandEnqueueAUBFixture,
   public:
     using HelloWorldKernelFixture::SetUp;
 
-    void SetUp() {
+    void SetUp() override {
         CommandEnqueueAUBFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         if (pClDevice->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
@@ -27,7 +27,7 @@ class AUBParentKernelFixture : public CommandEnqueueAUBFixture,
         }
         HelloWorldKernelFixture::SetUp(pClDevice, programFile, kernelName, "-cl-std=CL2.0");
     }
-    void TearDown() {
+    void TearDown() override {
         if (IsSkipped()) {
             return;
         }

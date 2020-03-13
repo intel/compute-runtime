@@ -25,7 +25,7 @@ class MockContext : public Context {
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
         void *data);
     MockContext();
-    ~MockContext();
+    ~MockContext() override;
 
     void clearSharingFunctions();
     void setSharingFunctions(SharingFunctions *sharingFunctions);
@@ -34,6 +34,6 @@ class MockContext : public Context {
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
 
   private:
-    ClDevice *device;
+    ClDevice *device = nullptr;
 };
 } // namespace NEO

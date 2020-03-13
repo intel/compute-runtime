@@ -21,15 +21,15 @@ class MockPipeStorage {
     MockPipeStorage(bool unaligned) {
         mockGfxAllocation = new MockGraphicsAllocation(alignUp(&data, 4), sizeof(data) / 2);
     }
-    char data[256];
-    MockGraphicsAllocation *mockGfxAllocation;
+    char data[256]{};
+    MockGraphicsAllocation *mockGfxAllocation = nullptr;
 };
 
 class MockPipe : public MockPipeStorage, public Pipe {
   public:
     MockPipe(Context *context) : MockPipeStorage(), Pipe(context, 0, 1, 128, nullptr, &data, mockGfxAllocation) {
     }
-    ~MockPipe() {
+    ~MockPipe() override {
         if (!getContext()) {
             delete mockGfxAllocation;
         }

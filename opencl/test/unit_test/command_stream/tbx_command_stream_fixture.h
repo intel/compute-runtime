@@ -19,10 +19,10 @@ class MockDevice;
 class TbxCommandStreamFixture : public CommandStreamFixture {
   public:
     virtual void SetUp(MockDevice *pDevice);
-    virtual void TearDown(void);
+    void TearDown(void) override;
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
 
-    MemoryManager *memoryManager;
+    MemoryManager *memoryManager = nullptr;
 };
 } // namespace NEO

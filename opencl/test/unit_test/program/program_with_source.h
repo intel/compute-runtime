@@ -30,11 +30,7 @@ class ProgramFromSourceTest : public ContextFixture,
     using PlatformFixture::SetUp;
 
   protected:
-    ProgramFromSourceTest()
-        : kbHelper(nullptr), SourceFileName(nullptr), KernelName(nullptr), retVal(CL_SUCCESS) {
-    }
-
-    virtual void SetUp() {
+    void SetUp() override {
         std::tie(SourceFileName, BinaryFileName, KernelName) = GetParam();
         kbHelper = new KernelBinaryHelper(BinaryFileName);
 
@@ -49,7 +45,7 @@ class ProgramFromSourceTest : public ContextFixture,
             SourceFileName);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
@@ -57,10 +53,10 @@ class ProgramFromSourceTest : public ContextFixture,
         delete kbHelper;
     }
 
-    KernelBinaryHelper *kbHelper;
-    const char *SourceFileName;
-    const char *BinaryFileName;
-    const char *KernelName;
-    cl_int retVal;
+    KernelBinaryHelper *kbHelper = nullptr;
+    const char *SourceFileName = nullptr;
+    const char *BinaryFileName = nullptr;
+    const char *KernelName = nullptr;
+    cl_int retVal = CL_SUCCESS;
 };
 } // namespace NEO

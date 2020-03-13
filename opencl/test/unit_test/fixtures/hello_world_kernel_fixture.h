@@ -85,7 +85,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         delete pKernelName;
         delete pTestFilename;
         pKernel->release();

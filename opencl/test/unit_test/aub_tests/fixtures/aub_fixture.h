@@ -110,12 +110,12 @@ class AUBFixture : public CommandQueueHwFixture {
 template <typename KernelFixture>
 struct KernelAUBFixture : public AUBFixture,
                           public KernelFixture {
-    void SetUp() {
+    void SetUp() override {
         AUBFixture::SetUp(nullptr);
         KernelFixture::SetUp(device.get(), context);
     }
 
-    void TearDown() {
+    void TearDown() override {
         KernelFixture::TearDown();
         AUBFixture::TearDown();
     }

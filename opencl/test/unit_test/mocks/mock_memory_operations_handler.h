@@ -15,9 +15,8 @@ class GraphicsAllocation;
 class MockMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandler() {}
-    virtual ~MockMemoryOperationsHandler() {}
-    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
 };
 } // namespace NEO

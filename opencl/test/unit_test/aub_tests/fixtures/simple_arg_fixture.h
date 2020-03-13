@@ -55,7 +55,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     }
 
   public:
-    virtual void SetUp() {
+    void SetUp() override {
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         CommandQueueFixture::SetUp(pClDevice, 0);
@@ -86,7 +86,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         if (pExpectedMemory) {
             alignedFree(pExpectedMemory);
             pExpectedMemory = nullptr;

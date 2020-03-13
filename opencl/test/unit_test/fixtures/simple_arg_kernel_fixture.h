@@ -123,7 +123,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         if (pKernel) {
             delete pKernel;
             pKernel = nullptr;
@@ -177,7 +177,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         if (kernel) {
             delete kernel;
             kernel = nullptr;
@@ -230,7 +230,7 @@ class SimpleKernelFixture : public ProgramFixture {
         }
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         for (size_t i = 0; i < maxKernelsCount; i++) {
             if (kernels[i]) {
                 kernels[i].reset(nullptr);
@@ -283,7 +283,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() {
+    void TearDown() override {
         ProgramFixture::TearDown();
     }
 

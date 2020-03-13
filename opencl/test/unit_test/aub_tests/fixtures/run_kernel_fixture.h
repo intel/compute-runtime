@@ -41,11 +41,11 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
     RunKernelFixture() {
     }
 
-    virtual void SetUp() {
+    void SetUp() override {
         CommandEnqueueAUBFixture::SetUp();
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         CommandEnqueueAUBFixture::TearDown();
     }
 

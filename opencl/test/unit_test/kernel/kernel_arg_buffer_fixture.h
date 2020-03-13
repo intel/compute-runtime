@@ -28,19 +28,14 @@ class KernelArgBufferFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;
 
   public:
-    KernelArgBufferFixture()
-        : retVal(CL_SUCCESS), pProgram(nullptr), pKernel(nullptr), pKernelInfo(nullptr) {
-    }
-
-  protected:
     void SetUp();
-    void TearDown();
+    void TearDown() override;
 
-    cl_int retVal;
-    MockProgram *pProgram;
-    MockKernel *pKernel;
-    std::unique_ptr<KernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
-    char pSshLocal[64];
-    char pCrossThreadData[64];
+    cl_int retVal = CL_SUCCESS;
+    MockProgram *pProgram = nullptr;
+    MockKernel *pKernel = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo = nullptr;
+    SKernelBinaryHeaderCommon kernelHeader{};
+    char pSshLocal[64]{};
+    char pCrossThreadData[64]{};
 };

@@ -22,7 +22,7 @@ struct SurfaceFormatInfo;
 
 class MockGmmResourceInfo : public GmmResourceInfo {
   public:
-    virtual ~MockGmmResourceInfo();
+    ~MockGmmResourceInfo() override;
 
     MockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams);
 

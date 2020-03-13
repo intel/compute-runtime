@@ -13,7 +13,7 @@ class MockDeferredDeleter : public DeferredDeleter {
   public:
     MockDeferredDeleter();
 
-    ~MockDeferredDeleter();
+    ~MockDeferredDeleter() override;
 
     void deferDeletion(DeferrableDeletion *deletion) override;
 

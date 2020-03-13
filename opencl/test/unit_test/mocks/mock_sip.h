@@ -24,7 +24,7 @@ class MockSipKernel : public SipKernel {
 
     MockSipKernel(SipKernelType type, Program *sipProgram);
     MockSipKernel();
-    ~MockSipKernel();
+    ~MockSipKernel() override;
 
     static std::vector<char> dummyBinaryForSip;
     static std::vector<char> getDummyGenBinary();

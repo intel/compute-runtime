@@ -99,7 +99,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         setupExpectedCmds();
     };
 
-    ~MockDeviceQueueHw() {
+    ~MockDeviceQueueHw() override {
         if (expectedCmds.prefetch)
             delete expectedCmds.prefetch;
     }

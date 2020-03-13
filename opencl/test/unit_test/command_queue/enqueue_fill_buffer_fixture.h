@@ -15,11 +15,7 @@ namespace NEO {
 
 struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
 
-    EnqueueFillBufferFixture()
-        : buffer(nullptr) {
-    }
-
-    virtual void SetUp() {
+    void SetUp() override {
         CommandEnqueueFixture::SetUp();
 
         BufferDefaults::context = new MockContext;
@@ -27,7 +23,7 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         buffer = BufferHelper<>::create();
     }
 
-    virtual void TearDown() {
+    void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
 
@@ -44,6 +40,6 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
     }
 
     MockContext context;
-    Buffer *buffer;
+    Buffer *buffer = nullptr;
 };
 } // namespace NEO

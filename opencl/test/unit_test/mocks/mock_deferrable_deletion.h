@@ -15,7 +15,7 @@ class MockDeferrableDeletion : public DeferrableDeletion {
   public:
     bool apply() override;
 
-    virtual ~MockDeferrableDeletion();
+    ~MockDeferrableDeletion() override;
     int applyCalled = 0;
 };
 } // namespace NEO

@@ -53,17 +53,17 @@ struct InternalsEventTest
     InternalsEventTest() {
     }
 
-    void SetUp() {
+    void SetUp() override {
         DeviceFixture::SetUp();
         mockContext = new MockContext(pClDevice);
     }
 
-    void TearDown() {
+    void TearDown() override {
         delete mockContext;
         DeviceFixture::TearDown();
     }
 
-    MockContext *mockContext;
+    MockContext *mockContext = nullptr;
 };
 
 struct MyUserEvent : public VirtualEvent {
@@ -119,7 +119,7 @@ struct MyEvent : public Event {
 
 class MockEventTests : public HelloWorldTest<HelloWorldFixtureFactory> {
   public:
-    void TearDown() {
+    void TearDown() override {
         uEvent->setStatus(-1);
         uEvent.reset();
         HelloWorldFixture::TearDown();

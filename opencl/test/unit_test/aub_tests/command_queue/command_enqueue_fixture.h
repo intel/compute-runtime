@@ -19,12 +19,12 @@ namespace NEO {
 struct CommandEnqueueAUBFixture : public CommandEnqueueBaseFixture,
                                   public AUBCommandStreamFixture {
     using AUBCommandStreamFixture::SetUp;
-    void SetUp() {
+    void SetUp() override {
         CommandEnqueueBaseFixture::SetUp(cl_command_queue_properties(0));
         AUBCommandStreamFixture::SetUp(pCmdQ);
     }
 
-    void TearDown() {
+    void TearDown() override {
         AUBCommandStreamFixture::TearDown();
         CommandEnqueueBaseFixture::TearDown();
     }

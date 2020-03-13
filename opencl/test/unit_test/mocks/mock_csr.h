@@ -257,16 +257,13 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool multiOsContextCapable = false;
     bool downloadAllocationCalled = false;
 
-    ~MockCommandStreamReceiver() {
-    }
-
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         return true;
     }
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
-    bool isMultiOsContextCapable() const { return multiOsContextCapable; }
+    bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
     CompletionStamp flushTask(
         LinearStream &commandStream,
