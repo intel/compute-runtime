@@ -354,13 +354,24 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
 }
 
+HWTEST_F(BcsTests, whenAskingForCmdSizeForMiFlushDwWithMemoryWriteThenReturnCorrectValue) {
+    size_t waSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize();
+    size_t totalSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    constexpr size_t miFlushDwSize = sizeof(typename FamilyType::MI_FLUSH_DW);
+
+    size_t additionalSize = UnitTestHelper<FamilyType>::additionalMiFlushDwRequired ? miFlushDwSize : 0;
+
+    EXPECT_EQ(additionalSize, waSize);
+    EXPECT_EQ(miFlushDwSize + additionalSize, totalSize);
+}
+
 HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCalculateForAllAttachedProperites) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
     const uint64_t bltSize = (3 * max2DBlitSize);
     const uint32_t numberOfBlitOperations = 4;
 
-    auto baseSize = sizeof(typename FamilyType::MI_FLUSH_DW) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedBlitInstructionsSize = sizeof(typename FamilyType::XY_COPY_BLT) * numberOfBlts;
 
     auto expectedAlignedSize = baseSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo());
@@ -384,7 +395,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
 HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommandsThenAddMiFlushDw) {
     size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT);
 
-    auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + sizeof(typename FamilyType::MI_FLUSH_DW);
+    auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, true);

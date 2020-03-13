@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -34,7 +35,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
 
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
            (sizeof(typename GfxFamily::XY_COPY_BLT) * numberOfBlits) +
-           (sizeof(typename GfxFamily::MI_FLUSH_DW) * static_cast<size_t>(updateTimestampPacket));
+           (EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() * static_cast<size_t>(updateTimestampPacket));
 }
 
 template <typename GfxFamily>
@@ -45,7 +46,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
                                                                         blitProperties.outputTimestampPacket != nullptr);
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
-    size += sizeof(typename GfxFamily::MI_FLUSH_DW) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+    size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     return alignUp(size, MemoryConstants::cacheLineSize);
 }

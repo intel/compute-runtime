@@ -272,4 +272,9 @@ void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd) {}
 template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::programMiFlushDwWA(LinearStream &commandStream) {}
 
+template <typename GfxFamily>
+size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
+    return 0;
+}
+
 } // namespace NEO

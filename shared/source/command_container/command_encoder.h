@@ -218,5 +218,7 @@ struct EncodeMiFlushDW {
     static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData);
     static void programMiFlushDwWA(LinearStream &commandStream);
     static void appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd);
+    static size_t getMiFlushDwCmdSizeForDataWrite();
+    static size_t getMiFlushDwWaSize();
 };
 } // namespace NEO
