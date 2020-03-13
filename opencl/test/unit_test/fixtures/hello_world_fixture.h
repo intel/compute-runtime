@@ -50,13 +50,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     using IndirectHeapFixture::SetUp;
     using KernelFixture::pKernel;
 
-    HelloWorldFixture() : pSrcMemory(nullptr),
-                          pDestMemory(nullptr),
-                          sizeUserMemory(128 * sizeof(float)),
-                          kernelFilename("CopyBuffer_simd"),
-                          kernelName("CopyBuffer") {
-    }
-
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -109,13 +102,13 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         BufferDefaults::context->release();
         DeviceFixture::TearDown();
     }
-    Buffer *srcBuffer;
-    Buffer *destBuffer;
-    void *pSrcMemory;
-    void *pDestMemory;
-    size_t sizeUserMemory;
-    const char *kernelFilename;
-    const char *kernelName;
+    Buffer *srcBuffer = nullptr;
+    Buffer *destBuffer = nullptr;
+    void *pSrcMemory = nullptr;
+    void *pDestMemory = nullptr;
+    size_t sizeUserMemory = 128 * sizeof(float);
+    const char *kernelFilename = "CopyBuffer_simd";
+    const char *kernelName = "CopyBuffer";
     const int srcPattern = 85;
     const int destPattern = 170;
 

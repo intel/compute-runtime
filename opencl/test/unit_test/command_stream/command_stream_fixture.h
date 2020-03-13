@@ -13,20 +13,15 @@
 namespace NEO {
 
 struct CommandStreamFixture {
-    CommandStreamFixture(void)
-        : pCS(nullptr),
-          pCmdBuffer(nullptr) {
-    }
-
     void SetUp(CommandQueue *pCmdQ) {
         pCS = &pCmdQ->getCS(1024);
         pCmdBuffer = pCS->getCpuBase();
     }
 
-    virtual void TearDown(void) {
+    virtual void TearDown() {
     }
 
-    LinearStream *pCS;
-    void *pCmdBuffer;
+    LinearStream *pCS = nullptr;
+    void *pCmdBuffer = nullptr;
 };
 } // namespace NEO

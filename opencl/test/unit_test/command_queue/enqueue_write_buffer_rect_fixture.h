@@ -21,11 +21,6 @@ namespace NEO {
 
 struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
                                     public ::testing::Test {
-    EnqueueWriteBufferRectTest(void)
-        : buffer(nullptr),
-          hostPtr(nullptr) {
-    }
-
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
         context.reset(new MockContext(pClDevice));
@@ -48,10 +43,10 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
-        buffer.reset(nullptr);
-        nonZeroCopyBuffer.reset(nullptr);
+        buffer.reset();
+        nonZeroCopyBuffer.reset();
         ::alignedFree(hostPtr);
-        context.reset(nullptr);
+        context.reset();
         CommandEnqueueFixture::TearDown();
     }
 
@@ -87,7 +82,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     std::unique_ptr<Buffer> buffer;
     std::unique_ptr<Buffer> nonZeroCopyBuffer;
 
-    void *hostPtr;
+    void *hostPtr = nullptr;
 
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;

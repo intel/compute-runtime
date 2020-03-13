@@ -19,5 +19,5 @@ class BuiltInFixture {
     void SetUp(NEO::Device *pDevice);
     void TearDown();
 
-    NEO::BuiltIns *pBuiltIns;
+    NEO::BuiltIns *pBuiltIns = nullptr;
 };

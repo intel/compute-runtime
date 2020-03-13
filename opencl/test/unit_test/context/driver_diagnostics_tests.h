@@ -33,9 +33,6 @@ void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, s
 struct DriverDiagnosticsTest : public PlatformFixture,
                                public ::testing::Test {
     using PlatformFixture::SetUp;
-    DriverDiagnosticsTest() : retVal(CL_SUCCESS) {
-    }
-
     void SetUp() override {
         PlatformFixture::SetUp();
         memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
@@ -45,9 +42,9 @@ struct DriverDiagnosticsTest : public PlatformFixture,
         PlatformFixture::TearDown();
     }
 
-    cl_int retVal;
-    char userData[maxHintCounter * DriverDiagnostics::maxHintStringSize];
-    char expectedHint[DriverDiagnostics::maxHintStringSize];
+    cl_int retVal = CL_SUCCESS;
+    char userData[maxHintCounter * DriverDiagnostics::maxHintStringSize]{};
+    char expectedHint[DriverDiagnostics::maxHintStringSize]{};
 };
 
 struct VerboseLevelTest : public DriverDiagnosticsTest,
@@ -101,10 +98,10 @@ struct PerformanceHintBufferTest : public PerformanceHintTest,
         alignedFree(address);
         PerformanceHintTest::TearDown();
     }
-    bool alignedSize;
-    bool alignedAddress;
-    void *address;
-    Buffer *buffer;
+    bool alignedSize = false;
+    bool alignedAddress = false;
+    void *address = nullptr;
+    Buffer *buffer = nullptr;
 };
 
 struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
@@ -123,11 +120,11 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
         delete clDevice;
         PerformanceHintTest::TearDown();
     }
-    MockDevice *device;
-    MockClDevice *clDevice;
-    cl_command_queue cmdQ;
-    bool profilingEnabled;
-    bool preemptionSupported;
+    MockDevice *device = nullptr;
+    MockClDevice *clDevice = nullptr;
+    cl_command_queue cmdQ = nullptr;
+    bool profilingEnabled = false;
+    bool preemptionSupported = false;
 };
 
 struct PerformanceHintEnqueueTest : public PerformanceHintTest {
@@ -158,8 +155,8 @@ struct PerformanceHintEnqueueBufferTest : public PerformanceHintEnqueueTest {
         alignedFree(address);
         PerformanceHintEnqueueTest::TearDown();
     }
-    void *address;
-    Buffer *buffer;
+    void *address = nullptr;
+    Buffer *buffer = nullptr;
 };
 
 struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBufferTest,
@@ -173,8 +170,8 @@ struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBuffe
     void TearDown() override {
         PerformanceHintEnqueueBufferTest::TearDown();
     }
-    bool alignedSize;
-    bool alignedAddress;
+    bool alignedSize = false;
+    bool alignedAddress = false;
 };
 
 struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
@@ -192,8 +189,8 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
         alignedFree(address);
         PerformanceHintEnqueueTest::TearDown();
     }
-    void *address;
-    Image *image;
+    void *address = nullptr;
+    Image *image = nullptr;
     std::unique_ptr<Image> zeroCopyImage;
 };
 
@@ -208,8 +205,8 @@ struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageT
     void TearDown() override {
         PerformanceHintEnqueueImageTest::TearDown();
     }
-    bool alignedSize;
-    bool alignedAddress;
+    bool alignedSize = false;
+    bool alignedAddress = false;
 };
 
 struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest,
@@ -243,8 +240,8 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         ProgramFixture::TearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
-    Kernel *kernel;
-    size_t globalWorkGroupSize[3];
+    Kernel *kernel = nullptr;
+    size_t globalWorkGroupSize[3]{};
 };
 
 struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKernelTest,
@@ -279,8 +276,8 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         ProgramFixture::TearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
-    Kernel *kernel;
-    size_t globalWorkGroupSize[3];
+    Kernel *kernel = nullptr;
+    size_t globalWorkGroupSize[3]{};
 };
 
 struct PerformanceHintKernelTest : public PerformanceHintTest,
@@ -294,5 +291,5 @@ struct PerformanceHintKernelTest : public PerformanceHintTest,
     void TearDown() override {
         PerformanceHintTest::TearDown();
     }
-    bool zeroSized;
+    bool zeroSized = false;
 };

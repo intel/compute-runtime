@@ -29,11 +29,6 @@ class ProgramFromBinaryTest : public DeviceFixture,
     using ContextFixture::SetUp;
 
   protected:
-    ProgramFromBinaryTest() : BinaryFileName(nullptr),
-                              KernelName(nullptr),
-                              retVal(CL_SUCCESS) {
-    }
-
     void SetUp() override {
         std::tie(BinaryFileName, KernelName) = GetParam();
 
@@ -60,9 +55,9 @@ class ProgramFromBinaryTest : public DeviceFixture,
         options = optionsIn;
     }
 
-    const char *BinaryFileName;
-    const char *KernelName;
-    cl_int retVal;
+    const char *BinaryFileName = nullptr;
+    const char *KernelName = nullptr;
+    cl_int retVal = CL_SUCCESS;
     std::string options;
 };
 
@@ -76,9 +71,6 @@ class ProgramSimpleFixture : public DeviceFixture,
     using ContextFixture::SetUp;
 
   public:
-    ProgramSimpleFixture() : retVal(CL_SUCCESS) {
-    }
-
     void SetUp() override {
         DeviceFixture::SetUp();
 
@@ -95,6 +87,6 @@ class ProgramSimpleFixture : public DeviceFixture,
     }
 
   protected:
-    cl_int retVal;
+    cl_int retVal = CL_SUCCESS;
 };
 } // namespace NEO

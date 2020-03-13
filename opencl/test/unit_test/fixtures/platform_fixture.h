@@ -21,9 +21,9 @@ class PlatformFixture {
     void SetUp();
     void TearDown();
 
-    Platform *pPlatform;
+    Platform *pPlatform = nullptr;
 
-    cl_uint num_devices;
-    cl_device_id *devices;
+    cl_uint num_devices = 0u;
+    cl_device_id *devices = nullptr;
 };
 } // namespace NEO

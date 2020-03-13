@@ -48,9 +48,9 @@ class TestEnvironment : public ::testing::Environment {
     virtual std::string &igcGetMockFile();
 
   protected:
-    OsLibrary *libraryFrontEnd;
-    OsLibrary *libraryIGC;
-    OsLibrary *libraryOS;
+    OsLibrary *libraryFrontEnd = nullptr;
+    OsLibrary *libraryIGC = nullptr;
+    OsLibrary *libraryOS = nullptr;
 
     std::vector<MockCompilerDebugVars> igcDebugVarStack;
     std::vector<MockCompilerDebugVars> fclDebugVarStack;
@@ -58,14 +58,14 @@ class TestEnvironment : public ::testing::Environment {
     void (*igcSetDebugVarsFPtr)(MockCompilerDebugVars &debugVars);
     void (*fclSetDebugVarsFptr)(MockCompilerDebugVars &debugVars);
 
-    MockCompilerDebugVars fclDefaultDebugVars;
-    MockCompilerDebugVars igcDefaultDebugVars;
-    HardwareInfo hwInfoDefaultDebugVars;
+    MockCompilerDebugVars fclDefaultDebugVars{};
+    MockCompilerDebugVars igcDefaultDebugVars{};
+    HardwareInfo hwInfoDefaultDebugVars{};
 
-    std::string fclMockFile;
-    std::string igcMockFile;
+    std::string fclMockFile{};
+    std::string igcMockFile{};
 
-    MockCompilerEnableGuard mockCompilerGuard;
+    MockCompilerEnableGuard mockCompilerGuard{};
 };
 
 extern TestEnvironment *gEnvironment;

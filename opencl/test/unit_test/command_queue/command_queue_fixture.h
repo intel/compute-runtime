@@ -62,7 +62,7 @@ struct CommandQueueFixture {
         ClDevice *device,
         cl_command_queue_properties properties);
 
-    CommandQueue *pCmdQ;
+    CommandQueue *pCmdQ = nullptr;
 };
 
 static const cl_command_queue_properties AllCommandQueueProperties[] = {

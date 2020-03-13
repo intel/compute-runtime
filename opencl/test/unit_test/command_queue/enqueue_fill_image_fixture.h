@@ -15,10 +15,6 @@
 namespace NEO {
 
 struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
-
-    EnqueueFillImageTestFixture() : image(nullptr) {
-    }
-
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         context = new MockContext(pClDevice);
@@ -40,7 +36,7 @@ struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    MockContext *context;
-    Image *image;
+    MockContext *context = nullptr;
+    Image *image = nullptr;
 };
 } // namespace NEO

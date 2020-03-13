@@ -20,10 +20,6 @@ namespace NEO {
 struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
                                       public ::testing::Test {
 
-    EnqueueCopyImageToBufferTest() : srcImage(nullptr),
-                                     dstBuffer(nullptr) {
-    }
-
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext(pClDevice);
@@ -51,17 +47,14 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    MockContext *context;
-    Image *srcImage;
-    Buffer *dstBuffer;
+    MockContext *context = nullptr;
+    Image *srcImage = nullptr;
+    Buffer *dstBuffer = nullptr;
 };
 
 struct EnqueueCopyImageToBufferMipMapTest : public CommandEnqueueFixture,
                                             public ::testing::Test,
                                             public ::testing::WithParamInterface<uint32_t> {
-
-    EnqueueCopyImageToBufferMipMapTest() : dstBuffer(nullptr) {
-    }
 
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
@@ -77,7 +70,7 @@ struct EnqueueCopyImageToBufferMipMapTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::TearDown();
     }
 
-    MockContext *context;
-    Buffer *dstBuffer;
+    MockContext *context = nullptr;
+    Buffer *dstBuffer = nullptr;
 };
 } // namespace NEO

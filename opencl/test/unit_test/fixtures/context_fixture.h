@@ -19,6 +19,6 @@ class ContextFixture {
     virtual void SetUp(cl_uint numDevices, cl_device_id *pDeviceList);
     virtual void TearDown();
 
-    MockContext *pContext;
+    MockContext *pContext = nullptr;
 };
 } // namespace NEO

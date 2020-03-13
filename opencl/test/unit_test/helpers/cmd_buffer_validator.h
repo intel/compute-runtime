@@ -47,7 +47,7 @@ struct GenericCmdValidator : CmdValidatorWithStaticStorage<GenericCmdValidator<C
 
 struct NamedValidator {
     NamedValidator(CmdValidator *validator)
-        : validator(validator), name("Unspecified") {
+        : NamedValidator(validator, "Unspecified") {
     }
 
     NamedValidator(CmdValidator *validator, const char *name)
@@ -69,7 +69,7 @@ struct MatchCmd {
     }
 
     MatchCmd(int amount)
-        : amount(amount), matchesAny(false) {
+        : MatchCmd(amount, false) {
     }
 
     virtual ~MatchCmd() = default;

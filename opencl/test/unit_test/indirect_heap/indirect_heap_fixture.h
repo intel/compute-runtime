@@ -14,17 +14,12 @@ namespace NEO {
 class CommandQueue;
 
 struct IndirectHeapFixture {
-    IndirectHeapFixture() : pDSH(nullptr),
-                            pIOH(nullptr),
-                            pSSH(nullptr) {
-    }
-
     virtual void SetUp(CommandQueue *pCmdQ);
     virtual void TearDown() {
     }
 
-    IndirectHeap *pDSH;
-    IndirectHeap *pIOH;
-    IndirectHeap *pSSH;
+    IndirectHeap *pDSH = nullptr;
+    IndirectHeap *pIOH = nullptr;
+    IndirectHeap *pSSH = nullptr;
 };
 } // namespace NEO

@@ -22,10 +22,6 @@ using CreatorFuncT = CIF::ICIF *(*)(CIF::InterfaceId_t intId, CIF::Version_t ver
 
 template <typename BaseType = CIF::ICIF>
 struct MockCIF : BaseType {
-    MockCIF()
-        : refCount(1) {
-    }
-
     void Release() override {
         auto prev = refCount--;
         assert(prev >= 1);
@@ -53,7 +49,7 @@ struct MockCIF : BaseType {
         return true; // by default : no sub-interface are supported
     }
 
-    uint32_t refCount;
+    uint32_t refCount = 1u;
 };
 
 struct MockCIFMain : MockCIF<CIF::CIFMain> {

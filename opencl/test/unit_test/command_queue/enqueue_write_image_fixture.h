@@ -20,10 +20,6 @@ namespace NEO {
 struct EnqueueWriteImageTest : public CommandEnqueueFixture,
                                public ::testing::Test {
 
-    EnqueueWriteImageTest() : srcPtr(nullptr),
-                              dstImage(nullptr) {
-    }
-
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
 
@@ -52,9 +48,9 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    float *srcPtr;
-    Image *dstImage;
-    MockContext *context;
+    float *srcPtr = nullptr;
+    Image *dstImage = nullptr;
+    MockContext *context = nullptr;
 };
 
 struct EnqueueWriteImageMipMapTest : public EnqueueWriteImageTest,

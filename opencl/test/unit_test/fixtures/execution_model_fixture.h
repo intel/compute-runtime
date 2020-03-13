@@ -43,15 +43,13 @@ class DeviceQueueFixture {
         delete pDevQueue;
     }
 
-    DeviceQueue *pDevQueue;
+    DeviceQueue *pDevQueue = nullptr;
 };
 
 class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
                                  public CommandQueueHwFixture,
                                  public DeviceQueueFixture {
   public:
-    ExecutionModelKernelTest(){};
-
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(0);
         ExecutionModelKernelFixture::SetUp();
@@ -82,8 +80,6 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
                                     public CommandQueueHwFixture,
                                     public DeviceQueueFixture {
   public:
-    ExecutionModelSchedulerTest(){};
-
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueHwFixture::SetUp(pClDevice, 0);
@@ -101,7 +97,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    MockParentKernel *parentKernel;
+    MockParentKernel *parentKernel = nullptr;
 };
 
 struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
@@ -125,5 +121,5 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
         return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
     }
 
-    MockClDevice *device;
+    MockClDevice *device = nullptr;
 };

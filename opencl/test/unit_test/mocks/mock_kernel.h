@@ -438,9 +438,7 @@ class MockParentKernel : public Kernel {
             info->childrenKernelsIdOffset.push_back({0, crossThreadOffset});
         }
 
-        crossThreadOffset += 8;
-
-        assert(crossThreadSize >= crossThreadOffset);
+        UNRECOVERABLE_IF(crossThreadSize < crossThreadOffset + 8);
         info->crossThreadData = new char[crossThreadSize];
 
         auto clDevice = device.getSpecializedDevice<ClDevice>();

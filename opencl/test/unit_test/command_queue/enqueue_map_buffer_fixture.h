@@ -18,10 +18,6 @@ namespace NEO {
 struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
                                   public ::testing::Test {
 
-    EnqueueMapBufferTypeTest(void)
-        : srcBuffer(nullptr) {
-    }
-
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext;
@@ -50,6 +46,6 @@ struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    Buffer *srcBuffer;
+    Buffer *srcBuffer = nullptr;
 };
 } // namespace NEO

@@ -53,10 +53,6 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
                                    public EnqueueCopyBufferRectHelper,
                                    public ::testing::Test {
 
-    EnqueueCopyBufferRectTest(void) : srcBuffer(nullptr),
-                                      dstBuffer(nullptr) {
-    }
-
     struct BufferRect : public BufferDefaults {
         static const size_t sizeInBytes;
     };
@@ -130,8 +126,8 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    Buffer *srcBuffer;
-    Buffer *dstBuffer;
+    Buffer *srcBuffer = nullptr;
+    Buffer *dstBuffer = nullptr;
 
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;

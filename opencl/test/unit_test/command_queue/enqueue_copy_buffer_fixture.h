@@ -46,10 +46,6 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
                                public EnqueueCopyBufferHelper,
                                public ::testing::Test {
 
-    EnqueueCopyBufferTest(void)
-        : srcBuffer(nullptr) {
-    }
-
     void SetUp(void) override {
         CommandEnqueueFixture::SetUp();
 
@@ -88,7 +84,7 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     }
 
     MockContext context;
-    Buffer *srcBuffer;
-    Buffer *dstBuffer;
+    Buffer *srcBuffer = nullptr;
+    Buffer *dstBuffer = nullptr;
 };
 } // namespace NEO
