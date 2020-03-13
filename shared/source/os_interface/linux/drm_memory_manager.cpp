@@ -260,6 +260,8 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         return nullptr;
     }
 
+    bo->gpuAddress = gpuVirtualAddress;
+
     if (validateHostPtrMemory) {
         int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, getDefaultDrmContextId());
         if (result != SUCCESS) {
@@ -268,8 +270,6 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
             return nullptr;
         }
     }
-
-    bo->gpuAddress = gpuVirtualAddress;
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, const_cast<void *>(allocationData.hostPtr),
                                         gpuVirtualAddress, allocationData.size, MemoryPool::System4KBPages);

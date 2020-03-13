@@ -154,6 +154,9 @@ class DrmMockCustom : public Drm {
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
     drm_i915_gem_execbuffer2 execBuffer = {0};
 
+    //First exec object
+    drm_i915_gem_exec_object2 execBufferBufferObjects = {0};
+
     //DRM_IOCTL_I915_GEM_CREATE
     __u64 createParamsSize = 0;
     __u32 createParamsHandle = 0;
@@ -201,6 +204,8 @@ class DrmMockCustom : public Drm {
         case DRM_IOCTL_I915_GEM_EXECBUFFER2: {
             drm_i915_gem_execbuffer2 *execbuf = (drm_i915_gem_execbuffer2 *)arg;
             this->execBuffer = *execbuf;
+            this->execBufferBufferObjects =
+                *reinterpret_cast<drm_i915_gem_exec_object2 *>(this->execBuffer.buffers_ptr);
             ioctl_cnt.execbuffer2++;
         } break;
 
