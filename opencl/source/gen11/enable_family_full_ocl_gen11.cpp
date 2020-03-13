@@ -12,9 +12,6 @@
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 
-#ifdef HAVE_INSTRUMENTATION
-#include "opencl/source/event/perf_counter.h"
-#endif
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sampler/sampler.h"

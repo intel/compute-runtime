@@ -74,6 +74,10 @@ Directly linking to the runtime library is not supported:
 * GmmLib - https://github.com/intel/gmmlib
 * Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler
 
+In addition, to enable performance counters support, the following packages are needed:
+* Intel Metrics Discovery - https://github.com/intel/metrics-discovery
+* Intel Metrics Library for MDAPI - https://github.com/intel/metrics-library
+
 ## How to provide feedback
 
 By default, please submit an issue using native github.com [interface](https://github.com/intel/compute-runtime/issues).

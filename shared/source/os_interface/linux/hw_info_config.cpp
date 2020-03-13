@@ -17,8 +17,6 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
 
-#include "instrumentation.h"
-
 #include <cstring>
 
 namespace NEO {
@@ -154,9 +152,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
-
-    outHwInfo->capabilityTable.instrumentationEnabled =
-        (outHwInfo->capabilityTable.instrumentationEnabled && haveInstrumentation);
 
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;

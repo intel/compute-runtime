@@ -7,23 +7,11 @@
 
 #pragma once
 
-#include "level_zero/tools/source/metrics/metric.h"
-// Ignore function-overload warning in clang
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
-#elif defined(__linux__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
-#endif
-#include "common/instrumentation/api/metrics_discovery_api.h"
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#elif defined(__linux__)
-#pragma GCC diagnostic pop
-#endif
-
 #include "shared/source/os_interface/os_library.h"
+
+#include "level_zero/tools/source/metrics/metric.h"
+
+#include "metrics_discovery_api.h"
 
 #include <vector>
 
@@ -44,7 +32,7 @@ struct MetricEnumeration {
     ze_result_t initialize();
 
     virtual ze_result_t openMetricsDiscovery();
-    virtual ze_result_t cleanupMetricsDiscovery();
+    ze_result_t cleanupMetricsDiscovery();
 
     ze_result_t cacheMetricInformation();
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,

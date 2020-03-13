@@ -16,8 +16,6 @@
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
 
-#include "instrumentation.h"
-
 #include <map>
 #include <utility>
 

@@ -16,8 +16,6 @@
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "test.h"
 
-#include "instrumentation.h"
-
 namespace NEO {
 
 template <>
@@ -101,7 +99,7 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     outHwInfo.capabilityTable.instrumentationEnabled = true;
     ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);
-    EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled == haveInstrumentation);
+    EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
 HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {

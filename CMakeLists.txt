@@ -211,6 +211,24 @@ if(DISABLE_AUB_STREAM)
     unset(AUB_STREAM_DIR)
 endif()
 
+# Metrics Library
+get_filename_component(METRICS_LIBRARY_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/metrics_library" ABSOLUTE)
+if(IS_DIRECTORY ${METRICS_LIBRARY_HEADERS_DIR})
+    message(STATUS "Metrics Library dir: ${METRICS_LIBRARY_HEADERS_DIR}")
+    include_directories(${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/metrics_library)
+else()
+    message(FATAL_ERROR "Metrics Library headers not available!")
+endif()
+
+# Metrics Discovery
+get_filename_component(METRICS_DISCOVERY_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/metrics_discovery" ABSOLUTE)
+if(IS_DIRECTORY ${METRICS_DISCOVERY_HEADERS_DIR})
+    message(STATUS "Metrics Discovery dir: ${METRICS_DISCOVERY_HEADERS_DIR}")
+    include_directories(${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/metrics_discovery)
+else()
+    message(FATAL_ERROR "Metrics Discovery headers not available!")
+endif()
+
 get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
@@ -486,33 +504,6 @@ endmacro()
 
 link_directories(${NEO__GMM_LIBRARY_PATH})
 
-# Instrumentation detection
-if(NOT DEFINED INSTRUMENTATION_LIB_NAME)
-  if(DEFINED INSTRUMENTATION_SOURCE_DIR)
-    get_filename_component(INSTRUMENTATION_SOURCE_DIR "${INSTRUMENTATION_SOURCE_DIR}" ABSOLUTE)
-  else()
-    get_filename_component(INSTRUMENTATION_SOURCE_DIR_tmp "${NEO_SOURCE_DIR}/../instrumentation" ABSOLUTE)
-    if(IS_DIRECTORY "${INSTRUMENTATION_SOURCE_DIR_tmp}")
-      set(INSTRUMENTATION_SOURCE_DIR "${INSTRUMENTATION_SOURCE_DIR_tmp}")
-    endif()
-  endif()
-  if(IS_DIRECTORY "${INSTRUMENTATION_SOURCE_DIR}")
-    message(STATUS "Instrumentation source dir is: ${INSTRUMENTATION_SOURCE_DIR}")
-    set(INSTRUMENTATION_INCLUDE_PATHS ${INSTRUMENTATION_SOURCE_DIR}/inc)
-    set(HAVE_INSTRUMENTATION TRUE)
-  else()
-    message(STATUS "Instrumentation source dir not found")
-    set(HAVE_INSTRUMENTATION FALSE)
-  endif()
-else()
-  if(TARGET ${INSTRUMENTATION_LIB_NAME})
-    set(INSTRUMENTATION_INCLUDE_PATHS $<TARGET_PROPERTY:${INSTRUMENTATION_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-    set(HAVE_INSTRUMENTATION TRUE)
-  else()
-    message(STATUS "Instrumentation target not found. ${INSTRUMENTATION_LIB_NAME} is not a valid target")
-    set(HAVE_INSTRUMENTATION FALSE)
-  endif()
-endif()
 
 if(NOT DISABLE_LIBVA)
     # LibVA detection
@@ -821,15 +812,6 @@ include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${
 if (MSVC)
     include_directories(${NEO_SOURCE_DIR}/opencl/source/sharings/gl/windows/include)
 endif()
-
-if(HAVE_INSTRUMENTATION)
-  set(NEO__INSTRUMENTATION_DIR_SUFFIX ${BRANCH_DIR_SUFFIX})
-  message(STATUS "Instrumentation include dirs: ${INSTRUMENTATION_INCLUDE_PATHS}")
-  include_directories(${INSTRUMENTATION_INCLUDE_PATHS})
-else()
-  set(NEO__INSTRUMENTATION_DIR_SUFFIX "/")
-endif()
-include_directories(${NEO_SOURCE_DIR}/opencl/source/instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
 
 # Define where to put binaries
 set(TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

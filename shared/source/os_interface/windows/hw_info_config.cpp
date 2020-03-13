@@ -14,8 +14,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_constants.h"
 
-#include "instrumentation.h"
-
 namespace NEO {
 
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
@@ -36,9 +34,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt));
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-
-    outHwInfo->capabilityTable.instrumentationEnabled =
-        (outHwInfo->capabilityTable.instrumentationEnabled && haveInstrumentation);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

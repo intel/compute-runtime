@@ -8,8 +8,6 @@
 #pragma once
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "instrumentation.h"
-
 #include <map>
 #include <vector>
 

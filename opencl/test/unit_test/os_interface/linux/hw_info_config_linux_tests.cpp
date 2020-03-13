@@ -435,7 +435,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInstrumentationForHardwareIsEnabledOrDis
     pInHwInfo.capabilityTable.instrumentationEnabled = true;
     ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     ASSERT_EQ(0, ret);
-    EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled == haveInstrumentation);
+    EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenGttSizeReturnedWhenInitializingHwInfoThenSetSvmFtr) {

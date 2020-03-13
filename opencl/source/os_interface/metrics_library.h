@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 
-#include "instrumentation.h"
+#include "metrics_library_api_1_0.h"
 
 #include <memory>
 

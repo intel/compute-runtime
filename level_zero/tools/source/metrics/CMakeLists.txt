@@ -7,16 +7,11 @@
 set(L0_SRCS_TOOLS_METRICS
 )
 
-if(HAVE_INSTRUMENTATION)
-    list(APPEND L0_SRCS_TOOLS_METRICS
-        ${CMAKE_CURRENT_SOURCE_DIR}/metric.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/metric_enumeration_imp.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/metric_tracer_imp.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_imp.cpp)
-else()
-    list(APPEND L0_SRCS_TOOLS_METRICS
-        ${CMAKE_CURRENT_SOURCE_DIR}/metric_stubs.cpp)
-endif()
+list(APPEND L0_SRCS_TOOLS_METRICS
+    ${CMAKE_CURRENT_SOURCE_DIR}/metric.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/metric_enumeration_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/metric_tracer_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_imp.cpp)
 
 if(UNIX)
     add_subdirectory(linux)

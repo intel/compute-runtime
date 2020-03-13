@@ -192,7 +192,6 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/get_devices.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/source_level_debugger.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/source/helpers/built_ins_helper.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/source/instrumentation/instrumentation.cpp
     )
 
     if(WIN32)
@@ -398,14 +397,6 @@ if(UNIX)
     set_property(TARGET ${TARGET_NAME_L0}
         APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
     )
-endif()
-
-if(HAVE_INSTRUMENTATION)
-    target_link_libraries(${TARGET_NAME_L0}
-        ${INSTRUMENTATION_LIB_NAME})
-    target_include_directories(${TARGET_NAME_L0} BEFORE PRIVATE
-        ${INSTRUMENTATION_INCLUDE_PATH}
-  )
 endif()
 
 create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)

@@ -22,7 +22,6 @@ endif()
 
 hide_subdir(builtin_kernels_simulation)
 hide_subdir(dll)
-hide_subdir(instrumentation)
 
 add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
@@ -31,7 +30,6 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
 )
 
 add_subdirectories()
-add_subdirectory(instrumentation${NEO__INSTRUMENTATION_DIR_SUFFIX})
 include(enable_gens.cmake)
 
 # Enable SSE4/AVX2 options for files that need them

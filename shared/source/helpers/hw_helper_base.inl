@@ -20,8 +20,6 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
-#include "instrumentation.h"
-
 namespace NEO {
 
 template <typename Family>
