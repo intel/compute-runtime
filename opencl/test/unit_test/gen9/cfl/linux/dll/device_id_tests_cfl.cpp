@@ -14,7 +14,7 @@
 using namespace NEO;
 
 TEST(CflDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 41> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 43> expectedDescriptors = {{
         {ICFL_GT1_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {ICFL_GT1_S41_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {ICFL_GT1_S61_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
@@ -61,6 +61,9 @@ TEST(CflDeviceIdTest, supportedDeviceId) {
         {ICFL_GT2_DT_DEVICE_G0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
         {ICFL_GT2_HALO_DEVICE_15_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
         {ICFL_GT2_HALO_DEVICE_17_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        // CML WORKSTATION
+        {ICFL_GT2_WKS_DEVICE_P0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_WKS_DEVICE_G0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
