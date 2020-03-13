@@ -5,8 +5,13 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds.h"
+
+using Family = NEO::TGLLPFamily;
+
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
+#include "shared/source/helpers/hw_helper_tgllp_plus.inl"
 
 #include "opencl/source/aub/aub_helper_bdw_plus.inl"
 #include "opencl/source/gen12lp/helpers_gen12lp.h"
@@ -14,7 +19,6 @@
 #include "engine_node.h"
 
 namespace NEO {
-typedef TGLLPFamily Family;
 
 template <>
 bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {

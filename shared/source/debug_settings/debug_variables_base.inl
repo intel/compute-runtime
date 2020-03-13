@@ -39,7 +39,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints ex
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerGWS, 0, "Forces gws of scheduler kernel, only multiple of 24 allowed or 0 - default selected")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableExperimentalCommandBuffer, 0, "Enables injection of experimental command buffer")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideStatelessMocsIndex, -1, "-1: feature inactive, >=0 : following MOCS index will be programmed for stateless accesses in state base address")
-DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch in FrontEnd State command. -1 - do not set")
+DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch in FrontEnd State command. -1 - default, 0 - enabled, 1 - disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationMode, -1, "-1: Default, 0: Builtin, 1: Blit")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGpuAddressSpace, -1, "-1: Default, !=-1: GPU address space range in bits")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkgroupSize, -1, "-1: Default, !=-1: Overrides max worgkroup size to this value")

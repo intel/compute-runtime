@@ -79,13 +79,12 @@ uint32_t PreambleHelper<TGLLPFamily>::getUrbEntryAllocationSize() {
 
 template <>
 void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo) {
-    mediaVfeState->setDisableSlice0Subslice2(hwInfo.workaroundTable.waDisableFusedThreadScheduling);
-
-    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
-        mediaVfeState->setDisableSlice0Subslice2(DebugManager.flags.CFEFusedEUDispatch.get());
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+        mediaVfeState->setDisableSlice0Subslice2(true);
     }
 }
-// Explicitly instantiate PreambleHelper for TGLLP device family
 
+// Explicitly instantiate PreambleHelper for TGLLP device family
 template struct PreambleHelper<TGLLPFamily>;
 } // namespace NEO

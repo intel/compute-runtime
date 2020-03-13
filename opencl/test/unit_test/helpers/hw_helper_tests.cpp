@@ -816,6 +816,14 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
+    if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
+        GTEST_SKIP();
+    }
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isFusedEuDispatchEnabled(hardwareInfo));
+}
+
 HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForCacheFlushThenReturnCorrectValue) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     size_t actualSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();

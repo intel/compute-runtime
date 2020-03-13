@@ -581,7 +581,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
     cl_ulong scratchSize;
     cl_ulong privateMemSize;
     size_t maxWorkgroupSize;
-
+    const auto &hwInfo = getDevice().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
@@ -612,6 +613,9 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
         DEBUG_BREAK_IF(!patchInfo.executionEnvironment);
         preferredWorkGroupSizeMultiple = patchInfo.executionEnvironment->LargestCompiledSIMDSize;
+        if (hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+            preferredWorkGroupSizeMultiple *= 2;
+        }
         retVal = changeGetInfoStatusToCLResultType((info.set<size_t>(preferredWorkGroupSizeMultiple)));
         break;
 

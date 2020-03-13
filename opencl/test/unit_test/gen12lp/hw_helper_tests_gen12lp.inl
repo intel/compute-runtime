@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -142,6 +144,30 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEn
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2]);
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalledThenResultIsCorrect) {
+    DebugManagerStateRestore restorer;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &waTable = hardwareInfo.workaroundTable;
+    bool wa;
+    int32_t debugKey;
+    size_t expectedResult;
+
+    const std::array<std::tuple<bool, bool, int32_t>, 6> testParams{std::make_tuple(true, false, -1),
+                                                                    std::make_tuple(false, true, -1),
+                                                                    std::make_tuple(true, false, 0),
+                                                                    std::make_tuple(true, true, 0),
+                                                                    std::make_tuple(false, false, 1),
+                                                                    std::make_tuple(false, true, 1)};
+
+    for (const auto &params : testParams) {
+        std::tie(expectedResult, wa, debugKey) = params;
+        waTable.waDisableFusedThreadScheduling = wa;
+        DebugManager.flags.CFEFusedEUDispatch.set(debugKey);
+
+        EXPECT_EQ(expectedResult, helper.isFusedEuDispatchEnabled(hardwareInfo));
+    }
 }
 
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {
