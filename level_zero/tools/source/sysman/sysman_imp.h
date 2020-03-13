@@ -28,11 +28,12 @@ struct SysmanImp : Sysman {
 
     ze_device_handle_t hCoreDevice;
 
-    OsSysman *pOsSysman;
-    Pci *pPci;
-    SysmanDevice *pSysmanDevice;
-    FrequencyHandleContext *pFrequencyHandleContext;
-    StandbyHandleContext *pStandbyHandleContext;
+    OsSysman *pOsSysman = nullptr;
+    Pci *pPci = nullptr;
+    SysmanDevice *pSysmanDevice = nullptr;
+    FrequencyHandleContext *pFrequencyHandleContext = nullptr;
+    StandbyHandleContext *pStandbyHandleContext = nullptr;
+    MemoryHandleContext *pMemoryHandleContext = nullptr;
 
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
     ze_result_t schedulerGetCurrentMode(zet_sched_mode_t *pMode) override;

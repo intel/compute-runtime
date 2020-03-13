@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
+#include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/pci/pci.h"
 #include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/sysman_device/sysman_device.h"

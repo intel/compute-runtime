@@ -20,26 +20,50 @@ namespace L0 {
 SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
+    UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPci = new PciImp(pOsSysman);
     pSysmanDevice = new SysmanDeviceImp(pOsSysman, hCoreDevice);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
+    pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
 }
 
 SysmanImp::~SysmanImp() {
-    delete pStandbyHandleContext;
-    delete pFrequencyHandleContext;
-    delete pSysmanDevice;
-    delete pPci;
+    if (pMemoryHandleContext) {
+        delete pMemoryHandleContext;
+    }
+    if (pStandbyHandleContext) {
+        delete pStandbyHandleContext;
+    }
+    if (pFrequencyHandleContext) {
+        delete pFrequencyHandleContext;
+    }
+    if (pSysmanDevice) {
+        delete pSysmanDevice;
+    }
+    if (pPci) {
+        delete pPci;
+    }
     delete pOsSysman;
 }
 
 void SysmanImp::init() {
     pOsSysman->init();
-    pFrequencyHandleContext->init();
-    pStandbyHandleContext->init();
-    pPci->init();
-    pSysmanDevice->init();
+    if (pFrequencyHandleContext) {
+        pFrequencyHandleContext->init();
+    }
+    if (pStandbyHandleContext) {
+        pStandbyHandleContext->init();
+    }
+    if (pMemoryHandleContext) {
+        pMemoryHandleContext->init();
+    }
+    if (pPci) {
+        pPci->init();
+    }
+    if (pSysmanDevice) {
+        pSysmanDevice->init();
+    }
 }
 
 ze_result_t SysmanImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
@@ -123,7 +147,7 @@ ze_result_t SysmanImp::firmwareGet(uint32_t *pCount, zet_sysman_firmware_handle_
 }
 
 ze_result_t SysmanImp::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pMemoryHandleContext->memoryGet(pCount, phMemory);
 }
 
 ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {

@@ -17,16 +17,7 @@ target_sources(${L0_STATIC_LIB_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
-add_subdirectory(sysman_device)
-add_subdirectory(pci)
-add_subdirectory(frequency)
-add_subdirectory(standby)
-
-if(UNIX)
-    add_subdirectory(linux)
-else()
-    add_subdirectory(windows)
-endif()
+add_subdirectories()
 
 # Make our source files visible to parent
 set_property(GLOBAL PROPERTY L0_SRCS_TOOLS_SYSMAN ${L0_SRCS_TOOLS_SYSMAN})
