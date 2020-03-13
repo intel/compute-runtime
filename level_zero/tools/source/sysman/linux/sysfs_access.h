@@ -8,7 +8,6 @@
 #pragma once
 
 #include <level_zero/ze_api.h>
-#include <level_zero/zet_api.h>
 
 #include <fstream>
 #include <iostream>

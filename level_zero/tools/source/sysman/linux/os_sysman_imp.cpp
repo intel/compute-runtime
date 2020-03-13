@@ -27,19 +27,6 @@ SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
     return *pSysfsAccess;
 }
 
-ze_result_t LinuxSysmanImp::systemCmd(const std::string cmd, std::string &output) {
-    std::array<char, ZET_STRING_PROPERTY_SIZE> temp;
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (!fd) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    while (fgets(temp.data(), ZET_STRING_PROPERTY_SIZE, fd) != NULL) {
-        output += temp.data();
-    }
-    pclose(fd);
-    return ZE_RESULT_SUCCESS;
-}
-
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pSysfsAccess) {
         delete pSysfsAccess;

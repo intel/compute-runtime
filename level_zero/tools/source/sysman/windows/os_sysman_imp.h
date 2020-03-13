@@ -19,7 +19,6 @@ class WddmSysmanImp : public OsSysman {
     WddmSysmanImp &operator=(const WddmSysmanImp &obj) = delete;
 
     ze_result_t init() override;
-    ze_result_t systemCmd(const std::string cmd, std::string &output);
 
   private:
     SysmanImp *pParentSysmanImp;

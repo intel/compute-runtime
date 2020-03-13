@@ -9,7 +9,6 @@
 
 #include <climits>
 
-#include <array>
 #include <cerrno>
 #include <cstdio>
 

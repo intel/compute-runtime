@@ -18,8 +18,4 @@ OsSysman *OsSysman::create(SysmanImp *pParentSysmanImp) {
     return static_cast<OsSysman *>(pWddmSysmanImp);
 }
 
-ze_result_t WddmSysmanImp::systemCmd(const std::string cmd, std::string &output) {
-    return ZE_RESULT_SUCCESS;
-}
-
 } // namespace L0

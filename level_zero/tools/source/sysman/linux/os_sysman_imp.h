@@ -26,7 +26,6 @@ class LinuxSysmanImp : public OsSysman {
     ze_result_t init() override;
 
     SysfsAccess &getSysfsAccess();
-    ze_result_t systemCmd(const std::string cmd, std::string &output);
 
   private:
     SysmanImp *pParentSysmanImp;
