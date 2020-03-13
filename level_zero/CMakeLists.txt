@@ -29,7 +29,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         endif()
     endif()
 
-    project(level-zero-gpu VERSION 0.4.1)
+    project(level-zero-gpu VERSION 0.8.0)
     include(cmake/source_tree.cmake)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/platforms.cmake AND NOT SKIP_L0_UNIT_TESTS)
         include(cmake/${BRANCH_TYPE}/platforms.cmake)
