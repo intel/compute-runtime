@@ -50,8 +50,8 @@ constexpr uint64_t maxSvmAddress = is64bit ? maxNBitValue(47) : maxNBitValue(32)
 } // namespace MemoryConstants
 
 namespace BlitterConstants {
-constexpr uint64_t maxBlitWidth = 0x7FC0; // 0x7FFF aligned to cacheline size
-constexpr uint64_t maxBlitHeight = 0x7FFF;
+constexpr uint64_t maxBlitWidth = 0x7FC0;  // 0x7FFF aligned to cacheline size
+constexpr uint64_t maxBlitHeight = 0x3FC0; // 0x4000 aligned to cacheline size
 enum class BlitDirection : uint32_t {
     BufferToHostPtr,
     HostPtrToBuffer,

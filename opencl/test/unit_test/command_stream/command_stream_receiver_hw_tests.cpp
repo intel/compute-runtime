@@ -1241,3 +1241,8 @@ TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItRe
     EXPECT_NE(nullptr, scratchSpaceController.privateScratchAllocation);
     //no memory leak is expected
 }
+
+TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
+    EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x7FC0u);
+    EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x3FC0u);
+}
