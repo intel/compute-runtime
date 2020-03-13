@@ -316,13 +316,16 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     uint32_t GLHDCHandle = 0;
     uint32_t propertyType = 0;
     uint32_t propertyValue = 0;
+    Platform *platform = nullptr;
 
     if (properties != nullptr) {
         while (*properties != 0) {
             propertyType = static_cast<uint32_t>(properties[0]);
             propertyValue = static_cast<uint32_t>(properties[1]);
-            properties += 2;
             switch (propertyType) {
+            case CL_CONTEXT_PLATFORM: {
+                platform = castToObject<Platform>(reinterpret_cast<cl_platform_id>(properties[1]));
+            } break;
             case CL_GL_CONTEXT_KHR:
                 GLHGLRCHandle = propertyValue;
                 break;
@@ -330,6 +333,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
                 GLHDCHandle = propertyValue;
                 break;
             }
+            properties += 2;
         }
     }
 
@@ -346,7 +350,11 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     }
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
-        info.set<cl_device_id>(::platform()->getClDevice(0));
+        if (platform) {
+            info.set<cl_device_id>(platform->getClDevice(0));
+        } else {
+            info.set<cl_device_id>(platformsImpl[0]->getClDevice(0));
+        }
         return retVal;
     }
 
