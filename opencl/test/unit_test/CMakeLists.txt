@@ -7,7 +7,7 @@
 project(igdrcl_tests)
 
 set(OPENCL_TEST_PROJECTS_FOLDER "opencl runtime")
-set(PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER "${OPENCL_TEST_PROJECTS_FOLDER}/test platforms")
+set(OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER "${OPENCL_TEST_PROJECTS_FOLDER}/test platforms")
 set(OPENCL_UNIT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # disable optimizations for ults
@@ -181,7 +181,7 @@ function(neo_copy_test_files target product)
     DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
+  set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
 endfunction()
 
 add_dependencies(unit_tests
@@ -470,7 +470,7 @@ macro(macro_for_each_gen)
         endif()
       endif()
       add_custom_target(prepare_test_kernels_${family_name_with_type} DEPENDS ${kernels_to_compile_${family_name_with_type}} copy_compiler_files)
-      set_target_properties(prepare_test_kernels_${family_name_with_type} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}")
+      set_target_properties(prepare_test_kernels_${family_name_with_type} PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}")
       add_dependencies(prepare_test_kernels prepare_test_kernels_${family_name_with_type})
     endif()
   endforeach()

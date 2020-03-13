@@ -919,10 +919,6 @@ endif()
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 
-if(NOT SKIP_UNIT_TESTS)
-    add_subdirectory_unique(target_unit_tests)
-endif()
-
 hide_subdir(${NEO_RUNTIME_SUB_DIR})
 add_subdirectories()
 
