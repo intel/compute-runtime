@@ -15,6 +15,7 @@
 #if defined(__linux__)
 #include <dlfcn.h>
 #define HMODULE void *
+#define MAKE_VERSION() L0_PROJECT_VERSION_MAJOR "." L0_PROJECT_VERSION_MINOR
 #define MAKE_LIBRARY_NAME(NAME, VERSION) "lib" NAME ".so." VERSION
 #define LOAD_DRIVER_LIBRARY(NAME) dlopen(NAME, RTLD_LAZY | RTLD_LOCAL)
 #define FREE_DRIVER_LIBRARY(LIB) \
@@ -50,7 +51,7 @@ inline bool getenv_tobool(const char *name) {
 }
 
 #if defined(__linux__)
-#define LOAD_INTEL_GPU_LIBRARY() LOAD_DRIVER_LIBRARY(MAKE_LIBRARY_NAME("ze_intel_gpu", "0.4"))
+#define LOAD_INTEL_GPU_LIBRARY() LOAD_DRIVER_LIBRARY(MAKE_LIBRARY_NAME("ze_intel_gpu", MAKE_VERSION()))
 #elif defined(_WIN32)
 #if _WIN64
 #define LOAD_INTEL_GPU_LIBRARY() LOAD_DRIVER_LIBRARY(MAKE_LIBRARY_NAME("ze_intel_gpu", "64"))
