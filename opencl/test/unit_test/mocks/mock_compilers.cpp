@@ -337,6 +337,13 @@ CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 2)::GetPreferredIn
     return CodeType::spirV;
 }
 
+IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 3)::CreateTranslationCtxImpl(CIF::Version_t ver,
+                                                                                                     IGC::CodeType::CodeType_t inType,
+                                                                                                     IGC::CodeType::CodeType_t outType,
+                                                                                                     CIF::Builtins::BufferSimple *err) {
+    return nullptr;
+}
+
 } // namespace IGC
 
 #include "cif/macros/disable.h"
@@ -590,6 +597,13 @@ CIF::ICIF *MockFclOclDeviceCtx::Create(CIF::InterfaceId_t intId, CIF::Version_t 
 IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF::Version_t ver,
                                                                              IGC::CodeType::CodeType_t inType,
                                                                              IGC::CodeType::CodeType_t outType) {
+    return new MockFclOclTranslationCtx;
+}
+
+IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF::Version_t ver,
+                                                                             IGC::CodeType::CodeType_t inType,
+                                                                             IGC::CodeType::CodeType_t outType,
+                                                                             CIF::Builtins::BufferSimple *err) {
     return new MockFclOclTranslationCtx;
 }
 
