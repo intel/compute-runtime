@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/device/driver_info.h"
+#include "shared/source/os_interface/driver_info.h"
 
 namespace NEO {
 

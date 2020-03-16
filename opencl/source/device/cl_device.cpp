@@ -10,11 +10,11 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
-#include "opencl/source/device/driver_info.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/platform/platform.h"
 

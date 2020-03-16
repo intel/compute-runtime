@@ -10,7 +10,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_init_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_plus.inl
