@@ -15,6 +15,8 @@
 
 namespace NEO {
 
+DriverInfoWindows::DriverInfoWindows(std::string &&fullPath) : path(DriverInfoWindows::trimRegistryKey(fullPath)) {}
+
 DriverInfo *DriverInfo::create(OSInterface *osInterface) {
     if (osInterface) {
         auto wddm = osInterface->get()->getWddm();
@@ -22,11 +24,10 @@ DriverInfo *DriverInfo::create(OSInterface *osInterface) {
 
         std::string path(wddm->getDeviceRegistryPath());
 
-        auto result = new DriverInfoWindows();
-        path = result->trimRegistryKey(path);
+        auto driverInfo = new DriverInfoWindows(std::move(path));
 
-        result->setRegistryReader(new RegistryReader(false, path));
-        return result;
+        driverInfo->setRegistryReader(new RegistryReader(false, driverInfo->getRegistryPath()));
+        return driverInfo;
     }
 
     return nullptr;
@@ -52,4 +53,9 @@ std::string DriverInfoWindows::getDeviceName(std::string defaultName) {
 std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
     return registryReader.get()->getSetting("DriverVersion", defaultVersion);
 };
+
+const std::string &DriverInfoWindows::getRegistryPath() const {
+    return path;
+}
+
 } // namespace NEO

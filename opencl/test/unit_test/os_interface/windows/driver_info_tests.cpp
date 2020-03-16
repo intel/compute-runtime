@@ -99,7 +99,7 @@ class RegistryReaderMock : public SettingsReader {
 };
 
 TEST(DriverInfo, GivenDriverInfoWhenThenReturnNonNullptr) {
-    DriverInfoWindows driverInfo;
+    DriverInfoWindows driverInfo("");
     RegistryReaderMock *registryReaderMock = new RegistryReaderMock();
 
     driverInfo.setRegistryReader(registryReaderMock);
@@ -117,6 +117,15 @@ TEST(DriverInfo, GivenDriverInfoWhenThenReturnNonNullptr) {
 
     EXPECT_STREQ(defaultVersion.c_str(), driverVersion.c_str());
     EXPECT_TRUE(registryReaderMock->properVersionKey);
+};
+
+TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegistryPathIsTrimmed) {
+    std::string registryPath = "Path\\In\\Registry";
+    std::string fullRegistryPath = "\\REGISTRY\\MACHINE\\" + registryPath;
+    std::string expectedTrimmedRegistryPath = registryPath;
+    DriverInfoWindows driverInfo(std::move(fullRegistryPath));
+
+    EXPECT_STREQ(expectedTrimmedRegistryPath.c_str(), driverInfo.getRegistryPath().c_str());
 };
 
 TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriverInfoWindowsNotNullptr) {
@@ -144,6 +153,7 @@ TEST(DriverInfo, givenNotInitializedOsInterfaceWhenCreateDriverInfoThenReturnDri
 class MockDriverInfoWindows : public DriverInfoWindows {
 
   public:
+    MockDriverInfoWindows() : DriverInfoWindows("") {}
     const char *getRegistryReaderRegKey() {
         return reader->getRegKey();
     }
