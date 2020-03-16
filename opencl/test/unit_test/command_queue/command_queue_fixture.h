@@ -49,8 +49,6 @@ struct OOQueueFixture : public CommandQueueHwFixture {
 };
 
 struct CommandQueueFixture {
-    CommandQueueFixture();
-
     virtual void SetUp(
         Context *context,
         ClDevice *device,

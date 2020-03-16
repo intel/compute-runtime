@@ -78,10 +78,6 @@ void CommandQueueHwFixture::TearDown() {
     }
 }
 
-CommandQueueFixture::CommandQueueFixture()
-    : pCmdQ(nullptr) {
-}
-
 CommandQueue *CommandQueueFixture::createCommandQueue(
     Context *context,
     ClDevice *device,

@@ -11,9 +11,7 @@
 
 #include "opencl/source/os_interface/os_inc_base.h"
 
-TestEnvironment::TestEnvironment(void)
-    : libraryFrontEnd(nullptr), libraryIGC(nullptr),
-      libraryOS(nullptr), hwInfoDefaultDebugVars() {
+TestEnvironment::TestEnvironment() {
     igcDebugVarStack.reserve(3);
     fclDebugVarStack.reserve(3);
 }

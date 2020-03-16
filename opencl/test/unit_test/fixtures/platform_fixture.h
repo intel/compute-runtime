@@ -11,12 +11,7 @@
 
 namespace NEO {
 
-struct HardwareInfo;
-
 class PlatformFixture {
-  public:
-    PlatformFixture();
-
   protected:
     void SetUp();
     void TearDown();

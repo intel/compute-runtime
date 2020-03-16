@@ -17,13 +17,6 @@ using namespace NEO;
 
 class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
                                     public PlatformFixture {
-  public:
-    ExecutionModelKernelFixture() : pKernel(nullptr),
-                                    retVal(CL_SUCCESS) {
-    }
-
-    ~ExecutionModelKernelFixture() override = default;
-
   protected:
     void SetUp() override {
         PlatformFixture::SetUp();
@@ -87,6 +80,6 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         }
     }
 
-    Kernel *pKernel;
-    cl_int retVal;
+    Kernel *pKernel = nullptr;
+    cl_int retVal = CL_SUCCESS;
 };

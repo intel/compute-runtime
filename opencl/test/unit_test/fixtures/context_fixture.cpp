@@ -5,17 +5,13 @@
  *
  */
 
-#include "context_fixture.h"
+#include "opencl/test/unit_test/fixtures/context_fixture.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 
 namespace NEO {
-
-ContextFixture::ContextFixture()
-    : pContext(nullptr) {
-}
 
 void ContextFixture::SetUp(cl_uint numDevices, cl_device_id *pDeviceList) {
     auto retVal = CL_SUCCESS;

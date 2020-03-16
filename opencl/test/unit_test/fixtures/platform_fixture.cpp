@@ -13,11 +13,6 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-
-PlatformFixture::PlatformFixture()
-    : pPlatform(nullptr), num_devices(0), devices(nullptr) {
-}
-
 void PlatformFixture::SetUp() {
     pPlatform = constructPlatform();
     ASSERT_EQ(0u, pPlatform->getNumDevices());

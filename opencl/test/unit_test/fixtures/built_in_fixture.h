@@ -14,8 +14,6 @@ class Device;
 
 class BuiltInFixture {
   public:
-    BuiltInFixture();
-
     void SetUp(NEO::Device *pDevice);
     void TearDown();
 

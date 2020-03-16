@@ -16,9 +16,6 @@
 
 using namespace NEO;
 
-BuiltInFixture::BuiltInFixture() : pBuiltIns(nullptr) {
-}
-
 void BuiltInFixture::SetUp(Device *pDevice) {
     // create an instance of the builtins
     pBuiltIns = pDevice->getBuiltIns();
