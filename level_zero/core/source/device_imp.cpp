@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/device_imp.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -577,6 +578,19 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
         device->getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
     }
 
+    if (neoDevice->getDeviceInfo().debuggerActive) {
+        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+
+        auto debugSurface = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {device->getRootDeviceIndex(),
+             NEO::SipKernel::maxDbgSurfaceSize,
+             NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+        device->setDebugSurface(debugSurface);
+
+        device->getSourceLevelDebugger()
+            ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
+    }
+
     return device;
 }
 
@@ -591,8 +605,10 @@ DeviceImp::~DeviceImp() {
     metricContext.reset();
     builtins.reset();
 
-    if (neoDevice->getDeviceInfo().debuggerActive && getSourceLevelDebugger()) {
+    if (neoDevice->getDeviceInfo().debuggerActive) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
+        this->driverHandle->getMemoryManager()->freeGraphicsMemory(this->debugSurface);
+        this->debugSurface = nullptr;
     }
 
     if (neoDevice) {

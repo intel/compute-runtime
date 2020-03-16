@@ -57,6 +57,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
   protected:
     std::atomic<uint32_t> commandQueuePerThreadScratchSize;
     NEO::PreemptionMode commandQueuePreemptionMode = NEO::PreemptionMode::Initial;
+    bool commandQueueDebugCmdsProgrammed = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

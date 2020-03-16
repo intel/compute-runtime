@@ -139,6 +139,7 @@ struct KernelImp : Kernel {
     void patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z);
 
     void createPrintfBuffer();
+    void setDebugSurface();
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;

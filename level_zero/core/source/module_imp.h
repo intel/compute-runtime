@@ -61,6 +61,8 @@ struct ModuleImp : public Module {
 
     bool initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
 
+    bool isDebugEnabled() const override;
+
   protected:
     ModuleImp() = default;
 

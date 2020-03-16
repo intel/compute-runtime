@@ -39,6 +39,7 @@ struct Module : _ze_module_handle_t {
     virtual const KernelImmutableData *getKernelImmutableData(const char *functionName) const = 0;
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;
     virtual uint32_t getMaxGroupSize() const = 0;
+    virtual bool isDebugEnabled() const = 0;
 
     Module() = default;
     Module(const Module &) = delete;

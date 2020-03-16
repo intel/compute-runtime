@@ -77,7 +77,8 @@ struct DeviceImp : public Device {
     NEO::Device *getNEODevice() override;
     void activateMetricGroups() override;
     void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_kernel_properties_t *pKernelProperties);
-
+    NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
+    void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     ~DeviceImp() override;
 
     NEO::Device *neoDevice = nullptr;
@@ -90,6 +91,9 @@ struct DeviceImp : public Device {
     std::vector<Device *> subDevices;
     DriverHandle *driverHandle = nullptr;
     CommandList *pageFaultCommandList = nullptr;
+
+  protected:
+    NEO::GraphicsAllocation *debugSurface = nullptr;
 };
 
 } // namespace L0

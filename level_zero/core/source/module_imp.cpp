@@ -525,6 +525,10 @@ ze_result_t ModuleImp::getKernelNames(uint32_t *pCount, const char **pNames) {
     return ZE_RESULT_SUCCESS;
 }
 
+bool ModuleImp::isDebugEnabled() const {
+    return this->translationUnit->debugDataSize > 0;
+}
+
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName) {
     auto optInSrcPos = srcOptionSet.find(srcOptionName.begin());
     if (std::string::npos == optInSrcPos) {

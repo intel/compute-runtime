@@ -64,6 +64,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     size_t spaceForResidency = 0;
     size_t preemptionSize = 0u;
+    size_t debuggerCmdsSize = 0;
     constexpr size_t residencyContainerSpaceForPreemption = 2;
     constexpr size_t residencyContainerSpaceForFence = 1;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
@@ -78,6 +79,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                           NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
         statePreemption = devicePreemption;
     }
+
+    if (!commandQueueDebugCmdsProgrammed) {
+        debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->isDebuggerActive());
+    }
+
     if (devicePreemption == NEO::PreemptionMode::MidThread) {
         spaceForResidency += residencyContainerSpaceForPreemption;
     }
@@ -147,7 +153,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
 
-    linearStreamSizeEstimate += preemptionSize;
+    linearStreamSizeEstimate += preemptionSize + debuggerCmdsSize;
 
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
@@ -157,6 +163,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (!gpgpuEnabled) {
         programPipelineSelect(child);
     }
+
+    if (!commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
+        NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
+        commandQueueDebugCmdsProgrammed = true;
+    }
+
     if (frontEndStateDirty) {
         programFrontEnd(scratchSpaceController->getScratchPatchAddress(), child);
     }
@@ -175,10 +187,19 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         statePreemption = commandQueuePreemptionMode;
     }
 
+    const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
+                               neoDevice->isDebuggerActive();
     if (devicePreemption == NEO::PreemptionMode::MidThread) {
         residencyContainer.push_back(csr->getPreemptionAllocation());
-        auto sipIsa = neoDevice->getBuiltIns()->getSipKernel(NEO::SipKernelType::Csr, *neoDevice).getSipAllocation();
+    }
+
+    if (sipKernelUsed) {
+        auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
         residencyContainer.push_back(sipIsa);
+    }
+
+    if (neoDevice->isDebuggerActive()) {
+        residencyContainer.push_back(device->getDebugSurface());
     }
 
     for (auto i = 0u; i < numCommandLists; ++i) {

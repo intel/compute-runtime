@@ -608,6 +608,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     this->createPrintfBuffer();
 
+    this->setDebugSurface();
+
     for (auto &alloc : kernelImmData->getResidencyContainer()) {
         residencyContainer.push_back(alloc);
     }
@@ -627,6 +629,19 @@ void KernelImp::createPrintfBuffer() {
 
 void KernelImp::printPrintfOutput() {
     PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice());
+}
+
+void KernelImp::setDebugSurface() {
+    auto device = module->getDevice();
+    if (module->isDebugEnabled() && device->getNEODevice()->isDebuggerActive()) {
+
+        auto surfaceStateHeapRef = ArrayRef<uint8_t>(surfaceStateHeapData.get(), surfaceStateHeapDataSize);
+
+        patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
+                                 0,
+                                 *device->getDebugSurface(), this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.systemThreadSurfaceAddress,
+                                 *device->getNEODevice());
+    }
 }
 
 void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z) {
