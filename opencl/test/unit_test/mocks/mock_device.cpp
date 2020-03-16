@@ -30,14 +30,6 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
       subdevices(pMockDevice->subdevices), mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
 }
 
-void MockClDevice::setDriverInfo(DriverInfo *driverInfo) {
-    this->driverInfo.reset(driverInfo);
-};
-
-bool MockClDevice::hasDriverInfo() {
-    return driverInfo.get() != nullptr;
-};
-
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment, this->getRootDeviceIndex());

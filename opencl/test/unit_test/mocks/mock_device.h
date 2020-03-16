@@ -125,15 +125,13 @@ class MockClDevice : public ClDevice {
     using ClDevice::ClDevice;
     using ClDevice::deviceExtensions;
     using ClDevice::deviceInfo;
+    using ClDevice::driverInfo;
     using ClDevice::enabledClVersion;
     using ClDevice::initializeCaps;
     using ClDevice::name;
     using ClDevice::simultaneousInterops;
 
     explicit MockClDevice(MockDevice *pMockDevice);
-
-    void setDriverInfo(DriverInfo *driverInfo);
-    bool hasDriverInfo();
 
     bool createEngines() { return device.createEngines(); }
     void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }

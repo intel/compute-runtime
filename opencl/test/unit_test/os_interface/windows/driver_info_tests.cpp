@@ -60,12 +60,34 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
     return csr;
 }
 
+class MockDriverInfoWindows : public DriverInfoWindows {
+
+  public:
+    using DriverInfoWindows::DriverInfoWindows;
+    using DriverInfoWindows::path;
+    using DriverInfoWindows::registryReader;
+
+    const char *getRegistryReaderRegKey() {
+        return reader->getRegKey();
+    }
+    TestedRegistryReader *reader = nullptr;
+
+    static MockDriverInfoWindows *create(std::string path) {
+
+        auto result = new MockDriverInfoWindows("");
+        result->reader = new TestedRegistryReader(path);
+        result->registryReader.reset(result->reader);
+
+        return result;
+    };
+};
+
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateDriverInfo) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
 
-    EXPECT_TRUE(device->hasDriverInfo());
+    EXPECT_NE(nullptr, device->driverInfo.get());
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDontCreateDriverInfo) {
@@ -73,7 +95,7 @@ TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDont
     ultHwConfig.useHwCsr = false;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
 
-    EXPECT_FALSE(device->hasDriverInfo());
+    EXPECT_EQ(nullptr, device->driverInfo.get());
 }
 
 class RegistryReaderMock : public SettingsReader {
@@ -99,10 +121,10 @@ class RegistryReaderMock : public SettingsReader {
 };
 
 TEST(DriverInfo, GivenDriverInfoWhenThenReturnNonNullptr) {
-    DriverInfoWindows driverInfo("");
+    MockDriverInfoWindows driverInfo("");
     RegistryReaderMock *registryReaderMock = new RegistryReaderMock();
 
-    driverInfo.setRegistryReader(registryReaderMock);
+    driverInfo.registryReader.reset(registryReaderMock);
 
     std::string defaultName = "defaultName";
 
@@ -123,9 +145,9 @@ TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegi
     std::string registryPath = "Path\\In\\Registry";
     std::string fullRegistryPath = "\\REGISTRY\\MACHINE\\" + registryPath;
     std::string expectedTrimmedRegistryPath = registryPath;
-    DriverInfoWindows driverInfo(std::move(fullRegistryPath));
+    MockDriverInfoWindows driverInfo(std::move(fullRegistryPath));
 
-    EXPECT_STREQ(expectedTrimmedRegistryPath.c_str(), driverInfo.getRegistryPath().c_str());
+    EXPECT_STREQ(expectedTrimmedRegistryPath.c_str(), driverInfo.path.c_str());
 };
 
 TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriverInfoWindowsNotNullptr) {
@@ -148,25 +170,6 @@ TEST(DriverInfo, givenNotInitializedOsInterfaceWhenCreateDriverInfoThenReturnDri
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));
 
     EXPECT_EQ(nullptr, driverInfo);
-};
-
-class MockDriverInfoWindows : public DriverInfoWindows {
-
-  public:
-    MockDriverInfoWindows() : DriverInfoWindows("") {}
-    const char *getRegistryReaderRegKey() {
-        return reader->getRegKey();
-    }
-    TestedRegistryReader *reader;
-
-    static MockDriverInfoWindows *create(std::string path) {
-
-        auto result = new MockDriverInfoWindows();
-        result->reader = new TestedRegistryReader(path);
-        result->setRegistryReader(result->reader);
-
-        return result;
-    };
 };
 
 TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoWindowsThenSetRegistryReaderWithExpectRegKey) {

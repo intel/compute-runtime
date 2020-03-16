@@ -22,9 +22,6 @@ class DriverInfoWindows : public DriverInfo {
     std::string getDeviceName(std::string defaultName);
     std::string getVersion(std::string defaultVersion);
 
-    void setRegistryReader(SettingsReader *reader);
-    const std::string &getRegistryPath() const;
-
   protected:
     static std::string trimRegistryKey(std::string key);
     const std::string path;

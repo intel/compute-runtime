@@ -991,7 +991,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThen
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
-    device->setDriverInfo(driverInfoMock);
+    device->driverInfo.reset(driverInfoMock);
     device->initializeCaps();
 
     const auto &caps = device->getDeviceInfo();
@@ -1003,7 +1003,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThen
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
-    device->setDriverInfo(nullptr);
+    device->driverInfo.reset();
     device->name.clear();
     device->initializeCaps();
 
