@@ -73,8 +73,7 @@ struct Event : _ze_event_handle_t {
 };
 
 struct EventPool : _ze_event_pool_handle_t {
-    static EventPool *create(Device *device, const ze_event_pool_desc_t *desc);
-
+    static EventPool *create(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc);
     virtual ~EventPool() = default;
     virtual ze_result_t destroy() = 0;
     virtual size_t getPoolSize() = 0;

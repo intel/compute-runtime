@@ -25,8 +25,6 @@ struct DeviceImp : public Device {
                                            ze_command_list_handle_t *phCommandList) override;
     ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                    ze_command_queue_handle_t *commandQueue) override;
-    ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
-                                ze_event_pool_handle_t *eventPool) override;
     ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) override;
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog) override;

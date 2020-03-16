@@ -124,12 +124,6 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::createEventPool(const ze_event_pool_desc_t *desc,
-                                       ze_event_pool_handle_t *eventPool) {
-    *eventPool = EventPool::create(this, desc);
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     *phImage = Image::create(productFamily, this, desc);

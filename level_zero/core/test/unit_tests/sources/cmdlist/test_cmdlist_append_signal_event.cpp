@@ -110,7 +110,8 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
         ZE_EVENT_SCOPE_FLAG_DEVICE,
         ZE_EVENT_SCOPE_FLAG_NONE};
 
-    auto eventPoolHostVisible = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+    auto eventPoolHostVisible =
+        std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto eventHostVisible = std::unique_ptr<Event>(Event::create(eventPoolHostVisible.get(), &eventDesc, device));
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();

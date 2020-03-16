@@ -190,7 +190,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
         ZE_EVENT_SCOPE_FLAG_NONE,
         ZE_EVENT_SCOPE_FLAG_NONE};
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -254,7 +254,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
         ZE_EVENT_SCOPE_FLAG_NONE,
         ZE_EVENT_SCOPE_FLAG_NONE};
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -477,7 +477,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsAddsSemaphoreT
     ze_event_desc_t eventDesc = {ZE_EVENT_DESC_VERSION_CURRENT, 0, ZE_EVENT_SCOPE_FLAG_NONE,
                                  ZE_EVENT_SCOPE_FLAG_NONE};
 
-    std::unique_ptr<EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event(Event::create(eventPool.get(), &eventDesc, device));
     ze_event_handle_t hEventHandle = event->toHandle();
 
@@ -523,7 +523,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsAddsSemaphor
     ze_event_desc_t eventDesc2 = {ZE_EVENT_DESC_VERSION_CURRENT, 1, ZE_EVENT_SCOPE_FLAG_NONE,
                                   ZE_EVENT_SCOPE_FLAG_NONE};
 
-    std::unique_ptr<EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event1(Event::create(eventPool.get(), &eventDesc1, device));
     std::unique_ptr<Event> event2(Event::create(eventPool.get(), &eventDesc2, device));
     ze_event_handle_t hEventHandle1 = event1->toHandle();

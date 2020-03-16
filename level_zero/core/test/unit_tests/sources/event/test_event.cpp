@@ -23,7 +23,7 @@ TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         1};
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
     auto allocation = &eventPool->getAllocation();
@@ -39,7 +39,7 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenVerifyNumTimestampsToRead) {
         ZE_EVENT_POOL_FLAG_TIMESTAMP, // all events in pool are visible to Host
         1};
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
     uint32_t numTimestamps = 4u;
@@ -59,7 +59,7 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
 
     ze_event_handle_t event = nullptr;
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
     eventPool->createEvent(&eventDesc, &event);
@@ -80,13 +80,38 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
         ZE_EVENT_SCOPE_FLAG_DEVICE,
         ZE_EVENT_SCOPE_FLAG_DEVICE};
 
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
     std::unique_ptr<L0::Event> event(Event::create(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
     ASSERT_NE(nullptr, event.get()->csr);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event.get()->csr);
+}
+
+TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    auto eventPool = EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool);
+    eventPool->destroy();
+}
+
+TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithDevice) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        4};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool);
+    eventPool->destroy();
 }
 
 class TimestampEventCreate : public Test<DeviceFixture> {
@@ -104,7 +129,7 @@ class TimestampEventCreate : public Test<DeviceFixture> {
             ZE_EVENT_SCOPE_FLAG_NONE,
             ZE_EVENT_SCOPE_FLAG_NONE};
 
-        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(device, &eventPoolDesc));
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
         event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
         ASSERT_NE(nullptr, eventPool);

@@ -44,8 +44,6 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                            ze_command_queue_handle_t *commandQueue) = 0;
 
-    virtual ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
-                                        ze_event_pool_handle_t *phEventPool) = 0;
     virtual ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) = 0;
 
     virtual ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,

@@ -72,7 +72,8 @@ struct EventImp : public Event {
 };
 
 struct EventPoolImp : public EventPool {
-    EventPoolImp(Device *device, uint32_t count, ze_event_pool_flag_t flags) : device(device), count(count) {
+    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t count, ze_event_pool_flag_t flags) : count(count) {
+
         pool = std::vector<int>(this->count);
         eventPoolUsedCount = 0;
         for (uint32_t i = 0; i < count; i++) {
@@ -85,10 +86,22 @@ struct EventPoolImp : public EventPool {
             timestampMultiplier = numEventTimestampsToRead;
         }
 
+        ze_device_handle_t hDevice;
+        if (numDevices > 0) {
+            hDevice = phDevices[0];
+        } else {
+            uint32_t count = 1;
+            ze_result_t result = driver->getDevice(&count, &hDevice);
+
+            UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+        }
+        device = Device::fromHandle(hDevice);
+
         NEO::AllocationProperties properties(
-            device->getRootDeviceIndex(), count * eventSize * timestampMultiplier, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+            device->getRootDeviceIndex(), count * eventSize * timestampMultiplier,
+            NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         properties.alignment = MemoryConstants::cacheLineSize;
-        eventPoolAllocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        eventPoolAllocation = driver->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
         UNRECOVERABLE_IF(eventPoolAllocation == nullptr);
     }
@@ -319,11 +332,10 @@ ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void
     return ZE_RESULT_SUCCESS;
 }
 
-EventPool *EventPool::create(Device *device, const ze_event_pool_desc_t *desc) {
-    auto eventPool = new EventPoolImp(device, desc->count, desc->flags);
-    UNRECOVERABLE_IF(eventPool == nullptr);
-
-    return eventPool;
+EventPool *EventPool::create(DriverHandle *driver, uint32_t numDevices,
+                             ze_device_handle_t *phDevices,
+                             const ze_event_pool_desc_t *desc) {
+    return new EventPoolImp(driver, numDevices, phDevices, desc->count, desc->flags);
 }
 
 ze_result_t EventPoolImp::reserveEventFromPool(int index, Event *event) {

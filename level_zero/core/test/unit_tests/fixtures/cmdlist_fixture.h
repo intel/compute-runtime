@@ -32,7 +32,7 @@ class CommandListFixture : public DeviceFixture {
             ZE_EVENT_SCOPE_FLAG_NONE,
             ZE_EVENT_SCOPE_FLAG_NONE};
 
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
         event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
     }
 
