@@ -12,18 +12,12 @@ using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics library file name.
 const char *MetricsLibrary::getFilename() { return "libigdml64.so"; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns os specific data required to initialize metrics library.
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes metric group configuration to gpu.
 bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
     UNRECOVERABLE_IF(!configurationHandle.IsValid());
 
@@ -40,8 +34,6 @@ bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configu
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Disables activated metric group configuration.
 bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
 
     const bool validMetricsLibrary = isInitialized();

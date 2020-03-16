@@ -17,8 +17,6 @@
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns Metrics Discovery library file name.
 const char *MetricEnumeration::getMetricsDiscoveryFilename() { return METRICS_DISCOVERY_NAME; }
 
 } // namespace L0

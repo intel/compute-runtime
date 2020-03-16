@@ -22,12 +22,8 @@ using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns metrics library file name.
 const char *MetricsLibrary::getFilename() { return METRICS_LIBRARY_NAME; }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Returns os specific data required to initialize metrics library.
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 
     auto osInterface = device.getOsInterface().get();
@@ -43,8 +39,6 @@ bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &conte
     return osData.Device && osData.Escape && osData.Adapter;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Writes metric group configuration to gpu.
 bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
 
     ConfigurationActivateData_1_0 activateData = {};
@@ -59,8 +53,6 @@ bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configu
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Disables activated metric group configuration.
 bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
 
     const bool validMetricsLibrary = isInitialized();
