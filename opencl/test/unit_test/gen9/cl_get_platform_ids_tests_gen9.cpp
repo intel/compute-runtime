@@ -7,6 +7,7 @@
 
 #include "shared/source/device/root_device.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
@@ -15,6 +16,9 @@ using namespace NEO;
 typedef api_tests clGetPlatformIDsTests;
 
 TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFamilyThenClGetPlatformIdsCreatesMultiplePlatformsProperlySorted) {
+    if ((HwInfoConfig::get(IGFX_SKYLAKE) == nullptr) || (HwInfoConfig::get(IGFX_KABYLAKE) == nullptr)) {
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore restorer;
     const size_t numRootDevices = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
