@@ -24,7 +24,6 @@ if(WIN32)
 else()
   append_sources_from_properties(NEO_CORE_UNIT_TESTS_SOURCES
     NEO_CORE_DIRECT_SUBMISSION_LINUX_TESTS
-    NEO_CORE_OS_INTERFACE_TESTS_LINUX
   )
 
 endif()

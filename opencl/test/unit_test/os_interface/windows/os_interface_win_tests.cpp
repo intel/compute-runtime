@@ -40,19 +40,3 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
 }
-
-TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet) {
-    MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    auto wddm = new WddmMock(rootDeviceEnvironment);
-    osInterface->get()->setWddm(wddm);
-    wddm->init();
-    auto &adapterBDF = wddm->adapterBDF;
-    adapterBDF.Bus = 0x12;
-    adapterBDF.Device = 0x34;
-    adapterBDF.Function = 0x56;
-    GMM_INIT_IN_ARGS gmmInputArgs = {};
-    EXPECT_NE(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
-    osInterface->setGmmInputArgs(&gmmInputArgs);
-    EXPECT_EQ(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
-}

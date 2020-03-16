@@ -40,10 +40,6 @@ uint32_t OSInterface::getDeviceHandle() const {
     return 0;
 }
 
-void OSInterface::setGmmInputArgs(void *args) {
-    reinterpret_cast<GMM_INIT_IN_ARGS *>(args)->FileDescriptor = this->get()->getDrm()->getFileDescriptor();
-}
-
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
     Drm *drm = Drm::create(std::move(hwDeviceId), *this);
     if (!drm) {

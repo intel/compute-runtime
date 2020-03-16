@@ -27,19 +27,4 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsRetu
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
 }
 
-TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenProperFileDescriptorIsSet) {
-    MockExecutionEnvironment executionEnvironment;
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    auto osInterface = new OSInterface();
-    rootDeviceEnvironment->osInterface.reset(osInterface);
-
-    auto drm = Drm::create(nullptr, *rootDeviceEnvironment);
-    osInterface->get()->setDrm(drm);
-    GMM_INIT_IN_ARGS gmmInputArgs = {};
-    EXPECT_EQ(0u, gmmInputArgs.FileDescriptor);
-    osInterface->setGmmInputArgs(&gmmInputArgs);
-    EXPECT_NE(0u, gmmInputArgs.FileDescriptor);
-    uint32_t expectedFileDescriptor = drm->getFileDescriptor();
-    EXPECT_EQ(expectedFileDescriptor, gmmInputArgs.FileDescriptor);
-}
 } // namespace NEO

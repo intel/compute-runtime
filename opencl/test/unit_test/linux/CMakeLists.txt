@@ -18,6 +18,7 @@ add_executable(igdrcl_${target_name}
   ${CMAKE_CURRENT_SOURCE_DIR}/main_linux_dll.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
   ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp

@@ -13,4 +13,6 @@ namespace NEO {
 
 bool OSInterface::osEnableLocalMemory = true;
 
+void OSInterface::setGmmInputArgs(void *args) {}
+
 } // namespace NEO
