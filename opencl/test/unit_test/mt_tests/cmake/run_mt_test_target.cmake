@@ -16,7 +16,7 @@ if(NOT WIN32)
 endif()
 
 add_dependencies(run_mt_unit_tests run_${product}_mt_unit_tests)
-set_target_properties(run_${product}_mt_unit_tests PROPERTIES FOLDER "${OPENCL_PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
+set_target_properties(run_${product}_mt_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
 
 add_custom_command(
   TARGET run_${product}_mt_unit_tests

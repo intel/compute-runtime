@@ -920,6 +920,13 @@ configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driv
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
 
 hide_subdir(${NEO_RUNTIME_SUB_DIR})
+
+if(BUILD_WITH_L0)
+    add_subdirectory_unique(level_zero)
+endif()
+
+add_subdirectory_unique(target_unit_tests)
+
 add_subdirectories()
 
 include(package.cmake)

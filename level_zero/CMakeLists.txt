@@ -97,7 +97,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         set(SKIP_L0_UNIT_TESTS TRUE)
     endif()
 
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/l0_tests.cmake)
+    if(NOT SKIP_L0_UNIT_TESTS)
         include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/l0_tests.cmake)
     endif()
 
@@ -369,7 +369,11 @@ else()
         CONFIGURATIONS Debug
     )
 endif()
-
+    if(NOT SKIP_L0_UNIT_TESTS)
+        add_subdirectory_unique(core/test)
+    else()
+    hide_subdir(core/test)
+    endif()
     add_subdirectories()
 
     if(UNIX)
@@ -424,4 +428,7 @@ endif()
         endif()
 
     endif()
+else()
+    set(BUILD_WITH_L0 FALSE
+    PARENT_SCOPE)
 endif()
