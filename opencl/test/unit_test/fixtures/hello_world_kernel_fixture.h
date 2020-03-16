@@ -30,7 +30,10 @@ class Program;
 struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::SetUp;
 
-    virtual void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options = nullptr) {
+    void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
+        SetUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
+    }
+    void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
         ProgramFixture::SetUp();
 
         pTestFilename = new std::string(kernelFilenameStr);

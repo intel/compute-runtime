@@ -19,9 +19,9 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
 
     void initialize() override { initializeCalled = true; }
     void pollForCompletion() override { pollForCompletionCalled = true; }
-    void writeAndSubmitBatchBuffer(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank, size_t pageSize = 65536) override { writeAndSubmitCalled = true; }
+    void writeAndSubmitBatchBuffer(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank, size_t pageSize) override { writeAndSubmitCalled = true; }
     void submitBatchBuffer(uint64_t gfxAddress, bool overrideRingHead) override { submitCalled = true; }
-    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override {
+    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
         writeMemoryCalled = true;
         writeMemoryPageSizePassed = pageSize;
         memoryBanksPassed = memoryBanks;
@@ -96,7 +96,7 @@ class MockAubManager : public aub_stream::AubManager {
         addCommentCalled = true;
     }
 
-    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override {
+    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) override {
         writeMemoryCalled = true;
         hintToWriteMemory = hint;
         writeMemoryPageSizePassed = pageSize;
