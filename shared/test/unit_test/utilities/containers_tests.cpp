@@ -1203,26 +1203,21 @@ TEST(StackVec, MoveAsignment) {
 }
 
 TEST(StackVec, Alignment) {
-    struct alignas(16) S16 {
-        int a;
-    };
-    struct alignas(32) S32 {
-        int a;
-    };
-    struct alignas(64) S64 {
-        int a;
-    };
+    StackVec<uint16_t, 4> s16;
+    StackVec<uint32_t, 4> s32;
+    StackVec<uint64_t, 4> s64;
 
-    StackVec<S32, 4> s32;
-    StackVec<S16, 4> s16;
-    StackVec<S64, 4> s64;
-    s16.push_back(S16{});
-    s32.push_back(S32{});
-    s64.push_back(S64{});
+    static_assert(sizeof(s16) <= 24u, "");
+    static_assert(sizeof(s32) <= 32u, "");
+    static_assert(sizeof(s64) <= 48u, "");
 
-    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(&*s16.begin()) % 16);
-    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(&*s32.begin()) % 32);
-    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(&*s64.begin()) % 64);
+    s16.push_back(0);
+    s32.push_back(0);
+    s64.push_back(0);
+
+    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(s16.begin()) % 2);
+    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(s32.begin()) % 4);
+    EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(s64.begin()) % 8);
 }
 
 TEST(StackVec, PushBack) {
