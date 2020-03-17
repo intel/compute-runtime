@@ -494,11 +494,10 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_EQ(gpuAddress, miFlushCmd->getDestinationAddress());
         EXPECT_EQ(immData, miFlushCmd->getImmediateData());
 
-        miFlushCmd++;
-        cmdIterator++;
+        miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
     }
 
-    EXPECT_NE(nullptr, miFlushCmd);
+    EXPECT_NE(cmdIterator, cmdList.end());
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushCmd->getPostSyncOperation());
     EXPECT_EQ(csr.getTagAllocation()->getGpuAddress(), miFlushCmd->getDestinationAddress());
     EXPECT_EQ(newTaskCount, miFlushCmd->getImmediateData());
