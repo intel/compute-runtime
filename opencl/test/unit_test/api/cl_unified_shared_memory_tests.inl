@@ -192,7 +192,6 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAlloca
     }
     {
         size_t paramValue = 1;
-        retVal = CL_INVALID_VALUE;
         paramValueSize = sizeof(size_t);
         retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_SIZE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -201,7 +200,6 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAlloca
     }
     {
         cl_device_id paramValue = mockContext.getDevice(0);
-        retVal = CL_INVALID_VALUE;
         paramValueSize = sizeof(cl_device_id);
         retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_DEVICE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -210,7 +208,6 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAlloca
     }
     {
         cl_mem_alloc_flags_intel paramValue = 1;
-        retVal = CL_INVALID_VALUE;
         paramValueSize = sizeof(cl_mem_properties_intel);
         retVal = clGetMemAllocInfoINTEL(&mockContext, mockContext.getDevice(0), CL_MEM_ALLOC_FLAGS_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
         EXPECT_EQ(CL_SUCCESS, retVal);
