@@ -11,6 +11,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "cl_api_tests.h"
 

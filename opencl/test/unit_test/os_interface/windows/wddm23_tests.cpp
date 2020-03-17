@@ -15,6 +15,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface23.h"
 #include "opencl/test/unit_test/os_interface/windows/gdi_dll_fixture.h"

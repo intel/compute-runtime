@@ -13,6 +13,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

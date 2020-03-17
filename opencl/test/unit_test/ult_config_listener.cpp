@@ -13,6 +13,7 @@
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     referencedHwInfo = *platformDevices[0];

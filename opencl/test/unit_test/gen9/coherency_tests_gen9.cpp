@@ -10,6 +10,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 using namespace NEO;

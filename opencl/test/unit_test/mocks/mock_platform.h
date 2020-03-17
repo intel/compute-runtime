@@ -21,5 +21,9 @@ class MockPlatform : public Platform {
     bool initializeWithNewDevices();
 };
 
+Platform *platform();
+
+Platform *constructPlatform();
+
 bool initPlatform();
 } // namespace NEO

@@ -14,6 +14,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"

@@ -13,6 +13,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 #include "gmock/gmock.h"

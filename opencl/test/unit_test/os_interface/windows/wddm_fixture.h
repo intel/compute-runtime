@@ -20,6 +20,7 @@
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface20.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"

@@ -15,6 +15,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
 #include "hw_device_id.h"

@@ -17,6 +17,7 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_kmdaf_listener.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "test.h"

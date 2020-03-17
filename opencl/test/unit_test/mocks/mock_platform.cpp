@@ -20,4 +20,20 @@ bool MockPlatform::initializeWithNewDevices() {
     executionEnvironment.prepareRootDeviceEnvironments(1u);
     return Platform::initialize(DeviceFactory::createDevices(executionEnvironment));
 }
+
+Platform *platform() {
+    if (platformsImpl.empty()) {
+        return nullptr;
+    }
+    return platformsImpl[0].get();
+}
+
+Platform *constructPlatform() {
+    static std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    if (platformsImpl.empty()) {
+        platformsImpl.push_back(std::make_unique<Platform>(*(new ExecutionEnvironment())));
+    }
+    return platformsImpl[0].get();
+}
 } // namespace NEO

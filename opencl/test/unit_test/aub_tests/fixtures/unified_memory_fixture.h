@@ -11,6 +11,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 namespace PagaFaultManagerTestConfig {

@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/libult/create_command_stream.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
 
 #include "gtest/gtest.h"

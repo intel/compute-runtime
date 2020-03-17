@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 #include "test.h"

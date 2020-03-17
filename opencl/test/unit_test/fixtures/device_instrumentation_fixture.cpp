@@ -10,6 +10,7 @@
 #include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 void DeviceInstrumentationFixture::SetUp(bool instrumentation) {

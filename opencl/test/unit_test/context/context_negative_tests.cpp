@@ -9,6 +9,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 #include "CL/cl_gl.h"

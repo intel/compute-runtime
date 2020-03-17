@@ -12,6 +12,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
 

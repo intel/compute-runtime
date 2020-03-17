@@ -29,6 +29,7 @@
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger_functions.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"

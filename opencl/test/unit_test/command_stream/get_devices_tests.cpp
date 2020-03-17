@@ -16,6 +16,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/libult/create_command_stream.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 namespace NEO {

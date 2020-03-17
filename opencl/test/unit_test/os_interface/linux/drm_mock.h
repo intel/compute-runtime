@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
 
