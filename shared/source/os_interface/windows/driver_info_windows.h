@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/driver_info.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -19,8 +20,11 @@ class SettingsReader;
 class DriverInfoWindows : public DriverInfo {
   public:
     DriverInfoWindows(std::string &&path);
-    std::string getDeviceName(std::string defaultName);
-    std::string getVersion(std::string defaultVersion);
+    std::string getDeviceName(std::string defaultName) override;
+    std::string getVersion(std::string defaultVersion) override;
+    bool isCompatibleDriverStore() const;
+
+    static std::function<std::unique_ptr<SettingsReader>(const std::string &registryPath)> createRegistryReaderFunc;
 
   protected:
     static std::string trimRegistryKey(std::string key);

@@ -12,9 +12,11 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
@@ -40,7 +42,7 @@
 
 namespace NEO {
 namespace SysCalls {
-extern const wchar_t *igdrclFilePath;
+extern const wchar_t *currentLibraryPath;
 }
 extern uint32_t numRootDevicesToEnum;
 } // namespace NEO
@@ -105,58 +107,12 @@ TEST(WddmDiscoverDevices, WhenNoHwDeviceIdIsProvidedToWddmThenWddmIsNotCreated) 
     EXPECT_THROW(auto wddm = std::make_unique<MockWddm>(nullptr, rootDeviceEnvironment), std::exception);
 }
 
-TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathDoesntContainDchDThenNoDeviceIsDiscovered) {
-    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
-    descriptionBackup = L"Intel DCH-D";
-    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
-    igdrclPathBackup = L"intel_dch.inf";
-    ExecutionEnvironment executionEnvironment;
-
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntContainDchIThenNoDeviceIsDiscovered) {
-    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
-    descriptionBackup = L"Intel DCH-I";
-    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
-    igdrclPathBackup = L"intel_dch.inf";
-    ExecutionEnvironment executionEnvironment;
-
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
 TEST(WddmDiscoverDevices, WhenMultipleRootDevicesAreAvailableThenAllAreDiscovered) {
     VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
     numRootDevicesToEnum = 3u;
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(numRootDevicesToEnum, hwDeviceIds.size());
-}
-
-TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathContainsDchDThenAdapterIsDiscovered) {
-    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
-    descriptionBackup = L"Intel DCH-D";
-    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
-    igdrclPathBackup = L"intel_dch_d.inf";
-    ExecutionEnvironment executionEnvironment;
-
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
-}
-
-TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathContainsDchIThenAdapterIsDiscovered) {
-    VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
-    descriptionBackup = L"Intel DCH-I";
-    VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
-    igdrclPathBackup = L"intel_dch_i.inf";
-    ExecutionEnvironment executionEnvironment;
-
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
@@ -1398,4 +1354,33 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     EXPECT_EQ(4u, NEO::ResLog::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
     EXPECT_FALSE(logger->enterWait);
+}
+
+TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNotCreated) {
+
+    class MockRegistryReader : public SettingsReader {
+      public:
+        std::string getSetting(const char *settingName, const std::string &value) override {
+            std::string key(settingName);
+            if (key == "DriverStorePathForComputeRuntime") {
+                return driverStorePath;
+            }
+            return value;
+        }
+
+        bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
+        int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
+        const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
+
+        std::string driverStorePath = "driverStore\\0x8086";
+    };
+    VariableBackup<decltype(DriverInfoWindows::createRegistryReaderFunc)> createFuncBackup{&DriverInfoWindows::createRegistryReaderFunc};
+    DriverInfoWindows::createRegistryReaderFunc = [](const std::string &) -> std::unique_ptr<SettingsReader> {
+        return std::make_unique<MockRegistryReader>();
+    };
+    VariableBackup<const wchar_t *> currentLibraryPathBackup(&SysCalls::currentLibraryPath);
+    currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
 }

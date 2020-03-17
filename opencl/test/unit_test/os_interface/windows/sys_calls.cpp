@@ -16,7 +16,7 @@ constexpr uintptr_t dummyHandle = static_cast<uintptr_t>(0x7);
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
 HMODULE handleValue = reinterpret_cast<HMODULE>(dummyHandle);
-const wchar_t *igdrclFilePath = L"";
+const wchar_t *currentLibraryPath = L"";
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName) {
     return reinterpret_cast<HANDLE>(dummyHandle);
@@ -42,7 +42,7 @@ DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     if (hModule != handleValue) {
         return FALSE;
     }
-    lstrcpyW(lpFilename, igdrclFilePath);
+    lstrcpyW(lpFilename, currentLibraryPath);
     return TRUE;
 }
 } // namespace SysCalls

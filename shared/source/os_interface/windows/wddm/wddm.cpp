@@ -17,12 +17,12 @@
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
+#include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -34,24 +34,6 @@
 #include "gmm_memory.h"
 
 #include <dxgi.h>
-
-std::wstring getIgdrclPath() {
-    std::wstring returnValue;
-    WCHAR path[255];
-    HMODULE handle = NULL;
-
-    auto status = NEO::SysCalls::getModuleHandle(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                                                     GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                                 reinterpret_cast<LPCWSTR>(&getIgdrclPath), &handle);
-    if (status != 0) {
-
-        status = NEO::SysCalls::getModuleFileName(handle, path, sizeof(path));
-        if (status != 0) {
-            returnValue.append(path);
-        }
-    }
-    return returnValue;
-}
 
 namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
@@ -233,10 +215,32 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
     OpenAdapterData.AdapterLuid = adapterLuid;
     auto status = osEnvironment.gdi->openAdapterFromLuid(&OpenAdapterData);
 
-    if (status == STATUS_SUCCESS) {
-        return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment);
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF("openAdapterFromLuid failed");
+        return nullptr;
     }
-    return nullptr;
+
+    D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
+    ADAPTER_INFO adapterInfo = {0};
+    QueryAdapterInfo.hAdapter = OpenAdapterData.hAdapter;
+    QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
+    QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
+    QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
+
+    status = osEnvironment.gdi->queryAdapterInfo(&QueryAdapterInfo);
+
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF("queryAdapterInfo failed");
+        return nullptr;
+    }
+
+    std::string deviceRegistryPath = adapterInfo.DeviceRegistryPath;
+    DriverInfoWindows driverInfo(std::move(deviceRegistryPath));
+    if (!driverInfo.isCompatibleDriverStore()) {
+        return nullptr;
+    }
+
+    return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment);
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
@@ -256,8 +260,6 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
     IDXGIAdapter1 *pAdapter = nullptr;
     DWORD iDevNum = 0;
 
-    auto igdrclPath = getIgdrclPath();
-
     HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
     if ((hr != S_OK) || (pFactory == nullptr)) {
         return hwDeviceIds;
@@ -274,20 +276,7 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
                 (wcsstr(OpenAdapterDesc.Description, L"Virtual Render") != 0)) {
                 char deviceId[16];
                 sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
-                bool choosenDevice = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
-                if (choosenDevice) {
-                    if (wcsstr(OpenAdapterDesc.Description, L"DCH-D") != 0) {
-                        if (wcsstr(igdrclPath.c_str(), L"_dch_d.inf") != 0) {
-                            createHwDeviceId = true;
-                        }
-                    } else if (wcsstr(OpenAdapterDesc.Description, L"DCH-I") != 0) {
-                        if (wcsstr(igdrclPath.c_str(), L"_dch_i.inf") != 0) {
-                            createHwDeviceId = true;
-                        }
-                    } else {
-                        createHwDeviceId = true;
-                    }
-                }
+                createHwDeviceId = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
             }
             if (createHwDeviceId) {
                 auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, OpenAdapterDesc.AdapterLuid);
