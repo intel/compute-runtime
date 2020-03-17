@@ -20,15 +20,13 @@ if(NOT SKIP_NEO_UNIT_TESTS)
       COMMAND $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
     )
 
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND appverified_allowed)
+    if(WIN32 AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND appverified_allowed)
       add_custom_command(
         TARGET run_${product}_unit_tests
         POST_BUILD
-        COMMAND echo copying test verify.bat file from ${OPENCL_UNIT_TEST_DIR} to ${TargetDir}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCL_UNIT_TEST_DIR}/verify.bat ${TargetDir}/verify.bat
         COMMAND WORKING_DIRECTORY ${TargetDir}
         COMMAND echo Running igdrcl_tests with App Verifier
-        COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
+        COMMAND ${NEO_SOURCE_DIR}/scripts/verify.bat $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
         COMMAND echo App Verifier returned: %errorLevel%
       )
     endif()
