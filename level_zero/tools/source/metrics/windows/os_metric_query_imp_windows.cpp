@@ -49,7 +49,7 @@ bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configu
     const bool result = validMetricsLibrary && validConfiguration &&
                         (api.ConfigurationActivate(configurationHandle, &activateData) == StatusCode::Success);
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -60,7 +60,7 @@ bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 confi
     const bool result = validMetricsLibrary && validConfiguration &&
                         (api.ConfigurationDeactivate(configurationHandle) == StatusCode::Success);
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 

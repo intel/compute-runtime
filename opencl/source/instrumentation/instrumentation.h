@@ -25,10 +25,13 @@ enum class ClientGen : uint32_t { Unknown,
                                   Gen9,
                                   Gen11,
                                   Gen12 };
-enum class ValueType : uint32_t { Uint32 };
+enum class ValueType : uint32_t { Uint32,
+                                  Last };
 enum class GpuConfigurationActivationType : uint32_t { Tbs,
                                                        EscapeCode };
 enum class ObjectType : uint32_t { QueryHwCounters,
+                                   MarkerStreamUser,
+                                   OverrideFlushCaches,
                                    ConfigurationHwCountersUser,
                                    ConfigurationHwCountersOa };
 enum class ParameterType : uint32_t { QueryHwCountersReportApiSize,
@@ -95,6 +98,7 @@ struct ClientType_1_0 {
 
 struct TypedValue_1_0 {
     uint32_t ValueUInt32;
+    ValueType Type;
 };
 
 struct GpuMemory_1_0 {
@@ -106,6 +110,15 @@ struct CommandBufferQueryHwCounters_1_0 {
     QueryHandle_1_0 Handle;
     ConfigurationHandle_1_0 HandleUserConfiguration;
     bool Begin;
+    uint32_t Slot;
+};
+
+struct CommandBufferMarkerStreamUser_1_0 {
+    uint32_t Value;
+};
+
+struct CommandBufferOverride_1_0 {
+    bool Enable;
 };
 
 struct CommandBufferSize_1_0 {
@@ -125,6 +138,8 @@ struct CommandBufferData_1_0 {
     void *Data;
     uint32_t Size;
     CommandBufferQueryHwCounters_1_0 QueryHwCounters;
+    CommandBufferMarkerStreamUser_1_0 MarkerStreamUser;
+    CommandBufferOverride_1_0 Override;
 };
 
 struct QueryCreateData_1_0 {

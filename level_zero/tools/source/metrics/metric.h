@@ -52,8 +52,8 @@ struct MetricContext {
                                                      zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) = 0;
 
-    virtual void setUseCcs(const bool useCcs) = 0;
-    virtual bool isCcsUsed() = 0;
+    virtual void setUseCompute(const bool useCompute) = 0;
+    virtual bool isComputeUsed() = 0;
 };
 
 struct Metric : _zet_metric_handle_t {

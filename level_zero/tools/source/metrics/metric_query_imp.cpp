@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -27,9 +28,11 @@ MetricsLibrary::MetricsLibrary(MetricContext &metricContextInput)
     : metricContext(metricContextInput) {}
 
 MetricsLibrary::~MetricsLibrary() {
-    // Deactivate all metric group configurations.
+    // Delete all metric group configurations.
     for (auto &configuration : configurations) {
-        deactivateConfiguration(configuration.second);
+        if (configuration.second.IsValid()) {
+            api.ConfigurationDelete(configuration.second);
+        }
     }
 
     configurations.clear();
@@ -54,7 +57,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
                                        NEO::GraphicsAllocation *&pAllocation) {
     // Validate metrics library state.
     if (!isInitialized()) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
@@ -70,7 +73,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
 
     // Validate gpu report size.
     if (!gpuReportSize.ValueUInt32) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
@@ -82,7 +85,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
 
     // Validate gpu report size.
     if (!pAllocation) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
@@ -91,7 +94,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
 
     // Create query pool within metrics library.
     if (api.QueryCreate(&queryData, &query) != StatusCode::Success) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
         return false;
     }
@@ -100,10 +103,10 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
 }
 
 bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
-    UNRECOVERABLE_IF(!query.IsValid());
+    DEBUG_BREAK_IF(!query.IsValid());
 
     const bool result = isInitialized() && (api.QueryDelete(query) == StatusCode::Success);
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -113,7 +116,7 @@ bool MetricsLibrary::getMetricQueryReportSize(size_t &rawDataSize) {
 
     const bool result = isInitialized() && (api.GetParameter(ParameterType::QueryHwCountersReportApiSize, &valueType, &value) == StatusCode::Success);
     rawDataSize = static_cast<size_t>(value.ValueUInt32);
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -129,7 +132,7 @@ bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const size_t r
     report.Query.DataSize = static_cast<uint32_t>(rawDataSize);
 
     const bool result = isInitialized() && (api.GetData(&report) == StatusCode::Success);
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -137,7 +140,7 @@ void MetricsLibrary::initialize() {
     auto &metricsEnumeration = metricContext.getMetricEnumeration();
 
     // Function should be called only once.
-    UNRECOVERABLE_IF(initializationState != ZE_RESULT_ERROR_UNINITIALIZED);
+    DEBUG_BREAK_IF(initializationState != ZE_RESULT_ERROR_UNINITIALIZED);
 
     // Metrics Enumeration needs to be initialized before Metrics Library
     const bool validMetricsEnumeration = metricsEnumeration.isInitialized();
@@ -145,7 +148,7 @@ void MetricsLibrary::initialize() {
 
     // Load metrics library and exported functions.
     initializationState = validMetricsLibrary ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
-    UNRECOVERABLE_IF(initializationState != ZE_RESULT_SUCCESS);
+    DEBUG_BREAK_IF(initializationState != ZE_RESULT_SUCCESS);
 }
 
 bool MetricsLibrary::load() {
@@ -162,7 +165,7 @@ bool MetricsLibrary::load() {
 
     // Return success if exported functions have been loaded.
     const bool result = contextCreateFunction && contextDeleteFunction;
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -183,12 +186,12 @@ bool MetricsLibrary::createContext() {
     const auto &deviceImp = *static_cast<DeviceImp *>(&device);
     const auto &commandStreamReceiver = *deviceImp.neoDevice->getDefaultEngine().commandStreamReceiver;
     const auto engineType = commandStreamReceiver.getOsContext().getEngineType();
-    const bool isCcsUsed = engineType >= aub_stream::ENGINE_CCS && engineType <= aub_stream::ENGINE_CCS3;
+    const bool isComputeUsed = NEO::EngineHelpers::isCcs(engineType);
 
-    metricContext.setUseCcs(isCcsUsed);
+    metricContext.setUseCompute(isComputeUsed);
 
     // Create metrics library context.
-    UNRECOVERABLE_IF(!contextCreateFunction);
+    DEBUG_BREAK_IF(!contextCreateFunction);
     clientType.Api = ClientApi::OpenCL;
     clientType.Gen = getGenType(device.getPlatformInfo());
 
@@ -206,7 +209,7 @@ bool MetricsLibrary::createContext() {
         getContextData(device, createData) &&
         contextCreateFunction(clientType, &createData, &context) == StatusCode::Success;
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -226,7 +229,7 @@ uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer
         result = api.CommandBufferGetSize(&commandBuffer, &commandBufferSize) == StatusCode::Success;
     }
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result ? commandBufferSize.GpuMemorySize : 0;
 }
 
@@ -238,7 +241,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
 
     // Validate gpu commands size.
     if (!commandBuffer.Size) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
@@ -248,7 +251,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
 
     // Validate command buffer space.
     if (!buffer) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
@@ -258,7 +261,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
     // Obtain gpu commands from metrics library.
     const bool result =
         isInitialized() && (api.CommandBufferGet(&commandBuffer) == StatusCode::Success);
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -267,7 +270,8 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
                                     const zet_metric_group_properties_t properties) {
     // Metric group internal data.
     auto metricGroup = MetricGroup::fromHandle(metricGroupHandle);
-    UNRECOVERABLE_IF(!metricGroup);
+    auto metricGroupDummy = ConfigurationHandle_1_0{};
+    DEBUG_BREAK_IF(!metricGroup);
 
     // Metrics library configuration creation data.
     ConfigurationHandle_1_0 handle = {};
@@ -292,7 +296,7 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
         metricGroup->deactivate();
     }
 
-    return validActivate ? handle : nullptr;
+    return validActivate ? handle : metricGroupDummy;
 }
 
 ConfigurationHandle_1_0 MetricsLibrary::getConfiguration(zet_metric_group_handle_t handle) {
@@ -300,13 +304,13 @@ ConfigurationHandle_1_0 MetricsLibrary::getConfiguration(zet_metric_group_handle
     auto iter = configurations.find(handle);
     auto configuration = (iter != end(configurations)) ? iter->second : addConfiguration(handle);
 
-    UNRECOVERABLE_IF(!configuration.IsValid());
+    DEBUG_BREAK_IF(!configuration.IsValid());
     return configuration;
 }
 
 ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle_t handle) {
     ConfigurationHandle_1_0 libraryHandle = {};
-    UNRECOVERABLE_IF(!handle);
+    DEBUG_BREAK_IF(!handle);
 
     // Create metrics library configuration.
     auto metricGroup = MetricGroup::fromHandle(handle);
@@ -319,7 +323,7 @@ ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle
         configurations[handle] = libraryHandle;
     }
 
-    UNRECOVERABLE_IF(!libraryHandle.IsValid());
+    DEBUG_BREAK_IF(!libraryHandle.IsValid());
     return libraryHandle;
 }
 
@@ -359,7 +363,7 @@ bool MetricQueryPoolImp::create() {
         return createMetricQueryPool();
 
     default:
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 }
@@ -369,14 +373,14 @@ bool MetricQueryPoolImp::destroy() {
 
     switch (description.flags) {
     case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
-        UNRECOVERABLE_IF(!(pAllocation && query.IsValid()));
+        DEBUG_BREAK_IF(!(pAllocation && query.IsValid()));
         metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
         result = metricsLibrary.destroyMetricQuery(query);
         delete this;
         break;
 
     default:
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         break;
     }
 
@@ -436,7 +440,7 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
         return writeMetricQuery(commandList, nullptr, true);
 
     default:
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 }
@@ -448,7 +452,7 @@ ze_result_t MetricQueryImp::appendEnd(CommandList &commandList,
         return writeMetricQuery(commandList, hCompletionEvent, false);
 
     default:
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 }
@@ -486,7 +490,7 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList,
     commandBuffer.QueryHwCounters.Slot = slot;
     commandBuffer.Allocation.GpuAddress = pool.pAllocation->getGpuAddress();
     commandBuffer.Allocation.CpuAddress = pool.pAllocation->getUnderlyingBuffer();
-    commandBuffer.Type = metricContext.isCcsUsed()
+    commandBuffer.Type = metricContext.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 
@@ -510,7 +514,7 @@ ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
     CommandBufferData_1_0 commandBuffer = {};
     commandBuffer.CommandsType = ObjectType::OverrideFlushCaches;
     commandBuffer.Override.Enable = true;
-    commandBuffer.Type = metricContext.isCcsUsed()
+    commandBuffer.Type = metricContext.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 
@@ -529,7 +533,7 @@ ze_result_t MetricQuery::appendTracerMarker(CommandList &commandList,
     CommandBufferData_1_0 commandBuffer = {};
     commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
     commandBuffer.MarkerStreamUser.Value = value;
-    commandBuffer.Type = metricContext.isCcsUsed()
+    commandBuffer.Type = metricContext.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 

@@ -19,7 +19,6 @@ bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &conte
 }
 
 bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
-    UNRECOVERABLE_IF(!configurationHandle.IsValid());
 
     ConfigurationActivateData_1_0 activateData = {};
     activateData.Type = GpuConfigurationActivationType::Tbs;
@@ -30,7 +29,7 @@ bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configu
         validMetricsLibrary && validConfiguration &&
         (api.ConfigurationActivate(configurationHandle, &activateData) == StatusCode::Success);
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 

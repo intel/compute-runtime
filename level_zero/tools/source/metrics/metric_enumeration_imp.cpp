@@ -128,10 +128,10 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
 }
 
 ze_result_t MetricEnumeration::cacheMetricInformation() {
-    UNRECOVERABLE_IF(pMetricsDevice == nullptr);
+    DEBUG_BREAK_IF(pMetricsDevice == nullptr);
 
     MetricsDiscovery::TMetricsDeviceParams_1_2 *pMetricsDeviceParams = pMetricsDevice->GetParams();
-    UNRECOVERABLE_IF(pMetricsDeviceParams == nullptr);
+    DEBUG_BREAK_IF(pMetricsDeviceParams == nullptr);
 
     // Check required Metrics Discovery API version - should be at least 1.5.
     const bool unsupportedMajorVersion =
@@ -149,11 +149,11 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
     MetricsDiscovery::IConcurrentGroup_1_5 *pConcurrentGroup = nullptr;
     for (uint32_t i = 0; i < pMetricsDeviceParams->ConcurrentGroupsCount; ++i) {
         pConcurrentGroup = pMetricsDevice->GetConcurrentGroup(i);
-        UNRECOVERABLE_IF(pConcurrentGroup == nullptr);
+        DEBUG_BREAK_IF(pConcurrentGroup == nullptr);
 
         MetricsDiscovery::TConcurrentGroupParams_1_0 *pConcurrentGroupParams =
             pConcurrentGroup->GetParams();
-        UNRECOVERABLE_IF(pConcurrentGroupParams == nullptr);
+        DEBUG_BREAK_IF(pConcurrentGroupParams == nullptr);
 
         // 2. Find "OA" concurrent group.
         if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0) {
@@ -163,7 +163,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
             // 3. Iterate over metric sets.
             for (uint32_t j = 0; j < pConcurrentGroupParams->MetricSetsCount; ++j) {
                 MetricsDiscovery::IMetricSet_1_5 *pMetricSet = pConcurrentGroup->GetMetricSet(j);
-                UNRECOVERABLE_IF(pMetricSet == nullptr);
+                DEBUG_BREAK_IF(pMetricSet == nullptr);
 
                 cacheMetricGroup(*pMetricSet, *pConcurrentGroup, i,
                                  ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
@@ -182,7 +182,7 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                     const uint32_t domain,
                                     const zet_metric_group_sampling_type_t samplingType) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
-    UNRECOVERABLE_IF(pMetricSetParams == nullptr);
+    DEBUG_BREAK_IF(pMetricSetParams == nullptr);
 
     const uint32_t sourceApiMask = MetricGroupImp::getApiMask(samplingType);
 
@@ -208,7 +208,7 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
         createMetrics(metricSet, metrics);
 
         auto pMetricGroup = MetricGroup::create(properties, metricSet, concurrentGroup, metrics);
-        UNRECOVERABLE_IF(pMetricGroup == nullptr);
+        DEBUG_BREAK_IF(pMetricGroup == nullptr);
 
         metricGroups.push_back(pMetricGroup);
 
@@ -222,17 +222,17 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
 ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                              std::vector<Metric *> &metrics) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
-    UNRECOVERABLE_IF(pMetricSetParams == nullptr);
+    DEBUG_BREAK_IF(pMetricSetParams == nullptr);
 
     metrics.reserve(pMetricSetParams->MetricsCount + pMetricSetParams->InformationCount);
 
     // Map metrics to level zero format and add them to 'metrics' vector.
     for (uint32_t i = 0; i < pMetricSetParams->MetricsCount; ++i) {
         MetricsDiscovery::IMetric_1_0 *pSourceMetric = metricSet.GetMetric(i);
-        UNRECOVERABLE_IF(pSourceMetric == nullptr);
+        DEBUG_BREAK_IF(pSourceMetric == nullptr);
 
         MetricsDiscovery::TMetricParams_1_0 *pSourceMetricParams = pSourceMetric->GetParams();
-        UNRECOVERABLE_IF(pSourceMetricParams == nullptr);
+        DEBUG_BREAK_IF(pSourceMetricParams == nullptr);
 
         zet_metric_properties_t properties = {};
         properties.version = ZET_METRIC_PROPERTIES_VERSION_CURRENT;
@@ -257,11 +257,11 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
     // Map information to level zero format and add them to 'metrics' vector (as metrics).
     for (uint32_t i = 0; i < pMetricSetParams->InformationCount; ++i) {
         MetricsDiscovery::IInformation_1_0 *pSourceInformation = metricSet.GetInformation(i);
-        UNRECOVERABLE_IF(pSourceInformation == nullptr);
+        DEBUG_BREAK_IF(pSourceInformation == nullptr);
 
         MetricsDiscovery::TInformationParams_1_0 *pSourceInformationParams =
             pSourceInformation->GetParams();
-        UNRECOVERABLE_IF(pSourceInformationParams == nullptr);
+        DEBUG_BREAK_IF(pSourceInformationParams == nullptr);
 
         zet_metric_properties_t properties;
         properties.version = ZET_METRIC_PROPERTIES_VERSION_CURRENT;
@@ -323,7 +323,7 @@ MetricEnumeration::getMetricType(const MetricsDiscovery::TMetricType sourceMetri
     case MetricsDiscovery::METRIC_TYPE_RAW:
         return ZET_METRIC_TYPE_RAW;
     default:
-        UNRECOVERABLE_IF(!false);
+        DEBUG_BREAK_IF(!false);
         return ZET_METRIC_TYPE_RAW;
     }
 }
@@ -344,7 +344,7 @@ zet_metric_type_t MetricEnumeration::getMetricType(
     case MetricsDiscovery::INFORMATION_TYPE_TIMESTAMP:
         return ZET_METRIC_TYPE_TIMESTAMP;
     default:
-        UNRECOVERABLE_IF(!false);
+        DEBUG_BREAK_IF(!false);
         return ZET_METRIC_TYPE_RAW;
     }
 }
@@ -362,7 +362,7 @@ zet_value_type_t MetricEnumeration::getMetricResultType(
     case MetricsDiscovery::RESULT_FLOAT:
         return ZET_VALUE_TYPE_FLOAT32;
     default:
-        UNRECOVERABLE_IF(!false);
+        DEBUG_BREAK_IF(!false);
         return ZET_VALUE_TYPE_UINT64;
     }
 }
@@ -377,7 +377,7 @@ MetricGroupImp ::~MetricGroupImp() {
 };
 
 ze_result_t MetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
-    UNRECOVERABLE_IF(pProperties->version > ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT);
+    DEBUG_BREAK_IF(pProperties->version > ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
@@ -413,14 +413,14 @@ ze_result_t MetricGroupImp::getMetric(uint32_t *pCount, zet_metric_handle_t *phM
 }
 
 bool MetricGroupImp::activate() {
-    UNRECOVERABLE_IF(pReferenceMetricSet == nullptr);
+    DEBUG_BREAK_IF(pReferenceMetricSet == nullptr);
     const bool result = pReferenceMetricSet->Activate() == MetricsDiscovery::CC_OK;
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
 bool MetricGroupImp::deactivate() {
-    UNRECOVERABLE_IF(pReferenceMetricSet == nullptr);
+    DEBUG_BREAK_IF(pReferenceMetricSet == nullptr);
     const bool result = pReferenceMetricSet->Deactivate() == MetricsDiscovery::CC_OK;
     return result;
 }
@@ -433,7 +433,7 @@ uint32_t MetricGroupImp::getApiMask(const zet_metric_group_sampling_type_t sampl
     case ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED:
         return MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
     default:
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return 0;
     }
 }
@@ -562,7 +562,7 @@ uint32_t MetricGroupImp::getRawReportSize() {
 
 void MetricGroupImp::copyProperties(const zet_metric_group_properties_t &source,
                                     zet_metric_group_properties_t &destination) {
-    UNRECOVERABLE_IF(source.version < destination.version);
+    DEBUG_BREAK_IF(source.version < destination.version);
     destination = source;
     memcpy_s(destination.name, sizeof(destination.name),
              source.name, sizeof(destination.name));
@@ -599,13 +599,13 @@ void MetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
     default:
         destination.type = ZET_VALUE_TYPE_UINT64;
         destination.value.ui64 = 0;
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         break;
     }
 }
 
 ze_result_t MetricImp::getProperties(zet_metric_properties_t *pProperties) {
-    UNRECOVERABLE_IF(pProperties->version > ZET_METRIC_PROPERTIES_VERSION_CURRENT);
+    DEBUG_BREAK_IF(pProperties->version > ZET_METRIC_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
@@ -617,7 +617,7 @@ ze_result_t MetricImp::initialize(const zet_metric_properties_t &sourcePropertie
 
 void MetricImp::copyProperties(const zet_metric_properties_t &source,
                                zet_metric_properties_t &destination) {
-    UNRECOVERABLE_IF(source.version < destination.version);
+    DEBUG_BREAK_IF(source.version < destination.version);
     destination = source;
     memcpy_s(destination.name, sizeof(destination.name),
              source.name, sizeof(destination.name));

@@ -65,8 +65,8 @@ struct MetricContextImp : public MetricContext {
                                              zet_metric_group_handle_t *phMetricGroups) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) override;
 
-    void setUseCcs(const bool useCcs) override;
-    bool isCcsUsed() override;
+    void setUseCompute(const bool useCompute) override;
+    bool isComputeUsed() override;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -75,7 +75,7 @@ struct MetricContextImp : public MetricContext {
     std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
     MetricGroupDomains metricGroupDomains;
     MetricTracer *pMetricTracer = nullptr;
-    bool useCcs = false;
+    bool useCompute = false;
 };
 
 MetricContextImp::MetricContextImp(Device &deviceInput)
@@ -94,11 +94,11 @@ bool MetricContextImp::loadDependencies() {
     bool result = true;
     if (metricEnumeration->loadMetricsDiscovery() != ZE_RESULT_SUCCESS) {
         result = false;
-        UNRECOVERABLE_IF(!result);
+        DEBUG_BREAK_IF(!result);
     }
     if (result && !metricsLibrary->load()) {
         result = false;
-        UNRECOVERABLE_IF(!result);
+        DEBUG_BREAK_IF(!result);
     }
     if (result) {
         setInitializationState(ZE_RESULT_SUCCESS);
@@ -136,12 +136,12 @@ void MetricContextImp::setMetricEnumeration(MetricEnumeration &metricEnumeration
     this->metricEnumeration.reset(&metricEnumeration);
 }
 
-void MetricContextImp::setUseCcs(const bool useCcs) {
-    this->useCcs = useCcs;
+void MetricContextImp::setUseCompute(const bool useCompute) {
+    this->useCompute = useCompute;
 }
 
-bool MetricContextImp::isCcsUsed() {
-    return useCcs;
+bool MetricContextImp::isComputeUsed() {
+    return useCompute;
 }
 
 ze_result_t
@@ -228,7 +228,7 @@ ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
                                                  zet_metric_group_handle_t *phMetricGroups) {
     // For each metric group:
     for (uint32_t i = 0; i < count; ++i) {
-        UNRECOVERABLE_IF(!phMetricGroups[i]);
+        DEBUG_BREAK_IF(!phMetricGroups[i]);
 
         // Try to associate it with a domain (oa, ...).
         if (!activateMetricGroupDeffered(phMetricGroups[i])) {
@@ -284,7 +284,7 @@ ze_result_t MetricGroupDomains::activate() {
             metricGroupActive = activateEventMetricGroup(hMetricGroup);
 
             if (metricGroupActive == false) {
-                UNRECOVERABLE_IF(true);
+                DEBUG_BREAK_IF(true);
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
         }
@@ -299,14 +299,14 @@ bool MetricGroupDomains::activateEventMetricGroup(const zet_metric_group_handle_
 
     // Validate metrics library handle.
     if (!hConfiguration.IsValid()) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
     // Write metric group configuration to gpu.
     const bool result = metricsLibrary.activateConfiguration(hConfiguration);
 
-    UNRECOVERABLE_IF(!result);
+    DEBUG_BREAK_IF(!result);
     return result;
 }
 
@@ -320,9 +320,10 @@ ze_result_t MetricGroupDomains::deactivate() {
         auto metricGroupEventBased = (metricGroup != nullptr)
                                          ? MetricGroup::getProperties(hMetricGroup).samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED
                                          : false;
+        auto hConfigurationEmpty = ConfigurationHandle_1_0{};
         auto hConfiguration = metricGroupEventBased
                                   ? metricsLibrary.getConfiguration(hMetricGroup)
-                                  : ConfigurationHandle_1_0{nullptr};
+                                  : hConfigurationEmpty;
 
         // Deactivate metric group configuration using metrics library.
         if (hConfiguration.IsValid() && metricGroupActivated) {

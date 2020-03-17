@@ -15,7 +15,7 @@ namespace L0 {
 
 ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                       uint8_t *pRawData) {
-    UNRECOVERABLE_IF(rawReportSize == 0);
+    DEBUG_BREAK_IF(rawReportSize == 0);
 
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
 
@@ -129,7 +129,7 @@ Event::State MetricTracerImp::getNotificationState() {
 }
 
 uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) const {
-    UNRECOVERABLE_IF(rawReportSize == 0);
+    DEBUG_BREAK_IF(rawReportSize == 0);
     uint32_t maxOaBufferReportCount = oaBufferSize / rawReportSize;
 
     // Trim to OA buffer size if needed.
