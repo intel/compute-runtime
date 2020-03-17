@@ -64,11 +64,11 @@ class CCustomEventListener : public ::testing::TestEventListener {
         lastTest = ss.str();
     }
 
-    void OnTestPartResult(const ::testing::TestPartResult &test_part_result) override {
-        if (test_part_result.failed()) {
+    void OnTestPartResult(const ::testing::TestPartResult &testPartResult) override {
+        if (testPartResult.failed()) {
             printf("\n");
         }
-        _listener->OnTestPartResult(test_part_result);
+        _listener->OnTestPartResult(testPartResult);
     }
 
     void OnTestEnd(const ::testing::TestInfo &testCase) override {
