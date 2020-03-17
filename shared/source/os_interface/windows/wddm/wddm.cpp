@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
@@ -177,6 +178,7 @@ bool Wddm::createPagingQueue() {
         pagingQueue = CreatePagingQueue.hPagingQueue;
         pagingQueueSyncObject = CreatePagingQueue.hSyncObject;
         pagingFenceAddress = reinterpret_cast<UINT64 *>(CreatePagingQueue.FenceValueCPUVirtualAddress);
+        createPagingFenceLogger();
     }
 
     return status == STATUS_SUCCESS;
@@ -335,11 +337,13 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
+bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DDDI_MAKERESIDENT makeResident = {0};
     UINT priority = 0;
     bool success = false;
+
+    perfLogResidencyReportAllocations(residencyLogger.get(), count, totalSize);
 
     makeResident.AllocationList = handles;
     makeResident.hPagingQueue = pagingQueue;
@@ -349,14 +353,16 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     makeResident.Flags.MustSucceed = cantTrimFurther ? 1 : 0;
 
     status = getGdi()->makeResident(&makeResident);
-
     if (status == STATUS_PENDING) {
+        perfLogResidencyMakeResident(residencyLogger.get(), true);
         updatePagingFenceValue(makeResident.PagingFenceValue);
         success = true;
     } else if (status == STATUS_SUCCESS) {
+        perfLogResidencyMakeResident(residencyLogger.get(), false);
         success = true;
     } else {
         DEBUG_BREAK_IF(true);
+        perfLogResidencyTrimRequired(residencyLogger.get(), makeResident.NumBytesToTrim);
         if (numberOfBytesToTrim != nullptr)
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
         UNRECOVERABLE_IF(cantTrimFurther);
@@ -683,10 +689,10 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     return true;
 }
 
-void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
+void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) {
 
     if (applyMakeResidentPriorToLock) {
-        temporaryResources->makeResidentResource(handle);
+        temporaryResources->makeResidentResource(handle, size);
     }
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -1001,8 +1007,11 @@ bool Wddm::configureDeviceAddressSpace() {
 }
 
 void Wddm::waitOnPagingFenceFromCpu() {
+    perfLogStartWaitTime(residencyLogger.get());
     while (currentPagingFenceValue > *getPagingFenceAddress())
-        ;
+        perfLogResidencyEnteredWait(residencyLogger.get());
+
+    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get());
 }
 
 void Wddm::setGmmInputArg(void *args) {
@@ -1018,6 +1027,12 @@ WddmVersion Wddm::getWddmVersion() {
         return WddmVersion::WDDM_2_3;
     } else {
         return WddmVersion::WDDM_2_0;
+    }
+}
+
+void Wddm::createPagingFenceLogger() {
+    if (DebugManager.flags.WddmResidencyLogger.get()) {
+        residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress);
     }
 }
 

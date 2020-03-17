@@ -23,9 +23,11 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(ArrayRef<Graphi
     constexpr uint32_t stackAllocations = 64;
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForResidency;
+    size_t totalSize = 0;
 
     for (const auto &allocation : gfxAllocations) {
         WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(allocation);
+        totalSize += wddmAllocation->getAlignedSize();
 
         if (wddmAllocation->fragmentsStorage.fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
@@ -39,7 +41,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(ArrayRef<Graphi
             totalHandlesCount += wddmAllocation->getNumHandles();
         }
     }
-    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount);
+    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize);
 }
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {

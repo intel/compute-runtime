@@ -22,9 +22,9 @@ class MockWddmResidentAllocationsContainer : public WddmResidentAllocationsConta
     MockWddmResidentAllocationsContainer(Wddm *wddm) : WddmResidentAllocationsContainer(wddm) {}
     virtual ~MockWddmResidentAllocationsContainer() = default;
 
-    MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle) override {
+    MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle, size_t size) override {
         makeResidentResult.called++;
-        makeResidentResult.operationSuccess = WddmResidentAllocationsContainer::makeResidentResource(handle);
+        makeResidentResult.operationSuccess = WddmResidentAllocationsContainer::makeResidentResource(handle, size);
         return makeResidentResult.operationSuccess;
     }
 

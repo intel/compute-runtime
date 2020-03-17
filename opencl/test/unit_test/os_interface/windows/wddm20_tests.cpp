@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
@@ -459,7 +460,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
-    error = wddm->makeResident(allocation.getHandles().data(), allocation.getNumHandles(), false, nullptr);
+    error = wddm->makeResident(allocation.getHandles().data(), allocation.getNumHandles(), false, nullptr, allocation.getAlignedSize());
     EXPECT_TRUE(error);
 
     uint64_t sizeToTrim;
@@ -666,7 +667,7 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
     gdi->getMakeResidentArg().NumAllocations = 0;
     gdi->getMakeResidentArg().AllocationList = nullptr;
 
-    bool error = wddm->makeResident(handles, 2, false, nullptr);
+    bool error = wddm->makeResident(handles, 2, false, nullptr, 0x1000);
     EXPECT_TRUE(error);
 
     EXPECT_EQ(2u, gdi->getMakeResidentArg().NumAllocations);
@@ -681,7 +682,7 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
     gdi->getMakeResidentArg().NumBytesToTrim = 30;
 
     uint64_t bytesToTrim = 0;
-    bool success = wddm->makeResident(handles, 2, false, &bytesToTrim);
+    bool success = wddm->makeResident(handles, 2, false, &bytesToTrim, 0x1000);
     EXPECT_TRUE(success);
 
     EXPECT_EQ(gdi->getMakeResidentArg().NumBytesToTrim, bytesToTrim);
@@ -891,29 +892,29 @@ using WddmLockWithMakeResidentTests = Wddm20Tests;
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatDoesntNeedMakeResidentBeforeLockWhenLockThenDontStoreItOrCallMakeResident) {
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    wddm->lockResource(ALLOCATION_HANDLE, false);
+    wddm->lockResource(ALLOCATION_HANDLE, false, 0x1000);
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
     wddm->unlockResource(ALLOCATION_HANDLE);
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBeforeLockWhenLockThenCallBlockingMakeResident) {
-    wddm->lockResource(ALLOCATION_HANDLE, true);
+    wddm->lockResource(ALLOCATION_HANDLE, true, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->makeResidentResult.called);
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenAcquireUniqueLock) {
-    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE);
+    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->acquireLockResult.called);
     EXPECT_EQ(reinterpret_cast<uint64_t>(&mockTemporaryResources->resourcesLock), mockTemporaryResources->acquireLockResult.uint64ParamPassed);
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenCallMakeResidentAndStoreAllocation) {
-    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE);
+    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(ALLOCATION_HANDLE, mockTemporaryResources->resourceHandles.back());
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenWaitForCurrentPagingFenceValue) {
     wddm->mockPagingFence = 0u;
     wddm->currentPagingFenceValue = 3u;
-    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE);
+    wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(3u, wddm->mockPagingFence);
     EXPECT_EQ(3u, wddm->getPagingFenceAddressResult.called);
@@ -923,8 +924,8 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
     allocation.handle = 0x3;
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0].get());
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
-    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillRepeatedly(::testing::Return(false));
-    gmockWddm.temporaryResources->makeResidentResource(allocation.handle);
+    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillRepeatedly(::testing::Return(false));
+    gmockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->evictAllResourcesResult.called);
 }
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryResourcesAreEvictedSuccessfullyThenCallMakeResidentOneMoreTime) {
@@ -934,8 +935,8 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryR
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(allocation.handle);
     EXPECT_CALL(gmockWddm, evict(::testing::_, ::testing::_, ::testing::_)).Times(1).WillRepeatedly(::testing::Return(true));
-    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_)).Times(3).WillRepeatedly(::testing::Return(false));
-    gmockWddm.temporaryResources->makeResidentResource(allocation.handle);
+    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(3).WillRepeatedly(::testing::Return(false));
+    gmockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(2u, mockTemporaryResources->evictAllResourcesResult.called);
 }
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeResidentStillFailsThenDontStoreTemporaryResource) {
@@ -945,9 +946,9 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(0x1);
     EXPECT_CALL(gmockWddm, evict(::testing::_, ::testing::_, ::testing::_)).Times(1).WillRepeatedly(::testing::Return(true));
-    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_)).Times(3).WillRepeatedly(::testing::Return(false));
+    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(3).WillRepeatedly(::testing::Return(false));
     EXPECT_EQ(1u, mockTemporaryResources->resourceHandles.size());
-    gmockWddm.temporaryResources->makeResidentResource(allocation.handle);
+    gmockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(0u, mockTemporaryResources->resourceHandles.size());
 }
 TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeResidentPassesAfterEvictThenStoreTemporaryResource) {
@@ -957,9 +958,9 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(0x1);
     EXPECT_CALL(gmockWddm, evict(::testing::_, ::testing::_, ::testing::_)).Times(1).WillRepeatedly(::testing::Return(true));
-    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Return(false)).WillOnce(::testing::Return(true));
+    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Return(false)).WillOnce(::testing::Return(true));
     EXPECT_EQ(1u, mockTemporaryResources->resourceHandles.size());
-    gmockWddm.temporaryResources->makeResidentResource(allocation.handle);
+    gmockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->resourceHandles.size());
     EXPECT_EQ(0x2, mockTemporaryResources->resourceHandles.back());
 }
@@ -969,8 +970,8 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
     GmockWddm gmockWddm(*executionEnvironment->rootDeviceEnvironments[0].get());
     auto mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(gmockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(0x1);
-    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
-    gmockWddm.temporaryResources->makeResidentResource(allocation.handle);
+    EXPECT_CALL(gmockWddm, makeResident(&allocation.handle, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
+    gmockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(2u, mockTemporaryResources->resourceHandles.size());
     EXPECT_EQ(0x2, mockTemporaryResources->resourceHandles.back());
 }
@@ -1265,4 +1266,130 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
     }
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
+}
+
+namespace NEO {
+namespace ResLog {
+extern uint32_t mockFopenCalled;
+extern uint32_t mockVfptrinfCalled;
+extern uint32_t mockFcloseCalled;
+} // namespace ResLog
+} // namespace NEO
+
+TEST_F(WddmTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
+    NEO::ResLog::mockFopenCalled = 0;
+    NEO::ResLog::mockVfptrinfCalled = 0;
+    NEO::ResLog::mockFcloseCalled = 0;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    wddm->residencyLogger.reset();
+    if (NEO::residencyLoggingAvailable) {
+        EXPECT_EQ(1u, NEO::ResLog::mockFopenCalled);
+        EXPECT_EQ(1u, NEO::ResLog::mockVfptrinfCalled);
+        EXPECT_EQ(1u, NEO::ResLog::mockFcloseCalled);
+    }
+}
+
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSizeRapport) {
+    if (!NEO::residencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::ResLog::mockFopenCalled = 0;
+    NEO::ResLog::mockVfptrinfCalled = 0;
+    NEO::ResLog::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+
+    D3DKMT_HANDLE handle = 0x10;
+    uint64_t bytesToTrim = 0;
+    wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
+
+    //2 - one for open log, second for allocation size
+    EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_TRUE(logger->makeResidentCall);
+}
+
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimReport) {
+    if (!NEO::residencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::ResLog::mockFopenCalled = 0;
+    NEO::ResLog::mockVfptrinfCalled = 0;
+    NEO::ResLog::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+
+    D3DKMT_HANDLE handle = static_cast<D3DKMT_HANDLE>(-1);
+    uint64_t bytesToTrim = 0;
+
+    wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
+
+    //3 - one for open log, second for report allocations, 3rd for trim size
+    EXPECT_EQ(3u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_FALSE(logger->makeResidentCall);
+}
+
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
+    if (!NEO::residencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::ResLog::mockFopenCalled = 0;
+    NEO::ResLog::mockVfptrinfCalled = 0;
+    NEO::ResLog::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+    logger->enteredWait();
+    EXPECT_TRUE(logger->enterWait);
+}
+
+TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenExpectFlagsOff) {
+    if (!NEO::residencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+    NEO::ResLog::mockFopenCalled = 0;
+    NEO::ResLog::mockVfptrinfCalled = 0;
+    NEO::ResLog::mockFcloseCalled = 0;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.WddmResidencyLogger.set(true);
+    wddm->callBaseCreatePagingLogger = false;
+
+    wddm->createPagingFenceLogger();
+    EXPECT_NE(nullptr, wddm->residencyLogger.get());
+    auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
+
+    D3DKMT_HANDLE handle = 0x10;
+    uint64_t bytesToTrim = 0;
+    wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
+
+    //2 - one for open log, second for allocation size
+    EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_TRUE(logger->makeResidentCall);
+
+    logger->enterWait = true;
+    wddm->waitOnPagingFenceFromCpu();
+    EXPECT_EQ(4u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_FALSE(logger->makeResidentCall);
+    EXPECT_FALSE(logger->enterWait);
 }

@@ -14,6 +14,7 @@
 
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
+#include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
 
 #include "gtest/gtest.h"
 
@@ -27,14 +28,14 @@ WddmMock::~WddmMock() {
     EXPECT_EQ(0, reservedAddresses.size());
 }
 
-bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
+bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) {
     makeResidentResult.called++;
     makeResidentResult.handleCount = count;
     for (auto i = 0u; i < count; i++) {
         makeResidentResult.handlePack.push_back(handles[i]);
     }
     if (callBaseMakeResident) {
-        return makeResidentResult.success = Wddm::makeResident(handles, count, cantTrimFurther, numberOfBytesToTrim);
+        return makeResidentResult.success = Wddm::makeResident(handles, count, cantTrimFurther, numberOfBytesToTrim, totalSize);
     } else {
         makeResidentResult.success = makeResidentStatus;
         return makeResidentStatus;
@@ -171,9 +172,9 @@ bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {
     return waitOnGPUResult.success = Wddm::waitOnGPU(context);
 }
 
-void *WddmMock::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
+void *WddmMock::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) {
     lockResult.called++;
-    auto ptr = Wddm::lockResource(handle, applyMakeResidentPriorToLock);
+    auto ptr = Wddm::lockResource(handle, applyMakeResidentPriorToLock, size);
     lockResult.success = ptr != nullptr;
     lockResult.uint64ParamPassed = applyMakeResidentPriorToLock;
     return ptr;
@@ -276,6 +277,16 @@ uint64_t *WddmMock::getPagingFenceAddress() {
 void WddmMock::waitOnPagingFenceFromCpu() {
     waitOnPagingFenceFromCpuResult.called++;
     Wddm::waitOnPagingFenceFromCpu();
+}
+
+void WddmMock::createPagingFenceLogger() {
+    if (callBaseCreatePagingLogger) {
+        Wddm::createPagingFenceLogger();
+    } else {
+        if (DebugManager.flags.WddmResidencyLogger.get()) {
+            residencyLogger = std::make_unique<MockWddmResidencyLogger>(device, pagingFenceAddress);
+        }
+    }
 }
 
 void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {

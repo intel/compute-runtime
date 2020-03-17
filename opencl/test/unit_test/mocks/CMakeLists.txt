@@ -108,6 +108,8 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
     ${IGDRCL_SRC_tests_mock_wddm}
   )

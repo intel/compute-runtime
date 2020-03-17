@@ -54,7 +54,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
 };
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListenerNotifyLockIsFedWithCorrectParams) {
-    wddmWithKmDafMock->lockResource(ALLOCATION_HANDLE, false);
+    wddmWithKmDafMock->lockResource(ALLOCATION_HANDLE, false, 0x1000);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAdapter);
@@ -105,7 +105,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenFreeGpuVirtualAddressIsCalledThenKmDa
 TEST_F(WddmKmDafListenerTest, givenWddmWhenMakeResidentIsCalledThenKmDafListenerNotifyMakeResidentIsFedWithCorrectParams) {
     MockWddmAllocation allocation;
 
-    wddmWithKmDafMock->makeResident(&allocation.handle, 1, false, nullptr);
+    wddmWithKmDafMock->makeResident(&allocation.handle, 1, false, nullptr, 0x1000);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMakeResidentParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMakeResidentParametrization.hAdapter);

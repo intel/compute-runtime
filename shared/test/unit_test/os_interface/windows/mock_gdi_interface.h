@@ -25,6 +25,9 @@ class MockGdi : public Gdi {
     }
 
     static NTSTATUS __stdcall makeResidentMock(IN OUT D3DDDI_MAKERESIDENT *arg) {
+        if (arg->AllocationList[0] == static_cast<D3DKMT_HANDLE>(-1)) {
+            return STATUS_SEVERITY_ERROR;
+        }
         getMakeResidentArg() = *arg;
         return 0;
     }

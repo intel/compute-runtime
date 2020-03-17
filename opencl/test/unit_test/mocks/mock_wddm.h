@@ -28,6 +28,7 @@ constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 class WddmMock : public Wddm {
   public:
     using Wddm::adapterBDF;
+    using Wddm::createPagingFenceLogger;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
     using Wddm::device;
@@ -39,13 +40,14 @@ class WddmMock : public Wddm {
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
+    using Wddm::residencyLogger;
     using Wddm::temporaryResources;
     using Wddm::wddmInterface;
 
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock();
 
-    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
+    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
     bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
     bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override;
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
@@ -64,7 +66,7 @@ class WddmMock : public Wddm {
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
-    void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) override;
+    void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) override;
     void unlockResource(const D3DKMT_HANDLE &handle) override;
     void kmDafLock(D3DKMT_HANDLE handle) override;
     bool isKmDafEnabled() const override;
@@ -82,6 +84,7 @@ class WddmMock : public Wddm {
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
     uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu() override;
+    void createPagingFenceLogger() override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -130,6 +133,7 @@ class WddmMock : public Wddm {
     uint64_t mockPagingFence = 0u;
     bool makeResidentStatus = true;
     bool callBaseMakeResident = true;
+    bool callBaseCreatePagingLogger = true;
 };
 
 struct GmockWddm : WddmMock {
@@ -141,7 +145,7 @@ struct GmockWddm : WddmMock {
 
     void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type);
     uintptr_t virtualAllocAddress;
-    MOCK_METHOD4(makeResident, bool(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
+    MOCK_METHOD5(makeResident, bool(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize));
     MOCK_METHOD3(evict, bool(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
     MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
 

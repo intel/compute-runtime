@@ -50,6 +50,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_residency_logger.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_residency_logger_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool.cpp

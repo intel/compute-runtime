@@ -301,6 +301,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
     const size_t residencyCount = allocationsForResidency.size();
     std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * maxFragmentsCount * EngineLimits::maxHandleCount]);
     uint32_t totalHandlesCount = 0;
+    size_t totalSize = 0;
 
     auto lock = this->acquireLock();
 
@@ -310,6 +311,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
         WddmAllocation *allocation = static_cast<WddmAllocation *>(allocationsForResidency[i]);
         ResidencyData &residencyData = allocation->getResidencyData();
         bool fragmentResidency[3] = {false, false, false};
+        totalSize += allocation->getAlignedSize();
 
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident[osContextId] ? "resident" : "not resident");
 
@@ -337,7 +339,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
     bool result = true;
     if (totalHandlesCount) {
         uint64_t bytesToTrim = 0;
-        while ((result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, false, &bytesToTrim)) == false) {
+        while ((result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             if (!trimmingDone) {
@@ -346,7 +348,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
                     continue;
                 }
                 DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::MEMORY_NOT_FOUND);
-                result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, true, &bytesToTrim);
+                result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, true, &bytesToTrim, totalSize);
                 break;
             }
         }

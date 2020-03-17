@@ -79,6 +79,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintEMDebugInformation, false, "prints execution m
 DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver choosen local workgroup sizes")
 DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch paramters of kernels passed to clEnqueueNDRangeKernel")
 DECLARE_DEBUG_VARIABLE(bool, PrintProgramBinaryProcessingTime, false, "prints execution time of Program::processGenBinary() method during program building")
+DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNullHardware, false, "works on Windows only, sets the Null Hardware flag that makes all Command buffers completed while GPU does nothing")

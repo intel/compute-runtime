@@ -56,17 +56,17 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::evictResources(const D3
     return MemoryOperationsStatus::SUCCESS;
 }
 
-MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle) {
-    return makeResidentResources(&handle, 1u);
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle, size_t size) {
+    return makeResidentResources(&handle, 1u, size);
 }
 
-MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size) {
     bool madeResident = false;
-    while (!(madeResident = wddm->makeResident(handles, count, false, nullptr))) {
+    while (!(madeResident = wddm->makeResident(handles, count, false, nullptr, size))) {
         if (evictAllResources() == MemoryOperationsStatus::SUCCESS) {
             continue;
         }
-        if (!wddm->makeResident(handles, count, false, nullptr)) {
+        if (!wddm->makeResident(handles, count, false, nullptr, size)) {
             DEBUG_BREAK_IF(true);
             return MemoryOperationsStatus::OUT_OF_MEMORY;
         };

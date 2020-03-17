@@ -11,4 +11,11 @@ namespace NEO {
 Wddm *Wddm::createWddm(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     return new Wddm(std::move(hwDeviceId), rootDeviceEnvironment);
 }
+
+namespace ResLog {
+fopenFuncPtr fopenPtr = &fopen;
+vfprintfFuncPtr vfprintfPtr = &vfprintf;
+fcloseFuncPtr fclosePtr = &fclose;
+} // namespace ResLog
+
 } // namespace NEO

@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include "sku_info.h"
@@ -54,7 +55,7 @@ class Wddm {
     bool init();
 
     MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
-    MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
+    MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize);
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData);
     MOCKABLE_VIRTUAL D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size);
@@ -67,7 +68,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
-    MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock);
+    MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);
     MOCKABLE_VIRTUAL bool isKmDafEnabled() const { return featureTable->ftrKmdDaf; }
@@ -184,6 +185,7 @@ class Wddm {
     bool destroyDevice();
     void getDeviceState();
     void handleCompletion(OsContextWin &osContext);
+    MOCKABLE_VIRTUAL void createPagingFenceLogger();
 
     static GetSystemInfoFcn getSystemInfo;
     static VirtualFreeFcn virtualFreeFnc;
@@ -192,5 +194,6 @@ class Wddm {
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
+    std::unique_ptr<WddmResidencyLogger> residencyLogger;
 };
 } // namespace NEO
