@@ -260,7 +260,7 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
 
     output.valuesBuffer->Resize(output.idsBuffer->GetSizeRaw() * 2);
     for (uint32_t i = 0; i < output.valuesBuffer->GetSize<uint64_t>(); i++) {
-        output.valuesBuffer->GetMemoryWriteable<void *>()[i] = 0u;
+        output.valuesBuffer->GetMemoryWriteable<uint64_t>()[i] = 0u;
     }
 
     return TranslationOutput::ErrorCode::Success;
