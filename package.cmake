@@ -21,12 +21,13 @@ if(UNIX)
   include("os_release_info.cmake")
 
   get_os_release_info(os_name os_version os_codename)
-
-  if("${os_name}" STREQUAL "clear-linux-os")
-    # clear-linux-os distribution avoids /etc for distribution defaults.
-    set(_dir_etc "/usr/share/defaults/etc")
-  else()
-    set(_dir_etc "/etc")
+  if(NOT DEFINED OCL_ICD_VENDORDIR)
+    if("${os_name}" STREQUAL "clear-linux-os")
+      # clear-linux-os distribution avoids /etc for distribution defaults.
+      set(OCL_ICD_VENDORDIR "/usr/share/defaults/etc/OpenCL/vendors")
+    else()
+	    set(OCL_ICD_VENDORDIR "/etc/OpenCL/vendors")
+    endif()
   endif()
 
   set(OCL_ICD_RUNTIME_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${NEO_DLL_NAME_BASE}${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -38,7 +39,7 @@ if(UNIX)
     CODE "file( COPY ${NEO_BINARY_DIR}/tmp/postrm DESTINATION ${NEO_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
     COMPONENT opencl
   )
-  install(FILES ${NEO_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
+  install(FILES ${NEO_BINARY_DIR}/intel.icd DESTINATION ${OCL_ICD_VENDORDIR} COMPONENT opencl)
 
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
