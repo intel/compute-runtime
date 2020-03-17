@@ -10,8 +10,6 @@ set(TARGET_NAME ${TARGET_NAME_L0}_core_tests)
 
 append_sources_from_properties(L0_CORE_ENABLERS NEO_CORE_SRCS_LINK)
 
-append_sources_from_properties(L0_SCRS_FROM_PROPERTIES
-)
 add_executable(${TARGET_NAME}
     ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
     ${NEO_SOURCE_DIR}/level_zero/core/source/debug_manager.cpp
@@ -23,7 +21,6 @@ add_executable(${TARGET_NAME}
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.h
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
-    ${L0_SCRS_FROM_PROPERTIES}
     ${L0_CORE_ENABLERS}
 )
 
@@ -156,6 +153,6 @@ if(NOT GTEST_SHUFFLE)
 endif()
 message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
 
-add_subdirectory(sources)
+add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

@@ -37,6 +37,7 @@ if(TESTS_GEN12LP)
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/gen12lp.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/gen12lp/cmd_parse_gen12lp.cpp
     )
+    include_directories(${NEO_SHARED_TEST_DIRECTORY}/unit_test/gen12lp/cmd_parse${BRANCH_DIR_SUFFIX}/)
 endif()
 
 ## ULT related settings

@@ -10,8 +10,6 @@
 #include "level_zero/core/source/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist_hw_immediate.h"
 
-#include "cache_flush_gen12lp.inl"
-
 namespace L0 {
 
 template <PRODUCT_FAMILY productFamily>
