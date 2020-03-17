@@ -8,12 +8,14 @@
 #include "drm_neo.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
 
@@ -291,8 +293,9 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     return 0;
 }
 
-std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices() {
+std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
+    executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
     char fullPath[PATH_MAX];
     size_t numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {

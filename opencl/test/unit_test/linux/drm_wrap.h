@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -15,7 +16,7 @@
 class DrmWrap : public NEO::Drm {
   public:
     static NEO::Drm *createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
-        auto hwDeviceIds = OSInterface::discoverDevices();
+        auto hwDeviceIds = OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);
         if (!hwDeviceIds.empty()) {
             return NEO::Drm::create(std::move(hwDeviceIds[0]), rootDeviceEnvironment);
         }

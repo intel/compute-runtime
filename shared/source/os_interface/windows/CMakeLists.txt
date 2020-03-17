@@ -31,6 +31,8 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h

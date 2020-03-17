@@ -15,12 +15,11 @@
 
 namespace NEO {
 class Gdi;
+struct OsEnvironment;
 class HwDeviceId : NonCopyableClass {
   public:
-    HwDeviceId(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, std::unique_ptr<Gdi> gdiIn);
-    inline Gdi *getGdi() const {
-        return gdi.get();
-    }
+    HwDeviceId(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, OsEnvironment *osEnvironmentIn);
+    Gdi *getGdi() const;
     constexpr D3DKMT_HANDLE getAdapter() const {
         return adapter;
     }
@@ -32,6 +31,6 @@ class HwDeviceId : NonCopyableClass {
   protected:
     const D3DKMT_HANDLE adapter;
     const LUID adapterLuid;
-    const std::unique_ptr<Gdi> gdi;
+    OsEnvironment *osEnvironment;
 };
 } // namespace NEO

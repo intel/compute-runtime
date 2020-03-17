@@ -81,10 +81,10 @@ struct WddmResidencyControllerTest : ::testing::Test {
         residencyController = &mockOsContextWin->mockResidencyController;
     }
 
-    std::unique_ptr<WddmMock> wddm;
-    std::unique_ptr<MockOsContextWin> mockOsContextWin;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
+    std::unique_ptr<WddmMock> wddm;
+    std::unique_ptr<MockOsContextWin> mockOsContextWin;
     MockWddmResidencyController *residencyController = nullptr;
 };
 
@@ -106,10 +106,10 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         residencyController->registerCallback();
     }
 
-    std::unique_ptr<WddmMock> wddm;
-    std::unique_ptr<MockOsContextWin> mockOsContextWin;
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
+    std::unique_ptr<WddmMock> wddm;
+    std::unique_ptr<MockOsContextWin> mockOsContextWin;
     MockWddmResidencyController *residencyController = nullptr;
     MockGdi *gdi;
 };

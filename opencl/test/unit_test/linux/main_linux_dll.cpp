@@ -72,7 +72,8 @@ TEST(DrmTest, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
     openCounter = 2;
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
 }
 
@@ -82,7 +83,8 @@ TEST(DrmTest, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = testOpen;
     openRetVal = -1;
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
@@ -92,7 +94,8 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openRetVal = 1023; // fakeFd
     openFull = testOpen;
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
@@ -103,8 +106,9 @@ TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = testOpen;
     openRetVal = 1024;
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
@@ -49,10 +50,11 @@ class MockWddmMemoryManagerFixture {
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
-
+        osEnvironment->gdi.reset(gdi);
+        executionEnvironment->osEnvironment.reset(osEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-        wddm->resetGdi(gdi);
         constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
         wddm->init();

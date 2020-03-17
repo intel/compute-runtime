@@ -62,7 +62,8 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             }
 
             DebugManager.flags.ProductFamilyOverride.set(productFamily);
-            ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
+            platformsImpl.clear();
+            ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
             const auto ret = getDevices(numDevices, *exeEnv);
             for (auto i = 0u; i < expectedDevices; i++) {
@@ -149,7 +150,8 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
 
         DebugManager.flags.SetCommandStreamReceiver.set(csrType);
         DebugManager.flags.ProductFamilyOverride.set(productFamily);
-        ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
+        platformsImpl.clear();
+        ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
         auto ret = getDevices(numDevices, *exeEnv);
         for (auto i = 0u; i < expectedDevices; i++) {

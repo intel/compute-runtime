@@ -12,6 +12,7 @@
 
 namespace NEO {
 class MemoryManager;
+struct OsEnvironment;
 struct RootDeviceEnvironment;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
@@ -25,6 +26,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
 
     std::unique_ptr<MemoryManager> memoryManager;
+    std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
 };
 } // namespace NEO

@@ -153,6 +153,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 }
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
+                                                  sizeof(std::unique_ptr<OsEnvironment>) +
                                                   (is64bit ? 16 : 12),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 

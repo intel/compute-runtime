@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace NEO {
+class ExecutionEnvironment;
 class HwDeviceId;
 
 class OSInterface {
@@ -30,7 +31,7 @@ class OSInterface {
     static bool are64kbPagesEnabled();
     uint32_t getDeviceHandle() const;
     void setGmmInputArgs(void *args);
-    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices();
+    static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
   protected:
     OSInterfaceImpl *osInterfaceImpl = nullptr;

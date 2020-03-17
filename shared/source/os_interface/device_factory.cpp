@@ -88,7 +88,7 @@ bool DeviceFactory::isHwModeSelected() {
 bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
     using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
 
-    HwDeviceIds hwDeviceIds = OSInterface::discoverDevices();
+    HwDeviceIds hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     totalNumRootDevices = hwDeviceIds.size();
     if (totalNumRootDevices == 0) {
         return false;

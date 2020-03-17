@@ -209,10 +209,11 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateSynchronizationObjectFa
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbSyncObjectFails) {
+    auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
     MockOSInterface mockOsInterface;
     MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
 
-    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
+    auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
     wddm->resetGdi(gdi);
     wddm->init();
@@ -239,8 +240,9 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
             return STATUS_INVALID_PARAMETER;
         }
     };
+    auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
 
-    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
+    auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
     wddm->resetGdi(gdi);
     wddm->init();
@@ -268,8 +270,9 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
             getDestroyCounter() = 0;
         }
     };
+    auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
 
-    auto wddm = new WddmMock(*rootDeviceEnvironment.get());
+    auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
     wddm->resetGdi(gdi);
     wddm->init();

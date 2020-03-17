@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
@@ -32,13 +33,15 @@ struct WddmFixture : ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
         rootDeviceEnvironemnt = executionEnvironment->rootDeviceEnvironments[0].get();
+        auto osEnvironment = new OsEnvironmentWin();
+        gdi = new MockGdi();
+        osEnvironment->gdi.reset(gdi);
+        executionEnvironment->osEnvironment.reset(osEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironemnt));
         rootDeviceEnvironemnt->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironemnt->osInterface->get()->setWddm(wddm);
         rootDeviceEnvironemnt->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = rootDeviceEnvironemnt->osInterface.get();
-        gdi = new MockGdi();
-        wddm->resetGdi(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         wddm->init();
         auto hwInfo = rootDeviceEnvironemnt->getHardwareInfo();
@@ -50,9 +53,9 @@ struct WddmFixture : ::testing::Test {
 
     WddmMock *wddm = nullptr;
     OSInterface *osInterface;
-    std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironemnt = nullptr;
+    std::unique_ptr<OsContextWin> osContext;
 
     MockGdi *gdi = nullptr;
     MockWddmResidentAllocationsContainer *mockTemporaryResources;

@@ -94,6 +94,8 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.set(!refEnableQuickKmdSleepForSporadicWaits);
     DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForSporadicWaitsMicroseconds) + 12);
 
+    platformsImpl.clear();
+    executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
     hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -259,7 +261,8 @@ TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseI
 TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("invalid");
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnviornment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 

@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -92,6 +93,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
 
     EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation));
 }
+
 TEST(WddmDiscoverDevices, WhenNoHwDeviceIdIsProvidedToWddmThenWddmIsNotCreated) {
     struct MockWddm : public Wddm {
         MockWddm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceIdIn), rootDeviceEnvironment) {}
@@ -107,8 +109,9 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathDoesntCo
     descriptionBackup = L"Intel DCH-D";
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch.inf";
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
@@ -117,15 +120,17 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHIAndgdrclPathDoesntCo
     descriptionBackup = L"Intel DCH-I";
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch.inf";
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
 TEST(WddmDiscoverDevices, WhenMultipleRootDevicesAreAvailableThenAllAreDiscovered) {
     VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
     numRootDevicesToEnum = 3u;
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(numRootDevicesToEnum, hwDeviceIds.size());
 }
 
@@ -134,8 +139,9 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsDCHDAndgdrclPathContains
     descriptionBackup = L"Intel DCH-D";
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch_d.inf";
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
@@ -145,8 +151,9 @@ TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathConta
     descriptionBackup = L"Intel DCH-I";
     VariableBackup<const wchar_t *> igdrclPathBackup(&SysCalls::igdrclFilePath);
     igdrclPathBackup = L"intel_dch_i.inf";
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
@@ -154,8 +161,9 @@ TEST(Wddm20EnumAdaptersTest, WhenAdapterDescriptionContainsDCHIAndgdrclPathConta
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
     VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
     descriptionBackup = L"Virtual Render";
+    ExecutionEnvironment executionEnvironment;
 
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
@@ -566,7 +574,8 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
 }
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
-    wddm->hwDeviceId = std::make_unique<HwDeviceId>(0, LUID{}, std::make_unique<Gdi>());
+    auto gdi = std::make_unique<Gdi>();
+    wddm->resetGdi(gdi.release());
     EXPECT_CALL(*gmmMem,
                 configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .Times(0);
@@ -1097,14 +1106,14 @@ TEST_F(WddmGfxPartitionTest, initGfxPartition) {
     }
 }
 
-TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
+TEST(WddmGfxPartitionTests, initGfxPartitionHeapStandard64KBSplit) {
     struct MockWddm : public Wddm {
         using Wddm::gfxPartition;
 
-        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(OSInterface::discoverDevices()[0]), rootDeviceEnvironment) {}
+        MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment)[0]), rootDeviceEnvironment) {}
     };
 
-    MockWddm wddm(*executionEnvironment->rootDeviceEnvironments[0].get());
+    MockWddm wddm(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
 
     uint32_t rootDeviceIndex = 3;
     size_t numRootDevices = 5;
@@ -1121,7 +1130,8 @@ TEST_F(WddmGfxPartitionTest, initGfxPartitionHeapStandard64KBSplit) {
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id
-    auto hwDeviceIds = OSInterface::discoverDevices();
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
@@ -1259,10 +1269,13 @@ struct GdiWithMockedCloseFunc : public Gdi {
 uint32_t GdiWithMockedCloseFunc::closeAdapterCalled;
 D3DKMT_HANDLE GdiWithMockedCloseFunc::closeAdapterCalledArgPassed;
 TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
+    auto gdi = std::make_unique<GdiWithMockedCloseFunc>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi.reset(gdi.release());
 
     D3DKMT_HANDLE adapter = 0x1234;
     {
-        HwDeviceId hwDeviceId{adapter, {}, std::make_unique<GdiWithMockedCloseFunc>()};
+        HwDeviceId hwDeviceId{adapter, {}, osEnv.get()};
     }
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
