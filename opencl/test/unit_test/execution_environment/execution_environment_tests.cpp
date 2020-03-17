@@ -21,12 +21,12 @@
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-#include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 using namespace NEO;
@@ -241,4 +241,21 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     }
 
     EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
+}
+
+TEST(ClExecutionEnvironment, shutdownClosesAsyncEventHandlerThread) {
+    auto executionEnvironment = new MockClExecutionEnvironment();
+    MockHandler *mockAsyncHandler = new MockHandler();
+
+    executionEnvironment->asyncEventsHandler.reset(mockAsyncHandler);
+    EXPECT_EQ(mockAsyncHandler, executionEnvironment->getAsyncEventsHandler());
+
+    mockAsyncHandler->openThread();
+    delete executionEnvironment;
+    EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
+}
+
+TEST(ClExecutionEnvironment, hasAsyncEventHandler) {
+    auto executionEnvironment = std::make_unique<ClExecutionEnvironment>();
+    EXPECT_NE(nullptr, executionEnvironment->getAsyncEventsHandler());
 }

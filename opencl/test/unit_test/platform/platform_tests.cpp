@@ -17,7 +17,6 @@
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
-#include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
@@ -101,10 +100,6 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
-}
-
-TEST_F(PlatformTest, hasAsyncEventsHandler) {
-    EXPECT_NE(nullptr, pPlatform->getAsyncEventsHandler());
 }
 
 TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGetSipKernel) {
@@ -197,19 +192,6 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
     EXPECT_TRUE(ret);
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
-}
-
-TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {
-    Platform *platform = new MockPlatform();
-
-    MockHandler *mockAsyncHandler = new MockHandler();
-
-    auto oldHandler = platform->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(mockAsyncHandler));
-    EXPECT_EQ(mockAsyncHandler, platform->getAsyncEventsHandler());
-
-    mockAsyncHandler->openThread();
-    delete platform;
-    EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
 }
 
 namespace NEO {

@@ -18,6 +18,7 @@
 
 namespace NEO {
 
+class AsyncEventsHandler;
 struct BuiltInKernel;
 class CommandStreamReceiver;
 class CommandQueue;
@@ -142,6 +143,8 @@ class Context : public BaseObject<_cl_context> {
     SchedulerKernel &getSchedulerKernel();
 
     bool isDeviceAssociated(const ClDevice &clDevice) const;
+
+    AsyncEventsHandler &getAsyncEventsHandler();
 
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,

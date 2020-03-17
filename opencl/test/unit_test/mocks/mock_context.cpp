@@ -16,6 +16,7 @@
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "d3d_sharing_functions.h"
 
@@ -60,7 +61,7 @@ MockContext::~MockContext() {
 }
 
 MockContext::MockContext() {
-    device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+    device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     devices.push_back(device);
     memoryManager = device->getMemoryManager();
     svmAllocsManager = new SVMAllocsManager(memoryManager);
@@ -92,4 +93,9 @@ void MockContext::clearSharingFunctions() {
     std::vector<decltype(this->sharingFunctions)::value_type> v;
     this->sharingFunctions.swap(v);
 }
+
+std::unique_ptr<AsyncEventsHandler> &MockContext::getAsyncEventsHandlerUniquePtr() {
+    return static_cast<MockClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->asyncEventsHandler;
+}
+
 } // namespace NEO

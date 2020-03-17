@@ -8,6 +8,7 @@
 #pragma once
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
 namespace NEO {
@@ -55,7 +56,14 @@ class MockClDevice : public ClDevice {
     }
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
-        return MockDevice::createWithNewExecutionEnvironment<T>(pHwInfo, rootDeviceIndex);
+        auto executionEnvironment = new MockClExecutionEnvironment();
+        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+        }
+        return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }

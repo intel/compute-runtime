@@ -20,7 +20,6 @@ namespace NEO {
 
 class CompilerInterface;
 class Device;
-class AsyncEventsHandler;
 class ExecutionEnvironment;
 class GmmHelper;
 class GmmClientContext;
@@ -55,8 +54,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     ClDevice *getClDevice(size_t deviceOrdinal);
 
     const PlatformInfo &getPlatformInfo() const;
-    AsyncEventsHandler *getAsyncEventsHandler();
-    std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
     ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
 
     static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
@@ -73,7 +70,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     MOCKABLE_VIRTUAL void initializationLoopHelper(){};
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
-    std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
     ExecutionEnvironment &executionEnvironment;
 };
 

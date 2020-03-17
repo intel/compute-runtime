@@ -7,12 +7,10 @@
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 #include <memory>
@@ -41,16 +39,15 @@ TEST(EventCallbackTest, GivenUserEventWhenAddingCallbackThenNestedCallbacksCanBe
 }
 
 TEST(EventCallbackTest, GivenEventWhenAddingCallbackThenNestedCallbacksCanBeCreated) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MockContext context;
-    MockCommandQueue queue(&context, device.get(), nullptr);
+    auto device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+    MockCommandQueue queue(&context, context.getDevice(0), nullptr);
     MockEvent<Event> event(&queue, CL_COMMAND_MARKER, 0, 0);
     uint32_t nestLevel = 0;
 
     event.addCallback(CallbackData::callback, CL_COMPLETE, &nestLevel);
     event.setStatus(CL_COMPLETE);
-
-    platform()->getAsyncEventsHandler()->closeThread();
+    context.getAsyncEventsHandler().closeThread();
 
     EXPECT_EQ(4u, nestLevel);
 }

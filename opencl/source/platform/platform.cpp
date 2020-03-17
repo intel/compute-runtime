@@ -24,7 +24,6 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
@@ -42,12 +41,10 @@ std::vector<std::unique_ptr<Platform>> platformsImpl;
 
 Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvironment(executionEnvironmentIn) {
     clDevices.reserve(4);
-    setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(new AsyncEventsHandler()));
     executionEnvironment.incRefInternal();
 }
 
 Platform::~Platform() {
-    asyncEventsHandler->closeThread();
     for (auto clDevice : this->clDevices) {
         clDevice->decRefInternal();
     }
@@ -208,15 +205,6 @@ ClDevice **Platform::getClDevices() {
 const PlatformInfo &Platform::getPlatformInfo() const {
     DEBUG_BREAK_IF(!platformInfo);
     return *platformInfo;
-}
-
-AsyncEventsHandler *Platform::getAsyncEventsHandler() {
-    return asyncEventsHandler.get();
-}
-
-std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler) {
-    asyncEventsHandler.swap(handler);
-    return handler;
 }
 
 std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {

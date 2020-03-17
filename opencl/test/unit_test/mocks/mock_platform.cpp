@@ -10,6 +10,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/device_factory.h"
 
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
+
 namespace NEO {
 
 bool initPlatform() {
@@ -32,7 +34,7 @@ Platform *constructPlatform() {
     static std::mutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
     if (platformsImpl.empty()) {
-        platformsImpl.push_back(std::make_unique<Platform>(*(new ExecutionEnvironment())));
+        platformsImpl.push_back(std::make_unique<Platform>(*(new MockClExecutionEnvironment())));
     }
     return platformsImpl[0].get();
 }

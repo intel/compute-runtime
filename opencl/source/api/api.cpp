@@ -31,6 +31,7 @@
 #include "opencl/source/context/driver_diagnostics.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/mem_properties_parser_helper.h"
@@ -85,7 +86,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
         if (platformsImpl.empty()) {
-            auto executionEnvironment = new ExecutionEnvironment();
+            auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
             executionEnvironment->decRefInternal();

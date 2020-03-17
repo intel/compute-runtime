@@ -7,11 +7,9 @@
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/scenario_test_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -126,5 +124,5 @@ TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutpu
     clReleaseEvent(eventOut);
     clReleaseCommandQueue(clCommandQ);
 
-    platform()->getAsyncEventsHandler()->closeThread();
+    context->getAsyncEventsHandler().closeThread();
 }

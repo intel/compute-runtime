@@ -242,7 +242,7 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
             event->updateExecutionStatus();
             if ((event->peekExecutionStatus() > CL_COMPLETE) && (event->isExternallySynchronized())) {
                 if (DebugManager.flags.EnableAsyncEventsHandler.get()) {
-                    platformsImpl[0]->getAsyncEventsHandler()->registerEvent(event);
+                    event->getContext()->getAsyncEventsHandler().registerEvent(event);
                 }
             }
         }

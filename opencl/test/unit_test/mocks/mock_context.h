@@ -12,6 +12,9 @@
 #include <memory>
 
 namespace NEO {
+
+class AsyncEventsHandler;
+
 class MockContext : public Context {
   public:
     using Context::contextType;
@@ -32,6 +35,7 @@ class MockContext : public Context {
     void releaseSharingFunctions(SharingType sharing);
     void resetSharingFunctions(SharingType sharing);
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
+    std::unique_ptr<AsyncEventsHandler> &getAsyncEventsHandlerUniquePtr();
 
   private:
     ClDevice *device = nullptr;

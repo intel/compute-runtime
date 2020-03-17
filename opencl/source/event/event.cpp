@@ -26,7 +26,6 @@
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/platform/platform.h"
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)
 
@@ -621,7 +620,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     }
 
     if (peekHasCallbacks() && !isUserEvent() && DebugManager.flags.EnableAsyncEventsHandler.get()) {
-        platformsImpl[0]->getAsyncEventsHandler()->registerEvent(this);
+        ctx->getAsyncEventsHandler().registerEvent(this);
     }
 
     decRefInternal();
