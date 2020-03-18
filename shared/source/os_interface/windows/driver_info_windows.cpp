@@ -75,4 +75,8 @@ bool DriverInfoWindows::isCompatibleDriverStore() const {
 decltype(DriverInfoWindows::createRegistryReaderFunc) DriverInfoWindows::createRegistryReaderFunc = [](const std::string &registryPath) -> std::unique_ptr<SettingsReader> {
     return std::make_unique<RegistryReader>(false, registryPath);
 };
+
+bool DriverInfoWindows::getMediaSharingSupport() {
+    return registryReader.get()->getSetting(is64bit ? "UserModeDriverName" : "UserModeDriverNameWOW", std::string("")) != "<>";
+}
 } // namespace NEO

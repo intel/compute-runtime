@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -718,6 +719,20 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, result);
 }
 
+TEST(D3D9, givenD3D9BuilderAndExtensionEnableTrueWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
+    auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
+    builderFactory.get()->extensionEnabled = true;
+    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_intel_dx9_media_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_khr_dx9_media_sharing")));
+}
+
+TEST(D3D9, givenD3D9BuilderAndExtensionEnableFalseWhenGettingExtensionsThenDx9MediaSheringExtensionsAreNotReturned) {
+    auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
+    builderFactory.get()->extensionEnabled = false;
+    EXPECT_THAT(builderFactory->getExtensions(), testing::Not(testing::HasSubstr(std::string("cl_intel_dx9_media_sharing"))));
+    EXPECT_THAT(builderFactory->getExtensions(), testing::Not(testing::HasSubstr(std::string("cl_khr_dx9_media_sharing"))));
+}
+
 TEST(D3D10, givenD3D10BuilderWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D10>>();
     EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_khr_d3d10_sharing")));
@@ -742,5 +757,46 @@ TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGett
 
     function = sharingFactory.getExtensionFunctionAddress("clGetSupportedD3D11TextureFormatsINTEL");
     EXPECT_EQ(reinterpret_cast<void *>(clGetSupportedD3D11TextureFormatsINTEL), function);
+}
+
+TEST(D3D9SharingFactory, givenDriverInfoWhenVerifyExtensionSupportThenExtensionEnableIsSetCorrect) {
+    class MockDriverInfo : public DriverInfo {
+      public:
+        bool getMediaSharingSupport() override { return support; };
+        bool support = true;
+    };
+    class MockSharingFactory : public SharingFactory {
+      public:
+        MockSharingFactory() {
+            memcpy_s(savedState, sizeof(savedState), sharingContextBuilder, sizeof(sharingContextBuilder));
+        }
+        ~MockSharingFactory() {
+            memcpy_s(sharingContextBuilder, sizeof(sharingContextBuilder), savedState, sizeof(savedState));
+        }
+
+        void prepare() {
+            for (auto &builder : sharingContextBuilder) {
+                builder = nullptr;
+            }
+            d3d9SharingBuilderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
+            sharingContextBuilder[SharingType::D3D9_SHARING] = d3d9SharingBuilderFactory.get();
+        }
+
+        using SharingFactory::sharingContextBuilder;
+        std::unique_ptr<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>> d3d9SharingBuilderFactory;
+        decltype(SharingFactory::sharingContextBuilder) savedState;
+    };
+
+    auto driverInfo = std::make_unique<MockDriverInfo>();
+    auto mockSharingFactory = std::make_unique<MockSharingFactory>();
+    mockSharingFactory->prepare();
+
+    driverInfo->support = true;
+    mockSharingFactory->verifyExtensionSupport(driverInfo.get());
+    EXPECT_TRUE(mockSharingFactory->d3d9SharingBuilderFactory->extensionEnabled);
+
+    driverInfo->support = false;
+    mockSharingFactory->verifyExtensionSupport(driverInfo.get());
+    EXPECT_FALSE(mockSharingFactory->d3d9SharingBuilderFactory->extensionEnabled);
 }
 } // namespace NEO

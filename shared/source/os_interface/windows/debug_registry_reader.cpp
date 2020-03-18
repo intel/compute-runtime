@@ -103,7 +103,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                                    NULL,
                                    &regSize);
         if (ERROR_SUCCESS == success) {
-            if (regType == REG_SZ) {
+            if (regType == REG_SZ || regType == REG_MULTI_SZ) {
                 auto regData = std::make_unique<char[]>(regSize);
                 success = RegQueryValueExA(Key,
                                            settingName,

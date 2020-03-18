@@ -14,6 +14,7 @@
 
 namespace NEO {
 class Context;
+class DriverInfo;
 
 enum SharingType {
     CLGL_SHARING = 0,
@@ -39,6 +40,7 @@ class SharingBuilderFactory {
     virtual std::string getExtensions() = 0;
     virtual void fillGlobalDispatchTable() {}
     virtual void *getExtensionFunctionAddress(const std::string &functionName) = 0;
+    virtual void setExtensionEnabled(DriverInfo *driverInfo);
 };
 
 class SharingFactory {
@@ -59,6 +61,7 @@ class SharingFactory {
     std::string getExtensions();
     void fillGlobalDispatchTable();
     void *getExtensionFunctionAddress(const std::string &functionName);
+    void verifyExtensionSupport(DriverInfo *driverInfo);
 };
 
 extern SharingFactory sharingFactory;

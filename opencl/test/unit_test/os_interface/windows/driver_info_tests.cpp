@@ -113,6 +113,13 @@ class MockRegistryReader : public SettingsReader {
             properNameKey = true;
         } else if (key == "DriverVersion") {
             properVersionKey = true;
+        } else if (key == "UserModeDriverName") {
+            properMediaSharingExtensions = true;
+            using64bit = true;
+            return returnString;
+        } else if (key == "UserModeDriverNameWOW") {
+            properMediaSharingExtensions = true;
+            return returnString;
         }
         if (key == "DriverStorePathForComputeRuntime") {
             return driverStorePath;
@@ -127,6 +134,9 @@ class MockRegistryReader : public SettingsReader {
     bool properNameKey = false;
     bool properVersionKey = false;
     std::string driverStorePath = "driverStore\\0x8086";
+    bool properMediaSharingExtensions = false;
+    bool using64bit = false;
+    std::string returnString = "";
 };
 
 struct DriverInfoWindowsTest : public ::testing::Test {
@@ -158,6 +168,31 @@ TEST_F(DriverInfoWindowsTest, GivenDriverInfoWhenThenReturnNonNullptr) {
 
     EXPECT_STREQ(defaultVersion.c_str(), driverVersion.c_str());
     EXPECT_TRUE(registryReaderMock->properVersionKey);
+};
+
+TEST(DriverInfo, givenDriverInfoWhenGetStringReturnNotMeaningEmptyStringThenEnableSharingSupport) {
+    MockDriverInfoWindows driverInfo("");
+    MockRegistryReader *registryReaderMock = new MockRegistryReader();
+
+    driverInfo.registryReader.reset(registryReaderMock);
+    auto enable = driverInfo.getMediaSharingSupport();
+
+    EXPECT_TRUE(enable);
+    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
+    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
+};
+
+TEST(DriverInfo, givenDriverInfoWhenGetStringReturnMeaningEmptyStringThenDisableSharingSupport) {
+    MockDriverInfoWindows driverInfo("");
+    MockRegistryReader *registryReaderMock = new MockRegistryReader();
+    registryReaderMock->returnString = "<>";
+    driverInfo.registryReader.reset(registryReaderMock);
+
+    auto enable = driverInfo.getMediaSharingSupport();
+
+    EXPECT_FALSE(enable);
+    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
+    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
 };
 
 TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegistryPathIsTrimmed) {

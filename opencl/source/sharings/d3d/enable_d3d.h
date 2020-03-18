@@ -13,6 +13,7 @@
 
 namespace NEO {
 class Context;
+class DriverInfo;
 
 template <typename D3D>
 struct D3DCreateContextProperties {
@@ -37,5 +38,7 @@ class D3DSharingBuilderFactory : public SharingBuilderFactory {
     std::string getExtensions() override;
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
+    void setExtensionEnabled(DriverInfo *driverInfo) override;
+    bool extensionEnabled = true;
 };
 } // namespace NEO

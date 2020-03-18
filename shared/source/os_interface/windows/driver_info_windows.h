@@ -23,7 +23,7 @@ class DriverInfoWindows : public DriverInfo {
     std::string getDeviceName(std::string defaultName) override;
     std::string getVersion(std::string defaultVersion) override;
     bool isCompatibleDriverStore() const;
-
+    bool getMediaSharingSupport() override;
     static std::function<std::unique_ptr<SettingsReader>(const std::string &registryPath)> createRegistryReaderFunc;
 
   protected:

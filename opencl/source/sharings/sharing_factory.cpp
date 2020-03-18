@@ -81,5 +81,15 @@ bool SharingFactory::finalizeProperties(Context &context, int32_t &errcodeRet) {
 SharingBuilderFactory *SharingFactory::sharingContextBuilder[SharingType::MAX_SHARING_VALUE] = {
     nullptr,
 };
+
+void SharingFactory::verifyExtensionSupport(DriverInfo *driverInfo) {
+    for (auto &builder : sharingContextBuilder) {
+        if (builder == nullptr)
+            continue;
+        builder->setExtensionEnabled(driverInfo);
+    }
+};
+void SharingBuilderFactory::setExtensionEnabled(DriverInfo *driverInfo){};
+
 SharingFactory sharingFactory;
 } // namespace NEO

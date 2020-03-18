@@ -33,4 +33,9 @@ TEST(DriverInfo, GivenDriverInfoWhenLinuxThenReturnDefault) {
     EXPECT_STREQ(defaultVersion.c_str(), resultVersion.c_str());
 }
 
+TEST(DriverInfo, givenGetMediaSharingSupportWhenLinuxThenReturnTrue) {
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr));
+
+    EXPECT_TRUE(driverInfo->getMediaSharingSupport());
+}
 } // namespace NEO

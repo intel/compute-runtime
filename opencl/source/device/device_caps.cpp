@@ -196,6 +196,7 @@ void ClDevice::initializeCaps() {
     if (driverInfo) {
         name.assign(driverInfo.get()->getDeviceName(name).c_str());
         driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
+        sharingFactory.verifyExtensionSupport(driverInfo.get());
     }
 
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);

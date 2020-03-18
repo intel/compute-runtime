@@ -9,6 +9,8 @@
 
 #include "opencl/source/sharings/d3d/enable_d3d.h"
 
+#include "shared/source/os_interface/driver_info.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"
@@ -103,7 +105,7 @@ std::unique_ptr<SharingContextBuilder> D3DSharingBuilderFactory<D3D>::createCont
 };
 
 std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::getExtensions() {
-    return "cl_intel_dx9_media_sharing cl_khr_dx9_media_sharing ";
+    return extensionEnabled ? "cl_intel_dx9_media_sharing cl_khr_dx9_media_sharing " : "";
 }
 
 std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::getExtensions() {
@@ -167,6 +169,15 @@ void *D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::getExtensionFunctionAddre
     }
     return nullptr;
 }
+
+void D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::setExtensionEnabled(DriverInfo *driverInfo) {
+    extensionEnabled = driverInfo->getMediaSharingSupport();
+}
+
+void D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::setExtensionEnabled(DriverInfo *driverInfo) {}
+
+void D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::setExtensionEnabled(DriverInfo *driverInfo) {}
+
 static SharingFactory::RegisterSharing<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>, D3DSharingFunctions<D3DTypesHelper::D3D9>> D3D9Sharing;
 static SharingFactory::RegisterSharing<D3DSharingBuilderFactory<D3DTypesHelper::D3D10>, D3DSharingFunctions<D3DTypesHelper::D3D10>> D3D10Sharing;
 static SharingFactory::RegisterSharing<D3DSharingBuilderFactory<D3DTypesHelper::D3D11>, D3DSharingFunctions<D3DTypesHelper::D3D11>> D3D11Sharing;
