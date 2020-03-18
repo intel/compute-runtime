@@ -44,8 +44,10 @@ endif()
 include(GNUInstallDirs)
 
 # define global property where we will collect component list to package
-define_property(GLOBAL PROPERTY NEO_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
-set(GLOBAL PROPERTY NEO_COMPONENTS_LIST "")
+define_property(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
+set(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST "")
+define_property(GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
+set(GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST "")
 
 set(BRANCH_TYPE "")
 set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")

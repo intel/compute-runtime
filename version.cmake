@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2018-2019 Intel Corporation
+# Copyright (C) 2018-2020 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(UNIX)
-  if(NOT DEFINED NEO_DRIVER_VERSION)
+  if(NOT DEFINED NEO_OCL_DRIVER_VERSION)
     find_program(GIT NAMES git)
     if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
       if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
@@ -18,50 +18,54 @@ if(UNIX)
       endif()
     endif()
 
-    if(NOT DEFINED NEO_VERSION_MAJOR)
+    if(NOT DEFINED NEO_OCL_VERSION_MAJOR)
       if(NOT DEFINED GIT_output)
-        set(NEO_VERSION_MAJOR 1)
+        set(NEO_OCL_VERSION_MAJOR 1)
       else()
         SET(DATE_arg --date=@${GIT_output} +%y)
         execute_process(
           COMMAND date ${DATE_arg}
-          OUTPUT_VARIABLE NEO_VERSION_MAJOR
+          OUTPUT_VARIABLE NEO_OCL_VERSION_MAJOR
           OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        message(STATUS "Computed version major is: ${NEO_VERSION_MAJOR}")
+        message(STATUS "Computed OpenCL version major is: ${NEO_OCL_VERSION_MAJOR}")
       endif()
     endif()
 
-    if(NOT DEFINED NEO_VERSION_MINOR)
+    if(NOT DEFINED NEO_OCL_VERSION_MINOR)
       if(NOT DEFINED GIT_output)
-        set(NEO_VERSION_MINOR 0)
+        set(NEO_OCL_VERSION_MINOR 0)
       else()
         SET(DATE_arg --date=@${GIT_output} +%V)
         execute_process(
           COMMAND date ${DATE_arg}
-          OUTPUT_VARIABLE NEO_VERSION_MINOR
+          OUTPUT_VARIABLE NEO_OCL_VERSION_MINOR
           OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        message(STATUS "Computed version minor is: ${NEO_VERSION_MINOR}")
+        message(STATUS "Computed OpenCL version minor is: ${NEO_OCL_VERSION_MINOR}")
       endif()
     endif()
 
     if(NOT DEFINED NEO_VERSION_BUILD)
       set(NEO_VERSION_BUILD 0)
     endif()
-    set(NEO_DRIVER_VERSION "${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}")
+    set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}")
   endif()
 else()
-  if(NOT DEFINED NEO_VERSION_MAJOR)
-    set(NEO_VERSION_MAJOR 1)
+  if(NOT DEFINED NEO_OCL_VERSION_MAJOR)
+    set(NEO_OCL_VERSION_MAJOR 1)
   endif()
 
-  if(NOT DEFINED NEO_VERSION_MINOR)
-    set(NEO_VERSION_MINOR 0)
+  if(NOT DEFINED NEO_OCL_VERSION_MINOR)
+    set(NEO_OCL_VERSION_MINOR 0)
   endif()
 
   if(NOT DEFINED NEO_VERSION_BUILD)
     set(NEO_VERSION_BUILD 0)
   endif()
-  set(NEO_DRIVER_VERSION "${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}")
+  set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}")
 endif(UNIX)
+
+# Level-Zero package version
+set(NEO_L0_VERSION_MAJOR 0)
+set(NEO_L0_VERSION_MINOR 8)

@@ -29,7 +29,9 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         endif()
     endif()
 
-    project(level-zero-gpu VERSION 0.8.0)
+    project(level-zero-gpu VERSION ${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_VERSION_BUILD})
+    message(STATUS "Level Zero driver version: ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
     include(cmake/source_tree.cmake)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/platforms.cmake AND NOT SKIP_L0_UNIT_TESTS)
         include(cmake/${BRANCH_TYPE}/platforms.cmake)
@@ -447,10 +449,10 @@ endif()
     endif()
     add_subdirectories()
 
-    if(UNIX)
+    if(UNIX AND NEO_BUILD_L0_PACKAGE)
         message(STATUS "Building LevelZero package")
 
-        set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST ${PROJECT_NAME})
+        set_property(GLOBAL APPEND PROPERTY NEO_L0_COMPONENTS_LIST ${PROJECT_NAME})
 
         set(L0_PACKAGE_VERSION_DEB "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
         set(L0_PACKAGE_VERSION_RPM "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
